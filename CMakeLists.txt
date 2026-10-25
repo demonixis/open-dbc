@@ -355,13 +355,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JoltPhysics)
 
-add_compile_definitions(
-    GLM_FORCE_RADIANS
-    GLM_FORCE_DEPTH_ZERO_TO_ONE
-    GLM_FORCE_LEFT_HANDED
-    $<$<CXX_COMPILER_ID:MSVC>:_USE_MATH_DEFINES>
-)
-
 if(APPLE OR (NOT ANDROID AND NOT IOS))
     if(ANDROID OR IOS)
         set(SDLSHADERCROSS_DXC OFF CACHE BOOL "" FORCE)
@@ -370,7 +363,12 @@ if(APPLE OR (NOT ANDROID AND NOT IOS))
     endif()
     set(OPENDBC_SAVED_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     if(APPLE AND SDLSHADERCROSS_DXC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-invalid-specialization")
+        # Recent Apple Clang flags DXC's specializations; older releases reject the option.
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag(-Wno-invalid-specialization OPENDBC_HAS_WNO_INVALID_SPECIALIZATION)
+        if(OPENDBC_HAS_WNO_INVALID_SPECIALIZATION)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-invalid-specialization")
+        endif()
     endif()
     set(SDLSHADERCROSS_SHARED OFF CACHE BOOL "" FORCE)
     set(SDLSHADERCROSS_STATIC ON CACHE BOOL "" FORCE)
@@ -527,6 +525,14 @@ endfunction()
 dbc_mark_system_includes(SDL3::SDL3 SDL3_image::SDL3_image SDL3_mixer::SDL3_mixer SDL3_ttf::SDL3_ttf
     assimp::assimp glm::glm spdlog::spdlog_header_only unordered_dense::unordered_dense
     SDL3_shadercross::SDL3_shadercross nlohmann_json::nlohmann_json)
+
+# Declared after the dependencies: DXC defines _USE_MATH_DEFINES itself and builds with /WX.
+add_compile_definitions(
+    GLM_FORCE_RADIANS
+    GLM_FORCE_DEPTH_ZERO_TO_ONE
+    GLM_FORCE_LEFT_HANDED
+    $<$<CXX_COMPILER_ID:MSVC>:_USE_MATH_DEFINES>
+)
 
 add_subdirectory(src/language)
 add_subdirectory(src/vm)
