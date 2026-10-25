@@ -1,0 +1,101 @@
+rem ==================================================================
+rem Static World - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Static objects are scenery fixed in place: they draw fast and come
+rem with their own collision data. Here maze walls become static, a
+rem walker slides along them with GET STATIC COLLISION HIT, and a turret
+rem watches it with STATIC LINE OF SIGHT. The level is saved to a file,
+rem cleared and loaded back. O switches static occlusion, D the door.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+color backdrop rgb(40, 44, 56)
+position camera 0, 90, -60
+point camera 0, 0, 0
+load image "bricks.jpg", 1
+load image "rock.jpg", 2
+
+rem --- Walls: cubes turned into static objects, then deleted
+restore
+for w = 1 to 9
+   read x, z, sx, sz
+   make object box 1, sx, 8, sz
+   position object 1, x, 4, z
+   texture object 1, 1
+   scale object texture 1, sx / 8, 1
+   make static object 1
+   delete object 1
+next w
+rem The floor joins the static scenery with the rock texture
+make object box 1, 100, 1, 80
+position object 1, 0, -0.5, 0
+texture object 1, 2
+make static object 1
+delete object 1
+rem An invisible collision-only block in the open: walls you cannot see
+make static collision box 10, 0, -30, 20, 8, -20
+
+rem --- Save the level, clear it and load it back from the file
+save static objects "level.dbo"
+delete static objects
+load static objects "level.dbo"
+delete file "level.dbo"
+set static objects texture 0
+enable static occlusion
+
+rem The walker and the turret
+make object sphere 2, 4
+color object 2, rgb(255, 220, 60)
+make object cylinder 3, 4
+position object 3, 35, 2, -25
+color object 3, rgb(200, 60, 60)
+rem A sliding door that is not static until D attaches it
+make object box 4, 14, 8, 1
+position object 4, -10, 4, 15
+color object 4, rgb(140, 100, 60)
+
+wx# = -40 : wz# = -30 : heading# = 45
+do
+   rem Move the walker; a static hit pushes it back and turns it
+   oldx# = wx# : oldz# = wz#
+   wx# = newxvalue(wx#, heading#, 0.6) : wz# = newzvalue(wz#, heading#, 0.6)
+   if get static collision hit(oldx# - 2, 0, oldz# - 2, oldx# + 2, 4, oldz# + 2, wx# - 2, 0, wz# - 2, wx# + 2, 4, wz# + 2) = 1
+      wx# = wx# - get static collision x() : wz# = wz# - get static collision z()
+      push$ = str$(int(get static collision x() * 10) / 10.0) + ", " + str$(int(get static collision y() * 10) / 10.0) + ", " + str$(int(get static collision z() * 10) / 10.0)
+      heading# = wrapvalue(heading# + 90 + rnd(90))
+   endif
+   if abs(wx#) > 48 or abs(wz#) > 38 then wx# = oldx# : wz# = oldz# : heading# = wrapvalue(heading# + 180)
+   position object 2, wx#, 2, wz#
+
+   rem The turret sees the walker when no static object is in between
+   blocked = static line of sight(35, 3, -25, wx#, 3, wz#, 1, 1)
+   if blocked = 0 then color object 3, rgb(255, 60, 60) else color object 3, rgb(90, 40, 40)
+
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$
+      if key$ = "o"
+         occlusion = 1 - occlusion
+         if occlusion = 1 then disable static occlusion else enable static occlusion
+      endif
+      if key$ = "d"
+         attached = 1 - attached
+         if attached = 1 then attach object to static 4 else detach object from static 4
+      endif
+   endif
+   lastkey$ = key$
+
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "STATIC WORLD - O occlusion, D attaches the door to the static world"
+   if blocked = 0
+      text 10, 30, "turret sees the walker"
+   else
+      text 10, 30, "line of sight blocked at " + str$(int(static line of sight x())) + ", " + str$(int(static line of sight y())) + ", " + str$(int(static line of sight z()))
+   endif
+   text 10, 50, "door static: " + str$(attached) + "   occlusion off: " + str$(occlusion) + "   last push back: " + push$
+   sync
+loop
+
+rem Wall centre x and z, then length along x and along z
+data -20, 0, 40, 2, 20, 10, 2, 30, 0, -20, 2, 20, -30, 20, 30, 2, 30, 25, 30, 2
+data -49, 0, 2, 80, 49, 0, 2, 80, 0, 39, 100, 2, 0, -39, 100, 2

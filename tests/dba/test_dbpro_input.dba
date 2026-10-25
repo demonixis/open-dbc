@@ -1,0 +1,4 @@
+sync on : sync rate 0
+print "before input"
+input "name>"; name$
+print "never printed"

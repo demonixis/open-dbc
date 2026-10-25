@@ -1,0 +1,46 @@
+rem ==================================================================
+rem Picture Effects - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Loads a picture into a bitmap and transforms it in place with
+rem MIRROR BITMAP, FLIP BITMAP, BLUR BITMAP and FADE BITMAP. A second
+rem copy of the picture restores the original between effects.
+rem Keys 1 to 5 pick an effect; otherwise they cycle by themselves.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 30
+load bitmap "harbour.bmp", 1
+load bitmap "harbour.bmp", 2
+set current bitmap 0
+
+effect = 0 : shown = -1
+started = timer()
+do
+   rem Pick the effect from the keyboard, or move on every three seconds
+   for k = 1 to 5
+      if keystate(k + 1) = 1 then effect = k - 1 : started = timer()
+   next k
+   if timer() - started > 3000 then effect = (effect + 1) mod 5 : started = timer()
+
+   if effect <> shown
+      rem Restore the untouched copy, then apply the new effect once
+      copy bitmap 2, 1
+      if bitmap mirrored(1) = 1 then mirror bitmap 1
+      if bitmap flipped(1) = 1 then flip bitmap 1
+      select effect
+         case 0 : name$ = "ORIGINAL (COPY BITMAP 2, 1)" : endcase
+         case 1 : mirror bitmap 1 : name$ = "MIRROR BITMAP 1" : endcase
+         case 2 : flip bitmap 1 : name$ = "FLIP BITMAP 1" : endcase
+         case 3 : blur bitmap 1, 6 : name$ = "BLUR BITMAP 1, 6" : endcase
+         case 4 : fade bitmap 1, 40 : name$ = "FADE BITMAP 1, 40" : endcase
+      endselect
+      shown = effect
+   endif
+
+   copy bitmap 1, 0
+   ink rgb(0, 0, 0), 0
+   box 0, 0, screen width(), 52
+   ink rgb(255, 255, 255), 0
+   text 10, 8, str$(effect + 1) + ". " + name$
+   text 10, 28, "MIRRORED " + str$(bitmap mirrored(1)) + "   FLIPPED " + str$(bitmap flipped(1)) + "   keys 1-5 pick an effect"
+   sync
+loop

@@ -1,0 +1,72 @@
+rem ==================================================================
+rem Type Specimen - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Prints a specimen sheet for a font: its styles, a range of sizes and
+rem opaque versus transparent text. The font changes every few seconds;
+rem LEFT and RIGHT pick one yourself.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+
+rem PERFORM CHECKLIST FOR FONTS lists the fonts this computer offers
+perform checklist for fonts
+installed = checklist quantity()
+
+dim font$(4)
+font$(0) = "Arial" : font$(1) = "Times New Roman" : font$(2) = "Courier New"
+font$(3) = "Georgia" : font$(4) = "Verdana"
+current = 0 : changed = timer()
+
+do
+   if timer() - changed > 4000 then current = (current + 1) mod 5 : changed = timer()
+   if rightkey() = 1 and held = 0 then current = (current + 1) mod 5 : changed = timer()
+   if leftkey() = 1 and held = 0 then current = (current + 4) mod 5 : changed = timer()
+   held = leftkey() + rightkey()
+
+   cls rgb(246, 241, 230)
+   set text font font$(current)
+   set text transparent
+
+   rem The title, centred on the screen
+   ink rgb(120, 40, 30), 0
+   set text size 36 : set text to bold
+   center text w / 2, 14, font$(current)
+
+   rem The four styles, each reporting TEXT STYLE()
+   ink rgb(40, 40, 50), 0
+   set text size 20
+   for style = 0 to 3
+      select style
+         case 0 : set text to normal : name$ = "normal" : endcase
+         case 1 : set text to bold : name$ = "bold" : endcase
+         case 2 : set text to italic : name$ = "italic" : endcase
+         case 3 : set text to bolditalic : name$ = "bold italic" : endcase
+      endselect
+      text 30, 80 + style * 30, "Sphinx of black quartz - " + name$ + " (TEXT STYLE " + str$(text style()) + ")"
+   next style
+
+   rem A size ramp: TEXT WIDTH tells where the next sample starts
+   set text to normal
+   x = 30
+   for size = 10 to 46 step 6
+      set text size size
+      text x, 230 + 46 - text height("Ag"), "Ag"
+      x = x + text width("Ag") + 14
+   next size
+
+   rem Opaque text paints the INK background colour behind the letters
+   set text size 18
+   set text opaque
+   ink rgb(255, 255, 255), rgb(120, 40, 30)
+   text 30, 300, " SET TEXT OPAQUE: TEXT BACKGROUND TYPE() = " + str$(text background type()) + " "
+   set text transparent
+   ink rgb(120, 40, 30), 0
+   text 30, 330, " SET TEXT TRANSPARENT: TEXT BACKGROUND TYPE() = " + str$(text background type()) + " "
+
+   ink rgb(90, 90, 100), 0
+   set text size 14
+   text 30, h - 60, "TEXT FONT$() = " + text font$() + "   TEXT SIZE() = " + str$(text size())
+   text 30, h - 40, str$(installed) + " fonts found by PERFORM CHECKLIST FOR FONTS - LEFT and RIGHT change font"
+   sync
+loop

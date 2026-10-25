@@ -1,0 +1,17 @@
+rem The DBPro BOX form shades the rectangle between four corner colours
+sync on : sync rate 0
+
+create bitmap 1, 32, 32
+cls
+box 0, 0, 10, 10, rgb(255, 0, 0), rgb(255, 0, 0), rgb(0, 0, 255), rgb(0, 0, 255)
+p = point(0, 0)
+print "top="; rgbr(p); ","; rgbb(p)
+p = point(0, 10)
+print "bottom="; rgbr(p); ","; rgbb(p)
+p = point(5, 5)
+print "middle red between="; (rgbr(p) > 100 and rgbr(p) < 160)
+print "middle blue between="; (rgbb(p) > 100 and rgbb(p) < 160)
+set current bitmap 0
+print "TEST_DONE"
+sync
+end

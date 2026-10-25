@@ -1,0 +1,41 @@
+rem Test math functions
+sync on : sync rate 0
+
+rem Integer math
+print "ABS_NEG="; abs(-5)
+print "ABS_POS="; abs(5)
+print "INT_3_7="; int(3.7)
+print "INT_NEG="; int(-2.3)
+
+rem Trigonometry (DBA uses degrees)
+print "SIN_0="; sin(0)
+print "SIN_90="; sin(90)
+print "COS_0="; cos(0)
+print "COS_90="; cos(90)
+
+rem Sqrt
+print "SQRT_4="; sqrt(4)
+print "SQRT_9="; sqrt(9)
+
+rem Wrapvalue
+print "WRAP_370="; wrapvalue(370)
+print "WRAP_NEG10="; wrapvalue(-10)
+print "WRAP_0="; wrapvalue(0)
+print "WRAP_360="; wrapvalue(360)
+
+rem Curvevalue
+cv# = curvevalue(100.0, 0.0, 10.0)
+print "CURVE_FIRST="; cv#
+
+rem Rnd
+randomize 42
+r1 = rnd(100)
+print "RND_RANGE_OK="; (r1 >= 0 and r1 <= 100)
+
+rem Curveangle
+ca# = curveangle(180.0, 0.0, 10.0)
+print "CURVEANGLE_FIRST="; ca#
+
+print "TEST_DONE"
+sync
+end

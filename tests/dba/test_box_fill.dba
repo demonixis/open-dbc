@@ -1,0 +1,17 @@
+rem BOX fills its rectangle in the current ink colour
+sync on : sync rate 0
+
+create bitmap 1, 16, 16
+cls rgb(0, 0, 0)
+ink rgb(200, 100, 50), 0
+box 4, 4, 9, 9
+p = point(6, 6)
+print "inside="; rgbr(p); ","; rgbg(p); ","; rgbb(p)
+p = point(9, 9)
+print "edge="; rgbr(p); ","; rgbg(p); ","; rgbb(p)
+p = point(12, 12)
+print "outside="; rgbr(p); ","; rgbg(p); ","; rgbb(p)
+set current bitmap 0
+print "TEST_DONE"
+sync
+end

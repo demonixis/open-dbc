@@ -1,0 +1,83 @@
+rem ==================================================================
+rem Notebook - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Works with files in a scratch folder: writes a record of bytes,
+rem words, longs, floats and strings, reads it back value by value,
+rem then copies, renames, moves and deletes files. Each step is logged
+rem on the screen. The scratch folder is removed at the end.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+dim log$(40) : lines = 0
+
+rem --- A scratch folder next to the program, entered with SET DIR
+if path exist("notebook_tmp") = 1 then gosub tidy_up
+make directory "notebook_tmp"
+set dir "notebook_tmp"
+note$ = "MAKE DIRECTORY and SET DIR: now in ..." + right$(get dir$(), 30) : gosub add_line
+
+rem --- Writing: each WRITE command appends one value to the open file
+open to write 1, "record.dat"
+write byte 1, 200
+write word 1, 1999
+write long 1, 123456789
+write float 1, 3.25
+write string 1, "lighthouse"
+write file 1, -42
+note$ = "FILE OPEN(1) while writing = " + str$(file open(1)) : gosub add_line
+close file 1
+note$ = "record.dat written: FILE EXIST = " + str$(file exist("record.dat")) + ", FILE SIZE = " + str$(file size("record.dat")) + " bytes" : gosub add_line
+
+rem --- Reading: the values come back in the order they were written
+open to read 2, "record.dat"
+read byte 2, b
+read word 2, wd
+read long 2, l
+read float 2, f#
+read string 2, s$
+read file 2, q
+note$ = "READ BYTE " + str$(b) + "  WORD " + str$(wd) + "  LONG " + str$(l) + "  FLOAT " + str$(f#) : gosub add_line
+note$ = "READ STRING """ + s$ + """  READ FILE " + str$(q) + "  FILE END = " + str$(file end(2)) : gosub add_line
+close file 2
+note$ = "CLOSE FILE: FILE OPEN(2) = " + str$(file open(2)) : gosub add_line
+
+rem --- Managing files
+make file "empty.txt"
+note$ = "MAKE FILE empty.txt: size " + str$(file size("empty.txt")) : gosub add_line
+copy file "record.dat", "backup.dat"
+note$ = "COPY FILE record.dat to backup.dat: " + str$(file exist("backup.dat")) : gosub add_line
+rename file "backup.dat", "old_record.dat"
+note$ = "RENAME FILE to old_record.dat: backup.dat exists " + str$(file exist("backup.dat")) : gosub add_line
+make directory "archive"
+move file "old_record.dat", "archive/old_record.dat"
+note$ = "MOVE FILE into archive: " + str$(file exist("archive/old_record.dat")) : gosub add_line
+gosub tidy_up
+note$ = "DELETE FILE and DELETE DIRECTORY: notebook_tmp exists " + str$(path exist("notebook_tmp")) : gosub add_line
+
+shown = 0
+do
+   if shown < lines and timer() - last > 250 then inc shown : last = timer()
+   cls rgb(250, 246, 232)
+   ink rgb(70, 60, 50), 0
+   center text screen width() / 2, 14, "NOTEBOOK - files step by step"
+   for i = 1 to shown
+      if i = shown then ink rgb(180, 60, 30), 0 else ink rgb(50, 50, 60), 0
+      text 20, 30 + i * 22, str$(i) + ". " + log$(i)
+   next i
+   sync
+loop
+
+add_line:
+   inc lines
+   log$(lines) = note$
+return
+
+rem Leave the scratch folder and remove everything in it
+tidy_up:
+   if right$(get dir$(), 12) = "notebook_tmp" then set dir ".."
+   if file exist("notebook_tmp/archive/old_record.dat") = 1 then delete file "notebook_tmp/archive/old_record.dat"
+   if path exist("notebook_tmp/archive") = 1 then delete directory "notebook_tmp/archive"
+   if file exist("notebook_tmp/record.dat") = 1 then delete file "notebook_tmp/record.dat"
+   if file exist("notebook_tmp/empty.txt") = 1 then delete file "notebook_tmp/empty.txt"
+   if path exist("notebook_tmp") = 1 then delete directory "notebook_tmp"
+return

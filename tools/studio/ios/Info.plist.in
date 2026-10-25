@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>OpenDBC</string>
+    <key>CFBundleDisplayName</key>
+    <string>OpenDBC</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <!-- Marketing version and build number both come from CMake. The build
+         number is the git commit count, so every upload gets a higher one,
+         which is what App Store Connect requires. -->
+    <key>CFBundleShortVersionString</key>
+    <string>@OPENDBC_VERSION@</string>
+    <key>CFBundleVersion</key>
+    <string>@OPENDBC_BUILD_NUMBER@</string>
+
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIColorName</key>
+        <string>SystemBackgroundColor</string>
+    </dict>
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+
+    <!-- The renderer is SDL_GPU on Metal. -->
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+        <string>metal</string>
+    </array>
+
+    <!-- Both orientations everywhere: the project browser is usable one-handed
+         in portrait on a phone, the editor wants landscape on a tablet. -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- This is what makes the app's Documents folder show up in the Files app
+         under "On My iPad > OpenDBC". Without both keys there is no way to
+         get a project in or out on iOS. -->
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+
+    <!-- No encryption beyond what the OS provides: answers the export
+         compliance question once instead of on every TestFlight upload. -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+</dict>
+</plist>

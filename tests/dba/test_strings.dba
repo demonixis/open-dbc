@@ -1,0 +1,36 @@
+rem Test string functions
+sync on : sync rate 0
+
+print "LEFT="; left$("Hello World", 5)
+print "RIGHT="; right$("Hello World", 5)
+print "MID="; mid$("Hello World", 7)
+print "LEN="; len("Hello")
+print "LEN_EMPTY="; len("")
+print "ASC_A="; asc("A")
+print "ASC_Z="; asc("Z")
+print "CHR_65="; chr$(65)
+print "CHR_90="; chr$(90)
+print "UPPER="; upper$("hello")
+print "LOWER="; lower$("HELLO")
+print "STR="; str$(42)
+print "STR_FLOAT="; str$(3.14)
+print "VAL_INT="; val("42")
+print "VAL_FLOAT="; val("3.14")
+print "HEX="; hex$(255)
+print "BIN="; bin$(10)
+
+rem INSTR tests
+print "INSTR_FOUND="; instr("Hello World", "World")
+print "INSTR_NOTFOUND="; instr("Hello World", "xyz")
+print "INSTR_START="; instr("Hello World", "Hello")
+print "INSTR_EMPTY="; instr("Hello World", "")
+
+rem Edge cases
+print "LEFT_0="; left$("Test", 0)
+print "RIGHT_0="; right$("Test", 0)
+print "UPPER_EMPTY="; upper$("")
+print "LOWER_EMPTY="; lower$("")
+
+print "TEST_DONE"
+sync
+end

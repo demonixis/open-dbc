@@ -1,0 +1,21 @@
+rem Test light creation and manipulation
+sync on : sync rate 0
+
+rem Set ambient light
+color ambient light rgb(64, 64, 64)
+
+rem Make a directional light (light 0 exists by default in DBA)
+set directional light 0, 1.0, -1.0, 1.0
+color light 0, rgb(255, 255, 255)
+
+rem Show/hide state is covered by the typed engine oracle.
+show light 0
+hide light 0
+show light 0
+
+rem Position light
+position light 0, 10.0, 20.0, 30.0
+
+print "TEST_DONE"
+sync
+end

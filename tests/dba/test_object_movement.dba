@@ -1,0 +1,52 @@
+rem Test object movement commands
+sync on : sync rate 0
+
+rem Setup
+make object cube 1, 10
+
+rem MOVE OBJECT (forward along facing direction)
+position object 1, 0, 0, 0
+rotate object 1, 0, 0, 0
+move object 1, 5.0
+print "MOVE_FWD_Z="; object position z(1)
+
+rem MOVE OBJECT with rotation
+position object 1, 0, 0, 0
+yrotate object 1, 90.0
+move object 1, 5.0
+print "MOVE_ROT_X="; object position x(1)
+
+rem MOVE OBJECT UP/DOWN
+position object 1, 0, 0, 0
+rotate object 1, 0, 0, 0
+move object up 1, 10.0
+print "MOVE_UP_Y="; object position y(1)
+move object down 1, 5.0
+print "MOVE_DOWN_Y="; object position y(1)
+
+rem TURN OBJECT LEFT/RIGHT
+rotate object 1, 0, 0, 0
+turn object left 1, 45.0
+print "TURN_LEFT_Y="; object angle y(1)
+turn object right 1, 90.0
+print "TURN_RIGHT_Y="; object angle y(1)
+
+rem PITCH OBJECT UP/DOWN
+rotate object 1, 0, 0, 0
+pitch object up 1, 30.0
+print "PITCH_UP_X="; object angle x(1)
+pitch object down 1, 60.0
+print "PITCH_DOWN_X="; object angle x(1)
+
+rem ROLL OBJECT LEFT/RIGHT
+rotate object 1, 0, 0, 0
+roll object left 1, 20.0
+print "ROLL_LEFT_Z="; object angle z(1)
+roll object right 1, 40.0
+print "ROLL_RIGHT_Z="; object angle z(1)
+
+delete object 1
+
+print "TEST_DONE"
+sync
+end

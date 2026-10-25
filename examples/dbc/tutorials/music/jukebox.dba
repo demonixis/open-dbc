@@ -1,0 +1,89 @@
+rem ==================================================================
+rem Jukebox - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Plays two tunes with the music commands. Music is one long piece
+rem played at a time, unlike sounds. LOAD MUSIC reads MIDI files; when
+rem the computer has no MIDI synthesiser, OpenDBC plays the WAV of the
+rem same name instead. 1 and 2 pick a tune, L loops it, P pauses and
+rem resumes, S stops, D deletes tune 2. Otherwise the tunes alternate.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+load music "harbour_waltz.mid", 1
+load music "night_march.mid", 2
+dim title$(2)
+title$(1) = "Harbour Waltz" : title$(2) = "Night March"
+
+track = 1 : loop music track : changed = timer()
+do
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$
+      if key$ = "1" or key$ = "2"
+         if music exist(val(key$)) = 1
+            stop music track
+            track = val(key$) : play music track : manual = 1
+         endif
+      endif
+      if key$ = "l" then stop music track : loop music track : manual = 1
+      if key$ = "p"
+         if music paused(track) = 1 then resume music track else pause music track
+         manual = 1
+      endif
+      if key$ = "s" then stop music track : manual = 1
+      if key$ = "d" and music exist(2) = 1
+         if track = 2 then stop music 2 : track = 1 : play music 1
+         delete music 2
+      endif
+   endif
+   lastkey$ = key$
+
+   rem Without the keyboard the two tunes take turns every twelve seconds
+   if manual = 0 and timer() - changed > 12000 and music exist(2) = 1
+      stop music track
+      track = 3 - track
+      loop music track
+      changed = timer()
+   endif
+
+   rem --- A turntable that spins while the music plays
+   cls rgb(40, 28, 24)
+   ink rgb(90, 60, 40), 0
+   box 60, 80, w - 60, h - 70
+   if music playing(track) = 1 and music paused(track) = 0 then spin# = wrapvalue(spin# + 6)
+   ink rgb(20, 20, 20), 0
+   radius = 130 : gosub disc
+   ink rgb(60, 60, 60), 0
+   for r = 34 to 126 step 9 : circle 220, 240, r : next r
+   ink rgb(200, 60, 50), 0
+   radius = 28 : gosub disc
+   ink rgb(255, 230, 200), 0
+   line 220, 240, 220 + sin(spin#) * 26, 240 - cos(spin#) * 26
+
+   rem A level meter that only dances while the music plays
+   for bar = 0 to 7
+      level = 10
+      if music playing(track) = 1 and music paused(track) = 0 then level = 20 + rnd(110)
+      if level > 120 then level = 120
+      ink rgb(240, 180 - bar * 12, 60), 0
+      box 400 + bar * 22, 390 - level, 416 + bar * 22, 390
+   next bar
+
+   ink rgb(255, 240, 220), 0
+   center text w / 2, 20, "JUKEBOX"
+   text 400, 120, "NOW: " + title$(track)
+   text 400, 150, "PLAYING " + str$(music playing(track))
+   text 400, 170, "LOOPING " + str$(music looping(track))
+   text 400, 190, "PAUSED  " + str$(music paused(track))
+   text 400, 220, "TUNE 2 EXISTS " + str$(music exist(2))
+   text 70, h - 50, "1/2 pick a tune, L loops, P pauses, S stops, D deletes tune 2"
+   sync
+loop
+
+rem A filled disc around the turntable centre, one LINE per row
+disc:
+   for dy = 0 - radius to radius
+      half = sqrt(radius * radius - dy * dy)
+      line 220 - half, 240 + dy, 220 + half, 240 + dy
+   next dy
+return

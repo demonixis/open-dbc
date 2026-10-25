@@ -1,0 +1,28 @@
+rem Test matrix (terrain) creation and manipulation
+sync on : sync rate 0
+
+rem Create a matrix: id, width, depth, seg_x, seg_z
+make matrix 1, 1000.0, 1000.0, 10, 10
+
+rem Set some heights
+set matrix height 1, 5, 5, 50.0
+set matrix height 1, 0, 0, 10.0
+
+rem Read back heights
+print "HEIGHT_5_5="; get matrix height(1, 5, 5)
+print "HEIGHT_0_0="; get matrix height(1, 0, 0)
+print "HEIGHT_1_1="; get matrix height(1, 1, 1)
+
+rem Position matrix
+position matrix 1, -500.0, 0.0, -500.0
+
+rem Update matrix (generates mesh)
+update matrix 1
+
+rem Get ground height at a point
+gh# = get ground height(1, 0.0, 0.0)
+print "GROUND_HEIGHT="; gh#
+
+print "TEST_DONE"
+sync
+end

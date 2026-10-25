@@ -1,0 +1,58 @@
+rem Test memblock operations
+sync on : sync rate 0
+
+rem Create memblock
+make memblock 1, 64
+print "MB_EXIST="; memblock exist(1)
+print "MB_SIZE="; get memblock size(1)
+
+rem Non-existent memblock
+print "MB_NOEXIST="; memblock exist(99)
+
+rem Write/read byte
+write memblock byte 1, 0, 42
+print "BYTE="; memblock byte(1, 0)
+
+rem Write/read word (16-bit)
+write memblock word 1, 4, 1000
+print "WORD="; memblock word(1, 4)
+
+rem Write/read dword (32-bit)
+write memblock dword 1, 8, 100000
+print "DWORD="; memblock dword(1, 8)
+
+rem Write/read float
+write memblock float 1, 12, 3.14
+print "FLOAT="; memblock float(1, 12)
+
+rem Delete memblock
+delete memblock 1
+print "MB_DELETED="; memblock exist(1)
+
+rem Bitmap <-> Memblock conversion
+create bitmap 5, 16, 8
+make memblock from bitmap 2, 5
+print "BMP_MB_EXIST="; memblock exist(2)
+rem Header: 12 bytes + 16*8*4 pixels = 12 + 512 = 524
+print "BMP_MB_SIZE="; get memblock size(2)
+rem Read width from header (dword at offset 0)
+print "BMP_MB_W="; memblock dword(2, 0)
+rem Read height from header (dword at offset 4)
+print "BMP_MB_H="; memblock dword(2, 4)
+rem Read depth from header (dword at offset 8)
+print "BMP_MB_D="; memblock dword(2, 8)
+
+rem Convert back to bitmap
+make bitmap from memblock 6, 2
+print "BMP6_EXIST="; bitmap exist(6)
+print "BMP6_W="; bitmap width(6)
+print "BMP6_H="; bitmap height(6)
+
+rem Clean up
+delete bitmap 5
+delete bitmap 6
+delete memblock 2
+
+print "TEST_DONE"
+sync
+end

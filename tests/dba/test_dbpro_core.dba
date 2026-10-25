@@ -1,0 +1,25 @@
+print acos(0) = 90
+print asin(1) > 89.99 and asin(1) < 90.01
+print atan(1) = 45
+print atanfull(1, 0) = 90
+print curveangle(180, 0, 10) = 18
+print curvevalue(100, 0, 10) = 10
+print exp(0) = 1
+print hcos(0) = 1
+print hsin(0) = 0
+print htan(0) = 0
+print newxvalue(10, 90, 2) = 12
+print newyvalue(10, 90, 2) = 12
+print newzvalue(10, 0, 2) = 12
+print sqrt(9) = 3
+print tan(0) = 0
+print ceil(1.2) = 2
+print floor(-1.2) = -2
+print bin$(5) = "101"
+print chr$(65) = "A"
+print hex$(255) = "FF"
+print instr("abc", "b") = 2
+print left$("abcd", 2) = "ab"
+print lower$("AbC") = "abc"
+print right$("abcd", 2) = "cd"
+print val("12.5") = 12.5

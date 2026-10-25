@@ -1,0 +1,80 @@
+rem ==================================================================
+rem Joystick Lab - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Lists the game controllers, picks the first one with SET CONTROL
+rem DEVICE and shows every axis, button, slider and hat it reports.
+rem Buttons A to D play force-feedback effects on controllers that have
+rem them; without a controller every reading stays at zero.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+
+perform checklist for control devices
+devices = checklist quantity()
+dim device$(8)
+for d = 1 to devices
+   if d <= 8 then device$(d) = checklist string$(d)
+next d
+if devices > 0 then set control device device$(1)
+force auto center on
+
+do
+   rem Force feedback, one effect per button
+   if joystick fire a() = 1 and fired = 0 then force shoot 100, 200 : fired = 1
+   if joystick fire b() = 1 and fired = 0 then force impact 100, 300 : fired = 1
+   if joystick fire c() = 1 and fired = 0 then force chainsaw 60, 500 : fired = 1
+   if joystick fire d() = 1 and fired = 0 then force water effect 80, 800 : fired = 1
+   if joystick fire a() + joystick fire b() + joystick fire c() + joystick fire d() = 0 and fired = 1
+      force no effect : fired = 0
+   endif
+   rem The stick pushes back against the direction it is held
+   if joystick left() = 1 then force right 40
+   if joystick right() = 1 then force left 40
+   if joystick up() = 1 then force down 40
+   if joystick down() = 1 then force up 40
+   if joystick x() = 0 and joystick y() = 0 and joystick fire x(4) = 1 then force angle 50, 90, 300
+   rem Buttons 5 and 6 release and restore the stick's self-centring spring
+   if joystick fire x(5) = 1 then force auto center off
+   if joystick fire x(6) = 1 then force auto center on
+
+   cls rgb(26, 28, 36)
+   ink rgb(255, 210, 120), 0
+   center text w / 2, 12, "JOYSTICK LAB"
+   ink rgb(220, 220, 230), 0
+   if devices = 0
+      text 30, 40, "No game controller found - plug one in and run the program again."
+   else
+      text 30, 40, str$(devices) + " controller(s); using " + control device name$()
+   endif
+
+   rem The stick: X and Y from -1000 to 1000 move the dot inside the square
+   ink rgb(60, 64, 84), 0
+   box 30, 80, 230, 280
+   ink rgb(255, 200, 60), 0
+   cx = 130 + joystick x() / 10 : cy = 180 + joystick y() / 10
+   for r = 1 to 8 : circle cx, cy, r : next r
+   ink rgb(220, 220, 230), 0
+   text 30, 290, "X " + str$(joystick x()) + "  Y " + str$(joystick y()) + "  Z " + str$(joystick z())
+   text 30, 310, "DEVICE X " + str$(control device x()) + "  Y " + str$(control device y()) + "  Z " + str$(control device z())
+   text 30, 330, "UP " + str$(joystick up()) + " DOWN " + str$(joystick down()) + " LEFT " + str$(joystick left()) + " RIGHT " + str$(joystick right())
+
+   rem Buttons: the four named ones and the first sixteen by number
+   ink rgb(220, 220, 230), 0
+   text 280, 80, "FIRE A " + str$(joystick fire a()) + "  B " + str$(joystick fire b()) + "  C " + str$(joystick fire c()) + "  D " + str$(joystick fire d())
+   for b = 0 to 15
+      if joystick fire x(b) = 1 then ink rgb(255, 120, 60), 0 else ink rgb(60, 64, 84), 0
+      box 280 + (b mod 8) * 40, 110 + (b / 8) * 40, 312 + (b mod 8) * 40, 142 + (b / 8) * 40
+      ink rgb(255, 255, 255), 0
+      text 286 + (b mod 8) * 40, 118 + (b / 8) * 40, str$(b)
+   next b
+
+   rem Sliders, twists and the hat
+   text 280, 210, "SLIDER A " + str$(joystick slider a()) + "  B " + str$(joystick slider b())
+   text 280, 230, "SLIDER C " + str$(joystick slider c()) + "  D " + str$(joystick slider d())
+   text 280, 250, "TWIST X " + str$(joystick twist x()) + "  Y " + str$(joystick twist y()) + "  Z " + str$(joystick twist z())
+   text 280, 270, "HAT ANGLE " + str$(joystick hat angle(0)) + " (-1 when centred)"
+   ink rgb(150, 150, 170), 0
+   text 30, h - 40, "Buttons A-D: shoot, impact, chainsaw and water forces; the stick pushes back"
+   sync
+loop

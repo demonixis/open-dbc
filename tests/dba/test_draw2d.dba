@@ -1,0 +1,55 @@
+rem Test 2D drawing commands and RGB functions
+sync on : sync rate 0
+
+rem RGB packing/unpacking
+c = rgb(128, 64, 32)
+print "RGBR="; rgbr(c)
+print "RGBG="; rgbg(c)
+print "RGBB="; rgbb(c)
+
+rem More RGB tests
+c2 = rgb(255, 0, 0)
+print "RED_R="; rgbr(c2)
+print "RED_G="; rgbg(c2)
+print "RED_B="; rgbb(c2)
+
+c3 = rgb(0, 255, 0)
+print "GREEN_R="; rgbr(c3)
+print "GREEN_G="; rgbg(c3)
+print "GREEN_B="; rgbb(c3)
+
+rem 2D drawing commands (no-crash verification)
+ink rgb(255, 255, 255), 0
+dot 100, 100
+line 0, 0, 200, 200
+box 10, 10, 50, 50
+circle 200, 200, 50
+ellipse 200, 200, 40, 20
+
+rem CLS
+cls
+
+rem Text commands (no-crash)
+set text size 14
+set text font "Arial"
+text 10, 10, "hello"
+center text 320, 240, "centered"
+set text to bold
+set text opaque
+
+rem Text metrics
+tw = text width("Test")
+th = text height("Test")
+print "TW_POSITIVE="; (tw > 0)
+print "TH_POSITIVE="; (th > 0)
+print "TEXT_SIZE="; text size()
+print "TEXT_STYLE="; text style()
+print "TEXT_BG="; text background type()
+print "TEXT_FONT="; text font$()
+set text to normal
+set text to italic
+set text to bolditalic
+
+print "TEST_DONE"
+sync
+end

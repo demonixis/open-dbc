@@ -1,0 +1,74 @@
+rem ==================================================================
+rem Colour Picker - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Paints a palette with RGB colours, then reads the pixel under the
+rem mouse back with POINT and splits it with RGBR, RGBG and RGBB.
+rem Move the mouse over the palette; without a mouse a probe wanders.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+w = screen width() : h = screen height()
+palette_h = h - 120
+
+rem The palette: hue changes across, pale at the top and dark at the bottom
+for y = 0 to palette_h - 1 step 6
+   for x = 0 to w - 1 step 6
+      ink palette_colour(x * 360.0 / w, y * 1.0 / palette_h), 0
+      box x, y, x + 5, y + 5
+   next x
+next y
+
+do
+   mx = mousex() : my = mousey()
+   rem No mouse movement yet: let a probe trace a slow loop over the palette
+   if mx = 0 and my = 0
+      t# = t# + 0.6
+      mx = w / 2 + sin(t#) * (w / 2 - 20)
+      my = palette_h / 2 + cos(t# * 1.7) * (palette_h / 2 - 10)
+   endif
+   if my > palette_h - 1 then my = palette_h - 1
+
+   rem POINT reads the screen, so read before drawing anything new
+   c = point(mx, my)
+   red = rgbr(c) : green = rgbg(c) : blue = rgbb(c)
+
+   rem The panel under the palette is redrawn every frame
+   ink rgb(24, 24, 30), 0
+   box 0, palette_h, w - 1, h - 1
+   ink c, 0
+   box 16, palette_h + 14, 116, h - 16
+   ink rgb(230, 230, 230), 0
+   text 136, palette_h + 10, "POINT(" + str$(mx) + "," + str$(my) + ")"
+   text 136, palette_h + 34, "RGBR " + str$(red)
+   text 136, palette_h + 56, "RGBG " + str$(green)
+   text 136, palette_h + 78, "RGBB " + str$(blue)
+   ink rgb(red, 0, 0), 0 : box 230, palette_h + 38, 230 + red, palette_h + 48
+   ink rgb(0, green, 0), 0 : box 230, palette_h + 60, 230 + green, palette_h + 70
+   ink rgb(0, 0, blue), 0 : box 230, palette_h + 82, 230 + blue, palette_h + 92
+   sync
+loop
+
+rem Hue in degrees, height from 0 (top, pale) to 1 (bottom, dark)
+function palette_colour(hue#, height#)
+   sector = int(hue# / 60.0)
+   f# = hue# / 60.0 - sector
+   r# = 0.0 : g# = 0.0 : b# = 0.0
+   select sector
+      case 0 : r# = 1.0 : g# = f# : endcase
+      case 1 : r# = 1.0 - f# : g# = 1.0 : endcase
+      case 2 : g# = 1.0 : b# = f# : endcase
+      case 3 : g# = 1.0 - f# : b# = 1.0 : endcase
+      case 4 : r# = f# : b# = 1.0 : endcase
+      case default : r# = 1.0 : b# = 1.0 - f# : endcase
+   endselect
+   if height# < 0.5
+      rem Mix towards white
+      mix# = (0.5 - height#) * 2.0
+      r# = r# + (1.0 - r#) * mix# : g# = g# + (1.0 - g#) * mix# : b# = b# + (1.0 - b#) * mix#
+   else
+      rem Mix towards black
+      mix# = 1.0 - (height# - 0.5) * 2.0
+      r# = r# * mix# : g# = g# * mix# : b# = b# * mix#
+   endif
+   colour = rgb(int(r# * 255), int(g# * 255), int(b# * 255))
+endfunction colour

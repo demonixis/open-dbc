@@ -1,0 +1,82 @@
+rem ==================================================================
+rem Scenery - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem The world around the objects: a textured, scrolling backdrop for the
+rem sky, fog that hides the distance, and ambient light that follows a
+rem day and night cycle. F switches the fog, B the backdrop, and D draws
+rem the 2D panel behind or in front of the 3D scene.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+randomize 7
+set camera range 1, 1500
+set normalization off
+
+rem The sky is the backdrop with a cloud texture that scrolls
+load image "sky.jpg", 1
+backdrop on
+texture backdrop 1
+color backdrop rgb(120, 160, 210)
+
+rem Ground and a forest of cone trees on cylinder trunks
+make object plain 1, 1200, 1200
+xrotate object 1, 90
+color object 1, rgb(70, 110, 50)
+for t = 0 to 59
+   x = rnd(800) - 400 : z = rnd(800) - 100
+   make object cone 10 + t, 12 + rnd(8)
+   position object 10 + t, x, 10, z
+   color object 10 + t, rgb(30, 90 + rnd(50), 40)
+   make object cylinder 100 + t, 3
+   scale object 100 + t, 60, 200, 60
+   position object 100 + t, x, 2, z
+   color object 100 + t, rgb(90, 60, 30)
+next t
+
+fogged = 1 : behind = 0
+if fog available() = 1
+   fog on
+   fog color rgb(170, 190, 210)
+endif
+position camera 0, 14, -150
+
+do
+   t# = t# + 0.3
+   rem The camera walks slowly through the forest
+   position camera sin(t#) * 60, 14, -150 + t# * 1.5
+   point camera sin(t# + 10) * 60, 12, -100 + t# * 1.5
+   if t# > 400 then t# = 0
+   scroll backdrop 0.2, 0
+
+   rem Day and night: ambient light and fog distance follow the sun
+   sun# = (sin(t# * 2) + 1) / 2
+   set ambient light 20 + sun# * 70
+   if fog available() = 1 then fog distance 150 + sun# * 450
+
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$
+      if key$ = "f" and fog available() = 1
+         fogged = 1 - fogged
+         if fogged = 1 then fog on else fog off
+      endif
+      if key$ = "b"
+         sky_off = 1 - sky_off
+         if sky_off = 1 then backdrop off else backdrop on
+      endif
+      if key$ = "d"
+         behind = 1 - behind
+         if behind = 1 then draw to back else draw to front
+      endif
+   endif
+   lastkey$ = key$
+
+   rem A 2D panel: in front of the 3D by default, behind it after DRAW TO BACK
+   ink rgb(30, 30, 40), 0
+   box 10, 10, 330, 92
+   ink rgb(255, 255, 255), 0
+   text 20, 16, "SCENERY - F fog, B backdrop, D draw order"
+   text 20, 36, "ambient " + str$(int(20 + sun# * 70)) + "%   fog " + str$(fogged) + " (available " + str$(fog available()) + ")"
+   if behind = 1 then text 20, 56, "2D drawn behind the 3D" else text 20, 56, "2D drawn in front of the 3D"
+   sync
+loop

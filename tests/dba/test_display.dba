@@ -1,0 +1,39 @@
+rem Test display and system commands
+sync on : sync rate 0
+
+rem Screen dimensions
+sw = screen width()
+sh = screen height()
+print "SW_POSITIVE="; (sw > 0)
+print "SH_POSITIVE="; (sh > 0)
+print "CHECK_MODE="; check display mode(sw, sh, 32)
+print "GPU_NAME_PRESENT="; (len(current graphics card$()) > 0)
+print "MEMORY_POSITIVE="; (memory free() > 0)
+set display mode sw, sh, 32
+print "SCREEN_DEPTH="; screen depth()
+print "SCREEN_TYPE="; screen type()
+print "SCREEN_INVALID="; screen invalid()
+
+rem Timer
+t1 = timer()
+print "TIMER_POSITIVE="; (t1 >= 0)
+
+rem Color backdrop
+color backdrop rgb(0, 0, 128)
+backdrop on
+
+rem Fog commands (no-crash)
+fog on
+fog color rgb(128, 128, 128)
+fog distance 1000
+fog off
+
+rem Backdrop off
+backdrop off
+
+rem CLS with color
+cls rgb(0, 0, 0)
+
+print "TEST_DONE"
+sync
+end

@@ -1,0 +1,50 @@
+{
+  "descriptor_count": 64,
+  "descriptor_inventory_sha256": "9f7beded2c0cac6f3b4152c1938cb1deceb4f95bd8caad90f03cbbf302a396c7",
+  "final_source_counts": {
+    "missing": 1,
+    "missing_file": 34,
+    "resolved": 29
+  },
+  "key_counts": {
+    "app title": 64,
+    "build type": 64,
+    "card options window": 35,
+    "cli": 64,
+    "commandlinearguments": 1,
+    "comments1": 6,
+    "compression": 64,
+    "encryption": 64,
+    "executable": 64,
+    "externalisedlls": 1,
+    "final source": 63,
+    "fullscreen resolution": 64,
+    "graphics mode": 64,
+    "icon1": 1,
+    "linemain": 1,
+    "localtempfolder": 1,
+    "main": 64,
+    "media root path": 35,
+    "project name": 64,
+    "removesafetycode": 1,
+    "safearrays": 1,
+    "vercomments": 35,
+    "vercompany": 35,
+    "vercopyright": 35,
+    "verfiledesc": 35,
+    "verfilename": 35,
+    "verfilenumber": 35,
+    "verinternal": 35,
+    "verproduct": 35,
+    "verproductnumber": 35,
+    "version": 64,
+    "vertrademark": 35,
+    "window resolution": 64
+  },
+  "main_resolved": 64,
+  "newline_counts": {
+    "crlf": 32,
+    "lf": 32
+  },
+  "source_commit": "af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9"
+}

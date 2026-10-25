@@ -1,0 +1,213 @@
+rem ============================================================
+rem  MAZE RUNNER — First-person 3D maze navigation
+rem  Find the exit (green cube) in a maze defined by DATA
+rem  Controls: Arrow keys to move, A/D to turn
+rem ============================================================
+
+sync on : sync rate 60
+hide mouse
+set display mode 1024, 768, 32
+
+rem ── Maze dimensions (max 10 values per DATA line) ──
+MazeW = 10
+MazeH = 10
+WallSize# = 50.0
+WallHeight# = 60.0
+
+rem ── Load maze from DATA ──
+dim map(MazeW, MazeH)
+for z = 0 to MazeH - 1
+    for x = 0 to MazeW - 1
+        read v
+        map(x, z) = v
+    next x
+next z
+
+rem 1=wall, 0=path, 2=start, 3=exit
+DATA 1,1,1,1,1,1,1,1,1,1
+DATA 1,2,0,0,1,0,0,0,0,1
+DATA 1,0,1,0,1,0,1,1,0,1
+DATA 1,0,1,0,0,0,0,1,0,1
+DATA 1,0,1,1,1,1,0,1,0,1
+DATA 1,0,0,0,0,1,0,0,0,1
+DATA 1,1,1,0,1,1,1,1,0,1
+DATA 1,0,0,0,1,0,0,0,0,1
+DATA 1,0,1,0,0,0,1,0,3,1
+DATA 1,1,1,1,1,1,1,1,1,1
+
+rem ── Textures ──
+load image "assets/wall1.jpg", 1
+load image "assets/floor.jpg", 2
+load image "assets/roof.jpg", 3
+
+rem ── Build floor ──
+make matrix 1, MazeW * WallSize#, MazeH * WallSize#, MazeW, MazeH
+prepare matrix texture 1, 2, 1, 1
+
+rem ── Build walls and find start/exit ──
+WallCount = 0
+StartX# = 0.0
+StartZ# = 0.0
+ExitX# = 0.0
+ExitZ# = 0.0
+
+for z = 0 to MazeH - 1
+    for x = 0 to MazeW - 1
+        cx# = x * WallSize# + WallSize# / 2.0
+        cz# = z * WallSize# + WallSize# / 2.0
+
+        if map(x, z) = 1
+            WallCount = WallCount + 1
+            wid = WallCount
+            make object cube wid, WallSize#
+            scale object wid, 100, int(WallHeight# / WallSize# * 100.0), 100
+            position object wid, cx#, WallHeight# / 2.0, cz#
+            texture object wid, 1
+        endif
+
+        if map(x, z) = 2
+            StartX# = cx#
+            StartZ# = cz#
+        endif
+
+        if map(x, z) = 3
+            ExitX# = cx#
+            ExitZ# = cz#
+        endif
+    next x
+next z
+
+rem ── Exit marker (green glowing cube) ──
+ExitObj = 900
+make object cube ExitObj, 15.0
+position object ExitObj, ExitX#, 15.0, ExitZ#
+color object ExitObj, rgb(0, 255, 0)
+
+rem ── Ceiling ──
+CeilObj = 901
+make object plain CeilObj, MazeW * WallSize#, MazeH * WallSize#
+position object CeilObj, MazeW * WallSize# / 2.0, WallHeight#, MazeH * WallSize# / 2.0
+xrotate object CeilObj, 90
+texture object CeilObj, 3
+
+rem ── Lighting ──
+set ambient light 50
+fog on
+fog distance 300
+fog color rgb(10, 10, 20)
+color backdrop rgb(10, 10, 20)
+
+rem ── Player state ──
+px# = StartX#
+pz# = StartZ#
+py# = 25.0
+angle# = 0.0
+MoveSpeed# = 2.0
+TurnSpeed# = 2.0
+Won = 0
+ExitSpin# = 0.0
+
+position camera px#, py#, pz#
+
+rem ============================================================
+rem  MAIN LOOP
+rem ============================================================
+do
+    rem ── Exit cube animation ──
+    ExitSpin# = wrapvalue(ExitSpin# + 2.0)
+    rotate object ExitObj, ExitSpin#, ExitSpin# * 0.7, 0
+    by# = 15.0 + sin(ExitSpin# * 2.0) * 5.0
+    position object ExitObj, ExitX#, by#, ExitZ#
+
+    if Won = 1
+        text 300, 350, "YOU FOUND THE EXIT!"
+        text 340, 380, "Press SPACE to restart"
+        if spacekey() = 1
+            px# = StartX#
+            pz# = StartZ#
+            angle# = 0.0
+            Won = 0
+        endif
+        sync
+        goto _skip_move
+    endif
+
+    rem ── Turning ──
+    if leftkey() = 1 or keystate(30) = 1
+        angle# = wrapvalue(angle# - TurnSpeed#)
+    endif
+    if rightkey() = 1 or keystate(32) = 1
+        angle# = wrapvalue(angle# + TurnSpeed#)
+    endif
+
+    rem ── Movement with collision ──
+    mx# = 0.0
+    mz# = 0.0
+    if upkey() = 1 or keystate(17) = 1
+        mx# = sin(angle#) * MoveSpeed#
+        mz# = cos(angle#) * MoveSpeed#
+    endif
+    if downkey() = 1 or keystate(31) = 1
+        mx# = 0.0 - sin(angle#) * MoveSpeed#
+        mz# = 0.0 - cos(angle#) * MoveSpeed#
+    endif
+
+    rem Grid collision check
+    nx# = px# + mx#
+    nz# = pz# + mz#
+    Margin# = 8.0
+
+    rem Check X movement
+    gx = int((nx# + mx# * Margin# / MoveSpeed#) / WallSize#)
+    gz = int(pz# / WallSize#)
+    if gx >= 0 and gx < MazeW and gz >= 0 and gz < MazeH
+        if map(gx, gz) <> 1 then px# = nx#
+    endif
+
+    rem Check Z movement
+    gx = int(px# / WallSize#)
+    gz = int((nz# + mz# * Margin# / MoveSpeed#) / WallSize#)
+    if gx >= 0 and gx < MazeW and gz >= 0 and gz < MazeH
+        if map(gx, gz) <> 1 then pz# = nz#
+    endif
+
+    position camera px#, py#, pz#
+    rotate camera 0, angle#, 0
+
+    rem ── Check for exit ──
+    dx# = px# - ExitX#
+    dz# = pz# - ExitZ#
+    dist# = sqrt(dx# * dx# + dz# * dz#)
+    if dist# < 20.0 then Won = 1
+
+    rem ── HUD ──
+    text 10, 10, "MAZE RUNNER"
+    text 10, 30, "Arrows: Move/Turn  |  Find the green cube!"
+
+    rem ── Mini-map (text-based, top-right) ──
+    pgx = int(px# / WallSize#)
+    pgz = int(pz# / WallSize#)
+    for mz = 0 to MazeH - 1
+        row$ = ""
+        for mx = 0 to MazeW - 1
+            if mx = pgx and mz = pgz
+                row$ = row$ + "@"
+            else
+                if map(mx, mz) = 1
+                    row$ = row$ + "#"
+                else
+                    if map(mx, mz) = 3
+                        row$ = row$ + "X"
+                    else
+                        row$ = row$ + "."
+                    endif
+                endif
+            endif
+        next mx
+        text 850, 10 + mz * 14, row$
+    next mz
+
+    sync
+
+    _skip_move:
+loop

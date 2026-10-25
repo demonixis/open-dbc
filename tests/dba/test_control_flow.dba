@@ -1,0 +1,77 @@
+rem Test control flow constructs
+sync on : sync rate 0
+
+rem FOR/NEXT
+total = 0
+for i = 1 to 5
+    total = total + i
+next i
+print "FOR_SUM="; total
+
+rem FOR with STEP
+total2 = 0
+for j = 0 to 10 step 2
+    total2 = total2 + j
+next j
+print "FOR_STEP="; total2
+
+rem REPEAT/UNTIL
+x = 0
+repeat
+    x = x + 1
+until x >= 3
+print "REPEAT_X="; x
+
+rem WHILE/ENDWHILE
+w = 10
+while w > 7
+    w = w - 1
+endwhile
+print "WHILE_W="; w
+
+rem IF/ELSE (true branch)
+if 1 > 0
+    print "IF_TRUE=1"
+else
+    print "IF_TRUE=0"
+endif
+
+rem IF/ELSE (false branch)
+if 0 > 1
+    print "IF_FALSE=wrong"
+else
+    print "IF_FALSE=correct"
+endif
+
+rem Nested IF
+a = 5
+if a > 3
+    if a < 10
+        print "NESTED_IF=yes"
+    endif
+endif
+
+rem GOSUB/RETURN
+gosub mysub
+print "AFTER_GOSUB=1"
+
+rem Inline IF/THEN
+z = 42
+if z = 42 then print "INLINE_IF=correct"
+
+rem Multiple FOR loops
+sum3 = 0
+for m = 1 to 3
+    for n = 1 to 3
+        sum3 = sum3 + 1
+    next n
+next m
+print "NESTED_FOR="; sum3
+
+print "TEST_DONE"
+sync
+end
+
+mysub:
+    print "IN_GOSUB=1"
+return

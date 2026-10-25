@@ -1,0 +1,78 @@
+rem Test DBPro Vector3 system
+sync on : sync rate 0
+rem Create vectors
+MAKE VECTOR3 1
+MAKE VECTOR3 2
+MAKE VECTOR3 3
+print "MAKE_FUNCTION="; MAKE VECTOR3(4)
+print "MAKE_FUNCTION_BAD="; MAKE VECTOR3(0)
+
+rem Set vector values
+SET VECTOR3 1, 3.0, 4.0, 0.0
+SET VECTOR3 2, 1.0, 0.0, 0.0
+
+rem Query components
+vx = X VECTOR3(1)
+print "VX="; vx
+vy = Y VECTOR3(1)
+print "VY="; vy
+vz = Z VECTOR3(1)
+print "VZ="; vz
+
+rem Length of (3,4,0) = 5
+vl = LENGTH VECTOR3(1)
+print "LEN="; vl
+
+rem Dot product: (3,4,0).(1,0,0) = 3
+dp = DOT PRODUCT VECTOR3(1, 2)
+print "DOT="; dp
+
+rem Add: (3,4,0)+(1,0,0) = (4,4,0)
+ADD VECTOR3 3, 1, 2
+ax = X VECTOR3(3)
+print "ADD_X="; ax
+ay = Y VECTOR3(3)
+print "ADD_Y="; ay
+
+rem Subtract: (3,4,0)-(1,0,0) = (2,4,0)
+SUBTRACT VECTOR3 3, 1, 2
+sx = X VECTOR3(3)
+print "SUB_X="; sx
+
+rem Scale: (3,4,0)*2 = (6,8,0)
+SCALE VECTOR3 3, 1, 2.0
+scx = X VECTOR3(3)
+print "SCALE_X="; scx
+scy = Y VECTOR3(3)
+print "SCALE_Y="; scy
+
+rem DBPro MULTIPLY VECTOR3 scales a vector in place
+SET VECTOR3 3, 2.0, 3.0, 4.0
+MULTIPLY VECTOR3 3, 2.5
+print "MULTIPLY_X="; X VECTOR3(3)
+print "MULTIPLY_Y="; Y VECTOR3(3)
+print "MULTIPLY_Z="; Z VECTOR3(3)
+
+rem Normalize (3,4,0) → (0.6,0.8,0) — multiply by 10 and round for clean output
+NORMALIZE VECTOR3 3, 1
+nx = INT(X VECTOR3(3) * 10)
+print "NORM_X10="; nx
+ny = INT(Y VECTOR3(3) * 10)
+print "NORM_Y10="; ny
+
+rem Cross product: (1,0,0) x (0,1,0) = (0,0,1)
+SET VECTOR3 1, 1.0, 0.0, 0.0
+SET VECTOR3 2, 0.0, 1.0, 0.0
+CROSS PRODUCT VECTOR3 3, 1, 2
+cz = Z VECTOR3(3)
+print "CROSS_Z="; cz
+
+rem Cleanup
+DELETE VECTOR3 1
+DELETE VECTOR3 2
+DELETE VECTOR3 3
+DELETE VECTOR3 4
+
+print "VECTOR3_DONE"
+sync
+end

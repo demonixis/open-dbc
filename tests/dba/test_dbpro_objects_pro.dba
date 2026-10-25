@@ -1,0 +1,44 @@
+rem Test implemented DBPro object commands and functions
+sync on : sync rate 0
+make object cube 1, 10.0
+set object texture 1, 2, 1
+set object texture 1, 3, 5, 7
+set object radius 1, 25.0
+
+cr = object collision radius(1)
+print "COL_RADIUS="; cr
+
+position object 1, 10, 20, 30
+cx = object collision center x(1)
+print "COL_CX="; cx
+cy = object collision center y(1)
+print "COL_CY="; cy
+cz = object collision center z(1)
+print "COL_CZ="; cz
+position object 1, 0, 0, 0
+
+ix = intersect object(1, -100, 0, 0, 100, 0, 0)
+print "INTERSECT_HIT="; (ix > 0)
+
+sx = limb scale x(1, 0)
+print "LSX="; sx
+sy = limb scale y(1, 0)
+print "LSY="; sy
+sz = limb scale z(1, 0)
+print "LSZ="; sz
+
+scale limb 1, 0, 200, 150, 50
+sx2 = limb scale x(1, 0)
+print "LSX2="; sx2
+sy2 = limb scale y(1, 0)
+print "LSY2="; sy2
+sz2 = limb scale z(1, 0)
+print "LSZ2="; sz2
+
+lk = check limb link(1, 0)
+print "LINK="; lk
+
+delete object 1
+print "OBJECTS_PRO_DONE"
+sync
+end

@@ -1,0 +1,78 @@
+rem ==================================================================
+rem Rock Dodge - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A small game: steer the scooter with the arrow keys between the
+rem rocks drifting down a scrolling sea. SPRITE HIT reports each new
+rem crash, SPRITE COLLISION tells whether the scooter is still touching
+rem a rock. Without a key press the scooter steers by itself.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+randomize timer()
+w = screen width() : h = screen height()
+
+rem The sea lives in bitmap 1 and is copied to the screen every frame
+load bitmap "sea.bmp", 1
+set current bitmap 0
+load image "scooter.bmp", 1
+load image "rock.bmp", 2
+
+rem The whole screen is redrawn each frame, so the sprites need no saved
+rem background: SET SPRITE n, 0, 1 turns backsave off and keeps black
+rem as the transparent colour
+rocks = 6
+dim rockx(rocks) : dim rocky#(rocks) : dim rockspeed#(rocks)
+for r = 1 to rocks
+   rockx(r) = rnd(w - 48) : rocky#(r) = 0 - rnd(h) : rockspeed#(r) = 2 + rnd(30) / 10.0
+   sprite 1 + r, rockx(r), rocky#(r), 2
+   set sprite 1 + r, 0, 1
+next r
+px# = w / 2 - 32 : py = h - 90
+sprite 1, px#, py, 1
+set sprite 1, 0, 1
+lives = 3 : score = 0 : flash = 0
+
+do
+   rem Scroll the sea: copy two slices of bitmap 1 so the picture wraps
+   scroll = (scroll + 3) mod h
+   copy bitmap 1, 0, h - scroll, w, h, 0, 0, 0, w, scroll
+   copy bitmap 1, 0, 0, w, h - scroll, 0, 0, scroll, w, h
+
+   rem Steering: the arrow keys, or a simple pilot that avoids the closest rock
+   steer = rightkey() - leftkey()
+   if steer = 0 and leftkey() = 0 and rightkey() = 0
+      closest = 0 : best# = h
+      for r = 1 to rocks
+         gap# = py - rocky#(r)
+         if gap# > 0 and gap# < best# and abs(rockx(r) - px#) < 70 then best# = gap# : closest = r
+      next r
+      if closest > 0
+         if rockx(closest) > px# then steer = -1 else steer = 1
+      endif
+   endif
+   px# = px# + steer * 5
+   if px# < 0 then px# = 0
+   if px# > w - 64 then px# = w - 64
+   sprite 1, px#, py, 1
+
+   for r = 1 to rocks
+      rocky#(r) = rocky#(r) + rockspeed#(r)
+      if rocky#(r) > h
+         rockx(r) = rnd(w - 48) : rocky#(r) = -48 : score = score + 1
+      endif
+      sprite 1 + r, rockx(r), rocky#(r), 2
+   next r
+
+   rem SPRITE HIT only reports a crash once; SPRITE COLLISION stays true
+   rem while the sprites overlap
+   if sprite hit(1, 0) > 0 then lives = lives - 1 : flash = 20
+   touching = sprite collision(1, 0)
+   if lives = 0 then lives = 3 : score = 0
+
+   ink rgb(0, 0, 0), 0
+   box 0, 0, w, 24
+   ink rgb(255, 255, 255), 0
+   if flash > 0 then ink rgb(255, 80, 60), 0 : flash = flash - 1
+   text 10, 4, "LIVES " + str$(lives) + "   ROCKS DODGED " + str$(score) + "   TOUCHING ROCK " + str$(touching)
+   sync
+loop

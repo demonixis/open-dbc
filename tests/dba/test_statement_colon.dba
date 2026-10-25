@@ -1,0 +1,21 @@
+rem A command or statement followed by ':' is a statement; only a plain word at the start of a line is a label
+sync on : sync rate 0
+
+print : print "after empty print"
+count = 0
+do
+   inc count
+   if count = 3:exit:endif
+loop
+print "count="; count
+for i = 1 to 2
+   cls : print "cls then print"; i
+next i
+gosub marker
+print "TEST_DONE"
+sync
+end
+
+marker:
+print "label still works"
+return

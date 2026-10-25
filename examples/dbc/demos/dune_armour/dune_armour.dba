@@ -1,0 +1,361 @@
+rem ==================================================================
+rem Dune Armour - an OpenDBC example for the DarkBASIC Classic profile
+rem Command a tank across the dunes and hold the outpost against a
+rem patrol of six-wheeled raiders. The radar in the corner shows them.
+rem UP/DOWN drive, LEFT/RIGHT steer, Z/X turn the turret, SPACE fires.
+rem Without the keys the tank drives and fights by itself.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+hide mouse
+autocam off
+randomize timer()
+backdrop on
+sky = rgb(200, 190, 160)
+color backdrop sky
+set camera range 1, 2500
+set ambient light 55
+fog_ok = fog available()
+if fog_ok = 1 then fog on : fog color sky : fog distance 900
+
+rem Limbs of the tank and of the raiders (from their .x files)
+track_l = 2 : track_r = 3 : turret = 4 : dish = 7
+wheel_first = 2 : wheel_last = 7 : gun_ring = 9
+
+gosub build_desert
+gosub build_outpost
+gosub build_acacias
+gosub build_tank
+gosub build_raiders
+gosub build_effects
+
+load sound "rumble.wav", 1
+load sound "cannon.wav", 2
+load sound "blast.wav", 3
+load sound "ping.wav", 4
+load sound "raider_gun.wav", 5
+loop sound 1
+
+do
+   gosub drive_tank
+   gosub aim_and_fire
+   gosub move_shell
+   for r = 1 to raiders
+      gosub update_raider
+   next r
+   gosub update_effects
+   gosub follow_camera
+   gosub draw_hud
+   if health <= 0
+      center text screen width() / 2, screen height() / 2, "TANK DESTROYED - PRESS SPACE"
+      if spacekey() = 1 then health = 100 : score = 0 : tx# = 0 : tz# = -60
+   endif
+   sync
+loop
+
+rem ------------------------------------------------------------------
+rem The desert: a 48 x 48 matrix of dunes, textured from a 2 x 2 atlas
+rem (sand, shadowed sand, rock and a track road)
+build_desert:
+   load image "desert.jpg", 1
+   make matrix 1, 2400, 2400, 48, 48
+   prepare matrix texture 1, 1, 2, 2
+   position matrix 1, -1200, 0, -1200
+   for z = 0 to 48
+      for x = 0 to 48
+         h# = 22 * sin(x * 21 + z * 9) + 14 * cos(z * 27) + 9 * sin((x - z) * 37)
+         rem Flatten the outpost and the road running north to it
+         if abs(x - 24) < 4 and abs(z - 24) < 4 then h# = 0
+         if abs(x - 24) < 1 then h# = h# * 0.15
+         set matrix height 1, x, z, h#
+         if x < 48 and z < 48
+            tile = 1
+            if h# < -8 then tile = 2
+            if h# > 26 then tile = 3
+            if abs(x - 24) < 1 then tile = 4
+            set matrix tile 1, x, z, tile
+         endif
+      next x
+   next z
+   update matrix 1
+return
+
+rem The outpost at the centre: a radar tower, a watchtower and two houses
+build_outpost:
+   load object "radar_tower.x", 30
+   position object 30, 30, 0, 20
+   load object "watchtower.x", 31
+   position object 31, -30, 0, -25
+   load object "house.x", 32
+   position object 32, -35, 0, 25
+   load object "dome_house.x", 33
+   position object 33, 35, 0, -28
+   for o = 30 to 33 : scale object o, 200, 200, 200 : next o
+return
+
+rem Acacias are camera-facing plains; black around the tree is transparent
+build_acacias:
+   load image "acacia.bmp", 2
+   trees = 60
+   dim treex(trees) : dim treez(trees)
+   for t = 1 to trees
+      treex(t) = rnd(1800) - 900 : treez(t) = rnd(1800) - 900
+      if abs(treex(t)) < 80 and abs(treez(t)) < 80 then treex(t) = treex(t) + 200
+      make object plain 100 + t, 26, 26
+      texture object 100 + t, 2
+      set object 100 + t, 1, 1, 0, 1, 1, 1, 1
+      position object 100 + t, treex(t), get ground height(1, treex(t) + 1200, treez(t) + 1200) + 12, treez(t)
+   next t
+return
+
+build_tank:
+   load object "hunter.x", 1
+   scale object 1, 200, 200, 200
+   tx# = 0 : tz# = -60 : tyaw# = 0 : tspeed# = 0 : turret_yaw# = 0
+   health = 100 : score = 0 : cooldown = 0
+return
+
+rem Raiders are six-wheelers; each owns a shell object (60 + r)
+build_raiders:
+   raiders = 4
+   dim rx#(raiders) : dim rz#(raiders) : dim ryaw#(raiders) : dim rstate(raiders) : dim rtimer(raiders)
+   dim rshell(raiders) : dim rsx#(raiders) : dim rsz#(raiders) : dim rsdx#(raiders) : dim rsdz#(raiders)
+   for r = 1 to raiders
+      load object "rattler.x", 10 + r
+      scale object 10 + r, 200, 200, 200
+      make object sphere 60 + r, 1.5
+      color object 60 + r, rgb(255, 220, 120)
+      set object 60 + r, 1, 0, 1, 1, 0, 0, 1
+      hide object 60 + r
+      gosub spawn_raider
+   next r
+return
+
+spawn_raider:
+   a# = rnd(359)
+   rx#(r) = sin(a#) * (500 + rnd(300)) : rz#(r) = cos(a#) * (500 + rnd(300))
+   ryaw#(r) = wrapvalue(a# + 180) : rstate(r) = 1 : rtimer(r) = 60 + rnd(120)
+   show object 10 + r
+return
+
+rem Shell, muzzle flash and a pool of six explosions (ghosted fire spheres)
+build_effects:
+   load image "fire.jpg", 3
+   make object sphere 50, 1.6
+   color object 50, rgb(40, 40, 40)
+   hide object 50
+   for e = 1 to 6
+      make object sphere 70 + e, 10
+      texture object 70 + e, 3
+      set object 70 + e, 1, 0, 1, 1, 0, 0, 1
+      ghost object on 70 + e
+      hide object 70 + e
+   next e
+   dim blast(6) : dim blastsize#(6)
+   shell = 0
+return
+
+rem ------------------------------------------------------------------
+drive_tank:
+   steer = rightkey() - leftkey()
+   throttle = upkey() - downkey()
+   if steer = 0 and throttle = 0 and upkey() + downkey() + leftkey() + rightkey() = 0
+      rem Autopilot: head for the nearest raider and stop at gun range
+      gosub nearest_raider
+      if target > 0
+         want# = atanfull(rx#(target) - tx#, rz#(target) - tz#)
+         turn# = wrapvalue(want# - tyaw# + 180) - 180
+         if turn# > 3 then steer = 1
+         if turn# < -3 then steer = -1
+         if best# > 160 then throttle = 1
+      endif
+   endif
+   tspeed# = tspeed# + throttle * 0.04
+   tspeed# = tspeed# * 0.97
+   tyaw# = wrapvalue(tyaw# + steer * 0.9)
+   nx# = newxvalue(tx#, tyaw#, tspeed#) : nz# = newzvalue(tz#, tyaw#, tspeed#)
+   if abs(nx#) < 1100 and abs(nz#) < 1100 then tx# = nx# : tz# = nz#
+   rem Sit on the dunes and tilt with the slope
+   ground# = ground_at(tx#, tz#)
+   front# = ground_at(newxvalue(tx#, tyaw#, 7), newzvalue(tz#, tyaw#, 7))
+   back# = ground_at(newxvalue(tx#, tyaw#, -7), newzvalue(tz#, tyaw#, -7))
+   pitch# = curvevalue(atanfull(back# - front#, 14), pitch#, 8)
+   position object 1, tx#, ground#, tz#
+   rotate object 1, pitch#, tyaw#, 0
+   rem Tracks: scroll each belt's texture with the speed, the inner one slower in a turn
+   scroll limb texture 1, track_l, 0, (tspeed# + steer * 0.3) * 0.02
+   scroll limb texture 1, track_r, 0, (tspeed# - steer * 0.3) * 0.02
+   dish_angle# = wrapvalue(dish_angle# + 4)
+   rotate limb 1, dish, 0, dish_angle#, 0
+   set sound speed 1, 6000 + abs(tspeed#) * 9000
+return
+
+aim_and_fire:
+   aim = keystate(45) - keystate(44)
+   if aim <> 0
+      turret_yaw# = wrapvalue(turret_yaw# + aim * 1.5)
+   else
+      if target > 0
+         rem The gunner keeps the turret on the nearest raider
+         want# = wrapvalue(atanfull(rx#(target) - tx#, rz#(target) - tz#) - tyaw#)
+         turret_yaw# = curveangle(want#, turret_yaw#, 12)
+      endif
+   endif
+   rotate limb 1, turret, 0, turret_yaw#, 0
+   if cooldown > 0 then dec cooldown
+   fire = spacekey()
+   if fire = 0 and target > 0 and best# < 260 and cooldown = 0 then fire = (rnd(30) = 0)
+   if fire = 1 and shell = 0 and cooldown = 0 and health > 0
+      heading# = wrapvalue(tyaw# + turret_yaw#)
+      sx# = newxvalue(tx#, heading#, 12) : sz# = newzvalue(tz#, heading#, 12) : sy# = ground# + 7
+      sdx# = sin(heading#) * 6 : sdz# = cos(heading#) * 6 : sdy# = 1.1
+      shell = 1 : cooldown = 70
+      show object 50
+      play sound 2
+      x# = sx# : y# = sy# : z# = sz# : size# = 5 : gosub start_blast
+   endif
+return
+
+move_shell:
+   if shell = 0 then return
+   sx# = sx# + sdx# : sy# = sy# + sdy# : sz# = sz# + sdz# : sdy# = sdy# - 0.06
+   position object 50, sx#, sy#, sz#
+   for r = 1 to raiders
+      if rstate(r) = 1
+         if abs(sx# - rx#(r)) < 9 and abs(sz# - rz#(r)) < 9 and sy# < ground_at(rx#(r), rz#(r)) + 12
+            rstate(r) = 2 : rtimer(r) = 240 : hide object 10 + r
+            score = score + 100
+            x# = rx#(r) : y# = ground_at(rx#(r), rz#(r)) + 4 : z# = rz#(r) : size# = 30 : gosub start_blast
+            play sound 3
+            shell = 0 : hide object 50
+         endif
+      endif
+   next r
+   if shell = 1
+      if sy# < ground_at(sx#, sz#) or abs(sx#) > 1200 or abs(sz#) > 1200
+         x# = sx# : y# = sy# : z# = sz# : size# = 12 : gosub start_blast
+         shell = 0 : hide object 50
+      endif
+   endif
+return
+
+rem State 1 hunts the tank, 2 is wrecked and waits to return
+update_raider:
+   if rstate(r) = 2
+      dec rtimer(r)
+      if rtimer(r) = 0 then gosub spawn_raider
+   else
+      dx# = tx# - rx#(r) : dz# = tz# - rz#(r)
+      dist# = sqrt(dx# * dx# + dz# * dz#)
+      ryaw#(r) = curveangle(atanfull(dx#, dz#), ryaw#(r), 40)
+      if dist# > 120 then rx#(r) = newxvalue(rx#(r), ryaw#(r), 0.9) : rz#(r) = newzvalue(rz#(r), ryaw#(r), 0.9) : spin# = spin# + 8
+      g# = ground_at(rx#(r), rz#(r))
+      position object 10 + r, rx#(r), g#, rz#(r)
+      yrotate object 10 + r, ryaw#(r)
+      rem Wheels turn about their axles; the gun ring tracks the tank
+      for w = wheel_first to wheel_last
+         rotate limb 10 + r, w, wrapvalue(spin#), 0, 0
+      next w
+      rotate limb 10 + r, gun_ring, 0, wrapvalue(atanfull(dx#, dz#) - ryaw#(r)), 0
+      rem Fire a tracer when in range
+      dec rtimer(r)
+      if rtimer(r) <= 0 and dist# < 320 and rshell(r) = 0
+         rshell(r) = 90 : rtimer(r) = 150 + rnd(120)
+         rsx#(r) = rx#(r) : rsz#(r) = rz#(r)
+         rsdx#(r) = dx# / dist# * 4 : rsdz#(r) = dz# / dist# * 4
+         show object 60 + r
+         play sound 5
+      endif
+   endif
+   if rshell(r) > 0
+      dec rshell(r)
+      rsx#(r) = rsx#(r) + rsdx#(r) : rsz#(r) = rsz#(r) + rsdz#(r)
+      position object 60 + r, rsx#(r), ground_at(rsx#(r), rsz#(r)) + 5, rsz#(r)
+      if abs(rsx#(r) - tx#) < 7 and abs(rsz#(r) - tz#) < 7
+         health = health - 10 : rshell(r) = 0
+         x# = tx# : y# = ground# + 6 : z# = tz# : size# = 8 : gosub start_blast
+         play sound 3
+      endif
+      if rshell(r) = 0 then hide object 60 + r
+   endif
+return
+
+rem Explosions: the oldest slot is reused; each grows and fades out
+start_blast:
+   e = 1 + (blastnext mod 6) : inc blastnext
+   blast(e) = 40 : blastsize#(e) = size#
+   position object 70 + e, x#, y#, z#
+   show object 70 + e
+return
+
+update_effects:
+   for e = 1 to 6
+      if blast(e) > 0
+         dec blast(e)
+         s# = blastsize#(e) * (1.4 - blast(e) / 40.0) * 10
+         scale object 70 + e, s#, s#, s#
+         fade object 70 + e, blast(e) * 2.5
+         if blast(e) = 0 then hide object 70 + e
+      endif
+   next e
+   rem Acacias turn to face the camera
+   for t = 1 to trees
+      yrotate object 100 + t, camera angle y()
+   next t
+   rotate limb 30, 7, 0, wrapvalue(dish_angle# * 0.5), 0
+   if dish_angle# mod 360 < 4 then play sound 4
+return
+
+follow_camera:
+   cx# = curvevalue(newxvalue(tx#, tyaw#, -45), cx#, 12)
+   cz# = curvevalue(newzvalue(tz#, tyaw#, -45), cz#, 12)
+   cy# = curvevalue(ground# + 22, cy#, 12)
+   if cy# < ground_at(cx#, cz#) + 6 then cy# = ground_at(cx#, cz#) + 6
+   position camera cx#, cy#, cz#
+   point camera tx#, ground# + 6, tz#
+return
+
+rem The radar: a sweep and blips drawn in 2D over the 3D scene
+draw_hud:
+   rx = screen width() - 90 : ry = screen height() - 90
+   ink rgb(10, 30, 10), 0
+   for dy = -70 to 70
+      half = sqrt(4900 - dy * dy)
+      line rx - half, ry + dy, rx + half, ry + dy
+   next dy
+   ink rgb(60, 200, 80), 0
+   circle rx, ry, 70 : circle rx, ry, 35
+   line rx, ry, rx + sin(dish_angle#) * 70, ry - cos(dish_angle#) * 70
+   for r = 1 to raiders
+      if rstate(r) = 1
+         bx# = (rx#(r) - tx#) / 8 : bz# = (rz#(r) - tz#) / 8
+         if bx# * bx# + bz# * bz# < 4900
+            ink rgb(255, 80, 60), 0
+            box rx + bx# - 2, ry - bz# - 2, rx + bx# + 2, ry - bz# + 2
+         endif
+      endif
+   next r
+   ink rgb(220, 220, 220), 0
+   box rx - 2, ry - (0 - tz#) / 8 - 2, rx + 2, ry - (0 - tz#) / 8 + 2
+   ink rgb(40, 30, 20), 0
+   text 12, 10, "SCORE " + str$(score) + "   ARMOUR " + str$(health)
+   ink rgb(160, 40, 30), 0
+   box 12, 30, 12 + health * 2, 38
+   gosub nearest_raider
+return
+
+nearest_raider:
+   target = 0 : best# = 100000.0
+   for n = 1 to raiders
+      if rstate(n) = 1
+         d# = sqrt((rx#(n) - tx#) ^ 2 + (rz#(n) - tz#) ^ 2)
+         if d# < best# then best# = d# : target = n
+      endif
+   next n
+return
+
+rem GET GROUND HEIGHT uses the matrix's own coordinates
+function ground_at(x#, z#)
+   h# = get ground height(1, x# + 1200, z# + 1200)
+endfunction h#

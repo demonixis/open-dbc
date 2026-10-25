@@ -1,0 +1,19 @@
+rem DBPro matrix appearance, priority and texture trim
+sync on
+make matrix 1, 10.0, 10.0, 1, 1
+print "DEFAULT_WIRE="; matrix wireframe state(1)
+set matrix wireframe off 1
+print "WIRE_OFF="; matrix wireframe state(1)
+set matrix wireframe on 1
+print "WIRE_ON="; matrix wireframe state(1)
+set matrix 1, 0, 1, 0, 1, 0, 0, 0
+print "AGGREGATE_WIRE="; matrix wireframe state(1)
+set matrix texture 1, 2, 1
+set matrix trim 1, 0.125, 0.25
+set matrix priority 1, 1
+ghost matrix on 1, 4
+ghost matrix off 1
+delete matrix 1
+print "TEST_DONE"
+sync
+end

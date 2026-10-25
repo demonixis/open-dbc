@@ -1,0 +1,139 @@
+rem ==================================================================
+rem Maze Walker - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A tour of the language: the maze is stored in DATA lines and READ
+rem into an array, a FUNCTION answers questions about it, SELECT CASE
+rem picks a direction, FOR, WHILE, REPEAT and DO loops do the work and
+rem GOSUB and GOTO move between parts of the program.
+rem The walker keeps its right hand on the wall until it finds the exit.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+remstart
+   The maze is 21 x 15 characters: # is a wall, . a corridor, S the
+   start and E the exit. Every corridor joins every other one by a
+   single path, so following the right-hand wall always reaches E.
+remend
+
+sync on : sync rate 20
+columns = 21 : rows = 15 : cell = 28
+originx = (screen width() - columns * cell) / 2 : originy = 50
+dim maze(columns - 1, rows - 1)
+rem A function only sees its own variables, but arrays are shared:
+rem the maze size travels to is_open() through this one
+dim size(1) : size(0) = columns : size(1) = rows
+rem Directions 0 to 3: up, right, down, left
+dim dx(3) : dim dy(3)
+dx(1) = 1 : dx(3) = -1 : dy(0) = -1 : dy(2) = 1
+
+gosub read_maze
+
+restart:
+x = startx : y = starty : heading = 1 : steps = 0
+gosub draw_maze
+
+do
+   rem Try right, ahead, left, then back, and take the first open way
+   for attempt = 0 to 3
+      select attempt
+         case 0 : try = (heading + 1) mod 4 : endcase
+         case 1 : try = heading : endcase
+         case 2 : try = (heading + 3) mod 4 : endcase
+         case default : try = (heading + 2) mod 4 : endcase
+      endselect
+      if is_open(x + dx(try), y + dy(try)) = 1 then heading = try : exit
+   next attempt
+
+   rem Repaint the cell the walker leaves with a breadcrumb, then move
+   ink rgb(32, 36, 48), 0
+   box originx + x * cell, originy + y * cell, originx + x * cell + cell - 1, originy + y * cell + cell - 1
+   ink rgb(90, 140, 200), 0
+   box originx + x * cell + 11, originy + y * cell + 11, originx + x * cell + cell - 12, originy + y * cell + cell - 12
+   x = x + dx(heading) : y = y + dy(heading)
+   inc steps
+   ink rgb(255, 210, 60), 0
+   for r = 1 to 9
+      circle originx + x * cell + cell / 2, originy + y * cell + cell / 2, r
+   next r
+
+   ink rgb(0, 0, 0), 0
+   box 0, 0, screen width(), 40
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "STEPS " + str$(steps) + "   right-hand rule"
+
+   if maze(x, y) = 3
+      gosub celebrate
+      rem Read the maze again from the first DATA line and start over
+      restore
+      gosub read_maze
+      goto restart
+   endif
+   sync
+loop
+
+rem Subroutines share every variable with the main program, so they use
+rem their own loop counters (gx, gy) and leave the walker's x and y alone
+read_maze:
+   gy = 0
+   while gy < rows
+      read row$
+      for gx = 0 to columns - 1
+         c$ = mid$(row$, gx + 1)
+         select c$
+            case "#" : maze(gx, gy) = 1 : endcase
+            case "S" : maze(gx, gy) = 2 : startx = gx : starty = gy : endcase
+            case "E" : maze(gx, gy) = 3 : endcase
+            case default : maze(gx, gy) = 0 : endcase
+         endselect
+      next gx
+      inc gy
+   endwhile
+return
+
+draw_maze:
+   cls rgb(20, 22, 30)
+   for gy = 0 to rows - 1
+      for gx = 0 to columns - 1
+         if maze(gx, gy) = 1
+            ink rgb(70, 80, 110), 0
+         else
+            ink rgb(32, 36, 48), 0
+         endif
+         if maze(gx, gy) = 3 then ink rgb(60, 200, 110), 0
+         box originx + gx * cell, originy + gy * cell, originx + gx * cell + cell - 1, originy + gy * cell + cell - 1
+      next gx
+   next gy
+return
+
+celebrate:
+   flashes = 0
+   repeat
+      if flashes mod 2 = 0 then ink rgb(60, 200, 110), 0 else ink rgb(255, 255, 255), 0
+      center text screen width() / 2, originy + rows * cell + 8, "EXIT FOUND IN " + str$(steps) + " STEPS"
+      sync
+      sleep 150
+      inc flashes
+   until flashes = 8
+return
+
+rem 1 when the cell is inside the maze and not a wall
+function is_open(cx, cy)
+   if cx < 0 or cy < 0 or cx >= size(0) or cy >= size(1) then exitfunction 0
+   passable = 1
+   if maze(cx, cy) = 1 then passable = 0
+endfunction passable
+
+data "#####################"
+data "#S#.......#.........#"
+data "#.###.###.#.#.#######"
+data "#...#...#...#.......#"
+data "###.#.#############.#"
+data "#.#.#.#...#.......#.#"
+data "#.#.###.#.#.#####.#.#"
+data "#.#.....#...#.....#.#"
+data "#.###########.#####.#"
+data "#...........#...#...#"
+data "#.###.#####.###.#.#.#"
+data "#...#.....#...#...#.#"
+data "###.#####.#########.#"
+data "#.......#..........E#"
+data "#####################"

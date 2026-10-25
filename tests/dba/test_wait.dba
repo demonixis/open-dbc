@@ -1,0 +1,12 @@
+rem WAIT yields to the host and resumes once its deadline has passed
+sync on : sync rate 0
+
+t = timer()
+print "before"
+wait 20
+elapsed = timer() - t
+if elapsed >= 20 then print "waited"
+print "after"
+print "TEST_DONE"
+sync
+end

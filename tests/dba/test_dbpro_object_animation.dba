@@ -1,0 +1,21 @@
+rem DBPro overloads: object only, object/start, object/start/end.
+sync on : sync rate 0
+make object cube 1, 10
+play object 1
+print "PLAY_1="; object playing(1)
+play object 1, 3
+print "PLAY_2="; object playing(1)
+play object 1, 2, 5
+print "PLAY_3="; object playing(1)
+
+loop object 1
+print "LOOP_1="; object looping(1)
+loop object 1, 3
+print "LOOP_2="; object looping(1)
+loop object 1, 2, 5
+print "LOOP_3="; object looping(1)
+
+delete object 1
+print "TEST_DONE"
+sync
+end

@@ -1,0 +1,40 @@
+rem Test sphere-sphere collision detection
+sync on : sync rate 0
+
+make object sphere 1, 10.0
+position object 1, 0.0, 0.0, 0.0
+
+make object sphere 2, 10.0
+position object 2, 5.0, 0.0, 0.0
+
+rem Overlapping spheres should collide
+set object collision on 1
+set object collision on 2
+hit = object collision(1, 0)
+print "COLLISION_OVERLAP="; hit
+
+rem Move far apart — no collision
+position object 2, 100.0, 0.0, 0.0
+hit = object collision(1, 0)
+print "COLLISION_SEPARATED="; hit
+
+rem Move close again — should collide
+position object 2, 8.0, 0.0, 0.0
+hit = object collision(1, 0)
+print "COLLISION_CLOSE="; hit
+
+rem Specific target collision
+hit = object collision(1, 2)
+print "COLLISION_SPECIFIC="; hit
+
+rem Sliding feedback is reserved for an explicit non-rotating collision box.
+print "SLIDE_X="; get object collision x(1)
+print "SLIDE_Y="; get object collision y(1)
+print "SLIDE_Z="; get object collision z(1)
+
+delete object 1
+delete object 2
+
+print "TEST_DONE"
+sync
+end

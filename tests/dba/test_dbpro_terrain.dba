@@ -1,0 +1,13 @@
+make terrain 3, "../fixtures/classic/bmp/stone.bmp"
+print terrain exist(3)
+print int(get total terrain height(3))
+h# = get terrain height(3, 10.0, 10.0)
+print h# >= 0.0
+position terrain 3, 4.0, 5.0, 6.0
+print int(terrain position x(3))
+print int(terrain position y(3))
+print int(terrain position z(3))
+load image "../fixtures/classic/bmp/stone.bmp", 7
+texture terrain 3, 7
+delete terrain 3
+print terrain exist(3)

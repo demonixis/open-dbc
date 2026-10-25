@@ -1,0 +1,53 @@
+dim values(0) as integer
+values(0) = 10
+
+add to queue values()
+values() = 20
+add to stack values()
+values() = 30
+print array count(values())
+
+array index to top values()
+print values()
+next array index values()
+print values()
+previous array index values()
+print values()
+array index to bottom values()
+print values()
+array index to queue values()
+print values()
+array index to stack values()
+print values()
+print array index valid(values())
+next array index values()
+print array index valid(values())
+
+array insert at bottom values()
+values() = 40
+array insert at bottom values(), 2
+values() = 50
+next array index values()
+values() = 60
+array insert at top values()
+values() = 1
+array insert at top values(), 2
+values() = 2
+array insert at element values(), 1
+values() = 3
+array delete element values()
+array delete element values(), 0
+remove from queue values()
+remove from stack values()
+print array count(values())
+
+empty array values()
+print array count(values())
+
+if 0 then
+    print "wrong"
+elseif 1 then
+    print "elseif"
+else
+    print "wrong"
+endif

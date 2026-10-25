@@ -1,0 +1,79 @@
+rem ==================================================================
+rem Jelly Lab - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Shows the bob transforms: OFFSET BOB moves the handle to the middle,
+rem SCALE BOB and STRETCH BOB resize, FLIP BOB turns a bob upside down,
+rem PASTE BOB stamps a lasting copy and SET BOB with backsave off leaves
+rem a painted trail behind a moving bob.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+w = screen width() : h = screen height()
+
+rem --- Artwork: a jellyfish (image 1) and a starfish (image 2)
+create bitmap 1, 128, 64
+set current bitmap 1
+cls 0
+for dy = -20 to 0
+   half = 26 * sqrt(1.0 - dy * dy / 400.0)
+   ink rgb(230, 120 + dy * 3, 230), 0
+   line 32 - half, 28 + dy, 32 + half, 28 + dy
+next dy
+ink rgb(250, 200, 250), 0
+for t = 0 to 5
+   tx = 12 + t * 8
+   for k = 0 to 28
+      dot tx + sin(k * 25 + t * 60) * 2, 29 + k
+   next k
+next t
+get image 1, 0, 0, 64, 60
+cls 0
+ink rgb(255, 150, 60), 0
+for a = 0 to 359 step 2
+   r# = 10 + abs(sin(a * 2.5)) * 18
+   line 32, 32, 32 + cos(a) * r#, 32 + sin(a) * r#
+next a
+get image 2, 0, 0, 64, 64
+delete bitmap 1
+set current bitmap 0
+
+rem --- Background
+for y = 0 to h - 1
+   ink rgb(0, 30 + y / 8, 70 + y / 6), 0
+   line 0, y, w, y
+next y
+
+rem PASTE BOB draws a copy into the background itself: it stays there
+bob 9, 0, 0, 2
+for x = 20 to w - 64 step 90
+   paste bob 9, x, h - 70
+next x
+delete bob 9
+
+rem 1: centre handle and SCALE BOB, 2: STRETCH BOB, 3: FLIP BOB,
+rem 4: backsave off, so the bob is never erased and paints a trail
+for b = 1 to 3
+   bob b, b * w / 4, 200, 1
+   offset bob b, 32, 30
+next b
+bob 4, 40, 330, 2
+set bob 4, 0, 1
+
+do
+   t = t + 1
+   scale bob 1, 100 + sin(t * 3) * 40
+   stretch bob 2, 100 - sin(t * 6) * 25, 100 + sin(t * 6) * 35
+   if t mod 90 = 0 then flip bob 3
+   bob 1, w / 4, 200 + sin(t * 2) * 30, 1
+   bob 2, w / 2, 200 + sin(t * 2 + 120) * 30, 1
+   bob 3, 3 * w / 4, 200 + sin(t * 2 + 240) * 30, 1
+   bob 4, 40 + (t * 2) mod (w - 100), 330 + sin(t * 4) * 20, 2
+
+   ink rgb(0, 0, 0), 0
+   box 0, 0, w, 64
+   ink rgb(255, 255, 255), 0
+   text 8, 4, "1 OFFSET " + str$(bob offset x(1)) + "," + str$(bob offset y(1)) + "  SCALE " + str$(bob scale x(1)) + "%"
+   text 8, 24, "2 STRETCH " + str$(bob scale x(2)) + "% x " + str$(bob scale y(2)) + "%    3 FLIPPED " + str$(bob flipped(3))
+   text 8, 44, "4 has backsave off and paints a trail; the starfish below were PASTE BOB stamps"
+   sync
+loop

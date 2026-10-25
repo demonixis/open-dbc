@@ -1,0 +1,72 @@
+rem ==================================================================
+rem Mouse Lab - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A painting program: the left button paints, the right button paints
+rem white, both together clear the canvas. MOUSEMOVEX and MOUSEMOVEY
+rem tell how fast the mouse moves, and the brush grows with speed.
+rem The system pointer is hidden and replaced by a drawn crosshair;
+rem M shows it again, C puts it back in the centre with POSITION MOUSE.
+rem Until the mouse moves, an invisible pen paints by itself.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+w = screen width() : h = screen height()
+hide mouse
+cls rgb(250, 248, 240)
+lastx = -1
+hue = 0
+
+do
+   mx = mousex() : my = mousey()
+   dx = mousemovex() : dy = mousemovey()
+   if dx <> 0 or dy <> 0 then moved = 1
+
+   rem The pen: the mouse, or a slow figure of eight until the mouse moves
+   if moved = 0
+      t# = t# + 3.0
+      penx = w / 2 + sin(t#) * 220 : peny = h / 2 + sin(t# * 2) * 120
+      button = 1
+      speed = 3
+   else
+      penx = mx : peny = my
+      button = mouseclick()
+      speed = sqrt(dx * dx + dy * dy)
+   endif
+
+   rem Button values add up: 1 left, 2 right, 3 both
+   if button = 3 then cls rgb(250, 248, 240)
+   if (button = 1 or button = 2) and lastx >= 0
+      hue = (hue + 2) mod 360
+      if button = 1
+         ink rgb(128 + sin(hue) * 127, 128 + sin(hue + 120) * 127, 128 + sin(hue + 240) * 127), 0
+      else
+         ink rgb(250, 248, 240), 0
+      endif
+      size = 2 + speed / 3
+      if size > 20 then size = 20
+      for r = 0 to size
+         line lastx, lasty + r - size / 2, penx, peny + r - size / 2
+      next r
+   endif
+   lastx = penx : lasty = peny
+
+   key$ = lower$(inkey$())
+   if key$ = "m" and lastkey$ <> "m"
+      shown = 1 - shown
+      if shown = 1 then show mouse else hide mouse
+   endif
+   if key$ = "c" and lastkey$ <> "c" then position mouse w / 2, h / 2
+   lastkey$ = key$
+
+   rem The status bar and a crosshair drawn where the mouse is
+   ink rgb(40, 40, 50), 0
+   box 0, 0, w, 22
+   ink rgb(255, 255, 255), 0
+   text 6, 3, "MOUSEX " + str$(mx) + "  MOUSEY " + str$(my) + "  MOVE " + str$(dx) + "," + str$(dy) + "  CLICK " + str$(mouseclick()) + "   M pointer, C centre"
+   if moved = 1
+      ink rgb(0, 0, 0), 0
+      line mx - 8, my, mx - 3, my : line mx + 3, my, mx + 8, my
+      line mx, my - 8, mx, my - 3 : line mx, my + 3, mx, my + 8
+   endif
+   sync
+loop

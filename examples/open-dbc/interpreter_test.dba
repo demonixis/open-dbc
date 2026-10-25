@@ -1,0 +1,14 @@
+rem Interpreter rendering smoke test
+sync on
+
+for c=0 to 255 step 5
+    cls rgb(c,0,255-c)
+    sync
+next c
+
+for c=255 to 0 step -5
+    cls rgb(c,0,255-c)
+    sync
+next c
+
+end

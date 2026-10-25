@@ -1,0 +1,61 @@
+rem ==================================================================
+rem Typewriter - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Types a short story one character at a time, wrapping the words
+rem itself with TEXT WIDTH, while a news ticker scrolls along the bottom
+rem of the screen. SPACE types the whole page at once.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+w = screen width() : h = screen height()
+set text font "Courier New" : set text size 18
+
+story$ = "The keeper climbed the hundred steps of the lighthouse as the storm rolled in. "
+story$ = story$ + "Far out on the water a small scooter was racing for the harbour, its lamp "
+story$ = story$ + "blinking between the waves. The keeper lit the great lantern, and the beam "
+story$ = story$ + "swept across the sea once, twice, three times. When the rain finally came, "
+story$ = story$ + "the scooter was already tied up at the quay, and its rider was waving."
+ticker$ = "  +++  STORM WARNING FOR THE COAST TONIGHT  +++  HARBOUR OPEN UNTIL MIDNIGHT  +++  LIGHTHOUSE BEAM CHECKED AND WORKING  "
+shown = 0 : tick# = 0.0
+
+do
+   rem Reveal one more character every other frame
+   if spacekey() = 1 then shown = len(story$)
+   if shown < len(story$) then shown = shown + 1
+   if shown = len(story$) then pause = pause + 1
+   if pause > 240 then shown = 0 : pause = 0
+
+   cls rgb(250, 247, 238)
+   ink rgb(40, 40, 40), 0
+   center text w / 2, 16, "THE LIGHTHOUSE KEEPER"
+
+   rem Word wrapping: add the next word to the line only if it still fits
+   margin = 40 : y = 60 : line$ = "" : word$ = ""
+   for i = 1 to shown
+      c$ = mid$(story$, i)
+      word$ = word$ + c$
+      if c$ = " " or i = shown
+         if text width(line$ + word$) > w - margin * 2
+            text margin, y, line$
+            y = y + text height(line$) + 6
+            line$ = ""
+         endif
+         line$ = line$ + word$
+         word$ = ""
+      endif
+   next i
+   rem The blinking cursor sits after the last character typed
+   if (timer() / 400) mod 2 = 0 then line$ = line$ + "_"
+   text margin, y, line$
+
+   rem The ticker: draw the text twice so that it loops without a gap
+   ink rgb(30, 30, 50), 0
+   box 0, h - 40, w, h
+   ink rgb(255, 220, 90), 0
+   tick# = tick# + 2.0
+   loop_width = text width(ticker$)
+   if tick# > loop_width then tick# = tick# - loop_width
+   text 0 - tick#, h - 30, ticker$
+   text loop_width - tick#, h - 30, ticker$
+   sync
+loop

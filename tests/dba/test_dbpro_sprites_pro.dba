@@ -1,0 +1,33 @@
+rem Test DBPro sprite commands and functions
+sync on : sync rate 0
+rem Create a minimal image and sprite
+create bitmap 1, 16, 16
+set current bitmap 1
+ink rgb(255, 255, 255), 0
+box 0, 0, 15, 15
+get image 1, 0, 0, 16, 16
+set current bitmap 0
+sprite 1, 50, 50, 1
+
+rem Test SET SPRITE ALPHA and query
+SET SPRITE ALPHA 1, 128
+a = SPRITE ALPHA(1)
+print "ALPHA="; a
+
+rem Test SET SPRITE DIFFUSE and queries
+SET SPRITE DIFFUSE 1, 200, 100, 50
+r = SPRITE RED(1)
+print "RED="; r
+g = SPRITE GREEN(1)
+print "GREEN="; g
+b = SPRITE BLUE(1)
+print "BLUE="; b
+
+rem Cleanup
+delete sprite 1
+delete image 1
+delete bitmap 1
+
+print "SPRITES_PRO_DONE"
+sync
+end

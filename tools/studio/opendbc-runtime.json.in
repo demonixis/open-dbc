@@ -1,0 +1,7 @@
+{
+  "format": 1,
+  "version": "@OPENDBC_VERSION@",
+  "revision": "@OPENDBC_REVISION@",
+  "fingerprint": "@OPENDBC_RUNTIME_FINGERPRINT@",
+  "profiles": ["dbc", "dbpro"]
+}

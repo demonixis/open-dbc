@@ -1,0 +1,14 @@
+rem A plain assignment inside a function is local to it: without GLOBAL the main program's `a` is untouched
+sync on : sync rate 0
+
+a = 1
+ModifyGlobal()
+print "A="; a
+
+print "TEST_DONE"
+sync
+end
+
+function ModifyGlobal()
+    a = 999
+endfunction

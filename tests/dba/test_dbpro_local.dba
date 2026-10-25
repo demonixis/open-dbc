@@ -1,0 +1,20 @@
+rem Test LOCAL variable scoping in DBPro mode
+rem The test profile manifest selects the strict DBPro profile.
+sync on : sync rate 0
+
+x = 100
+print "BEFORE="; x
+
+result = TestLocal(5)
+print "RESULT="; result
+print "AFTER="; x
+
+print "TEST_DONE"
+sync
+end
+
+function TestLocal(n)
+    LOCAL x AS INTEGER
+    x = n * 10
+    LOCAL y = 42
+endfunction x + y

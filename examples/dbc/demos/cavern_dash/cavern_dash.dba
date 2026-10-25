@@ -1,0 +1,144 @@
+rem ==================================================================
+rem Cavern Dash - an OpenDBC example for the DarkBASIC Classic profile
+rem Fly through an endless cave carved by two scrolling matrices.
+rem Arrow keys steer and climb, SPACE boosts, ESCAPE quits.
+rem Code and media are part of OpenDBC (MIT licence).
+rem ==================================================================
+
+sync on : sync rate 60
+hide mouse
+randomize 7
+autocam off
+backdrop on
+color backdrop rgb(10, 8, 16)
+set camera range 1, 900
+
+rem --- Tunnel layout: a floor and a ceiling matrix of 10 x 20 tiles
+tiles = 10 : rows = 20 : tile# = 40.0
+width# = tiles * tile# : depth# = rows * tile#
+ceiling# = 150.0
+
+rem --- Texture atlas: four 1024 pixel tiles in one 2048 x 2048 image
+load bitmap "tiles.jpg", 1
+get image 1, 0, 0, 2048, 2048
+delete bitmap 1
+
+make matrix 1, width#, depth#, tiles, rows
+make matrix 2, width#, depth#, tiles, rows
+prepare matrix texture 1, 1, 2, 2
+prepare matrix texture 2, 1, 2, 2
+rem The ceiling is seen from below, so it must not be back-face culled
+set matrix 2, 0, 0, 0, 1, 1, 1, 1
+gosub new_tunnel
+
+rem --- Fog hides the far edge of the matrices
+if fog available() = 1
+   fog on
+   fog color rgb(10, 8, 16)
+   fog distance 700
+endif
+
+load sound "engine.wav", 1
+load sound "crash.wav", 2
+loop sound 1
+
+ink rgb(255, 220, 160), 0
+best = 0
+
+do
+   rem --- Steering, climbing and boost
+   steer# = 0.0
+   if leftkey() = 1 then steer# = -1.0
+   if rightkey() = 1 then steer# = 1.0
+   if upkey() = 1 then y# = y# + 1.5
+   if downkey() = 1 then y# = y# - 1.5
+   x# = x# + steer# * 2.5
+   boost# = 0.0
+   if spacekey() = 1 then boost# = 2.5
+   speed# = curvevalue(3.0 + distance / 400.0 + boost#, speed#, 20)
+   roll# = curvevalue(steer# * -20.0, roll#, 8)
+
+   rem --- Scroll the cave towards the camera one tile row at a time
+   scroll# = scroll# + speed#
+   if scroll# >= tile#
+      scroll# = scroll# - tile#
+      shift matrix up 1
+      shift matrix up 2
+      row = rows
+      gosub carve_row
+      update matrix 1
+      update matrix 2
+      distance = distance + 1
+   endif
+   position matrix 1, 0, 0, 0 - scroll#
+   position matrix 2, 0, ceiling#, 0 - scroll#
+
+   rem --- Collision against the floor, the ceiling and the side walls
+   local_z# = z# + scroll#
+   ground# = get ground height(1, x#, local_z#)
+   roof# = ceiling# + get ground height(2, x#, local_z#)
+   if y# < ground# + 6 or y# > roof# - 6 then gosub crash
+
+   position camera x#, y#, z#
+   xrotate camera 8
+   zrotate camera roll#
+   set sound speed 1, 8000 + speed# * 1200
+
+   center text screen width() / 2, 12, "DISTANCE " + str$(distance) + "   BEST " + str$(best)
+   sync
+loop
+
+rem ------------------------------------------------------------------
+rem Rebuild the whole tunnel and put the ship back at its entrance
+new_tunnel:
+   pathx = tiles / 2
+   for row = 0 to rows
+      gosub carve_row
+   next row
+   update matrix 1
+   update matrix 2
+   x# = (tiles / 2) * tile# : y# = 50.0 : z# = 60.0
+   scroll# = 0.0 : speed# = 2.0 : roll# = 0.0 : distance = 0
+return
+
+rem ------------------------------------------------------------------
+rem Carve one row of vertices around a path that wanders sideways
+carve_row:
+   rem The first rows stay straight so a new run starts in open space
+   if row > 3 then pathx = pathx + rnd(2) - 1
+   if pathx < 3 then pathx = 3
+   if pathx > tiles - 3 then pathx = tiles - 3
+   tile_row = row
+   if tile_row > rows - 1 then tile_row = rows - 1
+   for col = 0 to tiles
+      gap = abs(col - pathx)
+      if gap > 2
+         floor_height# = 60 + rnd(40)
+         roof_height# = 0 - 60 - rnd(40)
+         tile = 3 + rnd(1)
+      else
+         floor_height# = rnd(12)
+         roof_height# = 0 - rnd(12)
+         tile = 1 + rnd(1)
+      endif
+      set matrix height 1, col, row, floor_height#
+      set matrix height 2, col, row, roof_height#
+      if col < tiles
+         set matrix tile 1, col, tile_row, tile
+         set matrix tile 2, col, tile_row, tile
+      endif
+   next col
+return
+
+rem ------------------------------------------------------------------
+rem Flash the cave red, then restart
+crash:
+   play sound 2
+   for flash = 1 to 20
+      color backdrop rgb(255 - flash * 12, 40, 20)
+      sync
+   next flash
+   color backdrop rgb(10, 8, 16)
+   if distance > best then best = distance
+   gosub new_tunnel
+return

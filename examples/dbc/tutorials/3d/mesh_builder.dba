@@ -1,0 +1,79 @@
+rem ==================================================================
+rem Mesh Builder - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A mesh is the shape of an object without its position or texture.
+rem Meshes come from objects (MAKE MESH FROM OBJECT) or files (LOAD
+rem MESH) and build new objects: MAKE OBJECT starts one, ADD LIMB stacks
+rem more meshes on it, LINK LIMB chains them and CHANGE MESH swaps a
+rem limb's shape. On the right, a sphere mesh is copied into a memblock,
+rem its vertices pushed in and out, and turned back into a mesh.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+color backdrop rgb(30, 40, 50)
+position camera 0, 8, -36
+point camera 0, 4, 0
+
+rem --- Meshes from shapes and from a file
+make object sphere 1, 4 : make mesh from object 1, 1 : delete object 1
+make object cube 2, 3 : make mesh from object 2, 2 : delete object 2
+make object cylinder 3, 2 : make mesh from object 3, 3 : delete object 3
+load mesh "buoy.x", 4
+
+rem --- A totem built from meshes: a base and two limbs linked in a chain
+make object 10, 2, 0
+add limb 10, 1, 1
+offset limb 10, 1, 0, 3.5, 0
+add limb 10, 2, 3
+rem LINK LIMB object, parent limb, child limb: limb 2 follows limb 1
+link limb 10, 1, 2
+offset limb 10, 2, 0, 3.5, 0
+position object 10, -10, 0, 0
+color object 10, rgb(220, 170, 80)
+
+rem --- The blob: sphere mesh 1 copied into memblock 1
+make object sphere 20, 8
+make mesh from object 5, 20
+delete object 20
+make memblock from mesh 1, 5
+vertices = memblock dword(1, 0)
+offset = memblock dword(1, 4)
+rem Keep the original vertex positions to deform from
+dim vx#(vertices) : dim vy#(vertices) : dim vz#(vertices)
+for v = 0 to vertices - 1
+   vx#(v) = memblock float(1, offset + v * 12)
+   vy#(v) = memblock float(1, offset + v * 12 + 4)
+   vz#(v) = memblock float(1, offset + v * 12 + 8)
+next v
+make mesh from memblock 6, 1
+make object 21, 6, 0
+position object 21, 10, 4, 0
+color object 21, rgb(120, 200, 255)
+
+do
+   t = t + 1
+   rotate limb 10, 1, 0, t, 0
+   rotate limb 10, 2, 0, t * 2, 0
+   rem Every three seconds the top limb changes shape: cylinder or buoy
+   if t mod 180 = 0 then change mesh 10, 2, 4
+   if t mod 180 = 90 then change mesh 10, 2, 3
+
+   rem Push every vertex along its own direction, then rebuild the mesh
+   for v = 0 to vertices - 1
+      bump# = 1.0 + 0.18 * sin(t * 4 + vy#(v) * 60) * cos(vx#(v) * 50 + t * 3)
+      write memblock float 1, offset + v * 12, vx#(v) * bump#
+      write memblock float 1, offset + v * 12 + 4, vy#(v) * bump#
+      write memblock float 1, offset + v * 12 + 8, vz#(v) * bump#
+   next v
+   change mesh from memblock 6, 1
+   rem The object keeps its own copy: CHANGE MESH gives it the new shape
+   change mesh 21, 0, 6
+   yrotate object 21, t
+
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "MESH BUILDER   meshes 1-6 exist: " + str$(mesh exist(1)) + str$(mesh exist(2)) + str$(mesh exist(3)) + str$(mesh exist(4)) + str$(mesh exist(5)) + str$(mesh exist(6))
+   text 10, 30, "blob: " + str$(vertices) + " vertices in a " + str$(get memblock size(1)) + "-byte memblock"
+   if t = 300 then delete mesh 2
+   sync
+loop

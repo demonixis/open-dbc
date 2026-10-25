@@ -1,0 +1,80 @@
+# --- Build output (out-of-source builds only) ---
+/build/
+/build-*/
+/build_*/
+/out/
+/cmake-build-*/
+CMakeUserPresets.json
+compile_commands.json
+__cmake_systeminformation
+
+# --- IDEs and editors ---
+.vscode/
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.vs/
+*.user
+.idea/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+.cache/
+.claude/
+
+# --- Compilation artifacts ---
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.gch
+*.pch
+
+# --- Android / Gradle ---
+.gradle/
+local.properties
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+# --- Runtime output ---
+imgui.ini
+*.log
+docs/api/
+
+# --- Python ---
+__pycache__/
+
+# --- Operating systems ---
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*~
+
+# --- Media ---
+# MP3 is only tracked where a source has no lossless alternative.
+*.mp3
+*.MP3
+# The DBPro tutorials ship their soundtracks as MP3 (this SDL_mixer build has no Vorbis).
+!examples/dbpro/**/*.mp3
+
+# --- Shaders ---
+# Only the canonical SPIR-V modules are tracked; everything else is build output.
+*.spv
+!shaders/dbclassic_tri.frag.spv
+!shaders/dbclassic_tri.vert.spv
+!shaders/vr_transfer.vert.spv
+!shaders/vr_transfer.frag.spv
+examples/dbc/demos/.opendbc-project.json

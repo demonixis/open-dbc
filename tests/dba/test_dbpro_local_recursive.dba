@@ -1,0 +1,22 @@
+rem Test LOCAL with recursive function calls
+sync on : sync rate 0
+
+result = Factorial(5)
+print "FACT5="; result
+
+result = SumLocal(3)
+print "SUM3="; result
+
+print "TEST_DONE"
+sync
+end
+
+function Factorial(n)
+    LOCAL r = 1
+    if n > 1 then r = n * Factorial(n - 1)
+endfunction r
+
+function SumLocal(n)
+    LOCAL Total = 0
+    if n > 0 then Total = n + SumLocal(n - 1)
+endfunction Total

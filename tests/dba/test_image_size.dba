@@ -1,0 +1,12 @@
+rem IMAGE WIDTH/HEIGHT describe the image, not a bitmap that happens to share its number
+sync on : sync rate 0
+
+create bitmap 2, 64, 32
+get image 7, 0, 0, 64, 32
+set current bitmap 0
+print "w="; image width(7)
+print "h="; image height(7)
+print "missing="; image width(9)
+print "TEST_DONE"
+sync
+end

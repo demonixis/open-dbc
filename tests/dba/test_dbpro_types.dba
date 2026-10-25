@@ -1,0 +1,37 @@
+rem Test TYPE/ENDTYPE user-defined types in DBPro mode
+sync on : sync rate 0
+
+TYPE Player
+    x AS FLOAT
+    y AS FLOAT
+    health
+ENDTYPE
+
+DIM p AS Player
+p.x = 10
+p.y = 20
+p.health = 100
+
+print "X="; p.x
+print "Y="; p.y
+print "HEALTH="; p.health
+
+p.x = p.x + 5
+print "X2="; p.x
+
+TYPE Vec3
+    vx
+    vy
+    vz
+ENDTYPE
+
+DIM v AS Vec3
+v.vx = 1
+v.vy = 2
+v.vz = 3
+total = v.vx + v.vy + v.vz
+print "TOTAL="; total
+
+print "TYPES_DONE"
+sync
+end

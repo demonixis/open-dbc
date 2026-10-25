@@ -1,0 +1,80 @@
+rem ==================================================================
+rem Animation - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Left: an imp whose idle and walk clips sit one after the other in a
+rem single object (APPEND OBJECT), played, looped, slowed down and
+rem blended with interpolation. Right: a rider animated by hand: each
+rem pose is stored with SET OBJECT KEYFRAME, the keyframes are saved to
+rem a file and loaded onto a second rider with APPEND OBJECT ANIMATION.
+rem 1 idle, 2 walk, 3 stops, 4 shows frame 10, 5 walks once, S slows down, I toggles
+rem interpolation, C clears the rider's middle keyframe.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+color backdrop rgb(50, 60, 80)
+set ambient light 60
+position camera 0, 6, -22
+point camera 0, 3, 0
+
+rem --- The imp: idle frames first, then the walk appended from frame 30
+load object "imp_idle.x", 1
+idle_end = total object frames(1)
+append object "imp_walk.x", 1, 30
+walk_end = total object frames(1)
+scale object 1, 200, 200, 200
+position object 1, -6, 0, 0
+loop object 1, 30, walk_end
+set object speed 1, 100
+
+rem --- The rider: three poses of the right arm become keyframes 0, 20 and 40
+load object "rider.x", 2
+scale object 2, 300, 300, 300
+position object 2, 5, 0, 0
+for pose = 0 to 2
+   rotate limb 2, 6, -150 + pose * 50, 0, 30
+   set object keyframe 2, pose * 20
+next pose
+loop object 2, 0, 40
+
+rem The keyframes go to a file and back onto a second rider
+save object animation "wave.anim", 2
+load object "rider.x", 3
+append object animation "rider.x", "wave.anim", 3, 0
+delete file "wave.anim"
+scale object 3, 300, 300, 300
+position object 3, 11, 0, 0
+loop object 3, 0, 40
+speed = 100
+
+do
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$
+      select key$
+         case "1" : loop object 1, 0, idle_end : endcase
+         case "2" : loop object 1, 30, walk_end : endcase
+         case "3" : stop object 1 : endcase
+         case "5" : play object 1, 30, walk_end : endcase
+         case "4" : stop object 1 : set object frame 1, 10 : endcase
+         case "s"
+            if speed = 100 then speed = 25 else speed = 100
+            set object speed 1, speed
+         endcase
+         case "i"
+            rem Interpolation blends smoothly into a new clip instead of jumping
+            if object interpolation(1) = 0 then set object interpolation 1, 100 else set object interpolation 1, 0
+         endcase
+         case "c" : clear object keyframe 2, 20 : endcase
+         case "x" : clear all object keyframes 2 : endcase
+      endselect
+   endif
+   lastkey$ = key$
+   yrotate object 1, 180
+
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "ANIMATION - 1 idle  2 walk  3 stop  4 frame 10  S speed  I interpolation  C/X keyframes"
+   text 10, 34, "IMP: FRAME " + str$(int(object frame(1))) + " of " + str$(total object frames(1)) + "  PLAYING " + str$(object playing(1)) + "  LOOPING " + str$(object looping(1))
+   text 10, 54, "     SPEED " + str$(object speed(1)) + "  INTERPOLATION " + str$(object interpolation(1))
+   text 10, 78, "RIDERS: frame " + str$(int(object frame(2))) + " and " + str$(int(object frame(3))) + " (the second loaded the saved keyframes)"
+   sync
+loop

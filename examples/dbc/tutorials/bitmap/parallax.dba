@@ -1,0 +1,82 @@
+rem ==================================================================
+rem Parallax - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Draws two wide landscapes once into off-screen bitmaps, then scrolls
+rem them at different speeds with COPY BITMAP. The far mountains move
+rem slowly, the near hills quickly, which gives a sense of depth.
+rem SPACE squeezes the whole panorama onto the screen, ESCAPE quits.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+w = screen width() : h = screen height()
+band = h / 2
+
+rem Bitmap 1: the sky and far mountains, two screens wide. The ridge
+rem repeats every screen width, so any window of it can be copied.
+create bitmap 1, w * 2, band
+set current bitmap 1
+for y = 0 to band - 1
+   ink rgb(70 + y / 3, 120 + y / 3, 200 - y / 6), 0
+   line 0, y, w * 2, y
+next y
+for x = 0 to w * 2 - 1
+   a# = x * 360.0 / w
+   ridge = band - 60 - sin(a# * 2) * 30 - sin(a# * 5 + 40) * 14
+   ink rgb(90, 100, 130), 0
+   line x, ridge, x, band
+   ink rgb(235, 240, 250), 0
+   if ridge < band - 80 then line x, ridge, x, ridge + 6
+next x
+
+rem Bitmap 2: the near hills with trees, also seamless across a screen width
+create bitmap 2, w * 2, band
+set current bitmap 2
+for y = 0 to band - 1
+   ink rgb(90, 100, 130), 0
+   line 0, y, w * 2, y
+next y
+for x = 0 to w * 2 - 1
+   a# = x * 360.0 / w
+   hill = 50 + sin(a# * 3) * 25 + sin(a# * 7 + 90) * 8
+   ink rgb(40, 110 + hill / 2, 50), 0
+   line x, hill, x, band
+next x
+for t = 0 to 23
+   tx = t * w / 12 + 10
+   a# = tx * 360.0 / w
+   ty = 50 + sin(a# * 3) * 25 + sin(a# * 7 + 90) * 8
+   ink rgb(30, 70, 35), 0
+   for k = 0 to 24
+      line tx - k / 3, ty - 30 + k, tx + k / 3, ty - 30 + k
+   next k
+   ink rgb(80, 50, 30), 0
+   box tx - 2, ty - 6, tx + 2, ty + 4
+next t
+
+rem Back to the screen. CURRENT BITMAP() reports which bitmap draws now.
+set current bitmap 0
+screen_bitmap = current bitmap()
+
+do
+   far = (far + 1) mod w
+   near = (near + 4) mod w
+   if spacekey() = 1
+      rem The ten-argument form stretches: the whole panorama fits the screen
+      copy bitmap 1, 0, 0, w * 2, band, 0, 0, 0, w, band
+      copy bitmap 2, 0, 0, w * 2, band, 0, 0, band, w, h
+   else
+      copy bitmap 1, far, 0, far + w, band, 0, 0, 0, w, band
+      copy bitmap 2, near, 0, near + w, band, 0, 0, band, w, h
+   endif
+
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "BITMAP 1: " + str$(bitmap width(1)) + " x " + str$(bitmap height(1)) + " x " + str$(bitmap depth(1)) + " bits"
+   text 10, 28, "BITMAP 2 EXISTS: " + str$(bitmap exist(2)) + "   CURRENT BITMAP: " + str$(screen_bitmap)
+   text 10, 46, "SPACE shows the whole panorama, ESCAPE quits"
+   if escapekey() = 1 then exit
+   sync
+loop
+
+delete bitmap 2
+delete bitmap 1
+end

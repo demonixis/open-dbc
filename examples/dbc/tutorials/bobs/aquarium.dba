@@ -1,0 +1,108 @@
+rem ==================================================================
+rem Aquarium - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Bobs are blitter objects: images drawn onto the screen that put the
+rem background back when they move. This program draws its fish with
+rem 2D commands in an off-screen bitmap, grabs them with GET IMAGE,
+rem round-trips one through SAVE IMAGE and LOAD IMAGE, then lets them
+rem swim as bobs. MIRROR BOB turns a fish when it changes direction.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+randomize timer()
+w = screen width() : h = screen height()
+
+rem --- Draw the artwork into bitmap 1. Black is transparent for bobs.
+create bitmap 1, 256, 64
+set current bitmap 1
+cls 0
+for f = 0 to 2
+   if f = 0 then body = rgb(255, 140, 30) : fin = rgb(255, 230, 200)
+   if f = 1 then body = rgb(60, 170, 255) : fin = rgb(255, 230, 60)
+   if f = 2 then body = rgb(220, 60, 140) : fin = rgb(255, 255, 255)
+   cx = f * 64 + 36 : cy = 20
+   rem Tail: a fan of lines behind the body
+   ink fin, 0
+   for k = -10 to 10
+      line cx - 18, cy, cx - 30, cy + k
+   next k
+   rem Body: an ellipse filled line by line, then a darker rim
+   ink body, 0
+   for dy = -12 to 12
+      half = 22 * sqrt(1.0 - dy * dy / 144.0)
+      line cx - half, cy + dy, cx + half, cy + dy
+   next dy
+   ink rgb(rgbr(body) / 2, rgbg(body) / 2, rgbb(body) / 2), 0
+   ellipse cx, cy, 22, 12
+   ink rgb(255, 255, 255), 0 : box cx + 10, cy - 5, cx + 14, cy - 1
+   ink rgb(1, 1, 1), 0 : dot cx + 12, cy - 3
+   get image 1 + f, f * 64, 0, f * 64 + 64, 40
+next f
+rem Image 4: a bubble
+cls 0
+ink rgb(200, 230, 255), 0
+circle 8, 8, 7
+ink rgb(255, 255, 255), 0
+dot 5, 5 : dot 6, 5 : dot 5, 6
+get image 4, 0, 0, 17, 17
+
+rem --- Save the third fish to a file and read it back as image 5
+save image "fish.bmp", 3
+load image "fish.bmp", 5
+delete file "fish.bmp"
+delete bitmap 1
+set current bitmap 0
+
+rem --- The tank is drawn once on the screen; bobs restore it as they move
+for y = 0 to h - 1
+   ink rgb(10, 60 + y / 6, 110 + y / 5), 0
+   line 0, y, w, y
+next y
+ink rgb(194, 170, 110), 0
+box 0, h - 50, w, h
+for weed = 1 to 14
+   wx = rnd(w)
+   ink rgb(30, 120 + rnd(60), 50), 0
+   for k = 0 to 90 + rnd(80)
+      dot wx + sin(k * 6) * 6, h - 50 - k
+      dot wx + 1 + sin(k * 6) * 6, h - 50 - k
+   next k
+next weed
+
+fish = 8
+dim fishx#(fish) : dim fishy(fish) : dim fishspeed#(fish)
+for f = 1 to fish
+   fishx#(f) = rnd(w - 64) : fishy(f) = 40 + rnd(h - 160)
+   fishspeed#(f) = (1 + rnd(20) / 10.0) * (rnd(1) * 2 - 1)
+   image = 1 + rnd(2) : if f = fish then image = 5
+   bob f, fishx#(f), fishy(f), image
+   rem The art faces right: mirror the fish that start swimming left
+   if fishspeed#(f) < 0 then mirror bob f
+next f
+for b = 1 to 6
+   bob 20 + b, rnd(w), h - 60 - rnd(h), 4
+   rem SET BOB bob, backsave, transparency: both on is the default
+   set bob 20 + b, 1, 1
+next b
+
+do
+   for f = 1 to fish
+      fishx#(f) = fishx#(f) + fishspeed#(f)
+      if fishx#(f) < 0 or fishx#(f) > w - 64
+         fishspeed#(f) = 0 - fishspeed#(f)
+         mirror bob f
+      endif
+      bob f, fishx#(f), fishy(f) + sin(fishx#(f) * 2) * 4, bob image(f)
+   next f
+   for b = 21 to 26
+      y = bob y(b) - 2
+      if y < -20 then y = h - 60
+      bob b, bob x(b) + sin(y * 3) * 1.2, y, 4
+   next b
+
+   ink rgb(0, 0, 0), 0
+   box 0, 0, w, 22
+   ink rgb(255, 255, 255), 0
+   text 8, 3, "BOB 1: X " + str$(bob x(1)) + " Y " + str$(bob y(1)) + "  IMAGE " + str$(bob image(1)) + "  " + str$(bob width(1)) + " x " + str$(bob height(1)) + "  MIRRORED " + str$(bob mirrored(1)) + "  EXIST " + str$(bob exist(1))
+   sync
+loop

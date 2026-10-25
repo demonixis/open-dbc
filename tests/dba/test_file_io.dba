@@ -1,0 +1,87 @@
+rem Test file I/O operations
+sync on : sync rate 0
+
+rem Write a test file
+open to write 1, "_test_output.txt"
+write string 1, "hello"
+write string 1, "world"
+close file 1
+
+open to write 2, "_test_binary.dat"
+write byte 2, 255
+write word 2, 513
+write long 2, 123456
+write float 2, 3.5
+write file 2, -77
+write string 2, "tail"
+close file 2
+
+open to read 3, "_test_binary.dat"
+fb = read byte(3)
+fw = read word(3)
+fl = read long(3)
+ff# = read float(3)
+read file 3, ffile
+close file 3
+
+rem Check file exists
+print "FILE_EXISTS="; file exist("_test_output.txt")
+
+rem Read it back
+open to read 1, "_test_output.txt"
+read string 1, line1$
+read string 1, line2$
+close file 1
+
+open to read 2, "_test_binary.dat"
+read byte 2, b
+read word 2, w
+read long 2, l
+read float 2, f#
+read file 2, filevalue
+read string 2, s$
+close file 2
+
+print "LINE1="; line1$
+print "LINE2="; line2$
+print "BYTE="; b
+print "WORD="; w
+print "LONG="; l
+print "FLOAT="; f#
+print "FILE="; filevalue
+print "STRING="; s$
+print "FUNCTION_BYTE="; fb
+print "FUNCTION_WORD="; fw
+print "FUNCTION_LONG="; fl
+print "FUNCTION_FLOAT="; ff#
+print "FUNCTION_FILE="; ffile
+
+open to write 4, "_test_block_source.bin"
+write byte 4, 7
+write file 4, -123
+close file 4
+open to write 4, "_test_pack.bin"
+write fileblock 4, "_test_block_source.bin"
+close file 4
+delete file "_test_block_source.bin"
+open to read 4, "_test_pack.bin"
+read fileblock 4, "_test_block_copy.bin"
+close file 4
+open to read 4, "_test_block_copy.bin"
+blockbyte = read byte(4)
+read file 4, blocklong
+close file 4
+print "BLOCK_BYTE="; blockbyte
+print "BLOCK_LONG="; blocklong
+
+rem Clean up
+delete file "_test_output.txt"
+delete file "_test_binary.dat"
+delete file "_test_pack.bin"
+delete file "_test_block_copy.bin"
+print "FILE_DELETED="; file exist("_test_output.txt")
+print "BINARY_DELETED="; file exist("_test_binary.dat")
+
+print "TEST_DONE"
+sync
+end

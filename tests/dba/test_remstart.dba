@@ -1,0 +1,18 @@
+rem REMSTART ... REMEND hides whole blocks, whatever follows the keywords on their lines
+sync on : sync rate 0
+
+print "before"
+remstart **** this text and the next lines are comments ****
+print "hidden 1"
+remend
+REMSTART
+print "hidden 2"
+   remend and this trailing text is ignored too
+print "after"
+a = 1 : remstart
+print "hidden 3"
+remend
+print "a="; a
+print "TEST_DONE"
+sync
+end

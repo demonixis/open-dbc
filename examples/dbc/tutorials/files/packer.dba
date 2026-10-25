@@ -1,0 +1,117 @@
+rem ==================================================================
+rem Packer - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Packs files and folders into one archive and unpacks them again:
+rem WRITE FILEBLOCK and READ FILEBLOCK store a whole file, WRITE DIRBLOCK
+rem and READ DIRBLOCK a whole folder, WRITE MEMBLOCK and READ MEMBLOCK a
+rem memblock, and MAKE MEMBLOCK FROM FILE loads raw bytes for a hex view.
+rem K copies a line to the clipboard and V reads the clipboard back.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+dim log$(20) : lines = 0
+if path exist("packer_tmp") = 1 then gosub tidy_up
+make directory "packer_tmp"
+make directory "packer_tmp/photos"
+
+rem Some files to pack: a note and two tiny "photos"
+open to write 1, "packer_tmp/note.txt" : write string 1, "Pack me with the photos" : close file 1
+for p = 1 to 2
+   open to write 1, "packer_tmp/photos/photo" + str$(p) + ".raw"
+   for b = 1 to 32 : write byte 1, p * 40 + b : next b
+   close file 1
+next p
+make memblock 1, 16
+for b = 0 to 15 : write memblock byte 1, b, b * 16 : next b
+
+rem --- Pack: one archive file holds a file, a folder and a memblock
+open to write 2, "packer_tmp/archive.pak"
+write fileblock 2, "packer_tmp/note.txt"
+write dirblock 2, "packer_tmp/photos"
+write memblock 2, 1
+close file 2
+note$ = "archive.pak: " + str$(file size("packer_tmp/archive.pak")) + " bytes" : gosub add_line
+
+rem --- Unpack into another folder
+make directory "packer_tmp/out"
+open to read 3, "packer_tmp/archive.pak"
+read fileblock 3, "packer_tmp/out/note.txt"
+read dirblock 3, "packer_tmp/out/photos"
+read memblock 3, 2
+close file 3
+note$ = "READ FILEBLOCK: out/note.txt " + str$(file size("packer_tmp/out/note.txt")) + " bytes" : gosub add_line
+note$ = "READ DIRBLOCK: out/photos/photo2.raw exists " + str$(file exist("packer_tmp/out/photos/photo2.raw")) : gosub add_line
+note$ = "READ MEMBLOCK: memblock 2 has " + str$(get memblock size(2)) + " bytes, byte 15 = " + str$(memblock byte(2, 15)) : gosub add_line
+
+rem --- Raw bytes of the archive for the hex view
+open to read 4, "packer_tmp/archive.pak"
+make memblock from file 3, 4
+close file 4
+gosub tidy_up
+note$ = "Scratch folder removed: " + str$(path exist("packer_tmp")) : gosub add_line
+
+do
+   key$ = lower$(inkey$())
+   if key$ = "k" and lastkey$ <> "k" then write to clipboard "Packed by OpenDBC" : note$ = "WRITE TO CLIPBOARD done" : gosub add_line
+   if key$ = "v" and lastkey$ <> "v" then note$ = "GET CLIPBOARD$ = """ + left$(get clipboard$(), 40) + """" : gosub add_line
+   lastkey$ = key$
+
+   cls rgb(24, 30, 26)
+   ink rgb(150, 255, 170), 0
+   text 16, 10, "PACKER - the first bytes of archive.pak"
+   rem Hex dump: sixteen bytes per row, then the printable characters
+   for row = 0 to 7
+      line$ = right$("000" + hex$(row * 16), 4) + "  "
+      chars$ = ""
+      for col = 0 to 15
+         offset = row * 16 + col
+         if offset < get memblock size(3)
+            value = memblock byte(3, offset)
+            line$ = line$ + right$("0" + hex$(value), 2) + " "
+            if value >= 32 and value < 127 then chars$ = chars$ + chr$(value) else chars$ = chars$ + "."
+         endif
+      next col
+      ink rgb(200, 230, 200), 0
+      text 16, 40 + row * 20, line$
+      text 470, 40 + row * 20, chars$
+   next row
+   ink rgb(230, 230, 230), 0
+   for i = 1 to lines
+      text 16, 220 + i * 20, log$(i)
+   next i
+   ink rgb(150, 170, 150), 0
+   text 16, screen height() - 24, "K writes to the clipboard, V reads it back"
+   sync
+loop
+
+add_line:
+   rem Keep the last ten lines: drop the oldest when the log is full
+   if lines = 10
+      for i = 1 to 9 : log$(i) = log$(i + 1) : next i
+      lines = 9
+   endif
+   inc lines
+   log$(lines) = note$
+return
+
+tidy_up:
+   for p = 1 to 2
+      for folder = 0 to 1
+         if folder = 0 then f$ = "packer_tmp/photos/photo" + str$(p) + ".raw" else f$ = "packer_tmp/out/photos/photo" + str$(p) + ".raw"
+         if file exist(f$) = 1 then delete file f$
+      next folder
+   next p
+   for i = 1 to 4
+      if i = 1 then f$ = "packer_tmp/note.txt"
+      if i = 2 then f$ = "packer_tmp/out/note.txt"
+      if i = 3 then f$ = "packer_tmp/archive.pak"
+      if i = 4 then f$ = ""
+      if f$ <> ""
+         if file exist(f$) = 1 then delete file f$
+      endif
+   next i
+   if path exist("packer_tmp/out/photos") = 1 then delete directory "packer_tmp/out/photos"
+   if path exist("packer_tmp/out") = 1 then delete directory "packer_tmp/out"
+   if path exist("packer_tmp/photos") = 1 then delete directory "packer_tmp/photos"
+   if path exist("packer_tmp") = 1 then delete directory "packer_tmp"
+return

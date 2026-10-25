@@ -1,0 +1,43 @@
+rem Test audio state independently of an output device.
+sync on : sync rate 0
+
+rem Sound should not exist before loading
+print "SOUND_1_BEFORE="; sound exist(1)
+print "MUSIC_1_BEFORE="; music exist(1)
+
+load sound "../fixtures/classic/sound/chime.wav", 1, 0
+set sound volume 1, 37
+set sound pan 1, -25
+set sound speed 1, 11025
+load 3dsound "../fixtures/classic/sound/thump.wav", 2
+position sound 2, 10, 20, 30
+load music "../../examples/dbpro/tutorials/music/music/hero.mp3", 1
+position listener 4, 5, 6
+rotate listener 7, 8, 9
+
+print "SOUND_1_AFTER="; sound exist(1)
+print "MUSIC_1_AFTER="; music exist(1)
+print "SOUND_1_VOLUME="; get sound volume(1)
+print "SOUND_1_GET_VOLUME="; get sound volume(1)
+print "SOUND_1_PAN="; get sound pan(1)
+print "SOUND_1_SPEED="; get sound speed(1)
+print "SOUND_2_TYPE="; sound type(2)
+print "SOUND_2_X="; sound position x(2)
+print "SOUND_2_Y="; sound position y(2)
+print "SOUND_2_Z="; sound position z(2)
+print "LISTENER_X="; listener position x()
+print "LISTENER_Y="; listener position y()
+print "LISTENER_Z="; listener position z()
+print "LISTENER_AX="; listener angle x()
+print "LISTENER_AY="; listener angle y()
+print "LISTENER_AZ="; listener angle z()
+
+delete music 1
+delete sound 2
+delete sound 1
+print "SOUND_1_DELETED="; sound exist(1)
+print "MUSIC_1_DELETED="; music exist(1)
+
+print "TEST_DONE"
+sync
+end

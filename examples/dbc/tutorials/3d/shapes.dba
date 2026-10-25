@@ -1,0 +1,62 @@
+rem ==================================================================
+rem Shapes - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem The first steps in 3D: every MAKE OBJECT shape on a turntable, each
+rem turning on a different axis, with its position, angles and size read
+rem back. SPACE hides and shows the cone, D deletes the triangle.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+backdrop on
+color backdrop rgb(30, 34, 52)
+position camera 0, 9, -50
+point camera 0, 3, 0
+
+rem One of each shape, side by side
+make object cube 1, 6
+make object box 2, 8, 4, 3
+make object sphere 3, 6
+make object cylinder 4, 6
+make object cone 5, 6
+make object plain 6, 7, 5
+make object triangle 7, 0, 4, 0, -4, -3, 0, 4, -3, 0
+for o = 1 to 7
+   position object o, (o - 4) * 9, 3, 0
+   color object o, rgb(80 + o * 24, 220 - o * 18, 120 + (o mod 3) * 50)
+next o
+rem A triangle has one side only: SET OBJECT with culling 0 shows both
+set object 7, 1, 0, 0
+rem A floor made from a flattened box
+make object box 10, 90, 1, 30
+position object 10, 0, -2, 0
+color object 10, rgb(60, 70, 90)
+
+do
+   a = wrapvalue(a + 1)
+   rem Each command turns one axis; ROTATE OBJECT sets all three at once
+   xrotate object 1, a
+   yrotate object 2, a
+   zrotate object 3, a
+   rotate object 4, a, a / 2, 0
+   yrotate object 5, a
+   yrotate object 6, a
+   yrotate object 7, a
+   rem The sphere breathes with SCALE OBJECT (percent on each axis)
+   scale object 3, 100, 70 + sin(a * 4) * 30, 100
+
+   key$ = lower$(inkey$())
+   if key$ = " " and lastkey$ <> " "
+      if object visible(5) = 1 then hide object 5 else show object 5
+   endif
+   if key$ = "d" and lastkey$ <> "d" and object exist(7) = 1 then delete object 7
+   lastkey$ = key$
+
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "SHAPES - SPACE hides the cone, D deletes the triangle"
+   text 10, 34, "CUBE: POSITION " + str$(object position x(1)) + ", " + str$(object position y(1)) + ", " + str$(object position z(1)) + "  ANGLE X " + str$(int(object angle x(1)))
+   text 10, 54, "BOX: SIZE " + str$(int(object size(2))) + "  X " + str$(int(object size x(2))) + "  Y " + str$(int(object size y(2))) + "  Z " + str$(int(object size z(2)))
+   text 10, 74, "CYLINDER: ANGLES " + str$(int(object angle x(4))) + ", " + str$(int(object angle y(4))) + ", " + str$(int(object angle z(4)))
+   text 10, 94, "CONE VISIBLE " + str$(object visible(5)) + "   TRIANGLE EXISTS " + str$(object exist(7))
+   sync
+loop

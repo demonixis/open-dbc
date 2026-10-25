@@ -1,0 +1,58 @@
+rem ==================================================================
+rem Sprite Lab - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Five scooters show the commands that change how a sprite is drawn:
+rem OFFSET SPRITE moves its handle, SCALE SPRITE and STRETCH SPRITE
+rem resize it in percent, SIZE SPRITE in pixels, MIRROR SPRITE and
+rem FLIP SPRITE turn it over. PASTE SPRITE draws a copy of a sprite as
+rem it looks right now, and PASTE IMAGE stamps an image onto the screen.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+w = screen width() : h = screen height()
+load bitmap "sea.bmp"
+load image "scooter.bmp", 1
+load image "rock.bmp", 2
+
+rem Stamp a row of rocks along the bottom once: PASTE IMAGE with
+rem transparency 1 skips the black background around each rock
+for x = 0 to w step 56
+   paste image 2, x, h - 60, 1
+next x
+
+column = w / 6
+for s = 1 to 5
+   sprite s, column * s - 32, 150, 1
+next s
+rem Sprite 1 spins its handle around the image centre instead of the corner
+offset sprite 1, 32, 32
+
+do
+   t = t + 1
+   rem 1. A handle in the middle: the sprite now orbits around its centre
+   sprite 1, column - 32 + 32 + cos(t * 3) * 30, 150 + 32 + sin(t * 3) * 30, 1
+   rem 2. Uniform scale from 50% to 150%
+   scale sprite 2, 100 + sin(t * 2) * 50
+   rem 3. Independent horizontal and vertical stretch
+   stretch sprite 3, 100 + sin(t * 3) * 60, 100 + cos(t * 3) * 60
+   rem 4. An absolute size in pixels
+   size sprite 4, 32 + (t mod 64), 64
+   rem 5. Mirror and flip every second
+   if t mod 60 = 0 then mirror sprite 5
+   if t mod 120 = 0 then flip sprite 5
+
+   rem PASTE SPRITE copies sprite 2 with its current scale; paste it every frame
+   paste sprite 2, column * 2 - 32, 290
+
+   ink rgb(0, 0, 0), 0
+   box 0, 0, w, 100
+   ink rgb(255, 255, 255), 0
+   text 10, 6, "1 OFFSET " + str$(sprite offset x(1)) + "," + str$(sprite offset y(1))
+   text 10, 26, "2 SCALE " + str$(sprite scale x(2)) + "%"
+   text 10, 46, "3 STRETCH " + str$(sprite scale x(3)) + "% x " + str$(sprite scale y(3)) + "%"
+   text 10, 66, "4 SIZE " + str$(sprite width(4)) + " x " + str$(sprite height(4)) + " pixels"
+   text w / 2, 6, "5 MIRRORED " + str$(sprite mirrored(5)) + "  FLIPPED " + str$(sprite flipped(5))
+   text w / 2, 26, "PASTE SPRITE copies sprite 2 below it"
+   text w / 2, 46, "PASTE IMAGE drew the rocks below"
+   sync
+loop

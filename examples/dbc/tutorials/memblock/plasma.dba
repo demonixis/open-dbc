@@ -1,0 +1,84 @@
+rem ==================================================================
+rem Plasma - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A memblock is a block of bytes you can read and write freely. An
+rem image memblock starts with three dwords (width, height, depth) and
+rem then holds one dword per pixel, written like an RGB() colour. This
+rem program paints a plasma into such a memblock every frame, turns it
+rem into a bitmap and stretches it over the screen. A second memblock
+rem shows the other ways of reading and writing bytes.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+w = screen width() : h = screen height()
+pw = 80 : ph = 60
+
+rem --- The plasma memblock: 12 header bytes, then 4 bytes per pixel
+make memblock 1, 12 + pw * ph * 4
+write memblock dword 1, 0, pw
+write memblock dword 1, 4, ph
+write memblock dword 1, 8, 32
+rem A palette of 256 colours, so each pixel needs a single lookup
+dim palette(255)
+for i = 0 to 255
+   palette(i) = rgb(128 + sin(i * 1.41) * 127, 128 + sin(i * 1.41 + 120) * 127, 128 + sin(i * 2.82) * 127)
+next i
+dim wave(359)
+for i = 0 to 359 : wave(i) = 32 + sin(i) * 31 : next i
+
+rem --- A small memblock for the byte, word, dword and float readers
+make memblock 2, 16
+write memblock byte 2, 0, 200
+write memblock word 2, 2, 40000
+write memblock dword 2, 4, 123456
+write memblock float 2, 8, 2.5
+rem COPY MEMBLOCK from, to, from offset, to offset, bytes: duplicate the word
+copy memblock 2, 2, 2, 12, 2
+
+rem --- A drawn logo travels the other way: image to memblock and back
+create bitmap 2, 64, 32
+set current bitmap 2
+cls rgb(255, 255, 255)
+ink rgb(30, 30, 30), 0 : box 4, 4, 59, 27
+ink rgb(255, 210, 80), 0 : text 10, 8, "MEM"
+get image 1, 0, 0, 64, 32
+set current bitmap 0
+delete bitmap 2
+make memblock from image 3, 1
+rem Swap the red and blue bytes of every pixel (blue comes first in memory)
+for p = 0 to 64 * 32 - 1
+   b = memblock byte(3, 12 + p * 4)
+   write memblock byte 3, 12 + p * 4, memblock byte(3, 14 + p * 4)
+   write memblock byte 3, 14 + p * 4, b
+next p
+make image from memblock 2, 3
+delete memblock 3
+
+do
+   t = t + 3
+   for y = 0 to ph - 1
+      row = 12 + y * pw * 4
+      a = wave((y * 6 + t) mod 360)
+      for x = 0 to pw - 1
+         v = a + wave((x * 5 + t * 2) mod 360) + wave(((x + y) * 4 + t) mod 360) + wave((x * 3 - y * 2 + 720 + t) mod 360)
+         write memblock dword 1, row + x * 4, palette(v mod 256)
+      next x
+   next y
+   rem The memblock becomes bitmap 1, stretched over the screen
+   rem MAKE BITMAP FROM MEMBLOCK also makes the new bitmap the current one
+   make bitmap from memblock 1, 1
+   set current bitmap 0
+   copy bitmap 1, 0, 0, pw, ph, 0, 0, 0, w, h
+   rem Read the screen back into a memblock to show its size
+   if t = 3 then make memblock from bitmap 4, 0 : screen_bytes = get memblock size(4) : delete memblock 4
+
+   paste image 1, 20, h - 100
+   paste image 2, 100, h - 100
+   ink rgb(0, 0, 0), 0
+   box 0, 0, w, 66
+   ink rgb(255, 255, 255), 0
+   text 10, 4, "MEMBLOCK 1: " + str$(get memblock size(1)) + " bytes (" + str$(pw) + " x " + str$(ph) + ")   screen: " + str$(screen_bytes) + " bytes"
+   text 10, 24, "BYTE " + str$(memblock byte(2, 0)) + "  WORD " + str$(memblock word(2, 2)) + "  DWORD " + str$(memblock dword(2, 4)) + "  FLOAT " + str$(memblock float(2, 8)) + "  COPY " + str$(memblock word(2, 12))
+   text 10, 44, "MEMBLOCK EXIST(3) = " + str$(memblock exist(3)) + "   right logo: red and blue swapped"
+   sync
+loop

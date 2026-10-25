@@ -1,0 +1,63 @@
+# OpenDBC
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
+
+OpenDBC runs DarkBASIC Classic and DarkBASIC Professional programs on modern
+systems. It is a single `opendbc` executable, a Studio and a command line, written
+in C++20 on SDL3 GPU (Vulkan, Metal). It is an independent project, not
+affiliated with The Game Creators or Dark Basic Software Limited.
+
+```basic
+sync on
+make object cube 1, 10
+position object 1, 0, 0, 50
+do
+    yrotate object 1, object angle y(1) + 1
+    sync
+loop
+```
+
+## Build and run
+
+Requires CMake 3.24+, Ninja and a C++20 compiler (Visual Studio 2022+ on Windows).
+
+```bash
+cmake --preset default
+cmake --build build
+```
+
+```bash
+opendbc                                   # open the Studio
+opendbc run game.dba --dialect dbc        # run a Classic program
+opendbc run project.dbpro                 # run a Professional project
+opendbc check game.dba --dialect dbpro    # compile and verify only
+```
+
+## Test
+
+```bash
+ctest --preset default
+```
+
+<!-- BEGIN GENERATED COMPATIBILITY METRICS -->
+- BASIC execution goldens: **74**.
+- Full corpus expectations: **92** sources, including **81** that reach verified bytecode.
+- Observable implemented-overload contracts: **1600**.
+<!-- END GENERATED COMPATIBILITY METRICS -->
+
+## Documentation
+
+| Topic | Where |
+| --- | --- |
+| CLI, Studio, exports, debugging | [docs/usage.md](docs/usage.md) |
+| Code layout, language pipeline, compatibility rules, tests | [docs/architecture.md](docs/architecture.md) |
+| Commands and their support state, per profile | [docs/reference/](docs/reference/) |
+| Desktop VR | [docs/vr.md](docs/vr.md) |
+| Example programs | [examples/README.md](examples/README.md) |
+| Contributing | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
+| Remaining work | [docs/roadmap.md](docs/roadmap.md) |
+
+## Licence
+
+MIT, see [LICENSE](LICENSE). Trademarks and third-party content are listed in
+[docs/NOTICE.md](docs/NOTICE.md).

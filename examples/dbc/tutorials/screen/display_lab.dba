@@ -1,0 +1,65 @@
+rem ==================================================================
+rem Display Lab - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Asks the computer about its screen and graphics card: the display
+rem modes on offer, the current width, height, depth and frame rate,
+rem and the video memory. Checklists hold the answers: a name in
+rem CHECKLIST STRING$ and up to four numbers in CHECKLIST VALUE A to D.
+rem SET GAMMA fades the whole picture; M switches to the next display
+rem mode, but only when you press it.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+
+rem Display modes: width, height and depth in values A, B and C; value D
+rem is the refresh rate where the system reports one
+perform checklist for display modes
+modes = checklist quantity()
+dim modew(64) : dim modeh(64) : dim moded(64) : dim moder(64)
+for m = 1 to modes
+   if m <= 64 then modew(m) = checklist value a(m) : modeh(m) = checklist value b(m) : moded(m) = checklist value c(m) : moder(m) = checklist value d(m)
+next m
+perform checklist for graphics cards
+cards = checklist quantity()
+if cards > 0 then card$ = checklist string$(1)
+empty checklist
+emptied = checklist quantity()
+mode = 0
+
+do
+   if lower$(inkey$()) = "m" and held = 0 and modes > 0
+      mode = (mode mod modes) + 1
+      rem CHECK DISPLAY MODE answers 1 when the mode can be used
+      if check display mode(modew(mode), modeh(mode), moded(mode)) = 1 then set display mode modew(mode), modeh(mode), moded(mode)
+   endif
+   held = (lower$(inkey$()) = "m")
+   rem Gamma 255 is normal; the picture breathes between dim and bright
+   level = 255 + sin(timer() / 20.0) * 120
+   set gamma level, level, level
+
+   w = screen width() : h = screen height()
+   cls rgb(30, 30, 44)
+   for x = 0 to w step 16
+      ink rgb(x * 255 / w, 120, 255 - x * 255 / w), 0
+      box x, h - 60, x + 15, h - 20
+   next x
+   ink rgb(255, 210, 120), 0
+   text 20, 14, "DISPLAY LAB"
+   ink rgb(230, 230, 240), 0
+   text 20, 44, "SCREEN " + str$(w) + " x " + str$(h) + " x " + str$(screen depth()) + " bits   TYPE " + str$(screen type()) + "   FPS " + str$(screen fps())
+   text 20, 64, "GAMMA " + str$(level) + "   SCREEN INVALID " + str$(screen invalid())
+   text 20, 94, "GRAPHICS CARD " + current graphics card$() + "  (" + str$(cards) + " found: " + card$ + ")"
+   text 20, 114, "TNL AVAILABLE " + str$(tnl available())
+   text 20, 134, "MEMORY: DISPLAY " + str$(system dmem available()) + "  SYSTEM " + str$(system smem available()) + "  TOTAL " + str$(system tmem available())
+   text 20, 164, str$(modes) + " display modes (EMPTY CHECKLIST leaves " + str$(emptied) + "):"
+   for m = 1 to modes
+      if m <= 24
+         x = 20 + ((m - 1) / 8) * 200 : y = 184 + ((m - 1) mod 8) * 20
+         if m = mode then ink rgb(120, 230, 160), 0 else ink rgb(180, 180, 200), 0
+         text x, y, str$(modew(m)) + " x " + str$(modeh(m)) + " x " + str$(moded(m)) + "  " + str$(moder(m)) + " Hz"
+      endif
+   next m
+   ink rgb(150, 150, 170), 0
+   text 20, h - 90, "M switches to the next display mode"
+   sync
+loop

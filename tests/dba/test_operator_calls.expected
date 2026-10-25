@@ -1,0 +1,7 @@
+and-array ok
+or-array ok
+and-function ok
+compact ok
+and-not ok
+x=1
+TEST_DONE

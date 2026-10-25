@@ -1,0 +1,78 @@
+rem ==================================================================
+rem Explorer - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Looks around the folders: DIR and DRIVELIST print listings,
+rem PERFORM CHECKLIST FOR FILES fills a list to read back, FIND FIRST
+rem and FIND NEXT walk through the files one at a time, and CD moves
+rem between folders. UP and DOWN select a file; E opens the selected
+rem file with EXECUTE FILE, which hands it to the program your system
+rem uses for it.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+rem DIR and DRIVELIST print straight onto the screen, like PRINT
+cls rgb(20, 24, 34)
+ink rgb(220, 220, 230), 0
+print "DIR of " + get dir$()
+dir
+print
+print "DRIVELIST"
+drivelist
+sleep 2500
+
+sync on : sync rate 30
+home$ = get dir$()
+
+rem The parent folder through CD, then back again
+cd ".."
+parent$ = get dir$()
+perform checklist for files
+parent_entries = checklist quantity()
+cd home$
+
+rem The files here, from FIND FIRST and FIND NEXT
+dim name$(60) : dim kind(60) : dim date$(60)
+count = 0
+find first
+while get file type() <> -1 and count < 60
+   inc count
+   name$(count) = get file name$() : kind(count) = get file type() : date$(count) = get file date$()
+   find next
+endwhile
+perform checklist for drives
+drives = checklist quantity()
+selected = 1
+
+do
+   if downkey() = 1 and held = 0 and selected < count then inc selected
+   if upkey() = 1 and held = 0 and selected > 1 then dec selected
+   held = upkey() + downkey()
+   key$ = lower$(inkey$())
+   if key$ = "e" and lastkey$ <> "e" and kind(selected) = 0
+      rem EXECUTE FILE file$, command line$, folder$
+      execute file name$(selected), "", home$
+   endif
+   lastkey$ = key$
+
+   cls rgb(20, 24, 34)
+   ink rgb(255, 210, 120), 0
+   text 16, 10, "EXPLORER - " + home$
+   ink rgb(160, 160, 180), 0
+   text 16, 30, "PATH EXIST(""..""): " + str$(path exist("..")) + "   parent has " + str$(parent_entries) + " entries   " + str$(drives) + " drive(s)"
+   for i = 1 to count
+      y = 50 + i * 20
+      if y < screen height() - 30
+         if i = selected
+            ink rgb(60, 80, 130), 0 : box 12, y - 2, screen width() - 12, y + 17
+         endif
+         if kind(i) = 1 then ink rgb(120, 200, 255), 0 else ink rgb(230, 230, 230), 0
+         if kind(i) = 1 then label$ = "[" + name$(i) + "]" else label$ = name$(i)
+         text 20, y, label$
+         ink rgb(150, 150, 170), 0
+         if kind(i) = 0 then text 300, y, str$(file size(name$(i))) + " bytes"
+         text 430, y, date$(i)
+      endif
+   next i
+   ink rgb(150, 150, 170), 0
+   text 16, screen height() - 24, "UP/DOWN select, E opens a file with EXECUTE FILE"
+   sync
+loop

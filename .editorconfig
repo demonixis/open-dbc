@@ -1,0 +1,39 @@
+# "Microsoft" is the base style closest to C#
+BasedOnStyle:    Microsoft
+
+Standard:        c++20
+
+# --- Indentation ---
+IndentWidth:     4
+TabWidth:        4
+UseTab:          Never
+
+# --- Namespaces (indented) ---
+# "All" indents the code inside every namespace
+NamespaceIndentation: All
+
+# --- Braces (C# / Allman style) ---
+# Put every brace on its own line
+BreakBeforeBraces: Allman
+
+# --- C++ specific ---
+# Align pointers left (int* p), as in C# (implicit references)
+PointerAlignment: Left
+
+# Column limit
+ColumnLimit:     120
+
+# --- C#-like rules ---
+# No single-line if: always braces and a line break
+AllowShortIfStatementsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortBlocksOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+# switch/case: indent case labels inside the switch
+IndentCaseLabels: true
+
+# Spaces
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceInEmptyParentheses: false

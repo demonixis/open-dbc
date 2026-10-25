@@ -1,0 +1,22 @@
+rem Test DIM with AS keyword (DBPro syntax)
+rem The test profile manifest selects the strict DBPro profile.
+sync on : sync rate 0
+
+dim values(3) AS INTEGER
+values(0) = 10
+values(1) = 20
+values(2) = 30
+values(3) = 40
+
+print "V0="; values(0)
+print "V1="; values(1)
+print "V2="; values(2)
+print "V3="; values(3)
+
+dim x AS FLOAT
+x = 3.14
+print "X="; x
+
+print "TEST_DONE"
+sync
+end

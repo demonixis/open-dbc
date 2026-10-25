@@ -1,0 +1,90 @@
+rem ==================================================================
+rem Station Clock - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Shows the ways a program waits and keeps time: WAIT and SLEEP pause
+rem for a number of milliseconds, SYNC RATE paces the frames, TIMER()
+rem counts milliseconds, GET TIME$() and GET DATE$() read the clock,
+rem and WAIT KEY, SUSPEND FOR KEY and SUSPEND FOR MOUSE wait for input.
+rem ESCAPE stops the clock; then a key and a click end the program.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+w = screen width() : h = screen height()
+cx = w / 2 : cy = h / 2 - 10 : radius = 170
+
+rem A short countdown, paced with WAIT
+for n = 3 to 1 step -1
+   cls rgb(20, 20, 30)
+   ink rgb(255, 255, 255), 0
+   center text cx, cy, "Starting in " + str$(n)
+   wait 300
+next n
+
+sync on : sync rate 30
+start = timer()
+do
+   time$ = get time$()
+   hours = val(left$(time$, 2)) mod 12
+   minutes = val(right$(left$(time$, 5), 2))
+   seconds = val(right$(time$, 2))
+   rem TIMER adds the fraction of a second so the second hand sweeps smoothly
+   fraction# = ((timer() - start) mod 1000) / 1000.0
+
+   cls rgb(30, 34, 46)
+   rem The dial: a white face filled line by line, ticks every minute
+   ink rgb(245, 245, 240), 0
+   for dy = 0 - radius to radius
+      half = sqrt(radius * radius - dy * dy)
+      line cx - half, cy + dy, cx + half, cy + dy
+   next dy
+   ink rgb(30, 30, 30), 0
+   for tick = 0 to 59
+      inner = radius - 8
+      if tick mod 5 = 0 then inner = radius - 22
+      a = tick * 6
+      line cx + sin(a) * inner, cy - cos(a) * inner, cx + sin(a) * (radius - 4), cy - cos(a) * (radius - 4)
+   next tick
+
+   rem Hands: each angle grows clockwise from twelve o'clock
+   gosub draw_hand_setup
+   hand_angle# = (hours + minutes / 60.0) * 30 : hand_length = radius * 0.5 : hand_width = 5
+   gosub draw_hand
+   hand_angle# = (minutes + seconds / 60.0) * 6 : hand_length = radius * 0.8 : hand_width = 3
+   gosub draw_hand
+   ink rgb(200, 30, 30), 0
+   hand_angle# = (seconds + fraction#) * 6
+   line cx, cy, cx + sin(hand_angle#) * (radius - 12), cy - cos(hand_angle#) * (radius - 12)
+   circle cx, cy, 4
+
+   ink rgb(230, 230, 230), 0
+   center text cx, cy + radius + 14, get date$() + "   " + time$
+   text 10, 10, "Running for " + str$((timer() - start) / 1000) + " s - ESCAPE stops the clock"
+   if escapekey() = 1 then exit
+   sync
+loop
+
+rem Waiting for input: each command returns once the player acts
+sync off
+cls rgb(20, 20, 30)
+ink rgb(255, 255, 255), 0
+center text cx, cy, "Clock stopped. Press a key."
+wait key
+cls rgb(20, 20, 30)
+center text cx, cy, "Now press another key."
+suspend for key
+cls rgb(20, 20, 30)
+center text cx, cy, "And finally click the mouse."
+suspend for mouse
+sleep 200
+end
+
+draw_hand_setup:
+   ink rgb(30, 30, 30), 0
+return
+
+rem A hand is a fan of lines hand_width pixels wide
+draw_hand:
+   for side = 0 - hand_width to hand_width
+      offset# = side / 2.0
+      line cx + cos(hand_angle#) * offset#, cy + sin(hand_angle#) * offset#, cx + sin(hand_angle#) * hand_length, cy - cos(hand_angle#) * hand_length
+   next side
+return

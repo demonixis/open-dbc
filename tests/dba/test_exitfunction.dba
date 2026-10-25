@@ -1,0 +1,41 @@
+rem Test EXITFUNCTION (early return with/without value)
+sync on : sync rate 0
+
+rem EXITFUNCTION with integer value
+print "EARLY_INT="; EarlyReturnInt(5)
+print "EARLY_INT="; EarlyReturnInt(15)
+
+rem EXITFUNCTION with string value
+print "EARLY_STR="; EarlyReturnStr$("yes")
+print "EARLY_STR="; EarlyReturnStr$("no")
+
+rem EXITFUNCTION without value (void function)
+VoidExit(1)
+VoidExit(0)
+print "VOID_DONE"
+
+print "TEST_DONE"
+sync
+end
+
+function EarlyReturnInt(n)
+    if n < 10
+        exitfunction 42
+    endif
+    result = 99
+endfunction result
+
+function EarlyReturnStr$(s$)
+    if s$ = "yes"
+        exitfunction "FOUND"
+    endif
+    r$ = "DEFAULT"
+endfunction r$
+
+function VoidExit(flag)
+    if flag = 1
+        print "VOID_EARLY"
+        exitfunction
+    endif
+    print "VOID_NORMAL"
+endfunction

@@ -1,0 +1,40 @@
+rem Test sprite functions
+sync on : sync rate 0
+
+rem Create a minimal image from a bitmap
+create bitmap 1, 32, 32
+set current bitmap 1
+ink rgb(255, 0, 0), 0
+box 0, 0, 31, 31
+get image 1, 0, 0, 32, 32
+set current bitmap 0
+
+rem Create sprite
+sprite 1, 100, 200, 1
+print "SPRITE_EXIST="; sprite exist(1)
+print "SPRITE_X="; sprite x(1)
+print "SPRITE_Y="; sprite y(1)
+
+rem Non-existent sprite
+print "SPRITE_NOEXIST="; sprite exist(99)
+
+rem Move sprite
+sprite 1, 50, 75, 1
+print "SPRITE_X2="; sprite x(1)
+print "SPRITE_Y2="; sprite y(1)
+
+rem Hide/show sprite
+hide sprite 1
+show sprite 1
+
+rem Delete sprite
+delete sprite 1
+print "SPRITE_DELETED="; sprite exist(1)
+
+rem Cleanup
+delete image 1
+delete bitmap 1
+
+print "TEST_DONE"
+sync
+end

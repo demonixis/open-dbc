@@ -1,0 +1,78 @@
+rem System Showcase
+rem Screen transitions written in plain BASIC: a wipe, venetian blinds, a box
+rem zoom and a sprite cross-fade between two pictures, timed with TIMER().
+rem Rewritten for OpenDBC (MIT licence); the pictures come from the
+rem Dark-Basic-Pro help examples (MIT, The Game Creators Ltd).
+
+sync on : sync rate 60
+backdrop off
+
+load bitmap "screen1.jpg", 1
+load bitmap "screen2.jpg", 2
+w = bitmap width(1)
+h = bitmap height(1)
+steps = 45
+
+rem The second picture is also kept as an image for the sprite cross-fade
+load image "screen2.jpg", 1
+
+copy bitmap 1, 0
+sync
+
+for effect = 1 to 4
+   start = timer()
+   rem Effects alternate between the two pictures
+   if effect mod 2 = 1
+      source = 1 : target = 2
+   else
+      source = 2 : target = 1
+   endif
+
+   for stepnum = 1 to steps
+      progress# = stepnum / (steps * 1.0)
+      copy bitmap source, 0
+      select effect
+         case 1
+            rem Wipe from left to right
+            x = int(w * progress#)
+            if x > 0 then copy bitmap target, 0, 0, x, h, 0, 0, 0, x, h
+         endcase
+         case 2
+            rem Venetian blinds: eight bands open together
+            band = h / 8
+            opened = int(band * progress#)
+            for b = 0 to 7
+               top = b * band
+               if opened > 0 then copy bitmap target, 0, top, w, top + opened, 0, 0, top, w, top + opened
+            next b
+         endcase
+         case 3
+            rem Box zoom from the centre
+            hw = int(w * progress# / 2) : hh = int(h * progress# / 2)
+            if hw > 0 and hh > 0
+               left = w / 2 - hw : top = h / 2 - hh
+               copy bitmap target, left, top, left + hw * 2, top + hh * 2, 0, left, top, left + hw * 2, top + hh * 2
+            endif
+         endcase
+         case 4
+            rem Cross-fade: the target picture is a sprite whose alpha rises
+            sprite 1, 0, 0, 1
+            set sprite alpha 1, int(255 * progress#)
+         endcase
+      endselect
+      ink rgb(255, 255, 255), 0
+      text 8, 8, "Effect " + str$(effect) + " of 4"
+      sync
+   next stepnum
+
+   if effect = 4 then delete sprite 1
+   copy bitmap target, 0
+   elapsed = timer() - start
+   text 8, 24, "Last transition: " + str$(elapsed) + " ms at depth " + str$(screen depth())
+   sync
+next effect
+
+delete bitmap 1
+delete bitmap 2
+delete image 1
+end

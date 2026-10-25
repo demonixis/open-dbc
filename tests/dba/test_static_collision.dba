@@ -1,0 +1,33 @@
+rem Test static collision system
+sync on : sync rate 0
+
+rem Create a static collision box
+make static collision box -50, -50, -50, 50, 50, 50
+
+rem Test hit detection with object inside the box
+make object cube 1, 5
+position object 1, 0, 0, 0
+set object collision on 1
+
+rem A small box moving inside the static box touches it; a move from outside stores the push-back
+hit = get static collision hit(-1, -1, -1, 1, 1, 1, 9, 9, 9, 11, 11, 11)
+print "STATIC_HIT="; hit
+hit = get static collision hit(60, -5, -5, 70, 5, 5, 45, -5, -5, 55, 5, 5)
+print "WALL_HIT="; hit
+print "PUSH_X="; get static collision x()
+hit = get static collision hit(60, -5, -5, 70, 5, 5, 61, -5, -5, 71, 5, 5)
+print "MISS="; hit
+
+rem Make static object
+make object cube 2, 20
+position object 2, 100, 0, 100
+make static object 2
+
+rem Cleanup
+delete object 1
+delete object 2
+delete static objects
+
+print "TEST_DONE"
+sync
+end

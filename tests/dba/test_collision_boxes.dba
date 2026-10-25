@@ -1,0 +1,38 @@
+rem Test AABB collision detection
+sync on : sync rate 0
+
+make object cube 1, 10.0
+make object cube 2, 10.0
+
+rem Set to box collision
+set object collision to boxes 1
+set object collision to boxes 2
+make object collision box 1,-5.0,-5.0,-5.0,5.0,5.0,5.0,0
+
+rem Overlapping boxes
+position object 1, 0.0, 0.0, 0.0
+position object 2, 5.0, 0.0, 0.0
+hit = object collision(1, 0)
+print "BOX_OVERLAP="; hit
+print "OBJECT_PUSH_X="; get object collision x(1)
+
+rem Separated boxes
+position object 2, 100.0, 0.0, 0.0
+hit = object collision(1, 0)
+print "BOX_SEPARATED="; hit
+
+rem Static collision
+make static collision box -50.0, -1.0, -50.0, 50.0, 0.0, 50.0
+rem A unit box dropping from above the floor slab into it is pushed back up by the penetration depth
+hit = get static collision hit(-1.0, 9.0, -1.0, 1.0, 11.0, 1.0, -1.0, -1.5, -1.0, 1.0, 0.5, 1.0)
+print "STATIC_HIT="; hit
+print "PUSH_Y="; get static collision y()
+
+rem Clean up
+delete object 1
+delete object 2
+delete static objects
+
+print "TEST_DONE"
+sync
+end

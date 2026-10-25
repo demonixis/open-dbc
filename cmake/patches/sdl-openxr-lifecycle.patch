@@ -1,0 +1,586 @@
+diff --git a/src/gpu/vulkan/SDL_gpu_vulkan.c b/src/gpu/vulkan/SDL_gpu_vulkan.c
+index 51b9980fc..b085c2096 100644
+--- a/src/gpu/vulkan/SDL_gpu_vulkan.c
++++ b/src/gpu/vulkan/SDL_gpu_vulkan.c
+@@ -95,36 +95,7 @@ static VkPresentModeKHR SDLToVK_PresentMode[] = {
+     VK_PRESENT_MODE_MAILBOX_KHR
+ };
+
+-// NOTE: this is behind an ifdef guard because without, it would trigger an "unused variable" error when OpenXR support is disabled
+-#ifdef HAVE_GPU_OPENXR
+-typedef struct TextureFormatPair {
+-    VkFormat vk;
+-    SDL_GPUTextureFormat sdl;
+-} TextureFormatPair;
+-
+-static TextureFormatPair SDLToVK_TextureFormat_SrgbOnly[] = {
+-    {VK_FORMAT_R8G8B8A8_SRGB, SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB},
+-    {VK_FORMAT_B8G8R8A8_SRGB, SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB},
+-    {VK_FORMAT_BC1_RGBA_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM_SRGB},
+-    {VK_FORMAT_BC2_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM_SRGB},
+-    {VK_FORMAT_BC3_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM_SRGB},
+-    {VK_FORMAT_BC7_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_BC7_RGBA_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_4x4_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_4x4_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_5x4_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_5x4_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_5x5_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_5x5_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_6x5_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_6x5_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_6x6_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_6x6_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_8x5_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_8x5_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_8x6_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_8x6_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_8x8_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_8x8_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_10x5_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_10x5_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_10x6_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_10x6_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_10x8_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_10x8_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_10x10_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_10x10_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_12x10_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_12x10_UNORM_SRGB},
+-    {VK_FORMAT_ASTC_12x12_SRGB_BLOCK, SDL_GPU_TEXTUREFORMAT_ASTC_12x12_UNORM_SRGB},
+-};
+-#endif // HAVE_GPU_OPENXR
++ // HAVE_GPU_OPENXR
+
+ static VkFormat SDLToVK_TextureFormat[] = {
+     VK_FORMAT_UNDEFINED,                   // INVALID
+@@ -5126,6 +5097,13 @@ static void VULKAN_DestroyDevice(
+
+     renderer->vkDestroyDevice(renderer->logicalDevice, NULL);
+     renderer->vkDestroyInstance(renderer->instance, NULL);
++#ifdef HAVE_GPU_OPENXR
++    if (renderer->xr) {
++        renderer->xr->xrDestroyInstance(renderer->xrInstance);
++        SDL_free(renderer->xr);
++        SDL_OpenXR_UnloadLibrary();
++    }
++#endif
+
+     SDL_DestroyProperties(renderer->props);
+
+@@ -10291,7 +10269,7 @@ static bool VULKAN_INTERNAL_AcquireSwapchainTexture(
+         acquireResult = renderer->vkAcquireNextImageKHR(
+             renderer->logicalDevice,
+             windowData->swapchain,
+-            SDL_MAX_UINT64,
++            block ? SDL_MAX_UINT64 : 0,
+             windowData->imageAvailableSemaphore[windowData->frameCounter],
+             VK_NULL_HANDLE,
+             &swapchainImageIndex);
+@@ -10300,6 +10278,10 @@ static bool VULKAN_INTERNAL_AcquireSwapchainTexture(
+             break;  // we got the next image!
+         }
+
++        if (!block && (acquireResult == VK_NOT_READY || acquireResult == VK_TIMEOUT)) {
++            return true;
++        }
++
+         // Surface lost — flag for surface + swapchain recreation on next call
+         if (acquireResult == VK_ERROR_SURFACE_LOST_KHR) {
+             windowData->needsSurfaceRecreate = true;
+@@ -12806,11 +12788,7 @@ static void VULKAN_INTERNAL_LoadEntryPoints(void)
+     // Required for MoltenVK support
+     SDL_setenv_unsafe("MVK_CONFIG_FULL_IMAGE_VIEW_SWIZZLE", "1", 1);
+
+-    // Load Vulkan entry points
+-    if (!SDL_Vulkan_LoadLibrary(NULL)) {
+-        SDL_LogWarn(SDL_LOG_CATEGORY_GPU, "Vulkan: SDL_Vulkan_LoadLibrary failed!");
+-        return;
+-    }
++    // PrepareDriver/CreateDevice already hold a Vulkan loader reference.
+
+ #ifdef HAVE_GCC_DIAGNOSTIC_PRAGMA
+ #pragma GCC diagnostic push
+@@ -12873,6 +12851,8 @@ static bool VULKAN_INTERNAL_PrepareVulkan(
+
+     if (!VULKAN_INTERNAL_DeterminePhysicalDevice(renderer, features)) {
+         SDL_LogWarn(SDL_LOG_CATEGORY_GPU, "Vulkan: Failed to determine a suitable physical device");
++        renderer->vkDestroyInstance(renderer->instance, NULL);
++        renderer->instance = VK_NULL_HANDLE;
+         return false;
+     }
+     return true;
+@@ -12890,6 +12870,9 @@ static bool VULKAN_INTERNAL_SearchForOpenXrGpuExtension(XrExtensionProperties *f
+         return false;
+
+     XrExtensionProperties *extension_properties = (XrExtensionProperties *)SDL_calloc(extension_count, sizeof(XrExtensionProperties));
++    if (!extension_properties) {
++        return false;
++    }
+     for (i = 0; i < extension_count; i++)
+         extension_properties[i].type = XR_TYPE_EXTENSION_PROPERTIES;
+
+@@ -13013,6 +12996,10 @@ static bool VULKAN_PrepareDriver(SDL_VideoDevice *_this, SDL_PropertiesID props)
+         instancePfns = SDL_OPENXR_LoadInstanceSymbols(xrInstance);
+         if (!instancePfns) {
+             SDL_LogDebug(SDL_LOG_CATEGORY_GPU, "Failed to load needed OpenXR instance symbols");
++            PFN_xrDestroyInstance destroyInstance = NULL;
++            if (XR_SUCCEEDED(xrGetInstanceProcAddr(xrInstance, "xrDestroyInstance", (PFN_xrVoidFunction *)&destroyInstance)) && destroyInstance) {
++                destroyInstance(xrInstance);
++            }
+             SDL_Vulkan_UnloadLibrary();
+             SDL_OpenXR_UnloadLibrary();
+             return false;
+@@ -13070,16 +13057,15 @@ static bool VULKAN_PrepareDriver(SDL_VideoDevice *_this, SDL_PropertiesID props)
+             renderer->vkDestroyInstance(renderer->instance, NULL);
+         }
+
+-#ifdef HAVE_GPU_OPENXR
+-        if (instancePfns) {
+-            instancePfns->xrDestroyInstance(xrInstance);
+-            SDL_free(instancePfns);
+-            SDL_OpenXR_UnloadLibrary();
+-        }
+-#endif // HAVE_GPU_OPENXR
+-
+         SDL_free(renderer);
+     }
++#ifdef HAVE_GPU_OPENXR
++    if (instancePfns) {
++        instancePfns->xrDestroyInstance(xrInstance);
++        SDL_free(instancePfns);
++        SDL_OpenXR_UnloadLibrary();
++    }
++#endif
+     SDL_Vulkan_UnloadLibrary();
+
+     return result;
+@@ -13091,34 +13077,18 @@ static XrResult VULKAN_DestroyXRSwapchain(
+     SDL_GPUTexture **swapchainImages)
+ {
+ #ifdef HAVE_GPU_OPENXR
+-    XrResult result;
+     VulkanRenderer *renderer = (VulkanRenderer *)driverData;
+-
+     VULKAN_Wait(driverData);
+-
+-    Uint32 swapchainCount;
+-    result = renderer->xr->xrEnumerateSwapchainImages(swapchain, 0, &swapchainCount, NULL);
+-    if (result != XR_SUCCESS) {
+-        return result;
+-    }
+-
+-    // We always want to destroy the swapchain images, so don't early return if xrDestroySwapchain fails for some reason
+-    for (Uint32 i = 0; i < swapchainCount; i++) {
+-        VulkanTextureContainer *container = (VulkanTextureContainer *)swapchainImages[i];
+-
+-        if (!container->externallyManaged) {
+-            SDL_SetError("Invalid GPU Texture handle.");
+-            return XR_ERROR_HANDLE_INVALID;
++    // Our wrapper array has a sentinel, so teardown still works after runtime loss.
++    if (swapchainImages) {
++        for (Uint32 i = 0; swapchainImages[i]; ++i) {
++            VulkanTextureContainer *container = (VulkanTextureContainer *)swapchainImages[i];
++            VULKAN_INTERNAL_DestroyTexture(renderer, container->activeTexture);
++            SDL_free(container->textures);
++            SDL_free(container);
+         }
+-
+-        VULKAN_INTERNAL_DestroyTexture(renderer, container->activeTexture);
+-
+-        // Free the container now that it's unused
+-        SDL_free(container);
++        SDL_free(swapchainImages);
+     }
+-
+-    SDL_free(swapchainImages);
+-
+     return renderer->xr->xrDestroySwapchain(swapchain);
+ #else
+     SDL_SetError("SDL not built with OpenXR support");
+@@ -13126,76 +13096,43 @@ static XrResult VULKAN_DestroyXRSwapchain(
+ #endif
+ }
+
+-#ifdef HAVE_GPU_OPENXR
+-static bool VULKAN_INTERNAL_FindXRSrgbSwapchain(int64_t *supportedFormats, Uint32 numFormats, SDL_GPUTextureFormat *sdlFormat, int64_t *vkFormat)
+-{
+-    for (Uint32 i = 0; i < SDL_arraysize(SDLToVK_TextureFormat_SrgbOnly); i++) {
+-        for (Uint32 j = 0; j < numFormats; j++) {
+-            if (SDLToVK_TextureFormat_SrgbOnly[i].vk == supportedFormats[j]) {
+-                *sdlFormat = SDLToVK_TextureFormat_SrgbOnly[i].sdl;
+-                *vkFormat = SDLToVK_TextureFormat_SrgbOnly[i].vk;
+-                return true;
+-            }
+-        }
+-    }
+-
+-    return false;
+-}
+-#endif // HAVE_GPU_OPENXR
+-
+-static SDL_GPUTextureFormat* VULKAN_GetXRSwapchainFormats(
++static SDL_GPUTextureFormat *VULKAN_GetXRSwapchainFormats(
+     SDL_GPURenderer *driverData,
+     XrSession session,
+     int *num_formats)
+ {
+ #ifdef HAVE_GPU_OPENXR
+-    XrResult result;
+-    Uint32 i, j, num_supported_formats;
+-    int64_t *supported_formats;
+     VulkanRenderer *renderer = (VulkanRenderer *)driverData;
+-
+-    result = renderer->xr->xrEnumerateSwapchainFormats(session, 0, &num_supported_formats, NULL);
+-    if (result != XR_SUCCESS) return NULL;
+-    supported_formats = SDL_stack_alloc(int64_t, num_supported_formats);
+-    result = renderer->xr->xrEnumerateSwapchainFormats(session, num_supported_formats, &num_supported_formats, supported_formats);
+-    if (result != XR_SUCCESS) {
+-        SDL_stack_free(supported_formats);
++    Uint32 count = 0;
++    *num_formats = 0;
++    if (XR_FAILED(renderer->xr->xrEnumerateSwapchainFormats(session, 0, &count, NULL)) ||
++        !count || count > SDL_MAX_SINT32) {
+         return NULL;
+     }
+-
+-    // FIXME: For now we're just searching for the optimal format, not all supported formats.
+-    // FIXME: Expand this search for all SDL_GPU formats!
+-
+-    SDL_GPUTextureFormat sdlFormat = SDL_GPU_TEXTUREFORMAT_INVALID;
+-    int64_t vkFormat = VK_FORMAT_UNDEFINED;
+-    // The OpenXR spec recommends applications not submit linear data, so let's try to explicitly find an sRGB swapchain before we search the whole list
+-    if (!VULKAN_INTERNAL_FindXRSrgbSwapchain(supported_formats, num_supported_formats, &sdlFormat, &vkFormat)) {
+-        // Iterate over all formats the runtime supports
+-        for (i = 0; i < num_supported_formats && vkFormat == VK_FORMAT_UNDEFINED; i++) {
+-            // Iterate over all formats we support
+-            for (j = 0; j < SDL_arraysize(SDLToVK_TextureFormat); j++) {
+-                // Pick the first format the runtime wants that we also support, the runtime should return these in order of preference
+-                if (SDLToVK_TextureFormat[j] == supported_formats[i]) {
+-                    vkFormat = supported_formats[i];
+-                    sdlFormat = j;
+-                    break;
+-                }
++    int64_t *formats = SDL_calloc(count, sizeof(*formats));
++    SDL_GPUTextureFormat *result = SDL_calloc(count, sizeof(*result));
++    if (!formats || !result ||
++        XR_FAILED(renderer->xr->xrEnumerateSwapchainFormats(session, count, &count, formats))) {
++        SDL_free(formats);
++        SDL_free(result);
++        return NULL;
++    }
++    // Return all compatible choices so the caller can select its pipeline format.
++    for (Uint32 i = 0; i < count; ++i) {
++        for (Uint32 j = 1; j < SDL_arraysize(SDLToVK_TextureFormat); ++j) {
++            if (SDLToVK_TextureFormat[j] == formats[i]) {
++                result[(*num_formats)++] = (SDL_GPUTextureFormat)j;
++                break;
+             }
+         }
+     }
+-
+-    SDL_stack_free(supported_formats);
+-
+-    if (vkFormat == VK_FORMAT_UNDEFINED) {
+-        SDL_SetError("Failed to find a swapchain format supported by both OpenXR and SDL");
++    SDL_free(formats);
++    if (!*num_formats) {
++        SDL_free(result);
++        SDL_SetError("No shared OpenXR/SDL swapchain format");
+         return NULL;
+     }
+-
+-    SDL_GPUTextureFormat *retval = (SDL_GPUTextureFormat*) SDL_malloc(sizeof(SDL_GPUTextureFormat) * 2);
+-    retval[0] = sdlFormat;
+-    retval[1] = SDL_GPU_TEXTUREFORMAT_INVALID;
+-    *num_formats = 1;
+-    return retval;
++    return result;
+ #else
+     SDL_SetError("SDL not built with OpenXR support");
+     return NULL;
+@@ -13211,115 +13148,92 @@ static XrResult VULKAN_CreateXRSwapchain(
+     SDL_GPUTexture ***textures)
+ {
+ #ifdef HAVE_GPU_OPENXR
+-    XrResult result;
+-    Uint32 i, j;
+     VulkanRenderer *renderer = (VulkanRenderer *)driverData;
+-
+     XrSwapchainCreateInfo createInfo = *oldCreateInfo;
+     createInfo.format = SDLToVK_TextureFormat[format];
+-
+-    result = renderer->xr->xrCreateSwapchain(session, &createInfo, swapchain);
+-    if (result != XR_SUCCESS) return result;
+-
+-    Uint32 swapchainImageCount;
+-    result = renderer->xr->xrEnumerateSwapchainImages(*swapchain, 0, &swapchainImageCount, NULL);
+-    if (result != XR_SUCCESS) return result;
+-
+-    XrSwapchainImageVulkan2KHR *swapchainImages = (XrSwapchainImageVulkan2KHR *)SDL_calloc(swapchainImageCount, sizeof(XrSwapchainImageVulkan2KHR));
+-    for (i = 0; i < swapchainImageCount; i++) swapchainImages[i].type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR;
+-
+-    result = renderer->xr->xrEnumerateSwapchainImages(*swapchain, swapchainImageCount, &swapchainImageCount, (XrSwapchainImageBaseHeader *)swapchainImages);
+-    if (result != XR_SUCCESS) {
+-        SDL_free(swapchainImages);
+-        return result;
+-    }
+-
+-    VulkanTextureContainer **textureContainers = (VulkanTextureContainer **)SDL_calloc(swapchainImageCount, sizeof(VulkanTextureContainer *));
+-
+-    for (Uint32 idx = 0; idx < swapchainImageCount; idx++) {
+-        VkImage vkImage = swapchainImages[idx].image;
+-
+-        VulkanTexture *texture = SDL_calloc(1, sizeof(VulkanTexture));
+-
++    Uint32 count = 0, capacity = 0;
++    XrSwapchainImageVulkan2KHR *images = NULL;
++    VulkanTextureContainer **containers = NULL;
++    *swapchain = XR_NULL_HANDLE;
++    *textures = NULL;
++    XrResult result = renderer->xr->xrCreateSwapchain(session, &createInfo, swapchain);
++    if (XR_FAILED(result)) return result;
++    result = renderer->xr->xrEnumerateSwapchainImages(*swapchain, 0, &count, NULL);
++    if (XR_FAILED(result)) goto fail;
++    if (!count || count == SDL_MAX_UINT32) { result = XR_ERROR_RUNTIME_FAILURE; goto fail; }
++    capacity = count;
++    images = SDL_calloc(count, sizeof(*images));
++    containers = SDL_calloc(count + 1, sizeof(*containers));
++    if (!images || !containers) { result = XR_ERROR_OUT_OF_MEMORY; goto fail; }
++    for (Uint32 i = 0; i < count; ++i) images[i].type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR;
++    result = renderer->xr->xrEnumerateSwapchainImages(*swapchain, count, &count, (XrSwapchainImageBaseHeader *)images);
++    if (XR_FAILED(result)) goto fail;
++    for (Uint32 index = 0; index < count; ++index) {
++        VulkanTextureContainer *container = containers[index] = SDL_calloc(1, sizeof(*container));
++        if (!container) { result = XR_ERROR_OUT_OF_MEMORY; goto fail; }
++        container->textures = SDL_calloc(1, sizeof(VulkanTexture *));
++        VulkanTexture *texture = container->activeTexture = SDL_calloc(1, sizeof(*texture));
++        if (!container->textures || !texture) { result = XR_ERROR_OUT_OF_MEMORY; goto fail; }
++        container->textures[0] = texture;
++        container->textureCount = container->textureCapacity = 1;
++        container->externallyManaged = true;
++        container->canBeCycled = false;
++        container->header.info.type = SDL_GPU_TEXTURETYPE_2D;
++        container->header.info.width = createInfo.width;
++        container->header.info.height = createInfo.height;
++        container->header.info.format = format;
++        container->header.info.layer_count_or_depth = createInfo.arraySize;
++        container->header.info.num_levels = createInfo.mipCount;
++        container->header.info.sample_count = SDL_GPU_SAMPLECOUNT_1;
++        container->header.info.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
++        texture->container = container;
+         texture->swizzle = SwizzleForSDLFormat(format);
+         texture->depth = 1;
++        texture->levelCount = createInfo.mipCount;
++        texture->layerCount = createInfo.arraySize;
++        texture->type = SDL_GPU_TEXTURETYPE_2D;
+         texture->usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+-        SDL_SetAtomicInt(&texture->referenceCount, 0);
+-        texture->image = vkImage;
++        texture->image = images[index].image;
+         texture->externallyManaged = true;
+         texture->aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+-
++        texture->subresources = SDL_calloc(createInfo.arraySize * createInfo.mipCount, sizeof(VulkanTextureSubresource));
++        if (!texture->subresources) { result = XR_ERROR_OUT_OF_MEMORY; goto fail; }
+         texture->subresourceCount = createInfo.arraySize * createInfo.mipCount;
+-        texture->subresources = SDL_calloc(
+-            texture->subresourceCount,
+-            sizeof(VulkanTextureSubresource));
+-
+-        for (i = 0; i < createInfo.arraySize; i += 1) {
+-            for (j = 0; j < createInfo.mipCount; j += 1) {
+-                Uint32 subresourceIndex = VULKAN_INTERNAL_GetTextureSubresourceIndex(
+-                    j,
+-                    i,
+-                    createInfo.mipCount);
+-
+-                if (createInfo.usageFlags & XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT) {
+-                    texture->subresources[subresourceIndex].renderTargetViews = SDL_malloc(sizeof(VkImageView));
+-
+-                    if (!VULKAN_INTERNAL_CreateRenderTargetView(
+-                            renderer,
+-                            texture,
+-                            i,
+-                            j,
+-                            SDLToVK_TextureFormat[format],
+-                            texture->swizzle,
+-                            &texture->subresources[subresourceIndex].renderTargetViews[0])) {
+-                        VULKAN_INTERNAL_DestroyTexture(renderer, texture);
+-                        SDL_SetError("Failed to create render target view");
+-                        return XR_ERROR_RUNTIME_FAILURE;
+-                    }
++        for (Uint32 layer = 0; layer < createInfo.arraySize; ++layer) {
++            for (Uint32 level = 0; level < createInfo.mipCount; ++level) {
++                VulkanTextureSubresource *sub = &texture->subresources[VULKAN_INTERNAL_GetTextureSubresourceIndex(level, layer, createInfo.mipCount)];
++                sub->parent = texture;
++                sub->layer = layer;
++                sub->level = level;
++                sub->renderTargetViews = SDL_calloc(1, sizeof(VkImageView));
++                if (!sub->renderTargetViews) { result = XR_ERROR_OUT_OF_MEMORY; goto fail; }
++                if (!VULKAN_INTERNAL_CreateRenderTargetView(renderer, texture, layer, level,
++                        SDLToVK_TextureFormat[format], texture->swizzle, &sub->renderTargetViews[0])) {
++                    result = XR_ERROR_RUNTIME_FAILURE;
++                    goto fail;
+                 }
+-
+-                texture->subresources[subresourceIndex].parent = texture;
+-                texture->subresources[subresourceIndex].layer = i;
+-                texture->subresources[subresourceIndex].level = j;
+             }
+         }
+-
+-        // Transition to the default barrier state
+-        VulkanCommandBuffer *barrierCommandBuffer = (VulkanCommandBuffer *)VULKAN_AcquireCommandBuffer((SDL_GPURenderer *)renderer);
+-        VULKAN_INTERNAL_TextureTransitionToDefaultUsage(
+-            renderer,
+-            barrierCommandBuffer,
+-            VULKAN_TEXTURE_USAGE_MODE_UNINITIALIZED,
+-            texture);
+-        VULKAN_INTERNAL_TrackTexture(barrierCommandBuffer, texture);
+-        VULKAN_Submit((SDL_GPUCommandBuffer *)barrierCommandBuffer);
+-
+-        textureContainers[idx] = SDL_malloc(sizeof(VulkanTextureContainer));
+-        VulkanTextureContainer *container = textureContainers[idx];
+-        SDL_zero(container->header.info);
+-        container->header.info.width = createInfo.width;
+-        container->header.info.height = createInfo.height;
+-        container->header.info.format = format;
+-        container->header.info.layer_count_or_depth = createInfo.arraySize;
+-        container->header.info.num_levels = createInfo.mipCount;
+-        container->header.info.sample_count = SDL_GPU_SAMPLECOUNT_1;
+-        container->header.info.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+-
+-        container->externallyManaged = true;
+-        container->canBeCycled = false;
+-        container->activeTexture = texture;
+-        container->textureCapacity = 1;
+-        container->textureCount = 1;
+-        container->textures = SDL_malloc(
+-            container->textureCapacity * sizeof(VulkanTexture *));
+-        container->textures[0] = container->activeTexture;
+-        container->debugName = NULL;
++        // OpenXR owns the image and supplies COLOR_ATTACHMENT_OPTIMAL after wait.
++        // Never touch it before a successful acquire/wait, or cycle its storage.
+     }
+-
+-    *textures = (SDL_GPUTexture **)textureContainers;
+-
+-    SDL_free(swapchainImages);
++    SDL_free(images);
++    *textures = (SDL_GPUTexture **)containers;
+     return XR_SUCCESS;
++fail:
++    if (containers) {
++        for (Uint32 index = 0; index < capacity; ++index) {
++            if (!containers[index]) continue;
++            if (containers[index]->activeTexture) VULKAN_INTERNAL_DestroyTexture(renderer, containers[index]->activeTexture);
++            SDL_free(containers[index]->textures);
++            SDL_free(containers[index]);
++        }
++        SDL_free(containers);
++    }
++    SDL_free(images);
++    renderer->xr->xrDestroySwapchain(*swapchain);
++    *swapchain = XR_NULL_HANDLE;
++    return result;
+ #else
+     SDL_SetError("SDL not built with OpenXR support");
+     return XR_ERROR_FUNCTION_UNSUPPORTED;
+@@ -13570,6 +13484,15 @@ static SDL_GPUDevice *VULKAN_CreateDevice(bool debugMode, bool preferLowPower, S
+
+     if (!VULKAN_INTERNAL_CreateLogicalDevice(renderer, &features)) {
+         SET_STRING_ERROR("Failed to create logical device!");
++        renderer->vkDestroyInstance(renderer->instance, NULL);
++#ifdef HAVE_GPU_OPENXR
++        if (renderer->xr) {
++            renderer->xr->xrDestroyInstance(renderer->xrInstance);
++            SDL_free(renderer->xr);
++            SDL_OpenXR_UnloadLibrary();
++        }
++#endif
++        SDL_DestroyProperties(renderer->props);
+         SDL_free(renderer);
+         SDL_Vulkan_UnloadLibrary();
+         return NULL;
+@@ -13577,6 +13500,21 @@ static SDL_GPUDevice *VULKAN_CreateDevice(bool debugMode, bool preferLowPower, S
+
+     // FIXME: just move this into this function
+     result = (SDL_GPUDevice *)SDL_calloc(1, sizeof(SDL_GPUDevice));
++    if (!result) {
++        renderer->vkDestroyDevice(renderer->logicalDevice, NULL);
++        renderer->vkDestroyInstance(renderer->instance, NULL);
++#ifdef HAVE_GPU_OPENXR
++        if (renderer->xr) {
++            renderer->xr->xrDestroyInstance(renderer->xrInstance);
++            SDL_free(renderer->xr);
++            SDL_OpenXR_UnloadLibrary();
++        }
++#endif
++        SDL_DestroyProperties(renderer->props);
++        SDL_free(renderer);
++        SDL_Vulkan_UnloadLibrary();
++        return NULL;
++    }
+     ASSIGN_DRIVER(VULKAN)
+
+     result->driverData = (SDL_GPURenderer *)renderer;
+diff --git a/src/gpu/xr/SDL_gpu_openxr.c b/src/gpu/xr/SDL_gpu_openxr.c
+index e4104365d..ab720b70e 100644
+--- a/src/gpu/xr/SDL_gpu_openxr.c
++++ b/src/gpu/xr/SDL_gpu_openxr.c
+@@ -87,7 +87,7 @@ static bool SDL_OPENXR_INTERNAL_ValidationLayerAvailable(void)
+ #endif
+ }
+
+-XrResult SDL_OPENXR_INTERNAL_GPUInitOpenXR(
++bool SDL_OPENXR_INTERNAL_GPUInitOpenXR(
+     bool debugMode,
+     XrExtensionProperties gpuExtension,
+     SDL_PropertiesID props,
+@@ -101,7 +101,7 @@ XrResult SDL_OPENXR_INTERNAL_GPUInitOpenXR(
+     // Android requires loader initialization before any other XR calls
+     if (!SDL_OPENXR_INTERNAL_InitializeAndroidLoader()) {
+         SDL_LogDebug(SDL_LOG_CATEGORY_GPU, "Failed to initialize Android OpenXR loader");
+-        return XR_ERROR_INITIALIZATION_FAILED;
++        return false;
+     }
+ #endif
+
+@@ -189,9 +189,11 @@ XrResult SDL_OPENXR_INTERNAL_GPUInitOpenXR(
+     *xr = SDL_OPENXR_LoadInstanceSymbols(*instance);
+     if (!*xr) {
+         SDL_LogDebug(SDL_LOG_CATEGORY_GPU, "Failed to load required OpenXR instance symbols");
+-        /* NOTE: we can't actually destroy the created OpenXR instance here,
+-                as we only get that function pointer by loading the instance symbols...
+-                let's just hope that doesn't happen. */
++        PFN_xrDestroyInstance destroyInstance = NULL;
++        if (XR_SUCCEEDED(xrGetInstanceProcAddr(*instance, "xrDestroyInstance", (PFN_xrVoidFunction *)&destroyInstance)) && destroyInstance) {
++            destroyInstance(*instance);
++        }
++        *instance = XR_NULL_HANDLE;
+         return false;
+     }
+
+@@ -203,6 +205,8 @@ XrResult SDL_OPENXR_INTERNAL_GPUInitOpenXR(
+         SDL_LogDebug(SDL_LOG_CATEGORY_GPU, "Failed to get OpenXR system");
+         (*xr)->xrDestroyInstance(*instance);
+         SDL_free(*xr);
++        *xr = NULL;
++        *instance = XR_NULL_HANDLE;
+         return false;
+     }
+
+diff --git a/src/gpu/xr/SDL_gpu_openxr.h b/src/gpu/xr/SDL_gpu_openxr.h
+index 9b2f80a03..28eefecad 100644
+--- a/src/gpu/xr/SDL_gpu_openxr.h
++++ b/src/gpu/xr/SDL_gpu_openxr.h
+@@ -21,7 +21,7 @@
+
+ #include "SDL_openxrdyn.h"
+
+-XrResult SDL_OPENXR_INTERNAL_GPUInitOpenXR(
++bool SDL_OPENXR_INTERNAL_GPUInitOpenXR(
+     bool debugMode,
+     XrExtensionProperties gpuExtension,
+     SDL_PropertiesID props,
+diff --git a/src/gpu/xr/SDL_openxrdyn.c b/src/gpu/xr/SDL_openxrdyn.c
+index f1a7a299a..baca9fab6 100644
+--- a/src/gpu/xr/SDL_openxrdyn.c
++++ b/src/gpu/xr/SDL_openxrdyn.c
+@@ -66,6 +66,9 @@ static openxrdynlib openxr_loader = { NULL };
+ static void *OPENXR_GetSym(const char *fnname, bool *failed)
+ {
+     void *fn = SDL_LoadFunction(openxr_loader.lib, fnname);
++    if (!fn) {
++        *failed = true;
++    }
+
+ #if DEBUG_DYNAMIC_OPENXR
+     if (fn) {

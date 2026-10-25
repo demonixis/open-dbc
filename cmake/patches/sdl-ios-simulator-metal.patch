@@ -1,0 +1,48 @@
+diff --git a/src/gpu/metal/SDL_gpu_metal.m b/src/gpu/metal/SDL_gpu_metal.m
+index fcc2aaf77..36fa97db0 100644
+--- a/src/gpu/metal/SDL_gpu_metal.m
++++ b/src/gpu/metal/SDL_gpu_metal.m
+@@ -25,6 +25,7 @@
+
+ #include <Metal/Metal.h>
+ #include <QuartzCore/CoreAnimation.h>
++#include <TargetConditionals.h>
+
+ #ifdef HAVE_GPU_OPENXR
+ #define XR_USE_GRAPHICS_API_METAL 1
+@@ -417,6 +418,7 @@ static MTLColorWriteMask SDLToMetal_ColorWriteMask(
+     return result;
+ }
+
++#if !defined(SDL_PLATFORM_VISIONOS) && !(defined(SDL_PLATFORM_IOS) && TARGET_OS_SIMULATOR)
+ static MTLDepthClipMode SDLToMetal_DepthClipMode(
+     bool enableDepthClip
+ ) {
+@@ -426,6 +428,7 @@ static MTLDepthClipMode SDLToMetal_DepthClipMode(
+         return MTLDepthClipModeClamp;
+     }
+ }
++#endif
+
+ // Structs
+
+@@ -2426,7 +2429,7 @@ static void METAL_BindGraphicsPipeline(
+         [metalCommandBuffer->renderEncoder setTriangleFillMode:SDLToMetal_PolygonMode[pipeline->rasterizerState.fill_mode]];
+         [metalCommandBuffer->renderEncoder setCullMode:SDLToMetal_CullMode[pipeline->rasterizerState.cull_mode]];
+         [metalCommandBuffer->renderEncoder setFrontFacingWinding:SDLToMetal_FrontFace[pipeline->rasterizerState.front_face]];
+-#ifndef SDL_PLATFORM_VISIONOS
++#if !defined(SDL_PLATFORM_VISIONOS) && !(defined(SDL_PLATFORM_IOS) && TARGET_OS_SIMULATOR)
+         [metalCommandBuffer->renderEncoder setDepthClipMode:SDLToMetal_DepthClipMode(pipeline->rasterizerState.enable_depth_clip)];
+ #endif
+         [metalCommandBuffer->renderEncoder
+@@ -4621,6 +4624,10 @@ static XrResult METAL_CreateXRSession(
+         }
+ #elif defined(SDL_PLATFORM_VISIONOS)
+         hasHardwareSupport = true;
++#elif defined(SDL_PLATFORM_IOS) && TARGET_OS_SIMULATOR
++        if (@available(iOS 13.0, tvOS 13.0, *)) {
++            hasHardwareSupport = [device supportsFamily:MTLGPUFamilyApple2];
++        }
+ #else
+         if (@available(iOS 13.0, tvOS 13.0, *)) {
+             hasHardwareSupport = [device supportsFamily:MTLGPUFamilyApple3];

@@ -1,0 +1,1290 @@
+# DBPro commit	af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9
+# Keywords100.ini sha256	e42a81f2bf3437193d5c8e78afe7857db8d7d2eabae62b5f068f10da5f330135
+# keywords107.ini sha256	26f0146bb687795a613c9780b7cbe84701375e43ee418ebd9381c5e221666568
+# keywordsAT.ini sha256	161719945555adb463c0445fb188bb92c407bb2457b58859d47b4a9e7e2ec99d
+name	kind	accepted_counts	sources	signatures
+#CONSTANT	Directive	1	keywords107.ini	ConstantName ConstantValue
+#INCLUDE	Directive	1	keywords107.ini	DBA Filename
+ABS	Function	1	keywords107.ini	(Value)
+ACOS	Function	1	keywords107.ini	(Value)
+ADD LIGHT MAP LIGHT	Command	9	keywords107.ini	X, Y, Z, Radius, Red, Green, Blue, Brightness, Shadow
+ADD LIMB	Command	3	keywords107.ini	Object Number, Limb Number, Mesh Number
+ADD LIMB TO LIGHT MAP POOL	Command	2	keywords107.ini	Integer Value, Integer Value
+ADD LOD TO OBJECT	Command	4	keywords107.ini	Object Number, LOD Object, LOD Level, LOD Distance
+ADD MATRIX4	Command	3	keywords107.ini	Matrix4Result, Matrix4A, Matrix4B
+ADD MEMBLOCK TO OBJECT	Command	2	keywords107.ini	memblock Number, Object Number
+ADD MESH TO VERTEXDATA	Command	1	keywords107.ini	Mesh Number
+ADD OBJECT TO LIGHT MAP POOL	Command	1	keywords107.ini	Object Number
+ADD STATIC OBJECTS TO LIGHT MAP POOL	Command	0	keywords107.ini	*no parameters*
+ADD STATIC SCORCH	Command	2	keywords107.ini	Scorch Size, Scorch Type
+ADD TO QUEUE	Command	1	keywords107.ini	Array Name(0)
+ADD TO STACK	Command	1	keywords107.ini	Array Name(0)
+ADD VECTOR2	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+ADD VECTOR3	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+ADD VECTOR4	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+ALPHA AVAILABLE	Function	0	keywords107.ini	*no parameters*
+ALPHABLENDING AVAILABLE	Function	0	keywords107.ini	*no parameters*
+ALPHACOMPARISON AVAILABLE	Function	0	keywords107.ini	*no parameters*
+AMBIENT LIGHT	Function	0	keywords107.ini	*no parameters*
+AND	Operator	1	Keywords100.ini	Boolean Value
+ANIMATION EXIST	Function	1	keywords107.ini	(Animation Number)
+ANIMATION HEIGHT	Function	1	keywords107.ini	(Animation Number)
+ANIMATION LOOPING	Function	1	keywords107.ini	(Animation Number)
+ANIMATION PAUSED	Function	1	keywords107.ini	(Animation Number)
+ANIMATION PLAYING	Function	1	keywords107.ini	(Animation Number)
+ANIMATION POSITION X	Function	1	keywords107.ini	(Animation Number)
+ANIMATION POSITION Y	Function	1	keywords107.ini	(Animation Number)
+ANIMATION SPEED	Function	1	keywords107.ini	(Animation Number)
+ANIMATION VOLUME	Function	1	keywords107.ini	(Animation Number)
+ANIMATION WIDTH	Function	1	keywords107.ini	(Animation Number)
+ANISTROPICFILTERING AVAILABLE	Function	0	keywords107.ini	*no parameters*
+ANTIALIAS AVAILABLE	Function	0	keywords107.ini	*no parameters*
+APPEND OBJECT	Command	3	keywords107.ini	Filename, Object Number, Start Frame
+APPEND$	Function	2	keywords107.ini	string A, string B
+APPNAME$	Function	0	keywords107.ini	*no parameters*
+ARRAY COUNT	Function	1	keywords107.ini	(Array Name(0))
+ARRAY DELETE ELEMENT	Command	1,2	keywords107.ini	[Array Name(0)][Array Name(0), Index]
+ARRAY INDEX TO BOTTOM	Command	1	keywords107.ini	Array Name(0)
+ARRAY INDEX TO QUEUE	Command	1	keywords107.ini	Array Name(0)
+ARRAY INDEX TO STACK	Command	1	keywords107.ini	Array Name(0)
+ARRAY INDEX TO TOP	Command	1	keywords107.ini	Array Name(0)
+ARRAY INDEX VALID	Function	1	keywords107.ini	(Array Name(0))
+ARRAY INSERT AT BOTTOM	Command	1,2	keywords107.ini	[Array Name(0)][Array Name(0), Index]
+ARRAY INSERT AT ELEMENT	Command	2	keywords107.ini	Array Name(0), Index
+ARRAY INSERT AT TOP	Command	1,2	keywords107.ini	[Array Name(0)][Array Name(0), Index]
+AS	Statement	1	Keywords100.ini	Variable Type
+ASC	Function	1	keywords107.ini	(String)
+ASIN	Function	1	keywords107.ini	(Value)
+ATAN	Function	1	keywords107.ini	(Value)
+ATANFULL	Function	2	keywords107.ini	(Distance X, Distance Y)
+ATTACH OBJECT TO STATIC	Command	1	keywords107.ini	Object Number
+AUTOCAM OFF	Command	0	keywords107.ini	*no parameters*
+AUTOCAM ON	Command	0	keywords107.ini	*no parameters*
+AUTOMATIC CAMERA COLLISION	Command	3,4	keywords107.ini	[Camera Number, Radius, Response][Camera Number, Radius, Response, Stand Ground Mode]
+AUTOMATIC OBJECT COLLISION	Command	3	keywords107.ini	Object Number, Radius, Response
+BACKDROP OFF	Command	0,1	keywords107.ini	[*no parameters*][Camera Number]
+BACKDROP ON	Command	0,1	keywords107.ini	[*no parameters*][Camera Number]
+BCC VECTOR2	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, FValue, GBValue
+BCC VECTOR3	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, FValue, GBValue
+BCC VECTOR4	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, FValue, GBValue
+BIN$	Function	1	keywords107.ini	(Value)
+BITMAP DEPTH	Function	0,1	keywords107.ini	[(Bitmap Number)][()]
+BITMAP EXIST	Function	0,1	keywords107.ini	[(Bitmap Number)][()]
+BITMAP FLIPPED	Function	0,1	keywords107.ini	[(Bitmap Number)][()]
+BITMAP HEIGHT	Function	0,1	keywords107.ini	[(Bitmap Number)][()]
+BITMAP MIRRORED	Function	0,1	keywords107.ini	[(Bitmap Number)][()]
+BITMAP WIDTH	Function	0,1	keywords107.ini	[(Bitmap Number)][()]
+BLITSYSTOLOCAL AVAILABLE	Function	0	keywords107.ini	*no parameters*
+BLUR BITMAP	Command	2	keywords107.ini	Bitmap Number,Blur Value
+BOOLEAN	Statement	1	Keywords100.ini	Range = 0..1
+BOX	Command	4,8	keywords107.ini	[Left,Top,Right,Bottom][Left, Top, Right, Bottom, Color1, Color2, Color3, Color4]
+BREAK	Command	0,1	keywords107.ini	[*no parameters*][Debug String]
+BSP COLLISION HIT	Function	1	keywords107.ini	(Collision Index)
+BSP COLLISION X	Function	1	keywords107.ini	(Collision Index)
+BSP COLLISION Y	Function	1	keywords107.ini	(Collision Index)
+BSP COLLISION Z	Function	1	keywords107.ini	(Collision Index)
+BUILD FOV LHMATRIX4	Command	5	keywords107.ini	Matrix4Result, FOV, Aspect, Near, Far
+BUILD FOV RHMATRIX4	Command	5	keywords107.ini	Matrix4Result, FOV, Aspect, Near, Far
+BUILD LOOKAT LHMATRIX4	Command	4	keywords107.ini	Matrix4Result, Vector3Eye, Vector3At, Vector3Up
+BUILD LOOKAT RHMATRIX4	Command	4	keywords107.ini	Matrix4Result, Vector3Eye, Vector3At, Vector3Up
+BUILD ORTHO LHMATRIX4	Command	5	keywords107.ini	Matrix4Result, Width, Height, Near, Far
+BUILD ORTHO RHMATRIX4	Command	5	keywords107.ini	Matrix4Result, Width, Height, Near, Far
+BUILD PERSPECTIVE LHMATRIX4	Command	5	keywords107.ini	Matrix4Result, Width, Height, Near, Far
+BUILD PERSPECTIVE RHMATRIX4	Command	5	keywords107.ini	Matrix4Result, Width, Height, Near, Far
+BUILD REFLECTION MATRIX4	Command	5	keywords107.ini	Matrix4Result, PlaneA, PlaneB, PlaneC, PlaneD
+BUILD ROTATION AXIS MATRIX4	Command	3	keywords107.ini	Matrix4Result, Vector3Axis, Angle
+BUILD STATIC PORTALS	Command	0	keywords107.ini	*no parameters*
+BUILD TERRAIN	Command		keywordsAT.ini	-
+BYTE	Statement	1	Keywords100.ini	Range = 0..255
+CALCULATE AUTOMATIC COLLISION	Command	0	keywords107.ini	*no parameters*
+CALCULATE OBJECT BOUNDS	Command	1	keywords107.ini	Integer Value
+CALIBRATEGAMMA AVAILABLE	Function	0	keywords107.ini	*no parameters*
+CALL DLL	Command	2,3	keywords107.ini	[DLL Number, Function Name][DLL Number, Function Name, [ Params ]][DLL Number, Function Name)][DLL Number, Function Name, [ Params ])]
+CALL DLL X	Command	4	keywords107.ini	DLL Number, Function Name, Parameter Pointer, Number Of Params)
+CAMERA ANGLE X	Function	0,1	keywords107.ini	[*no parameters*][(Camera Number)]
+CAMERA ANGLE Y	Function	0,1	keywords107.ini	[*no parameters*][(Camera Number)]
+CAMERA ANGLE Z	Function	0,1	keywords107.ini	[*no parameters*][(Camera Number)]
+CAMERA EXIST	Function	1	keywords107.ini	(Camera Number)
+CAMERA POSITION X	Function	0,1	keywords107.ini	[*no parameters*][(Camera Number)]
+CAMERA POSITION Y	Function	0,1	keywords107.ini	[*no parameters*][(Camera Number)]
+CAMERA POSITION Z	Function	0,1	keywords107.ini	[*no parameters*][(Camera Number)]
+CAN MAKE FILE	Function	1	keywords107.ini	(Filename)
+CASE	Statement	1	keywords107.ini	Data
+CASE DEFAULT	Statement	0	keywords107.ini	*no parameters*
+CATMULLROM VECTOR2	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, VectorD, Value
+CATMULLROM VECTOR3	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, VectorD, Value
+CATMULLROM VECTOR4	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, VectorD, Value
+CCW VECTOR2	Function	2	keywords107.ini	(VectorA, VectorB)
+CD	Command	1	keywords107.ini	Path$
+CEIL	Function	1	keywords107.ini	(Value)
+CENTER TEXT	Command	3	keywords107.ini	X,Y,String
+CHANGE MESH	Command	3	keywords107.ini	Object Number, Limb Number, Mesh Number
+CHANGE MESH FROM MEMBLOCK	Command	2	keywords107.ini	Mesh Number,Memblock Number
+CHANGE MOUSE	Command	1,2	Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK/Input/Input.rc,keywords107.ini	Cursor Number | Cursor Number, Touch Friendly
+CHECK DISPLAY MODE	Function	3,6	keywords107.ini	[(Width, Height, Depth)][(Width, Height, Depth, VSyncOn, Multisampling Factor, Multimonitor Mode)]
+CHECK LIMB LINK	Function	2	keywords107.ini	(Object Number, Limb Number)
+CHECKLIST FVALUE A	Function	1	keywords107.ini	(Index)
+CHECKLIST FVALUE B	Function	1	keywords107.ini	(Index)
+CHECKLIST FVALUE C	Function	1	keywords107.ini	(Index)
+CHECKLIST FVALUE D	Function	1	keywords107.ini	(Index)
+CHECKLIST QUANTITY	Function	0	keywords107.ini	*no parameters*
+CHECKLIST STRING$	Function	1	keywords107.ini	(Integer Value)
+CHECKLIST VALUE A	Function	1	keywords107.ini	(Integer Value)
+CHECKLIST VALUE B	Function	1	keywords107.ini	(Integer Value)
+CHECKLIST VALUE C	Function	1	keywords107.ini	(Integer Value)
+CHECKLIST VALUE D	Function	1	keywords107.ini	(Integer Value)
+CHR$	Function	1	keywords107.ini	(Value)
+CIRCLE	Command	3	keywords107.ini	X,Y,Radius
+CL$	Function	0	keywords107.ini	*no parameters*
+CLEAR CAMERA VIEW	Command	1,2	keywords107.ini	[Color Value][Camera Number, Color Value]
+CLEAR ENTRY BUFFER	Command	0	keywords107.ini	*no parameters*
+CLIPANDSCALEPOINTS AVAILABLE	Function	0	keywords107.ini	*no parameters*
+CLIPTLVERTS AVAILABLE	Function	0	keywords107.ini	*no parameters*
+CLONE OBJECT	Command	2,3	keywords107.ini	[Object Number, Source Object][Object Number, Source Object, Share Original Data]
+CLONE SOUND	Command	2	keywords107.ini	Destination Sound,Source Sound
+CLONE SPRITE	Command	2	keywords107.ini	Sprite Number, Destination Sprite Number
+CLOSE FILE	Command	1	keywords107.ini	File Number
+CLOSE IMAGEBLOCK	Command	0	keywords107.ini	*no parameters*
+CLS	Command	0,1	Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK/Basic2D/Basic2D.rc,keywords107.ini	*no parameters* | Color Value
+COLOR AMBIENT LIGHT	Command	1	keywords107.ini	Color Value
+COLOR BACKDROP	Command	1,2	keywords107.ini	[Color Value][Camera Number, Color Value]
+COLOR LIGHT	Command	2,4	keywords107.ini	[Light Number, Color Value][Light Number, Red, Green, Blue]
+COLOR LIMB	Command	3	keywords107.ini	Object Number, Limb Number, Color Value
+COLOR OBJECT	Command	2	keywords107.ini	Object Number, Color Value
+COLOR PARTICLES	Command	4	keywords107.ini	Particle Number, Red, Green, Blue
+COLORPERSPECTIVE AVAILABLE	Function	0	keywords107.ini	*no parameters*
+COLORWRITEENABLE AVAILABLE	Function	0	keywords107.ini	*no parameters*
+COMPARE CASE$	Function	2	keywords107.ini	(string A, string B)
+CONTROL CAMERA USING ARROWKEYS	Command	3	keywords107.ini	Camera Number, MoveSpeed, TurnSpeed
+CONTROL DEVICE INDEX	Function	0	keywords107.ini	*no parameters*
+CONTROL DEVICE NAME$	Function	0	keywords107.ini	*no parameters*
+CONTROL DEVICE X	Function	0	keywords107.ini	*no parameters*
+CONTROL DEVICE Y	Function	0	keywords107.ini	*no parameters*
+CONTROL DEVICE Z	Function	0	keywords107.ini	*no parameters*
+CONTROLKEY	Function	0	keywords107.ini	*no parameters*
+CONVERT MESH TO VERTEXDATA	Command	1	keywords107.ini	Mesh Number
+CONVERT OBJECT FVF	Command	2	keywords107.ini	Object Number, FVF Format
+COPY BITMAP	Command	2,10	keywords107.ini	[From Bitmap,To Bitmap][From Bitmap,Left,Top,Right,Bottom,To Bitmap,Left,Top,Right,Bottom]
+COPY FILE	Command	2	keywords107.ini	Source Filename, Destination Filename
+COPY MATRIX4	Command	2	keywords107.ini	Matrix4Result, Matrix4Source
+COPY MEMBLOCK	Command	5	keywords107.ini	From,To,PosFrom,PosTo,Bytes
+COPY MEMORY	Command	3	keywords107.ini	Memory Destination, Memory Source, Size In Bytes
+COPY VECTOR2	Command	2	keywords107.ini	VectorResult, VectorSource
+COPY VECTOR3	Command	2	keywords107.ini	VectorResult, VectorSource
+COPY VECTOR4	Command	2	keywords107.ini	VectorResult, VectorSource
+COS	Function	1	keywords107.ini	(Value)
+CREATE ANIMATED SPRITE	Command	5	keywords107.ini	Sprite Number, Filename, Across, Down, Image Number
+CREATE BITMAP	Command	3,4	keywords107.ini	[Bitmap Number,Width,Height][Bitmap Number,Width,Height,SystemMemoryMode]
+CREATE LIGHT MAPS	Command	3	keywords107.ini	Texture Size, Texture Quality, LightMapSavePath
+CREATE NET GAME	Command	3,4	keywords107.ini	[Gamename, Playername, Number Of Players][Gamename, Playername, Number Of Players, Flag]
+CREATE NET PLAYER	Function	1	keywords107.ini	[Playername][(Playername)]
+CREATE PIXEL SHADER FROM FILE	Command	2	keywords107.ini	PixelShader Number, Shader Filename
+CREATE VERTEX SHADER FROM FILE	Command	2	keywords107.ini	VertexShader Number, Shader Filename
+CROSS PRODUCT VECTOR3	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+CUBEMAP AVAILABLE	Function	0	keywords107.ini	*no parameters*
+CULLCCW AVAILABLE	Function	0	keywords107.ini	*no parameters*
+CULLCW AVAILABLE	Function	0	keywords107.ini	*no parameters*
+CURRENT BITMAP	Function	0	keywords107.ini	*no parameters*
+CURRENT GRAPHICS CARD$	Function	0	keywords107.ini	*no parameters*
+CURVEANGLE	Function	3	keywords107.ini	(Destination Value, Current Value, Speed Value)
+CURVEVALUE	Function	3	keywords107.ini	(Destination Value, Current Value, Speed Value)
+DATA	Command		keywords107.ini	Data Statements
+DEC	Statement	2	keywords107.ini	Variable, Value
+DEFAULT NET GAME	Function	4	keywords107.ini	(Gamename, Playername, Number Of Players, Game Type)
+DELETE ANIMATION	Command	1	keywords107.ini	Animation Number
+DELETE BITMAP	Command	1	keywords107.ini	Bitmap Number
+DELETE BSP	Command	0	keywords107.ini	*no parameters*
+DELETE CAMERA	Command	1	keywords107.ini	Camera Number
+DELETE DIRECTORY	Command	1	keywords107.ini	Directory Name
+DELETE DLL	Command	1	keywords107.ini	DLL Number
+DELETE EFFECT	Command	1	keywords107.ini	Effect Number
+DELETE FILE	Command	1	keywords107.ini	Filename
+DELETE ICON	Command	1	keywords107.ini	Icon Handle
+DELETE IMAGE	Command	1	keywords107.ini	Image Number
+DELETE LIGHT	Command	1	keywords107.ini	Light Number
+DELETE LIGHT MAP LIGHTS	Command	0	keywords107.ini	*no parameters*
+DELETE MATRIX	Command	1	keywords107.ini	Matrix Number
+DELETE MATRIX4	Command	1	keywords107.ini	(Matrix4Result)
+DELETE MEMBLOCK	Command	1	keywords107.ini	Memblock Number
+DELETE MEMBLOCK FROM OBJECT	Command	1	keywords107.ini	Object Number
+DELETE MEMORY	Command	1	keywords107.ini	Memory Address
+DELETE MESH	Command	1	keywords107.ini	Mesh Number
+DELETE MESH FROM VERTEXDATA	Command	4	keywords107.ini	Vertex Start, Vertex End, Index Start, Index End
+DELETE MUSIC	Command	1	keywords107.ini	Music Number
+DELETE OBJECT	Command	1	keywords107.ini	Object Number
+DELETE OBJECT COLLISION BOX	Command	1	keywords107.ini	Object Number
+DELETE OBJECTS	Command	2	keywords107.ini	From, To
+DELETE PARTICLES	Command	1	keywords107.ini	Particle Number
+DELETE PIXEL SHADER	Command	1	keywords107.ini	PixelShader Number
+DELETE SOUND	Command	1	keywords107.ini	Sound Number
+DELETE SPRITE	Command	1	keywords107.ini	Sprite Number
+DELETE STATIC OBJECT	Command	1	keywords107.ini	Object Number
+DELETE STATIC OBJECTS	Command	0	keywords107.ini	*no parameters*
+DELETE TERRAIN	Command	1	keywords107.ini	Terrain Number
+DELETE VECTOR2	Command	1	keywords107.ini	(Vector)
+DELETE VECTOR3	Command	1	keywords107.ini	(Vector)
+DELETE VECTOR4	Command	1	keywords107.ini	(Vector)
+DELETE VERTEX SHADER	Command	1	keywords107.ini	VertexShader Number
+DESKTOP HEIGHT	Function	0	keywords107.ini	*no parameters*
+DESKTOP WIDTH	Function	0	keywords107.ini	*no parameters*
+DESTROY TERRAIN	Command		keywordsAT.ini	-
+DETACH OBJECT FROM STATIC	Command	1	keywords107.ini	Object Number
+DIM	Statement	1	keywords107.ini	ArrayName(Array Dimensions)
+DIR	Command	0	keywords107.ini	*no parameters*
+DISABLE ESCAPEKEY	Command	0	keywords107.ini	*no parameters*
+DISABLE OBJECT ZBIAS	Command	1	keywords107.ini	Object Number
+DISABLE OBJECT ZDEPTH	Command	1	keywords107.ini	Object Number
+DISABLE OBJECT ZREAD	Command	1	keywords107.ini	Object Number
+DISABLE OBJECT ZWRITE	Command	1	keywords107.ini	Object Number
+DISABLE SYSTEMKEYS	Command	0	keywords107.ini	*no parameters*
+DITHER AVAILABLE	Function	0	keywords107.ini	*no parameters*
+DIVIDE MATRIX4	Command	2	keywords107.ini	Matrix4Result, Value
+DIVIDE VECTOR2	Command	2	keywords107.ini	VectorResult, Value
+DIVIDE VECTOR3	Command	2	keywords107.ini	VectorResult, Value
+DIVIDE VECTOR4	Command	2	keywords107.ini	VectorResult, Value
+DLL CALL EXIST	Function	2	keywords107.ini	(DLL Number, Function Name)
+DLL EXIST	Function	1	keywords107.ini	(DLL Number)
+DO	Statement	0	keywords107.ini	*no parameters*
+DOT	Command	2,3	keywords107.ini	[X,Y][X,Y,Color Value]
+DOT PRODUCT VECTOR2	Function	2	keywords107.ini	(VectorA, VectorB)
+DOT PRODUCT VECTOR3	Function	2	keywords107.ini	(VectorA, VectorB)
+DOUBLE FLOAT	Statement	1	Keywords100.ini	Range = 1.7E +/- 308 (15 digits)
+DOUBLE INTEGER	Statement	13	Keywords100.ini	Range = �9,223,372,036,854,775,808..9,223,372,036,854,775,807
+DOWNKEY	Function	0	keywords107.ini	*no parameters*
+DRAW SPRITES FIRST	Command	0	keywords107.ini	*no parameters*
+DRAW SPRITES LAST	Command	0	keywords107.ini	*no parameters*
+DRAW TO BACK	Command	0	keywords107.ini	*no parameters*
+DRAW TO CAMERA	Command	0	keywords107.ini	*no parameters*
+DRAW TO FRONT	Command	0	keywords107.ini	*no parameters*
+DRAW TO SCREEN	Command	0	keywords107.ini	*no parameters*
+DRIVELIST	Command	0	keywords107.ini	*no parameters*
+DWORD	Statement	4	Keywords100.ini	Range = 0..4,294,967,295
+EFFECT EXIST	Function	1	keywords107.ini	(Effect Number)
+ELLIPSE	Command	4	keywords107.ini	X,Y,X Radius,Y Radius
+ELSE	Statement	0	keywords107.ini	*no parameters*
+EMPTY ARRAY	Command	1	keywords107.ini	Array Name(0)
+EMPTY CHECKLIST	Command	0	keywords107.ini	*no parameters*
+ENABLE ESCAPEKEY	Command	0	keywords107.ini	*no parameters*
+ENABLE OBJECT ZBIAS	Command	3	keywords107.ini	Object Number, Slope Scale, Depth
+ENABLE OBJECT ZDEPTH	Command	1	keywords107.ini	Object Number
+ENABLE OBJECT ZREAD	Command	1	keywords107.ini	Object Number
+ENABLE OBJECT ZWRITE	Command	1	keywords107.ini	Object Number
+ENABLE SYSTEMKEYS	Command	0	keywords107.ini	*no parameters*
+END	Statement	0	keywords107.ini	*no parameters*
+ENDCASE	Statement	0	keywords107.ini	*no parameters*
+ENDFUNCTION	Statement		keywords107.ini	Variable
+ENDIF	Statement	0	keywords107.ini	*no parameters*
+ENDSELECT	Statement	0	keywords107.ini	*no parameters*
+ENDTYPE	Statement	0	Keywords100.ini	*no parameters*
+ENDWHILE	Statement	0	keywords107.ini	*no parameters*
+ENTRY$	Function	0,1	keywords107.ini	[*no parameters*][(Auto Backspace Mode)]
+ESCAPEKEY	Function	0	keywords107.ini	*no parameters*
+EXCLUDE FROM IMAGEBLOCK	Command	1	keywords107.ini	Exclude Path
+EXCLUDE LIMB OFF	Command	2	keywords107.ini	Object ID, Limb Number
+EXCLUDE LIMB ON	Command	2	keywords107.ini	Object ID, Limb Number
+EXCLUDE OBJECT OFF	Command	1	keywords107.ini	Object ID
+EXCLUDE OBJECT ON	Command	1	keywords107.ini	Object ID
+EXECUTABLE RUNNING	Function	1	keywords107.ini	(Executable ID)
+EXECUTE EXECUTABLE	Function	3,4	keywords107.ini	[(Filename, Commandline, Directory)][(Filename, Commandline, Directory, Priority)]
+EXECUTE FILE	Command	3,4	keywords107.ini	[Filename, Commandline, Directory][Filename, Commandline, Directory, Wait Flag]
+EXIT	Statement	0	keywords107.ini	*no parameters*
+EXIT PROMPT	Command	2	keywords107.ini	Message String, Caption String
+EXITFUNCTION	Statement		keywords107.ini	Variable
+EXP	Function	1	keywords107.ini	(Value)
+FADE BITMAP	Command	2	keywords107.ini	Bitmap Number,Fade Value
+FADE OBJECT	Command	2	keywords107.ini	Object Number, Fade Value
+FASTSYNC	Command	0,1	keywords107.ini	[*no parameters*][Non Display Update Flag]
+FILE END	Function	1	keywords107.ini	(File Number)
+FILE EXIST	Function	1	keywords107.ini	(Filename)
+FILE OPEN	Function	1	keywords107.ini	(File Number)
+FILE SIZE	Function	1	keywords107.ini	(Filename)
+FILL MATRIX	Command	3	keywords107.ini	Matrix Number, Height, Tile Number
+FILL MEMORY	Command	3	keywords107.ini	Memory Address, FillByte, Size In Bytes
+FILTERING AVAILABLE	Function	0	keywords107.ini	*no parameters*
+FIND FIRST	Command	0	keywords107.ini	*no parameters*
+FIND FIRST CHAR$	Function	2	keywords107.ini	(source, char)
+FIND LAST CHAR$	Function	2	keywords107.ini	(source, char)
+FIND NEXT	Command	0	keywords107.ini	*no parameters*
+FIND SUB STRING$	Function	2	keywords107.ini	(source, string)
+FIRST TOKEN$	Function	2	keywords107.ini	(source, delim)
+FIX OBJECT PIVOT	Command	1	keywords107.ini	Object Number
+FLIP BITMAP	Command	1	keywords107.ini	Bitmap Number
+FLIP SPRITE	Command	1	keywords107.ini	Sprite Number
+FLOAT	Statement	1	Keywords100.ini	Range = 3.4E +/- 38 (7 digits)
+FLOOR	Function	1	keywords107.ini	(Value)
+FLUSH LIGHT MAPS	Command	0	keywords107.ini	*no parameters*
+FLUSH VIDEO MEMORY	Command	0	keywords107.ini	*no parameters*
+FOG AVAILABLE	Function	0	keywords107.ini	*no parameters*
+FOG COLOR	Command	1,3	keywords107.ini	[Color Value][Red, Green, Blue]
+FOG DISTANCE	Command	1,2	keywords107.ini	[Distance][Start Distance, End Distance]
+FOG OFF	Command	0	keywords107.ini	*no parameters*
+FOG ON	Command	0	keywords107.ini	*no parameters*
+FOGRANGE AVAILABLE	Function	0	keywords107.ini	*no parameters*
+FOGTABLE AVAILABLE	Function	0	keywords107.ini	*no parameters*
+FOGVERTEX AVAILABLE	Function	0	keywords107.ini	*no parameters*
+FOR	Statement	1	keywords107.ini	rt-Value TO End-Value STEP Step-Value
+FORCE ANGLE	Command	3	keywords107.ini	Magnitude Value, Angle Value, Delay Value
+FORCE AUTO CENTER OFF	Command	0	keywords107.ini	*no parameters*
+FORCE AUTO CENTER ON	Command	0	keywords107.ini	*no parameters*
+FORCE CHAINSAW	Command	2	keywords107.ini	Magnitude Value, Delay Value
+FORCE DOWN	Command	1	keywords107.ini	Magnitude Value
+FORCE IMPACT	Command	2	keywords107.ini	Magnitude Value, Delay Value
+FORCE LEFT	Command	1	keywords107.ini	Magnitude Value
+FORCE NO EFFECT	Command	0	keywords107.ini	*no parameters*
+FORCE RIGHT	Command	1	keywords107.ini	Magnitude Value
+FORCE SHOOT	Command	2	keywords107.ini	Magnitude Value, Delay Value
+FORCE UP	Command	1	keywords107.ini	Magnitude Value
+FORCE WATER EFFECT	Command	2	keywords107.ini	Magnitude Value, Delay Value
+FREE NET GAME	Command	0	keywords107.ini	*no parameters*
+FREE NET PLAYER	Command	1	keywords107.ini	Player Number
+FREE STRING$	Function	0	keywords107.ini	*no parameters*
+FTP CONNECT	Command	3,4	keywords107.ini	[Url String, User String, Password String][Url String, User String, Password String, Window Mode]
+FTP DELETE FILE	Command	1	keywords107.ini	Ftp Filename String
+FTP DISCONNECT	Command	0,1	keywords107.ini	[*no parameters*][Dial-Up-Disconnect Flag]
+FTP FIND FIRST	Command	0	keywords107.ini	*no parameters*
+FTP FIND NEXT	Command	0	keywords107.ini	*no parameters*
+FTP GET FILE	Command	1,3	keywords107.ini	[Ftp Filename String][Ftp Filename String, Local Filename String, GrabInBits Flag]
+FTP PROCEED	Command	0	keywords107.ini	*no parameters*
+FTP PUT FILE	Command	1	keywords107.ini	Local Filename String
+FTP SET DIR	Command	1	keywords107.ini	Directory String
+FTP TERMINATE	Command	0	keywords107.ini	*no parameters*
+FULLSCREENGAMMA AVAILABLE	Function	0	keywords107.ini	*no parameters*
+FUNCTION	Statement	1	keywords107.ini	FunctionName(Function Parameters)
+GET ARRAY TYPE	Function	1	keywords107.ini	(Array Name(0))
+GET BACKBUFFER DEPTH	Function	0	keywords107.ini	*no parameters*
+GET BACKBUFFER HEIGHT	Function	0	keywords107.ini	*no parameters*
+GET BACKBUFFER PITCH	Function	0	keywords107.ini	*no parameters*
+GET BACKBUFFER PTR	Function	0	keywords107.ini	*no parameters*
+GET BACKBUFFER WIDTH	Function	0	keywords107.ini	*no parameters*
+GET CLIPBOARD$	Function	0	keywords107.ini	*no parameters*
+GET DATE$	Function	0	keywords107.ini	*no parameters*
+GET DEVICE TYPE	Function	0	keywords107.ini	*no parameters*
+GET DIR$	Function	0	keywords107.ini	*no parameters*
+GET DX VERSION$	Function	0	keywords107.ini	*no parameters*
+GET FILE CREATION$	Function	0	keywords107.ini	*no parameters*
+GET FILE DATE$	Function	0	keywords107.ini	*no parameters*
+GET FILE NAME$	Function	0	keywords107.ini	*no parameters*
+GET FILE TYPE	Function	0	keywords107.ini	*no parameters*
+GET FTP DIR$	Function	0	keywords107.ini	*no parameters*
+GET FTP ERROR$	Function	0	keywords107.ini	*no parameters*
+GET FTP FAILURE	Function	0	keywords107.ini	*no parameters*
+GET FTP FILE NAME$	Function	0	keywords107.ini	*no parameters*
+GET FTP FILE SIZE	Function	0	keywords107.ini	*no parameters*
+GET FTP FILE TYPE	Function	0	keywords107.ini	*no parameters*
+GET FTP PROGRESS	Function	0	keywords107.ini	*no parameters*
+GET FTP STATUS	Function	0	keywords107.ini	*no parameters*
+GET GROUND HEIGHT	Function	3	keywords107.ini	(Matrix Number, X, Z)
+GET IMAGE	Command	5,6	keywords107.ini	[Image Number, Left, Top, Right, Bottom][Image Number, Left, Top, Right, Bottom, Texture Flag]
+GET INDEXDATA	Function	1	keywords107.ini	(Index Number)
+GET KEY STATE	Function	1	keywords107.ini	(Virtual Key Value)
+GET MATRIX HEIGHT	Function	3	keywords107.ini	(Matrix Number, TileX, TileZ)
+GET MATRIX4 ELEMENT	Function	2	keywords107.ini	(Matrix4Result, Element Index)
+GET MAXIMUM LIGHTS	Function	0	keywords107.ini	*no parameters*
+GET MAXIMUM PIXEL SHADER VALUE	Function	0	keywords107.ini	*no parameters*
+GET MAXIMUM PIXEL SHADER VERSION	Function	0	keywords107.ini	*no parameters*
+GET MAXIMUM TEXTURE HEIGHT	Function	0	keywords107.ini	*no parameters*
+GET MAXIMUM TEXTURE WIDTH	Function	0	keywords107.ini	*no parameters*
+GET MAXIMUM VERTEX SHADER CONSTANTS	Function	0	keywords107.ini	*no parameters*
+GET MAXIMUM VERTEX SHADER VERSION	Function	0	keywords107.ini	*no parameters*
+GET MAXIMUM VOLUME EXTENT	Function	0	keywords107.ini	*no parameters*
+GET MEMBLOCK FROM OBJECT	Function	2	keywords107.ini	memblock Number, Object Number
+GET MEMBLOCK PTR	Function	1	keywords107.ini	(Memblock Number)
+GET MEMBLOCK SIZE	Function	1	keywords107.ini	(Memblock Number)
+GET NET MESSAGE	Command	0	keywords107.ini	*no parameters*
+GET NUMBER OF CD TRACKS	Function	0	keywords107.ini	*no parameters*
+GET OBJECT COLLISION X	Function	0	keywords107.ini	*no parameters*
+GET OBJECT COLLISION Y	Function	0	keywords107.ini	*no parameters*
+GET OBJECT COLLISION Z	Function	0	keywords107.ini	*no parameters*
+GET PICK DISTANCE	Function	0	keywords107.ini	*no parameters*
+GET PICK VECTOR X	Function	0	keywords107.ini	*no parameters*
+GET PICK VECTOR Y	Function	0	keywords107.ini	*no parameters*
+GET PICK VECTOR Z	Function	0	keywords107.ini	*no parameters*
+GET PIXELS PITCH	Function	0	keywords107.ini	*no parameters*
+GET PIXELS POINTER	Function	0	keywords107.ini	*no parameters*
+GET REGISTRY	Function	2	keywords107.ini	(Folder Name, Key Name)
+GET REGISTRY$	Function	2	keywords107.ini	(Folder Name, Key Name)
+GET STATIC COLLISION COUNT	Function	0	keywords107.ini	*no parameters*
+GET STATIC COLLISION FLOOR	Function	0	keywords107.ini	*no parameters*
+GET STATIC COLLISION HIT	Function	12	keywords107.ini	(OX1, OY1, OZ1, OX2, OY2, OZ2, NX1, NY1, NZ1, NX2, NY2, NZ2)
+GET STATIC COLLISION VALUE	Function	0	keywords107.ini	*no parameters*
+GET STATIC COLLISION X	Function	0	keywords107.ini	*no parameters*
+GET STATIC COLLISION Y	Function	0	keywords107.ini	*no parameters*
+GET STATIC COLLISION Z	Function	0	keywords107.ini	*no parameters*
+GET TERRAIN GROUND HEIGHT	Function		keywordsAT.ini	-
+GET TERRAIN HEIGHT	Function	3	keywords107.ini	(Terrain Number, X, Z)
+GET TERRAIN X SIZE	Function		keywordsAT.ini	-
+GET TERRAIN Z SIZE	Function		keywordsAT.ini	-
+GET TIME$	Function	0	keywords107.ini	*no parameters*
+GET TOTAL TERRAIN HEIGHT	Function	1	keywords107.ini	(Terrain Number)
+GET TYPE PATTERN$	Function	1,2	keywords107.ini	[(Type Name$)][(Type Name$,Type Index)]
+GET VERTEXDATA DIFFUSE	Function	1	keywords107.ini	(Vertex Index)
+GET VERTEXDATA INDEX COUNT	Function	0	keywords107.ini	*no parameters*
+GET VERTEXDATA NORMALS X	Function	1	keywords107.ini	(Vertex Index)
+GET VERTEXDATA NORMALS Y	Function	1	keywords107.ini	(Vertex Index)
+GET VERTEXDATA NORMALS Z	Function	1	keywords107.ini	(Vertex Index)
+GET VERTEXDATA POSITION X	Function	1	keywords107.ini	(Vertex Index)
+GET VERTEXDATA POSITION Y	Function	1	keywords107.ini	(Vertex Index)
+GET VERTEXDATA POSITION Z	Function	1	keywords107.ini	(Vertex Index)
+GET VERTEXDATA PTR	Function	0	keywords107.ini	*no parameters*
+GET VERTEXDATA U	Function	1,2	keywords107.ini	[(Vertex Index)][(Vertex Index, Stage Number)]
+GET VERTEXDATA V	Function	1,2	keywords107.ini	[(Vertex Index)][(Vertex Index, Stage Number)]
+GET VERTEXDATA VERTEX COUNT	Function	0	keywords107.ini	*no parameters*
+GHOST MATRIX OFF	Command	1	keywords107.ini	Matrix Number
+GHOST MATRIX ON	Command	1,2	keywords107.ini	[Matrix Number][Matrix Number, Mode]
+GHOST OBJECT OFF	Command	1	keywords107.ini	Object Number
+GHOST OBJECT ON	Command	1,2	keywords107.ini	[Object Number][Object Number, Ghost Effect]
+GHOST PARTICLES OFF	Command	1	keywords107.ini	Particle Number
+GHOST PARTICLES ON	Command	2,3	keywords107.ini	[Particle Number, Ghost Mode][Particle Number, Ghost Mode, Percentage]
+GLOBAL	Statement	1	Keywords100.ini	Variable Name
+GLUE OBJECT TO LIMB	Command	3,4	keywords107.ini	[Object Number, Second Object, Limb Number][Object Number, Second Object, Limb Number, Glue Mode]
+GOSUB	Statement	1	keywords107.ini	SubroutineLabel
+GOTO	Statement	1	keywords107.ini	JumpLabel
+HCOS	Function	1	keywords107.ini	(Value)
+HERMITE VECTOR2	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, VectorD, SValue
+HERMITE VECTOR3	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, VectorD, SValue
+HERMITE VECTOR4	Command	6	keywords107.ini	VectorResult, VectorA, VectorB, VectorC, VectorD, SValue
+HEX$	Function	1	keywords107.ini	(Value)
+HIDE ALL SPRITES	Command	0	keywords107.ini	*no parameters*
+HIDE LIGHT	Command	1	keywords107.ini	Light Number
+HIDE LIMB	Command	2	keywords107.ini	Object Number, Limb Number
+HIDE MOUSE	Command	0	keywords107.ini	*no parameters*
+HIDE OBJECT	Command	1	keywords107.ini	Object Number
+HIDE OBJECT BOUNDS	Command	1	keywords107.ini	Object Number
+HIDE PARTICLES	Command	1	keywords107.ini	Particle Number
+HIDE SPRITE	Command	1	keywords107.ini	Sprite Number
+HIDE WINDOW	Command	0	keywords107.ini	*no parameters*
+HSIN	Function	1	keywords107.ini	(Value)
+HTAN	Function	1	keywords107.ini	(Value)
+HTTP CONNECT	Command	1	keywords107.ini	URL String
+HTTP DISCONNECT	Command	0	keywords107.ini	*no parameters*
+HTTP REQUEST DATA	Function	3	keywords107.ini	(Verb, Object, String To Send)
+IF	Statement	1	keywords107.ini	Condition
+IMAGE EXIST	Function	1	keywords107.ini	(Image Number)
+IMAGE FILE EXIST	Function	1	keywords107.ini	(Filename)
+IMAGE HEIGHT	Function	1	keywords107.ini	(Image Number)
+IMAGE WIDTH	Function	1	keywords107.ini	(Image Number)
+INC	Statement	2	keywords107.ini	Variable, Value
+INK	Command	2	keywords107.ini	Foreground Color,Background Color
+INKEY$	Function	0	keywords107.ini	*no parameters*
+INPUT	Command	2	keywords107.ini	Print Statements, Input Variable
+INSTANCE OBJECT	Command	2	keywords107.ini	Object Number, Source Object
+INT	Function	1	keywords107.ini	(Value)
+INTEGER	Statement	7	Keywords100.ini	Range = �2,147,483,648..2,147,483,647
+INTERSECT OBJECT	Function	7	keywords107.ini	(Object Number, X, Y, Z, ToX, ToY, ToZ)
+INVERSE MATRIX4	Function	2	keywords107.ini	(Matrix4Result, Matrix4Source)
+IS EQUAL MATRIX4	Function	2	keywords107.ini	(Matrix4A, Matrix4B)
+IS EQUAL VECTOR2	Function	2	keywords107.ini	(VectorA, VectorB)
+IS EQUAL VECTOR3	Function	2	keywords107.ini	(VectorA, VectorB)
+IS EQUAL VECTOR4	Function	2	keywords107.ini	(VectorA, VectorB)
+IS IDENTITY MATRIX4	Function	1	keywords107.ini	(Matrix4Result)
+JOIN NET GAME	Command	2	keywords107.ini	Session Number, Playername
+JOYSTICK DOWN	Function	0	keywords107.ini	*no parameters*
+JOYSTICK FIRE A	Function	0	keywords107.ini	*no parameters*
+JOYSTICK FIRE B	Function	0	keywords107.ini	*no parameters*
+JOYSTICK FIRE C	Function	0	keywords107.ini	*no parameters*
+JOYSTICK FIRE D	Function	0	keywords107.ini	*no parameters*
+JOYSTICK FIRE X	Function	1	keywords107.ini	(Button Number)
+JOYSTICK HAT ANGLE	Function	1	keywords107.ini	(Hat Number)
+JOYSTICK INFORMATION	Function	1	keywords107.ini	(Integer Value)
+JOYSTICK LEFT	Function	0	keywords107.ini	*no parameters*
+JOYSTICK RIGHT	Function	0	keywords107.ini	*no parameters*
+JOYSTICK SLIDER A	Function	0	keywords107.ini	*no parameters*
+JOYSTICK SLIDER B	Function	0	keywords107.ini	*no parameters*
+JOYSTICK SLIDER C	Function	0	keywords107.ini	*no parameters*
+JOYSTICK SLIDER D	Function	0	keywords107.ini	*no parameters*
+JOYSTICK TWIST X	Function	0	keywords107.ini	*no parameters*
+JOYSTICK TWIST Y	Function	0	keywords107.ini	*no parameters*
+JOYSTICK TWIST Z	Function	0	keywords107.ini	*no parameters*
+JOYSTICK UP	Function	0	keywords107.ini	*no parameters*
+JOYSTICK X	Function	0	keywords107.ini	*no parameters*
+JOYSTICK Y	Function	0	keywords107.ini	*no parameters*
+JOYSTICK Z	Function	0	keywords107.ini	*no parameters*
+KEYSTATE	Function	1	keywords107.ini	(Scancode)
+LEFT$	Function	2	keywords107.ini	(String,Value)
+LEFTKEY	Function	0	keywords107.ini	*no parameters*
+LEN	Function	1	keywords107.ini	(String)
+LENGTH VECTOR2	Function	1	keywords107.ini	(Vector)
+LENGTH VECTOR3	Function	1	keywords107.ini	(Vector)
+LENGTH VECTOR4	Function	1	keywords107.ini	(Vector)
+LIGHT DIRECTION X	Function	1	keywords107.ini	(Light Number)
+LIGHT DIRECTION Y	Function	1	keywords107.ini	(Light Number)
+LIGHT DIRECTION Z	Function	1	keywords107.ini	(Light Number)
+LIGHT EXIST	Function	1	keywords107.ini	(Light Number)
+LIGHT POSITION X	Function	1	keywords107.ini	(Light Number)
+LIGHT POSITION Y	Function	1	keywords107.ini	(Light Number)
+LIGHT POSITION Z	Function	1	keywords107.ini	(Light Number)
+LIGHT RANGE	Function	1	keywords107.ini	(Light Number)
+LIGHT TYPE	Function	1	keywords107.ini	(Light Number)
+LIGHT VISIBLE	Function	1	keywords107.ini	(Light Number)
+LIMB ANGLE X	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB ANGLE Y	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB ANGLE Z	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB COLLISION	Function	4	keywords107.ini	(ObjectA Number, LimbA Number, ObjectB Number, LimbB Number)
+LIMB DIRECTION X	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB DIRECTION Y	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB DIRECTION Z	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB EXIST	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB HIT	Function	4	keywords107.ini	(ObjectA Number, LimbA Number, ObjectB Number, LimbB Number)
+LIMB NAME$	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB OFFSET X	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB OFFSET Y	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB OFFSET Z	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB POSITION X	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB POSITION Y	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB POSITION Z	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB SCALE X	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB SCALE Y	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB SCALE Z	Function	2	keywords107.ini	(Object Number, Limb Number)
+LIMB TEXTURE	Function	2,3	keywords107.ini	[(Object Number, Limb Number)][(Object Number, Limb Number, Texture Stage)]
+LIMB TEXTURE NAME	Function	2,3	keywords107.ini	[(Object Number, Limb Number)][(Object Number, Limb Number, Texture Stage)]
+LIMB VISIBLE	Function	2	keywords107.ini	(Object Number, Limb Number)
+LINE	Command	4	keywords107.ini	X1,Y1,X2,Y2
+LINEAR INTERPOLATE VECTOR2	Command	4	keywords107.ini	VectorResult, VectorA, VectorB, SValue
+LINEAR INTERPOLATE VECTOR3	Command	4	keywords107.ini	VectorResult, VectorA, VectorB, SValue
+LINEAR INTERPOLATE VECTOR4	Command	4	keywords107.ini	VectorResult, VectorA, VectorB, SValue
+LINK LIMB	Command	3	keywords107.ini	Object Number, Limb Parent, Limb Child
+LISTENER ANGLE X	Function	0	keywords107.ini	*no parameters*
+LISTENER ANGLE Y	Function	0	keywords107.ini	*no parameters*
+LISTENER ANGLE Z	Function	0	keywords107.ini	*no parameters*
+LISTENER POSITION X	Function	0	keywords107.ini	*no parameters*
+LISTENER POSITION Y	Function	0	keywords107.ini	*no parameters*
+LISTENER POSITION Z	Function	0	keywords107.ini	*no parameters*
+LOAD 3DSOUND	Command	2,3,4	keywords107.ini	[Filename,Sound Number][Filename,Sound Number,Silent Fail][Filename,Sound Number,Silent Fail,Global Sound Flag]
+LOAD ANIMATION	Command	2	keywords107.ini	Filename,Animation Number
+LOAD ARRAY	Command	2	keywords107.ini	Filename, Array Name(0)
+LOAD BITMAP	Command	1,2	keywords107.ini	[Filename,Bitmap Number][Filename]
+LOAD BSP	Command	2	keywords107.ini	PK3 Filename, BSP Filename
+LOAD CDMUSIC	Command	2	keywords107.ini	Track Number,Music Number
+LOAD DLL	Command	2	keywords107.ini	DLLName, DLL Number
+LOAD DVD ANIMATION	Command	1	keywords107.ini	Animation Number
+LOAD EFFECT	Command	3,4	keywords107.ini	[Filename, Effect Number, Texture Flag, DoNotGenerateExtraData][Filename, Effect Number, Texture Flag]
+LOAD ICON	Function	1	keywords107.ini	(Icon Filename)
+LOAD IMAGE	Command	2,3,4	keywords107.ini	[Filename, Image Number][Filename, Image Number, Texture Flag][Filename, Image Number, Texture Flag, Divide Texture Size]
+LOAD MESH	Command	2	keywords107.ini	Filename, Mesh Number
+LOAD MUSIC	Command	2	keywords107.ini	Filename,Music Number
+LOAD OBJECT	Command	2,3,4	keywords107.ini	[Filename, Object Number][Filename, Object Number, DBPro Mode][Filename, Object Number, DBPro Mode, Divide Texture]
+LOAD SOUND	Command	2,3,4,5	keywords107.ini	[Filename,Sound Number][Filename,Sound Number,Flag][Filename,Sound Number,Flag,Silent Fail][Filename,Sound Number,Flag,Silent Fail,Global Sound Flag]
+LOAD STATIC OBJECTS	Command	2	keywords107.ini	Filename, Divide Texture Size
+LOAD TERRAIN	Command		keywordsAT.ini	-
+LOCAL	Statement	1	Keywords100.ini	Variable Name
+LOCK BACKBUFFER	Command	0	keywords107.ini	*no parameters*
+LOCK OBJECT OFF	Command	1	keywords107.ini	Object Number
+LOCK OBJECT ON	Command	1	keywords107.ini	Object Number
+LOCK PIXELS	Command	0	keywords107.ini	*no parameters*
+LOCK VERTEXDATA FOR LIMB	Command	2,3	keywords107.ini	[Object Number, Limb Number][Object Number, Limb Number, Lock Mode]
+LOCK VERTEXDATA FOR MESH	Command	1	keywords107.ini	Mesh Number
+LOOP	Statement	0	keywords107.ini	*no parameters*
+LOOP ANIMATION	Command	1,6	keywords107.ini	[Animation Number][Animation Number,Bitmap Number,X,Y,X,Y]
+LOOP MUSIC	Command	1	keywords107.ini	Music Number
+LOOP OBJECT	Command	1,2,3	keywords107.ini	[Object Number][Object Number, Start Frame][Object Number, Start Frame, End Frame]
+LOOP SOUND	Command	1,2,3,4	keywords107.ini	[Sound Number][Sound Number,Start Position][Sound Number,Start Position,End Position][Sound Number,Start Position,End Position,Initial Position]
+LOWER$	Function	1	keywords107.ini	(String)
+MAKE ARRAY FROM MEMBLOCK	Command	2	keywords107.ini	Array Name(0), Memblock Number
+MAKE BITMAP FROM MEMBLOCK	Command	2	keywords107.ini	Bitmap Number,Memblock Number
+MAKE CAMERA	Command	1	keywords107.ini	Camera Number
+MAKE DIRECTORY	Command	1	keywords107.ini	Directory Name
+MAKE EMITTER	Command	2	keywords107.ini	Object Number, Size
+MAKE FILE	Command	1	keywords107.ini	Filename
+MAKE FILE FROM MEMBLOCK	Command	2	keywords107.ini	File Number, Memblock Number
+MAKE FIRE PARTICLES	Command	9	keywords107.ini	Particle Number, Image Number, Frequency, X, Y, Z, Width, Height, Depth
+MAKE IMAGE FROM MEMBLOCK	Command	2	keywords107.ini	Image Number, Memblock Number
+MAKE LIGHT	Command	1	keywords107.ini	Light Number
+MAKE MATRIX	Command	5	keywords107.ini	Matrix Number, Width, Height, XSegments, ZSegments
+MAKE MATRIX4	Function	1	keywords107.ini	(Matrix4)
+MAKE MEMBLOCK	Command	2	keywords107.ini	Memblock Number, Size in Bytes
+MAKE MEMBLOCK FROM ARRAY	Command	2	keywords107.ini	Memblock Number, Array Name(0)
+MAKE MEMBLOCK FROM BITMAP	Command	2	keywords107.ini	Memblock Number, Bitmap Number
+MAKE MEMBLOCK FROM FILE	Command	2	keywords107.ini	Memblock Number, File Number
+MAKE MEMBLOCK FROM IMAGE	Command	2	keywords107.ini	Memblock Number,Image Number
+MAKE MEMBLOCK FROM MESH	Command	2	keywords107.ini	Memblock Number,Mesh Number
+MAKE MEMBLOCK FROM SOUND	Command	2	keywords107.ini	Memblock Number, Sound Number
+MAKE MEMORY	Function	1	keywords107.ini	(Size In Bytes)
+MAKE MESH FROM MEMBLOCK	Command	2	keywords107.ini	Mesh Number, Memblock Number
+MAKE MESH FROM OBJECT	Command	2,3	keywords107.ini	[Mesh Number, Object Number][Mesh Number, Object Number, Ignore Mode]
+MAKE OBJECT	Command	3	keywords107.ini	Object Number, Mesh Index, Image Number
+MAKE OBJECT BOX	Command	4	keywords107.ini	Object Number, Width, Height, Depth
+MAKE OBJECT COLLISION BOX	Command	8	keywords107.ini	Object Number, X1, Y1, Z1, X2, Y2, Z2, Collision Flag
+MAKE OBJECT CONE	Command	2	keywords107.ini	Object Number, Size
+MAKE OBJECT CUBE	Command	2	keywords107.ini	Object Number, Size
+MAKE OBJECT CYLINDER	Command	2	keywords107.ini	Object Number, Size
+MAKE OBJECT FROM LIMB	Command	3,4	keywords107.ini	[Object Number, Second Object, Limb Number][Object Number, Second Object, Limb Number, All Limbs Flag]
+MAKE OBJECT PLAIN	Command	3,4	keywords107.ini	[Object Number, Width, Height][Object Number, Width, Height, Orientation]
+MAKE OBJECT PLANE	Command	3,4	keywords107.ini	[Object Number, Width, Height][Object Number, Width, Height, Orientation]
+MAKE OBJECT SPHERE	Command	2,4	keywords107.ini	[Object Number, Size][Object Number, Size, Rows, Columns]
+MAKE OBJECT TERRAIN	Command		keywordsAT.ini	-
+MAKE OBJECT TRIANGLE	Command	10	keywords107.ini	Object Number, X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3
+MAKE PARTICLES	Command	4	keywords107.ini	Particle Number, Image Number, Frequency, Radius
+MAKE SNOW PARTICLES	Command	9	keywords107.ini	Particle Number, Image Number, Frequency, X, Y, Z, Width, Height, Depth
+MAKE SOUND FROM MEMBLOCK	Command	2	keywords107.ini	Sound Number, Memblock Number
+MAKE STATIC COLLISION BOX	Command	6	keywords107.ini	X1, Y1, Z1, X2, Y2, Z2
+MAKE STATIC LIMB	Command	6	keywords107.ini	Object Number, Limb Number, Collision, Arbitrary Value, Cast Shadow, Portal Blocker
+MAKE STATIC OBJECT	Command	5	keywords107.ini	Object Number, Collision, Arbitrary Value, Cast Shadow, Portal Blocker
+MAKE TERRAIN	Command	2	keywords107.ini	Terrain Number, Heightmap Filename
+MAKE VECTOR2	Command	1	keywords107.ini	(Vector)
+MAKE VECTOR3	Function	1	keywords107.ini	(Vector)
+MAKE VECTOR4	Command	1	keywords107.ini	(Vector)
+MATRIX EXIST	Function	1	keywords107.ini	(Matrix Number)
+MATRIX POSITION X	Function	1	keywords107.ini	(Matrix Number)
+MATRIX POSITION Y	Function	1	keywords107.ini	(Matrix Number)
+MATRIX POSITION Z	Function	1	keywords107.ini	(Matrix Number)
+MATRIX TILE COUNT	Function	1	keywords107.ini	(Matrix Number)
+MATRIX TILES EXIST	Function	1	keywords107.ini	(Matrix Number)
+MATRIX WIREFRAME STATE	Function	1	keywords107.ini	(Matrix Number)
+MAXIMIZE VECTOR2	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+MAXIMIZE VECTOR3	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+MAXIMIZE VECTOR4	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+MAXIMIZE WINDOW	Command	0	keywords107.ini	*no parameters*
+MEMBLOCK BYTE	Function	2	keywords107.ini	(Memblock Number, Position)
+MEMBLOCK DWORD	Function	2	keywords107.ini	(Memblock Number, Position)
+MEMBLOCK EXIST	Function	1	keywords107.ini	(Memblock Number)
+MEMBLOCK FLOAT	Function	2	keywords107.ini	(Memblock Number, Position)
+MEMBLOCK WORD	Function	2	keywords107.ini	(Memblock Number, Position)
+MESH EXIST	Function	1	keywords107.ini	(Mesh Number)
+MID$	Function	2	keywords107.ini	(String,Value)
+MINIMIZE VECTOR2	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+MINIMIZE VECTOR3	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+MINIMIZE VECTOR4	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+MINIMIZE WINDOW	Command	0	keywords107.ini	*no parameters*
+MIPCUBEMAP AVAILABLE	Function	0	keywords107.ini	*no parameters*
+MIPMAP AVAILABLE	Function	0	keywords107.ini	*no parameters*
+MIPMAPLODBIAS AVAILABLE	Function	0	keywords107.ini	*no parameters*
+MIPMAPVOLUME AVAILABLE	Function	0	keywords107.ini	*no parameters*
+MIRROR BITMAP	Command	1	keywords107.ini	Bitmap Number
+MIRROR SPRITE	Command	1	keywords107.ini	Sprite Number
+MOUSECLICK	Function	0	keywords107.ini	*no parameters*
+MOUSEMOVEX	Function	0	keywords107.ini	*no parameters*
+MOUSEMOVEY	Function	0	keywords107.ini	*no parameters*
+MOUSEMOVEZ	Function	0	keywords107.ini	*no parameters*
+MOUSEX	Function	0	keywords107.ini	*no parameters*
+MOUSEY	Function	0	keywords107.ini	*no parameters*
+MOUSEZ	Function	0	keywords107.ini	*no parameters*
+MOVE CAMERA	Command	1,2	keywords107.ini	[Distance Value][Camera Number, Distance Value]
+MOVE FILE	Command	2	keywords107.ini	Source Filename, Destination Filename
+MOVE OBJECT	Command	2	keywords107.ini	Object Number, Speed
+MOVE OBJECT DOWN	Command	2	keywords107.ini	Object Number, Value
+MOVE OBJECT LEFT	Command	2	keywords107.ini	Object Number, Value
+MOVE OBJECT RIGHT	Command	2	keywords107.ini	Object Number, Value
+MOVE OBJECT UP	Command	2	keywords107.ini	Object Number, Value
+MOVE SPRITE	Command	2	keywords107.ini	Sprite Number, Velocity
+MULTIPLY MATRIX4	Command	2,3	keywords107.ini	[Matrix4Result, Matrix4A, Matrix4B][Matrix4Result, Value]
+MULTIPLY VECTOR2	Command	2	keywords107.ini	VectorResult, Value
+MULTIPLY VECTOR3	Command	2	keywords107.ini	VectorResult, Value
+MULTIPLY VECTOR4	Command	2	keywords107.ini	VectorResult, Value
+MUSIC EXIST	Function	1	keywords107.ini	(Music Number)
+MUSIC LOOPING	Function	1	keywords107.ini	(Music Number)
+MUSIC PAUSED	Function	1	keywords107.ini	(Music Number)
+MUSIC PLAYING	Function	1	keywords107.ini	(Music Number)
+MUSIC SPEED	Function	1	keywords107.ini	(Music Number)
+MUSIC VOLUME	Function	1	keywords107.ini	(Music Number)
+MYDOCDIR$	Function	0	keywords107.ini	*no parameters*
+NET BUFFER SIZE	Function	0	keywords107.ini	*no parameters*
+NET GAME EXISTS	Function	0	keywords107.ini	*no parameters*
+NET GAME LOST	Function	0	keywords107.ini	*no parameters*
+NET GAME NOW HOSTING	Function	0	keywords107.ini	*no parameters*
+NET MESSAGE BITMAP	Command	1	keywords107.ini	Bitmap Number
+NET MESSAGE EXISTS	Function	0	keywords107.ini	*no parameters*
+NET MESSAGE FLOAT	Function	0	keywords107.ini	*no parameters*
+NET MESSAGE IMAGE	Command	1	keywords107.ini	Image Number
+NET MESSAGE INTEGER	Function	0	keywords107.ini	*no parameters*
+NET MESSAGE MEMBLOCK	Command	1	keywords107.ini	Memblock Number
+NET MESSAGE MESH	Command	1	keywords107.ini	Mesh Number
+NET MESSAGE PLAYER FROM	Function	0	keywords107.ini	*no parameters*
+NET MESSAGE PLAYER TO	Function	0	keywords107.ini	*no parameters*
+NET MESSAGE SOUND	Command	1	keywords107.ini	Sound Number
+NET MESSAGE STRING$	Function	0	keywords107.ini	*no parameters*
+NET MESSAGE TYPE	Function	0	keywords107.ini	*no parameters*
+NET PLAYER CREATED	Function	0	keywords107.ini	*no parameters*
+NET PLAYER DESTROYED	Function	0	keywords107.ini	*no parameters*
+NEWXVALUE	Function	3	keywords107.ini	(Current X Value, Angle Value, Step Value)
+NEWYVALUE	Function	3	keywords107.ini	(Current Y Value, Angle Value, Step Value)
+NEWZVALUE	Function	3	keywords107.ini	(Current Z Value, Angle Value, Step Value)
+NEXT	Statement		keywords107.ini	Variable
+NEXT ARRAY INDEX	Command	1	keywords107.ini	Array Name(0)
+NEXT TOKEN$	Function	1	keywords107.ini	(delim)
+NONLOCALVIDEOMEMORY AVAILABLE	Function	0	keywords107.ini	*no parameters*
+NONPOWTEXTURES AVAILABLE	Function	0	keywords107.ini	*no parameters*
+NORMALIZE VECTOR2	Command	2	keywords107.ini	VectorResult, VectorSource
+NORMALIZE VECTOR3	Command	2	keywords107.ini	VectorResult, VectorSource
+NORMALIZE VECTOR4	Command	2	keywords107.ini	VectorResult, VectorSource
+NOT	Operator	1	Keywords100.ini	Boolean Value
+OBJECT ANGLE X	Function	1	keywords107.ini	(Object Number)
+OBJECT ANGLE Y	Function	1	keywords107.ini	(Object Number)
+OBJECT ANGLE Z	Function	1	keywords107.ini	(Object Number)
+OBJECT COLLISION	Function	2	keywords107.ini	(ObjectA Number, ObjectB Number)
+OBJECT COLLISION CENTER X	Function	1	keywords107.ini	(Object Number)
+OBJECT COLLISION CENTER Y	Function	1	keywords107.ini	(Object Number)
+OBJECT COLLISION CENTER Z	Function	1	keywords107.ini	(Object Number)
+OBJECT COLLISION RADIUS	Function	1	keywords107.ini	(Object Number)
+OBJECT EXIST	Function	1	keywords107.ini	(Object Number)
+OBJECT FRAME	Function	1	keywords107.ini	(Object Number)
+OBJECT HIT	Function	2	keywords107.ini	(ObjectA Number, ObjectB Number)
+OBJECT IN SCREEN	Function	1	keywords107.ini	(Object Number)
+OBJECT INTERPOLATION	Function	1	keywords107.ini	(Object Number)
+OBJECT LOOPING	Function	1	keywords107.ini	(Object Number)
+OBJECT PLAYING	Function	1	keywords107.ini	(Object Number)
+OBJECT POSITION X	Function	1	keywords107.ini	(Object Number)
+OBJECT POSITION Y	Function	1	keywords107.ini	(Object Number)
+OBJECT POSITION Z	Function	1	keywords107.ini	(Object Number)
+OBJECT SCREEN X	Function	1	keywords107.ini	(Object Number)
+OBJECT SCREEN Y	Function	1	keywords107.ini	(Object Number)
+OBJECT SIZE	Function	1,2	keywords107.ini	[(Object Number)][(Object Number, Actual Size)]
+OBJECT SIZE X	Function	1,2	keywords107.ini	[(Object Number)][(Object Number, Actual Size)]
+OBJECT SIZE Y	Function	1,2	keywords107.ini	[(Object Number)][(Object Number, Actual Size)]
+OBJECT SIZE Z	Function	1,2	keywords107.ini	[(Object Number)][(Object Number, Actual Size)]
+OBJECT SPEED	Function	1	keywords107.ini	(Object Number)
+OBJECT VISIBLE	Function	1	keywords107.ini	(Object Number)
+OFFSET LIMB	Command	5,6	keywords107.ini	[Object Number, Limb Number, X, Y, Z][Object Number, Limb Number, X, Y, Z, Bounds Flag]
+OFFSET SPRITE	Command	3	keywords107.ini	Sprite Number, XOffset, YOffset
+ONLYSQUARETEXTURES AVAILABLE	Function	0	keywords107.ini	*no parameters*
+OPEN IMAGEBLOCK	Command	2	keywords107.ini	Filename, Mode
+OPEN TO READ	Command	2	keywords107.ini	File Number, Filename
+OPEN TO WRITE	Command	2	keywords107.ini	File Number, Filename
+OR	Operator	1	Keywords100.ini	Boolean Value
+PARTICLES EXIST	Function	1	keywords107.ini	(Particle Number)
+PARTICLES POSITION X	Function	1	keywords107.ini	(Particle Number)
+PARTICLES POSITION Y	Function	1	keywords107.ini	(Particle Number)
+PARTICLES POSITION Z	Function	1	keywords107.ini	(Particle Number)
+PASTE IMAGE	Command	3,4	keywords107.ini	[Image Number, X, Y][Image Number, X, Y, Transparency]
+PASTE SPRITE	Command	3	keywords107.ini	Sprite Number, XPos, YPos
+PATH EXIST	Function	1	keywords107.ini	(Path String)
+PAUSE ANIMATION	Command	1	keywords107.ini	Animation Number
+PAUSE MUSIC	Command	1	keywords107.ini	Music Number
+PAUSE SOUND	Command	1	keywords107.ini	Sound Number
+PERFORM CHECKLIST FOR CONTROL DEVICES	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR DISPLAY MODES	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR DRIVES	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR EFFECT ERRORS	Command	0,1	keywords107.ini	[*no parameters*][Effect Number]
+PERFORM CHECKLIST FOR EFFECT VALUES	Command	1	keywords107.ini	Effect Number
+PERFORM CHECKLIST FOR FILES	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR FONTS	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR GRAPHICS CARDS	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR IMAGEBLOCK FILES	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR NET CONNECTIONS	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR NET PLAYERS	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR NET SESSIONS	Command	0	keywords107.ini	*no parameters*
+PERFORM CHECKLIST FOR OBJECT LIMBS	Command	1	keywords107.ini	Object Number
+PERFORM CHECKLIST FOR ONSCREEN OBJECTS	Command	1	keywords107.ini	Mode
+PERFORM CSG CLIP	Command	2	keywords107.ini	Target Object, Brush Object
+PERFORM CSG DIFFERENCE	Command	2	keywords107.ini	Target Object, Brush Object
+PERFORM CSG DIFFERENCE ON VERTEXDATA	Command	1	keywords107.ini	Brush Mesh
+PERFORM CSG INTERSECTION	Command	2	keywords107.ini	Target Object, Brush Object
+PERFORM CSG INTERSECTION ON VERTEXDATA	Command	1	keywords107.ini	Brush Mesh
+PERFORM CSG UNION	Command	2	keywords107.ini	Target Object, Brush Object
+PERFORM CSG UNION ON VERTEXDATA	Command	1	keywords107.ini	Brush Mesh
+PERFTIMER	Function	0	keywords107.ini	*no parameters*
+PERSPECTIVETEXTURES AVAILABLE	Function	0	keywords107.ini	*no parameters*
+PICK OBJECT	Function	4,5	keywords107.ini	[(Screen X, Screen Y, Object Start, Object End)][(Screen X, Screen Y, Object Start, Object End, Ignore Camera Flag)]
+PICK SCREEN	Command	3	keywords107.ini	Screen X, Screen Y, Distance
+PITCH CAMERA DOWN	Command	1,2	keywords107.ini	[Angle Value][Camera Number, Angle Value]
+PITCH CAMERA UP	Command	1,2	keywords107.ini	[Angle Value][Camera Number, Angle Value]
+PITCH OBJECT DOWN	Command	2	keywords107.ini	Object Number, Value
+PITCH OBJECT UP	Command	2	keywords107.ini	Object Number, Value
+PIXEL SHADER EXIST	Function	1	keywords107.ini	(PixelShader Number)
+PLACE ANIMATION	Command	5	keywords107.ini	Animation Number,X,Y,X,Y
+PLAY ANIMATION	Command	1,3,5,6	keywords107.ini	[Animation Number][Animation Number,X,Y][Animation Number,X,Y,X,Y][Animation Number,Bitmap Number,X,Y,X,Y]
+PLAY ANIMATION TO IMAGE	Command	6	keywords107.ini	Animation Number,Image,Left,Top,Right,Bottom
+PLAY MUSIC	Command	1	keywords107.ini	Music Number
+PLAY OBJECT	Command	1,2,3	keywords107.ini	[Object Number][Object Number, Start Frame][Object Number, Start Frame, End Frame]
+PLAY SOUND	Command	1,2	keywords107.ini	[Sound Number][Sound Number,Start Position]
+PLAY SPRITE	Command	4	keywords107.ini	Sprite Number, Start Frame, End Frame, Delay Value
+POINT	Function	2	keywords107.ini	(X,Y)
+POINT CAMERA	Command	3,4	keywords107.ini	[X, Y, Z][Camera Number, X, Y, Z]
+POINT LIGHT	Command	4	keywords107.ini	Light Number, X, Y, Z
+POINT OBJECT	Command	4	keywords107.ini	Object Number, X, Y, Z
+POSITION CAMERA	Command	2,3,4	keywords107.ini	[X, Y, Z][Camera Number, X, Y, Z][Camera Number, Vector]
+POSITION LIGHT	Command	2,4	keywords107.ini	[Light Number, X, Y, Z][Light Number, Vector]
+POSITION LISTENER	Command	3	keywords107.ini	X,Y,Z
+POSITION MATRIX	Command	2,4	keywords107.ini	[Matrix Number, X, Y, Z][Matrix Number, Vector]
+POSITION MOUSE	Command	2	keywords107.ini	X,Y
+POSITION OBJECT	Command	4	keywords107.ini	Object Number, X, Y, Z
+POSITION PARTICLE EMISSIONS	Command	4	keywords107.ini	Particle Number, X, Y, Z
+POSITION PARTICLES	Command	2,4	keywords107.ini	[Particle Number, X, Y, Z][Particle Number, Vector]
+POSITION SOUND	Command	4	keywords107.ini	Sound Number,X,Y,Z
+POSITION TERRAIN	Command	4	keywords107.ini	Terrain Number, X, Y, Z
+PREPARE MATRIX TEXTURE	Command	4	keywords107.ini	Matrix Number, Image Number, Across, Down
+PREVIOUS ARRAY INDEX	Command	1	keywords107.ini	Array Name(0)
+PRINT	Command		keywords107.ini	Print Statements
+PRINTC	Command	1	keywords107.ini	[Print Statements][ Value]
+PROCESS BSP COLLISION	Command	1	keywords107.ini	Collision Index
+PROJECT VECTOR3	Command	5	keywords107.ini	VectorResult, VectorSource, Matrix4Projection, Matrix4View, Matrix4World
+PROJECTEDTEXTURES AVAILABLE	Function	0	keywords107.ini	*no parameters*
+PROJECTION MATRIX4	Command	1	keywords107.ini	Matrix4Result
+RANDOMIZE	Command	1	keywords107.ini	Seed Value
+RANDOMIZE MATRIX	Command	2	keywords107.ini	Matrix Number, Maximum Height
+READ	Command		keywords107.ini	Variable
+READ BYTE	Command	2	keywords107.ini	File Number, Variable
+READ BYTE FROM FILE	Function	2	keywords107.ini	(Filename, Position)
+READ DIRBLOCK	Command	2	keywords107.ini	File Number, Folder to Read
+READ FILE	Command	2	keywords107.ini	File Number, Variable
+READ FILEBLOCK	Command	2	keywords107.ini	File Number, Filename to Read
+READ FILEMAP STRING	Function	1	keywords107.ini	(String Value)
+READ FILEMAP VALUE	Function	1	keywords107.ini	(Filemap Name)
+READ FLOAT	Command	2	keywords107.ini	File Number, Variable
+READ LONG	Command	2	keywords107.ini	File Number, Variable
+READ MEMBLOCK	Command	2	keywords107.ini	File Number, Memblock Number
+READ STRING	Command	2	keywords107.ini	File Number, Variable String
+READ WORD	Command	2	keywords107.ini	File Number, Variable
+RECORD SOUND	Command	1,2	keywords107.ini	[Sound Number][Sound Number, Duration]
+REDUCE MESH	Command	6	keywords107.ini	Mesh Number, Block Mode, Near Mode, GX, GY, GZ
+REM	Statement	1	keywords107.ini	Comments Can Be Written Here
+REMEND	Statement	0	keywords107.ini	*no parameters*
+REMOVE FROM QUEUE	Command	1	keywords107.ini	Array Name(0)
+REMOVE FROM STACK	Command	1	keywords107.ini	Array Name(0)
+REMOVE LIMB	Command	2	keywords107.ini	Object Number, Limb Number
+REMSTART	Statement	0	keywords107.ini	*no parameters*
+RENAME FILE	Command	2	keywords107.ini	Source Filename, New Filename
+RENDERAFTERFLIP AVAILABLE	Function	0	keywords107.ini	*no parameters*
+RENDERWINDOWED AVAILABLE	Function	0	keywords107.ini	*no parameters*
+REPEAT	Statement	0	keywords107.ini	*no parameters*
+RESTORE	Command	1	keywords107.ini	DataLabel
+RESTORE WINDOW	Command	0	keywords107.ini	*no parameters*
+RESUME ANIMATION	Command	1	keywords107.ini	Animation Number
+RESUME MUSIC	Command	1	keywords107.ini	Music Number
+RESUME SOUND	Command	1	keywords107.ini	Sound Number
+RETURN	Statement	0	keywords107.ini	*no parameters*
+RETURNKEY	Function	0	keywords107.ini	*no parameters*
+REVERSE$	Function	1	keywords107.ini	string
+RGB	Function	3	keywords107.ini	(Red Value,Green Value,Blue Value)
+RGBB	Function	1	keywords107.ini	(Blue Value)
+RGBG	Function	1	keywords107.ini	(Green Value)
+RGBR	Function	1	keywords107.ini	(Red Value)
+RIGHT$	Function	2	keywords107.ini	(String,Value)
+RIGHTKEY	Function	0	keywords107.ini	*no parameters*
+RND	Function	1	keywords107.ini	(Range Value)
+ROLL CAMERA LEFT	Command	1,2	keywords107.ini	[Angle Value][Camera Number, Angle Value]
+ROLL CAMERA RIGHT	Command	1,2	keywords107.ini	[Angle Value][Camera Number, Angle Value]
+ROLL OBJECT LEFT	Command	2	keywords107.ini	Object Number, Value
+ROLL OBJECT RIGHT	Command	2	keywords107.ini	Object Number, Value
+ROTATE CAMERA	Command	2,3,4	keywords107.ini	[XAngle, YAngle, ZAngle][Camera Number, XAngle, YAngle, ZAngle][Camera Number, Vector]
+ROTATE LIGHT	Command	2,4	keywords107.ini	[Light Number, XAngle, YAngle, ZAngle][Light Number, Vector]
+ROTATE LIMB	Command	5,6	keywords107.ini	[Object Number, Limb Number, XAngle, YAngle, ZAngle][Object Number, Limb Number, XAngle, YAngle, ZAngle, Bounds Flag]
+ROTATE LISTENER	Command	3	keywords107.ini	X,Y,Z
+ROTATE OBJECT	Command	4	keywords107.ini	Object Number, XAngle, YAngle, ZAngle
+ROTATE PARTICLES	Command	2,4	keywords107.ini	[Particle Number, X, Y, Z][Particle Number, Vector]
+ROTATE SPRITE	Command	2	keywords107.ini	Sprite Number, Angle
+ROTATE X MATRIX4	Command	2	keywords107.ini	Matrix4Result, Angle
+ROTATE Y MATRIX4	Command	2	keywords107.ini	Matrix4Result, Angle
+ROTATE YPR MATRIX4	Command	4	keywords107.ini	Matrix4Result, Yaw, Pitch, Roll
+ROTATE Z MATRIX4	Command	2	keywords107.ini	Matrix4Result, Angle
+SAVE ARRAY	Command	2	keywords107.ini	Filename, Array Name(0)
+SAVE BITMAP	Command	1,2	Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK/Bitmap/Bitmap.rc	Filename | Filename,Bitmap Number
+SAVE IMAGE	Command	2,3	keywords107.ini	[Filename, Image Number][Filename, Image Number, Compression Mode]
+SAVE MESH	Command	2	keywords107.ini	Filename, Mesh Number
+SAVE OBJECT	Command	2	keywords107.ini	Filename, Object Number
+SAVE SOUND	Command	2	keywords107.ini	Filename,Sound Number
+SAVE STATIC OBJECTS	Command	1	keywords107.ini	Filename
+SAVE TERRAIN	Command		keywordsAT.ini	-
+SCALE LIMB	Command	5,6	keywords107.ini	[Object Number, Limb Number, XSize, YSize, ZSize][Object Number, Limb Number, XSize, YSize, ZSize, Bounds Flag]
+SCALE LIMB TEXTURE	Command	4,5	keywords107.ini	[Object Number, Limb Number, UScale, VScale][Object Number, Limb Number, Stage, UScale, VScale]
+SCALE LISTENER	Command	1	keywords107.ini	Scaling Factor
+SCALE MATRIX4	Command	4	keywords107.ini	Matrix4Result, X, Y, Z
+SCALE OBJECT	Command	4	keywords107.ini	Object Number, XSize, YSize, ZSize
+SCALE OBJECT TEXTURE	Command	3,4	keywords107.ini	[Object Number, UScale, VScale][Object Number, Stage, UScale, VScale]
+SCALE SPRITE	Command	2	keywords107.ini	Sprite Number, Scale
+SCALE VECTOR2	Command	3	keywords107.ini	VectorResult, VectorSource, Value
+SCALE VECTOR3	Command	3	keywords107.ini	VectorResult, VectorSource, Value
+SCALE VECTOR4	Command	3	keywords107.ini	VectorResult, VectorSource, Value
+SCANCODE	Function	0	keywords107.ini	*no parameters*
+SCREEN DEPTH	Function	0	keywords107.ini	*no parameters*
+SCREEN FPS	Function	0	keywords107.ini	*no parameters*
+SCREEN HEIGHT	Function	0	keywords107.ini	*no parameters*
+SCREEN INVALID	Function	0	keywords107.ini	*no parameters*
+SCREEN TYPE	Function	0	keywords107.ini	*no parameters*
+SCREEN WIDTH	Function	0	keywords107.ini	*no parameters*
+SCROLL BACKDROP	Command	2,3	keywords107.ini	[U, V][Camera Number, U, V]
+SCROLL LIMB TEXTURE	Command	4,5	keywords107.ini	[Object Number, Limb Number, X, Y][Object Number, Limb Number, Stage, X, Y]
+SCROLL OBJECT TEXTURE	Command	3,4	keywords107.ini	[Object Number, X, Y][Object Number, Stage, X, Y]
+SELECT	Statement		keywords107.ini	Variable
+SEND NET MESSAGE BITMAP	Command	3	keywords107.ini	Player Number, Bitmap Number, Guarentee Packet
+SEND NET MESSAGE FLOAT	Command	2	keywords107.ini	Player Number, Float Value
+SEND NET MESSAGE IMAGE	Command	3	keywords107.ini	Player Number, Image Number, Guarentee Packet
+SEND NET MESSAGE INTEGER	Command	2	keywords107.ini	Player Number, Integer Value
+SEND NET MESSAGE MEMBLOCK	Command	2,3	keywords107.ini	[Player Number, Memblock Number][Player Number, Memblock Number, Guarentee Packet]
+SEND NET MESSAGE MESH	Command	3	keywords107.ini	Player Number, Mesh Number, Guarentee Packet
+SEND NET MESSAGE SOUND	Command	3	keywords107.ini	Player Number, Sound Number, Guarentee Packet
+SEND NET MESSAGE STRING	Command	2	keywords107.ini	Player Number, String
+SEPARATETEXTUREMEMORIES AVAILABLE	Function	0	keywords107.ini	*no parameters*
+SEPERATETEXTUREMEMORIES AVAILABLE	Function	0	keywords107.ini	*no parameters*
+SET ALPHA MAPPING ON	Command	2	keywords107.ini	Object Number, Alpha Percentage
+SET AMBIENT LIGHT	Command	1	keywords107.ini	Percentage
+SET ANIMATION SPEED	Command	2	keywords107.ini	Animation Number, Speed
+SET ANIMATION VOLUME	Command	2	keywords107.ini	Animation Number, Volume
+SET BITMAP FORMAT	Command	1	keywords107.ini	Bitmap Format Value
+SET BLEND MAPPING ON	Command	3,5	keywords107.ini	[Object Number, Image Number, Blend Mode][Object Number, Stage Index, Image Number, TexCoordMode, Blend Mode]
+SET BSP CAMERA	Command	1	keywords107.ini	Camera Number
+SET BSP CAMERA COLLISION	Command	4	keywords107.ini	Collision Index, Camera Number, Radius, Response
+SET BSP CAMERA COLLISION RADIUS	Command	5	keywords107.ini	Collision Index, Camera Number, X, Y, Z
+SET BSP COLLISION HEIGHT ADJUSTMENT	Command	2	keywords107.ini	Collision Index, Height
+SET BSP COLLISION OFF	Command	1	keywords107.ini	Collision Index
+SET BSP COLLISION THRESHHOLD	Command	2	keywords107.ini	Collision Index, Sensitivity
+SET BSP MULTITEXTURING OFF	Command	0	keywords107.ini	*no parameters*
+SET BSP MULTITEXTURING ON	Command	0	keywords107.ini	*no parameters*
+SET BSP OBJECT COLLISION	Command	4	keywords107.ini	Collision Index, Object Number, Radius, Response
+SET BSP OBJECT COLLISION RADIUS	Command	5	keywords107.ini	Collision Index, Object Number, X, Y, Z
+SET BUMP MAPPING ON	Command	2	keywords107.ini	Object Number, Image Number
+SET CAMERA ASPECT	Command	1,2	keywords107.ini	[ Aspect Ratio][Camera Number, Aspect Ratio]
+SET CAMERA CLIP	Command	8	keywords107.ini	Camera Number, ClipOnOff, X, Y, Z, NX, NY, NZ
+SET CAMERA FOV	Command	1,2	keywords107.ini	[Field-Of-View Angle][Camera Number, Field-Of-View Angle]
+SET CAMERA RANGE	Command	2,3	keywords107.ini	[Near Value, Far Value][Camera Number, Near Value, Far Value]
+SET CAMERA ROTATION XYZ	Command	0,1	keywords107.ini	[*no parameters*][Camera Number]
+SET CAMERA ROTATION ZYX	Command	0,1	keywords107.ini	[*no parameters*][Camera Number]
+SET CAMERA TO FOLLOW	Command	8,9	keywords107.ini	[X, Y, Z, Angle, Distance, Height, Smooth, Collision][Camera Number, X, Y, Z, Angle, Distance, Height, Smooth, Collision]
+SET CAMERA TO IMAGE	Command	4,5,6	keywords107.ini	[Camera Number, Image Number, Width, Height][Camera Number, Image Number, Width, Height, Generate Alpha Mode][Camera Number, Image Number, Width, Height, Generate Alpha Mode, D3D Format]
+SET CAMERA TO OBJECT ORIENTATION	Command	1,2	keywords107.ini	[Object Number][Camera Number, Object Number]
+SET CAMERA VIEW	Command	4,5	keywords107.ini	[Left, Top, Right, Bottom][Camera Number, Left, Top, Right, Bottom]
+SET CAMERAS TO STEREOSCOPIC	Command	5	keywords107.ini	Stereoscopic Mode, Camera Left, Camera Right, Image Back, Image Front
+SET CARTOON SHADING ON	Command	3	keywords107.ini	Object Number, Shade Image, Edge Image
+SET CONTROL DEVICE	Command	1,2	keywords107.ini	[Device Name$][Device Name$, Device Index]
+SET CONTROL DEVICE INDEX	Command	1	keywords107.ini	Index Value
+SET CUBE MAPPING ON	Command	7	keywords107.ini	Object Number, Face1, Face2, Face3, Face4, Face5, Face6
+SET CURRENT BITMAP	Command	1	keywords107.ini	Bitmap Number
+SET CURRENT CAMERA	Command	1	keywords107.ini	Camera Number
+SET CURSOR	Command	2	keywords107.ini	X,Y
+SET DETAIL MAPPING ON	Command	2	keywords107.ini	Object Number, Image Number
+SET DIR	Command	1	keywords107.ini	Path$
+SET DIRECTIONAL LIGHT	Command	4	keywords107.ini	Light Number, NX, NY, NZ
+SET DISPLAY MODE	Command	3,4,6	keywords107.ini	[Width, Height, Depth][Width, Height, Depth, VSyncOn][Width, Height, Depth, VSyncOn, Multisampling Factor, Multimonitor Mode]
+SET DVD CHAPTER	Command	3	keywords107.ini	Animation Number, Title Number, Chapter Number
+SET EFFECT CONSTANT BOOLEAN	Command	3	keywords107.ini	Effect Number, Constant String, Constant Value
+SET EFFECT CONSTANT FLOAT	Command	3	keywords107.ini	Effect Number, Constant String, Constant Value
+SET EFFECT CONSTANT INTEGER	Command	3	keywords107.ini	Effect Number, Constant String, Constant Value
+SET EFFECT CONSTANT MATRIX	Command	3	keywords107.ini	Effect Number, Constant String, Matrix Number
+SET EFFECT CONSTANT VECTOR	Command	3	keywords107.ini	Effect Number, Constant String, Vector Number
+SET EFFECT ON	Command	3	keywords107.ini	Object Number, Effect Filename, Texture Flag
+SET EFFECT TECHNIQUE	Command	2	keywords107.ini	Effect Number, Technique Name
+SET EFFECT TRANSPOSE	Command	2	keywords107.ini	Effect Number, Transpose Flag
+SET GAMMA	Command	3	keywords107.ini	Red, Green, Blue
+SET GLOBAL COLLISION OFF	Command	0	keywords107.ini	*no parameters*
+SET GLOBAL COLLISION ON	Command	0	keywords107.ini	*no parameters*
+SET GLOBAL OBJECT CREATION	Command	1	keywords107.ini	Creation Mode
+SET GLOBAL SHADOW COLOR	Command	4	keywords107.ini	Red, Green, Blue, Alpha
+SET GLOBAL SHADOW SHADES	Command	1	keywords107.ini	Number Of Shades
+SET GLOBAL SHADOWS OFF	Command	0	keywords107.ini	*no parameters*
+SET GLOBAL SHADOWS ON	Command	0	keywords107.ini	*no parameters*
+SET GRAPHICS CARD	Command	1	keywords107.ini	Cardname
+SET IDENTITY MATRIX4	Command	1	keywords107.ini	Matrix4Result
+SET IMAGE COLORKEY	Command	3	keywords107.ini	Red Value, Green Value, Blue Value
+SET INDEXDATA	Command	2	keywords107.ini	Indice Index, Vertex Index
+SET JOYSTICK DEADZONE	Command	1	keywords107.ini	Percentage Value
+SET KEY STATE TOGGLE	Command	2	keywords107.ini	Virtual Key Value, Index Value
+SET LIGHT MAPPING ON	Command	2,3	keywords107.ini	[Object Number, Image Number, Reverse Stage Mode][Object Number, Image Number]
+SET LIGHT RANGE	Command	2	keywords107.ini	Light Number, Distance
+SET LIGHT TO OBJECT ORIENTATION	Command	2	keywords107.ini	Light Number, Object Number
+SET LIGHT TO OBJECT POSITION	Command	2	keywords107.ini	Light Number, Object Number
+SET LIMB EFFECT	Command	3	keywords107.ini	Object Number, Limb Number, Effect Number
+SET LIMB NORMALS	Command	2	keywords107.ini	Object Number, Limb Number
+SET LIMB SMOOTHING	Command	3	keywords107.ini	Object Number, Limb Number, Percentage
+SET MATRIX	Command	8	keywords107.ini	Matrix Number, Wire, Transparency, Cull, Filter, Light, Fog, Ambient
+SET MATRIX HEIGHT	Command	4	keywords107.ini	Matrix Number, TileX, TileZ, Height
+SET MATRIX NORMAL	Command	6	keywords107.ini	Matrix Number, TileX, TileZ, NX, NY, NZ
+SET MATRIX PRIORITY	Command	2	keywords107.ini	Matrix Number, Priority Flag
+SET MATRIX TEXTURE	Command	3	keywords107.ini	Matrix Number, Texture Mode, Mip Mode
+SET MATRIX TILE	Command	4	keywords107.ini	Matrix Number, TileX, TileZ, Tile Number
+SET MATRIX TRIM	Command	3	keywords107.ini	Matrix Number, TrimX, TrimY
+SET MATRIX WIREFRAME OFF	Command	1	keywords107.ini	Matrix Number
+SET MATRIX WIREFRAME ON	Command	1	keywords107.ini	Matrix Number
+SET MUSIC SPEED	Command	2	keywords107.ini	Music Number,Speed
+SET MUSIC VOLUME	Command	2	keywords107.ini	Music Number,Volume
+SET NET CONNECTION	Command	1,2	keywords107.ini	[Connection Number][Connection Number,Address Data]
+SET NORMALIZATION OFF	Command	0	keywords107.ini	*no parameters*
+SET NORMALIZATION ON	Command	0	keywords107.ini	*no parameters*
+SET OBJECT	Command	4,5,6,7,8	Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,keywords107.ini	[Object Number, Wire, Transparent, Cull][Object Number, Wire, Transparent, Cull, Filter][Object Number, Wire, Transparent, Cull, Filter, Light][Object Number, Wire, Transparent, Cull, Filter, Light, Fog] | Object Number, Wire, Transparent, Cull, Filter, Light, Fog, Ambient
+SET OBJECT AMBIENCE	Command	2	keywords107.ini	Object Number, Color Value
+SET OBJECT AMBIENT	Command	2	keywords107.ini	Object Number, Flag
+SET OBJECT COLLISION OFF	Command	1	keywords107.ini	Object Number
+SET OBJECT COLLISION ON	Command	1	keywords107.ini	Object Number
+SET OBJECT COLLISION TO BOXES	Command	1	keywords107.ini	Object Number
+SET OBJECT COLLISION TO POLYGONS	Command	1	keywords107.ini	Object Number
+SET OBJECT COLLISION TO SPHERES	Command	1	keywords107.ini	Object Number
+SET OBJECT CULL	Command	2	keywords107.ini	Object Number, Flag
+SET OBJECT DIFFUSE	Command	2,3	keywords107.ini	[Object Number, Color Value][Object Number, Color Value, VertexDiffuseMode]
+SET OBJECT EFFECT	Command	2	keywords107.ini	Object Number, Effect Number
+SET OBJECT EMISSIVE	Command	2	keywords107.ini	Object Number, Color Value
+SET OBJECT FILTER	Command	2,3	keywords107.ini	[Object Number, Flag][Object Number, Stage Number, Flag]
+SET OBJECT FOG	Command	2	keywords107.ini	Object Number, Flag
+SET OBJECT FOV	Command	2	keywords107.ini	Object Number, FOV Angle
+SET OBJECT FRAME	Command	2,3	keywords107.ini	[Object Number, Frame][Object Number, Frame, Recalculate Bounds]
+SET OBJECT INTERPOLATION	Command	2	keywords107.ini	Object Number, Interpolation
+SET OBJECT LIGHT	Command	2	keywords107.ini	Object Number, Flag
+SET OBJECT MASK	Command	2	keywords107.ini	Object Number, Camera Mask Bits
+SET OBJECT NORMALS	Command	1	keywords107.ini	Object Number
+SET OBJECT RADIUS	Command	2	keywords107.ini	Object Number, Radius
+SET OBJECT ROTATION XYZ	Command	1	keywords107.ini	Object Number
+SET OBJECT ROTATION ZYX	Command	1	keywords107.ini	Object Number
+SET OBJECT SMOOTHING	Command	2	keywords107.ini	Object Number, Percentage
+SET OBJECT SPECULAR	Command	2	keywords107.ini	Object Number, Color Value
+SET OBJECT SPECULAR POWER	Command	2	keywords107.ini	Object Number, Power
+SET OBJECT SPEED	Command	2	keywords107.ini	Object Number, Speed
+SET OBJECT TEXTURE	Command	3,4	keywords107.ini	[Object Number, Texturing Mode, Mipmap Flag][Object Number, Stage Number, Texturing Mode, Mipmap Flag]
+SET OBJECT TO CAMERA ORIENTATION	Command	1	keywords107.ini	Object Number
+SET OBJECT TO OBJECT ORIENTATION	Command	2,3	keywords107.ini	[Object Number, Second Object, Flag][Object Number, Second Object]
+SET OBJECT TRANSPARENCY	Command	2	keywords107.ini	Object Number, Flag
+SET OBJECT WIREFRAME	Command	2	keywords107.ini	Object Number, Flag
+SET PARTICLE CHAOS	Command	2	keywords107.ini	Particle Number, Chaos Value
+SET PARTICLE EMISSIONS	Command	2	keywords107.ini	Particle Number, Frequency
+SET PARTICLE FLOOR	Command	2	keywords107.ini	Particle Number, Floor Flag
+SET PARTICLE GRAVITY	Command	2	keywords107.ini	Particle Number, Gravity Value
+SET PARTICLE LIFE	Command	2	keywords107.ini	Particle Number, Life Percentage
+SET PARTICLE SPEED	Command	2	keywords107.ini	Particle Number, Seconds Per Frame
+SET PARTICLE VELOCITY	Command	2	keywords107.ini	Particle Number, Velocity Value
+SET PIXEL SHADER OFF	Command	1	keywords107.ini	Object Number
+SET PIXEL SHADER ON	Command	2	keywords107.ini	Object Number, PixelShader Number
+SET PIXEL SHADER TEXTURE	Command	3	keywords107.ini	PixelShader Number, Slot Number, Image Number
+SET POINT LIGHT	Command	4	keywords107.ini	Light Number, X, Y, Z
+SET RAINBOW SHADING ON	Command	2	keywords107.ini	Object Number, Rainbow Image
+SET REFLECTION SHADING ON	Command	1	keywords107.ini	Object Number
+SET SCREEN EFFECT	Command	1	keywords107.ini	Effect Number
+SET SHADING OFF	Command	1	keywords107.ini	Object Number
+SET SHADOW LIGHT	Command	5	keywords107.ini	Light Number, X, Y, Z, Range
+SET SHADOW POSITION	Command	4	keywords107.ini	Mode, X, Y, Z
+SET SHADOW SHADING OFF	Command	1	keywords107.ini	Object Number
+SET SHADOW SHADING ON	Command	1,4	keywords107.ini	[Object Number][Object Number, Mesh Number, Shadow Range, Use Shader]
+SET SOUND PAN	Command	2	keywords107.ini	Sound Number,Pan Value
+SET SOUND SPEED	Command	2	keywords107.ini	Sound Number,Frequency Value
+SET SOUND VOLUME	Command	2	keywords107.ini	Sound Number,Volume Number
+SET SPHERE MAPPING ON	Command	2	keywords107.ini	Object Number, Image Number
+SET SPOT LIGHT	Command	3	keywords107.ini	Light Number, Inner Angle, Outer Angle
+SET SPRITE	Command	3	keywords107.ini	Sprite Number, Backsave, Transparency
+SET SPRITE ALPHA	Command	2	keywords107.ini	Sprite Number, Alpha Value
+SET SPRITE DIFFUSE	Command	4	keywords107.ini	Sprite Number, Red Value, Green Value, Blue Value
+SET SPRITE FRAME	Command	2	keywords107.ini	Sprite Number, Frame Value
+SET SPRITE IMAGE	Command	2	keywords107.ini	Sprite Number, Image Number
+SET SPRITE PRIORITY	Command	2	keywords107.ini	Sprite Number, Priority
+SET SPRITE RESIZE	Command	1,3	Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK/Sprites/Sprites.rc,keywords107.ini	Mode | Mode, Global X Offset, Global X Scale
+SET SPRITE TEXTURE COORD	Command	4	keywords107.ini	Sprite Number, Vertex Index, UValue, VValue
+SET STATIC OBJECTS WIREFRAME OFF	Command	0	keywords107.ini	*no parameters*
+SET STATIC OBJECTS WIREFRAME ON	Command	0	keywords107.ini	*no parameters*
+SET STATIC PORTALS OFF	Command	0	keywords107.ini	*no parameters*
+SET STATIC PORTALS ON	Command	0	keywords107.ini	*no parameters*
+SET STATIC SCORCH	Command	3	keywords107.ini	Image Number, Width, Height
+SET STATIC UNIVERSE	Command	3	keywords107.ini	X, Y, Z
+SET TERRAIN HEIGHTMAP	Command		keywordsAT.ini	-
+SET TERRAIN LIGHT	Command		keywordsAT.ini	-
+SET TERRAIN SCALE	Command		keywordsAT.ini	-
+SET TERRAIN SPLIT	Command		keywordsAT.ini	-
+SET TERRAIN TEXTURE	Command		keywordsAT.ini	-
+SET TERRAIN TILING	Command		keywordsAT.ini	-
+SET TEXT FONT	Command	1,2	keywords107.ini	[Fontname][Fontname, Charset Value]
+SET TEXT OPAQUE	Command	0	keywords107.ini	*no parameters*
+SET TEXT SIZE	Command	1	keywords107.ini	Point size
+SET TEXT TO BOLD	Command	0	keywords107.ini	*no parameters*
+SET TEXT TO BOLDITALIC	Command	0	keywords107.ini	*no parameters*
+SET TEXT TO ITALIC	Command	0	keywords107.ini	*no parameters*
+SET TEXT TO NORMAL	Command	0	keywords107.ini	*no parameters*
+SET TEXT TRANSPARENT	Command	0	keywords107.ini	*no parameters*
+SET TEXTURE MD3	Command	7	keywords107.ini	Object Number, H0, H1, L0, L1, L2, U0
+SET VECTOR2	Command	3	keywords107.ini	VectorResult, X, Y
+SET VECTOR3	Command	4	keywords107.ini	VectorResult, X, Y, Z
+SET VECTOR3 TO CAMERA POSITION	Command	2	keywords107.ini	Vector, Camera Number
+SET VECTOR3 TO CAMERA ROTATION	Command	2	keywords107.ini	Vector, Camera Number
+SET VECTOR3 TO LIGHT POSITION	Command	2	keywords107.ini	Vector, Light Number
+SET VECTOR3 TO LIGHT ROTATION	Command	2	keywords107.ini	Vector, Light Number
+SET VECTOR3 TO MATRIX POSITION	Command	2	keywords107.ini	Vector, Matrix Number
+SET VECTOR3 TO PARTICLES POSITION	Command	2	keywords107.ini	Vector, Particle Number
+SET VECTOR3 TO PARTICLES ROTATION	Command	2	keywords107.ini	Vector, Particle Number
+SET VECTOR4	Command	5	keywords107.ini	VectorResult, X, Y, Z, W
+SET VERTEX SHADER MATRIX	Command	4	keywords107.ini	VertexShader Number, Constant, Matrix4, ConstantCount
+SET VERTEX SHADER OFF	Command	1	keywords107.ini	Object Number
+SET VERTEX SHADER ON	Command	2	keywords107.ini	Object Number, VertexShader Number
+SET VERTEX SHADER STREAM	Command	4	keywords107.ini	VertexShader Number, Position, Data, Datatype
+SET VERTEX SHADER STREAMCOUNT	Command	2	keywords107.ini	VertexShader Number, Count
+SET VERTEX SHADER VECTOR	Command	4	keywords107.ini	VertexShader Number, Constant, Vector3, ConstantCount
+SET VERTEXDATA DIFFUSE	Command	2	keywords107.ini	Vertex Index, RGB Value
+SET VERTEXDATA NORMALS	Command	4	keywords107.ini	Vertex Index, NX, NY, NZ
+SET VERTEXDATA POSITION	Command	4	keywords107.ini	Vertex Index, X, Y, Z
+SET VERTEXDATA UV	Command	3,4	keywords107.ini	[Vertex Index, U, V][Vertex Index, Index,U, V]
+SET WINDOW LAYOUT	Command	3	keywords107.ini	Style, Caption, Icon Number
+SET WINDOW OFF	Command	0	keywords107.ini	*no parameters*
+SET WINDOW ON	Command	0	keywords107.ini	*no parameters*
+SET WINDOW POSITION	Command	2	keywords107.ini	X, Y
+SET WINDOW SIZE	Command	2	keywords107.ini	Width, Height
+SET WINDOW TITLE	Command	1	keywords107.ini	Caption String
+SHIFT MATRIX DOWN	Command	1	keywords107.ini	Matrix Number
+SHIFT MATRIX LEFT	Command	1	keywords107.ini	Matrix Number
+SHIFT MATRIX RIGHT	Command	1	keywords107.ini	Matrix Number
+SHIFT MATRIX UP	Command	1	keywords107.ini	Matrix Number
+SHIFTKEY	Function	0	keywords107.ini	*no parameters*
+SHOW ALL SPRITES	Command	0	keywords107.ini	*no parameters*
+SHOW LIGHT	Command	1	keywords107.ini	Light Number
+SHOW LIMB	Command	2	keywords107.ini	Object Number, Limb Number
+SHOW MOUSE	Command	0	keywords107.ini	*no parameters*
+SHOW OBJECT	Command	1	keywords107.ini	Object Number
+SHOW OBJECT BOUNDS	Command	1,2	keywords107.ini	[Object Number][Object Number, Box Only Flag]
+SHOW PARTICLES	Command	1	keywords107.ini	Particle Number
+SHOW SPRITE	Command	1	keywords107.ini	Sprite Number
+SHOW WINDOW	Command	0	keywords107.ini	*no parameters*
+SIN	Function	1	keywords107.ini	(Value)
+SIZE SPRITE	Command	3	keywords107.ini	Sprite Number, XSize, YSize
+SKIP BYTES	Command	2	keywords107.ini	File Number, Bytes To Skip
+SLEEP	Command	1	keywords107.ini	Delay
+SOUND EXIST	Function	1	keywords107.ini	(Sound Number)
+SOUND LOOPING	Function	1	keywords107.ini	(Sound Number)
+SOUND PAN	Function	1	keywords107.ini	(Sound Number)
+SOUND PAUSED	Function	1	keywords107.ini	(Sound Number)
+SOUND PLAYING	Function	1	keywords107.ini	(Sound Number)
+SOUND POSITION X	Function	1	keywords107.ini	(Sound Number)
+SOUND POSITION Y	Function	1	keywords107.ini	(Sound Number)
+SOUND POSITION Z	Function	1	keywords107.ini	(Sound Number)
+SOUND SPEED	Function	1	keywords107.ini	(Sound Number)
+SOUND TYPE	Function	1	keywords107.ini	(Sound Number)
+SOUND VOLUME	Function	1	keywords107.ini	(Sound Number)
+SPACE$	Function	1	keywords107.ini	(Number of Spaces)
+SPACEKEY	Function	0	keywords107.ini	*no parameters*
+SPRITE	Command	4	keywords107.ini	Sprite Number, XPos, YPos, Image Number
+SPRITE ALPHA	Function	1	keywords107.ini	(Sprite Number)
+SPRITE ANGLE	Function	1	keywords107.ini	(Sprite Number)
+SPRITE BLUE	Function	1	keywords107.ini	(Sprite Number)
+SPRITE COLLISION	Function	2	keywords107.ini	(Sprite Number, Target Sprite Number)
+SPRITE EXIST	Function	1	keywords107.ini	(Sprite Number)
+SPRITE FLIPPED	Function	1	keywords107.ini	(Sprite Number)
+SPRITE FRAME	Function	1	keywords107.ini	(Sprite Number)
+SPRITE GREEN	Function	1	keywords107.ini	(Sprite Number)
+SPRITE HEIGHT	Function	1	keywords107.ini	(Sprite Number)
+SPRITE HIT	Function	2	keywords107.ini	(Sprite Number, Target Sprite Number)
+SPRITE IMAGE	Function	1	keywords107.ini	(Sprite Number)
+SPRITE MIRRORED	Function	1	keywords107.ini	(Sprite Number)
+SPRITE OFFSET X	Function	1	keywords107.ini	(Sprite Number)
+SPRITE OFFSET Y	Function	1	keywords107.ini	(Sprite Number)
+SPRITE PRIORITY	Function	1	keywords107.ini	(Sprite Number)
+SPRITE RED	Function	1	keywords107.ini	(Sprite Number)
+SPRITE SCALE X	Function	1	keywords107.ini	(Sprite Number)
+SPRITE SCALE Y	Function	1	keywords107.ini	(Sprite Number)
+SPRITE VISIBLE	Function	1	keywords107.ini	(Sprite Number)
+SPRITE WIDTH	Function	1	keywords107.ini	(Sprite Number)
+SPRITE X	Function	1	keywords107.ini	(Sprite Number)
+SPRITE Y	Function	1	keywords107.ini	(Sprite Number)
+SQRT	Function	1	keywords107.ini	(Value)
+SQUARED LENGTH VECTOR2	Function	1	keywords107.ini	(Vector)
+SQUARED LENGTH VECTOR3	Function	1	keywords107.ini	(Vector)
+SQUARED LENGTH VECTOR4	Function	1	keywords107.ini	(Vector)
+STATIC LINE OF SIGHT	Function	8	keywords107.ini	(X1, Y1, Z1, X2, Y2, Z2, Width, Accuracy)
+STATIC LINE OF SIGHT X	Function	0	keywords107.ini	*no parameters*
+STATIC LINE OF SIGHT Y	Function	0	keywords107.ini	*no parameters*
+STATIC LINE OF SIGHT Z	Function	0	keywords107.ini	*no parameters*
+STATIC RAYCAST	Function	6	keywords107.ini	(X1, Y1, Z1, X2, Y2, Z2)
+STATIC VOLUME	Function	7	keywords107.ini	(X1, Y1, Z1, X2, Y2, Z2, Size)
+STATISTIC	Function	1	keywords107.ini	(Statistic Code)
+STEP	Statement	1	keywords107.ini	t-Value TO End-Value STEP Step-Value
+STOP ANIMATION	Command	1	keywords107.ini	Animation Number
+STOP EXECUTABLE	Command	1	keywords107.ini	Executable ID
+STOP MUSIC	Command	1	keywords107.ini	Music Number
+STOP OBJECT	Command	1	keywords107.ini	Object Number
+STOP RECORDING SOUND	Command	0	keywords107.ini	*no parameters*
+STOP SOUND	Command	1	keywords107.ini	Sound Number
+STR$	Function	1,2	keywords107.ini	[(Value)][(Double Float)][(Value, Decimal Places)][(Double Integer)]
+STRETCH SPRITE	Command	3	keywords107.ini	Sprite Number, XScale, YScale
+STRING	Statement	1	Keywords100.ini	String Type
+SUBTRACT MATRIX4	Command	3	keywords107.ini	Matrix4Result, Matrix4A, Matrix4B
+SUBTRACT VECTOR2	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+SUBTRACT VECTOR3	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+SUBTRACT VECTOR4	Command	3	keywords107.ini	VectorResult, VectorA, VectorB
+SUSPEND FOR KEY	Command	0	keywords107.ini	*no parameters*
+SUSPEND FOR MOUSE	Command	0	keywords107.ini	*no parameters*
+SYNC	Command	0	keywords107.ini	*no parameters*
+SYNC MASK	Command	1	keywords107.ini	Ignore Camera Mask
+SYNC OFF	Command	0	keywords107.ini	*no parameters*
+SYNC ON	Command	0	keywords107.ini	*no parameters*
+SYNC RATE	Command	1	keywords107.ini	Rate
+SYNC SLEEP	Command	1	keywords107.ini	Flag Processor Friendly
+SYSTEM DMEM AVAILABLE	Function	0	keywords107.ini	*no parameters*
+SYSTEM SMEM AVAILABLE	Function	0	keywords107.ini	*no parameters*
+SYSTEM TMEM AVAILABLE	Function	0	keywords107.ini	*no parameters*
+TAN	Function	1	keywords107.ini	(Value)
+TERRAIN EXIST	Function	1	keywords107.ini	(Terrain Number)
+TERRAIN POSITION X	Function	1	keywords107.ini	(Terrain Number)
+TERRAIN POSITION Y	Function	1	keywords107.ini	(Terrain Number)
+TERRAIN POSITION Z	Function	1	keywords107.ini	(Terrain Number)
+TEXT	Command	3	keywords107.ini	X,Y,String
+TEXT BACKGROUND TYPE	Function	0	keywords107.ini	*no parameters*
+TEXT FONT$	Function	0	keywords107.ini	*no parameters*
+TEXT HEIGHT	Function	1	keywords107.ini	(String)
+TEXT SIZE	Function	0	keywords107.ini	*no parameters*
+TEXT STYLE	Function	0	keywords107.ini	*no parameters*
+TEXT WIDTH	Function	1	keywords107.ini	(String)
+TEXTURE LIMB	Command	3,4	keywords107.ini	[Object Number, Limb Number, Image Number][Object Number, Limb Number, Stage Number, Image Number]
+TEXTURE OBJECT	Command	2,3,4	keywords107.ini	[Object Number, Image Number][Object Number, Stage Number, Image Number][Object Number, Stage Number, Image Number, Ignore Sorting]
+TEXTURE SCREEN	Command	1,2	keywords107.ini	[Image Number][Stage Index, Image Number]
+TEXTURE TERRAIN	Command	2	keywords107.ini	Terrain Number, Image Number
+TEXTURESYSTEMMEMORY AVAILABLE	Function	0	keywords107.ini	*no parameters*
+TEXTUREVIDEOMEMORY AVAILABLE	Function	0	keywords107.ini	*no parameters*
+TIMER	Function	0	keywords107.ini	*no parameters*
+TLVERTEXSYSTEMMEMORY AVAILABLE	Function	0	keywords107.ini	*no parameters*
+TLVERTEXVIDEOMEMORY AVAILABLE	Function	0	keywords107.ini	*no parameters*
+TNL AVAILABLE	Function	0	keywords107.ini	*no parameters*
+TOTAL DVD CHAPTERS	Function	2	keywords107.ini	(Animation Number, Title Number)
+TOTAL OBJECT FRAMES	Function	1	keywords107.ini	(Object Number)
+TRANSFORM COORDS VECTOR2	Command	3	keywords107.ini	VectorResult, VectorSource, Matrix4Source
+TRANSFORM COORDS VECTOR3	Command	3	keywords107.ini	VectorResult, VectorSource, Matrix4Source
+TRANSFORM NORMALS VECTOR3	Command	3	keywords107.ini	VectorResult, VectorSource, Matrix4Source
+TRANSFORM VECTOR4	Command	3	keywords107.ini	VectorResult, VectorSource, Matrix4Source
+TRANSLATE MATRIX4	Command	4	keywords107.ini	Matrix4Result, X, Y, Z
+TRANSPOSE MATRIX4	Command	2	keywords107.ini	Matrix4Result, Matrix4Source
+TURN CAMERA LEFT	Command	1,2	keywords107.ini	[Angle Value][Camera Number, Angle Value]
+TURN CAMERA RIGHT	Command	1,2	keywords107.ini	[Angle Value][Camera Number, Angle Value]
+TURN OBJECT LEFT	Command	2	keywords107.ini	Object Number, Value
+TURN OBJECT RIGHT	Command	2	keywords107.ini	Object Number, Value
+TYPE	Statement	4	Keywords100.ini	Type Name Field1,Field2,...,FieldN ENDTYPE
+UNDIM	Command	1	keywords107.ini	ArrayName(0)
+UNGLUE OBJECT	Command	1	keywords107.ini	Object Number
+UNLOCK BACKBUFFER	Command	0	keywords107.ini	*no parameters*
+UNLOCK PIXELS	Command	0	keywords107.ini	*no parameters*
+UNLOCK VERTEXDATA	Command	0	keywords107.ini	*no parameters*
+UNTIL	Statement	1	keywords107.ini	Condition
+UPDATE MATRIX	Command	1	keywords107.ini	Matrix Number
+UPDATE TERRAIN	Command		keywordsAT.ini	-
+UPKEY	Function	0	keywords107.ini	*no parameters*
+UPPER$	Function	1	keywords107.ini	(String)
+VAL	Function	1	keywords107.ini	(String)
+VERTEX SHADER EXIST	Function	1	keywords107.ini	(VertexShader Number)
+VIEW MATRIX4	Command	1	keywords107.ini	Matrix4Result
+VOLUMEMAP AVAILABLE	Function	0	keywords107.ini	*no parameters*
+W VECTOR4	Function	1	keywords107.ini	(Vector)
+WAIT	Command	1	keywords107.ini	Delay
+WAIT KEY	Command	0	keywords107.ini	*no parameters*
+WAIT MOUSE	Command	0	keywords107.ini	*no parameters*
+WBUFFER AVAILABLE	Function	0	keywords107.ini	*no parameters*
+WFOG AVAILABLE	Function	0	keywords107.ini	*no parameters*
+WHILE	Statement	1	keywords107.ini	Condition
+WINDIR$	Function	0	keywords107.ini	*no parameters*
+WINDOW EXIST	Function	1	keywords107.ini	(Window Name)
+WINDOW TO BACK	Command	0,1	keywords107.ini	[*no parameters*][Window Name]
+WINDOW TO FRONT	Command	0,1	keywords107.ini	[*no parameters*][Window Name]
+WORD	Statement	1	Keywords100.ini	Range = 0..65535
+WORLD MATRIX4	Command	1	keywords107.ini	Matrix4Result
+WRAPVALUE	Function	1	keywords107.ini	(Angle Value)
+WRITE BYTE	Command	2	keywords107.ini	File Number, Variable
+WRITE BYTE TO FILE	Command	3	keywords107.ini	Filename, Position, ByteValue
+WRITE DIRBLOCK	Command	2	keywords107.ini	File Number, Folder to Create
+WRITE FILE	Command	2	keywords107.ini	File Number, Variable
+WRITE FILEBLOCK	Command	2	keywords107.ini	File Number, Filename to Create
+WRITE FILEMAP STRING	Command	2	keywords107.ini	Filemap Name, String
+WRITE FILEMAP VALUE	Command	2	keywords107.ini	Filemap Name, Value
+WRITE FLOAT	Command	2	keywords107.ini	File Number, Variable
+WRITE LONG	Command	2	keywords107.ini	File Number, Variable
+WRITE MEMBLOCK	Command	2	keywords107.ini	File Number, Memblock Number
+WRITE MEMBLOCK BYTE	Command	3	keywords107.ini	Memblock Number, Position, Byte
+WRITE MEMBLOCK DWORD	Command	3	keywords107.ini	Memblock Number, Position, DWord
+WRITE MEMBLOCK FLOAT	Command	3	keywords107.ini	Memblock Number, Position, Float
+WRITE MEMBLOCK WORD	Command	3	keywords107.ini	Memblock Number, Position, Word
+WRITE STRING	Command	2	keywords107.ini	File Number, String
+WRITE STRING TO REGISTRY	Command	3	keywords107.ini	Folder Name, Key Name, String
+WRITE TO CLIPBOARD	Command	1	keywords107.ini	String
+WRITE TO REGISTRY	Command	3	keywords107.ini	Folder Name, Key Name, Value
+WRITE WORD	Command	2	keywords107.ini	File Number, Variable
+X VECTOR2	Function	1	keywords107.ini	(Vector)
+X VECTOR3	Function	1	keywords107.ini	(Vector)
+X VECTOR4	Function	1	keywords107.ini	(Vector)
+XOR	Operator	1	Keywords100.ini	Boolean Value
+XROTATE CAMERA	Command	1,2	keywords107.ini	[XAngle][Camera Number, XAngle]
+XROTATE OBJECT	Command	2	keywords107.ini	Object Number, XAngle
+Y VECTOR2	Function	1	keywords107.ini	(Vector)
+Y VECTOR3	Function	1	keywords107.ini	(Vector)
+Y VECTOR4	Function	1	keywords107.ini	(Vector)
+YROTATE CAMERA	Command	1,2	keywords107.ini	[YAngle][Camera Number, YAngle]
+YROTATE OBJECT	Command	2	keywords107.ini	Object Number, YAngle
+Z VECTOR3	Function	1	keywords107.ini	(Vector)
+Z VECTOR4	Function	1	keywords107.ini	(Vector)
+ZBUFFER AVAILABLE	Function	0	keywords107.ini	*no parameters*
+ZFOG AVAILABLE	Function	0	keywords107.ini	*no parameters*
+ZROTATE CAMERA	Command	1,2	keywords107.ini	[ZAngle][Camera Number, ZAngle]
+ZROTATE OBJECT	Command	2	keywords107.ini	Object Number, ZAngle

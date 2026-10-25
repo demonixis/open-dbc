@@ -1,0 +1,45 @@
+rem DBPro standard particles state, queries and vector overloads
+sync on : sync rate 0
+autocam off
+
+make particles 1, 0, 8, 2.0
+print "EXIST="; particles exist(1)
+
+position particles 1, 1.0, 2.0, 3.0
+print "POSITION="; particles position x(1); ","; particles position y(1); ","; particles position z(1)
+make vector3 1
+make vector3 2
+set vector3 1, 4.0, 5.0, 6.0
+position particles 1, 1
+set vector3 to particles position 2, 1
+print "VECTOR_POSITION="; x vector3(2); ","; y vector3(2); ","; z vector3(2)
+
+rotate particles 1, 10.0, 20.0, 30.0
+set vector3 to particles rotation 2, 1
+print "ROTATION="; x vector3(2); ","; y vector3(2); ","; z vector3(2)
+rotate particles 1, 1
+set vector3 to particles rotation 2, 1
+print "VECTOR_ROTATION="; x vector3(2); ","; y vector3(2); ","; z vector3(2)
+
+position particle emissions 1, 2.0, 4.0, 6.0
+color particles 1, 64, 128, 255
+set particle speed 1, 0.01
+set particle emissions 1, 1
+set particle velocity 1, 2.0
+set particle gravity 1, 3.0
+set particle life 1, 75
+set particle floor 1, 0
+set particle chaos 1, 250.0
+ghost particles on 1, 2
+ghost particles on 1, 5, 50
+ghost particles off 1
+hide particles 1
+show particles 1
+
+delete particles 1
+print "DELETED="; particles exist(1)
+delete vector3 1
+delete vector3 2
+print "PARTICLES_DONE"
+sync
+end

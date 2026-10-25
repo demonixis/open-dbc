@@ -1,0 +1,29 @@
+---
+Language: Cpp
+# Use the existing Microsoft-based layout.
+BasedOnStyle: Microsoft
+Standard: c++20
+
+# --- Indentation ---
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# --- Braces ---
+# Use Allman braces consistently.
+BreakBeforeBraces: Allman
+
+# --- Namespaces ---
+# Indent namespace contents.
+NamespaceIndentation: All
+
+# --- C++ ---
+PointerAlignment: Left
+ColumnLimit: 120
+
+# --- Multiline blocks ---
+AllowShortIfStatementsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortBlocksOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+IndentCaseLabels: true

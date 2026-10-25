@@ -1,0 +1,24 @@
+rem DBPro ODE rigid-body core through the portable physics backend
+sync on : sync rate 0
+autocam off
+
+make object box 1, 40.0, 2.0, 40.0
+position object 1, 0.0, -1.0, 0.0
+make object sphere 2, 1.0
+position object 2, 0.0, 5.0, 0.0
+
+ode start
+ode create static box 1
+ode create dynamic sphere 2
+ode set world gravity 0.0, -20.0, 0.0
+for step = 1 to 90
+    ode update
+next step
+
+print "RESTING="; (object position y(2) > 0.4 and object position y(2) < 0.7)
+print "HEIGHT="; ode get body height(2)
+ode destroy object 2
+ode end
+delete object 1
+delete object 2
+end

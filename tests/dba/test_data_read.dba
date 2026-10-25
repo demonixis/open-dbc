@@ -1,0 +1,26 @@
+rem Test DATA/READ/RESTORE
+sync on : sync rate 0
+
+data 10, 20, 30
+data "alpha", "beta"
+
+read a
+read b
+read c
+print "D1="; a
+print "D2="; b
+print "D3="; c
+
+read s1$
+read s2$
+print "S1="; s1$
+print "S2="; s2$
+
+rem RESTORE resets read pointer
+restore
+read r
+print "RESTORE="; r
+
+print "TEST_DONE"
+sync
+end

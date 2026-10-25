@@ -1,0 +1,33 @@
+rem Test extended math functions
+sync on : sync rate 0
+
+rem Trigonometry (DBA uses degrees)
+print "TAN_45="; tan(45)
+print "ACOS_1="; acos(1)
+print "ASIN_1="; asin(1)
+print "ATAN_1="; atan(1)
+print "ATANFULL_1_1="; atanfull(1, 1)
+
+rem New position values (movement along angle)
+rem NEWXVALUE(current_x, angle, distance)
+nx# = newxvalue(0.0, 90.0, 10.0)
+print "NEWX_90="; nx#
+nz# = newzvalue(0.0, 90.0, 10.0)
+print "NEWZ_90="; nz#
+ny# = newyvalue(0.0, 90.0, 10.0)
+print "NEWY_90="; ny#
+
+rem More math
+print "EXP_0="; exp(0)
+print "EXP_1="; exp(1)
+
+rem Absolute value edge cases
+print "ABS_0="; abs(0)
+
+rem Wrapvalue extended
+print "WRAP_720="; wrapvalue(720)
+print "WRAP_NEG360="; wrapvalue(-360)
+
+print "TEST_DONE"
+sync
+end

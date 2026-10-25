@@ -1,0 +1,60 @@
+rem ==================================================================
+rem Buoy Field - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Loads images, places them on the screen as sprites and queries them.
+rem A jet scooter weaves up through a field of buoys whose lamps blink
+rem with HIDE SPRITE and SHOW SPRITE.
+rem H hides every sprite while held, D deletes the scooter sprite and
+rem its image.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+w = screen width() : h = screen height()
+
+rem The sea goes onto the screen; sprites are drawn over it and the
+rem screen behind them is kept intact
+load bitmap "sea.bmp"
+load image "scooter.bmp", 1
+load image "buoy.bmp", 2
+
+rem Sprites 2 to 13: a grid of buoys
+for b = 0 to 11
+   sprite 2 + b, 70 + (b mod 4) * 160 + (b / 4) * 40, 60 + (b / 4) * 150, 2
+next b
+
+x# = w / 2 : y# = h
+do
+   rem The scooter climbs the screen, swaying left and right, then wraps
+   y# = y# - 1.5
+   if y# < -64 then y# = h
+   x# = w / 2 - 32 + sin(y# * 1.2) * 180
+   if deleted = 0 then sprite 1, x#, y#, 1
+
+   rem Every buoy blinks on its own rhythm
+   for b = 0 to 11
+      if ((timer() / 400) + b) mod 5 = 0
+         hide sprite 2 + b
+      else
+         show sprite 2 + b
+      endif
+   next b
+
+   if keystate(35) = 1
+      hide all sprites
+   else
+      if hidden = 1 then show all sprites
+   endif
+   hidden = keystate(35)
+   if keystate(32) = 1 and deleted = 0 then delete sprite 1 : delete image 1 : deleted = 1
+
+   ink rgb(0, 0, 0), 0
+   box 0, h - 44, w, h
+   ink rgb(255, 255, 255), 0
+   if sprite exist(1) = 1
+      text 10, h - 40, "SPRITE 1: X " + str$(sprite x(1)) + "  Y " + str$(sprite y(1)) + "  IMAGE " + str$(sprite image(1)) + "  SIZE " + str$(sprite width(1)) + " x " + str$(sprite height(1))
+   else
+      text 10, h - 40, "SPRITE 1 deleted - SPRITE EXIST(1) = " + str$(sprite exist(1)) + ", IMAGE EXIST(1) = " + str$(image exist(1))
+   endif
+   text 10, h - 20, "H hides all sprites, D deletes the scooter"
+   sync
+loop

@@ -1,0 +1,5 @@
+print 6 or 1
+print 6 and 3
+print 6 xor 3
+print not 0
+print not 6

@@ -1,0 +1,28 @@
+{
+    "android": {
+        "minSdk": 29,
+        "permissions": [
+        ],
+        "screenOrientation": "sensorLandscape",
+        "targetSdk": 34
+    },
+    "general": {
+        "appName": "",
+        "bundleId": "",
+        "versionCode": 1,
+        "versionName": "1.0.0"
+    },
+    "ios": {
+        "deploymentTarget": "16.0",
+        "orientations": [
+            "LandscapeLeft",
+            "LandscapeRight"
+        ],
+        "teamId": ""
+    },
+    "targets": {
+        "android": false,
+        "desktop": true,
+        "ios": false
+    }
+}

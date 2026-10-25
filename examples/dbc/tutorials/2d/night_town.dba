@@ -1,0 +1,95 @@
+rem ==================================================================
+rem Night Town - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Paints a town at night with the 2D drawing commands only:
+rem LINE for the sky and for filling shapes, DOT for the stars, CIRCLE
+rem and ELLIPSE for outlines, BOX for the buildings and windows.
+rem Press any key to build another town.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+randomize timer()
+do
+   gosub draw_town
+   suspend for key
+loop
+
+draw_town:
+   w = screen width() : h = screen height()
+   cls
+
+   rem A sky gradient: one horizontal LINE per row, a little bluer each time
+   for y = 0 to h - 1
+      ink rgb(8 + y / 24, 10 + y / 10, 40 + y / 5), 0
+      line 0, y, w - 1, y
+   next y
+
+   rem Stars are single DOTs of random brightness, thinner near the horizon
+   for s = 1 to 220
+      sx = rnd(w - 1) : sy = rnd(h / 2)
+      c = 120 + rnd(135) - sy / 2
+      ink rgb(c, c, c + 20), 0
+      dot sx, sy
+   next s
+
+   rem The moon: a disc filled with one LINE per row, shaded from the lit
+   rem side, then CIRCLE outlines for its rim and a few craters
+   moonx = w - 130 : moony = 90 : moonr = 44
+   for dy = 0 - moonr to moonr
+      half = sqrt(moonr * moonr - dy * dy)
+      c = 235 - (dy + moonr) / 2
+      ink rgb(c, c - 6, c - 50), 0
+      line moonx - half, moony + dy, moonx + half, moony + dy
+   next dy
+   ink rgb(255, 250, 210), 0
+   circle moonx, moony, moonr
+   ink rgb(190, 180, 130), 0
+   circle moonx - 14, moony - 10, 9
+   circle moonx + 12, moony + 14, 6
+   circle moonx + 18, moony - 16, 4
+
+   rem Clouds: overlapping puffs filled row by row, each with an ELLIPSE rim
+   for cloud = 1 to 4
+      cx = rnd(w) : cy = 70 + rnd(110)
+      for puff = 0 to 3
+         px = cx + puff * 34 - 50 : py = cy - (puff mod 2) * 10
+         rx = 40 + rnd(20) : ry = 14 + rnd(6)
+         ink rgb(48 + puff * 4, 54 + puff * 4, 92 + puff * 4), 0
+         for dy = 0 - ry to ry
+            half = rx * sqrt(1.0 - (dy * dy * 1.0) / (ry * ry))
+            line px - half, py + dy, px + half, py + dy
+         next dy
+         ink rgb(90, 98, 140), 0
+         ellipse px, py, rx, ry
+      next puff
+   next cloud
+
+   rem Buildings: a filled BOX each, then small boxes for the windows
+   x = 0
+   while x < w
+      bw = 36 + rnd(40) : bh = 70 + rnd(170)
+      top = h - 30 - bh
+      shade = 18 + rnd(18)
+      ink rgb(shade, shade, shade + 12), 0
+      box x, top, x + bw - 2, h - 30
+      for wy = top + 10 to h - 48 step 16
+         for wx = x + 6 to x + bw - 14 step 12
+            if rnd(3) = 0
+               ink rgb(250, 210 + rnd(40), 110), 0
+               box wx, wy, wx + 5, wy + 8
+            endif
+         next wx
+      next wy
+      x = x + bw
+   endwhile
+
+   rem The street
+   ink rgb(20, 20, 26), 0
+   box 0, h - 30, w - 1, h - 1
+   ink rgb(220, 200, 90), 0
+   for x = 10 to w step 60
+      line x, h - 15, x + 30, h - 15
+   next x
+
+   ink rgb(255, 255, 255), 0
+   text 12, 10, "NIGHT TOWN - press a key for another town"
+return

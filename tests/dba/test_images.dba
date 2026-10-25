@@ -1,0 +1,93 @@
+rem Test image functions (existence checks without loading files)
+sync on : sync rate 0
+
+rem Images should not exist before loading
+print "IMAGE_1_BEFORE="; image exist(1)
+print "IMAGE_2_BEFORE="; image exist(2)
+
+rem Create a bitmap (no file needed)
+create bitmap 1, 64, 64
+print "BITMAP_CREATED=1"
+cls rgb(1,2,3)
+ink rgb(40,50,60),0
+dot 10,11
+line 12,13,16,13
+box 20,20,24,24
+if point(0,0)=rgb(1,2,3) then print "OFFSCREEN_CLS=1" else print "OFFSCREEN_CLS=0"
+if point(10,11)=rgb(40,50,60) then print "OFFSCREEN_DOT=1" else print "OFFSCREEN_DOT=0"
+if point(14,13)=rgb(40,50,60) then print "OFFSCREEN_LINE=1" else print "OFFSCREEN_LINE=0"
+if point(20,22)=rgb(40,50,60) then print "OFFSCREEN_BOX=1" else print "OFFSCREEN_BOX=0"
+save bitmap "_test_bitmap.bmp", 1
+print "BITMAP_SAVED="; file exist("_test_bitmap.bmp")
+get image 3, 0, 0, 16, 16
+save image "_test_image.png", 3
+print "IMAGE_SAVED="; file exist("_test_image.png")
+make memblock from image 10, 3
+make image from memblock 11, 10
+print "IMAGE_MEMBLOCK="; image exist(11)
+load image "_test_image.png", 6
+print "IMAGE_LOADED="; image exist(6)
+
+rem PASTE IMAGE and CLS operate on the active offscreen bitmap immediately.
+create bitmap 4, 32, 32
+cls rgb(9,8,7)
+paste image 3, 4, 5
+if point(0,0)=rgb(9,8,7) then print "OFFSCREEN_PASTE_BG=1" else print "OFFSCREEN_PASTE_BG=0"
+if point(14,16)=rgb(40,50,60) then print "OFFSCREEN_PASTE_PIXEL=1" else print "OFFSCREEN_PASTE_PIXEL=0"
+
+rem The optional transparency flag preserves destination pixels under black source pixels.
+create bitmap 7, 4, 4
+cls rgb(0,0,0)
+ink rgb(11,22,33),0
+dot 1,1
+get image 8, 0, 0, 4, 4
+create bitmap 9, 4, 4
+cls rgb(70,80,90)
+paste image 8, 0, 0, 1
+if point(0,0)=rgb(70,80,90) then print "PASTE_KEY_BG=1" else print "PASTE_KEY_BG=0"
+if point(1,1)=rgb(11,22,33) then print "PASTE_KEY_COLOR=1" else print "PASTE_KEY_COLOR=0"
+
+rem CLS discards only work queued before it; subsequent screen drawing survives capture.
+set current bitmap 0
+ink rgb(90,80,70),0
+dot 2,2
+cls rgb(10,20,30)
+ink rgb(200,100,50),0
+dot 30,31
+save bitmap "_test_screen.bmp"
+print "SCREEN_BITMAP_SAVED="; file exist("_test_screen.bmp")
+load bitmap "_test_screen.bmp", 5
+if point(2,2)=rgb(10,20,30) then print "SCREEN_CLS_ORDER=1" else print "SCREEN_CLS_ORDER=0"
+screenDot=0
+for sy=28 to 34
+  for sx=27 to 33
+    if point(sx,sy)<>rgb(10,20,30) then screenDot=1
+  next sx
+next sy
+print "SCREEN_CAPTURE_DOT="; screenDot
+
+rem Screen dimensions: the DarkBASIC Classic default is 640x480
+rem unless the script calls SET DISPLAY MODE
+print "SCREEN_W="; screen width()
+print "SCREEN_H="; screen height()
+
+delete bitmap 1
+delete bitmap 4
+delete bitmap 5
+delete bitmap 7
+delete bitmap 9
+delete image 3
+delete image 6
+delete image 8
+delete image 11
+delete memblock 10
+delete file "_test_bitmap.bmp"
+delete file "_test_image.png"
+delete file "_test_screen.bmp"
+print "BITMAP_SAVE_DELETED="; file exist("_test_bitmap.bmp")
+print "IMAGE_SAVE_DELETED="; file exist("_test_image.png")
+print "SCREEN_SAVE_DELETED="; file exist("_test_screen.bmp")
+
+print "TEST_DONE"
+sync
+end

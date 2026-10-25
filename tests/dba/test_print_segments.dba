@@ -1,0 +1,16 @@
+rem A PRINT with ';' may follow another statement on the same line
+sync on : sync rate 0
+
+r = 1 : print "r=";r
+a = 2 : b = 3 : print "a+b=";a+b;" done"
+print "joined=";
+print 42
+print "discarded by cursor";
+set cursor 0,0
+print "after cursor"
+print "discarded by cls";
+cls
+print "after cls"
+print "TEST_DONE"
+sync
+end

@@ -1,0 +1,73 @@
+# --- Global Settings ---
+# Auto-detect text files and normalize line endings to LF on commit
+* text=auto eol=lf
+# --- C++ Sources ---
+*.cpp text diff=cpp
+*.c   text diff=cpp
+*.h   text diff=cpp
+*.hpp text diff=cpp
+*.inl text diff=cpp
+# --- Shaders ---
+*.vert text
+*.frag text
+*.comp text
+*.geom text
+*.tesc text
+*.tese text
+*.glsl text
+*.hlsl text
+*.spv binary
+# --- Build Scripts ---
+# CMake
+CMakeLists.txt text
+*.cmake text
+# Scripts (Force LF for shell scripts)
+*.sh text eol=lf
+# Windows Scripts (Force CRLF)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+# --- Assets (Binary) ---
+# Images
+*.png binary
+*.jpg binary
+*.JPG binary
+*.jpeg binary
+*.tga binary
+*.ico binary
+*.psd binary
+*.bmp binary
+*.BMP binary
+*.rez binary
+*.REZ binary
+# Audio
+*.wav binary
+*.mp3 binary
+*.mid binary
+*.avi binary
+*.abc binary
+# 3D Models
+# Binary formats
+*.glb binary
+*.fbx binary
+*.blend binary
+# Text formats
+*.gltf text
+*.obj text
+*.mtl text
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+# Fonts
+*.ttf binary
+*.otf binary
+# --- Configuration ---
+.editorconfig text
+.clang-format text
+.gitignore text
+.gitattributes text
+*.dat binary
+*.dds binary
+*.DDS binary
+*.dpr binary

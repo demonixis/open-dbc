@@ -1,0 +1,34 @@
+rem Test camera positioning and rotation
+sync on : sync rate 0
+
+rem Default camera position
+print "CAM_X_DEFAULT="; camera position x()
+print "CAM_Y_DEFAULT="; camera position y()
+print "CAM_Z_DEFAULT="; camera position z()
+
+rem Position camera
+position camera 100.0, 50.0, 200.0
+print "CAM_X_SET="; camera position x()
+print "CAM_Y_SET="; camera position y()
+print "CAM_Z_SET="; camera position z()
+
+rem Default camera angles
+print "CAM_AX_DEFAULT="; camera angle x()
+print "CAM_AY_DEFAULT="; camera angle y()
+print "CAM_AZ_DEFAULT="; camera angle z()
+
+rem Rotate camera
+rotate camera 30.0, 60.0, 0.0
+print "CAM_AX_SET="; camera angle x()
+print "CAM_AY_SET="; camera angle y()
+print "CAM_AZ_SET="; camera angle z()
+
+rem Set camera range
+set camera range 1.0, 10000.0
+
+rem Set camera FOV
+set camera fov 90.0
+
+print "TEST_DONE"
+sync
+end

@@ -1,0 +1,13 @@
+rem CHECKLIST QUANTITY reports the entries of the last PERFORM CHECKLIST
+sync on : sync rate 0
+
+perform checklist for graphics cards
+print "cards="; checklist quantity()
+if len(checklist string$(1)) > 0 then print "card has a name"
+perform checklist for files
+if checklist quantity() > 0 then print "files listed"
+perform checklist for display modes
+perform checklist for fonts
+print "TEST_DONE"
+sync
+end

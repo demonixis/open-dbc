@@ -1,0 +1,324 @@
+rem ==================================================================
+rem Frost Outpost - an OpenDBC example for the DarkBASIC Classic profile
+rem Hold the snowy outpost against ice imps. Distant imps are cheap
+rem camera-facing impostors; close ones are animated 3D models.
+rem Mouse looks, W A S D or the arrow keys move, the mouse button fires.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+hide mouse
+autocam off
+randomize timer()
+backdrop on
+sky_colour = rgb(150, 170, 195)
+color backdrop sky_colour
+set camera range 1, 1600
+set ambient light 60
+if fog available() = 1
+   fog on
+   fog color rgb(170, 185, 205)
+   fog distance 700
+endif
+
+rem Clip ranges inside every imp object (each clip is appended after the idle one)
+idle_start = 0 : idle_end = 20
+walk_start = 30 : walk_end = 54
+charge_start = 60 : charge_end = 76
+punch_start = 80 : punch_end = 104
+diea_start = 110 : diea_end = 140
+dieb_start = 150 : dieb_end = 180
+
+gosub build_terrain
+gosub build_outpost
+gosub build_sky
+gosub build_weapon
+gosub build_hud
+gosub build_imps
+
+load sound "pulse.wav", 1
+load sound "impact.wav", 2
+load sound "shatter.wav", 3
+load sound "punch.wav", 4
+load sound "wind.wav", 5
+load 3dsound "howl.wav", 6
+loop sound 5
+
+px# = 0.0 : pz# = -90.0 : yaw# = 0.0 : pitch# = 0.0
+health = 100 : score = 0 : cooldown = 0 : hurt# = 0.0
+
+do
+   rem --- Mouse look and movement
+   yaw# = wrapvalue(yaw# + mousemovex() * 0.25)
+   pitch# = pitch# + mousemovey() * 0.25
+   if pitch# > 60 then pitch# = 60
+   if pitch# < -60 then pitch# = -60
+   forward# = 0.0 : side# = 0.0
+   if upkey() = 1 or keystate(17) = 1 then forward# = 1.2
+   if downkey() = 1 or keystate(31) = 1 then forward# = -0.8
+   if leftkey() = 1 or keystate(30) = 1 then side# = -0.9
+   if rightkey() = 1 or keystate(32) = 1 then side# = 0.9
+   px# = newxvalue(px#, yaw#, forward#) : pz# = newzvalue(pz#, yaw#, forward#)
+   px# = newxvalue(px#, wrapvalue(yaw# + 90), side#) : pz# = newzvalue(pz#, wrapvalue(yaw# + 90), side#)
+   if px# < -700 then px# = -700
+   if px# > 700 then px# = 700
+   if pz# < -700 then pz# = -700
+   if pz# > 700 then pz# = 700
+   py# = get ground height(1, px# + 800, pz# + 800) + 7.0
+   position camera px#, py#, pz#
+   rotate camera pitch#, yaw#, 0
+   position listener px#, py#, pz#
+   rotate listener 0, yaw#, 0
+
+   rem --- Fire a pulse
+   if cooldown > 0 then dec cooldown
+   if mouseclick() = 1 and cooldown = 0 and shot = 0
+      shot = 1 : cooldown = 18
+      shotx# = px# : shoty# = py# - 1.0 : shotz# = pz#
+      shotyaw# = yaw# : shotpitch# = pitch# : shotlife = 90
+      position object 60, shotx#, shoty#, shotz#
+      show object 60
+      play sound 1
+      recoil# = 0.6
+   endif
+   if shot = 1
+      shotx# = shotx# + sin(shotyaw#) * cos(shotpitch#) * 6.0
+      shoty# = shoty# - sin(shotpitch#) * 6.0
+      shotz# = shotz# + cos(shotyaw#) * cos(shotpitch#) * 6.0
+      position object 60, shotx#, shoty#, shotz#
+      dec shotlife
+      if shotlife = 0 or shoty# < get ground height(1, shotx# + 800, shotz# + 800) then shot = 0 : hide object 60
+   endif
+   recoil# = curvevalue(0.0, recoil#, 6)
+   position object 40, 1.6, -1.5, 3.2 - recoil#
+
+   rem --- Imps
+   nearest# = 100000.0
+   for i = 1 to imps
+      gosub update_imp
+   next i
+
+   rem --- HUD: the needle points north whatever the player faces
+   zrotate object 51, yaw#
+   if hurt# > 0.0
+      hurt# = hurt# - 0.02
+      color backdrop rgb(150 + hurt# * 60, 170 - hurt# * 60, 195 - hurt# * 80)
+      if fog available() = 1 then fog color rgb(170 + hurt# * 50, 185 - hurt# * 60, 205 - hurt# * 80)
+   endif
+
+   scroll object texture 55, 0.0004, 0.0001
+   scroll object texture 56, -0.0002, 0.0003
+   scroll object texture 57, 0.0001, -0.0002
+
+   ink rgb(20, 30, 50), 0
+   text 12, 10, "HEALTH " + str$(health) + "    IMPS SHATTERED " + str$(score)
+   if health <= 0
+      center text screen width() / 2, screen height() / 2, "THE OUTPOST HAS FALLEN - PRESS SPACE"
+      if spacekey() = 1 then health = 100 : score = 0 : gosub reset_imps
+   endif
+   sync
+loop
+
+rem ------------------------------------------------------------------
+rem Rolling hills from a few sine waves, textured from a 2 x 2 atlas
+build_terrain:
+   load bitmap "terrain.jpg", 1
+   get image 1, 0, 0, 2048, 2048
+   delete bitmap 1
+   make matrix 1, 1600, 1600, 48, 48
+   prepare matrix texture 1, 1, 2, 2
+   for z = 0 to 48
+      for x = 0 to 48
+         wx# = x - 24 : wz# = z - 24
+         h# = 14 * sin(x * 19) + 10 * cos(z * 23) + 6 * sin((x + z) * 41)
+         rem Flatten the outpost square at the centre
+         d# = sqrt(wx# * wx# + wz# * wz#)
+         if d# < 5 then h# = h# * d# / 5
+         set matrix height 1, x, z, h#
+         if x < 48 and z < 48
+            tile = 1
+            if h# > 18 then tile = 4
+            if h# < -12 then tile = 3
+            if d# < 4 then tile = 2
+            set matrix tile 1, x, z, tile
+         endif
+      next x
+   next z
+   update matrix 1
+   position matrix 1, -800, 0, -800
+return
+
+build_outpost:
+   load object "outpost.x", 2
+   position object 2, -5, get ground height(1, 795, 800), 0
+return
+
+rem Three cloud layers: ghosted (additive) plains seen from below
+build_sky:
+   load image "clouds.jpg", 3
+   for c = 55 to 57
+      make object plain c, 3000, 3000
+      texture object c, 3
+      scale object texture c, 2 + c - 55, 2 + c - 55
+      xrotate object c, 90
+      position object c, 0, 260 + (c - 55) * 50, 0
+      set object c, 1, 1, 0, 1, 0, 0, 1
+      ghost object on c
+   next c
+return
+
+rem The pulse pistol and its projectile
+build_weapon:
+   load object "pistol.x", 40
+   lock object on 40
+   scale object 40, 60, 60, 60
+   load image "pulse.jpg", 4
+   make object sphere 60, 1.6
+   texture object 60, 4
+   set object 60, 1, 1, 1, 1, 0, 0, 1
+   ghost object on 60
+   hide object 60
+return
+
+rem A compass locked to the screen; black is invisible on ghosted plains
+build_hud:
+   load image "compass.jpg", 5
+   load image "needle.jpg", 6
+   make object plain 50, 1.6, 1.6
+   texture object 50, 5
+   make object plain 51, 1.4, 1.4
+   texture object 51, 6
+   for o = 50 to 51
+      set object o, 1, 1, 0, 1, 0, 0, 1
+      ghost object on o
+      lock object on o
+      position object o, -3.4, -2.3, 6.0 - (o - 50) * 0.01
+   next o
+return
+
+rem Each imp owns a 3D model (20 + i) and an impostor plain (30 + i)
+build_imps:
+   imps = 4
+   dim impx#(imps) : dim impz#(imps) : dim impstate(imps) : dim imptimer(imps) : dim impclip(imps)
+   load bitmap "impostors.png", 2
+   for f = 0 to 7
+      get image 10 + f, f * 128, 0, f * 128 + 128, 128
+   next f
+   delete bitmap 2
+   for i = 1 to imps
+      load object "imp_idle.x", 20 + i
+      append object "imp_walk.x", 20 + i, walk_start
+      append object "imp_charge.x", 20 + i, charge_start
+      append object "imp_punch.x", 20 + i, punch_start
+      append object "imp_die_a.x", 20 + i, diea_start
+      append object "imp_die_b.x", 20 + i, dieb_start
+      scale object 20 + i, 140, 140, 140
+      make object plain 30 + i, 9, 9
+      texture object 30 + i, 10
+      set object 30 + i, 1, 0, 0, 1, 0, 1, 1
+   next i
+   gosub reset_imps
+return
+
+reset_imps:
+   for i = 1 to imps
+      gosub spawn_imp
+   next i
+return
+
+rem Start an imp far away on a random bearing
+spawn_imp:
+   bearing# = rnd(359)
+   impx#(i) = px# + sin(bearing#) * (320 + rnd(200))
+   impz#(i) = pz# + cos(bearing#) * (320 + rnd(200))
+   impstate(i) = 1 : imptimer(i) = 0 : impclip(i) = -1
+   show object 30 + i
+   hide object 20 + i
+return
+
+rem State 1 approaches, 2 punches, 3 dies, 4 waits to respawn
+update_imp:
+   dx# = px# - impx#(i) : dz# = pz# - impz#(i)
+   dist# = sqrt(dx# * dx# + dz# * dz#)
+   facing# = atanfull(dx#, dz#)
+   ground# = get ground height(1, impx#(i) + 800, impz#(i) + 800)
+   select impstate(i)
+      case 1
+         speed# = 0.35
+         if dist# < 90 then speed# = 0.8
+         impx#(i) = impx#(i) + sin(facing#) * speed#
+         impz#(i) = impz#(i) + cos(facing#) * speed#
+         if dist# < 7 then impstate(i) = 2 : imptimer(i) = 0
+      endcase
+      case 2
+         inc imptimer(i)
+         if imptimer(i) = 12
+            play sound 4
+            health = health - 10
+            hurt# = 1.0
+         endif
+         if imptimer(i) >= 24 then impstate(i) = 1
+      endcase
+      case 3
+         inc imptimer(i)
+         if imptimer(i) > 120 then impstate(i) = 4 : imptimer(i) = 0 : hide object 20 + i
+      endcase
+      case 4
+         inc imptimer(i)
+         if imptimer(i) > 90 then gosub spawn_imp
+      endcase
+   endselect
+   if impstate(i) = 4 then return
+
+   rem --- Pick the clip that matches the state
+   clip = 0
+   if impstate(i) = 1 and dist# >= 90 then clip = 1
+   if impstate(i) = 1 and dist# < 90 then clip = 2
+   if impstate(i) = 2 then clip = 3
+   if impstate(i) = 3 then clip = 4
+   if clip <> impclip(i)
+      impclip(i) = clip
+      if clip = 1 then loop object 20 + i, walk_start, walk_end
+      if clip = 2 then loop object 20 + i, charge_start, charge_end
+      if clip = 3 then loop object 20 + i, punch_start, punch_end
+      if clip = 4
+         if rnd(1) = 0
+            play object 20 + i, diea_start, diea_end
+         else
+            play object 20 + i, dieb_start, dieb_end
+         endif
+      endif
+   endif
+
+   rem --- Far imps are impostors, near ones are full models
+   if dist# > 150 and impstate(i) = 1
+      hide object 20 + i
+      show object 30 + i
+      position object 30 + i, impx#(i), ground# + 4.5, impz#(i)
+      yrotate object 30 + i, yaw#
+      texture object 30 + i, 10 + (timer() / 120 + i) mod 8
+   else
+      hide object 30 + i
+      show object 20 + i
+      position object 20 + i, impx#(i), ground#, impz#(i)
+      yrotate object 20 + i, facing#
+   endif
+
+   rem --- The nearest approaching imp howls through the 3D sound
+   if impstate(i) = 1 and dist# < nearest#
+      nearest# = dist#
+      position sound 6, impx#(i), ground# + 4, impz#(i)
+      if sound playing(6) = 0 and rnd(200) = 0 then play sound 6
+   endif
+
+   rem --- A pulse shatters an imp it touches
+   if shot = 1 and impstate(i) <= 2
+      hx# = shotx# - impx#(i) : hy# = shoty# - (ground# + 4) : hz# = shotz# - impz#(i)
+      if hx# * hx# + hy# * hy# + hz# * hz# < 36
+         shot = 0 : hide object 60
+         impstate(i) = 3 : imptimer(i) = 0
+         score = score + 1
+         play sound 3
+      endif
+   endif
+return

@@ -1,0 +1,7 @@
+
+after empty print
+count=3
+cls then print1
+cls then print2
+label still works
+TEST_DONE

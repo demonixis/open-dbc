@@ -1,0 +1,2 @@
+print 5 xor 3
+print 1 or 2 xor 3

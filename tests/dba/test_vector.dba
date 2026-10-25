@@ -1,0 +1,125 @@
+rem Test the complete DBPro VECTOR2 / VECTOR3 / VECTOR4 maths family
+sync on : sync rate 0
+
+make vector2 101 : set vector2 101, 0, 0
+make vector2 102 : set vector2 102, 3, 4
+make vector2 103 : set vector2 103, 4, 8
+make vector2 104 : set vector2 104, 6, 12
+make vector2 105
+print "V2_LENGTH="; length vector2(102)
+print "V2_SQUARED="; squared length vector2(102)
+print "V2_XY="; x vector2(102); ","; y vector2(102)
+add vector2 105, 102, 103
+print "V2_ADD="; x vector2(105); ","; y vector2(105)
+subtract vector2 105, 103, 102
+print "V2_SUB="; x vector2(105); ","; y vector2(105)
+copy vector2 105, 102
+multiply vector2 105, 2
+divide vector2 105, 2
+print "V2_COPY_MUL_DIV="; x vector2(105); ","; y vector2(105)
+scale vector2 105, 103, 0.25
+print "V2_SCALE="; x vector2(105); ","; y vector2(105)
+maximize vector2 105, 102, 103
+print "V2_MAX="; x vector2(105); ","; y vector2(105)
+minimize vector2 105, 102, 103
+print "V2_MIN="; x vector2(105); ","; y vector2(105)
+linear interpolate vector2 105, 102, 103, 0.5
+print "V2_LERP_X2="; x vector2(105) * 2; ","; y vector2(105) * 2
+bcc vector2 105, 101, 102, 103, 0.25, 0.5
+print "V2_BCC_X4="; x vector2(105) * 4; ","; y vector2(105) * 4
+set vector2 101, 0, 0 : set vector2 102, 2, 4
+set vector2 103, 4, 8 : set vector2 104, 6, 12
+catmullrom vector2 105, 101, 102, 103, 104, 0.5
+print "V2_CATMULL="; x vector2(105); ","; y vector2(105)
+set vector2 101, 0, 0 : set vector2 102, 2, 0
+set vector2 103, 4, 4 : set vector2 104, 0, 2
+hermite vector2 105, 101, 102, 103, 104, 0.5
+print "V2_HERMITE_X4="; x vector2(105) * 4; ","; y vector2(105) * 4
+set vector2 102, 3, 4
+normalize vector2 105, 102
+print "V2_NORMALIZED_LENGTH1000="; int(length vector2(105) * 1000 + 0.5)
+print "V2_DOT="; dot product vector2(102, 103)
+print "V2_EQUAL="; is equal vector2(102, 102); ","; is equal vector2(102, 103)
+
+make vector3 201 : set vector3 201, 0, 0, 0
+make vector3 202 : set vector3 202, 2, 4, 6
+make vector3 203 : set vector3 203, 4, 8, 12
+make vector3 204 : set vector3 204, 6, 12, 18
+make vector3 205
+print "V3_SQUARED="; squared length vector3(202)
+copy vector3 205, 202
+divide vector3 205, 2
+print "V3_COPY_DIV="; x vector3(205); ","; y vector3(205); ","; z vector3(205)
+bcc vector3 205, 201, 202, 203, 0.25, 0.5
+print "V3_BCC_X2="; x vector3(205) * 2; ","; y vector3(205) * 2; ","; z vector3(205) * 2
+catmullrom vector3 205, 201, 202, 203, 204, 0.5
+print "V3_CATMULL="; x vector3(205); ","; y vector3(205); ","; z vector3(205)
+linear interpolate vector3 205, 202, 203, 0.5
+print "V3_LERP="; x vector3(205); ","; y vector3(205); ","; z vector3(205)
+maximize vector3 205, 202, 203
+print "V3_MAX="; x vector3(205); ","; y vector3(205); ","; z vector3(205)
+minimize vector3 205, 202, 203
+print "V3_MIN="; x vector3(205); ","; y vector3(205); ","; z vector3(205)
+set vector3 202, 2, 0, 0 : set vector3 203, 4, 4, 4
+set vector3 204, 0, 2, 0
+hermite vector3 205, 201, 202, 203, 204, 0.5
+print "V3_HERMITE_X4="; x vector3(205) * 4; ","; y vector3(205) * 4; ","; z vector3(205) * 4
+
+make vector4 301 : set vector4 301, 0, 0, 0, 0
+make vector4 302 : set vector4 302, 1, 2, 2, 4
+make vector4 303 : set vector4 303, 5, 6, 7, 8
+make vector4 304 : set vector4 304, 6, 12, 18, 24
+make vector4 305
+print "V4_LENGTH="; length vector4(302)
+print "V4_SQUARED="; squared length vector4(302)
+print "V4_XYZW="; x vector4(302); ","; y vector4(302); ","; z vector4(302); ","; w vector4(302)
+add vector4 305, 302, 303
+print "V4_ADD="; x vector4(305); ","; w vector4(305)
+subtract vector4 305, 303, 302
+print "V4_SUB="; x vector4(305); ","; z vector4(305)
+copy vector4 305, 302
+multiply vector4 305, 2
+divide vector4 305, 2
+print "V4_COPY_MUL_DIV="; x vector4(305); ","; w vector4(305)
+scale vector4 305, 303, 0.5
+print "V4_SCALE_X2="; x vector4(305) * 2; ","; w vector4(305) * 2
+maximize vector4 305, 302, 303
+print "V4_MAX="; x vector4(305); ","; w vector4(305)
+minimize vector4 305, 302, 303
+print "V4_MIN="; x vector4(305); ","; w vector4(305)
+linear interpolate vector4 305, 302, 303, 0.5
+print "V4_LERP_X2="; x vector4(305) * 2; ","; y vector4(305) * 2
+set vector4 302, 2, 4, 6, 8 : set vector4 303, 4, 8, 12, 16
+bcc vector4 305, 301, 302, 303, 0.25, 0.5
+print "V4_BCC_X2="; x vector4(305) * 2; ","; w vector4(305)
+catmullrom vector4 305, 301, 302, 303, 304, 0.5
+print "V4_CATMULL="; x vector4(305); ","; y vector4(305); ","; z vector4(305); ","; w vector4(305)
+set vector4 302, 2, 0, 0, 0 : set vector4 303, 4, 4, 4, 4
+set vector4 304, 0, 2, 0, 2
+hermite vector4 305, 301, 302, 303, 304, 0.5
+print "V4_HERMITE_X4="; x vector4(305) * 4; ","; y vector4(305) * 4; ","; z vector4(305) * 4; ","; w vector4(305) * 4
+set vector4 302, 1, 2, 2, 4
+normalize vector4 305, 302
+print "V4_NORMALIZED_LENGTH1000="; int(length vector4(305) * 1000 + 0.5)
+print "V4_EQUAL="; is equal vector4(302, 302); ","; is equal vector4(302, 303)
+
+make matrix4 401 : translate matrix4 401, 5, 0, 0
+transform coords vector3 205, 203, 401
+print "V3_COORDS_X="; x vector3(205)
+transform normals vector3 205, 203, 401
+print "V3_NORMALS_X="; x vector3(205)
+set vector2 101, 0, 1 : set vector2 102, 1, 0
+print "V2_CCW="; ccw vector2(101, 102)
+print "V3_EQUAL="; is equal vector3(203, 203); ","; is equal vector3(201, 203)
+
+delete vector2 101 : delete vector2 102 : delete vector2 103
+delete vector2 104 : delete vector2 105
+delete vector3 201 : delete vector3 202 : delete vector3 203
+delete vector3 204 : delete vector3 205
+delete vector4 301 : delete vector4 302 : delete vector4 303
+delete vector4 304 : delete vector4 305
+delete matrix4 401
+
+print "TEST_DONE"
+sync
+end

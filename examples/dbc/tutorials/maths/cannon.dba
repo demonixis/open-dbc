@@ -1,0 +1,103 @@
+rem ==================================================================
+rem Cannon - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Ballistics with the maths functions: ASIN works out the angle that
+rem lands a shot on the target, SIN and COS turn the angle into a
+rem velocity, SQRT measures how close a shot came and EXP fades the smoke.
+rem Move the mouse to aim (ATANFULL points the barrel), click to fire.
+rem Without the mouse the cannon aims and fires by itself.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+randomize timer()
+w = screen width() : h = screen height()
+ground = h - 40 : gunx = 50 : guny = ground - 14
+speed# = 9.0 : gravity# = 0.15
+targetx = 300 + rnd(w - 360)
+angle# = 45.0 : flying = 0 : cooldown = 60
+shots = 0 : hits = 0 : smoke = 0
+lastmx = mousex() : lastmy = mousey()
+
+do
+   rem The mouse takes over once it moves; otherwise the gunner aims
+   if mousex() <> lastmx or mousey() <> lastmy then manual = 1
+   lastmx = mousex() : lastmy = mousey()
+   if manual = 1
+      rem ATANFULL gives the heading of the mouse seen from the cannon
+      angle# = 90 - wrapvalue(atanfull(mousex() - gunx, guny - mousey()))
+      if angle# < 5 then angle# = 5
+      if angle# > 85 then angle# = 85
+   else
+      rem Range of a shot: speed^2 * SIN(2 * angle) / gravity, so the angle
+      rem for a given range is half of ASIN(range * gravity / speed^2)
+      ratio# = (targetx - gunx) * gravity# / (speed# * speed#)
+      if ratio# > 1 then ratio# = 1
+      angle# = asin(ratio#) / 2.0
+   endif
+
+   if flying = 0 then dec cooldown
+   fire = 0
+   if manual = 1 and mouseclick() = 1 and flying = 0 then fire = 1
+   if manual = 0 and cooldown <= 0 then fire = 1
+   if fire = 1
+      rem The gunner is not perfect: a small random error spoils some shots
+      aim# = angle#
+      if manual = 0 then aim# = angle# + (rnd(40) - 20) / 10.0
+      shotx# = gunx + cos(aim#) * 30 : shoty# = guny - sin(aim#) * 30
+      vx# = cos(aim#) * speed# : vy# = 0 - sin(aim#) * speed#
+      flying = 1 : smoke = 0 : cooldown = 90
+      inc shots
+   endif
+
+   if flying = 1
+      shotx# = shotx# + vx# : shoty# = shoty# + vy# : vy# = vy# + gravity#
+      distance# = sqrt((shotx# - targetx) ^ 2 + (shoty# - (ground - 12)) ^ 2)
+      if distance# < 20
+         inc hits
+         flying = 0
+         message$ = "HIT!"
+         targetx = 300 + rnd(w - 360)
+      endif
+      if shoty# > ground
+         flying = 0
+         message$ = "Missed by " + str$(int(abs(shotx# - targetx))) + " pixels"
+      endif
+   endif
+
+   rem --- Drawing
+   for y = 0 to ground
+      ink rgb(120 + y / 6, 170 + y / 8, 230), 0
+      line 0, y, w, y
+   next y
+   ink rgb(80, 140, 60), 0
+   box 0, ground, w, h
+   rem The target: a flag on a pole
+   ink rgb(90, 60, 30), 0 : box targetx - 2, ground - 40, targetx + 2, ground
+   ink rgb(230, 40, 40), 0 : box targetx + 2, ground - 40, targetx + 26, ground - 26
+   rem Smoke from the muzzle fades with EXP
+   inc smoke
+   fade = 255 * exp(0 - smoke / 25.0)
+   if fade > 8
+      ink rgb(fade, fade, fade), 0
+      for r = 1 to 6 + smoke / 6
+         circle gunx + cos(aim#) * 34, guny - sin(aim#) * 34 - smoke / 4, r
+      next r
+   endif
+   rem The barrel: a fan of lines along the aim angle
+   ink rgb(40, 40, 48), 0
+   for side# = -4.0 to 4.0 step 0.5
+      line gunx - sin(angle#) * side#, guny - cos(angle#) * side#, gunx + cos(angle#) * 30 - sin(angle#) * side#, guny - sin(angle#) * 30 - cos(angle#) * side#
+   next side#
+   box gunx - 16, guny, gunx + 16, ground
+   if flying = 1
+      ink rgb(20, 20, 20), 0
+      for r = 1 to 5 : circle shotx#, shoty#, r : next r
+   endif
+
+   ink rgb(20, 20, 40), 0
+   accuracy = 0
+   if shots > 0 then accuracy = int(hits * 100 / shots)
+   text 10, 10, "ANGLE " + str$(int(angle#)) + "   SHOTS " + str$(shots) + "   HITS " + str$(hits) + "   ACCURACY " + str$(accuracy) + "%"
+   text 10, 30, message$
+   sync
+loop

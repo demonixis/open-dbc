@@ -1,0 +1,96 @@
+rem ==================================================================
+rem Cameras - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Five ways to drive the camera, one after the other every four
+rem seconds (or with keys 1 to 5): circling with POSITION and POINT
+rem CAMERA, walking with MOVE, TURN, PITCH and ROLL, following a ball
+rem with SET CAMERA TO FOLLOW, turning on each axis, and riding a
+rem spinning object. The view is letterboxed with SET CAMERA VIEW.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+rem With AUTOCAM ON, the camera moves to frame each new object
+autocam on
+make object sphere 1, 4
+autocam off
+color object 1, rgb(255, 220, 60)
+load image "crystal.jpg", 1
+for p = 2 to 9
+   make object box p, 4, 10 + p * 2, 4
+   position object p, sin(p * 45) * 30, 5 + p, cos(p * 45) * 30
+   texture object p, 1
+next p
+make object plain 10, 120, 120
+xrotate object 10, 90
+color object 10, rgb(50, 60, 80)
+make object cone 11, 4
+position object 11, 0, 25, 0
+color object 11, rgb(255, 90, 90)
+
+set camera range 1, 500
+rem Letterbox: draw the 3D only between y = 60 and y = 420
+set camera view 0, 60, screen width(), screen height() - 60
+dim mode$(5)
+mode$(1) = "POSITION + POINT CAMERA" : mode$(2) = "MOVE, TURN, PITCH, ROLL" : mode$(3) = "SET CAMERA TO FOLLOW"
+mode$(4) = "XROTATE, YROTATE, ZROTATE, ROTATE" : mode$(5) = "SET CAMERA TO OBJECT ORIENTATION"
+mode = 1 : changed = timer()
+
+do
+   t = t + 1
+   for k = 1 to 5
+      if keystate(k + 1) = 1 and mode <> k then mode = k : changed = timer() : manual = 1 : gosub enter_mode
+   next k
+   if manual = 0 and timer() - changed > 4000 then mode = (mode mod 5) + 1 : changed = timer() : gosub enter_mode
+
+   rem The ball runs a circle; the cone spins on top
+   bx# = sin(t) * 20 : bz# = cos(t * 1.3) * 20
+   position object 1, bx#, 2, bz#
+   yrotate object 11, wrapvalue(t * 2)
+
+   select mode
+      case 1
+         position camera sin(t * 0.5) * 60, 30, cos(t * 0.5) * 60
+         point camera 0, 8, 0
+      endcase
+      case 2
+         rem Walk forwards, turn, nod and lean
+         move camera 0.3
+         if (t / 120) mod 2 = 0 then turn camera right 0.4 else turn camera left 0.4
+         if (t / 60) mod 2 = 0 then pitch camera down 0.1 else pitch camera up 0.1
+         if (t / 90) mod 2 = 0 then roll camera left 0.05 else roll camera right 0.05
+      endcase
+      case 3
+         rem SET CAMERA TO FOLLOW x, y, z, angle, distance, height, smoothing, collision
+         set camera to follow bx#, 2, bz#, wrapvalue(t + 90), 25, 10, 15, 0
+      endcase
+      case 4
+         position camera 0, 15, -50
+         if (t / 120) mod 2 = 0 then set camera rotation xyz else set camera rotation zyx
+         xrotate camera 10
+         yrotate camera sin(t) * 30
+         zrotate camera sin(t * 2) * 10
+         if (t / 60) mod 4 = 3 then rotate camera 20, 0, 0
+      endcase
+      case 5
+         position camera 0, 25, 0
+         set camera to object orientation 11
+         move camera -1
+      endcase
+   endselect
+
+   rem SET CAMERA FOV zooms: a narrow angle magnifies
+   set camera fov 60 + sin(t * 0.7) * 15
+   clear camera view rgb(20, 24, 34)
+
+   ink rgb(255, 255, 255), 0
+   text 10, 8, "CAMERAS - mode " + str$(mode) + ": " + mode$(mode) + "   (keys 1-5)"
+   text 10, 28, "POSITION " + str$(int(camera position x())) + ", " + str$(int(camera position y())) + ", " + str$(int(camera position z())) + "   ANGLE " + str$(int(camera angle x())) + ", " + str$(int(camera angle y())) + ", " + str$(int(camera angle z()))
+   sync
+loop
+
+rem Each mode starts from a fresh camera
+enter_mode:
+   set camera rotation xyz
+   rotate camera 0, 0, 0
+   if mode = 2 then position camera 0, 6, -40
+return

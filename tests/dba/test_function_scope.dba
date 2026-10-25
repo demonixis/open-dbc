@@ -1,0 +1,25 @@
+rem Names used inside a function are local to it; arrays are shared with the main program
+sync on : sync rate 0
+
+dim shared(3)
+x = 5
+touch()
+print "x="; x
+print "shared="; shared(1)
+print "sum="; sum(3)
+print "x still="; x
+print "TEST_DONE"
+sync
+end
+
+function touch()
+x = 10
+shared(1) = 7
+endfunction
+
+function sum(n)
+x = 0
+for i = 1 to n
+   x = x + i
+next i
+endfunction x

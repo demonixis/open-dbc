@@ -1,0 +1,79 @@
+rem ==================================================================
+rem Materials - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Eight cubes show the ways a surface can look: a texture, a texture
+rem repeated and scrolling, wireframe, black made transparent, ghosting,
+rem fading, no lighting, and drawing in front of everything. SET OBJECT
+rem switches wireframe, transparency, culling, filtering, light, fog and
+rem ambient light in one command.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+color backdrop rgb(40, 44, 60)
+set ambient light 40
+position camera 0, 3, -42
+point camera 0, 0, 0
+set mipmap mode 2
+set normalization on
+
+load image "bricks.jpg", 1
+load image "crystal.jpg", 2
+load image "sea.jpg", 3
+
+dim label$(8)
+for c = 1 to 8
+   make object cube c, 7
+   position object c, -27 + ((c - 1) mod 4) * 18, 7 - ((c - 1) / 4) * 15, 0
+   texture object c, 1
+next c
+label$(1) = "TEXTURE OBJECT"
+rem 2: the texture repeated three times, with mirrored tiles (mode 1)
+scale object texture 2, 3, 3
+set object texture 2, 1, 1
+label$(2) = "SCALE + SET OBJECT TEXTURE"
+rem 3: a scrolling sea
+texture object 3, 3
+label$(3) = "SCROLL OBJECT TEXTURE"
+rem 4: SET OBJECT object, wireframe 0 shows only the edges
+set object 4, 0, 0, 1
+label$(4) = "SET OBJECT wireframe"
+rem 5: transparency 1 makes black texels invisible
+texture object 5, 2
+set object 5, 1, 1, 0
+label$(5) = "SET OBJECT transparency"
+rem 6: a ghost adds its colour to what is behind it
+texture object 6, 2
+ghost object on 6
+label$(6) = "GHOST OBJECT ON"
+rem 7: fading darkens the object towards black
+label$(7) = "FADE OBJECT"
+rem 8: no lighting, and drawn over everything with z-depth off
+set object 8, 1, 0, 1, 1, 0, 1, 1
+disable object zdepth 8
+label$(8) = "light off, ZDEPTH off"
+rem A slab passing in front shows which cube ignores depth
+make object box 9, 70, 3, 2
+color object 9, rgb(200, 80, 60)
+
+do
+   t = t + 1
+   for c = 1 to 8 : yrotate object c, wrapvalue(t + c * 20) : xrotate object c, 20 : next c
+   scroll object texture 3, 0.004, 0.002
+   fade object 7, 50 + sin(t * 2) * 50
+   position object 9, 0, sin(t) * 12, -6
+   rem The ghost flickers on and off every two seconds
+   if t mod 240 = 0 then ghost object off 6
+   if t mod 240 = 120 then ghost object on 6
+   rem Cube 8 takes turns ignoring depth and respecting it
+   if t mod 360 = 180 then enable object zdepth 8
+   if t mod 360 = 0 then disable object zdepth 8
+
+   ink rgb(255, 255, 255), 0
+   for c = 1 to 8
+      if object in screen(c) = 1 then center text object screen x(c), object screen y(c) + 44, str$(c)
+      text 10 + ((c - 1) mod 2) * 310, screen height() - 90 + ((c - 1) / 2) * 20, str$(c) + ". " + label$(c)
+   next c
+   text 10, 10, "MATERIALS   filtering " + str$(filtering available()) + "   alpha blending " + str$(alphablending available()) + "   3D blit " + str$(3dblit available())
+   sync
+loop

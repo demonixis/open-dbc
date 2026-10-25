@@ -1,0 +1,90 @@
+rem ==================================================================
+rem Lights - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Three kinds of light on a gallery of spheres: a point light that
+rem circles like a lamp, a spot light carried by a lantern object, and
+rem a directional light like the sun. Light 0 is the default light;
+rem lights 1 to 7 are made with MAKE LIGHT. Keys 1 to 3 hide and show
+rem the lights, A changes the colour of the ambient light.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+color backdrop rgb(10, 10, 16)
+position camera 0, 20, -45
+point camera 0, 0, 0
+set ambient light 15
+
+load image "bricks.jpg", 1
+make object box 1, 80, 1, 50
+position object 1, 0, -4, 0
+texture object 1, 1
+scale object texture 1, 4, 3
+for s = 2 to 7
+   make object sphere s, 7
+   position object s, -25 + (s - 2) * 10, 0, 4
+next s
+make object cone 8, 2
+color object 8, rgb(255, 255, 160)
+set object 8, 1, 0, 1, 1, 0, 1, 1
+
+rem The default light 0 becomes a dim blue directional light from above
+set directional light 0, 0.3, -1, 0.4
+color light 0, rgb(40, 50, 90)
+
+rem Light 1: a warm point light, like a bulb
+make light 1
+set point light 1, 0, 8, 0
+color light 1, 255, 180, 90
+set light range 1, 40
+
+rem Light 2: a spot light carried by the lantern (object 8)
+make light 2
+set spot light 2, 20, 40
+color light 2, rgb(120, 255, 160)
+set light range 2, 80
+
+rem Light 3: a red directional light turned with ROTATE LIGHT
+make light 3
+set directional light 3, 1, 0, 0
+color light 3, rgb(180, 30, 30)
+
+ambient = 0
+do
+   t = t + 1
+   position light 1, sin(t) * 25, 8, cos(t) * 12 - 4
+   rem The lantern swings; the spot light copies its place and direction
+   position object 8, sin(t * 0.7) * 20, 15, -10
+   point object 8, sin(t * 1.3) * 20, 0, 4
+   set light to object position 2, 8
+   set light to object orientation 2, 8
+   rotate light 3, 0, wrapvalue(t), 0
+   if t mod 300 = 150 then point light 3, 0, 0, 0
+
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$
+      for l = 1 to 3
+         if key$ = str$(l)
+            if light visible(l) = 1 then hide light l else show light l
+         endif
+      next l
+      if key$ = "a" then ambient = (ambient + 1) mod 3
+   endif
+   lastkey$ = key$
+   if ambient = 0 then color ambient light rgb(255, 255, 255)
+   if ambient = 1 then color ambient light rgb(80, 120, 255)
+   if ambient = 2 then color ambient light rgb(255, 120, 60)
+
+   ink rgb(255, 255, 255), 0
+   text 10, 8, "LIGHTS - keys 1-3 hide and show lights, A ambient colour"
+   for l = 0 to 3
+      if light exist(l) = 1
+         line$ = "LIGHT " + str$(l) + ": type " + str$(light type(l)) + "  visible " + str$(light visible(l)) + "  range " + str$(int(light range(l)))
+         line$ = line$ + "  at " + str$(int(light position x(l))) + "," + str$(int(light position y(l))) + "," + str$(int(light position z(l)))
+         line$ = line$ + "  facing " + str$(int(light direction x(l) * 10) / 10.0) + "," + str$(int(light direction y(l) * 10) / 10.0) + "," + str$(int(light direction z(l) * 10) / 10.0)
+         text 10, 30 + l * 18, line$
+      endif
+   next l
+   if t = 600 then delete light 3
+   sync
+loop

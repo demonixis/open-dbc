@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "overrides": [
+    {
+      "match": {
+        "surface": "Core",
+        "symbols": [
+          "ANIMATION EXIST",
+          "ANIMATION HEIGHT",
+          "ANIMATION LOOPED",
+          "ANIMATION LOOPING",
+          "ANIMATION PAUSED",
+          "ANIMATION PLAYING",
+          "ANIMATION POSITION X",
+          "ANIMATION POSITION Y",
+          "ANIMATION SPEED",
+          "ANIMATION VOLUME",
+          "ANIMATION WIDTH",
+          "DELETE ANIMATION",
+          "LOAD ANIMATION",
+          "LOAD DVD ANIMATION",
+          "LOOP ANIMATION",
+          "PAUSE ANIMATION",
+          "PLACE ANIMATION",
+          "PLAY ANIMATION",
+          "PLAY ANIMATION TO IMAGE",
+          "RESUME ANIMATION",
+          "SET ANIMATION SPEED",
+          "SET ANIMATION VOLUME",
+          "SET DVD CHAPTER",
+          "STOP ANIMATION",
+          "TOTAL DVD CHAPTERS"
+        ]
+      },
+      "set": {
+        "notes": "Historical multimedia animation remains unavailable: Classic uses permanent neutral compatibility stubs while Professional remains deferred."
+      },
+      "expected_rows": 41
+    },
+    {
+      "match": {
+        "surface": "Core",
+        "profiles": "DBC",
+        "symbol_prefix": "FTP "
+      },
+      "set": {
+        "project_status": "Compatibility stub",
+        "disposition": "Never",
+        "notes": "FTP is a permanent compatibility stub with terminal-safe neutral state and is never reported as implemented."
+      },
+      "expected_rows": 10
+    },
+    {
+      "match": {
+        "surface": "Core",
+        "profiles": "DBPro",
+        "symbol_prefix": "FTP "
+      },
+      "set": {
+        "project_status": "Blocked",
+        "disposition": "Never",
+        "notes": "Explicit project policy classifies FTP compatibility as Never in the Professional profile."
+      },
+      "expected_rows": 10
+    },
+    {
+      "match": {
+        "symbols": [
+          "SET VR ENABLED",
+          "SET TRACKING SPACE",
+          "RECENTER VR CAMERA",
+          "GET VR CONTROLLER POSITION",
+          "GET VR CONTROLLER ROTATION",
+          "GET VR HEAD POSITION",
+          "GET VR ROTATION",
+          "IS VR CONTROLLER TRACKED",
+          "IS VR HEAD TRACKED",
+          "IS VR SUPPORTED",
+          "IS VR ENABLED",
+          "SET VR PREVIEW MODE",
+          "SET VR CAMERA HEIGHT",
+          "GET VR CAMERA HEIGHT"
+        ]
+      },
+      "set": {
+        "description": "OpenDBC desktop OpenXR addition shared by DBC and DBPro; not a historical DarkBASIC command.",
+        "notes": "See docs/vr.md for meter units, tracking, validation, defaults and unavailable-device behavior."
+      },
+      "expected_rows": 14
+    },
+    {
+      "match": {
+        "symbols": [
+          "X VECTOR3",
+          "Y VECTOR3",
+          "Z VECTOR3"
+        ]
+      },
+      "set": {
+        "notes": "Historical DBPro readers also available in Classic for Vector3 values written by the shared VR GET commands; readers alone do not request an XR device."
+      },
+      "expected_rows": 3
+    }
+  ],
+  "additional_rows": [
+    {
+      "symbol": "GET ACCELEROMETER X",
+      "kind": "Function",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "GET ACCELEROMETER Y",
+      "kind": "Function",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "GET ACCELEROMETER Z",
+      "kind": "Function",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "GET TOUCH POSITION X",
+      "kind": "Function",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "GET TOUCH POSITION Y",
+      "kind": "Function",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "IS TOUCH DOWN",
+      "kind": "Function",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "IS TOUCH MOVED",
+      "kind": "Function",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "IS TOUCH UP",
+      "kind": "Function",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "SET MOBILE INPUT EMULATION",
+      "kind": "Command",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    },
+    {
+      "symbol": "SET SCREEN ORIENTATION",
+      "kind": "Command",
+      "profiles": "DbcNew + DbProNew",
+      "surface": "OpenDBC New / Mobile",
+      "arity": "TBD",
+      "typed_overloads": "TBD — recover from pre-refactor catalogue or specify a new portable contract",
+      "runtime_status": "Not catalogued",
+      "project_status": "Not implemented",
+      "disposition": "Planned",
+      "relationship": "OpenDBC New shared addition",
+      "provenance": "OpenDBC project documentation",
+      "description": "OpenDBC mobile extension reserved for the opt-in New profiles; it must not be added to the historical DBC or DBPro profiles.",
+      "notes": "Language surface is deferred to DbcNew/DbProNew; signatures must be restored or specified. Kind inferred from the legacy spelling; exact arity and typed signature are not present in the supplied documentation.",
+      "source": "AGENTS.md:258-262; open-dbc_reference.md:27-30"
+    }
+  ]
+}

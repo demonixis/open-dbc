@@ -1,0 +1,112 @@
+rem ==================================================================
+rem Landscape - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A matrix is a grid of tiles whose corners can be raised and lowered:
+rem the quickest way to build ground in DarkBASIC. This one never ends:
+rem as the rover drives on, SHIFT MATRIX UP moves the rows along and a
+rem new row of hills is made at the far edge. A second, ghosted matrix
+rem is the lake. W wireframe, R random hills, F flattens, D drains,
+rem G makes the lake solid.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+color backdrop rgb(160, 190, 220)
+set camera range 1, 2000
+if fog available() = 1 then fog on : fog color rgb(160, 190, 220) : fog distance 600
+
+rem --- Matrix 1: 40 x 40 tiles over 800 x 800 units, textured from a 2 x 2 atlas
+segments = 40 : size = 800 : cell = size / segments
+make matrix 1, size, size, segments, segments
+load image "terrain.jpg", 1
+prepare matrix texture 1, 1, 2, 2
+position matrix 1, 0 - size / 2, 0, 0 - size / 2
+set matrix texture 1, 0, 1
+dim row(segments)
+for z = 0 to segments
+   gosub make_row
+next z
+update matrix 1
+
+rem --- Matrix 2: the lake, a ghosted flat grid that ripples
+make matrix 2, 300, 300, 12, 12
+load image "sea.jpg", 2
+prepare matrix texture 2, 2, 1, 1
+position matrix 2, -150, -6, 60
+ghost matrix on 2
+set matrix 2, 1, 0, 1, 1, 1, 1, 1
+
+rem The rover: a box riding the ground
+make object box 1, 8, 4, 12
+color object 1, rgb(220, 120, 40)
+travel# = 0.0 : rows_made = segments
+
+do
+   t = t + 1
+   rem Drive forward; every time the rover covers a whole tile, shift a row
+   travel# = travel# + 1.6
+   if travel# >= cell
+      travel# = travel# - cell
+      shift matrix up 1
+      inc rows_made
+      z = segments : gosub make_row
+      update matrix 1
+   endif
+   rem GET GROUND HEIGHT works in the matrix's own coordinates
+   gy# = get ground height(1, size / 2, size / 2 - 200 + travel#)
+   position object 1, 0, gy# + 2, -200 + travel#
+   position camera 0, gy# + 30, -260 + travel#
+   point camera 0, gy# + 5, -150 + travel#
+
+   rem The lake ripples: every corner of matrix 2 bobs on its own wave
+   for z = 0 to 12
+      for x = 0 to 12
+         set matrix height 2, x, z, sin(t * 3 + x * 30) * 1.5 + cos(t * 2 + z * 40) * 1.5
+      next x
+   next z
+   update matrix 2
+
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$
+      if key$ = "w"
+         if matrix wireframe state(1) = 1 then set matrix wireframe off 1 else set matrix wireframe on 1
+      endif
+      if key$ = "r" then randomize matrix 1, 60 : update matrix 1
+      if key$ = "f" then fill matrix 1, 0, 1 : update matrix 1
+      if key$ = "d" and matrix exist(2) = 1 then delete matrix 2
+      if key$ = "g" and matrix exist(2) = 1
+         clear_lake = 1 - clear_lake
+         if clear_lake = 1 then ghost matrix off 2 else ghost matrix on 2
+      endif
+      rem Nudge the whole landscape sideways and back with the other shifts
+      if key$ = "q" then shift matrix left 1 : update matrix 1
+      if key$ = "e" then shift matrix right 1 : update matrix 1
+      if key$ = "s" then shift matrix down 1 : update matrix 1
+   endif
+   lastkey$ = key$
+
+   ink rgb(20, 30, 40), 0
+   text 10, 8, "LANDSCAPE - W wireframe, R random, F flat, D drains the lake, Q/E/S shift"
+   text 10, 28, "rows made " + str$(rows_made) + "   ground under the rover " + str$(int(gy#)) + "   corner height " + str$(int(get matrix height(1, 20, 20)))
+   text 10, 48, "MATRIX 1 at " + str$(int(matrix position x(1))) + ", " + str$(int(matrix position y(1))) + ", " + str$(int(matrix position z(1))) + "   tiles " + str$(matrix tile count(1)) + " (" + str$(matrix tiles exist(1)) + ")   lake exists " + str$(matrix exist(2))
+   sync
+loop
+
+rem Heights and tiles for row z: rolling hills that never repeat exactly
+make_row:
+   for x = 0 to segments
+      wz = rows_made - segments + z
+      h# = 25 * sin(x * 17 + wz * 11) + 15 * cos(wz * 23) + 8 * sin((x - wz) * 31)
+      if abs(x - segments / 2) < 3 then h# = h# * 0.2
+      set matrix height 1, x, z, h#
+      rem Normals tilt with the slope so the light shades the hills
+      set matrix normal 1, x, z, 0 - cos(x * 17 + wz * 11) * 0.3, 1, 0 - cos(wz * 23) * 0.2
+      if x < segments and z < segments
+         tile = 1
+         if h# > 20 then tile = 4
+         if h# < -15 then tile = 3
+         if abs(x - segments / 2) < 2 then tile = 2
+         set matrix tile 1, x, z, tile
+      endif
+   next x
+return

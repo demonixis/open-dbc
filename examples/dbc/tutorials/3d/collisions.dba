@@ -1,0 +1,96 @@
+rem ==================================================================
+rem Collisions - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A ball bounces around an arena of obstacles. Each obstacle tests
+rem collisions in its own way: by box, by sphere or polygon by polygon,
+rem and one has a separate collision box. OBJECT COLLISION tells whether
+rem the ball touches something now, OBJECT HIT only reports a new touch.
+rem G switches all collisions off and on, B removes the collision box,
+rem W makes the walls solid.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+randomize 3
+color backdrop rgb(30, 30, 40)
+position camera 0, 55, -45
+point camera 0, 0, 0
+
+rem The floor and the ball
+make object box 100, 80, 1, 60
+position object 100, 0, -1, 0
+color object 100, rgb(60, 70, 60)
+make object sphere 1, 4
+color object 1, rgb(255, 220, 60)
+set object collision to spheres 1
+
+rem Obstacles 2 to 7, each with its own collision shape
+dim kind$(7) : dim flash(7)
+for o = 2 to 7
+   select o mod 3
+      case 0 : make object cube o, 8 : set object collision to boxes o : kind$(o) = "box" : endcase
+      case 1 : make object sphere o, 8 : set object collision to spheres o : kind$(o) = "sphere" : endcase
+      case 2 : make object cone o, 9 : set object collision to polygons o : kind$(o) = "polygon" : endcase
+   endselect
+   position object o, -27 + (o - 2) * 11, 3, sin(o * 70) * 15
+   color object o, rgb(90, 120, 200)
+next o
+rem Obstacle 7 gets a collision box larger than its own shape
+make object collision box 7, -7, -4, -7, 7, 8, 7, 0
+kind$(7) = "collision box"
+rem The arena walls do not collide: the ball turns round at the edges
+for w = 8 to 9
+   make object box w, 80, 4, 1
+   position object w, 0, 1, (w - 8.5) * 61
+   set object collision off w
+next w
+
+x# = 0 : z# = -20 : dx# = 0.35 : dz# = 0.27
+do
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$
+      if key$ = "g"
+         all_off = 1 - all_off
+         if all_off = 1 then set global collision off else set global collision on
+      endif
+      if key$ = "b" then delete object collision box 7 : kind$(7) = "sphere (box removed)"
+      rem W makes the walls solid: the ball then turns at them too
+      if key$ = "w"
+         walls = 1 - walls
+         for w = 8 to 9
+            if walls = 1 then set object collision on w else set object collision off w
+         next w
+      endif
+   endif
+   lastkey$ = key$
+
+   x# = x# + dx# : z# = z# + dz#
+   if abs(x#) > 38 then dx# = 0 - dx#
+   if abs(z#) > 28 then dz# = 0 - dz#
+   position object 1, x#, 2, z#
+
+   rem A new hit flashes the obstacle red and sends the ball back
+   hit = object hit(1, 0)
+   if hit > 1 and hit < 10
+      color object hit, rgb(255, 60, 60)
+      flash(hit) = 30
+      dx# = 0 - dx# : dz# = 0 - dz#
+      x# = x# + dx# * 3 : z# = z# + dz# * 3
+      lastx# = get object collision x() : lasty# = get object collision y() : lastz# = get object collision z()
+   endif
+   for o = 2 to 7
+      if flash(o) > 0
+         dec flash(o)
+         if flash(o) = 0 then color object o, rgb(90, 120, 200)
+      endif
+   next o
+
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "COLLISIONS - G switches collisions off/on, B removes the collision box"
+   text 10, 30, "touching now: " + str$(object collision(1, 0)) + "   last hit: " + str$(hit) + "   all collisions off: " + str$(all_off)
+   text 10, 50, "last collision adjustment: " + str$(int(lastx# * 10) / 10.0) + ", " + str$(int(lasty# * 10) / 10.0) + ", " + str$(int(lastz# * 10) / 10.0)
+   for o = 2 to 7
+      if object in screen(o) = 1 then center text object screen x(o), object screen y(o) + 28, kind$(o)
+   next o
+   sync
+loop

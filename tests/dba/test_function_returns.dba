@@ -1,0 +1,32 @@
+rem The return type of a function is the type of its ENDFUNCTION value, not the suffix of its name
+sync on : sync rate 0
+
+print getbefore("abc,def", ",")
+print half(3)
+print twice(4)
+print pick(1)
+print pick(0)
+print fact(5)
+print "TEST_DONE"
+sync
+end
+
+function getbefore(s$, d$)
+t$ = left$(s$, 3)
+endfunction t$
+
+function half(v)
+r# = v / 2.0
+endfunction r#
+
+function twice(v)
+endfunction v * 2
+
+function pick(flag)
+if flag = 1 then exitfunction "yes"
+endfunction "no"
+
+function fact(n)
+if n <= 1 then exitfunction 1
+r = n * fact(n - 1)
+endfunction r

@@ -1,0 +1,106 @@
+rem DBPro display, window, bitmap, image and extended text compatibility
+sync on : sync rate 0
+
+set display mode 96, 72, 32
+set display mode 96, 72, 32, 1
+set display mode 96, 72, 32, 1, 0, 0
+print "DISPLAY3="; check display mode(96, 72, 32)
+print "DISPLAY6="; check display mode(96, 72, 32, 1, 0, 0)
+print "SCREEN_DEPTH="; screen depth()
+print "SCREEN_TYPE="; screen type()
+print "SCREEN_INVALID="; screen invalid()
+print "DESKTOP_VALID="; (desktop width() > 0 and desktop height() > 0)
+print "CARD_VALID="; (len(current graphics card$()) > 0)
+
+perform checklist for graphics cards
+perform checklist for display modes
+perform checklist for fonts
+
+set window title "OpenDBC Lot 16"
+print "WINDOW_FOUND="; window exist("OpenDBC Lot 16")
+window to front
+window to front "OpenDBC Lot 16"
+
+set bitmap format 21
+create bitmap 1, 8, 8
+cls rgb(10, 20, 30)
+dot 1, 1, rgb(200, 100, 50)
+line 0, 0, 7, 7
+circle 4, 4, 2
+ellipse 4, 4, 3, 2
+print "RGBG="; rgbg(rgb(1, 2, 3))
+print "BITMAP_CURRENT="; current bitmap()
+print "BITMAP_SIZE="; bitmap width(); ","; bitmap height()
+print "BITMAP_DEPTH="; bitmap depth(); ","; bitmap depth(1)
+print "BITMAP_EXISTS="; bitmap exist(); ","; bitmap exist(1)
+print "BITMAP_FLAGS0="; bitmap mirrored(); ","; bitmap flipped()
+
+copy bitmap 1, 2
+create bitmap 3, 8, 8
+copy bitmap 1, 0, 0, 7, 7, 3, 0, 0, 7, 7
+mirror bitmap 1
+flip bitmap 1
+print "BITMAP_FLAGS1="; bitmap mirrored(1); ","; bitmap flipped(1)
+fade bitmap 1, 50
+blur bitmap 1, 1
+
+make memblock from bitmap 1, 1
+make image from memblock 1, 1
+make memblock from image 2, 1
+make image from memblock 2, 2
+make bitmap from memblock 4, 2
+print "RESOURCE_ROUNDTRIP="; image exist(1); ","; image exist(2); ","; bitmap width(4); "x"; bitmap height(4)
+
+save image "_lot16_image_a.png", 1
+save image "_lot16_image_b.png", 2, 5
+print "IMAGE_FILES="; image file exist("_lot16_image_a.png"); ","; image file exist("_lot16_image_b.png")
+load image "_lot16_image_a.png", 5
+load image "_lot16_image_a.png", 6, 0
+load image "_lot16_image_a.png", 7, 0, 2
+load image "_lot16_image_a.png", 8, 1, 2
+load image "_lot16_image_a.png", 9, 0, 16384
+print "IMAGE_LOADS="; image exist(5); ","; image exist(6); ","; image width(7); "x"; image height(7); ","; image width(8); "x"; image height(8); ","; image width(9); "x"; image height(9)
+
+set current bitmap 4
+set image colorkey 10, 20, 30
+paste image 1, 0, 0
+paste image 2, 0, 0, 1
+save bitmap "_lot16_bitmap.bmp", 4
+load bitmap "_lot16_bitmap.bmp", 5
+print "BITMAP_LOAD="; bitmap exist(5)
+
+print "APPEND="; append$("Open", "DBC")
+print "COMPARE="; compare case$("Case", "Case"); ","; compare case$("Case", "case")
+print "FIND="; find first char$("banana", "a"); ","; find last char$("banana", "a"); ","; find sub string$("banana", "nan")
+print "TOKENS="; first token$("red,green,blue", ","); ","; next token$(","); ","; next token$(",")
+print "REVERSE="; reverse$("OpenDBC")
+
+set text font "Arial"
+set text size 18
+set text opaque
+set text to normal
+set text to italic
+set text to bolditalic
+printc "queued"
+print "TEXT_STATE="; text font$(); ","; text size(); ","; text style(); ","; text background type()
+print "TEXT_HEIGHT_VALID="; (text height("OpenDBC") > 0)
+
+delete bitmap 1
+delete bitmap 2
+delete bitmap 3
+delete bitmap 4
+delete bitmap 5
+delete image 1
+delete image 2
+delete image 5
+delete image 6
+delete image 7
+delete memblock 1
+delete memblock 2
+delete file "_lot16_image_a.png"
+delete file "_lot16_image_b.png"
+delete file "_lot16_bitmap.bmp"
+
+print "TEST_DONE"
+sync
+end

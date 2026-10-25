@@ -1,0 +1,85 @@
+rem ==================================================================
+rem Keyboard Lab - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Every way of reading the keyboard: KEYSTATE for any key by scancode,
+rem the named key functions, INKEY$ and SCANCODE for the key held now,
+rem ENTRY$ for everything typed since the last CLEAR ENTRY BUFFER, and
+rem INPUT, which stops the program until RETURN.
+rem ESCAPE is disabled here so that it can be shown as a key: TAB asks
+rem your name with INPUT, F10 quits.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+disable escapekey
+w = screen width() : h = screen height()
+
+rem Three rows of a keyboard: a label and its scancode for each key
+dim label$(40) : dim code(40) : dim rowkeys(3)
+keys = 0
+restore
+for row = 1 to 3
+   read count
+   rowkeys(row) = count
+   for k = 1 to count
+      inc keys
+      read label$(keys), code(keys)
+   next k
+next row
+name$ = "nobody yet"
+clear entry buffer
+
+do
+   if keystate(68) = 1 then exit
+   if keystate(15) = 1
+      rem INPUT waits for RETURN; everything else stops meanwhile
+      sync off
+      cls rgb(20, 20, 30)
+      set cursor 40, 200
+      input "What is your name? ", name$
+      sync on
+      clear entry buffer
+   endif
+   if returnkey() = 1 then clear entry buffer
+
+   cls rgb(30, 32, 44)
+   rem The keyboard: each key lights up while KEYSTATE(scancode) is 1
+   k = 1
+   for row = 0 to 2
+      for col = 0 to rowkeys(row + 1) - 1
+         x = 40 + col * 56 + row * 18 : y = 90 + row * 56
+         if keystate(code(k)) = 1 then ink rgb(255, 190, 60), 0 else ink rgb(70, 76, 100), 0
+         box x, y, x + 48, y + 48
+         ink rgb(255, 255, 255), 0
+         text x + 6, y + 4, label$(k)
+         ink rgb(170, 170, 190), 0
+         text x + 6, y + 28, str$(code(k))
+         inc k
+      next col
+   next row
+
+   rem The named key functions
+   y = 270
+   ink rgb(230, 230, 230), 0
+   text 40, y, "UPKEY " + str$(upkey()) + "  DOWNKEY " + str$(downkey()) + "  LEFTKEY " + str$(leftkey()) + "  RIGHTKEY " + str$(rightkey())
+   text 40, y + 20, "SPACEKEY " + str$(spacekey()) + "  RETURNKEY " + str$(returnkey()) + "  SHIFTKEY " + str$(shiftkey()) + "  CONTROLKEY " + str$(controlkey()) + "  ESCAPEKEY " + str$(escapekey())
+   text 40, y + 50, "INKEY$ = """ + inkey$() + """    SCANCODE() = " + str$(scancode())
+   rem ENTRY$ collects the typing; RETURN empties it with CLEAR ENTRY BUFFER
+   ink rgb(20, 20, 26), 0
+   box 40, y + 80, w - 40, y + 110
+   ink rgb(120, 230, 160), 0
+   text 48, y + 86, entry$() + "_"
+   ink rgb(170, 170, 190), 0
+   text 40, y + 120, "Type anything: ENTRY$ keeps it until RETURN clears the buffer"
+   text 40, y + 150, "Your name: " + name$ + "   (TAB asks with INPUT, F10 quits)"
+   ink rgb(255, 210, 120), 0
+   center text w / 2, 30, "KEYBOARD LAB"
+   sync
+loop
+
+enable escapekey
+end
+
+rem Row: number of keys, then label and scancode pairs
+data 10, "Q", 16, "W", 17, "E", 18, "R", 19, "T", 20, "Y", 21, "U", 22, "I", 23, "O", 24, "P", 25
+data 9, "A", 30, "S", 31, "D", 32, "F", 33, "G", 34, "H", 35, "J", 36, "K", 37, "L", 38
+data 7, "Z", 44, "X", 45, "C", 46, "V", 47, "B", 48, "N", 49, "M", 50

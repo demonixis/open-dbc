@@ -1,0 +1,73 @@
+rem ==================================================================
+rem Random Garden - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Grows a garden from random numbers. RANDOMIZE sets the starting
+rem point of RND, so the same seed always grows the same garden.
+rem A new seed comes every few seconds; R grows the last one again.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+flowers = 18
+dim fx(flowers) : dim fy(flowers)
+seed = 1999
+gosub grow
+changed = timer()
+
+do
+   if timer() - changed > 5000
+      rem TIMER() is never the same twice, which makes a good new seed
+      seed = timer() mod 100000
+      gosub grow
+      changed = timer()
+   endif
+   if inkey$() = "r" or inkey$() = "R" then gosub grow : changed = timer()
+   sync
+loop
+
+grow:
+   randomize seed
+   cls rgb(150, 205, 240)
+   ink rgb(90, 160, 70), 0
+   box 0, h / 3, w, h
+   rem Pick spots, rejecting any closer than 50 pixels to an earlier one
+   placed = 0 : tries = 0
+   while placed < flowers and tries < 500
+      inc tries
+      x = 30 + rnd(w - 60) : y = h / 3 + 30 + rnd(h * 2 / 3 - 60)
+      ok = 1
+      for f = 1 to placed
+         if sqrt((x - fx(f)) ^ 2 + (y - fy(f)) ^ 2) < 50 then ok = 0
+      next f
+      if ok = 1 then inc placed : fx(placed) = x : fy(placed) = y
+   endwhile
+   rem Far flowers first, so the near ones overlap them
+   for f = 1 to placed
+      gosub draw_flower
+   next f
+   ink rgb(20, 40, 60), 0
+   text 10, 10, "RANDOMIZE " + str$(seed) + "  -  " + str$(placed) + " flowers in " + str$(tries) + " tries  -  R grows it again"
+return
+
+draw_flower:
+   size = 8 + rnd(10)
+   stem = 20 + rnd(30)
+   petals = 5 + rnd(4)
+   red = 150 + rnd(105) : green = rnd(120) : blue = 80 + rnd(175)
+   ink rgb(40, 110 + rnd(40), 40), 0
+   line fx(f), fy(f), fx(f), fy(f) - stem
+   line fx(f) + 1, fy(f), fx(f) + 1, fy(f) - stem
+   cy = fy(f) - stem
+   rem Each petal is a small filled circle placed around the centre
+   for p = 0 to petals - 1
+      a = p * 360 / petals
+      ink rgb(red, green, blue), 0
+      for r = 1 to size / 2
+         circle fx(f) + sin(a) * size, cy - cos(a) * size, r
+      next r
+   next p
+   ink rgb(255, 220, 60), 0
+   for r = 1 to int(size / 2.5)
+      circle fx(f), cy, r
+   next r
+return

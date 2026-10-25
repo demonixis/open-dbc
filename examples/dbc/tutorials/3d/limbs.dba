@@ -1,0 +1,73 @@
+rem ==================================================================
+rem Limbs - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A loaded model is a tree of limbs, each with its own position, angle,
+rem scale, texture and visibility. The rider is glued to the scooter's
+rem hull, waves an arm and turns a red helmet; the seat bounces, the
+rem handlebar grows and the hull gets a scrolling striped texture. The
+rem panel cycles through the rider's limbs. U unglues the rider.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+color backdrop rgb(60, 80, 110)
+set ambient light 50
+position camera 0, 9, -22
+point camera 0, 3, 0
+
+load object "scooter.x", 1
+load object "rider.x", 2
+rem The models are small: scale the scooter, and the glued rider follows
+scale object 1, 300, 300, 300
+rem GLUE OBJECT TO LIMB object, to object, limb: the rider rides limb 1
+glue object to limb 2, 1, 1
+load image "bands.jpg", 1
+texture limb 1, 1, 1
+scale limb texture 1, 1, 2, 2
+
+rem The rider's limbs, listed by name
+perform checklist for object limbs 2
+limbs = checklist quantity()
+dim limbname$(20)
+for l = 1 to limbs : limbname$(l) = checklist string$(l) : next l
+glued = 1
+
+do
+   t = t + 1
+   yrotate object 1, wrapvalue(t * 0.5)
+   rem Limb commands take the object number, then the limb number
+   rotate limb 2, 6, 0 - 60 + sin(t * 6) * 50, 0, 20
+   rotate limb 2, 3, 0, sin(t * 2) * 40, 0
+   color limb 2, 3, rgb(220, 40, 40)
+   offset limb 1, 2, 0, 0.6 + abs(sin(t * 4)) * 0.2, -0.6
+   scale limb 1, 3, 100 + sin(t * 3) * 30, 100, 100
+   scroll limb texture 1, 1, 0.003, 0
+   rem The flag (limb 5) shows for one second in three
+   if (t / 60) mod 3 = 0 then show limb 1, 5 else hide limb 1, 5
+
+   if lower$(inkey$()) = "u" and glued = 1
+      rem UNGLUE OBJECT frees the rider, who stays where the scooter left him
+      unglue object 2
+      position object 2, 3, 0, -2
+      glued = 0
+   endif
+
+   rem The panel shows one limb of the rider at a time
+   l = 1 + (t / 90) mod limbs
+   ink rgb(0, 0, 0), 0
+   box 0, 0, screen width(), 112
+   ink rgb(255, 255, 255), 0
+   text 10, 4, "LIMBS - " + str$(limbs) + " limbs in the rider; showing " + str$(l) + ": " + limbname$(l) + "   (U unglues the rider)"
+   text 10, 24, "EXIST " + str$(limb exist(2, l)) + "  VISIBLE " + str$(limb visible(2, l)) + "  TEXTURE " + str$(limb texture(2, l)) + " " + file_name$(limb texture name$(2, l))
+   text 10, 44, "POSITION " + str$(int(limb position x(2, l) * 10) / 10.0) + ", " + str$(int(limb position y(2, l) * 10) / 10.0) + ", " + str$(int(limb position z(2, l) * 10) / 10.0)
+   text 10, 64, "OFFSET " + str$(int(limb offset x(2, l) * 10) / 10.0) + ", " + str$(int(limb offset y(2, l) * 10) / 10.0) + ", " + str$(int(limb offset z(2, l) * 10) / 10.0) + "   ANGLE " + str$(int(limb angle x(2, l))) + ", " + str$(int(limb angle y(2, l))) + ", " + str$(int(limb angle z(2, l)))
+   text 10, 84, "DIRECTION " + str$(int(limb direction x(2, l))) + ", " + str$(int(limb direction y(2, l))) + ", " + str$(int(limb direction z(2, l)))
+   sync
+loop
+
+rem Texture names are full paths: keep what follows the last slash
+function file_name$(path$)
+   for i = len(path$) to 1 step -1
+      if mid$(path$, i) = "/" or mid$(path$, i) = "\" then exitfunction right$(path$, len(path$) - i)
+   next i
+endfunction path$

@@ -1,0 +1,26 @@
+rem Arrays and scalars of the same name are different variables; array commands take free markers
+sync on : sync rate 0
+
+dim x#(5)
+x#(2) = 7.5
+x# = x#(2) * 2
+print "scalar="; x#
+print "array="; x#(2)
+dim map(3, 3)
+map(1, 1) = 42
+save array "test_array_namespace.dat", map(0)
+map(1, 1) = 0
+load array "test_array_namespace.dat", map(0)
+print "loaded="; map(1, 1)
+delete file "test_array_namespace.dat"
+undim map(0)
+gosub later
+print "late="; late(1)
+print "TEST_DONE"
+sync
+end
+
+later:
+dim late(4)
+late(1) = 9
+return

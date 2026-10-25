@@ -1,0 +1,197 @@
+id	source	category	expected_stage	expected_diagnostics	expected_run	max_frames	timeout_seconds	isolation	interactions	oracle
+demos/caverun/caverun	examples/dbc/demos/caverun/caverun.dba	demos	verified	-	bounded	600	60	read-only	keyboard,mouse,audio	Cave geometry, HUD, ship and bounded flight render without diagnostics
+demos/caverun/caverun_hd	examples/dbc/demos/caverun/caverun_hd.dba	demos	verified	-	bounded	600	60	read-only	keyboard,mouse,audio	High-detail cave geometry, HUD and ship render without diagnostics
+demos/iced/iced	examples/dbc/demos/iced/iced.dba	demos	verified	-	bounded	600	60	copy-tree	keyboard,mouse,audio,filesystem	Loading bitmap stays until the first 3D frame clears it and the world remains visible
+demos/jetski/jetski	examples/dbc/demos/jetski/jetski.dba	demos	verified	-	bounded	600	60	read-only	keyboard,mouse,audio	Rider and jet-ski limbs retain their positions and animate without mesh corruption
+demos/room/room	examples/dbc/demos/room/room.dba	demos	verified	-	bounded	600	60	read-only	keyboard,mouse,joystick,audio,filesystem	Player starts free at the centre, traverses the room and collides only with the octagonal walls
+demos/swarm/swarm	examples/dbc/demos/swarm/swarm.dba	demos	verified	-	bounded	600	60	copy-tree	keyboard,mouse,audio,filesystem	Player and alien laser plains are visible while firing
+demos/tank/tank	examples/dbc/demos/tank/tank.dba	demos	verified	-	bounded	600	60	read-only	keyboard,mouse,audio	Tank, terrain and projectile loop render without diagnostics
+tutorials/2d/exam01	examples/dbc/tutorials/2d/exam01.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	2D drawing reaches its bounded interactive frame without runtime diagnostics
+tutorials/2d/exam02	examples/dbc/tutorials/2d/exam02.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	2D drawing reaches its bounded interactive frame without runtime diagnostics
+tutorials/2d/exam03	examples/dbc/tutorials/2d/exam03.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	2D drawing reaches its bounded interactive frame without runtime diagnostics
+tutorials/2d/exam04	examples/dbc/tutorials/2d/exam04.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	2D drawing reaches its bounded interactive frame without runtime diagnostics
+tutorials/2d/exam05	examples/dbc/tutorials/2d/exam05.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	2D drawing reaches its bounded interactive frame without runtime diagnostics
+tutorials/2d/exam06	examples/dbc/tutorials/2d/exam06.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	2D drawing reaches its bounded interactive frame without runtime diagnostics
+tutorials/2d/exam07	examples/dbc/tutorials/2d/exam07.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,mouse	2D drawing reaches its bounded interactive frame without runtime diagnostics
+tutorials/2d/exam08	examples/dbc/tutorials/2d/exam08.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	2D drawing reaches its bounded interactive frame without runtime diagnostics
+tutorials/anim/exam01	examples/dbc/tutorials/anim/exam01.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Animation compatibility behavior remains deterministic and bounded
+tutorials/anim/exam02	examples/dbc/tutorials/anim/exam02.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Animation compatibility behavior remains deterministic and bounded
+tutorials/anim/exam03	examples/dbc/tutorials/anim/exam03.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Animation compatibility behavior remains deterministic and bounded
+tutorials/anim/exam04	examples/dbc/tutorials/anim/exam04.dba	tutorials	verified	-	bounded	120	30	read-only	none	Animation compatibility behavior remains deterministic and bounded
+tutorials/basic3d/exam01	examples/dbc/tutorials/basic3d/exam01.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam02	examples/dbc/tutorials/basic3d/exam02.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam03	examples/dbc/tutorials/basic3d/exam03.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam04	examples/dbc/tutorials/basic3d/exam04.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam05	examples/dbc/tutorials/basic3d/exam05.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam06	examples/dbc/tutorials/basic3d/exam06.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam07	examples/dbc/tutorials/basic3d/exam07.dba	tutorials	verified	-	bounded	300	60	read-only	mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam08	examples/dbc/tutorials/basic3d/exam08.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam09	examples/dbc/tutorials/basic3d/exam09.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam10	examples/dbc/tutorials/basic3d/exam10.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam11	examples/dbc/tutorials/basic3d/exam11.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam12	examples/dbc/tutorials/basic3d/exam12.dba	tutorials	verified	-	bounded	300	60	read-only	none	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam13	examples/dbc/tutorials/basic3d/exam13.dba	tutorials	verified	-	bounded	300	60	copy-tree	mouse,audio,filesystem	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam14	examples/dbc/tutorials/basic3d/exam14.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam15	examples/dbc/tutorials/basic3d/exam15.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam16	examples/dbc/tutorials/basic3d/exam16.dba	tutorials	verified	-	bounded	300	60	read-only	none	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam17	examples/dbc/tutorials/basic3d/exam17.dba	tutorials	verified	-	bounded	300	60	read-only	none	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam18	examples/dbc/tutorials/basic3d/exam18.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam19	examples/dbc/tutorials/basic3d/exam19.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam20	examples/dbc/tutorials/basic3d/exam20.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam21	examples/dbc/tutorials/basic3d/exam21.dba	tutorials	verified	-	bounded	300	60	read-only	none	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam22	examples/dbc/tutorials/basic3d/exam22.dba	tutorials	verified	-	bounded	300	60	read-only	filesystem	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam23	examples/dbc/tutorials/basic3d/exam23.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam24	examples/dbc/tutorials/basic3d/exam24.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam25	examples/dbc/tutorials/basic3d/exam25.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam26	examples/dbc/tutorials/basic3d/exam26.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam27	examples/dbc/tutorials/basic3d/exam27.dba	tutorials	verified	-	bounded	300	60	read-only	mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam28	examples/dbc/tutorials/basic3d/exam28.dba	tutorials	verified	-	bounded	300	60	copy-tree	keyboard,mouse,filesystem	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam29	examples/dbc/tutorials/basic3d/exam29.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/basic3d/exam30	examples/dbc/tutorials/basic3d/exam30.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	3D objects, transforms, materials and collision reach the bounded scene
+tutorials/bitmap/2dfiles/loadallbitmaps	examples/dbc/tutorials/bitmap/2DFiles/loadallbitmaps.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,filesystem	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bitmap/exam01	examples/dbc/tutorials/bitmap/exam01.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bitmap/exam02	examples/dbc/tutorials/bitmap/exam02.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bitmap/exam03	examples/dbc/tutorials/bitmap/exam03.dba	tutorials	verified	-	bounded	180	60	copy-tree	keyboard,filesystem	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bitmap/exam04	examples/dbc/tutorials/bitmap/exam04.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bitmap/exam05	examples/dbc/tutorials/bitmap/exam05.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bitmap/exam06	examples/dbc/tutorials/bitmap/exam06.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bitmap/exam07	examples/dbc/tutorials/bitmap/exam07.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bitmap/exam08	examples/dbc/tutorials/bitmap/exam08.dba	tutorials	verified	-	bounded	180	60	copy-tree	keyboard,filesystem	Bitmap loading, drawing and screen operations reach the bounded frame
+tutorials/bobs/exam01	examples/dbc/tutorials/bobs/exam01.dba	tutorials	verified	-	bounded	5	45	read-only	mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam02	examples/dbc/tutorials/bobs/exam02.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam03	examples/dbc/tutorials/bobs/exam03.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam04	examples/dbc/tutorials/bobs/exam04.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam05	examples/dbc/tutorials/bobs/exam05.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam06	examples/dbc/tutorials/bobs/exam06.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam07	examples/dbc/tutorials/bobs/exam07.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam08	examples/dbc/tutorials/bobs/exam08.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam09	examples/dbc/tutorials/bobs/exam09.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	BOB state, movement and collision reach the bounded 2D scene
+tutorials/bobs/exam10	examples/dbc/tutorials/bobs/exam10.dba	tutorials	verified	-	bounded	180	60	copy-tree	filesystem	BOB state, movement and collision reach the bounded 2D scene
+tutorials/camera3d/exam01	examples/dbc/tutorials/camera3d/exam01.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Camera transforms and projections reach the bounded 3D scene
+tutorials/camera3d/exam02	examples/dbc/tutorials/camera3d/exam02.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Camera transforms and projections reach the bounded 3D scene
+tutorials/camera3d/exam03	examples/dbc/tutorials/camera3d/exam03.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Camera transforms and projections reach the bounded 3D scene
+tutorials/camera3d/exam04	examples/dbc/tutorials/camera3d/exam04.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Camera transforms and projections reach the bounded 3D scene
+tutorials/camera3d/exam05	examples/dbc/tutorials/camera3d/exam05.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Camera transforms and projections reach the bounded 3D scene
+tutorials/camera3d/exam06	examples/dbc/tutorials/camera3d/exam06.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Camera transforms and projections reach the bounded 3D scene
+tutorials/camera3d/exam07	examples/dbc/tutorials/camera3d/exam07.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Camera transforms and projections reach the bounded 3D scene
+tutorials/camera3d/exam08	examples/dbc/tutorials/camera3d/exam08.dba	tutorials	verified	-	bounded	300	60	read-only	none	Camera transforms and projections reach the bounded 3D scene
+tutorials/flow/exam01	examples/dbc/tutorials/flow/exam01.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam02	examples/dbc/tutorials/flow/exam02.dba	tutorials	verified	-	bounded	120	30	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam03	examples/dbc/tutorials/flow/exam03.dba	tutorials	verified	-	bounded	5	60	read-only	mouse	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam04	examples/dbc/tutorials/flow/exam04.dba	tutorials	verified	-	bounded	120	30	read-only	mouse	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam05	examples/dbc/tutorials/flow/exam05.dba	tutorials	verified	-	bounded	120	30	read-only	mouse	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam06	examples/dbc/tutorials/flow/exam06.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam07	examples/dbc/tutorials/flow/exam07.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam08	examples/dbc/tutorials/flow/exam08.dba	tutorials	verified	-	bounded	120	30	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam09	examples/dbc/tutorials/flow/exam09.dba	tutorials	verified	-	bounded	120	30	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam10	examples/dbc/tutorials/flow/exam10.dba	tutorials	verified	-	bounded	120	60	copy-tree	keyboard,filesystem	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam11	examples/dbc/tutorials/flow/exam11.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam12	examples/dbc/tutorials/flow/exam12.dba	tutorials	verified	-	bounded	120	30	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam13	examples/dbc/tutorials/flow/exam13.dba	tutorials	verified	-	bounded	120	30	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam14	examples/dbc/tutorials/flow/exam14.dba	tutorials	verified	-	bounded	120	30	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam15	examples/dbc/tutorials/flow/exam15.dba	tutorials	verified	-	bounded	120	30	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam16	examples/dbc/tutorials/flow/exam16.dba	tutorials	verified	-	bounded	120	30	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/exam17	examples/dbc/tutorials/flow/exam17.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,mouse	Control-flow behavior reaches its bounded or natural termination point
+tutorials/flow/mylib	examples/dbc/tutorials/flow/mylib.dba	tutorials	verified	-	bounded	30	15	read-only	none	Control-flow behavior reaches its bounded or natural termination point
+tutorials/input/exam01	examples/dbc/tutorials/input/exam01.dba	tutorials	verified	-	bounded	120	30	read-only	none	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam02	examples/dbc/tutorials/input/exam02.dba	tutorials	verified	-	bounded	120	30	read-only	mouse	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam03	examples/dbc/tutorials/input/exam03.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam04	examples/dbc/tutorials/input/exam04.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam05	examples/dbc/tutorials/input/exam05.dba	tutorials	verified	-	bounded	120	30	read-only	filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam06	examples/dbc/tutorials/input/exam06.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam07	examples/dbc/tutorials/input/exam07.dba	tutorials	verified	-	bounded	120	60	read-only	joystick	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam08	examples/dbc/tutorials/input/exam08.dba	tutorials	verified	-	bounded	120	30	read-only	joystick	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam09	examples/dbc/tutorials/input/exam09.dba	tutorials	verified	-	bounded	120	30	read-only	joystick	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam10	examples/dbc/tutorials/input/exam10.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,joystick	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam11	examples/dbc/tutorials/input/exam11.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,joystick	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam12	examples/dbc/tutorials/input/exam12.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,mouse	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam13	examples/dbc/tutorials/input/exam13.dba	tutorials	verified	-	bounded	120	60	copy-tree	filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam14	examples/dbc/tutorials/input/exam14.dba	tutorials	verified	-	bounded	120	60	copy-tree	keyboard,filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam15	examples/dbc/tutorials/input/exam15.dba	tutorials	verified	-	bounded	120	60	copy-tree	keyboard,filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam16	examples/dbc/tutorials/input/exam16.dba	tutorials	verified	-	bounded	120	60	copy-tree	keyboard,filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam17	examples/dbc/tutorials/input/exam17.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam18	examples/dbc/tutorials/input/exam18.dba	tutorials	verified	-	bounded	120	30	read-only	none	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam19	examples/dbc/tutorials/input/exam19.dba	tutorials	verified	-	bounded	120	60	copy-tree	keyboard,mouse,filesystem,network	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam20	examples/dbc/tutorials/input/exam20.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam21	examples/dbc/tutorials/input/exam21.dba	tutorials	verified	-	bounded	120	60	copy-tree	filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam22	examples/dbc/tutorials/input/exam22.dba	tutorials	verified	-	bounded	120	30	read-only	joystick	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam23	examples/dbc/tutorials/input/EXAM23.DBA	tutorials	verified	-	bounded	120	30	read-only	none	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam24	examples/dbc/tutorials/input/EXAM24.DBA	tutorials	verified	-	bounded	120	30	read-only	none	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/input/exam25	examples/dbc/tutorials/input/EXAM25.DBA	tutorials	verified	-	bounded	120	60	copy-tree	filesystem	Input, file and host-query behavior reaches its bounded interaction point
+tutorials/light3d/exam01	examples/dbc/tutorials/light3d/exam01.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	Lighting state reaches the bounded rendered scene
+tutorials/light3d/exam02	examples/dbc/tutorials/light3d/exam02.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	Lighting state reaches the bounded rendered scene
+tutorials/light3d/exam03	examples/dbc/tutorials/light3d/exam03.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	Lighting state reaches the bounded rendered scene
+tutorials/maths/exam01	examples/dbc/tutorials/maths/exam01.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Math results are produced without runtime diagnostics
+tutorials/maths/exam02	examples/dbc/tutorials/maths/exam02.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Math results are produced without runtime diagnostics
+tutorials/maths/exam03	examples/dbc/tutorials/maths/exam03.dba	tutorials	verified	-	bounded	120	30	read-only	none	Math results are produced without runtime diagnostics
+tutorials/matrix3d/exam01	examples/dbc/tutorials/matrix3d/exam01.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Matrix terrain state reaches the bounded rendered scene
+tutorials/matrix3d/exam02	examples/dbc/tutorials/matrix3d/exam02.dba	tutorials	verified	-	bounded	300	60	read-only	none	Matrix terrain state reaches the bounded rendered scene
+tutorials/matrix3d/exam03	examples/dbc/tutorials/matrix3d/exam03.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard	Matrix terrain state reaches the bounded rendered scene
+tutorials/matrix3d/exam04	examples/dbc/tutorials/matrix3d/exam04.dba	tutorials	verified	-	bounded	300	60	read-only	mouse	Matrix terrain state reaches the bounded rendered scene
+tutorials/matrix3d/exam05	examples/dbc/tutorials/matrix3d/exam05.dba	tutorials	verified	-	bounded	300	60	read-only	mouse	Matrix terrain state reaches the bounded rendered scene
+tutorials/matrix3d/exam06	examples/dbc/tutorials/matrix3d/exam06.dba	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse	Matrix terrain state reaches the bounded rendered scene
+tutorials/matrix3d/exam07	examples/dbc/tutorials/matrix3d/exam07.dba	tutorials	verified	-	bounded	300	60	read-only	none	Matrix terrain state reaches the bounded rendered scene
+tutorials/matrix3d/exam08	examples/dbc/tutorials/matrix3d/exam08.dba	tutorials	verified	-	bounded	300	60	read-only	mouse	Matrix terrain state reaches the bounded rendered scene
+tutorials/memblock/exam01	examples/dbc/tutorials/memblock/EXAM01.DBA	tutorials	verified	-	bounded	180	45	read-only	none	Memblock transfers and typed access complete without runtime diagnostics
+tutorials/memblock/exam02	examples/dbc/tutorials/memblock/EXAM02.DBA	tutorials	verified	-	bounded	180	45	read-only	mouse	Memblock transfers and typed access complete without runtime diagnostics
+tutorials/memblock/exam03	examples/dbc/tutorials/memblock/EXAM03.DBA	tutorials	verified	-	bounded	180	45	read-only	mouse	Memblock transfers and typed access complete without runtime diagnostics
+tutorials/memblock/exam04	examples/dbc/tutorials/memblock/EXAM04.DBA	tutorials	verified	-	bounded	180	45	read-only	mouse	Memblock transfers and typed access complete without runtime diagnostics
+tutorials/memblock/exam05	examples/dbc/tutorials/memblock/EXAM05.DBA	tutorials	verified	-	bounded	180	45	read-only	audio	Memblock transfers and typed access complete without runtime diagnostics
+tutorials/memblock/exam06	examples/dbc/tutorials/memblock/EXAM06.DBA	tutorials	verified	-	bounded	180	45	read-only	mouse	Memblock transfers and typed access complete without runtime diagnostics
+tutorials/multiplayer/exam01	examples/dbc/tutorials/multiplayer/EXAM01.DBA	tutorials	verified	-	bounded	300	60	read-only	mouse,network	Network compatibility stubs remain terminal, deterministic and bounded
+tutorials/multiplayer/exam02	examples/dbc/tutorials/multiplayer/EXAM02.DBA	tutorials	verified	-	bounded	300	60	read-only	keyboard,network	Network compatibility stubs remain terminal, deterministic and bounded
+tutorials/multiplayer/exam03/exam03	examples/dbc/tutorials/multiplayer/exam03/EXAM03.DBA	tutorials	verified	-	bounded	300	60	read-only	keyboard,mouse,network	Network compatibility stubs remain terminal, deterministic and bounded
+tutorials/multiplayer/exam04	examples/dbc/tutorials/multiplayer/EXAM04.DBA	tutorials	verified	-	bounded	300	60	read-only	network	Network compatibility stubs remain terminal, deterministic and bounded
+tutorials/multiplayer/exam05	examples/dbc/tutorials/multiplayer/EXAM05.DBA	tutorials	verified	-	bounded	300	60	read-only	network	Network compatibility stubs remain terminal, deterministic and bounded
+tutorials/multiplayer/exam06	examples/dbc/tutorials/multiplayer/EXAM06.DBA	tutorials	verified	-	bounded	300	60	read-only	keyboard,audio,network	Network compatibility stubs remain terminal, deterministic and bounded
+tutorials/multiplayer/exam07	examples/dbc/tutorials/multiplayer/EXAM07.DBA	tutorials	verified	-	bounded	300	60	read-only	mouse,audio,network	Network compatibility stubs remain terminal, deterministic and bounded
+tutorials/music/exam01	examples/dbc/tutorials/music/exam01.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,audio,filesystem	Music loading and playback controls reach the bounded interaction point
+tutorials/music/exam02	examples/dbc/tutorials/music/exam02.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,audio,filesystem	Music loading and playback controls reach the bounded interaction point
+tutorials/music/exam03	examples/dbc/tutorials/music/exam03.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse,audio,filesystem	Music loading and playback controls reach the bounded interaction point
+tutorials/music/exam04	examples/dbc/tutorials/music/exam04.dba	tutorials	verified	-	bounded	180	45	read-only	audio	Music loading and playback controls reach the bounded interaction point
+tutorials/music/exam05	examples/dbc/tutorials/music/exam05.dba	tutorials	verified	-	bounded	180	45	read-only	audio	Music loading and playback controls reach the bounded interaction point
+tutorials/screen/exam01	examples/dbc/tutorials/screen/exam01.dba	tutorials	verified	-	bounded	5	60	read-only	mouse	Screen and checklist state reaches the bounded rendered frame
+tutorials/screen/exam02	examples/dbc/tutorials/screen/exam02.dba	tutorials	verified	-	bounded	120	30	read-only	none	Screen and checklist state reaches the bounded rendered frame
+tutorials/sound/exam01	examples/dbc/tutorials/sound/exam01.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam02	examples/dbc/tutorials/sound/exam02.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse,audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam03	examples/dbc/tutorials/sound/exam03.dba	tutorials	verified	-	bounded	180	45	read-only	audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam04	examples/dbc/tutorials/sound/exam04.dba	tutorials	verified	-	bounded	180	45	read-only	audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam05	examples/dbc/tutorials/sound/exam05.dba	tutorials	verified	-	bounded	180	45	read-only	audio,filesystem	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam06	examples/dbc/tutorials/sound/exam06.dba	tutorials	verified	-	bounded	180	45	read-only	audio,filesystem	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam07	examples/dbc/tutorials/sound/exam07.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam08	examples/dbc/tutorials/sound/exam08.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam09	examples/dbc/tutorials/sound/exam09.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam10	examples/dbc/tutorials/sound/exam10.dba	tutorials	verified	-	bounded	180	60	copy-tree	mouse,audio,filesystem	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam11	examples/dbc/tutorials/sound/exam11.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse,audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sound/exam12	examples/dbc/tutorials/sound/EXAM12.DBA	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse,audio	Sound loading and playback controls reach the bounded interaction point
+tutorials/sprite/exam01	examples/dbc/tutorials/sprite/exam01.dba	tutorials	verified	-	bounded	5	45	read-only	mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam02	examples/dbc/tutorials/sprite/exam02.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam03	examples/dbc/tutorials/sprite/exam03.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam04	examples/dbc/tutorials/sprite/exam04.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam05	examples/dbc/tutorials/sprite/exam05.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam06	examples/dbc/tutorials/sprite/exam06.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam07	examples/dbc/tutorials/sprite/exam07.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam08	examples/dbc/tutorials/sprite/exam08.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam09	examples/dbc/tutorials/sprite/exam09.dba	tutorials	verified	-	bounded	180	45	read-only	keyboard,mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam10	examples/dbc/tutorials/sprite/exam10.dba	tutorials	verified	-	bounded	180	60	copy-tree	filesystem	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/sprite/exam11	examples/dbc/tutorials/sprite/exam11.dba	tutorials	verified	-	bounded	180	45	read-only	mouse	Sprite state, transforms and collision reach the bounded 2D scene
+tutorials/system/exam01	examples/dbc/tutorials/system/exam01.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam02	examples/dbc/tutorials/system/exam02.dba	tutorials	verified	-	bounded	120	30	read-only	mouse	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam03	examples/dbc/tutorials/system/exam03.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,mouse	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam04	examples/dbc/tutorials/system/exam04.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam05	examples/dbc/tutorials/system/exam05.dba	tutorials	verified	-	bounded	120	30	read-only	mouse	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam06	examples/dbc/tutorials/system/exam06.dba	tutorials	verified	-	bounded	120	30	read-only	none	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam07	examples/dbc/tutorials/system/exam07.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam08	examples/dbc/tutorials/system/EXAM08.DBA	tutorials	verified	-	bounded	120	30	read-only	mouse	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam09	examples/dbc/tutorials/system/EXAM09.DBA	tutorials	verified	-	bounded	120	30	read-only	none	System queries and compatibility stubs remain deterministic and bounded
+tutorials/system/exam10	examples/dbc/tutorials/system/EXAM10.DBA	tutorials	verified	-	bounded	120	30	read-only	keyboard	System queries and compatibility stubs remain deterministic and bounded
+tutorials/text/exam01	examples/dbc/tutorials/text/exam01.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam02	examples/dbc/tutorials/text/exam02.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam03	examples/dbc/tutorials/text/exam03.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard,mouse	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam04	examples/dbc/tutorials/text/exam04.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam05	examples/dbc/tutorials/text/exam05.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam06	examples/dbc/tutorials/text/exam06.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam07	examples/dbc/tutorials/text/exam07.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam08	examples/dbc/tutorials/text/exam08.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam09	examples/dbc/tutorials/text/exam09.dba	tutorials	verified	-	bounded	120	30	read-only	keyboard	Text metrics and drawing reach the bounded rendered frame
+tutorials/text/exam10	examples/dbc/tutorials/text/EXAM10.DBA	tutorials	verified	-	bounded	120	30	read-only	none	Text metrics and drawing reach the bounded rendered frame

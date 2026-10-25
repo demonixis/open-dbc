@@ -1,0 +1,74 @@
+rem Test SELECT/CASE statement
+sync on : sync rate 0
+
+rem Test matching first case
+x = 1
+select x
+    case 1
+        print "MATCH_FIRST=1"
+    endcase
+    case 2
+        print "MATCH_FIRST=2"
+    endcase
+    case default
+        print "MATCH_FIRST=DEFAULT"
+    endcase
+endselect
+
+rem Test matching second case
+x = 2
+select x
+    case 1
+        print "MATCH_SECOND=1"
+    endcase
+    case 2
+        print "MATCH_SECOND=2"
+    endcase
+    case default
+        print "MATCH_SECOND=DEFAULT"
+    endcase
+endselect
+
+rem Test matching third case
+x = 3
+select x
+    case 1
+        print "MATCH_THIRD=1"
+    endcase
+    case 2
+        print "MATCH_THIRD=2"
+    endcase
+    case 3
+        print "MATCH_THIRD=3"
+    endcase
+endselect
+
+rem Test default case
+x = 99
+select x
+    case 1
+        print "MATCH_DEFAULT=1"
+    endcase
+    case 2
+        print "MATCH_DEFAULT=2"
+    endcase
+    case default
+        print "MATCH_DEFAULT=DEFAULT"
+    endcase
+endselect
+
+rem Test with no matching case and no default (should skip all)
+x = 50
+select x
+    case 1
+        print "SKIP=1"
+    endcase
+    case 2
+        print "SKIP=2"
+    endcase
+endselect
+print "AFTER_SKIP=OK"
+
+print "TEST_DONE"
+sync
+end

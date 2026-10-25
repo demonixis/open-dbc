@@ -1,0 +1,62 @@
+rem Test advanced object operations
+sync on : sync rate 0
+
+rem Create various primitives
+make object box 1, 10, 20, 30
+set object texture 1, 2, 1
+print "BOX_EXIST="; object exist(1)
+
+make object cylinder 2, 10
+print "CYL_EXIST="; object exist(2)
+
+make object cone 3, 10
+print "CONE_EXIST="; object exist(3)
+
+rem Object size queries
+print "SIZE_X="; object size x(1)
+print "SIZE_Y="; object size y(1)
+print "SIZE_Z="; object size z(1)
+
+rem Clone object
+clone object 4, 1
+print "CLONE_EXIST="; object exist(4)
+
+rem Hide/show
+hide object 1
+print "VISIBLE_AFTER_HIDE="; object visible(1)
+show object 1
+print "VISIBLE_AFTER_SHOW="; object visible(1)
+
+rem Color object
+color object 1, rgb(255, 0, 0)
+
+rem Fade object (0-100)
+fade object 1, 50
+
+rem Ghost object
+ghost object on 1
+ghost object off 1
+
+rem Set object rotation order
+set object rotation zyx 1
+
+rem Point object at position
+position object 1, 0, 0, 0
+point object 1, 0, 0, 100
+
+rem Move object
+position object 2, 0, 0, 0
+yrotate object 2, 90.0
+move object 2, 10.0
+print "MOVE_X="; object position x(2)
+print "MOVE_Z="; object position z(2)
+
+rem Cleanup
+delete object 1
+delete object 2
+delete object 3
+delete object 4
+
+print "TEST_DONE"
+sync
+end

@@ -1,0 +1,158 @@
+rem ==================================================================
+rem Flooded Vault - an OpenDBC example for the DarkBASIC Classic profile
+rem Walk a mechanical crab through a flooded cistern and catch the drops
+rem that fall from the vault before they hit the water.
+rem Arrow keys walk and turn, ESCAPE quits.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+hide mouse
+autocam off
+randomize timer()
+backdrop on
+color backdrop rgb(4, 10, 12)
+set camera range 1, 600
+set ambient light 45
+
+if fog available() = 1
+   fog on
+   fog color rgb(4, 10, 12)
+   fog distance 260
+endif
+
+rem --- The cistern: one object whose limbs carry their own textures
+load object "room.x", 1
+perform checklist for object limbs 1
+limbs = checklist quantity()
+
+rem --- Water: an alpha-blended plain whose texture slowly drifts
+load image "water.jpg", 1
+make object plain 2, 62, 62
+texture object 2, 1
+scale object texture 2, 3, 3
+xrotate object 2, 90
+position object 2, 0, 1.2, 0
+ghost object on 2, 1
+fade object 2, 60
+
+rem --- The crab: idle frames 0 to 20, walk cycle appended at frame 100
+load object "crab_idle.x", 3
+append object "crab_walk.x", 3, 100
+scale object 3, 180, 180, 180
+loop object 3, 0, 20
+walking = 0
+
+rem --- Ripples: a pool of ghosted rings reused as drops land
+load image "ripple.jpg", 2
+rings = 8
+dim ring_life#(rings)
+for r = 1 to rings
+   make object plain 10 + r, 4, 4
+   texture object 10 + r, 2
+   ghost object on 10 + r
+   xrotate object 10 + r, 90
+   hide object 10 + r
+next r
+
+rem --- One falling drop at a time
+make object sphere 30, 0.6
+color object 30, rgb(160, 225, 255)
+gosub new_drop
+
+rem --- A blue point light under the oculus
+make light 1
+set point light 1, 0, 26, 0
+color light 1, rgb(110, 190, 255)
+set light range 1, 120
+
+load sound "drip.wav", 1
+load sound "chime.wav", 2
+load sound "cistern.wav", 3
+loop sound 3
+
+x# = 0.0 : z# = -10.0 : angle# = 0.0
+caught = 0 : missed = 0
+inner# = 24.0
+
+do
+   rem --- Walk and turn
+   moving = 0
+   if leftkey() = 1 then angle# = wrapvalue(angle# - 3.0)
+   if rightkey() = 1 then angle# = wrapvalue(angle# + 3.0)
+   if upkey() = 1 then step# = 0.35 : moving = 1
+   if downkey() = 1 then step# = -0.2 : moving = 1
+   if moving = 1
+      nx# = newxvalue(x#, angle#, step#)
+      nz# = newzvalue(z#, angle#, step#)
+      rem Stay inside the octagon (a circle is close enough for the walls)
+      if sqrt(nx# * nx# + nz# * nz#) < inner# then x# = nx# : z# = nz#
+   endif
+
+   rem Switch between the idle and walk clips only when the state changes
+   if moving = 1 and walking = 0 then loop object 3, 100, 124 : walking = 1
+   if moving = 0 and walking = 1 then loop object 3, 0, 20 : walking = 0
+
+   position object 3, x#, 0.4, z#
+   yrotate object 3, angle#
+
+   rem --- Third-person camera that trails the crab
+   cx# = newxvalue(x#, angle#, -16.0)
+   cz# = newzvalue(z#, angle#, -16.0)
+   position camera cx#, 9.0, cz#
+   point camera x#, 2.5, z#
+
+   rem --- The drop falls; the crab's shell can catch it
+   dropy# = dropy# - dropspeed#
+   position object 30, dropx#, dropy#, dropz#
+   if dropy# < 4.0
+      dx# = dropx# - x# : dz# = dropz# - z#
+      if dx# * dx# + dz# * dz# < 16.0
+         play sound 2
+         caught = caught + 1
+         gosub new_drop
+      endif
+   endif
+   if dropy# < 1.2
+      play sound 1
+      missed = missed + 1
+      gosub new_ripple
+      gosub new_drop
+   endif
+
+   rem --- Rings grow and fade
+   for r = 1 to rings
+      if ring_life#(r) > 0.0
+         ring_life#(r) = ring_life#(r) - 0.02
+         size# = 100.0 + (1.0 - ring_life#(r)) * 500.0
+         scale object 10 + r, size#, size#, 100
+         fade object 10 + r, int(ring_life#(r) * 100.0)
+         if ring_life#(r) <= 0.0 then hide object 10 + r
+      endif
+   next r
+
+   scroll object texture 2, 0.0006, 0.0004
+
+   ink rgb(200, 240, 255), 0
+   text 10, 10, "Caught " + str$(caught) + "   Missed " + str$(missed) + "   Limbs in the vault " + str$(limbs)
+   sync
+loop
+
+rem ------------------------------------------------------------------
+new_drop:
+   dropx# = rnd(36) - 18 : dropz# = rnd(36) - 18
+   dropy# = 27.0
+   dropspeed# = 0.25 + rnd(10) / 40.0
+return
+
+rem ------------------------------------------------------------------
+rem Start the oldest ring where the drop hit the water
+new_ripple:
+   oldest = 1
+   for r = 2 to rings
+      if ring_life#(r) < ring_life#(oldest) then oldest = r
+   next r
+   ring_life#(oldest) = 1.0
+   position object 10 + oldest, dropx#, 1.3, dropz#
+   show object 10 + oldest
+return

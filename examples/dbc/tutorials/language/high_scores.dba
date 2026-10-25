@@ -1,0 +1,82 @@
+rem ==================================================================
+rem High Scores - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Keeps a table of ten scores in arrays: reads the starting table from
+rem DATA, slots in a new score, saves the scores to a file, wipes them
+rem and loads them back. UNDIM frees a temporary array. Formatting
+rem functions come from score_helpers.dba through #INCLUDE.
+rem Start it with a name on the command line
+rem (opendbc run high_scores.dba --dialect dbc --command-line ADA) to
+rem see that name in the table; CL$() returns it.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+#include "score_helpers.dba"
+
+sync on : sync rate 30
+randomize timer()
+player$ = upper$(cl$())
+if player$ = "" then player$ = "YOU"
+
+rem --- The starting table, read from DATA
+dim names$(9) : dim scores(9)
+for i = 0 to 9
+   read names$(i), scores(i)
+next i
+
+rem --- A new score slides into place, pushing lower scores down. A copy
+rem of the old table tells how many players were pushed down.
+dim previous(9)
+for i = 0 to 9 : previous(i) = scores(i) : next i
+new_score = 4000 + rnd(5000)
+place = 10
+for i = 9 to 0 step -1
+   if new_score > scores(i) then place = i
+next i
+if place < 10
+   for i = 9 to place + 1 step -1
+      names$(i) = names$(i - 1) : scores(i) = scores(i - 1)
+   next i
+   names$(place) = player$ : scores(place) = new_score
+endif
+
+pushed = 0
+for i = 0 to 9
+   if scores(i) <> previous(i) then inc pushed
+next i
+if place < 10 then dec pushed
+rem The copy is no longer needed: UNDIM frees it
+undim previous(0)
+
+rem --- SAVE ARRAY writes a numeric array to a file: save the scores,
+rem wipe them, and load them back
+save array "scores.dat", scores(0)
+for i = 0 to 9 : scores(i) = 0 : next i
+load array "scores.dat", scores(0)
+delete file "scores.dat"
+
+do
+   cls rgb(16, 18, 40)
+   set text font "Courier New" : set text size 22
+   ink rgb(255, 210, 80), 0
+   center text screen width() / 2, 20, "HALL OF FAME"
+   for i = 0 to 9
+      if i = place and (timer() / 300) mod 2 = 0
+         ink rgb(255, 255, 255), 0
+      else
+         ink rgb(120 + i * 12, 180, 255 - i * 10), 0
+      endif
+      text 120, 70 + i * 32, pad$(ordinal$(i + 1), 6) + pad$(names$(i), 10) + zeros$(scores(i), 6)
+   next i
+   set text font "Arial" : set text size 14
+   ink rgb(160, 160, 190), 0
+   if place < 10
+      text 20, screen height() - 46, player$ + " scored " + str$(new_score) + ", placed " + ordinal$(place + 1) + " and pushed " + str$(pushed) + " players down"
+   else
+      text 20, screen height() - 46, player$ + " scored " + str$(new_score) + ", not enough for the table"
+   endif
+   text 20, screen height() - 26, "Table saved and reloaded on " + get date$() + " at " + get time$()
+   sync
+loop
+
+data "ROSA", 9800, "MAX", 9100, "INES", 8400, "TOM", 7700, "LEA", 6900
+data "OMAR", 6100, "JUNE", 5200, "KAI", 4300, "NOOR", 3500, "ELI", 2600

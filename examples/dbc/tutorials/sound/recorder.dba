@@ -1,0 +1,78 @@
+rem ==================================================================
+rem Recorder - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Records three seconds from the microphone into a sound, plays it
+rem back and saves it to a WAV file. Recording starts only when you
+rem press R, so the program never opens the microphone on its own.
+rem SPACE plays the take, S saves it as take.wav, X deletes it.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+
+rem SET EAX chose a Creative EAX reverb preset; modern systems have none,
+rem so OpenDBC accepts the command and does nothing
+set eax 0
+
+load sound "pluck.wav", 2
+state$ = "Press R to record three seconds"
+do
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$
+      if key$ = "r" and recording = 0
+         if sound exist(1) = 1 then delete sound 1
+         rem RECORD SOUND sound number, seconds
+         record sound 1, 3
+         recording = 1 : started = timer()
+         state$ = "Recording..."
+      endif
+      if key$ = " " and sound exist(1) = 1 then play sound 1 : state$ = "Playing the take"
+      if key$ = "s" and sound exist(1) = 1
+         if file exist("take.wav") = 1 then delete file "take.wav"
+         save sound "take.wav", 1
+         state$ = "Saved take.wav"
+      endif
+      if key$ = "x" and sound exist(1) = 1 then delete sound 1 : state$ = "Take deleted"
+   endif
+   lastkey$ = key$
+
+   rem STOP RECORDING SOUND ends early; here the three seconds run out first
+   if recording = 1 and timer() - started > 3000
+      stop recording sound
+      recording = 0
+      state$ = "Recorded - SPACE plays, S saves, X deletes"
+   endif
+
+   rem Without a take, the pluck sound keeps the meter busy
+   if recording = 0 and sound exist(1) = 0 and sound playing(2) = 0 then play sound 2
+
+   cls rgb(30, 26, 36)
+   rem A level meter: a fake, but it shows when something is going on
+   level = 0
+   if recording = 1 then level = 40 + rnd(160)
+   if sound exist(1) = 1
+      if sound playing(1) = 1 then level = 60 + rnd(180)
+   endif
+   if sound playing(2) = 1 then level = 30 + rnd(120)
+   for bar = 0 to 15
+      if bar * 15 < level
+         ink rgb(60 + bar * 12, 220 - bar * 10, 80), 0
+      else
+         ink rgb(60, 56, 70), 0
+      endif
+      box 60 + bar * 33, 300, 88 + bar * 33, 360
+   next bar
+   if recording = 1
+      ink rgb(230, 40, 40), 0
+      for r = 1 to 14 : circle w / 2, 200, r : next r
+      ink rgb(255, 255, 255), 0
+      center text w / 2, 230, str$((3000 - (timer() - started)) / 1000 + 1) + " s"
+   endif
+
+   ink rgb(240, 240, 240), 0
+   center text w / 2, 40, "RECORDER"
+   center text w / 2, 90, state$
+   text 20, h - 60, "Take: SOUND EXIST(1) = " + str$(sound exist(1))
+   text 20, h - 40, "R records, SPACE plays, S saves take.wav, X deletes"
+   sync
+loop

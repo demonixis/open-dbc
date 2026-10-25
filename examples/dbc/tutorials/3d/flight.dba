@@ -1,0 +1,123 @@
+rem ==================================================================
+rem Flight - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Moving and turning objects: a glider flies with MOVE OBJECT, TURN,
+rem PITCH and ROLL; a chaser follows it with POINT OBJECT; a shadow
+rem copies its orientation; a sign always faces the camera; and the
+rem camera trails behind using NEWXVALUE, CURVEVALUE and CURVEANGLE.
+rem LEFT/RIGHT turn, UP/DOWN pitch, Q/E roll, L frees the compass;
+rem otherwise it flies itself.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+autocam off
+backdrop on
+color backdrop rgb(150, 190, 230)
+set camera range 1, 3000
+
+rem The sea: a large plain laid flat
+load image "sea.jpg", 1
+make object plain 1, 2000, 2000
+texture object 1, 1
+scale object texture 1, 20, 20
+xrotate object 1, 90
+position object 1, 0, -20, 0
+
+rem The glider: a cone made to point along +Z. FIX OBJECT PIVOT keeps the
+rem tilt as the object's resting shape, so later turns start from it.
+make object cone 2, 8
+scale object 2, 100, 220, 100
+xrotate object 2, 90
+fix object pivot 2
+color object 2, rgb(240, 90, 60)
+
+rem The chaser, the shadow and a sign
+make object sphere 4, 2
+color object 4, rgb(60, 60, 200)
+make object cone 5, 4
+scale object 5, 60, 200, 60
+xrotate object 5, 90
+fix object pivot 5
+color object 5, rgb(20, 40, 60)
+make object plain 6, 12, 4
+color object 6, rgb(255, 230, 120)
+position object 6, -70, 12, 90
+rem A compass needle locked to the screen, like part of a dashboard
+make object cone 7, 0.6
+scale object 7, 40, 120, 40
+lock object on 7
+position object 7, 4.2, 3.0, 10
+color object 7, rgb(255, 60, 60)
+
+rem Two cones turned by the same angles in a different order
+for o = 8 to 9
+   make object cone o, 3
+   position object o, 40 + (o - 8.5) * 16, 5, 70
+   color object o, rgb(120, 200, 120)
+next o
+set object rotation xyz 8
+set object rotation zyx 9
+
+position object 2, 0, 10, 0
+camx# = 0 : camy# = 20 : camz# = -40 : camyaw# = 0
+
+do
+   rem Controls, or an autopilot that weaves in long curves
+   if leftkey() + rightkey() + upkey() + downkey() + keystate(16) + keystate(18) > 0 then manual = 1
+   if manual = 1
+      if leftkey() = 1 then turn object left 2, 1.5
+      if rightkey() = 1 then turn object right 2, 1.5
+      if upkey() = 1 then pitch object down 2, 1
+      if downkey() = 1 then pitch object up 2, 1
+      if keystate(16) = 1 then roll object left 2, 2
+      if keystate(18) = 1 then roll object right 2, 2
+   else
+      t = t + 1
+      turn object right 2, sin(t * 0.7) * 0.9
+      if object position y(2) > 25 then pitch object down 2, 0.3
+      if object position y(2) < 5 then pitch object up 2, 0.3
+   endif
+   move object 2, 0.8
+
+   rem The chaser aims a little above the glider and moves a little slower
+   point object 4, object position x(2), object position y(2) + 10, object position z(2)
+   move object 4, 0.7
+   rem The shadow sits on the water and copies the glider's orientation
+   position object 5, object position x(2), -19, object position z(2)
+   set object to object orientation 5, 2
+   rem The sign turns to face the camera
+   set object to camera orientation 6
+   rem L unlocks the compass needle from the screen and locks it again
+   if lower$(inkey$()) = "l" and lheld = 0
+      locked = 1 - locked
+      if locked = 1 then lock object off 7 else lock object on 7
+   endif
+   lheld = (lower$(inkey$()) = "l")
+   rem The compass needle shows the glider's heading
+   zrotate object 7, 0 - object angle y(2)
+   xrotate object 8, wrapvalue(t) : zrotate object 8, 40
+   xrotate object 9, wrapvalue(t) : zrotate object 9, 40
+
+   rem The camera eases towards a point behind the glider
+   heading# = object angle y(2)
+   wantx# = newxvalue(object position x(2), heading#, -22)
+   wantz# = newzvalue(object position z(2), heading#, -22)
+   wanty# = newyvalue(object position y(2), object angle x(2), -6) + 9
+   camx# = curvevalue(wantx#, camx#, 8)
+   camy# = curvevalue(wanty#, camy#, 8)
+   camz# = curvevalue(wantz#, camz#, 8)
+   camyaw# = curveangle(heading#, camyaw#, 8)
+   position camera camx#, camy#, camz#
+   point camera object position x(2), object position y(2), object position z(2)
+
+   ink rgb(20, 30, 50), 0
+   text 10, 10, "FLIGHT - arrows turn and pitch, Q/E roll"
+   text 10, 30, "GLIDER ANGLES " + str$(int(object angle x(2))) + ", " + str$(int(object angle y(2))) + ", " + str$(int(object angle z(2))) + "   CAMERA YAW " + str$(int(camyaw#))
+   rem OBJECT SCREEN X and Y place a label on the chaser when it is visible
+   if object in screen(4) = 1
+      text object screen x(4) + 10, object screen y(4) - 10, "chaser"
+   endif
+   if object in screen(8) = 1 then text object screen x(8) - 20, object screen y(8) + 20, "XYZ"
+   if object in screen(9) = 1 then text object screen x(9) - 20, object screen y(9) + 20, "ZYX"
+   sync
+loop

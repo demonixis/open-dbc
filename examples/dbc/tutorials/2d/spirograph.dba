@@ -1,0 +1,51 @@
+rem ==================================================================
+rem Spirograph - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Draws rolling-circle curves with short LINE segments whose colour
+rem drifts through the spectrum. Click the mouse (or wait for the
+rem curve to close) to start a new pattern. SPACE clears the screen.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+randomize timer()
+w = screen width() : h = screen height()
+cls
+gosub new_pattern
+
+do
+   rem Forty short segments per frame make the curve grow smoothly
+   for step = 1 to 40
+      t# = t# + 0.5
+      x# = cx + (big - small) * cos(t#) + pen * cos(t# * (big - small) / small)
+      y# = cy + (big - small) * sin(t#) - pen * sin(t# * (big - small) / small)
+      ink rgb(128 + sin(t# * 0.5) * 127, 128 + sin(t# * 0.5 + 120) * 127, 128 + sin(t# * 0.5 + 240) * 127), 0
+      line lastx#, lasty#, x#, y#
+      lastx# = x# : lasty# = y#
+   next step
+
+   if spacekey() = 1 then cls
+   if mouseclick() = 1 and clicked = 0 then gosub new_pattern
+   clicked = mouseclick()
+   if t# > turns * 360.0 then gosub new_pattern
+
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "SPIROGRAPH - click for a new pattern, SPACE clears"
+   sync
+loop
+
+new_pattern:
+   rem A fixed ring rolls a smaller wheel; the pen sits on the wheel's spoke
+   big = 120 + rnd(80)
+   small = 20 + rnd(70)
+   pen = 20 + rnd(90)
+   cx = w / 4 + rnd(w / 2) : cy = h / 3 + rnd(h / 3)
+   rem The curve closes after small / gcd(big, small) turns
+   a = big : b = small
+   while b > 0
+      r = a mod b : a = b : b = r
+   endwhile
+   turns = small / a
+   if turns > 12 then turns = 12
+   t# = 0.0
+   lastx# = cx + (big - small) + pen : lasty# = cy
+return

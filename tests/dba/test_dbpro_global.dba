@@ -1,0 +1,17 @@
+rem Test GLOBAL declaration in DBPro mode
+sync on : sync rate 0
+
+GLOBAL SharedVar = 999
+print "INITIAL="; SharedVar
+
+SetShared()
+print "MODIFIED="; SharedVar
+
+print "TEST_DONE"
+sync
+end
+
+function SetShared()
+    GLOBAL SharedVar AS INTEGER
+    SharedVar = 42
+endfunction

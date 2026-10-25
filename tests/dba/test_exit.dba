@@ -1,0 +1,46 @@
+rem Test EXIT (loop break) in FOR, DO, WHILE, REPEAT
+sync on : sync rate 0
+
+rem EXIT from FOR loop
+for i = 1 to 10
+    if i = 3 then exit
+next i
+print "FOR_EXIT="; i
+
+rem EXIT from DO loop
+x = 0
+do
+    inc x
+    if x = 5 then exit
+loop
+print "DO_EXIT="; x
+
+rem EXIT from WHILE loop
+y = 0
+while y < 100
+    inc y
+    if y = 7 then exit
+endwhile
+print "WHILE_EXIT="; y
+
+rem EXIT from REPEAT loop
+z = 0
+repeat
+    inc z
+    if z = 4 then exit
+until z = 999
+print "REPEAT_EXIT="; z
+
+rem Nested loop EXIT (only exits innermost)
+total = 0
+for a = 1 to 3
+    for b = 1 to 10
+        if b = 2 then exit
+    next b
+    inc total
+next a
+print "NESTED_EXIT="; total
+
+print "TEST_DONE"
+sync
+end

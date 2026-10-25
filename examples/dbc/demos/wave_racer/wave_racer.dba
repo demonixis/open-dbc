@@ -1,0 +1,262 @@
+rem ==================================================================
+rem Wave Racer - an OpenDBC example for the DarkBASIC Classic profile
+rem Race a jet scooter through eight buoy gates on a rolling sea, two
+rem laps against the clock. Hit the ramp for a jump.
+rem Up accelerates, Down brakes, Left and Right steer, SPACE restarts.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 60
+hide mouse
+autocam off
+backdrop on
+color backdrop rgb(204, 219, 235)
+set camera range 1, 4000
+set ambient light 70
+fog_ok = fog available()
+if fog_ok = 1
+   fog on
+   fog color rgb(204, 219, 235)
+   fog distance 900
+endif
+
+rem --- Sea: a matrix whose heights are recomputed every frame
+segments = 30 : sea_size# = 2400.0 : half# = sea_size# / 2
+load image "sea.jpg", 1
+make matrix 1, sea_size#, sea_size#, segments, segments
+prepare matrix texture 1, 1, 1, 1
+position matrix 1, 0 - half#, 0, 0 - half#
+
+rem --- Sky dome that follows the camera; it is seen from inside
+load image "sky.jpg", 2
+make object sphere 3, 3000
+texture object 3, 2
+set object 3, 1, 1, 0, 1, 0, 0, 1
+
+rem --- Scooter and rider (limb 1 of the scooter is the hull, limb 5 the flag);
+rem the glued rider inherits the scooter scale
+load object "scooter.x", 10
+load object "rider.x", 11
+scale object 10, 300, 300, 300
+glue object to limb 11, 10, 1
+hide limb 10, 5
+
+rem --- Course: eight gates of two buoys on a ring; limb 3 of a buoy is its lamp
+gates = 8 : ring# = 520.0
+dim gatex#(gates) : dim gatez#(gates)
+for g = 1 to gates
+   a# = (g - 1) * 360.0 / gates
+   gatex#(g) = sin(a#) * ring# : gatez#(g) = cos(a#) * ring#
+   for side = 0 to 1
+      b = 100 + (g - 1) * 2 + side
+      load object "buoy.x", b
+      scale object b, 250, 250, 250
+      offset# = (side * 2 - 1) * 22.0
+      position object b, gatex#(g) + cos(a#) * offset#, 0, gatez#(g) - sin(a#) * offset#
+   next side
+next g
+
+rem --- A jump ramp halfway between gates 2 and 3, facing along the course
+load object "ramp.x", 20
+scale object 20, 200, 200, 200
+rampangle# = 360.0 / gates * 1.5
+rampx# = sin(rampangle#) * ring# : rampz# = cos(rampangle#) * ring#
+rampyaw# = wrapvalue(rampangle# + 90)
+position object 20, rampx#, 0, rampz#
+yrotate object 20, rampyaw#
+
+load object "lighthouse.x", 21
+position object 21, 900, 0, -700
+
+rem --- Spray: ghosted puffs recycled behind the jet nozzle
+load image "spray.jpg", 3
+puffs = 8
+dim puffage(puffs)
+for p = 1 to puffs
+   make object plain 40 + p, 3, 3
+   texture object 40 + p, 3
+   set object 40 + p, 1, 1, 0, 1, 0, 1, 1
+   ghost object on 40 + p
+   hide object 40 + p
+next p
+
+load sound "jet.wav", 1
+load sound "splash.wav", 2
+load sound "gate.wav", 3
+load sound "fanfare.wav", 4
+loop sound 1
+
+gosub new_race
+best = 0
+
+do
+   t# = timer() / 1000.0
+   gosub animate_sea
+
+   rem --- Throttle and steering
+   if upkey() = 1 and finished = 0 then speed# = speed# + 0.06
+   if downkey() = 1 then speed# = speed# - 0.1
+   speed# = speed# * 0.985
+   if speed# < -0.6 then speed# = -0.6
+   if speed# > 4.5 then speed# = 4.5
+   steer# = 0.0
+   if leftkey() = 1 then steer# = -1.0
+   if rightkey() = 1 then steer# = 1.0
+   yaw# = wrapvalue(yaw# + steer# * (0.6 + abs(speed#) * 0.5))
+   lean# = curvevalue(steer# * 25.0 * smaller#(1.0, abs(speed#) / 2.0), lean#, 10)
+   x# = newxvalue(x#, yaw#, speed#) : z# = newzvalue(z#, yaw#, speed#)
+   if abs(x#) > half# - 50 or abs(z#) > half# - 50 then speed# = 0 - speed# * 0.5
+
+   rem --- Ride the waves: height under the hull, pitch from bow and stern
+   sea# = sea_height(x#, z#)
+   front# = sea_height(newxvalue(x#, yaw#, 6), newzvalue(z#, yaw#, 6))
+   back# = sea_height(newxvalue(x#, yaw#, -6), newzvalue(z#, yaw#, -6))
+   gosub ramp_check
+   if airborne = 1
+      vy# = vy# - 0.12
+      y# = y# + vy#
+      if y# <= sea# + 1.8
+         airborne = 0
+         play sound 2
+      endif
+      pitch# = curvevalue(0 - vy# * 6.0, pitch#, 6)
+   else
+      if onramp = 0 then y# = sea# + 1.8 : pitch# = curvevalue(atanfull(back# - front#, 12), pitch#, 6)
+   endif
+
+   position object 10, x#, y#, z#
+   rotate object 10, pitch#, yaw#, lean#
+   rem The rider leans further into the turn than the hull
+   rotate limb 11, 2, 20, 0, 0 - lean# * 0.8
+
+   rem --- Gates and laps
+   if finished = 0
+      dx# = gatex#(nextgate) - x# : dz# = gatez#(nextgate) - z#
+      if dx# * dx# + dz# * dz# < 900
+         play sound 3
+         inc nextgate
+         if nextgate > gates
+            nextgate = 1
+            inc lap
+            if lap > laps
+               finished = 1
+               racetime = timer() - starttime
+               if best = 0 or racetime < best then best = racetime
+               show limb 10, 5
+               play sound 4
+            endif
+         endif
+         gosub light_gates
+      endif
+   endif
+
+   gosub update_spray
+   set sound speed 1, 9000 + abs(speed#) * 2500
+
+   rem --- Chase camera, sky and fog that thickens away from the course
+   set camera to follow x#, y#, z#, yaw#, 34, 12, 8, 0
+   position object 3, camera position x(), 0, camera position z()
+   if fog_ok = 1
+      distance# = sqrt(x# * x# + z# * z#)
+      fog distance 1100 - smaller#(700.0, distance# * 0.5)
+   endif
+
+   gosub draw_hud
+   if finished = 1 and spacekey() = 1 then gosub new_race
+   sync
+loop
+
+rem ------------------------------------------------------------------
+new_race:
+   x# = gatex#(gates) : z# = gatez#(gates) - 40 : y# = 2.0
+   yaw# = 90.0 : speed# = 0.0 : lean# = 0.0 : pitch# = 0.0
+   airborne = 0 : onramp = 0 : vy# = 0.0
+   laps = 2 : lap = 1 : nextgate = 1 : finished = 0
+   starttime = timer()
+   hide limb 10, 5
+   gosub light_gates
+return
+
+rem Only the next gate shows its lamps
+light_gates:
+   for g = 1 to gates
+      for side = 0 to 1
+         if g = nextgate and finished = 0
+            show limb 100 + (g - 1) * 2 + side, 3
+         else
+            hide limb 100 + (g - 1) * 2 + side, 3
+         endif
+      next side
+   next g
+return
+
+rem Two travelling sine swells, sampled at every matrix vertex
+animate_sea:
+   for vz = 0 to segments
+      for vx = 0 to segments
+         set matrix height 1, vx, vz, 3.0 * sin(vx * 37 + t# * 70) + 2.0 * cos(vz * 29 + t# * 55)
+      next vx
+   next vz
+   update matrix 1
+return
+
+rem The ramp rises 8 units over its 24-unit length along its own +Z axis
+ramp_check:
+   onramp = 0
+   rx# = x# - rampx# : rz# = z# - rampz#
+   lx# = rx# * cos(rampyaw#) - rz# * sin(rampyaw#)
+   lz# = rx# * sin(rampyaw#) + rz# * cos(rampyaw#)
+   if airborne = 0 and abs(lx#) < 6 and lz# > -12 and lz# < 12
+      onramp = 1
+      y# = sea# + 1.8 + (lz# + 12) / 24.0 * 8.0
+      pitch# = curvevalue(-18, pitch#, 4)
+   endif
+   if airborne = 0 and onramp = 0 and lastonramp = 1 and speed# > 1.0
+      airborne = 1
+      vy# = speed# * 0.6
+   endif
+   lastonramp = onramp
+return
+
+rem Puffs spawn at the nozzle, rise a little and fade
+update_spray:
+   if speed# > 1.0 and airborne = 0
+      p = 1 + (spraytick mod puffs)
+      inc spraytick
+      puffage(p) = 30
+      position object 40 + p, newxvalue(x#, yaw#, -7), y# + 1, newzvalue(z#, yaw#, -7)
+      show object 40 + p
+   endif
+   for p = 1 to puffs
+      if puffage(p) > 0
+         dec puffage(p)
+         position object 40 + p, object position x(40 + p), object position y(40 + p) + 0.15, object position z(40 + p)
+         point object 40 + p, camera position x(), camera position y(), camera position z()
+         fade object 40 + p, puffage(p) * 2
+         if puffage(p) = 0 then hide object 40 + p
+      endif
+   next p
+return
+
+draw_hud:
+   ink rgb(10, 30, 60), 0
+   elapsed = timer() - starttime
+   if finished = 1 then elapsed = racetime
+   text 12, 10, "LAP " + str$(int(smaller#(lap, laps))) + "/" + str$(laps) + "   GATE " + str$(nextgate) + "/" + str$(gates)
+   text 12, 28, "TIME " + str$(elapsed / 1000) + "." + str$((elapsed mod 1000) / 100)
+   if best > 0 then text 12, 46, "BEST " + str$(best / 1000) + "." + str$((best mod 1000) / 100)
+   ink rgb(255, 255, 255), 0
+   text 12, screen height() - 40, "SPEED " + str$(int(abs(speed#) * 12)) + " KN"
+   ink rgb(255, 120, 20), 0
+   box 12, screen height() - 20, 12 + int(abs(speed#) * 40), screen height() - 12
+   if finished = 1 then center text screen width() / 2, screen height() / 2, "FINISHED - PRESS SPACE TO RACE AGAIN"
+return
+
+rem Classic has no MIN function
+function smaller#(a#, b#)
+   if b# < a# then a# = b#
+endfunction a#
+
+function sea_height(px#, pz#)
+   h# = get ground height(1, px# + 1200, pz# + 1200)
+endfunction h#

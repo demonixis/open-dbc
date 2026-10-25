@@ -1,0 +1,51 @@
+rem ==================================================================
+rem Postcards - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Loads a picture straight onto the screen, shrinks it into a small
+rem bitmap, writes a greeting on it and saves it with SAVE BITMAP. The
+rem saved file is loaded back with LOAD BITMAP and dealt out as cards.
+rem The temporary file is deleted again. Press a key to deal again.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+randomize timer()
+w = screen width() : h = screen height()
+
+rem LOAD BITMAP without a number loads the picture onto the screen itself
+load bitmap "harbour.bmp"
+ink rgb(255, 255, 255), 0
+text 10, 10, "LOAD BITMAP onto the screen"
+sleep 1500
+
+rem Shrink the screen into a half-size bitmap and decorate it there
+create bitmap 1, w / 2, h / 2
+copy bitmap 0, 0, 0, w, h, 1, 0, 0, w / 2, h / 2
+set current bitmap 1
+ink rgb(250, 245, 230), 0
+for edge = 0 to 5
+   box edge, edge, w / 2 - 1 - edge, edge
+   box edge, h / 2 - 1 - edge, w / 2 - 1 - edge, h / 2 - 1 - edge
+   box edge, edge, edge, h / 2 - 1 - edge
+   box w / 2 - 1 - edge, edge, w / 2 - 1 - edge, h / 2 - 1 - edge
+next edge
+ink rgb(255, 255, 255), 0
+text 16, h / 2 - 30, "Greetings from the lighthouse"
+
+rem Save it, forget it, and read it back from the file
+save bitmap "postcard.bmp", 1
+delete bitmap 1
+load bitmap "postcard.bmp", 2
+delete file "postcard.bmp"
+set current bitmap 0
+
+do
+   cls rgb(40, 60, 80)
+   rem Each card is a stretched copy of bitmap 2 at a random place and size
+   for card = 1 to 6
+      cw = w / 4 + rnd(w / 5) : ch = cw * 3 / 4
+      x = rnd(w - cw) : y = 40 + rnd(h - 50 - ch)
+      copy bitmap 2, 0, 0, bitmap width(2), bitmap height(2), 0, x, y, x + cw, y + ch
+   next card
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "postcard.bmp was " + str$(bitmap width(2)) + " x " + str$(bitmap height(2)) + " - press a key to deal again"
+   suspend for key
+loop

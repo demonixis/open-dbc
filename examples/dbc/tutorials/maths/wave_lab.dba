@@ -1,0 +1,113 @@
+rem ==================================================================
+rem Wave Lab - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Plots the maths functions side by side. Angles are in degrees in
+rem DarkBASIC: SIN(90) is 1. The waves drift so you can watch their
+rem phase, and a rotating pointer shows what ATANFULL measures.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+panel_w = w / 2 - 15 : panel_h = h / 3 - 18
+
+do
+   phase = phase + 4
+   cls rgb(14, 16, 24)
+
+   rem Panel 1: SIN and COS, a quarter turn apart, and ABS folding SIN up
+   px = 10 : py = 10 : gosub frame
+   lastx = px : lasts# = py + panel_h / 2 : lastc# = lasts# : lasta# = lasts#
+   for x = 0 to panel_w step 3
+      a = x * 2 + phase
+      s# = py + panel_h / 2 - sin(a) * panel_h * 0.4
+      c# = py + panel_h / 2 - cos(a) * panel_h * 0.4
+      b# = py + panel_h / 2 - abs(sin(a)) * panel_h * 0.4
+      ink rgb(255, 120, 90), 0 : line lastx, lasts#, px + x, s#
+      ink rgb(90, 200, 255), 0 : line lastx, lastc#, px + x, c#
+      ink rgb(120, 120, 140), 0 : line lastx, lasta#, px + x, b#
+      lastx = px + x : lasts# = s# : lastc# = c# : lasta# = b#
+   next x
+   ink rgb(230, 230, 230), 0 : text px + 6, py + 4, "SIN  COS  ABS(SIN)"
+
+   rem Panel 2: TAN shoots off to infinity at 90 degrees; clip it to the panel
+   px = w / 2 + 5 : py = 10 : gosub frame
+   lastx = -1
+   for x = 0 to panel_w step 2
+      a = x + phase
+      t# = tan(a)
+      if t# > 3 or t# < -3
+         lastx = -1
+      else
+         y# = py + panel_h / 2 - t# * panel_h / 6
+         ink rgb(255, 210, 90), 0
+         if lastx >= 0 then line lastx, lasty#, px + x, y#
+         lastx = px + x : lasty# = y#
+      endif
+   next x
+   ink rgb(230, 230, 230), 0 : text px + 6, py + 4, "TAN (clipped to -3..3)"
+
+   rem Panel 3: the hyperbolic functions over -3..3. Like every trig
+   rem function in DarkBASIC they take degrees, so 3 becomes 3 * 57.3
+   px = 10 : py = h / 3 + 4 : gosub frame
+   for k = 0 to 2
+      lastx = -1
+      for x = 0 to panel_w step 3
+         v# = ((x * 6.0 / panel_w) - 3.0) * 57.29578
+         if k = 0 then r# = hsin(v#) / 10.0 : ink rgb(255, 120, 90), 0
+         if k = 1 then r# = hcos(v#) / 10.0 : ink rgb(90, 200, 255), 0
+         if k = 2 then r# = htan(v#) : ink rgb(140, 255, 140), 0
+         y# = py + panel_h / 2 - r# * panel_h * 0.45
+         if lastx >= 0 then line lastx, lasty#, px + x, y#
+         lastx = px + x : lasty# = y#
+      next x
+   next k
+   ink rgb(230, 230, 230), 0 : text px + 6, py + 4, "HSIN/10  HCOS/10  HTAN"
+
+   rem Panel 4: EXP makes a wave die away
+   px = w / 2 + 5 : py = h / 3 + 4 : gosub frame
+   lastx = px : lasty# = py + panel_h / 2
+   for x = 0 to panel_w step 2
+      v# = x / 60.0
+      y# = py + panel_h / 2 - exp(0 - v#) * sin(x * 6 + phase) * panel_h * 0.45
+      ink rgb(220, 140, 255), 0 : line lastx, lasty#, px + x, y#
+      lastx = px + x : lasty# = y#
+   next x
+   ink rgb(230, 230, 230), 0 : text px + 6, py + 4, "EXP(-x) * SIN"
+
+   rem Panel 5: the inverse functions turn a ratio back into an angle
+   px = 10 : py = 2 * h / 3 - 2 : gosub frame
+   for k = 0 to 2
+      lastx = -1
+      for x = 0 to panel_w step 3
+         v# = (x * 2.0 / panel_w) - 1.0
+         if k = 0 then r# = asin(v#) : ink rgb(255, 120, 90), 0
+         if k = 1 then r# = acos(v#) - 90 : ink rgb(90, 200, 255), 0
+         rem ATAN answers between 0 and 360: fold the far half back below zero
+         if k = 2 then r# = atan(v# * 4) : ink rgb(140, 255, 140), 0
+         if r# > 180 then r# = r# - 360
+         y# = py + panel_h / 2 - r# * panel_h / 200.0
+         if lastx >= 0 then line lastx, lasty#, px + x, y#
+         lastx = px + x : lasty# = y#
+      next x
+   next k
+   ink rgb(230, 230, 230), 0 : text px + 6, py + 4, "ASIN  ACOS-90  ATAN (degrees)"
+
+   rem Panel 6: ATANFULL(x, y) gives the full 0-360 heading of a point
+   px = w / 2 + 5 : py = 2 * h / 3 - 2 : gosub frame
+   cx = px + panel_w / 2 : cy = py + panel_h / 2 + 8
+   dx# = sin(phase * 0.7) * 50 : dy# = cos(phase * 0.7) * 50
+   ink rgb(255, 210, 90), 0
+   line cx, cy, cx + dx#, cy - dy#
+   circle cx + dx#, cy - dy#, 4
+   circle cx, cy, 50
+   ink rgb(230, 230, 230), 0
+   text px + 6, py + 4, "ATANFULL(" + str$(int(dx#)) + "," + str$(int(dy#)) + ") = " + str$(int(wrapvalue(atanfull(dx#, dy#))))
+   sync
+loop
+
+frame:
+   ink rgb(28, 32, 46), 0
+   box px, py, px + panel_w, py + panel_h
+   ink rgb(60, 66, 90), 0
+   line px, py + panel_h / 2, px + panel_w, py + panel_h / 2
+return

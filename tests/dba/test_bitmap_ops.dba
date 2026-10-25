@@ -1,0 +1,63 @@
+rem Test bitmap operations (COPY, MIRROR, FLIP, FADE)
+sync on : sync rate 0
+
+rem Create source bitmap
+create bitmap 1, 64, 32
+print "BMP1_W="; bitmap width(1)
+print "BMP1_H="; bitmap height(1)
+print "BMP1_DEPTH="; bitmap depth()
+print "BMP1_CURRENT="; current bitmap()
+print "BMP1_FLAGS0="; bitmap mirrored(); ","; bitmap flipped()
+
+rem Copy bitmap (simple clone)
+copy bitmap 1, 2
+print "BMP2_EXIST="; bitmap exist(2)
+print "BMP2_W="; bitmap width(2)
+print "BMP2_H="; bitmap height(2)
+
+rem Copy a source region through the historical ten-argument overload
+set current bitmap 1
+cls rgb(1, 2, 3)
+ink rgb(200, 100, 50), 0
+dot 4, 5
+create bitmap 3, 16, 16
+copy bitmap 1, 0, 0, 15, 15, 3, 0, 0, 15, 15
+set current bitmap 3
+print "REGION_PIXEL="; point(4, 5)
+
+rem Mirror moves the marked pixel to the opposite horizontal edge.
+mirror bitmap 1
+set current bitmap 1
+print "MIRROR_PIXEL="; point(59, 5)
+
+rem Flip then moves the marked pixel to the opposite vertical edge.
+flip bitmap 1
+print "FLIP_PIXEL="; point(59, 26)
+print "BMP1_FLAGS1="; bitmap mirrored(1); ","; bitmap flipped(1)
+
+rem Fade applies the requested percentage to every colour channel.
+fade bitmap 1, 50
+print "FADE_PIXEL="; point(59, 26)
+blur bitmap 1, 1
+print "BLUR1_PIXEL="; point(59, 26)
+
+rem Blur is one source-sized box average, not repeated 3x3 passes.
+create bitmap 4, 3, 3
+cls 0
+ink rgb(90, 45, 18), 0
+dot 1, 1
+blur bitmap 4, 3
+print "BLUR3_CENTER="; point(1, 1)
+print "BLUR3_CORNER="; point(0, 0)
+
+rem Clean up
+delete bitmap 1
+delete bitmap 2
+delete bitmap 3
+delete bitmap 4
+print "BMP1_GONE="; bitmap exist(1)
+print "BMP2_GONE="; bitmap exist(2)
+
+print "TEST_DONE"
+sync
+end

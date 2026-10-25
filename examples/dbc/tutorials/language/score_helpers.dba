@@ -1,0 +1,33 @@
+rem ==================================================================
+rem Score Helpers - functions shared through #INCLUDE by high_scores.dba
+rem An included file is spliced into the program that includes it, so it
+rem holds only functions: running it on its own does nothing.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+rem Pad text$ with spaces on the right up to width characters
+function pad$(text$, width)
+   while len(text$) < width
+      text$ = text$ + " "
+   endwhile
+endfunction text$
+
+rem Put leading zeros in front of a number: 7 becomes 0007
+function zeros$(value, digits)
+   result$ = str$(value)
+   while len(result$) < digits
+      result$ = "0" + result$
+   endwhile
+endfunction result$
+
+rem 1st, 2nd, 3rd, 4th ... 11th, 12th, 13th ... 21st
+function ordinal$(place)
+   suffix$ = "th"
+   if place mod 100 < 11 or place mod 100 > 13
+      select place mod 10
+         case 1 : suffix$ = "st" : endcase
+         case 2 : suffix$ = "nd" : endcase
+         case 3 : suffix$ = "rd" : endcase
+      endselect
+   endif
+endfunction str$(place) + suffix$

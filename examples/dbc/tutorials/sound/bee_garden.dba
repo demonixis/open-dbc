@@ -1,0 +1,70 @@
+rem ==================================================================
+rem Bee Garden - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem 3D sound seen from above: three buzzing bees circle the garden and
+rem you are the listener. A 3D sound gets louder as it comes closer and
+rem moves between the speakers as you turn. UP and DOWN walk, LEFT and
+rem RIGHT turn; without the keys the listener turns slowly on the spot.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+cx = w / 2 : cy = h / 2 + 10 : scale# = 2.0
+
+rem LOAD 3DSOUND gives a sound a position in the world
+for b = 1 to 3
+   load 3dsound "buzz.wav", b
+   set sound speed b, 9000 + b * 1500
+   loop sound b
+next b
+
+px# = 0.0 : pz# = -40.0 : heading# = 0.0
+do
+   rem Walking and turning
+   moving = 0
+   if leftkey() = 1 then heading# = wrapvalue(heading# - 3) : moving = 1
+   if rightkey() = 1 then heading# = wrapvalue(heading# + 3) : moving = 1
+   if upkey() = 1 then px# = newxvalue(px#, heading#, 1.5) : pz# = newzvalue(pz#, heading#, 1.5) : moving = 1
+   if downkey() = 1 then px# = newxvalue(px#, heading#, -1.5) : pz# = newzvalue(pz#, heading#, -1.5) : moving = 1
+   if moving = 0 then heading# = wrapvalue(heading# + 0.8)
+   position listener px#, 0, pz#
+   rotate listener 0, heading#, 0
+
+   rem Each bee flies its own loop around the flowers
+   t# = t# + 1.0
+   for b = 1 to 3
+      a# = t# * (0.8 + b * 0.35) + b * 120
+      position sound b, sin(a#) * (40 + b * 25), 0, cos(a# * 1.3) * (30 + b * 20)
+   next b
+
+   rem --- The garden from above: +X is right and +Z is up the screen
+   cls rgb(70, 130, 60)
+   for f = 0 to 11
+      fx = cx + sin(f * 30) * (60 + (f mod 3) * 50) * scale#
+      fy = cy - cos(f * 30) * (60 + (f mod 3) * 50) * scale# / 1.4
+      ink rgb(240, 120 + (f mod 3) * 50, 160), 0
+      for r = 1 to 6 : circle fx, fy, r : next r
+   next f
+   for b = 1 to 3
+      bx = cx + sound position x(b) * scale# : by = cy - sound position z(b) * scale#
+      ink rgb(255, 220, 40), 0
+      for r = 1 to 6 : circle bx, by, r : next r
+      ink rgb(20, 20, 20), 0
+      line bx - 6, by, bx + 6, by
+      ink rgb(255, 255, 255), 0
+      text bx + 10, by - 8, "bee " + str$(b)
+   next b
+   rem The listener: a triangle pointing where it faces
+   lx = cx + listener position x() * scale# : ly = cy - listener position z() * scale#
+   ink rgb(255, 255, 255), 0
+   line lx + sin(heading#) * 16, ly - cos(heading#) * 16, lx + sin(heading# + 140) * 10, ly - cos(heading# + 140) * 10
+   line lx + sin(heading#) * 16, ly - cos(heading#) * 16, lx + sin(heading# - 140) * 10, ly - cos(heading# - 140) * 10
+   line lx + sin(heading# + 140) * 10, ly - cos(heading# + 140) * 10, lx + sin(heading# - 140) * 10, ly - cos(heading# - 140) * 10
+
+   ink rgb(0, 0, 0), 0
+   box 0, 0, w, 44
+   ink rgb(255, 255, 255), 0
+   text 10, 4, "LISTENER POSITION " + str$(int(listener position x())) + ", " + str$(int(listener position y())) + ", " + str$(int(listener position z())) + "   ANGLE " + str$(int(listener angle x())) + ", " + str$(int(listener angle y())) + ", " + str$(int(listener angle z()))
+   text 10, 24, "BEE 1 AT " + str$(int(sound position x(1))) + ", " + str$(int(sound position y(1))) + ", " + str$(int(sound position z(1))) + "   SOUND TYPE(1) = " + str$(sound type(1)) + " (3D)"
+   sync
+loop

@@ -1,0 +1,7 @@
+rem INPUT suspends for text without blocking the host; a frame-bounded run ends while it waits
+sync on : sync rate 0
+
+print "before input"
+input "name>"; name$
+print "never printed"
+end

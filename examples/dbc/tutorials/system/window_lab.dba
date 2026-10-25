@@ -1,0 +1,75 @@
+rem ==================================================================
+rem Window Lab - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Programs run full screen or in a window. SET WINDOW ON switches to a
+rem window, which the program can then title, move, resize, hide, show,
+rem minimise, maximise and restore. Every change waits for a key, so
+rem the program never moves your desktop around by itself:
+rem   W window on/off   T title   S size   P position   L layout
+rem   H hide (it comes back after two seconds)   N minimise   X maximise
+rem   R restore   A always active   ESCAPE asks before quitting
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+rem EXIT PROMPT sets the message box shown when the program ends
+exit prompt "Thanks for trying the Window Lab!", "Goodbye"
+rem The message box only makes sense in a window, so escape is ours
+disable escapekey
+windowed = 0 : active = 0
+dim title$(3)
+title$(0) = "Window Lab" : title$(1) = "Hello from DarkBASIC" : title$(2) = "OpenDBC" : title$(3) = "Still here?"
+log$ = "Press a key from the list"
+
+do
+   key$ = lower$(inkey$())
+   if key$ <> lastkey$ and key$ <> ""
+      select key$
+         case "w"
+            windowed = 1 - windowed
+            if windowed = 1 then set window on else set window off
+            log$ = "SET WINDOW " + on_off$(windowed)
+         endcase
+         case "t" : t = (t + 1) mod 4 : set window title title$(t) : log$ = "SET WINDOW TITLE """ + title$(t) + """" : endcase
+         case "s" : big = 1 - big : set window size 480 + big * 320, 360 + big * 240 : log$ = "SET WINDOW SIZE" : endcase
+         case "p" : set window position 40 + rnd(300), 40 + rnd(200) : log$ = "SET WINDOW POSITION" : endcase
+         case "l" : layout = 1 - layout : set window layout layout, layout, 1 : log$ = "SET WINDOW LAYOUT " + str$(layout) + ", " + str$(layout) + ", 1" : endcase
+         case "h" : hide window : sleep 2000 : show window : log$ = "HIDE WINDOW, then SHOW WINDOW" : endcase
+         case "n" : minimize window : log$ = "MINIMIZE WINDOW" : endcase
+         case "x" : maximize window : log$ = "MAXIMIZE WINDOW" : endcase
+         case "r" : restore window : log$ = "RESTORE WINDOW" : endcase
+         case "a"
+            active = 1 - active
+            if active = 1 then always active on else always active off
+            log$ = "ALWAYS ACTIVE " + on_off$(active) + ": the program " + left$("keeps running", 13 * active) + left$("pauses", 6 * (1 - active)) + " in the background"
+         endcase
+      endselect
+   endif
+   lastkey$ = key$
+   if escapekey() = 1 then exit
+
+   cls rgb(30, 40, 60)
+   ink rgb(255, 210, 120), 0
+   center text screen width() / 2, 16, "WINDOW LAB"
+   ink rgb(230, 230, 240), 0
+   restore
+   for item = 0 to 10
+      read menu$
+      text 30 + (item mod 3) * 200, 60 + (item / 3) * 24, menu$
+   next item
+   ink rgb(120, 230, 160), 0
+   text 30, 180, log$
+   ink rgb(170, 170, 190), 0
+   text 30, 220, "Windowed " + str$(windowed) + "   always active " + str$(active) + "   screen " + str$(screen width()) + " x " + str$(screen height())
+   sync
+loop
+
+enable escapekey
+end
+
+data "W  window on/off", "T  title", "S  size", "P  position", "L  layout", "H  hide for 2 s"
+data "N  minimise", "X  maximise", "R  restore", "A  always active", "ESCAPE  quit"
+
+function on_off$(flag)
+   result$ = "OFF"
+   if flag = 1 then result$ = "ON"
+endfunction result$

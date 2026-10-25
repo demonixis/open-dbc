@@ -1,0 +1,32 @@
+rem Test object creation, existence, and deletion
+sync on : sync rate 0
+
+rem Objects should not exist yet
+print "EXIST_1_BEFORE="; object exist(1)
+print "EXIST_2_BEFORE="; object exist(2)
+print "EXIST_3_BEFORE="; object exist(3)
+
+rem Create objects
+make object cube 1, 10.0
+make object sphere 2, 5.0
+make object plain 3, 20.0, 20.0
+
+print "EXIST_1_AFTER="; object exist(1)
+print "EXIST_2_AFTER="; object exist(2)
+print "EXIST_3_AFTER="; object exist(3)
+
+rem Delete one
+delete object 2
+print "EXIST_2_DELETED="; object exist(2)
+print "EXIST_1_STILL="; object exist(1)
+print "EXIST_3_STILL="; object exist(3)
+
+rem Delete all remaining
+delete object 1
+delete object 3
+print "EXIST_1_FINAL="; object exist(1)
+print "EXIST_3_FINAL="; object exist(3)
+
+print "TEST_DONE"
+sync
+end

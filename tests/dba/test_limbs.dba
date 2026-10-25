@@ -1,0 +1,42 @@
+rem Test limb operations
+sync on : sync rate 0
+
+rem Create source object and make mesh
+make object cube 1, 10
+make mesh from object 1, 1
+
+rem Create target object with limbs
+make object 2, 1, 0
+add limb 2, 1, 1
+print "LIMB0_EXIST="; limb exist(2, 0)
+print "LIMB1_EXIST="; limb exist(2, 1)
+print "LIMB2_EXIST="; limb exist(2, 2)
+
+rem Offset limb
+offset limb 2, 1, 20, 0, 0
+print "LIMB_OFF_X="; limb offset x(2, 1)
+print "LIMB_OFF_Y="; limb offset y(2, 1)
+print "LIMB_OFF_Z="; limb offset z(2, 1)
+
+rem Rotate limb
+rotate limb 2, 1, 45, 0, 0
+print "LIMB_ANG_X="; limb angle x(2, 1)
+print "LIMB_ANG_Y="; limb angle y(2, 1)
+print "LIMB_ANG_Z="; limb angle z(2, 1)
+
+rem Scale limb
+scale limb 2, 1, 200, 100, 100
+
+rem Hide/show limb
+hide limb 2, 1
+print "LIMB_VIS_HIDE="; limb visible(2, 1)
+show limb 2, 1
+print "LIMB_VIS_SHOW="; limb visible(2, 1)
+
+rem Cleanup
+delete object 1
+delete object 2
+
+print "TEST_DONE"
+sync
+end

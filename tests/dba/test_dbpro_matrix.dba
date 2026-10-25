@@ -1,0 +1,60 @@
+rem DBPro terrain matrix state, interpolation, shifts, textures and vector overloads
+sync on : sync rate 0
+autocam off
+
+make matrix 1, 20.0, 20.0, 2, 2
+print "EXIST="; matrix exist(1)
+print "TILES_EMPTY="; matrix tile count(1); ","; matrix tiles exist(1)
+
+create bitmap 1, 4, 4
+cls rgb(255, 255, 255)
+get image 1, 0, 0, 3, 3
+set current bitmap 0
+prepare matrix texture 1, 1, 2, 2
+print "TILES_READY="; matrix tile count(1); ","; matrix tiles exist(1)
+
+fill matrix 1, 0.0, 1
+set matrix tile 1, 0, 0, 4
+set matrix normal 1, 0, 0, 1.0, 2.0, 3.0
+set matrix height 1, 0, 0, 0.0
+set matrix height 1, 1, 0, 10.0
+set matrix height 1, 0, 1, 20.0
+set matrix height 1, 1, 1, 40.0
+print "HEIGHT="; get matrix height(1, 1, 1)
+print "GROUND_TRIANGLE="; get ground height(1, 7.5, 2.5)
+
+position matrix 1, 10.0, 20.0, 30.0
+print "POSITION="; matrix position x(1); ","; matrix position y(1); ","; matrix position z(1)
+make vector3 1
+set vector3 1, 40.0, 50.0, 60.0
+position matrix 1, 1
+make vector3 2
+set vector3 to matrix position 2, 1
+print "VECTOR_POSITION="; x vector3(2); ","; y vector3(2); ","; z vector3(2)
+
+randomize matrix 1, 1
+print "RANDOM_ONE="; get matrix height(1, 2, 2)
+set matrix height 1, 0, 0, 1.0
+set matrix height 1, 1, 0, 2.0
+set matrix height 1, 2, 0, 3.0
+shift matrix left 1
+print "SHIFT_LEFT="; get matrix height(1, 0, 0)
+shift matrix right 1
+print "SHIFT_RIGHT="; get matrix height(1, 0, 0)
+set matrix height 1, 0, 1, 4.0
+set matrix height 1, 0, 2, 7.0
+shift matrix up 1
+print "SHIFT_UP="; get matrix height(1, 0, 0)
+shift matrix down 1
+print "SHIFT_DOWN="; get matrix height(1, 0, 0)
+update matrix 1
+
+delete matrix 1
+print "DELETED="; matrix exist(1)
+delete vector3 1
+delete vector3 2
+delete image 1
+delete bitmap 1
+print "TEST_DONE"
+sync
+end

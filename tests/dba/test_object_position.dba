@@ -1,0 +1,35 @@
+rem Test object positioning, rotation, and movement
+sync on : sync rate 0
+
+make object cube 1, 10.0
+
+rem Default position should be 0,0,0
+print "POS_X_DEFAULT="; object position x(1)
+print "POS_Y_DEFAULT="; object position y(1)
+print "POS_Z_DEFAULT="; object position z(1)
+
+rem Position object
+position object 1, 10.0, 20.0, 30.0
+print "POS_X_SET="; object position x(1)
+print "POS_Y_SET="; object position y(1)
+print "POS_Z_SET="; object position z(1)
+
+rem Default angles should be 0,0,0
+print "ANG_X_DEFAULT="; object angle x(1)
+print "ANG_Y_DEFAULT="; object angle y(1)
+print "ANG_Z_DEFAULT="; object angle z(1)
+
+rem Rotate object
+rotate object 1, 45.0, 90.0, 180.0
+print "ANG_X_SET="; object angle x(1)
+print "ANG_Y_SET="; object angle y(1)
+print "ANG_Z_SET="; object angle z(1)
+
+rem Scale state is covered by the typed engine oracle.
+scale object 1, 200, 200, 200
+
+delete object 1
+
+print "TEST_DONE"
+sync
+end

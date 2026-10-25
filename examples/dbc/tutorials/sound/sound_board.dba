@@ -1,0 +1,94 @@
+rem ==================================================================
+rem Sound Board - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Six pads play sounds: keys 1 to 6 hit them, or a drum pattern plays
+rem by itself. Pad 6 is a CLONE SOUND of pad 4 with a higher SET SOUND
+rem SPEED. L loops the synth line, P pauses it, UP/DOWN set its volume,
+rem LEFT/RIGHT its pan and D deletes the clone.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+
+load sound "kick.wav", 1
+load sound "snare.wav", 2
+load sound "bell.wav", 3
+load sound "pluck.wav", 4
+load sound "synth_loop.wav", 5
+clone sound 6, 4
+rem The clone shares the pluck's samples; playing it faster raises its pitch
+set sound speed 6, 33000
+
+dim pad$(6)
+pad$(1) = "KICK" : pad$(2) = "SNARE" : pad$(3) = "BELL"
+pad$(4) = "PLUCK" : pad$(5) = "SYNTH LOOP" : pad$(6) = "PLUCK CLONE"
+rem A sixteen-step pattern: one string per pad, x marks a hit
+dim pattern$(6)
+pattern$(1) = "x...x...x...x..x"
+pattern$(2) = "....x.......x..."
+pattern$(3) = "x..............."
+pattern$(4) = "..x...x...x.x..."
+pattern$(6) = ".x.....x.....x.x"
+dim held(6)
+volume = 70 : pan = 0
+loop sound 5
+set sound volume 5, volume
+
+do
+   rem Keys 1 to 6 (scancodes 2 to 7); any key stops the automatic pattern
+   for p = 1 to 6
+      if keystate(p + 1) = 1 and held(p) = 0 and sound exist(p) = 1 and p <> 5 then play sound p : manual = 1
+      held(p) = keystate(p + 1)
+   next p
+   if manual = 0
+      inc frame
+      if frame mod 4 = 0
+         stepnum = (stepnum mod 16) + 1
+         for p = 1 to 6
+            if p <> 5 and sound exist(p) = 1
+               if mid$(pattern$(p), stepnum) = "x" then play sound p
+            endif
+         next p
+      endif
+   endif
+
+   rem The synth line: loop, pause, volume and pan
+   key$ = lower$(inkey$())
+   if key$ = "l" and lastkey$ <> "l"
+      if sound looping(5) = 1 then stop sound 5 else loop sound 5
+   endif
+   if key$ = "p" and lastkey$ <> "p"
+      if sound paused(5) = 1 then resume sound 5 else pause sound 5
+   endif
+   lastkey$ = key$
+   if upkey() = 1 and volume < 100 then inc volume
+   if downkey() = 1 and volume > 0 then dec volume
+   if rightkey() = 1 and pan < 10000 then pan = pan + 200
+   if leftkey() = 1 and pan > -10000 then pan = pan - 200
+   set sound volume 5, volume
+   set sound pan 5, pan
+   if key$ = "d" and sound exist(6) = 1 then delete sound 6
+
+   rem --- Pads light up while their sound plays
+   cls rgb(24, 24, 32)
+   for p = 1 to 6
+      x = 40 + ((p - 1) mod 3) * 190 : y = 60 + ((p - 1) / 3) * 150
+      if sound exist(p) = 0
+         ink rgb(50, 50, 50), 0
+      else
+         if sound playing(p) = 1 then ink rgb(255, 170, 40), 0 else ink rgb(70, 80, 120), 0
+      endif
+      box x, y, x + 170, y + 120
+      ink rgb(255, 255, 255), 0
+      text x + 10, y + 10, str$(p) + "  " + pad$(p)
+      if sound exist(p) = 0 then text x + 10, y + 30, "deleted"
+   next p
+
+   ink rgb(220, 220, 220), 0
+   text 20, 16, "SOUND BOARD - keys 1 to 6 play the pads"
+   text 20, h - 36, "L loops the synth, P pauses it, arrows set volume and pan, D deletes the clone"
+   text 20, h - 100, "Synth: PLAYING " + str$(sound playing(5)) + "  LOOPING " + str$(sound looping(5)) + "  PAUSED " + str$(sound paused(5))
+   text 20, h - 80, "GET SOUND VOLUME " + str$(get sound volume(5)) + "   GET SOUND PAN " + str$(get sound pan(5)) + "   GET SOUND SPEED " + str$(get sound speed(5))
+   text 20, h - 60, "Clone: SOUND EXIST(6) " + str$(sound exist(6)) + "   SOUND TYPE(1) " + str$(sound type(1)) + " (0 = ordinary, 1 = 3D)"
+   sync
+loop

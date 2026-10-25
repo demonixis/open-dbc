@@ -1,0 +1,33 @@
+rem Test the DBPro #constant directive
+rem Values are expanded as immutable tokens, so expressions work as well as literals.
+#constant CSCALE      1
+#constant CLIGHT      11
+#constant CDEGTORAD   ( 3.14 / 180.0 )
+#constant GREETING    "hello"
+
+sync on : sync rate 0
+
+print "INT_CONSTANT="; CSCALE
+print "INT_CONSTANT2="; CLIGHT
+print "STRING_CONSTANT="; GREETING
+
+rem An expression constant is evaluated, not stored as text
+print "EXPR_IN_RANGE="; CDEGTORAD > 0.017 and CDEGTORAD < 0.018
+print "EXPR_USED="; int(90.0 * CDEGTORAD * 100)
+
+rem Constants take part in arithmetic like any value
+a = CSCALE + 10
+print "ARITHMETIC="; a
+
+rem Text that looks like a constant is not expanded inside a string
+print "STRING_TOKEN="; "CLIGHT"
+
+rem Constants are readable inside a function
+print "IN_FUNCTION="; readconstant()
+
+print "TEST_DONE"
+sync
+end
+
+function readconstant()
+endfunction CSCALE

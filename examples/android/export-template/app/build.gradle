@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+def artifact = new Properties()
+file('../artifact.properties').withInputStream { artifact.load(it) }
+def keystorePath = artifact.getProperty('keystorePath', '')
+def signingEnabled = !keystorePath.isEmpty()
+
+android {
+    namespace 'net.demonixis.opendbc.host'
+    compileSdk 36
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        applicationId artifact.getProperty('applicationId')
+        minSdk Integer.parseInt(artifact.getProperty('minSdk'))
+        targetSdk Integer.parseInt(artifact.getProperty('targetSdk'))
+        versionCode Integer.parseInt(artifact.getProperty('versionCode'))
+        versionName artifact.getProperty('versionName')
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    if (signingEnabled) {
+        signingConfigs {
+            release {
+                storeFile file(keystorePath)
+                storePassword System.getenv('OPENDBC_ANDROID_KEYSTORE_PASSWORD')
+                keyAlias artifact.getProperty('keyAlias')
+                keyPassword System.getenv('OPENDBC_ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (signingEnabled) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            keepDebugSymbols += ['**/libmain.so']
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:none', '-nowarn']
+}

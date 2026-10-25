@@ -1,0 +1,9 @@
+rem #INCLUDE splices the included source at the directive, inheriting the root profile
+sync on : sync rate 0
+
+#include "include/shared.dba"
+print "double="; shared_double(21)
+print "value="; shared_value
+print "TEST_DONE"
+sync
+end

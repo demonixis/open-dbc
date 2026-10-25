@@ -1,0 +1,43 @@
+rem Test array operations
+sync on : sync rate 0
+
+rem 1D integer array
+dim arr(5)
+arr(0) = 10
+arr(3) = 33
+arr(5) = 50
+print "ARR_0="; arr(0)
+print "ARR_3="; arr(3)
+print "ARR_5="; arr(5)
+
+rem 2D array
+dim grid(3, 3)
+grid(0, 0) = 1
+grid(1, 2) = 42
+grid(3, 3) = 99
+print "GRID_0_0="; grid(0, 0)
+print "GRID_1_2="; grid(1, 2)
+print "GRID_3_3="; grid(3, 3)
+
+rem Float array
+dim floats#(2)
+floats#(0) = 1.5
+floats#(1) = 2.7
+print "FLOAT_0="; floats#(0)
+print "FLOAT_1="; floats#(1)
+
+rem String array
+dim names$(2)
+names$(0) = "alpha"
+names$(1) = "beta"
+names$(2) = "gamma"
+print "NAME_0="; names$(0)
+print "NAME_1="; names$(1)
+print "NAME_2="; names$(2)
+
+rem UNDIM
+undim arr()
+
+print "TEST_DONE"
+sync
+end

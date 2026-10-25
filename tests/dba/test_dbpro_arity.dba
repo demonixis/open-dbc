@@ -1,0 +1,35 @@
+rem DBPro forms that carry an extra leading camera number or texture stage.
+rem The engine has one camera and one texture unit, so the extra argument is
+rem dropped — but the remaining arguments must still land in the right places.
+sync on : sync rate 0
+rem Classic form first, so the DBPro form has something to overwrite.
+position camera 10, 20, 30
+print "CLASSIC="; camera position x(); ","; camera position y(); ","; camera position z()
+
+position camera 0, 40, 50, 60
+print "DBPRO="; camera position x(); ","; camera position y(); ","; camera position z()
+
+rem The camera number is also optional on the queries themselves.
+print "QUERY="; camera position x(0)
+
+rotate camera 0, 15, 25, 35
+print "ANGLE="; camera angle x(); ","; camera angle y(); ","; camera angle z()
+
+point camera 0, 40, 50, 100
+move camera 0, 0
+set camera fov 0, 60
+set camera range 0, 1, 1000
+set camera aspect 0, 1.5
+set camera view 0, 0, 0, 320, 240
+clear camera view 0
+color backdrop 0, rgb(0,0,0)
+print "CAMERA_FORMS_OK"
+
+rem A texture stage sits between the object and the image in DBPro.
+make object cube 1, 10
+texture object 1, 0, 0
+texture limb 1, 0, 0, 0
+print "TEXTURE_FORMS_OK"
+
+sync
+end

@@ -1,0 +1,43 @@
+rem Test extended camera commands
+sync on : sync rate 0
+
+rem Move camera forward (default facing +Z)
+position camera 0, 0, 0
+rotate camera 0, 0, 0
+move camera 10.0
+print "MOVE_Z="; camera position z()
+
+rem Move camera with rotation
+position camera 0, 0, 0
+yrotate camera 90.0
+move camera 10.0
+print "MOVE_ROT_X="; camera position x()
+
+rem Turn camera
+rotate camera 0, 0, 0
+turn camera left 45.0
+print "TURN_LEFT_Y="; camera angle y()
+turn camera right 90.0
+print "TURN_RIGHT_Y="; camera angle y()
+
+rem Pitch camera
+rotate camera 0, 0, 0
+pitch camera up 30.0
+print "PITCH_UP_X="; camera angle x()
+pitch camera down 60.0
+print "PITCH_DOWN_X="; camera angle x()
+
+rem Roll camera
+rotate camera 0, 0, 0
+roll camera left 20.0
+print "ROLL_LEFT_Z="; camera angle z()
+
+rem Set camera rotation order
+set camera rotation zyx
+
+rem Set camera view area
+set camera view 0, 0, 640, 480
+
+print "TEST_DONE"
+sync
+end

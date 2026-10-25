@@ -1,0 +1,71 @@
+rem OpenDBC desktop VR: run with --dialect dbc or --dialect dbpro.
+rem One world unit is one meter. No external assets are required.
+sync on
+sync rate 60
+autocam off
+set camera range 0.05, 100
+position camera 0, 0, 0
+color backdrop rgb(18, 24, 36)
+set vr enabled 1
+height# = 0
+spaceMode = 0
+previewMode = 0
+for marker = 1 to 9
+    make object cube marker, 0.15
+    position object marker, marker - 5, 1, 3
+    color object marker, rgb(80, 160, 220)
+next marker
+make object cube 20, 0.08
+make object cube 21, 0.08
+color object 20, rgb(255, 100, 80)
+color object 21, rgb(80, 255, 120)
+oldKey$ = ""
+do
+    key$ = lower$(inkey$())
+    if key$ <> oldKey$
+        if key$ = "v" then set vr enabled 1 - is vr enabled()
+        if key$ = "r" then recenter vr camera
+        if key$ = "t"
+            spaceMode = (spaceMode + 1) mod 3
+            set tracking space spaceMode
+        endif
+        if key$ = "p"
+            previewMode = (previewMode + 1) mod 3
+            set vr preview mode previewMode
+        endif
+        if key$ = "h" then height# = height# + 0.1
+        if key$ = "j" then height# = height# - 0.1
+        set vr camera height height#
+    endif
+    oldKey$ = key$
+    if upkey() = 1 then move camera 0.02
+    if downkey() = 1 then move camera -0.02
+    if leftkey() = 1 then yrotate camera camera angle y() - 1
+    if rightkey() = 1 then yrotate camera camera angle y() + 1
+    get vr head position 1
+    get vr rotation 2
+    for hand = 0 to 1
+        get vr controller position hand, 3
+        get vr controller rotation hand, 4
+        position object 20 + hand, x vector3(3), y vector3(3), z vector3(3)
+        rotate object 20 + hand, x vector3(4), y vector3(4), z vector3(4)
+        if is vr controller tracked(hand) = 1
+            show object 20 + hand
+        else
+            hide object 20 + hand
+        endif
+    next hand
+    cls rgb(18, 24, 36)
+    ink rgb(255, 255, 255), 0
+    text 10, 10, "V: VR  R: recenter  T: space  P: preview  H/J: height"
+    text 10, 30, "Arrows: locomotion  Escape: exit"
+    text 10, 50, "Supported: " + str$(is vr supported()) + " Enabled: " + str$(is vr enabled())
+    text 10, 70, "Tracked head/left/right: " + str$(is vr head tracked()) + " / " + str$(is vr controller tracked(0)) + " / " + str$(is vr controller tracked(1))
+    text 10, 90, "Head meters: " + str$(x vector3(1)) + ", " + str$(y vector3(1)) + ", " + str$(z vector3(1))
+    text 10, 110, "Pitch/yaw/roll: " + str$(x vector3(2)) + ", " + str$(y vector3(2)) + ", " + str$(z vector3(2))
+    text 10, 130, "Height: " + str$(get vr camera height()) + " Requested space: " + str$(spaceMode)
+    sync
+    if escapekey() = 1 then exit
+loop
+set vr enabled 0
+end

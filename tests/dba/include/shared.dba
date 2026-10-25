@@ -1,0 +1,4 @@
+rem Included by test_include.dba; it is not a test on its own
+function shared_double(v)
+endfunction v * 2
+shared_value = 7

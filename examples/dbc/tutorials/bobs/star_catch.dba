@@ -1,0 +1,99 @@
+rem ==================================================================
+rem Star Catch - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem A small game with bobs: move the basket with the arrow keys and
+rem catch the falling stars. BOB HIT reports a new catch, DELETE BOB
+rem removes the star and BOB EXIST tells when it must fall again.
+rem Without a key press the basket moves by itself.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 60
+randomize timer()
+w = screen width() : h = screen height()
+
+rem --- Artwork: a star (image 1) and a basket (image 2)
+create bitmap 1, 128, 64
+set current bitmap 1
+cls 0
+ink rgb(255, 230, 80), 0
+for a = 0 to 359
+   r# = 6 + 10 * abs(cos(a * 2.5))
+   line 16, 16, 16 + sin(a) * r#, 16 - cos(a) * r#
+next a
+get image 1, 0, 0, 33, 33
+cls 0
+ink rgb(150, 90, 40), 0
+box 0, 8, 79, 31
+ink rgb(200, 140, 70), 0
+for x = 2 to 77 step 6
+   line x, 9, x + 3, 30
+next x
+box 0, 6, 79, 9
+get image 2, 0, 0, 80, 32
+delete bitmap 1
+set current bitmap 0
+
+rem --- Night sky background
+for y = 0 to h - 1
+   ink rgb(10, 10, 30 + y / 8), 0
+   line 0, y, w, y
+next y
+for s = 1 to 150
+   c = 80 + rnd(120)
+   ink rgb(c, c, c), 0
+   dot rnd(w), rnd(h)
+next s
+
+stars = 5
+dim speed#(stars) : dim sy#(stars)
+basketx# = w / 2 - 40
+bob 1, basketx#, h - 50, 2
+score = 0 : missed = 0
+
+do
+   rem A missing star is dropped again from the top
+   for s = 1 to stars
+      if bob exist(10 + s) = 0
+         sy#(s) = -40 - rnd(300)
+         speed#(s) = 1.5 + rnd(25) / 10.0
+         bob 10 + s, rnd(w - 33), sy#(s), 1
+      endif
+   next s
+
+   rem Arrow keys, or follow the lowest star
+   move = rightkey() - leftkey()
+   if move = 0
+      target = 0 : lowest# = -1000
+      for s = 1 to stars
+         if sy#(s) > lowest# then lowest# = sy#(s) : target = s
+      next s
+      if target > 0
+         gap = bob x(10 + target) + 16 - (basketx# + 40)
+         if gap > 4 then move = 1
+         if gap < -4 then move = -1
+      endif
+   endif
+   basketx# = basketx# + move * 6
+   if basketx# < 0 then basketx# = 0
+   if basketx# > w - 80 then basketx# = w - 80
+   bob 1, basketx#, h - 50, 2
+
+   for s = 1 to stars
+      sy#(s) = sy#(s) + speed#(s)
+      bob 10 + s, bob x(10 + s), sy#(s), 1
+      if sy#(s) > h then delete bob 10 + s : missed = missed + 1
+   next s
+
+   rem BOB HIT returns the bob the basket has just touched (0 for none)
+   caught = bob hit(1, 0)
+   if caught > 10
+      delete bob caught
+      score = score + 1
+   endif
+
+   ink rgb(0, 0, 0), 0
+   box 0, 0, w, 22
+   ink rgb(255, 255, 255), 0
+   text 8, 3, "CAUGHT " + str$(score) + "   MISSED " + str$(missed) + "   BASKET TOUCHING " + str$(bob collision(1, 0))
+   sync
+loop

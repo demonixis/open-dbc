@@ -1,0 +1,80 @@
+rem ==================================================================
+rem Tone Maker - an OpenDBC tutorial for the DarkBASIC Classic profile
+rem Builds sounds sample by sample in a memblock: three dwords (bits per
+rem sample, samples per second, sample count) followed by the samples.
+rem MAKE SOUND FROM MEMBLOCK turns it into a sound, and MAKE MEMBLOCK
+rem FROM SOUND reads a sound back so its wave can be drawn.
+rem Keys 1 to 5 pick sine, square, saw, noise or a chord; otherwise the
+rem waves take turns.
+rem Code is part of OpenDBC (MIT).
+rem ==================================================================
+
+sync on : sync rate 30
+w = screen width() : h = screen height()
+rate = 22050 : samples = rate / 2
+dim name$(5)
+name$(1) = "SINE" : name$(2) = "SQUARE" : name$(3) = "SAW" : name$(4) = "NOISE" : name$(5) = "CHORD"
+wave = 1 : gosub build_sound
+changed = timer()
+
+do
+   for k = 1 to 5
+      if keystate(k + 1) = 1 and wave <> k then wave = k : gosub build_sound : manual = 1
+   next k
+   if manual = 0 and timer() - changed > 1500
+      wave = (wave mod 5) + 1 : gosub build_sound : changed = timer()
+   endif
+
+   cls rgb(16, 22, 30)
+   ink rgb(255, 210, 120), 0
+   center text w / 2, 10, "TONE MAKER - " + name$(wave) + "   (keys 1 to 5)"
+   rem The wave as stored in the sound: memblock 2 was made from sound 1
+   ink rgb(40, 60, 80), 0
+   line 0, h / 2, w, h / 2
+   ink rgb(120, 230, 255), 0
+   count = memblock dword(2, 8)
+   lasty = h / 2
+   for x = 0 to w - 1
+      rem Skip the fade-in: draw from the middle of the sound
+      value = memblock word(2, 12 + ((count / 2 + x) * 2 mod (count * 2)))
+      if value > 32767 then value = value - 65536
+      y = h / 2 - value * 150 / 32768
+      line x - 1, lasty, x, y
+      lasty = y
+   next x
+   ink rgb(220, 220, 230), 0
+   text 10, h - 60, "Header: " + str$(memblock dword(2, 0)) + " bits, " + str$(memblock dword(2, 4)) + " samples per second, " + str$(count) + " samples"
+   text 10, h - 40, "Screen memory: " + str$(get backbuffer width()) + " x " + str$(get backbuffer height()) + " x " + str$(get backbuffer depth()) + " bits, " + str$(get backbuffer pitch()) + " bytes per row"
+   sync
+loop
+
+build_sound:
+   if sound exist(1) = 1 then delete sound 1
+   if memblock exist(1) = 1 then delete memblock 1
+   if memblock exist(2) = 1 then delete memblock 2
+   make memblock 1, 12 + samples * 2
+   write memblock dword 1, 0, 16
+   write memblock dword 1, 4, rate
+   write memblock dword 1, 8, samples
+   for i = 0 to samples - 1
+      phase# = i * 220.0 * 360.0 / rate
+      select wave
+         case 1 : v# = sin(phase#) : endcase
+         case 2 : if sin(phase#) >= 0 then v# = 0.6 else v# = -0.6
+         endcase
+         case 3 : v# = (wrapvalue(phase#) / 180.0 - 1.0) * 0.7 : endcase
+         case 4 : v# = (rnd(2000) - 1000) / 1500.0 : endcase
+         case 5 : v# = (sin(phase#) + sin(phase# * 1.26) + sin(phase# * 1.5)) / 3.0 : endcase
+      endselect
+      rem Fade in and out so the sound starts and stops without a click
+      if i < 500 then v# = v# * i / 500.0
+      if i > samples - 500 then v# = v# * (samples - i) / 500.0
+      value = v# * 26000
+      rem A word is unsigned: negative samples wrap around to the top half
+      if value < 0 then value = value + 65536
+      write memblock word 1, 12 + i * 2, value
+   next i
+   make sound from memblock 1, 1
+   play sound 1
+   make memblock from sound 2, 1
+return

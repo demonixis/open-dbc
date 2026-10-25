@@ -1,0 +1,45 @@
+rem Test user-defined functions
+sync on : sync rate 0
+
+rem Simple function with return
+print "ADD="; add(3, 4)
+
+rem Function with local variable
+print "SQUARE="; square(5)
+
+rem String function
+print "GREET="; greet$("World")
+
+rem Function with no args
+print "SEVEN="; seven()
+
+rem Function calling another function
+print "DOUBLE_ADD="; double_add(2, 3)
+
+rem Float function
+print "HALF="; half#(10.0)
+
+print "TEST_DONE"
+sync
+end
+
+function add(a, b)
+endfunction a + b
+
+function square(n)
+    result = n * n
+endfunction result
+
+function greet$(name$)
+    s$ = "Hello " + name$
+endfunction s$
+
+function seven()
+endfunction 7
+
+function double_add(a, b)
+    r = add(a, b) * 2
+endfunction r
+
+function half#(v#)
+endfunction v# / 2.0

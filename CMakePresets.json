@@ -1,0 +1,160 @@
+{
+  "version": 5,
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Desktop Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "sanitize",
+      "displayName": "Desktop ASan and UBSan",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-sanitize",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "BUILD_TESTS": "ON",
+        "OPENDBC_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "shader-verify",
+      "displayName": "Canonical SPIR-V verification",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-shader-verify",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+        "OPENDBC_VERIFY_CANONICAL_SHADERS": "ON"
+      }
+    },
+    {
+      "name": "macos-xcode",
+      "displayName": "macOS full app, Xcode project",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build-macos",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
+      }
+    },
+    {
+      "name": "ios",
+      "displayName": "iOS device app",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build-ios",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "iOS",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "16.0",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED": "NO"
+      }
+    },
+    {
+      "name": "ios-simulator",
+      "displayName": "iOS simulator app",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build-ios-simulator",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "iOS",
+        "CMAKE_OSX_SYSROOT": "iphonesimulator",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "16.0",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED": "NO"
+      }
+    },
+    {
+      "name": "android-host",
+      "displayName": "Android arm64 export host",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-android-host",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
+        "ANDROID_ABI": "arm64-v8a",
+        "ANDROID_PLATFORM": "29",
+        "ANDROID_STL": "c++_static",
+        "BUILD_TESTS": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "jobs": 2
+    },
+    {
+      "name": "sanitize",
+      "configurePreset": "sanitize",
+      "jobs": 2
+    },
+    {
+      "name": "shader-verify",
+      "configurePreset": "shader-verify",
+      "jobs": 2,
+      "targets": ["opendbc_verify_shaders"]
+    },
+    {
+      "name": "ios",
+      "configurePreset": "ios",
+      "jobs": 2,
+      "configuration": "Release",
+      "targets": ["opendbc_export_host_manifest"]
+    },
+    {
+      "name": "ios-simulator",
+      "configurePreset": "ios-simulator",
+      "jobs": 2,
+      "configuration": "Release",
+      "targets": ["opendbc_export_host_manifest"]
+    },
+    {
+      "name": "android-host",
+      "configurePreset": "android-host",
+      "jobs": 2,
+      "targets": ["opendbc_export_host_manifest"]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "jobs": 1,
+        "noTestsAction": "error"
+      },
+      "environment": {
+        "CTEST_PARALLEL_LEVEL": "1",
+        "OPENDBC_HEADLESS": "1",
+        "SDL_ASSERT": "abort"
+      }
+    },
+    {
+      "name": "sanitize",
+      "configurePreset": "sanitize",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "jobs": 1,
+        "noTestsAction": "error"
+      },
+      "environment": {
+        "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1",
+        "CTEST_PARALLEL_LEVEL": "1",
+        "OPENDBC_HEADLESS": "1",
+        "SDL_ASSERT": "abort",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      }
+    }
+  ]
+}
