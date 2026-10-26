@@ -221,10 +221,6 @@ target_compile_definitions(opendbc PRIVATE
     OPENDBC_VERSION_STRING="${OPENDBC_VERSION}"
 )
 dbc_enable_warnings(opendbc)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # GCC 13 reports a false maybe-uninitialized inside libstdc++'s <regex> (GCC bug 105562).
-    set_source_files_properties(src/toolchain/shader_compiler.cpp PROPERTIES COMPILE_OPTIONS -Wno-maybe-uninitialized)
-endif()
 
 if(ANDROID)
     set(OPENDBC_HOST_MANIFEST_OUTPUT "$<TARGET_FILE_DIR:opendbc>/opendbc-host.json")

@@ -108,6 +108,17 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU" OR CMAKE_CXX_COMPILER_ID MATCHES 
         "-ffile-prefix-map=${CMAKE_SOURCE_DIR}=."
         "-ffile-prefix-map=${CMAKE_BINARY_DIR}=."
     )
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        # DXC's static libraries reference each other in a cycle that GNU ld cannot resolve in
+        # one pass; lld, like the Apple and Microsoft linkers, does not depend on archive order.
+        include(CheckLinkerFlag)
+        check_linker_flag(CXX "-fuse-ld=lld" OPENDBC_HAS_LLD)
+        if(OPENDBC_HAS_LLD)
+            add_link_options(-fuse-ld=lld)
+        else()
+            message(WARNING "lld was not found; linking DXC with GNU ld may fail")
+        endif()
+    endif()
     if(APPLE)
         # The Apple linker records each object file's absolute path in the debug map.
         add_link_options("LINKER:-oso_prefix,${CMAKE_BINARY_DIR}/")
@@ -504,12 +515,20 @@ option(OPENDBC_SANITIZE "Build OpenDBC targets with AddressSanitizer and Undefin
 
 function(dbc_enable_warnings target)
     if(MSVC)
-        target_compile_options(${target} PRIVATE /W4 /WX)
+        # C4702 (unreachable code) fires spuriously after inlining.
+        target_compile_options(${target} PRIVATE /W4 /WX /wd4702)
     else()
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            # GCC's flow analysis reports false positives inside libstdc++ (<regex>, std::function),
+            # more so under the sanitizers.
+            target_compile_options(${target} PRIVATE -Wno-maybe-uninitialized -Wno-array-bounds)
+        endif()
         if(OPENDBC_SANITIZE)
-            target_compile_options(${target} PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
-            target_link_options(${target} PRIVATE -fsanitize=address,undefined)
+            # Jolt is built without RTTI, which UBSan's vptr check needs.
+            target_compile_options(${target} PRIVATE -fsanitize=address,undefined -fno-sanitize=vptr
+                                   -fno-omit-frame-pointer)
+            target_link_options(${target} PRIVATE -fsanitize=address,undefined -fno-sanitize=vptr)
         endif()
     endif()
     set_target_properties(${target} PROPERTIES
@@ -543,6 +562,8 @@ add_compile_definitions(
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_LEFT_HANDED
     $<$<CXX_COMPILER_ID:MSVC>:_USE_MATH_DEFINES>
+    # The portable C library calls (fopen, getenv, sscanf) are intended.
+    $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
 )
 
 add_subdirectory(src/language)
