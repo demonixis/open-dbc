@@ -91,6 +91,8 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# No C++ modules are used, and the pinned Android NDK has no clang-scan-deps.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -106,6 +108,10 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU" OR CMAKE_CXX_COMPILER_ID MATCHES 
         "-ffile-prefix-map=${CMAKE_SOURCE_DIR}=."
         "-ffile-prefix-map=${CMAKE_BINARY_DIR}=."
     )
+    if(APPLE)
+        # The Apple linker records each object file's absolute path in the debug map.
+        add_link_options("LINKER:-oso_prefix,${CMAKE_BINARY_DIR}/")
+    endif()
 endif()
 
 if(MSVC)
