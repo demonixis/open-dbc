@@ -12,9 +12,9 @@
 
 namespace dbc
 {
-    inline bool LoadImage(EngineKernel& K, const std::string& Path, int ImageId, std::string* Error = nullptr)
+    inline bool LoadImageFile(EngineKernel& K, const std::string& Path, int ImageId, std::string* Error = nullptr)
     {
-        return K.ImageStoreRef().LoadImage(Path, ImageId, 0, 0, Error);
+        return K.ImageStoreRef().LoadImageFile(Path, ImageId, 0, 0, Error);
     }
     inline bool DeleteImage(EngineKernel& K, int ImageId, std::string* Error = nullptr)
     {

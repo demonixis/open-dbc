@@ -2438,7 +2438,7 @@ namespace dbc::interpreter::detail
                                           return false;
                                       const int BitmapId = (Args.size() >= 2) ? IntegerArgument0 : 0;
                                       const std::string Path = ResolveAssetPath(Ctx, Args[0].AsString());
-                                      return Ctx.Kernel->ImageStoreRef().LoadBitmap(Path, BitmapId, &Error);
+                                      return Ctx.Kernel->ImageStoreRef().LoadBitmapFile(Path, BitmapId, &Error);
                                   }}},
                                 {"LOAD IMAGE",
                                  {2, 4,
@@ -2457,7 +2457,7 @@ namespace dbc::interpreter::detail
                                       const std::string Path = ResolveAssetPath(Ctx, Args[0].AsString());
                                       const int TextureFlag = Args.size() >= 3 ? IntegerArgument0 : 0;
                                       const int DivideTextureSize = Args.size() >= 4 ? IntegerArgument1 : 0;
-                                      return Ctx.Kernel->ImageStoreRef().LoadImage(Path, IntegerArgument2, TextureFlag,
+                                      return Ctx.Kernel->ImageStoreRef().LoadImageFile(Path, IntegerArgument2, TextureFlag,
                                                                                    DivideTextureSize, &Error);
                                   }}},
                                 {"LOAD OBJECT",

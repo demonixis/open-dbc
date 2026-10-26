@@ -7,12 +7,6 @@
 
 #include "../engine_types.hpp"
 
-// Windows headers define these as macros; undef to avoid renaming our methods
-#ifdef _WIN32
-#undef LoadImage
-#undef LoadBitmap
-#endif
-
 struct SDL_Surface;
 struct SDL_Texture;
 struct SDL_GPUTexture;
@@ -29,7 +23,7 @@ namespace dbc
         ~ImageStore();
 
         // Image operations
-        bool LoadImage(const std::string& Path, int ImageId, int TextureFlag = 0, int DivideTextureSize = 0,
+        bool LoadImageFile(const std::string& Path, int ImageId, int TextureFlag = 0, int DivideTextureSize = 0,
                        std::string* Error = nullptr);
         bool DeleteImage(int ImageId, std::string* Error = nullptr);
         int ImageExist(int ImageId) const;
@@ -40,7 +34,7 @@ namespace dbc
         void SetImageColorKey(int Red, int Green, int Blue);
 
         // Bitmap operations
-        bool LoadBitmap(const std::string& Path, int BitmapId, std::string* Error = nullptr);
+        bool LoadBitmapFile(const std::string& Path, int BitmapId, std::string* Error = nullptr);
         bool DeleteBitmap(int BitmapId, std::string* Error = nullptr);
         bool SetCurrentBitmap(int BitmapId, std::string* Error = nullptr);
         int CurrentBitmap() const;

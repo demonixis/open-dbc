@@ -7,9 +7,9 @@
 
 namespace dbc
 {
-    inline bool LoadBitmap(EngineKernel& K, const std::string& Path, int BitmapId, std::string* Error = nullptr)
+    inline bool LoadBitmapFile(EngineKernel& K, const std::string& Path, int BitmapId, std::string* Error = nullptr)
     {
-        return K.ImageStoreRef().LoadBitmap(Path, BitmapId, Error);
+        return K.ImageStoreRef().LoadBitmapFile(Path, BitmapId, Error);
     }
     inline bool DeleteBitmap(EngineKernel& K, int BitmapId, std::string* Error = nullptr)
     {

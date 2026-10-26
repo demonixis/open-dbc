@@ -388,7 +388,7 @@ namespace dbc
         if (Kernel_.ImageStoreRef().ImageExist(ImageId))
             if (!Kernel_.ImageStoreRef().DeleteImage(ImageId, Error))
                 return false;
-        if (!Kernel_.ImageStoreRef().LoadImage(Path, ImageId, 0, 0, Error))
+        if (!Kernel_.ImageStoreRef().LoadImageFile(Path, ImageId, 0, 0, Error))
         {
             if (Error)
                 *Error = "CREATE ANIMATED SPRITE could not load '" + Path + "'";

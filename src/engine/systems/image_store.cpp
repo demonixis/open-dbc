@@ -27,11 +27,6 @@
 #include <filesystem>
 #include <cassert>
 
-#ifdef _WIN32
-#undef LoadImage
-#undef LoadBitmap
-#endif
-
 namespace dbc
 {
     namespace
@@ -259,7 +254,7 @@ namespace dbc
 
     // === Image operations ===
 
-    bool ImageStore::LoadImage(const std::string& Path, int ImageId, int TextureFlag, int DivideTextureSize,
+    bool ImageStore::LoadImageFile(const std::string& Path, int ImageId, int TextureFlag, int DivideTextureSize,
                                std::string* Error)
     {
         if (!ValidateImageId(ImageId, Error))
@@ -659,7 +654,7 @@ namespace dbc
 
     // === Bitmap operations ===
 
-    bool ImageStore::LoadBitmap(const std::string& Path, int BitmapId, std::string* Error)
+    bool ImageStore::LoadBitmapFile(const std::string& Path, int BitmapId, std::string* Error)
     {
         if (!ValidateBitmapId(BitmapId, Error))
         {
