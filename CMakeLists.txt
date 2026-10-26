@@ -698,6 +698,14 @@ if(BUILD_TESTS)
     )
 
     add_test(
+        NAME install_resource_validation
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/test_qualify_install.py
+    )
+    set_tests_properties(install_resource_validation PROPERTIES
+        LABELS "unit;qualification"
+    )
+
+    add_test(
         NAME behavior_manifest_regeneration
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_behavior_manifest.py
             --opendbc $<TARGET_FILE:opendbc> --check

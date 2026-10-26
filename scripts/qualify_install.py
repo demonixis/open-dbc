@@ -21,7 +21,7 @@ REFERENCE_SOURCES = tuple(
     for Name in ("darkbasic_reference.md", "dbpro_reference.md", "open-dbc_reference.md")
 )
 OPENXR_LOADER_PREFIXES = ("libopenxr_loader", "openxr_loader")
-SHADER_NAMES = ("dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv")
+SHADER_NAMES = ("dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "vr_transfer.vert.spv", "vr_transfer.frag.spv")
 REQUIRED_LICENSES = ("LICENSE", "Dark-Basic-Pro-LICENSE.md", "MuseScore-General-SoundFont-LICENSE.md", "RapidJSON.txt")
 
 
@@ -56,17 +56,21 @@ def installed_layout(destination: Path) -> tuple[Path, Path]:
     return destination / "bin" / executable, destination / "bin"
 
 
+def verify_shaders(directory: Path) -> None:
+    for name in SHADER_NAMES:
+        installed = directory / name
+        source = ROOT / "shaders" / name
+        require(installed.is_file(), f"installed shader is missing: {installed}")
+        require(installed.read_bytes() == source.read_bytes(), f"installed shader differs: {installed}")
+
+
 def verify_resources(resources: Path) -> None:
     for source in REFERENCE_SOURCES:
         name = source.name
         installed = resources / name
         require(installed.is_file(), f"installed reference is missing: {installed}")
         require(installed.read_bytes() == source.read_bytes(), f"installed reference differs: {name}")
-    for name in SHADER_NAMES:
-        installed = resources / "shaders" / name
-        source = ROOT / "shaders" / name
-        require(installed.is_file(), f"installed shader is missing: {installed}")
-        require(installed.read_bytes() == source.read_bytes(), f"installed shader differs: {name}")
+    verify_shaders(resources / "shaders")
     require((resources / "NOTICE.md").is_file(), "installed NOTICE.md is missing")
     runtime_manifest = resources / "opendbc-runtime.json"
     require(runtime_manifest.is_file(), "installed runtime manifest is missing")
@@ -91,6 +95,9 @@ def verify_export_hosts(resources: Path) -> None:
     )
     for installed in required:
         require(installed.is_file(), f"installed export host input is missing: {installed}")
+    for directory in (ios / "OpenDBC.app/shaders", simulator / "OpenDBC.app/shaders",
+                      android / "app/src/main/assets/shaders"):
+        verify_shaders(directory)
     for manifest in (ios / "opendbc-host.json", simulator / "opendbc-host.json",
                      android / "app/src/main/assets/opendbc-host.json"):
         json.loads(manifest.read_text(encoding="utf-8"))

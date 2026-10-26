@@ -401,9 +401,9 @@ function(opendbc_require_android_system_dependencies HOST_MANIFEST DESCRIPTION)
 endfunction()
 
 function(opendbc_require_canonical_host_shaders HOST_ROOT DESCRIPTION)
-    foreach(OPENDBC_SHADER_NAME IN ITEMS dbclassic_tri.vert.spv dbclassic_tri.frag.spv)
+    foreach(OPENDBC_SOURCE_SHADER IN LISTS OPENDBC_CANONICAL_SHADERS)
+        get_filename_component(OPENDBC_SHADER_NAME "${OPENDBC_SOURCE_SHADER}" NAME)
         set(OPENDBC_HOST_SHADER "${HOST_ROOT}/shaders/${OPENDBC_SHADER_NAME}")
-        set(OPENDBC_SOURCE_SHADER "${CMAKE_SOURCE_DIR}/shaders/${OPENDBC_SHADER_NAME}")
         if(NOT EXISTS "${OPENDBC_HOST_SHADER}" OR IS_SYMLINK "${OPENDBC_HOST_SHADER}")
             message(FATAL_ERROR "${DESCRIPTION} has no regular ${OPENDBC_SHADER_NAME}")
         endif()
@@ -538,11 +538,8 @@ if(NOT IOS AND NOT ANDROID)
             COMMAND ${CMAKE_COMMAND} -E make_directory
                 "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/shaders"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CMAKE_SOURCE_DIR}/shaders/dbclassic_tri.vert.spv"
-                "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/shaders/dbclassic_tri.vert.spv"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CMAKE_SOURCE_DIR}/shaders/dbclassic_tri.frag.spv"
-                "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/shaders/dbclassic_tri.frag.spv"
+                ${OPENDBC_CANONICAL_SHADERS}
+                "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/shaders"
             COMMAND ${CMAKE_COMMAND} -E make_directory
                 "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/licenses"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/docs/NOTICE.md"
