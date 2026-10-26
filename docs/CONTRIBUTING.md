@@ -15,6 +15,14 @@ program can be checked the same way, saving its last frame:
 build/tools/studio/opendbc.app/Contents/MacOS/opendbc run program.dba --dialect dbc --headless --max-frames 120 --capture-output frame.bmp
 ```
 
+ASan and UBSan (GCC or Clang):
+
+```bash
+cmake --preset sanitize
+cmake --build --preset sanitize
+ctest --preset sanitize
+```
+
 ## Rules
 
 - Code conventions, error handling, architecture constraints and the validation
