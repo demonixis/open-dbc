@@ -137,7 +137,7 @@ namespace dbc
             MouseX_ = static_cast<int>(Event.motion.x);
             MouseY_ = static_cast<int>(Event.motion.y);
             MousePositionKnown_ = true;
-            OnMouseMotion(Event.motion.xrel, Event.motion.yrel);
+            OnMouseMotion(static_cast<int>(Event.motion.xrel), static_cast<int>(Event.motion.yrel));
         }
         if (Event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && IsRuntimeWindow(Event.button.windowID))
             OnMouseButtonDown(Event.button.button);

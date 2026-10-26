@@ -1681,9 +1681,9 @@ namespace dbc
         const fs::path StemPath = BasePath.parent_path() / BasePath.stem();
 
         static constexpr std::array<const char*, 2> KFallbackExts = {".mp3", ".wav"};
-        for (const char* Extension : KFallbackExts)
+        for (const char* FallbackExtension : KFallbackExts)
         {
-            const fs::path Candidate = StemPath.string() + Extension;
+            const fs::path Candidate = StemPath.string() + FallbackExtension;
             const std::string CandidateString = Candidate.string();
             if (MIX_Audio* Audio = MIX_LoadAudio(Mixer_, CandidateString.c_str(), false))
             {

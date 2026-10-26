@@ -854,7 +854,7 @@ TEST_CASE("JetSki rider keeps Classic limb numbering transforms and hidden attac
     CHECK(std::string(Rider->LimbNodes[10]->mName.C_Str()) == "gauge");
     CHECK(std::string(Rider->LimbNodes[11]->mName.C_Str()) == "paddle");
     CHECK(std::string(Rider->LimbNodes[12]->mName.C_Str()) == "flask");
-    for (const auto [Limb, MeshIndex] : {std::pair{10, 9}, std::pair{11, 10}, std::pair{12, 11}})
+    for (const auto& [Limb, MeshIndex] : {std::pair{10, 9}, std::pair{11, 10}, std::pair{12, 11}})
     {
         const dbc::Mesh* LimbMesh = Kernel.Renderer().FindLimbMesh(*Rider, Limb);
         REQUIRE(LimbMesh != nullptr);
@@ -7723,7 +7723,7 @@ TEST_CASE("Classic restored object commands preserve typed state and historical 
     CHECK(Box->RotZ == doctest::Approx(5.0f));
 
     BuiltinValue SizeResult;
-    for (const auto [Symbol, Expected] : {
+    for (const auto& [Symbol, Expected] : {
              std::pair{dbc::language::SymbolId::Function_ObjectSize, 1.5},
              std::pair{dbc::language::SymbolId::Function_ObjectSizeX, 2.0},
              std::pair{dbc::language::SymbolId::Function_ObjectSizeY, 4.0},
@@ -7778,7 +7778,7 @@ TEST_CASE("Classic restored object commands preserve typed state and historical 
     CHECK(Cone->TexScrollV == doctest::Approx(-0.25f));
 
     Context.Checklist = {{"entry", 11, 22, 33, 44}};
-    for (const auto [Symbol, Expected] : {
+    for (const auto& [Symbol, Expected] : {
              std::pair{dbc::language::SymbolId::Function_ChecklistValueA, 11},
              std::pair{dbc::language::SymbolId::Function_ChecklistValueB, 22},
              std::pair{dbc::language::SymbolId::Function_ChecklistValueC, 33},
