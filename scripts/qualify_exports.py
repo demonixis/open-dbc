@@ -100,7 +100,8 @@ def only_artifact(directory: Path, suffix: str) -> Path:
 
 def verify_manifest(data: bytes, dialect: str) -> None:
     manifest = json.loads(data)
-    require(manifest.get("format") == 4, "artifact manifest has the wrong format")
+    require(manifest.get("format") == 5, "artifact manifest has the wrong format")
+    require(manifest.get("entry") in manifest.get("orderedSources", []), "artifact manifest does not order its entry")
     require(manifest.get("dialect") == dialect, "artifact manifest has the wrong dialect")
     require(str(manifest.get("entry", "")).endswith(".dba"), "artifact manifest entry is not DBA")
     paths = {entry.get("path") for entry in manifest.get("files", [])}
