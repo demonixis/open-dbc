@@ -142,14 +142,14 @@ namespace
                 *Chain = Handle<XrSwapchain>(10 + Eye);
                 if (Device)
                 {
-                    SDL_GPUTextureCreateInfo Info{};
-                    Info.type = SDL_GPU_TEXTURETYPE_2D;
-                    Info.format = Format;
-                    Info.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
-                    Info.width = Info.height = 64;
-                    Info.layer_count_or_depth = Info.num_levels = 1;
-                    Info.sample_count = SDL_GPU_SAMPLECOUNT_1;
-                    Active->Images[Eye][0] = SDL_CreateGPUTexture(Device, &Info);
+                    SDL_GPUTextureCreateInfo TextureInfo{};
+                    TextureInfo.type = SDL_GPU_TEXTURETYPE_2D;
+                    TextureInfo.format = Format;
+                    TextureInfo.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
+                    TextureInfo.width = TextureInfo.height = 64;
+                    TextureInfo.layer_count_or_depth = TextureInfo.num_levels = 1;
+                    TextureInfo.sample_count = SDL_GPU_SAMPLECOUNT_1;
+                    Active->Images[Eye][0] = SDL_CreateGPUTexture(Device, &TextureInfo);
                     if (!Active->Images[Eye][0])
                         return XR_ERROR_RUNTIME_FAILURE;
                 }

@@ -426,7 +426,7 @@ TEST_CASE("Loaded screen bitmaps persist and object defaults are isolated by exe
     const std::filesystem::path LoadingBitmap =
         std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp/loading.bmp";
     // A picture loaded onto the screen stays there while the program waits (2D frames keep bitmap 0).
-    REQUIRE(Kernel.ImageStoreRef().LoadBitmap(LoadingBitmap.string(), 0));
+    REQUIRE(Kernel.ImageStoreRef().LoadBitmapFile(LoadingBitmap.string(), 0));
     REQUIRE(Kernel.ImageStoreRef().GetBitmapSurface(0) != nullptr);
     SDL_Surface* LoadingFrame = Kernel.Renderer().CaptureScreen();
     REQUIRE(LoadingFrame != nullptr);
@@ -507,7 +507,7 @@ TEST_CASE("Loaded screen bitmaps persist and object defaults are isolated by exe
     CHECK(Kernel.Objects().GetObject(4)->CollisionShapeValue == dbc::CollisionShape::Polygon);
     REQUIRE(Kernel.Objects().SetObject(3, 1, 0, 1));
     CHECK_FALSE(Kernel.Objects().GetObject(3)->TransparentBlack);
-    REQUIRE(Kernel.ImageStoreRef().LoadBitmap(LoadingBitmap.string(), 0));
+    REQUIRE(Kernel.ImageStoreRef().LoadBitmapFile(LoadingBitmap.string(), 0));
     CHECK(Kernel.ImageStoreRef().GetBitmapSurface(0) != nullptr);
 }
 
@@ -518,7 +518,7 @@ TEST_CASE("Classic RLE tutorial bitmaps copy through render-compatible surfaces"
     Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Classic());
 
     const std::filesystem::path TutorialRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp";
-    REQUIRE(Kernel.ImageStoreRef().LoadBitmap((TutorialRoot / "backdrop.bmp").string(), 1));
+    REQUIRE(Kernel.ImageStoreRef().LoadBitmapFile((TutorialRoot / "backdrop.bmp").string(), 1));
     SDL_Surface* Source = Kernel.ImageStoreRef().GetBitmapSurface(1);
     REQUIRE(Source != nullptr);
     REQUIRE(SDL_BITSPERPIXEL(Source->format) <= 8);
@@ -550,7 +550,7 @@ TEST_CASE("Classic RLE tutorial bitmaps copy through render-compatible surfaces"
     const auto BitmapPixel = ReadPixel(BitmapCopy, 20, 20);
     CHECK(BitmapPixel == ExpectedPixel);
 
-    REQUIRE(Kernel.ImageStoreRef().LoadBitmap((TutorialRoot / "badge.bmp").string(), 3));
+    REQUIRE(Kernel.ImageStoreRef().LoadBitmapFile((TutorialRoot / "badge.bmp").string(), 3));
     SDL_Surface* IndexedDestination = Kernel.ImageStoreRef().GetBitmapSurface(3);
     REQUIRE(IndexedDestination != nullptr);
     REQUIRE(SDL_BITSPERPIXEL(IndexedDestination->format) <= 8);
@@ -730,8 +730,8 @@ TEST_CASE("Swarm Classic plains face negative Z while DBPro orientations remain 
     Kernel.Objects().HideObject(15);
 
     const std::filesystem::path SwarmRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic";
-    REQUIRE(Kernel.ImageStoreRef().LoadImage((SwarmRoot / "bmp/beam.bmp").string(), 3));
-    REQUIRE(Kernel.ImageStoreRef().LoadImage((SwarmRoot / "bmp/spark.bmp").string(), 4));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((SwarmRoot / "bmp/beam.bmp").string(), 3));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((SwarmRoot / "bmp/spark.bmp").string(), 4));
     REQUIRE(Kernel.Objects().MakeObjectPlain(301, 5.0f, 20.0f));
     REQUIRE(Kernel.Objects().MakeObjectPlain(302, 10.0f, 10.0f));
     Kernel.Objects().TextureObject(301, 3);
@@ -1534,7 +1534,7 @@ TEST_CASE("Screen drawing lasts one frame once a 3D scene is shown")
     // A loading screen has no alpha channel; the 3D frame must still clear it rather than paint it black.
     const std::filesystem::path LoadingBitmap =
         std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp/loading.bmp";
-    REQUIRE(Kernel.ImageStoreRef().LoadBitmap(LoadingBitmap.string(), 0));
+    REQUIRE(Kernel.ImageStoreRef().LoadBitmapFile(LoadingBitmap.string(), 0));
     Kernel.Renderer().RenderScene();
     CHECK(Kernel.Renderer().LastFrameShowedWorld());
     CHECK(ScreenPixel(Width / 2, Height / 2)[3] == 0);
@@ -1575,7 +1575,7 @@ TEST_CASE("LOAD IMAGE applies the configured color key to opaque images")
     REQUIRE(SDL_SaveBMP(Source, OneToOnePath.string().c_str()));
     SDL_DestroySurface(Source);
 
-    REQUIRE(Kernel.ImageStoreRef().LoadImage(Path.string(), 1));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile(Path.string(), 1));
     const dbc::Image* DefaultKey = Kernel.ImageStoreRef().GetImage(1);
     REQUIRE(DefaultKey != nullptr);
     REQUIRE(DefaultKey->Surface != nullptr);
@@ -1587,7 +1587,7 @@ TEST_CASE("LOAD IMAGE applies the configured color key to opaque images")
     CHECK(DefaultKey->HasAlpha);
 
     Kernel.ImageStoreRef().SetImageColorKey(255, 0, 0);
-    REQUIRE(Kernel.ImageStoreRef().LoadImage(Path.string(), 2));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile(Path.string(), 2));
     const dbc::Image* RedKey = Kernel.ImageStoreRef().GetImage(2);
     REQUIRE(RedKey != nullptr);
     REQUIRE(SDL_ReadSurfacePixel(RedKey->Surface, 0, 0, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
@@ -1596,7 +1596,7 @@ TEST_CASE("LOAD IMAGE applies the configured color key to opaque images")
     CHECK(Pixel[3] == 0);
 
     Kernel.ImageStoreRef().SetImageColorKey(0, 0, 0);
-    REQUIRE(Kernel.ImageStoreRef().LoadImage(OneToOnePath.string(), 3, 1));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile(OneToOnePath.string(), 3, 1));
     const dbc::Image* OneToOne = Kernel.ImageStoreRef().GetImage(3);
     REQUIRE(OneToOne != nullptr);
     REQUIRE(SDL_ReadSurfacePixel(OneToOne->Surface, 0, 0, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
@@ -3185,7 +3185,7 @@ TEST_CASE("Classic input functions preserve held keys absolute mouse state and b
     Motion.motion.xrel = 4.0f;
     Motion.motion.yrel = -2.0f;
     Kernel.Input().HandleEvent(Motion);
-    for (const Uint8 Button : {SDL_BUTTON_LEFT, SDL_BUTTON_RIGHT, SDL_BUTTON_MIDDLE})
+    for (const Uint8 Button : {Uint8{SDL_BUTTON_LEFT}, Uint8{SDL_BUTTON_RIGHT}, Uint8{SDL_BUTTON_MIDDLE}})
     {
         SDL_Event Down{};
         Down.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
@@ -7734,7 +7734,7 @@ TEST_CASE("Classic restored object commands preserve typed state and historical 
         CHECK(SizeResult.AsNumber() == doctest::Approx(Expected));
     }
 
-    REQUIRE(Kernel.ImageStoreRef().LoadImage((Context.AssetRoot / "bmp/stone.bmp").string(), 20));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Context.AssetRoot / "bmp/stone.bmp").string(), 20));
     REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_TextureLimb,
                           {BuiltinValue::FromNumber(6), BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(20)},
                           Error));

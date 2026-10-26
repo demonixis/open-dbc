@@ -2426,18 +2426,18 @@ namespace dbc
                         {
                             const Vec3 Edge1 = Vec3Sub(V1, V0);
                             const Vec3 Edge2 = Vec3Sub(V2, V0);
-                            const float U1 = T1.x - T0.x;
-                            const float V1 = T1.y - T0.y;
-                            const float U2 = T2.x - T0.x;
-                            const float V2 = T2.y - T0.y;
-                            const float Determinant = U1 * V2 - U2 * V1;
+                            const float DeltaU1 = T1.x - T0.x;
+                            const float DeltaV1 = T1.y - T0.y;
+                            const float DeltaU2 = T2.x - T0.x;
+                            const float DeltaV2 = T2.y - T0.y;
+                            const float Determinant = DeltaU1 * DeltaV2 - DeltaU2 * DeltaV1;
                             Vec3 Tangent{};
                             if (std::abs(Determinant) > 0.000001f)
                             {
                                 const float Inverse = 1.0f / Determinant;
-                                Tangent = Vec3Normalize(Vec3{(Edge1.X * V2 - Edge2.X * V1) * Inverse,
-                                                             (Edge1.Y * V2 - Edge2.Y * V1) * Inverse,
-                                                             (Edge1.Z * V2 - Edge2.Z * V1) * Inverse});
+                                Tangent = Vec3Normalize(Vec3{(Edge1.X * DeltaV2 - Edge2.X * DeltaV1) * Inverse,
+                                                             (Edge1.Y * DeltaV2 - Edge2.Y * DeltaV1) * Inverse,
+                                                             (Edge1.Z * DeltaV2 - Edge2.Z * DeltaV1) * Inverse});
                             }
                             if (Vec3Dot(Tangent, Tangent) < 0.000001f)
                             {
@@ -2453,15 +2453,15 @@ namespace dbc
 
                         if (Object.LockToScreen)
                         {
-                            SDL_FPoint P0{};
-                            SDL_FPoint P1{};
-                            SDL_FPoint P2{};
+                            SDL_FPoint Screen0{};
+                            SDL_FPoint Screen1{};
+                            SDL_FPoint Screen2{};
                             float Pd0 = 0.0f;
                             float Pd1 = 0.0f;
                             float Pd2 = 0.0f;
-                            if (!dbc::ProjectPointLocked(K, V0.X, V0.Y, V0.Z, P0, Pd0) ||
-                                !dbc::ProjectPointLocked(K, V1.X, V1.Y, V1.Z, P1, Pd1) ||
-                                !dbc::ProjectPointLocked(K, V2.X, V2.Y, V2.Z, P2, Pd2))
+                            if (!dbc::ProjectPointLocked(K, V0.X, V0.Y, V0.Z, Screen0, Pd0) ||
+                                !dbc::ProjectPointLocked(K, V1.X, V1.Y, V1.Z, Screen1, Pd1) ||
+                                !dbc::ProjectPointLocked(K, V2.X, V2.Y, V2.Z, Screen2, Pd2))
                             {
                                 continue;
                             }
@@ -2480,14 +2480,14 @@ namespace dbc
                             Tri.DepthTest = Object.DepthTest;
                             Tri.DepthWrite = Object.DepthWrite && !BlendAdditive;
                             Tri.Style = BuildSurfaceStyle(Object, MeshValue);
-                            Tri.Pos[0][0] = P0.x;
-                            Tri.Pos[0][1] = P0.y;
+                            Tri.Pos[0][0] = Screen0.x;
+                            Tri.Pos[0][1] = Screen0.y;
                             Tri.Pos[0][2] = 0.0f;
-                            Tri.Pos[1][0] = P1.x;
-                            Tri.Pos[1][1] = P1.y;
+                            Tri.Pos[1][0] = Screen1.x;
+                            Tri.Pos[1][1] = Screen1.y;
                             Tri.Pos[1][2] = 0.0f;
-                            Tri.Pos[2][0] = P2.x;
-                            Tri.Pos[2][1] = P2.y;
+                            Tri.Pos[2][0] = Screen2.x;
+                            Tri.Pos[2][1] = Screen2.y;
                             Tri.Pos[2][2] = 0.0f;
                             Tri.Normal[0][0] = 0.0f;
                             Tri.Normal[0][1] = 0.0f;
@@ -3688,7 +3688,7 @@ namespace dbc
         DepthTarget.cycle = false;
         DepthTarget.clear_stencil = 0;
         DepthTarget.mip_level = 0;
-        DepthTarget.layer = Target.DepthLayer;
+        DepthTarget.layer = static_cast<Uint8>(Target.DepthLayer);
 
         bool FailedEffectBatches = false;
         for (const GpuBatch& Batch : Batches)

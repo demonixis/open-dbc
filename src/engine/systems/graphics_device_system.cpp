@@ -1958,9 +1958,9 @@ namespace dbc
 
     void GraphicsDeviceSystem::SetDrawColorInt(int Packed)
     {
-        const int R = (Packed >> 16) & 0xFF;
-        const int G = (Packed >> 8) & 0xFF;
-        const int B = Packed & 0xFF;
+        const Uint8 R = static_cast<Uint8>((Packed >> 16) & 0xFF);
+        const Uint8 G = static_cast<Uint8>((Packed >> 8) & 0xFF);
+        const Uint8 B = static_cast<Uint8>(Packed & 0xFF);
         SDL_SetRenderDrawColor(Renderer_, R, G, B, 255);
     }
 
