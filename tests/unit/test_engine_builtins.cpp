@@ -5014,7 +5014,7 @@ TEST_CASE("Object texture scale and SET OBJECT defaults match BASIC semantics")
                           {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(0),
                            BuiltinValue::FromNumber(1)},
                           Error));
-    CHECK(Object->TextureFilter == 1);
+    CHECK(Object->TextureFilter);
     CHECK(Object->TransparentBlack);
 
     REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScaleObject,

@@ -1733,7 +1733,7 @@ namespace dbc::interpreter::detail
             return WriteHostLine(Context, Value, Error);
         }
 
-        bool DrivePaths(std::vector<fs::path>& Output, std::string* Error = nullptr)
+        bool DrivePaths(std::vector<fs::path>& Output, [[maybe_unused]] std::string* Error = nullptr)
         {
             std::vector<fs::path> Result;
 #if defined(_WIN32)

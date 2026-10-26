@@ -20,6 +20,9 @@ if(NOT DXC_CONTENTS MATCHES "libclang/dxcrewriteunused.cpp")
         DXC_CONTENTS "${DXC_CONTENTS}")
 endif()
 string(REPLACE "  clangTooling\n" "" DXC_CONTENTS "${DXC_CONTENTS}")
+# A static library must not carry the DLL's version resource: MSVC rejects it next to the
+# executable's own manifest resource (LNK1241).
+string(REPLACE "  DXCompiler.rc\n" "" DXC_CONTENTS "${DXC_CONTENTS}")
 string(REPLACE "  libclang\n" "" DXC_CONTENTS "${DXC_CONTENTS}")
 if(NOT DXC_CONTENTS MATCHES "target_compile_definitions\\(dxcompiler PRIVATE OPENDBC_DXC_STATIC\\)")
     string(REPLACE "add_clang_library(dxcompiler STATIC \${SOURCES})\n"

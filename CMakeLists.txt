@@ -522,7 +522,8 @@ function(dbc_enable_warnings target)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             # GCC's flow analysis reports false positives inside libstdc++ (<regex>, std::function),
             # more so under the sanitizers.
-            target_compile_options(${target} PRIVATE -Wno-maybe-uninitialized -Wno-array-bounds)
+            target_compile_options(${target} PRIVATE -Wno-maybe-uninitialized -Wno-array-bounds
+                                   -Wno-stringop-overread -Wno-stringop-overflow)
         endif()
         if(OPENDBC_SANITIZE)
             # Jolt is built without RTTI, which UBSan's vptr check needs.
