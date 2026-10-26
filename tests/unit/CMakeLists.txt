@@ -85,6 +85,18 @@ target_link_libraries(test_debug_system PRIVATE doctest_with_main dbc_engine)
 doctest_discover_tests(test_debug_system PROPERTIES LABELS "unit" RESOURCE_LOCK "opendbc_runtime")
 
 if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
+    add_executable(test_dxc_optimizer test_dxc_optimizer.cpp)
+    target_include_directories(test_dxc_optimizer SYSTEM PRIVATE
+        ${sdl3_shadercross_SOURCE_DIR}/external/DirectXShaderCompiler/include)
+    target_compile_definitions(test_dxc_optimizer PRIVATE DXC_API_IMPORT=)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # DXC's public COM declarations use Clang's UUID extensions.
+        target_compile_options(test_dxc_optimizer PRIVATE -fms-extensions)
+    endif()
+    target_link_libraries(test_dxc_optimizer PRIVATE
+        doctest_with_main SDL3_shadercross::SDL3_shadercross)
+    doctest_discover_tests(test_dxc_optimizer PROPERTIES LABELS "unit-studio-shaders")
+
     add_executable(test_shader_compiler
         test_shader_compiler.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/shader_compiler.cpp

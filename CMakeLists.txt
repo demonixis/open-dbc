@@ -391,6 +391,11 @@ if(APPLE OR (NOT ANDROID AND NOT IOS))
         -P ${CMAKE_SOURCE_DIR}/cmake/patch_shadercross_static_dxc.cmake
     )
     FetchContent_MakeAvailable(SDL3_shadercross)
+    if(SDLSHADERCROSS_DXC)
+        # DxcOptimizer references both archives. Declaring the ScalarOpts cycle lets
+        # CMake repeat the static libraries for linkers that scan archives in order.
+        target_link_libraries(LLVMHLSL PUBLIC LLVMScalarOpts LLVMPassPrinters)
+    endif()
     set(CMAKE_CXX_FLAGS "${OPENDBC_SAVED_CMAKE_CXX_FLAGS}")
     unset(OPENDBC_SAVED_CMAKE_CXX_FLAGS)
     foreach(OPENDBC_SPIRV_CROSS_TARGET
