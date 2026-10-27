@@ -329,12 +329,13 @@ namespace dbc
         int GluedTargetObject = -1;
         int GluedTargetLimb = 0;
         int GlueMode = 0;
-        std::unique_ptr<Assimp::Importer> ImporterValue;
+        // Imported scenes are never modified after loading, so clones share them with their source.
+        std::shared_ptr<const Assimp::Importer> ImporterValue;
         const aiScene* AssimpScene = nullptr;
         std::string ModelStructureSignature;
-        std::unique_ptr<aiNode> CompatibilityRootNode;
+        std::shared_ptr<const aiNode> CompatibilityRootNode;
         const aiNode* CompatibilitySkippedRootNode = nullptr;
-        std::vector<std::unique_ptr<Assimp::Importer>> AnimationImporters;
+        std::vector<std::shared_ptr<const Assimp::Importer>> AnimationImporters;
         std::unordered_map<unsigned int, const aiNode*> MeshNodeByIndex;
         aiMatrix4x4 RootInverseTransform;
         std::vector<const aiNode*> LimbNodes;

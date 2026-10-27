@@ -2,6 +2,7 @@
 
 #include "engine/systems/camera_system.hpp"
 #include "engine/systems/core_system.hpp"
+#include "engine/systems/draw_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
 #include "engine/systems/gpu_command_buffer.hpp"
 #include "engine/systems/graphics_device_system.hpp"
@@ -11,6 +12,7 @@
 #include <array>
 #include <glm/gtc/matrix_transform.hpp>
 #include <limits>
+#include <memory>
 
 namespace
 {
@@ -213,6 +215,40 @@ TEST_CASE("Two borrowed GPU views advance simulation once and finalize once")
     CHECK(Kernel.Objects().GetObject(1)->AnimTimeSeconds == doctest::Approx(0.2));
     CHECK(Kernel.Objects().GetObject(2)->AnimTimeSeconds == 0.0);
     CHECK_FALSE(NextFrame.Finalized);
+}
+
+TEST_CASE("Every DBPro camera draws its viewport and screen 2D stays in screen coordinates")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("camera-views", 80, 60));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    std::string Error;
+    REQUIRE_MESSAGE(Kernel.Core().SetWindowSize(80, 60, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().EnableBackdrop(&Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().SetBackdropColor(0xFF0000, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().MakeCamera(1, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().SetCameraView(1, 40, 0, 80, 30, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().SetBackdropColor(1, 0x0000FF, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().SetCurrentCamera(0, &Error), Error);
+    Kernel.Draw().SetInk(0xFFFFFF);
+    REQUIRE_MESSAGE(Kernel.Draw().DrawBox(64, 4, 72, 10, &Error), Error);
+
+    const std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> Frame(Kernel.Renderer().CaptureScreen(),
+                                                                             SDL_DestroySurface);
+    REQUIRE(Frame != nullptr);
+    const int Scale = Frame->w / 80;
+    REQUIRE(Scale >= 1);
+    const auto Pixel = [&](int X, int Y)
+    {
+        std::array<Uint8, 4> Value{};
+        REQUIRE(SDL_ReadSurfacePixel(Frame.get(), X * Scale, Y * Scale, &Value[0], &Value[1], &Value[2], &Value[3]));
+        return std::array<Uint8, 3>{Value[0], Value[1], Value[2]};
+    };
+    CHECK(Pixel(10, 50) == std::array<Uint8, 3>{255, 0, 0});
+    CHECK(Pixel(50, 20) == std::array<Uint8, 3>{0, 0, 255});
+    CHECK(Pixel(68, 7) == std::array<Uint8, 3>{255, 255, 255});
+    CHECK(Kernel.Camera().CurrentCameraId() == 0);
 }
 
 TEST_CASE("Failed GPU submission consumes ownership without retry or cancellation")

@@ -5136,6 +5136,57 @@ TEST_CASE("Classic mesh memblocks use the documented 32-byte indexed layout with
           12 + static_cast<int>(Source.Indices.size()) * 36);
 }
 
+TEST_CASE("DBPro vertex diffuse takes DWORD colours and keeps opaque objects opaque")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("vertex-diffuse", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    std::string Error;
+    REQUIRE_MESSAGE(Kernel.Core().SetWindowSize(32, 32, &Error), Error);
+    Kernel.Camera().SetAutoCamOff();
+    REQUIRE_MESSAGE(Kernel.Camera().SetBackdropColor(0, &Error), Error);
+    Kernel.Objects().MakeObjectCube(1, 4.0f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 10.0f);
+    REQUIRE(Kernel.Objects().SetObjectLight(1, 0));
+
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    EngineBuiltinHost Host(Context);
+    REQUIRE(Kernel.Objects().LockVertexdataForLimb(1, 0));
+    const int Vertices = ReadEngineNumber<int>(
+        [&](std::string& ReadError, int& Output) { return Kernel.Objects().VertexdataVertexCount(Output, &ReadError); });
+    REQUIRE(Vertices > 0);
+    const auto SetDiffuse = [&](int Vertex, dbc::vm::Value Colour)
+    {
+        const std::vector<dbc::vm::Value> Arguments{dbc::vm::Value::Integer(Vertex), Colour};
+        return Host.Invoke({1,
+                            dbc::language::SymbolId::Command_SetVertexdataDiffuse,
+                            Arguments,
+                            {dbc::language::TypeKind::Void, {}},
+                            false});
+    };
+    REQUIRE(SetDiffuse(0, dbc::vm::Value::Real(4278255360.0)).State == dbc::vm::BuiltinState::Completed);
+    CHECK(static_cast<uint32_t>(ReadEngineNumber<int>(
+              [&](std::string& ReadError, int& Output)
+              { return Kernel.Objects().VertexdataDiffuse(Output, 0, &ReadError); })) == 0xFF00FF00u);
+    CHECK(SetDiffuse(0, dbc::vm::Value::Real(4294967296.0)).State == dbc::vm::BuiltinState::Failed);
+    // RGB() leaves the alpha byte at zero.
+    for (int Vertex = 0; Vertex < Vertices; ++Vertex)
+        REQUIRE(SetDiffuse(Vertex, dbc::vm::Value::Integer(0x00FF00)).State == dbc::vm::BuiltinState::Completed);
+    Kernel.Objects().UnlockVertexdata();
+
+    const std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> Frame(Kernel.Renderer().CaptureScreen(),
+                                                                             SDL_DestroySurface);
+    REQUIRE(Frame != nullptr);
+    std::array<Uint8, 4> Pixel{};
+    REQUIRE(SDL_ReadSurfacePixel(Frame.get(), Frame->w / 2, Frame->h / 2, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
+    CHECK(Pixel[0] < 20);
+    CHECK(Pixel[1] > 200);
+    CHECK(Pixel[2] < 20);
+}
+
 TEST_CASE("Portable mesh vertex data memblocks and DBO preserve mutable geometry")
 {
     std::string MemblockError;
@@ -8403,6 +8454,28 @@ TEST_CASE("Classic authored object keyframes round-trip through the portable ani
 
     std::error_code CleanupError;
     std::filesystem::remove_all(Root, CleanupError);
+}
+
+TEST_CASE("Cloned imported objects keep their animation after the source is deleted")
+{
+    const std::filesystem::path Model =
+        std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/walk.x";
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("cloned-imported-animation", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Objects().LoadObject(Model.string(), 1));
+    REQUIRE(Kernel.Objects().TotalObjectFrames(1) > 1);
+    Kernel.Objects().CloneObject(2, 1);
+    Kernel.Objects().DeleteObject(1);
+    const dbc::Object3D* Clone = Kernel.Objects().GetObject(2);
+    REQUIRE(Clone != nullptr);
+    REQUIRE(Clone->AssimpScene != nullptr);
+    CHECK(Clone->LimbNodes.size() > 1);
+    REQUIRE(Kernel.Objects().LoopObject(2));
+    CHECK(Kernel.Objects().ObjectFrame(2) == 0);
+    Kernel.Renderer().PrepareFrameSimulation(0.5);
+    CHECK(Kernel.Objects().ObjectPlaying(2) == 1);
+    CHECK(Kernel.Objects().ObjectFrame(2) > 0);
 }
 
 TEST_CASE("Classic imported object animation saves every moving frame and appends losslessly")

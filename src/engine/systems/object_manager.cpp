@@ -4037,7 +4037,7 @@ namespace dbc
         Dst.SpecularPower = Src.SpecularPower;
         // Copy limb transforms (independent per clone).
         Dst.LimbTransforms = Src.LimbTransforms;
-        // Animation: copy playback state but not Assimp scene (non-copyable).
+        // Animation playback state.
         Dst.Speed = Src.Speed;
         Dst.Frame = Src.Frame;
         Dst.Interpolation = Src.Interpolation;
@@ -4049,6 +4049,18 @@ namespace dbc
         Dst.ImportedAnimationEnabled = Src.ImportedAnimationEnabled;
         Dst.ObjectKeyframes = Src.ObjectKeyframes;
         Dst.ModelStructureSignature = Src.ModelStructureSignature;
+        // The imported scene drives skinning, limbs and imported animation.
+        Dst.ImporterValue = Src.ImporterValue;
+        Dst.AssimpScene = Src.AssimpScene;
+        Dst.CompatibilityRootNode = Src.CompatibilityRootNode;
+        Dst.CompatibilitySkippedRootNode = Src.CompatibilitySkippedRootNode;
+        Dst.AnimationImporters = Src.AnimationImporters;
+        Dst.MeshNodeByIndex = Src.MeshNodeByIndex;
+        Dst.RootInverseTransform = Src.RootInverseTransform;
+        Dst.LimbNodes = Src.LimbNodes;
+        Dst.LimbIndexByNode = Src.LimbIndexByNode;
+        Dst.AnimChannelByNode = Src.AnimChannelByNode;
+        Dst.AnimationClips = Src.AnimationClips;
         // Bounding radius carries over (same mesh data).
         Dst.BoundingRadius = Src.BoundingRadius;
         Dst.RenderBoundingRadius = Src.RenderBoundingRadius;

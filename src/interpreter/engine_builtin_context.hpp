@@ -6,6 +6,7 @@
 #include <ankerl/unordered_dense.h>
 
 #include <array>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <functional>
@@ -58,6 +59,8 @@ namespace dbc
 
             double AsNumber() const;
             bool AsInt(int& Output, std::string* Error = nullptr) const;
+            // DWORD arguments accept every signed or unsigned 32-bit value and keep its bits.
+            bool AsDword(std::uint32_t& Output, std::string* Error = nullptr) const;
             bool AsFloat(float& Output, std::string* Error = nullptr) const;
             bool AsBool() const;
             std::string AsString() const;

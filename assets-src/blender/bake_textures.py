@@ -261,19 +261,22 @@ def bake(builder) -> np.ndarray:
 
 def save_jpeg(pixels: np.ndarray, path: Path) -> None:
     height, width, _ = pixels.shape
-    # The bake is linear; the byte image stores sRGB-encoded values.
-    encoded = np.clip(pixels, 0.0, 1.0).copy()
-    rgb = encoded[..., :3]
-    encoded[..., :3] = np.where(rgb <= 0.0031308, rgb * 12.92, 1.055 * np.power(rgb, 1.0 / 2.4) - 0.055)
-    image = bpy.data.images.new(path.stem, width, height)
-    image.pixels.foreach_set(encoded.ravel())
-    scene = bpy.context.scene
-    scene.render.image_settings.file_format = "JPEG"
-    scene.render.image_settings.quality = JPEG_QUALITY
-    scene.render.image_settings.color_management = "OVERRIDE"
-    scene.view_settings.view_transform = "Standard"
+    # The bake is linear. A float image keeps it so, and saving encodes it to sRGB through the
+    # image settings' own view, which OVERRIDE uses instead of the scene's (AgX by default).
+    # A byte image would reinterpret the values and darken the result.
+    image = bpy.data.images.new(path.stem, width, height, float_buffer=True)
+    image.pixels.foreach_set(np.clip(pixels, 0.0, 1.0).ravel())
+    settings = bpy.context.scene.render.image_settings
+    settings.file_format = "JPEG"
+    settings.quality = JPEG_QUALITY
+    settings.color_management = "OVERRIDE"
+    settings.display_settings.display_device = "sRGB"
+    settings.view_settings.view_transform = "Standard"
+    settings.view_settings.look = "None"
+    settings.view_settings.exposure = 0.0
+    settings.view_settings.gamma = 1.0
     path.parent.mkdir(parents=True, exist_ok=True)
-    image.save_render(str(path), scene=scene)
+    image.save_render(str(path), scene=bpy.context.scene)
     print(f"wrote {path.relative_to(ROOT)}")
 
 

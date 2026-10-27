@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cmath>
 #include <string>
+#include <utility>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -117,6 +118,22 @@ namespace dbc
         CurrentCameraId_ = CameraId;
         Current().Dirty = true;
         return true;
+    }
+
+    std::vector<int> CameraSystem::ScreenCameraIds() const
+    {
+        std::vector<int> Ids;
+        Ids.reserve(Cameras_.size());
+        for (const auto& [Id, Camera] : Cameras_)
+            Ids.push_back(Id);
+        std::sort(Ids.begin(), Ids.end());
+        return Ids;
+    }
+
+    int CameraSystem::SelectRenderCamera(int CameraId)
+    {
+        assert(Cameras_.contains(CameraId));
+        return std::exchange(CurrentCameraId_, CameraId);
     }
 
     int CameraSystem::CameraExist(int CameraId) const

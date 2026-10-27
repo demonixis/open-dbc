@@ -68,7 +68,10 @@ transpiles at run time. After `cmake --preset shader-verify`, the
 `shader-update` regenerates them. There is no video playback and no FFmpeg.
 
 Most 3D geometry is transformed on the CPU into view-space triangles, rebuilt
-only when the camera or an object changes. Terrains are uploaded once as static
+only when the camera or an object changes. At each `SYNC` every DBPro camera
+draws into its view, camera 0 first and the others by number, so the cache is
+bypassed while several cameras exist; the 2D layer is drawn once, in screen
+coordinates, under all cameras after `DRAW TO BACK` and over them otherwise. Terrains are uploaded once as static
 GPU buffers; each frame only picks the visible blocks and their LOD, and the
 vertex shader applies the view.
 

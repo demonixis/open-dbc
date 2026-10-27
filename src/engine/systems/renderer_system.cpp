@@ -2286,6 +2286,10 @@ namespace dbc
                                                             (UseMaterial ? MeshValue.MaterialColor.b : 1.0f),
                                                         0.0f, 1.0f),
                                              std::clamp(Object.Alpha, 0.0f, 1.0f)};
+                        // As in DBPro's fixed pipeline, vertex alpha only matters to objects that blend or
+                        // alpha-test. An opaque object stays opaque when RGB() leaves the alpha byte at zero.
+                        const bool UsesVertexAlpha = Object.Ghosted || Object.Alpha < 0.999f ||
+                                                     Object.AlphaMapping || Object.TransparentBlack;
                         const auto VertexColor = [&](uint32_t Index)
                         {
                             const uint32_t Packed =
@@ -2294,7 +2298,7 @@ namespace dbc
                                 Col.r * static_cast<float>((Packed >> 16u) & 0xFFu) / 255.0f,
                                 Col.g * static_cast<float>((Packed >> 8u) & 0xFFu) / 255.0f,
                                 Col.b * static_cast<float>(Packed & 0xFFu) / 255.0f,
-                                Col.a * static_cast<float>((Packed >> 24u) & 0xFFu) / 255.0f,
+                                UsesVertexAlpha ? Col.a * static_cast<float>((Packed >> 24u) & 0xFFu) / 255.0f : Col.a,
                             };
                         };
                         const SDL_FColor Color0 = VertexColor(I0);
@@ -3281,12 +3285,21 @@ namespace dbc
                 (Tris.size() + ReflectedTris.size() + ShadowTris.size() + OverlayTris.size()) * 3 + 8192));
             Batches.reserve(2048);
 
-            if (K.Camera().ClearRequested() && K.Camera().HasCameraView())
+            // A camera that does not clear the whole target fills its viewport first; the scissor bounds the quad.
+            SurfaceStyle ViewFillStyle{};
+            ViewFillStyle.Fog = false;
+            ViewFillStyle.Ambient = false;
+            ViewFillStyle.Backdrop = true;
+            const auto FillView = [&](int Color)
             {
                 dbc::AppendGpuQuad(K, Vertices, Batches, WhiteGpuTexture(K), 0.0f, 0.0f,
                                    static_cast<float>(View.LogicalWidth), static_cast<float>(View.LogicalHeight),
-                                   UnpackColor(K.Camera().ClearColor()), 1.0f);
-            }
+                                   UnpackColor(Color), 1.0f, false, true, ViewFillStyle);
+            };
+            if (K.Camera().ClearRequested() && (K.Camera().HasCameraView() || Geometry.OverPreviousCamera))
+                FillView(K.Camera().ClearColor());
+            else if (Geometry.OverPreviousCamera && (K.Camera().BackdropEnabled() || K.Draw().FogOn()))
+                FillView(K.Camera().BackdropEnabled() ? K.Camera().BackdropColor() : K.Draw().FogColor());
 
             if (K.Camera().BackdropEnabled() && K.Draw().BackdropImageId() > 0)
             {
@@ -3335,7 +3348,7 @@ namespace dbc
                                        SDL_FColor{1, 1, 1, 1}, 0.0f, true);
                 }
             };
-            if (!Frame.HudLast)
+            if (!Frame.HudLast && Geometry.Hud)
                 AppendBitmap(Vertices, Batches);
 
             // DRAW TO BACK: 2D overlay goes before 3D world.
@@ -3352,7 +3365,7 @@ namespace dbc
                 }
             };
 
-            if (!(Frame.HudLast || K.Draw().IsDrawToFront()))
+            if (!(Frame.HudLast || K.Draw().IsDrawToFront()) && Geometry.Hud)
                 AppendOverlay(Vertices, Batches);
 
             for (const Triangle& Tri : Tris)
@@ -3594,7 +3607,7 @@ namespace dbc
                 K.Sprites().ForEachVisibleSprite(AppendSprite);
                 K.Sprites().ForEachPastedSprite(AppendSprite);
             };
-            if (Frame.HudLast)
+            if (Geometry.Hud && Frame.HudLast)
             {
                 if (!Frame.HudPrepared)
                 {
@@ -3611,7 +3624,7 @@ namespace dbc
                     Batches.push_back(Batch);
                 }
             }
-            else
+            else if (Geometry.Hud)
                 AppendHud(Vertices, Batches);
         }
 
@@ -3692,7 +3705,7 @@ namespace dbc
         SDL_GPUColorTargetInfo ColorTarget{};
         ColorTarget.texture = Target.Color;
         ColorTarget.clear_color = ClearColor;
-        ColorTarget.load_op = SDL_GPU_LOADOP_CLEAR;
+        ColorTarget.load_op = Geometry.OverPreviousCamera ? SDL_GPU_LOADOP_LOAD : SDL_GPU_LOADOP_CLEAR;
         ColorTarget.store_op = SDL_GPU_STOREOP_STORE;
         ColorTarget.mip_level = 0;
         ColorTarget.layer_or_depth_plane = Target.ColorLayer;
@@ -4028,17 +4041,28 @@ namespace dbc
                        !Batch.Style.Backdrop && (!(!Frame.HudLast && K.Sprites().SpritesDrawFirst()) || !Batch.Sprite);
             };
             const auto Draw3d = [&](const GpuBatch& Batch) { return !Batch.Is2d && !Batch.Style.ShadowVolume; };
+            // Screen 2D keeps screen coordinates whatever the camera viewport.
+            const auto DrawScreen2d = [&]()
+            {
+                const SDL_GPUViewport Screen{0.0f, 0.0f, static_cast<float>(Target.Width),
+                                             static_cast<float>(Target.Height), 0.0f, 1.0f};
+                const SDL_Rect ScreenScissor{0, 0, static_cast<int>(Target.Width), static_cast<int>(Target.Height)};
+                SDL_SetGPUViewport(Pass, &Screen);
+                SDL_SetGPUScissor(Pass, &ScreenScissor);
+                DrawGroup(Draw2d);
+                ApplyCameraViewport(Pass);
+            };
             if (!HasReflection)
             {
                 if ((Frame.HudLast || K.Draw().IsDrawToFront()))
                 {
                     DrawGroup(Draw3d);
                     if (!HasShadow)
-                        DrawGroup(Draw2d);
+                        DrawScreen2d();
                 }
                 else
                 {
-                    DrawGroup(Draw2d);
+                    DrawScreen2d();
                     DrawGroup(Draw3d);
                 }
             }
@@ -4056,7 +4080,7 @@ namespace dbc
                 const auto DrawReflectionOverlay = [](const GpuBatch& Batch) { return Batch.Style.ReflectionOverlay; };
 
                 if (!(Frame.HudLast || K.Draw().IsDrawToFront()))
-                    DrawGroup(Draw2d);
+                    DrawScreen2d();
                 DrawGroup(DrawNormal3d);
                 DrawGroup(DrawReflectionMask);
                 SDL_EndGPURenderPass(Pass);
@@ -4079,7 +4103,7 @@ namespace dbc
                 DrawGroup(DrawReflected);
                 DrawGroup(DrawReflectionOverlay);
                 if ((Frame.HudLast || K.Draw().IsDrawToFront()) && !HasShadow)
-                    DrawGroup(Draw2d);
+                    DrawScreen2d();
             }
 
             if (HasShadow)
@@ -4118,7 +4142,7 @@ namespace dbc
                 DrawBatches(K.Gpu().ShadowOverlayPipeline(), K.Gpu().ShadowOverlayPipeline(), OrthoUbo,
                             [](const GpuBatch& Batch) { return Batch.Style.ShadowOverlay; });
                 if ((Frame.HudLast || K.Draw().IsDrawToFront()))
-                    DrawGroup(Draw2d);
+                    DrawScreen2d();
             }
         }
         SDL_EndGPURenderPass(Pass);
@@ -4157,7 +4181,7 @@ namespace dbc
             RenderFailureReported_ = false;
             K.Debug().ClearRenderError();
         }
-        K.Camera().ConsumeClearRequest();
+        K.Camera().ConsumeClearRequests();
 
         K.Renderer().RecordFramePolygons(Frame.Vertices / 3);
         K.Renderer().RecordFrameDrawCalls(Frame.Batches);
@@ -4303,15 +4327,42 @@ namespace dbc
             }
             CaptureTexture = K.Gpu().GpuCaptureTexture();
         }
-        const RenderView View = K.Renderer().CameraView(DrawableW, DrawableH);
         const GpuRenderTarget Target{CaptureTexture ? CaptureTexture : SwapchainTexture,
                                      K.Gpu().GpuDepthTexture(),
                                      K.Gpu().GpuColorFormat(),
                                      K.Gpu().GpuDepthFormat(),
                                      DrawableW,
                                      DrawableH};
-        if (!K.Renderer().RenderPreparedView(View, Target, Cmd, Frame))
+        const std::vector<int> CameraIds = K.Camera().ScreenCameraIds();
+        std::vector<RenderView> Views;
+        std::vector<PreparedViewGeometry> Geometry(CameraIds.size());
+        Views.reserve(CameraIds.size());
+        bool Prepared = true;
+        for (std::size_t Index = 0; Prepared && Index < CameraIds.size(); ++Index)
+        {
+            const int Previous = K.Camera().SelectRenderCamera(CameraIds[Index]);
+            // The triangle cache holds one camera's view-space geometry.
+            if (CameraIds.size() > 1)
+                K.Renderer().InvalidateTriCache();
+            Views.push_back(K.Renderer().CameraView(DrawableW, DrawableH));
+            // DRAW TO BACK puts the 2D layer under every camera, DRAW TO FRONT over them all.
+            Geometry[Index].Hud = K.Draw().IsDrawToFront() ? Index + 1 == CameraIds.size() : Index == 0;
+            Geometry[Index].OverPreviousCamera = Index > 0;
+            Prepared = K.Renderer().BuildPreparedView(Views.back(), Geometry[Index], Frame);
+            K.Camera().SelectRenderCamera(Previous);
+        }
+        if (!Prepared || !K.Renderer().UploadPreparedViews(Geometry, Cmd))
             return;
+        for (std::size_t Index = 0; Index < Views.size(); ++Index)
+        {
+            const int Previous = K.Camera().SelectRenderCamera(CameraIds[Index]);
+            const bool Recorded = K.Renderer().RecordPreparedView(Views[Index], Target, Geometry[Index], Cmd, Frame);
+            K.Camera().SelectRenderCamera(Previous);
+            if (!Recorded)
+                return;
+        }
+        if (CameraIds.size() > 1)
+            K.Renderer().InvalidateTriCache();
 
         bool Submitted = false;
         if (ApplyFinalColorTransform)
