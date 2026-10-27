@@ -1852,13 +1852,17 @@ def build_examples_page(profile: str, matcher: dict, anchor_map: dict,
                  "Each entry explains how the program is put together and links every command "
                  "to its reference page.")
     else:
+        demos = sorted((EXAMPLES_DIR / "dbpro" / "demos").rglob("*.dba"), key=_natural_key)
+        if demos:
+            sections.append(("Demos — complete games", demos))
         hello = sorted((EXAMPLES_DIR / "dbpro").glob("Hello World/*.dba"), key=_natural_key)
         if hello:
             sections.append(("Hello World", hello))
         sections += _collect_examples(EXAMPLES_DIR / "dbpro" / "tutorials", DBPRO_EXAMPLE_FOLDER_TITLES)
         title = "DBPro examples"
-        blurb = ("Every DarkBASIC Professional example shipped in examples/dbpro: the official "
-                 "showcase tutorials (one per command family) plus the Hello World project. "
+        blurb = ("Every DarkBASIC Professional example shipped in examples/dbpro: the complete "
+                 "demo games, the official showcase tutorials (one per command family) and the "
+                 "Hello World project. "
                  "Each entry explains how the program is put together and links every command "
                  "to its reference page.")
 
