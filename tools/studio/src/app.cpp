@@ -93,6 +93,12 @@ namespace dbc::studio
             return Pressed;
         }
 
+        // Height of the toolbar and status bar: one frame-height row plus vertical padding.
+        float BarHeight()
+        {
+            return ImGui::GetFrameHeight() + ImGui::GetStyle().FramePadding.y * 2.0f;
+        }
+
         void ToolbarSeparator()
         {
             ImGui::SameLine();
@@ -814,8 +820,9 @@ namespace dbc::studio
             }
         }
 
-        // Reserve a row at the bottom of the host window for the status bar.
-        const float StatusHeight = ImGui::GetFrameHeight();
+        // Reserve a row at the bottom of the host window for the status bar, plus
+        // the item spacing ImGui inserts between the dock space and it.
+        const float StatusHeight = BarHeight() + ImGui::GetStyle().ItemSpacing.y;
         ImGui::DockSpace(DockspaceId, ImVec2(0.0f, -StatusHeight), ImGuiDockNodeFlags_None);
 
         DrawStatusBar();
@@ -1194,7 +1201,7 @@ namespace dbc::studio
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(Theme::Panel));
-        ImGui::BeginChild("##Toolbar", ImVec2(0.0f, ImGui::GetFrameHeight() + Style.FramePadding.y * 2.0f),
+        ImGui::BeginChild("##Toolbar", ImVec2(0.0f, BarHeight()),
                           ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         ImGui::SetCursorPos(ImVec2(Style.ItemSpacing.x, Style.FramePadding.y));
 
@@ -1223,10 +1230,12 @@ namespace dbc::studio
     void App::DrawStatusBar()
     {
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(Theme::Panel));
-        ImGui::BeginChild("##StatusBar", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None,
+        ImGui::BeginChild("##StatusBar", ImVec2(0.0f, BarHeight()), ImGuiChildFlags_None,
                           ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
         ImGui::SetCursorPos(ImVec2(ImGui::GetStyle().ItemSpacing.x, ImGui::GetStyle().FramePadding.y));
+        // Centres the text on the dialect combo that shares its row.
+        ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(Status_.c_str());
 
         if (ResolvedProject_)
@@ -1252,7 +1261,8 @@ namespace dbc::studio
         const ImGuiIO& Io = ImGui::GetIO();
         char Fps[32];
         SDL_snprintf(Fps, sizeof(Fps), "%.0f FPS", Io.Framerate);
-        ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(Fps).x);
+        ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(Fps).x -
+                        ImGui::GetStyle().ItemSpacing.x);
         ImGui::TextDisabled("%s", Fps);
 
         ImGui::EndChild();
