@@ -52,6 +52,8 @@ with their GOTO/GOSUB jumps, types and main-program variables; selecting one
 goes to its line. Counts cover that file only, not its includes. The **Media**
 panel lists the asset root's images, audio, models, effects, videos and fonts,
 filtered by kind and name; double-clicking an image or sound previews it.
+`.fx` and `.hlsl` effects open in the editor as HLSL text, without completion,
+outline or Run.
 
 **Build → Compile HLSL Effect…** compiles a `.fx` or `.hlsl` file with `VSMain`
 and `PSMain` entry points into `<name>.vert.spv`, `<name>.frag.spv` and

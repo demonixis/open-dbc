@@ -32,8 +32,13 @@ namespace dbc::studio
             void Initialize(const dba::CommandDatabase* Commands);
             void SetProfile(dbc::language::LanguageProfile Profile);
 
+            // HLSL effects open as plain text: highlighted, but without BASIC
+            // completion, outline or Run.
+            static bool IsEffectSource(const std::filesystem::path& Path);
+            static bool CanOpen(const std::filesystem::path& Path);
+
             // Opens the file, focusing an already open tab if there is one.
-            // Returns false when the file cannot be read.
+            // Returns false when the file cannot be read or is neither BASIC nor an effect.
             bool Open(const std::filesystem::path& Path);
             void NewFile();
 
@@ -51,6 +56,7 @@ namespace dbc::studio
             std::filesystem::path CurrentPath() const;
             std::vector<BufferedSource> DirtySources(dbc::language::LanguageProfile Profile) const;
             TextEditor* CurrentEditor();
+            bool CurrentIsBasic() const;
             dbc::language::LanguageProfile CurrentProfile() const;
 
             // Moves the current tab's cursor to a 1-based line and focuses it.
@@ -74,15 +80,17 @@ namespace dbc::studio
             {
                 std::filesystem::path Path;
                 dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
+                bool Basic = true;
                 std::string Title;
                 std::unique_ptr<TextEditor> Editor;
                 size_t SavedUndoIndex = 0;
                 bool Open = true;
             };
 
-            void AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile,
+            void AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile, bool Basic,
                              const std::string& Text);
             void ConfigureEditor(TextEditor& Editor, dbc::language::LanguageProfile Profile) const;
+            void ConfigureEffectEditor(TextEditor& Editor) const;
             bool WriteDocument(Document& Doc, const std::filesystem::path& Path);
             static bool IsDirty(const Document& Doc);
             void DrawCloseConfirm();

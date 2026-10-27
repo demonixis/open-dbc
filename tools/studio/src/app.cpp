@@ -105,9 +105,8 @@ namespace dbc::studio
         }
 
         constexpr const char* KDbaFilter = "dba;dbpro";
-#if !defined(DBC_STUDIO_SANDBOXED)
         constexpr const char* KHlslFilter = "fx;hlsl";
-#endif
+        constexpr const char* KOpenFilter = "dba;dbpro;fx;hlsl";
     } // namespace
 
     bool App::Initialize(const std::string& OpenPath, std::optional<dbc::language::LanguageProfile> ForcedProfile)
@@ -145,7 +144,8 @@ namespace dbc::studio
         Media_.SetOnActivate(
             [this](const std::filesystem::path& Path)
             {
-                if (panels::AssetPreview::KindOf(Path) == panels::AssetPreview::Kind::None)
+                if (panels::AssetPreview::KindOf(Path) == panels::AssetPreview::Kind::None &&
+                    !panels::EditorPanel::CanOpen(Path))
                     Status_ = "No preview for " + Path.filename().string();
                 else
                     OpenFile(Path);
@@ -457,7 +457,7 @@ namespace dbc::studio
     void App::ShowOpenFileDialog()
     {
         const std::string Start = Project_.Root().empty() ? std::string() : Project_.Root().string();
-        Dialog_.OpenFile(Window_, Start, "DBA source", KDbaFilter,
+        Dialog_.OpenFile(Window_, Start, "DBA source or HLSL effect", KOpenFilter,
                          [this](const std::string& Path)
                          {
                              if (!Path.empty())
@@ -553,7 +553,8 @@ namespace dbc::studio
         }
 
         const std::string Start = Project_.Root().empty() ? std::string() : Project_.Root().string();
-        Dialog_.SaveFile(Window_, Start, "DBA source", KDbaFilter,
+        const bool Basic = Editor_.CurrentIsBasic();
+        Dialog_.SaveFile(Window_, Start, Basic ? "DBA source" : "HLSL effect", Basic ? KDbaFilter : KHlslFilter,
                          [this](const std::string& Path)
                          {
                              if (Path.empty())
@@ -839,8 +840,8 @@ namespace dbc::studio
             // Only a visible panel parses: a hidden tab costs nothing while typing.
             if (ImGui::Begin(KPanelCode, &ShowCode_))
             {
-                Code_.Update(Editor_.CurrentEditor(), Editor_.CurrentPath(), Editor_.CurrentProfile(),
-                             ImGui::GetTime());
+                Code_.Update(Editor_.CurrentIsBasic() ? Editor_.CurrentEditor() : nullptr, Editor_.CurrentPath(),
+                             Editor_.CurrentProfile(), ImGui::GetTime());
                 Code_.Draw();
             }
             ImGui::End();

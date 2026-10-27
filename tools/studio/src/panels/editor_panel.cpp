@@ -31,6 +31,14 @@ namespace dbc::studio
             return Buffer.str();
         }
 
+        std::string LowerExtension(const std::filesystem::path& Path)
+        {
+            std::string Extension = Path.extension().string();
+            std::transform(Extension.begin(), Extension.end(), Extension.begin(),
+                           [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
+            return Extension;
+        }
+
     } // namespace
 
     namespace panels
@@ -62,7 +70,8 @@ namespace dbc::studio
             for (const std::unique_ptr<Document>& Document : Documents_)
             {
                 Document->Profile = Profile;
-                ConfigureEditor(*Document->Editor, Profile);
+                if (Document->Basic)
+                    ConfigureEditor(*Document->Editor, Profile);
             }
             ClearErrorMarkers();
         }
@@ -146,16 +155,44 @@ namespace dbc::studio
                 });
         }
 
-        void EditorPanel::AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile,
+        void EditorPanel::ConfigureEffectEditor(TextEditor& Editor) const
+        {
+            Editor.SetLanguage(TextEditor::Language::Hlsl());
+            Editor.SetPalette(EditorPalette());
+            Editor.SetTabSize(4);
+            Editor.SetInsertSpacesOnTabs(true);
+            Editor.SetShowLineNumbersEnabled(true);
+            Editor.SetShowMatchingBrackets(true);
+            Editor.SetAutoIndentEnabled(true);
+            Editor.SetShowScrollbarMiniMapEnabled(true);
+            Editor.SetShowWhitespacesEnabled(false);
+        }
+
+        bool EditorPanel::IsEffectSource(const std::filesystem::path& Path)
+        {
+            const std::string Extension = LowerExtension(Path);
+            return Extension == ".fx" || Extension == ".hlsl";
+        }
+
+        bool EditorPanel::CanOpen(const std::filesystem::path& Path)
+        {
+            return dbc::language::IsLanguageSource(Path) || IsEffectSource(Path);
+        }
+
+        void EditorPanel::AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile, bool Basic,
                                       const std::string& Text)
         {
             auto Doc = std::make_unique<Document>();
             Doc->Path = std::move(Path);
             Doc->Profile = Profile;
+            Doc->Basic = Basic;
             Doc->Title = Doc->Path.empty() ? ("untitled-" + std::to_string(++UntitledCount_) + ".dba")
                                            : Doc->Path.filename().string();
             Doc->Editor = std::make_unique<TextEditor>();
-            ConfigureEditor(*Doc->Editor, Profile);
+            if (Basic)
+                ConfigureEditor(*Doc->Editor, Profile);
+            else
+                ConfigureEffectEditor(*Doc->Editor);
             Doc->Editor->SetText(Text);
             Doc->SavedUndoIndex = Doc->Editor->GetUndoIndex();
 
@@ -178,24 +215,24 @@ namespace dbc::studio
                 }
             }
 
+            if (!CanOpen(Target))
+            {
+                return false;
+            }
+
             bool Ok = false;
             const std::string Text = ReadFile(Target, Ok);
             if (!Ok)
             {
                 return false;
             }
-
-            if (!dbc::language::IsLanguageSource(Target))
-            {
-                return false;
-            }
-            AddDocument(Target, ProjectProfile_, Text);
+            AddDocument(Target, ProjectProfile_, dbc::language::IsLanguageSource(Target), Text);
             return true;
         }
 
         void EditorPanel::NewFile()
         {
-            AddDocument(std::filesystem::path(), ProjectProfile_, std::string());
+            AddDocument(std::filesystem::path(), ProjectProfile_, true, std::string());
         }
 
         bool EditorPanel::IsDirty(const Document& Doc)
@@ -244,7 +281,7 @@ namespace dbc::studio
             std::vector<BufferedSource> Sources;
             for (const std::unique_ptr<Document>& Document : Documents_)
             {
-                if (!Document->Path.empty() && Document->Profile == Profile && IsDirty(*Document))
+                if (Document->Basic && !Document->Path.empty() && Document->Profile == Profile && IsDirty(*Document))
                     Sources.push_back({Document->Path, Document->Editor->GetText()});
             }
             return Sources;
@@ -260,6 +297,11 @@ namespace dbc::studio
             return HasDocument() ? Documents_[Current_]->Editor.get() : nullptr;
         }
 
+        bool EditorPanel::CurrentIsBasic() const
+        {
+            return HasDocument() && Documents_[Current_]->Basic;
+        }
+
         void EditorPanel::GoToLine(std::uint32_t Line)
         {
             TextEditor* Editor = CurrentEditor();
@@ -273,7 +315,8 @@ namespace dbc::studio
 
         bool EditorPanel::WriteDocument(Document& Doc, const std::filesystem::path& Path)
         {
-            if (!dbc::language::IsLanguageSource(Path))
+            // A tab keeps its kind: a BASIC buffer cannot be saved as an effect or the reverse.
+            if (Doc.Basic ? !dbc::language::IsLanguageSource(Path) : !IsEffectSource(Path))
             {
                 return false;
             }
@@ -291,7 +334,8 @@ namespace dbc::studio
 
             Doc.Path = Path;
             Doc.Profile = ProjectProfile_;
-            ConfigureEditor(*Doc.Editor, Doc.Profile);
+            if (Doc.Basic)
+                ConfigureEditor(*Doc.Editor, Doc.Profile);
             Doc.Title = Path.filename().string();
             Doc.SavedUndoIndex = Doc.Editor->GetUndoIndex();
             return true;
