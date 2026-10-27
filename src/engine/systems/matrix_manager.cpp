@@ -846,6 +846,7 @@ namespace dbc
         if (!LoadTerrainHeightmap(Terrain, Path, "MAKE TERRAIN", Error))
             return false;
         Terrain.PosZ = Terrain.Depth;
+        Terrain.Revision = ++TerrainRevision_;
         const float Width = Terrain.Width;
         Terrains_.emplace(TerrainId, std::move(Terrain));
         InvalidateRenderer();
@@ -877,6 +878,7 @@ namespace dbc
         Terrain.Heights.assign(33 * 33, 0.0f);
         Terrain.Tiles.assign(32 * 32, 1);
         Terrain.TextureMode = 1;
+        Terrain.Revision = ++TerrainRevision_;
         Terrains_.emplace(TerrainId, std::move(Terrain));
         InvalidateRenderer();
         return true;
@@ -903,6 +905,7 @@ namespace dbc
         Matrix& Terrain = *TerrainPointer;
         if (!LoadTerrainHeightmap(Terrain, Path, "SET TERRAIN HEIGHTMAP", Error))
             return false;
+        Terrain.Revision = ++TerrainRevision_;
         InvalidateRenderer();
         return true;
     }
@@ -922,6 +925,7 @@ namespace dbc
         Terrain.Width = X * static_cast<float>(Terrain.SegX);
         Terrain.Depth = Z * static_cast<float>(Terrain.SegZ);
         Terrain.HeightScale = Y;
+        Terrain.Revision = ++TerrainRevision_;
         InvalidateRenderer();
         return true;
     }
@@ -962,6 +966,7 @@ namespace dbc
         }
         Terrain.TilesX = TilesX;
         Terrain.TilesY = TilesY;
+        Terrain.Revision = ++TerrainRevision_;
         InvalidateRenderer();
         return true;
     }
@@ -981,6 +986,7 @@ namespace dbc
         auto* CheckedMatrix = RequireTerrain(TerrainId, "BUILD TERRAIN", Error);
         if (!CheckedMatrix)
             return false;
+        CheckedMatrix->Revision = ++TerrainRevision_;
         InvalidateRenderer();
         return true;
     }
@@ -1000,6 +1006,7 @@ namespace dbc
         Terrain.PosX = X;
         Terrain.PosY = Y;
         Terrain.PosZ = Z;
+        Terrain.Revision = ++TerrainRevision_;
         InvalidateRenderer();
         return true;
     }

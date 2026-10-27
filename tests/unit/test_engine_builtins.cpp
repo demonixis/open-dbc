@@ -18,6 +18,7 @@
 #include "engine/systems/platform_io.hpp"
 #include "engine/systems/renderer_system.hpp"
 #include "engine/systems/sprite_system.hpp"
+#include "engine/systems/terrain_mesh.hpp"
 #include "engine/systems/text_state.hpp"
 #include "engine/systems/text_system.hpp"
 #include "interpreter/engine_builtin_api/file_io.hpp"
@@ -2902,13 +2903,15 @@ TEST_CASE("DBPro LOD terrain preserves heightmap identity query and render contr
     SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
     REQUIRE(Capture != nullptr);
     SDL_DestroySurface(Capture);
+    // The terrain draws from static GPU buffers; the matrix still goes through CPU triangles.
     CHECK(Kernel.Renderer().CachedWorldTris().size() >= 2);
-    const auto TerrainTriangle =
-        std::find_if(Kernel.Renderer().CachedWorldTris().begin(), Kernel.Renderer().CachedWorldTris().end(),
-                     [](const dbc::Triangle& Value) { return Value.Style.TextureAddressModes[0] == 2; });
-    REQUIRE(TerrainTriangle != Kernel.Renderer().CachedWorldTris().end());
-    CHECK(TerrainTriangle->Uv[0].x >= 0.0f);
-    CHECK(TerrainTriangle->Uv[0].x <= 1.0f);
+    CHECK(Kernel.Renderer().LastStaticTerrainTriangles() >= 2);
+    dbc::TerrainMesh Mesh;
+    dbc::BuildTerrainMesh(*Terrain, Mesh);
+    REQUIRE_FALSE(Mesh.Vertices.empty());
+    CHECK(std::all_of(Mesh.Vertices.begin(), Mesh.Vertices.end(), [](const dbc::TerrainVertex& Vertex)
+                      { return Vertex.Uv[0] >= 0.0f && Vertex.Uv[0] <= 1.0f && Vertex.Uv[1] >= 0.0f &&
+                               Vertex.Uv[1] <= 1.0f; }));
 
     REQUIRE_FALSE(Command(dbc::language::SymbolId::Command_MakeTerrain,
                           {BuiltinValue::FromNumber(2), BuiltinValue::FromString(Heightmap.string() + ".missing")}));
@@ -2934,7 +2937,7 @@ TEST_CASE("Matrices skip blocks outside the view and terrains coarsen far from t
         SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
         REQUIRE(Capture != nullptr);
         SDL_DestroySurface(Capture);
-        return Kernel.Renderer().CachedWorldTris().size();
+        return Kernel.Renderer().CachedWorldTris().size() + Kernel.Renderer().LastStaticTerrainTriangles();
     };
 
     // A small matrix in full view keeps every cell at full resolution.
@@ -2977,6 +2980,65 @@ TEST_CASE("Matrices skip blocks outside the view and terrains coarsen far from t
     const std::size_t TerrainTriangles = RenderedTriangles();
     CHECK(TerrainTriangles > 0);
     CHECK(TerrainTriangles < 256 * 256 * 2 / 8);
+}
+
+TEST_CASE("Static GPU terrains draw their upper side, follow the view and rebuild after changes")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("static-terrain", 64, 64));
+    Kernel.Camera().SetAutoCamOff();
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().SetCameraRange(1.0f, 1000.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().SetBackdropColor(0x0000FF, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().EnableBackdrop(&Error); });
+
+    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::filesystem::path Heightmap =
+        std::filesystem::temp_directory_path() / ("opendbc-static-terrain-" + std::to_string(Suffix) + ".bmp");
+    SDL_Surface* Surface = SDL_CreateSurface(33, 33, SDL_PIXELFORMAT_RGBA32);
+    REQUIRE(Surface != nullptr);
+    REQUIRE(SDL_FillSurfaceRect(Surface, nullptr, SDL_MapSurfaceRGBA(Surface, 0, 0, 0, 255)));
+    REQUIRE(SDL_SaveBMP(Surface, Heightmap.string().c_str()));
+    SDL_DestroySurface(Surface);
+    std::string Error;
+    REQUIRE(Kernel.Matrices().MakeTerrain(1, Heightmap.string(), &Error));
+    std::error_code Ignored;
+    std::filesystem::remove(Heightmap, Ignored);
+    const dbc::Matrix* Terrain = Kernel.Matrices().GetTerrain(1);
+    REQUIRE(Terrain != nullptr);
+    REQUIRE(Kernel.Renderer().DrawsTerrainOnGpu(*Terrain));
+
+    // Centre pixel: the untextured terrain is lit white, the backdrop is blue.
+    const auto CenterIsBackdrop = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        Uint8 Red = 0, Green = 0, Blue = 0, Alpha = 0;
+        REQUIRE(SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Red, &Green, &Blue, &Alpha));
+        SDL_DestroySurface(Capture);
+        return Red < 32 && Green < 32 && Blue > 200;
+    };
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(16.0f, 40.0f, 16.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(90.0f, 0.0f, 0.0f, &Error); });
+    CHECK_FALSE(CenterIsBackdrop());
+    CHECK(Kernel.Renderer().LastStaticTerrainTriangles() > 0);
+    CHECK(Kernel.Renderer().CachedWorldTris().empty());
+
+    // From below, the culled underside leaves the backdrop, as on the CPU path.
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(16.0f, -40.0f, 16.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(-90.0f, 0.0f, 0.0f, &Error); });
+    CHECK(CenterIsBackdrop());
+
+    // Moving the terrain out of the view rebuilds its buffer: nothing is drawn from above any more.
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(16.0f, 40.0f, 16.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(90.0f, 0.0f, 0.0f, &Error); });
+    REQUIRE(Kernel.Matrices().PositionTerrain(1, 500.0f, 0.0f, 500.0f, &Error));
+    CHECK(CenterIsBackdrop());
+    CHECK(Kernel.Renderer().LastStaticTerrainTriangles() == 0);
+    REQUIRE(Kernel.Matrices().PositionTerrain(1, 0.0f, 0.0f, 33.0f, &Error));
+    CHECK_FALSE(CenterIsBackdrop());
+    REQUIRE(Kernel.Matrices().DeleteTerrain(1, &Error));
+    CHECK(CenterIsBackdrop());
 }
 
 TEST_CASE("Classic sound memblocks use the documented 12-byte header and accept a zero sample count")

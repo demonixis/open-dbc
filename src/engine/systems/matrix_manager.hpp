@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <unordered_map>
 
 #include "../engine_types.hpp"
@@ -102,6 +103,7 @@ namespace dbc
         EngineKernel& Kernel_;
         std::unordered_map<int, Matrix> Matrices_;
         std::unordered_map<int, Matrix> Terrains_;
+        uint64_t TerrainRevision_ = 0;
     };
 
 } // namespace dbc

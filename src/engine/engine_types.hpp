@@ -180,6 +180,8 @@ namespace dbc
         bool IsTerrain = false;
         float HeightScale = 1.0f;
         int SplitLevel = 4;
+        // Changes whenever terrain geometry (heights, size, tiling, position) changes; unique across terrains.
+        uint64_t Revision = 0;
     };
 
     // -----------------------------------------------------------------------
@@ -604,6 +606,10 @@ namespace dbc
         SurfaceStyle Style{};
         std::array<SDL_GPUTexture*, 7> AuxiliaryTextures{};
         SDL_GPUTexture* CubeTexture = nullptr;
+        // Static world-space terrain: drawn from its own vertex buffer with the view's terrain indices.
+        SDL_GPUBuffer* StaticVertices = nullptr;
+        Uint32 FirstIndex = 0;
+        Uint32 IndexCount = 0;
     };
 
     struct ViewVertex

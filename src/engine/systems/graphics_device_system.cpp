@@ -6,11 +6,13 @@
 #include "image_store.hpp"
 #include "log.hpp"
 #include "object_manager.hpp"
+#include "terrain_mesh.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <limits>
 #include <set>
 
@@ -67,6 +69,7 @@ namespace dbc
         GpuPipelineTransparentWireframe_ = nullptr;
         GpuPipelineAdditiveWireframe_ = nullptr;
         GpuSurfaceOpaqueNoDepthPipelines_.fill(nullptr);
+        GpuTerrainPipelines_.fill(nullptr);
         GpuSurfaceGhostPipelines_.fill(nullptr);
         GpuSampler_ = nullptr;
         GpuSamplerNearest_ = nullptr;
@@ -1109,7 +1112,7 @@ namespace dbc
             DBC_LOG_ERROR("GPU shader path resolution failed: {}", PathError);
             return false;
         }
-        SDL_GPUShader* VertexShader = CreateGpuShaderFromSpirv(VertexPath, SDL_GPU_SHADERSTAGE_VERTEX, 0, 1);
+        SDL_GPUShader* VertexShader = CreateGpuShaderFromSpirv(VertexPath, SDL_GPU_SHADERSTAGE_VERTEX, 0, 2);
         SDL_GPUShader* FragmentShader = CreateGpuShaderFromSpirv(FragmentPath, SDL_GPU_SHADERSTAGE_FRAGMENT, 9, 2);
 
         if (!VertexShader || !FragmentShader)
@@ -1327,6 +1330,41 @@ namespace dbc
         AdditivePipelineInfo.target_info.color_target_descriptions = &AdditiveColorTarget;
         GpuPipelineAdditive_ = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &AdditivePipelineInfo);
 
+        // Static terrain: world-space position, normal and UV per vertex, and the attributes the shader expects
+        // but a terrain does not vary (colour, auxiliary UVs) read once per instance from a GpuVertex record.
+        SDL_GPUVertexBufferDescription TerrainBuffers[2]{};
+        TerrainBuffers[0].slot = 0;
+        TerrainBuffers[0].pitch = sizeof(TerrainVertex);
+        TerrainBuffers[0].input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
+        TerrainBuffers[1].slot = 1;
+        TerrainBuffers[1].pitch = sizeof(GpuVertex);
+        TerrainBuffers[1].input_rate = SDL_GPU_VERTEXINPUTRATE_INSTANCE;
+        SDL_GPUVertexAttribute TerrainAttributes[15]{};
+        std::copy(std::begin(Attributes), std::end(Attributes), std::begin(TerrainAttributes));
+        for (SDL_GPUVertexAttribute& Attribute : TerrainAttributes)
+            Attribute.buffer_slot = 1;
+        TerrainAttributes[0].buffer_slot = 0;
+        TerrainAttributes[0].offset = offsetof(TerrainVertex, Position);
+        TerrainAttributes[1].buffer_slot = 0;
+        TerrainAttributes[1].offset = offsetof(TerrainVertex, Normal);
+        TerrainAttributes[3].buffer_slot = 0;
+        TerrainAttributes[3].offset = offsetof(TerrainVertex, Uv);
+        SDL_GPUGraphicsPipelineCreateInfo TerrainInfo = PipelineInfo;
+        TerrainInfo.vertex_input_state.vertex_buffer_descriptions = TerrainBuffers;
+        TerrainInfo.vertex_input_state.num_vertex_buffers = 2;
+        TerrainInfo.vertex_input_state.vertex_attributes = TerrainAttributes;
+        // The CPU path culls terrain triangles facing away from the camera; the GPU does it here.
+        TerrainInfo.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_BACK;
+        TerrainInfo.rasterizer_state.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE;
+        GpuTerrainPipelines_[0] = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &TerrainInfo);
+        SDL_GPUGraphicsPipelineCreateInfo TerrainDepthInfo = TerrainInfo;
+        SDL_GPUColorTargetDescription TerrainDepthTarget = ColorTarget;
+        TerrainDepthTarget.blend_state.color_write_mask = 0;
+        TerrainDepthInfo.target_info.color_target_descriptions = &TerrainDepthTarget;
+        GpuTerrainPipelines_[2] = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &TerrainDepthInfo);
+        TerrainInfo.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_LINE;
+        GpuTerrainPipelines_[1] = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &TerrainInfo);
+
         // Wireframe surfaces rasterise the same triangles as lines.
         SDL_GPUGraphicsPipelineCreateInfo WireInfo = PipelineInfo;
         WireInfo.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_LINE;
@@ -1448,6 +1486,8 @@ namespace dbc
              (!GpuReflectionMaskPipeline_ || !GpuShadowDepthPipeline_ || !GpuShadowVolumePipeline_ ||
               !GpuShadowOverlayPipeline_)) ||
             std::any_of(GpuSurfaceOpaqueNoDepthPipelines_.begin(), GpuSurfaceOpaqueNoDepthPipelines_.end(),
+                        [](SDL_GPUGraphicsPipeline* Pipeline) { return Pipeline == nullptr; }) ||
+            std::any_of(GpuTerrainPipelines_.begin(), GpuTerrainPipelines_.end(),
                         [](SDL_GPUGraphicsPipeline* Pipeline) { return Pipeline == nullptr; }) ||
             std::any_of(GpuSurfaceDepthPipelines_.begin(),
                         GpuSurfaceDepthPipelines_.begin() + (StencilVariants == 2 ? 48 : 24),
@@ -2179,6 +2219,14 @@ namespace dbc
             }
         }
         for (SDL_GPUGraphicsPipeline*& Pipeline : GpuSurfaceOpaqueNoDepthPipelines_)
+        {
+            if (Pipeline)
+            {
+                SDL_ReleaseGPUGraphicsPipeline(GpuDevice_, Pipeline);
+                Pipeline = nullptr;
+            }
+        }
+        for (SDL_GPUGraphicsPipeline*& Pipeline : GpuTerrainPipelines_)
         {
             if (Pipeline)
             {

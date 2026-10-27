@@ -55,6 +55,11 @@ images, input, lights, matrices, DBPro BSP worlds, memblocks, objects, physics
 (converted to Metal on Apple platforms); `cmake --preset shader-verify` checks
 the tracked binaries byte for byte. There is no video playback and no FFmpeg.
 
+Most 3D geometry is transformed on the CPU into view-space triangles, rebuilt
+only when the camera or an object changes. Terrains are uploaded once as static
+GPU buffers; each frame only picks the visible blocks and their LOD, and the
+vertex shader applies the view.
+
 Profile differences the policy selects, among others:
 
 | Classic | Professional |

@@ -8,6 +8,7 @@ add_library(dbc_engine STATIC
   systems/audio_system.cpp
   systems/input_system.cpp
   systems/matrix_manager.cpp
+  systems/terrain_mesh.cpp
   systems/bsp_world.cpp
   systems/light_manager.cpp
   systems/image_store.cpp

@@ -14,6 +14,7 @@
 #include "object_manager.hpp"
 #include "platform_io.hpp"
 #include "sprite_system.hpp"
+#include "terrain_mesh.hpp"
 #include "text_system.hpp"
 #include "vr_system.hpp"
 
@@ -1383,70 +1384,6 @@ namespace dbc
         return nullptr;
     }
 
-    // Compute a terrain vertex normal from the height gradient at grid position (x, z).
-    Vec3 MatrixVertexNormal(const Matrix& MatrixValue, int X, int Z, float StepX, float StepZ)
-    {
-        const size_t VertexCount = static_cast<size_t>(MatrixValue.SegX + 1) * (MatrixValue.SegZ + 1);
-        if (MatrixValue.Normals.size() == VertexCount * 3)
-        {
-            const size_t Index = (static_cast<size_t>(Z) * (MatrixValue.SegX + 1) + X) * 3;
-            Vec3 Normal{MatrixValue.Normals[Index], MatrixValue.Normals[Index + 1], MatrixValue.Normals[Index + 2]};
-            const float Length = std::sqrt(Normal.X * Normal.X + Normal.Y * Normal.Y + Normal.Z * Normal.Z);
-            if (Length > 0.0001f)
-            {
-                Normal.X /= Length;
-                Normal.Y /= Length;
-                Normal.Z /= Length;
-                return Normal;
-            }
-            return {0.0f, 1.0f, 0.0f};
-        }
-
-        const int Xm = std::max(X - 1, 0);
-        const int Xp = std::min(X + 1, MatrixValue.SegX);
-        const int Zm = std::max(Z - 1, 0);
-        const int Zp = std::min(Z + 1, MatrixValue.SegZ);
-
-        const float HeightScale = MatrixValue.IsTerrain ? MatrixValue.HeightScale : 1.0f;
-        const float HL = MatrixManager::MatrixHeight(MatrixValue, Xm, Z) * HeightScale;
-        const float HR = MatrixManager::MatrixHeight(MatrixValue, Xp, Z) * HeightScale;
-        const float HD = MatrixManager::MatrixHeight(MatrixValue, X, Zm) * HeightScale;
-        const float HU = MatrixManager::MatrixHeight(MatrixValue, X, Zp) * HeightScale;
-
-        const float Dx = (Xp - Xm) * StepX;
-        const float Dz = (Zp - Zm) * StepZ;
-
-        // Normal = cross product of tangent vectors
-        Vec3 N{-(HR - HL) * Dz, Dx * Dz, -(HU - HD) * Dx};
-        const float Len = std::sqrt(N.X * N.X + N.Y * N.Y + N.Z * N.Z);
-        if (Len > 0.0001f)
-        {
-            N.X /= Len;
-            N.Y /= Len;
-            N.Z /= Len;
-        }
-        else
-        {
-            N = {0.0f, 1.0f, 0.0f};
-        }
-        if (MatrixValue.IsTerrain)
-            N.Z = -N.Z;
-        return N;
-    }
-
-    // Matrices and terrains are drawn in square blocks of cells. A block outside the view is skipped whole, and
-    // a terrain block far from the camera uses a coarser grid, as DBPro's LOD terrain did.
-    constexpr int MatrixBlockCells = 16;
-
-    // Grid step of a terrain block: one cell near the camera, doubling with distance up to the block size.
-    [[nodiscard]] int TerrainBlockStep(float Distance, float BlockSize)
-    {
-        int Step = 1;
-        while (Step < MatrixBlockCells && Distance > BlockSize * 4.0f * static_cast<float>(Step))
-            Step *= 2;
-        return Step;
-    }
-
     void RenderMatrix(EngineKernel& K, const Matrix& MatrixValue, std::vector<Triangle>& Tris)
     {
         if (MatrixValue.SegX <= 0 || MatrixValue.SegZ <= 0)
@@ -2780,6 +2717,25 @@ namespace dbc
         return GraphicsDeviceSystem::GetGpuTextureFromSdlTexture(ImageValue.Texture);
     }
 
+    // The material rides in the box-colour attributes: ambient, alpha override, specular and emissive.
+    void FillSurfaceMaterial(GpuVertex& Out, const SurfaceStyle& Style)
+    {
+        const auto Channel = [](uint32_t Packed, unsigned Shift)
+        { return static_cast<float>((Packed >> Shift) & 0xFFu) / 255.0f; };
+        Out.BoxTrR = Channel(Style.AmbientColor, 16u);
+        Out.BoxTrG = Channel(Style.AmbientColor, 8u);
+        Out.BoxTrB = Channel(Style.AmbientColor, 0u);
+        Out.BoxTrA = Style.AlphaOverride >= 0.0f ? -(Style.AlphaOverride + 1.0f) : 0.0f;
+        Out.BoxBrR = Channel(Style.SpecularColor, 16u);
+        Out.BoxBrG = Channel(Style.SpecularColor, 8u);
+        Out.BoxBrB = Channel(Style.SpecularColor, 0u);
+        Out.BoxBrA = Style.SpecularPower;
+        Out.BoxBlR = Channel(Style.EmissiveColor, 16u);
+        Out.BoxBlG = Channel(Style.EmissiveColor, 8u);
+        Out.BoxBlB = Channel(Style.EmissiveColor, 0u);
+        Out.BoxBlA = Style.AlphaTestThreshold;
+    }
+
     void AppendGpuTriangle(EngineKernel& K, std::vector<GpuVertex>& Vertices, std::vector<GpuBatch>& Batches,
                            SDL_GPUTexture* Texture, const float Pos[3][3], const float Normal[3][3],
                            const SDL_FColor Color[3], const SDL_FPoint Uv[3], bool Transparent = false,
@@ -2817,18 +2773,7 @@ namespace dbc
             Out.A = Color[I].a;
             Out.U = Uv[I].x;
             Out.V = Uv[I].y;
-            Out.BoxTrR = Channel(Style.AmbientColor, 16u);
-            Out.BoxTrG = Channel(Style.AmbientColor, 8u);
-            Out.BoxTrB = Channel(Style.AmbientColor, 0u);
-            Out.BoxTrA = Style.AlphaOverride >= 0.0f ? -(Style.AlphaOverride + 1.0f) : 0.0f;
-            Out.BoxBrR = Channel(Style.SpecularColor, 16u);
-            Out.BoxBrG = Channel(Style.SpecularColor, 8u);
-            Out.BoxBrB = Channel(Style.SpecularColor, 0u);
-            Out.BoxBrA = Style.SpecularPower;
-            Out.BoxBlR = Channel(Style.EmissiveColor, 16u);
-            Out.BoxBlG = Channel(Style.EmissiveColor, 8u);
-            Out.BoxBlB = Channel(Style.EmissiveColor, 0u);
-            Out.BoxBlA = Style.AlphaTestThreshold;
+            FillSurfaceMaterial(Out, Style);
             for (std::size_t Stage = 0; Stage < 7; ++Stage)
             {
                 const SDL_FPoint StageUv = AuxiliaryUvs ? (*AuxiliaryUvs)[Stage][static_cast<std::size_t>(I)] : Uv[I];
@@ -2866,7 +2811,7 @@ namespace dbc
             Vertices.push_back(Out);
         }
 
-        if (!Batches.empty() && Batches.back().Texture == DrawTexture &&
+        if (!Batches.empty() && !Batches.back().StaticVertices && Batches.back().Texture == DrawTexture &&
             Batches.back().AuxiliaryTextures == AuxiliaryTextures && Batches.back().CubeTexture == CubeTexture &&
             Batches.back().Transparent == Transparent && Batches.back().AlphaDepthWrite == AlphaDepthWrite &&
             Batches.back().Additive == Additive && Batches.back().Is2d == Is2d && Batches.back().Style == Style &&
@@ -3243,8 +3188,12 @@ namespace dbc
                 OverlayTris.reserve(2048);
                 K.Matrices().ForEachMatrix([&](int /*id*/, const Matrix& MatrixValue)
                                            { dbc::RenderMatrix(K, MatrixValue, Tris); });
-                K.Matrices().ForEachTerrain([&](int /*id*/, const Matrix& Terrain)
-                                            { dbc::RenderMatrix(K, Terrain, Tris); });
+                K.Matrices().ForEachTerrain(
+                    [&](int /*id*/, const Matrix& Terrain)
+                    {
+                        if (!K.Renderer().DrawsTerrainOnGpu(Terrain))
+                            dbc::RenderMatrix(K, Terrain, Tris);
+                    });
                 dbc::RenderBspWorld(K, Tris);
                 dbc::RenderObjects(K, Tris, OverlayTris);
                 dbc::RenderParticles(K, Tris);
@@ -3414,6 +3363,7 @@ namespace dbc
                                        Tri.AuxiliaryGpuTextures, Tri.CubeGpuTexture, &Tri.AuxiliaryUvs,
                                        Tri.CubeDirection);
             }
+            AppendStaticTerrains(View, Geometry);
 
             for (const Triangle& Tri : ReflectedTris)
             {
@@ -3673,6 +3623,8 @@ namespace dbc
 
     bool RendererSystem::UploadPreparedViews(std::span<PreparedViewGeometry> Geometry, SDL_GPUCommandBuffer* Cmd)
     {
+        if (!UploadStaticTerrains(Geometry, Cmd))
+            return false;
         auto& Gpu = Kernel_.Gpu();
         std::size_t Count = 0;
         for (auto& View : Geometry)
@@ -3761,6 +3713,9 @@ namespace dbc
         memcpy(OrthoUbo.ViewProj, &ProjOrtho[0][0], 64);
 
         SDL_PushGPUVertexUniformData(Cmd, 0, &PerspUbo, sizeof(GpuVertexUniforms));
+        // Slot 1 is the model-view matrix: identity for view-space vertices, the view for static terrain.
+        const glm::mat4 IdentityModelView(1.0f);
+        SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
 
         GpuFragmentUniforms FragUbo = dbc::BuildFragmentUniforms(K);
         GpuFragmentUniforms FragUbo2d = FragUbo;
@@ -3815,16 +3770,23 @@ namespace dbc
         // rather than bound, and a missing sampler cancels the textured passes.
         bool SkippedUntexturedBatches = false;
         SDL_GPUSampler* const Sampler = K.Gpu().GpuSampler();
-        if (!Sampler && !Vertices.empty())
+        // Static terrain can be the only 3D content, with no per-frame vertices at all.
+        const bool HasGeometry = !Vertices.empty() || !Geometry.TerrainIndices.empty();
+        if (!Sampler && HasGeometry)
         {
             K.Renderer().ReportRenderError("no GPU sampler");
         }
-        if (!Vertices.empty() && Sampler)
+        if (HasGeometry && Sampler)
         {
             SDL_GPUBufferBinding VertexBinding{};
             VertexBinding.buffer = K.Gpu().GpuVertexBuffer();
             VertexBinding.offset = Geometry.VertexOffset;
-            SDL_BindGPUVertexBuffers(Pass, 0, &VertexBinding, 1);
+            const auto BindSharedVertices = [&](SDL_GPURenderPass* RenderPass)
+            {
+                if (!Vertices.empty() && VertexBinding.buffer)
+                    SDL_BindGPUVertexBuffers(RenderPass, 0, &VertexBinding, 1);
+            };
+            BindSharedVertices(Pass);
 
             // One batch loop serves the three passes. A batch's SurfaceStyle picks the line-fill
             // pipeline variant, the point sampler, and a uniform copy without fog or ambient.
@@ -3924,6 +3886,9 @@ namespace dbc
                                                            Batch.Style.Wireframe, Batch.DepthTest, Batch.DepthWrite,
                                                            StencilTest);
                     }
+                    if (Batch.StaticVertices)
+                        Pipeline = ForcePipeline ? K.Gpu().TerrainDepthPipeline()
+                                                 : K.Gpu().TerrainPipeline(Batch.Style.Wireframe);
                     if (!Pipeline)
                         continue;
                     if (Pipeline != BoundPipeline)
@@ -4014,7 +3979,23 @@ namespace dbc
                             SDL_BindGPUFragmentSamplers(Pass, 0, &Binding, 1);
                         }
                     }
-                    SDL_DrawGPUPrimitives(Pass, Batch.VertexCount, 1, Batch.FirstVertex, 0);
+                    if (!Batch.StaticVertices)
+                    {
+                        SDL_DrawGPUPrimitives(Pass, Batch.VertexCount, 1, Batch.FirstVertex, 0);
+                        continue;
+                    }
+                    if (!TerrainIndexBuffer_ || !TerrainInstanceBuffer_)
+                        continue;
+                    const SDL_GPUBufferBinding TerrainBindings[2]{{Batch.StaticVertices, 0},
+                                                                  {TerrainInstanceBuffer_, 0}};
+                    SDL_BindGPUVertexBuffers(Pass, 0, TerrainBindings, 2);
+                    const SDL_GPUBufferBinding IndexBinding{TerrainIndexBuffer_, 0};
+                    SDL_BindGPUIndexBuffer(Pass, &IndexBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+                    SDL_PushGPUVertexUniformData(Cmd, 1, &View.WorldToView[0][0], sizeof(glm::mat4));
+                    SDL_DrawGPUIndexedPrimitives(Pass, Batch.IndexCount, 1,
+                                                 Geometry.TerrainIndexOffset + Batch.FirstIndex, 0, 0);
+                    SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
+                    BindSharedVertices(Pass);
                 }
             };
 
@@ -4094,7 +4075,7 @@ namespace dbc
                 }
                 ApplyCameraViewport(Pass);
                 SDL_SetGPUStencilReference(Pass, 1);
-                SDL_BindGPUVertexBuffers(Pass, 0, &VertexBinding, 1);
+                BindSharedVertices(Pass);
                 DrawGroup(DrawReflected);
                 DrawGroup(DrawReflectionOverlay);
                 if ((Frame.HudLast || K.Draw().IsDrawToFront()) && !HasShadow)
@@ -4118,7 +4099,7 @@ namespace dbc
                 }
                 ApplyCameraViewport(Pass);
                 SDL_SetGPUStencilReference(Pass, 0);
-                SDL_BindGPUVertexBuffers(Pass, 0, &VertexBinding, 1);
+                BindSharedVertices(Pass);
 
                 if (HasReflection)
                 {
@@ -4152,8 +4133,8 @@ namespace dbc
         }
 
         Frame.HasErrors |= SkippedUntexturedBatches || FailedEffectBatches;
-        Frame.WorldRendered |= !Geometry.World.empty();
-        Frame.Vertices += static_cast<int>(Vertices.size());
+        Frame.WorldRendered |= !Geometry.World.empty() || !Geometry.TerrainIndices.empty();
+        Frame.Vertices += static_cast<int>(Vertices.size() + Geometry.TerrainIndices.size());
         Frame.Batches += static_cast<int>(Batches.size());
         ++Frame.Views;
         return true;
@@ -4819,7 +4800,304 @@ namespace dbc
 
     RendererSystem::RendererSystem(EngineKernel& Kernel) : Kernel_(Kernel) {}
 
-    RendererSystem::~RendererSystem() = default;
+    RendererSystem::~RendererSystem()
+    {
+        ReleaseStaticTerrains();
+    }
+
+    bool RendererSystem::DrawsTerrainOnGpu(const Matrix& Terrain) const
+    {
+        // Ghost, transparent and unculled surfaces keep the CPU path with its blending and ordering.
+        return Terrain.IsTerrain && !Terrain.Ghost && !Terrain.Transparency && Terrain.Cull &&
+               Kernel_.Gpu().TerrainPipeline(false) != nullptr;
+    }
+
+    void RendererSystem::AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry)
+    {
+        EngineKernel& K = Kernel_;
+        Geometry.TerrainIndices.clear();
+        LastStaticTerrainTriangles_ = 0;
+        SDL_GPUDevice* Device = K.Gpu().GpuDevice();
+        if (!Device)
+            return;
+
+        // Drop buffers of terrains that were deleted or left the GPU path.
+        for (auto It = StaticTerrains_.begin(); It != StaticTerrains_.end();)
+        {
+            const Matrix* Terrain = K.Matrices().GetTerrain(It->first);
+            if (Terrain && DrawsTerrainOnGpu(*Terrain))
+            {
+                ++It;
+                continue;
+            }
+            if (It->second.Vertices)
+                SDL_ReleaseGPUBuffer(Device, It->second.Vertices);
+            It = StaticTerrains_.erase(It);
+        }
+
+        const glm::vec3 Camera = View.CameraPosition;
+        std::vector<int> Steps;
+        K.Matrices().ForEachTerrain(
+            [&](int TerrainId, const Matrix& Terrain)
+            {
+                if (!DrawsTerrainOnGpu(Terrain))
+                    return;
+                StaticTerrain& Entry = StaticTerrains_[TerrainId];
+                if (!Entry.Vertices || Entry.Revision != Terrain.Revision)
+                {
+                    BuildTerrainMesh(Terrain, Entry.Mesh);
+                    if (Entry.Vertices)
+                        SDL_ReleaseGPUBuffer(Device, Entry.Vertices);
+                    Entry.Vertices = nullptr;
+                    Entry.Revision = Terrain.Revision;
+                    if (Entry.Mesh.Vertices.empty() ||
+                        Entry.Mesh.Vertices.size() > std::numeric_limits<Uint32>::max() / sizeof(TerrainVertex))
+                        return;
+                    SDL_GPUBufferCreateInfo Info{};
+                    Info.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+                    Info.size = static_cast<Uint32>(Entry.Mesh.Vertices.size() * sizeof(TerrainVertex));
+                    Entry.Vertices = SDL_CreateGPUBuffer(Device, &Info);
+                    if (!Entry.Vertices)
+                    {
+                        ReportRenderError(std::string("terrain vertex buffer creation failed: ") + SDL_GetError());
+                        return;
+                    }
+                    Entry.PendingUpload = true;
+                }
+                const TerrainMesh& Mesh = Entry.Mesh;
+
+                // Visibility and grid step per block, then each block's triangles, stitched to coarser neighbours.
+                Steps.assign(Mesh.Blocks.size(), 0);
+                for (std::size_t Index = 0; Index < Mesh.Blocks.size(); ++Index)
+                {
+                    const TerrainBlock& Block = Mesh.Blocks[Index];
+                    const glm::vec3 Minimum(Block.Minimum.X, Block.Minimum.Y, Block.Minimum.Z);
+                    const glm::vec3 Maximum(Block.Maximum.X, Block.Maximum.Y, Block.Maximum.Z);
+                    const glm::vec3 Center = (Minimum + Maximum) * 0.5f;
+                    const glm::vec3 ViewCenter(View.WorldToView * glm::vec4(Center, 1.0f));
+                    const bool Visible = View.ContainsSphere(ViewCenter, glm::length(Maximum - Center));
+                    int Step = 1;
+                    if (Mesh.Lod)
+                        Step = TerrainBlockStep(glm::length(glm::clamp(Camera, Minimum, Maximum) - Camera),
+                                                Mesh.BlockSize);
+                    Steps[Index] = Visible ? Step : -Step;
+                }
+                const auto StepOf = [&](int Bx, int Bz)
+                {
+                    if (Bx < 0 || Bz < 0 || Bx >= Mesh.BlocksX || Bz >= Mesh.BlocksZ)
+                        return 1;
+                    return std::abs(Steps[static_cast<std::size_t>(Bz) * Mesh.BlocksX + Bx]);
+                };
+                const auto FirstIndex = static_cast<Uint32>(Geometry.TerrainIndices.size());
+                for (int Bz = 0; Bz < Mesh.BlocksZ; ++Bz)
+                {
+                    for (int Bx = 0; Bx < Mesh.BlocksX; ++Bx)
+                    {
+                        const int Step = Steps[static_cast<std::size_t>(Bz) * Mesh.BlocksX + Bx];
+                        if (Step < 0)
+                            continue;
+                        AppendTerrainBlockIndices(Mesh, Mesh.Blocks[static_cast<std::size_t>(Bz) * Mesh.BlocksX + Bx],
+                                                  Step,
+                                                  {StepOf(Bx, Bz - 1), StepOf(Bx, Bz + 1), StepOf(Bx - 1, Bz),
+                                                   StepOf(Bx + 1, Bz)},
+                                                  Geometry.TerrainIndices);
+                    }
+                }
+                const auto IndexCount = static_cast<Uint32>(Geometry.TerrainIndices.size()) - FirstIndex;
+                if (IndexCount == 0)
+                    return;
+
+                Image* Img = Terrain.ImageId != 0 ? K.ImageStoreRef().GetImage(Terrain.ImageId) : nullptr;
+                GpuBatch Batch;
+                // Like CPU triangles, an untextured terrain draws with the white texture.
+                Batch.Texture = Img ? dbc::ImageGpuTexture(K, *Img, false) : nullptr;
+                if (!Batch.Texture)
+                    Batch.Texture = WhiteGpuTexture(K);
+                Batch.FirstVertex = static_cast<Uint32>(Geometry.Vertices.size());
+                Batch.Style.Wireframe = Terrain.Wireframe;
+                Batch.Style.Fog = Terrain.Fog;
+                Batch.Style.Ambient = Terrain.Ambient;
+                Batch.Style.Filter = Terrain.Filter;
+                Batch.Style.TextureAddressModes[0] = Terrain.TextureMode;
+                Batch.Style.TextureMipModes[0] = Terrain.MipMode;
+                Batch.StaticVertices = Entry.Vertices;
+                Batch.FirstIndex = FirstIndex;
+                Batch.IndexCount = IndexCount;
+                Geometry.Batches.push_back(Batch);
+                LastStaticTerrainTriangles_ += IndexCount / 3;
+            });
+    }
+
+    bool RendererSystem::UploadStaticTerrains(std::span<PreparedViewGeometry> Geometry, SDL_GPUCommandBuffer* Cmd)
+    {
+        SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
+        std::size_t IndexCount = 0;
+        for (PreparedViewGeometry& View : Geometry)
+        {
+            View.TerrainIndexOffset = static_cast<Uint32>(IndexCount);
+            IndexCount += View.TerrainIndices.size();
+        }
+        std::size_t VertexBytes = 0;
+        for (const auto& [TerrainId, Entry] : StaticTerrains_)
+        {
+            (void)TerrainId;
+            if (Entry.PendingUpload)
+                VertexBytes += Entry.Mesh.Vertices.size() * sizeof(TerrainVertex);
+        }
+        const std::size_t InstanceBytes = TerrainInstanceUploaded_ ? 0 : sizeof(GpuVertex);
+        const std::size_t IndexBytes = IndexCount * sizeof(uint32_t);
+        const std::size_t TotalBytes = VertexBytes + InstanceBytes + IndexBytes;
+        if (IndexCount == 0 && VertexBytes == 0)
+            return true;
+        if (!Device || !Cmd)
+            return false;
+        if (TotalBytes > std::numeric_limits<Uint32>::max())
+        {
+            ReportRenderError("terrain geometry exceeds the GPU buffer limit");
+            return false;
+        }
+
+        const auto Recreate = [&](auto*& Resource, Uint32& Capacity, Uint32 Needed, auto&& Create, auto&& Release)
+        {
+            if (Resource && Capacity >= Needed)
+                return true;
+            if (Resource)
+                Release(Resource);
+            Capacity = std::max<Uint32>(Needed, Capacity * 2);
+            Resource = Create(Capacity);
+            if (!Resource)
+                Capacity = 0;
+            return Resource != nullptr;
+        };
+        if (!TerrainInstanceBuffer_)
+        {
+            SDL_GPUBufferCreateInfo Info{};
+            Info.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+            Info.size = sizeof(GpuVertex);
+            TerrainInstanceBuffer_ = SDL_CreateGPUBuffer(Device, &Info);
+            TerrainInstanceUploaded_ = false;
+        }
+        const bool Ready =
+            TerrainInstanceBuffer_ &&
+            (IndexBytes == 0 ||
+             Recreate(
+                 TerrainIndexBuffer_, TerrainIndexCapacity_, static_cast<Uint32>(IndexBytes),
+                 [&](Uint32 Size)
+                 {
+                     SDL_GPUBufferCreateInfo Info{};
+                     Info.usage = SDL_GPU_BUFFERUSAGE_INDEX;
+                     Info.size = Size;
+                     return SDL_CreateGPUBuffer(Device, &Info);
+                 },
+                 [&](SDL_GPUBuffer* Buffer) { SDL_ReleaseGPUBuffer(Device, Buffer); })) &&
+            Recreate(
+                TerrainTransfer_, TerrainTransferCapacity_, static_cast<Uint32>(TotalBytes),
+                [&](Uint32 Size)
+                {
+                    SDL_GPUTransferBufferCreateInfo Info{};
+                    Info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+                    Info.size = Size;
+                    return SDL_CreateGPUTransferBuffer(Device, &Info);
+                },
+                [&](SDL_GPUTransferBuffer* Buffer) { SDL_ReleaseGPUTransferBuffer(Device, Buffer); });
+        if (!Ready)
+        {
+            ReportRenderError(std::string("terrain buffer creation failed: ") + SDL_GetError());
+            return false;
+        }
+
+        auto* Mapped = static_cast<std::byte*>(SDL_MapGPUTransferBuffer(Device, TerrainTransfer_, true));
+        if (!Mapped)
+            return false;
+        std::size_t Offset = 0;
+        for (const auto& [TerrainId, Entry] : StaticTerrains_)
+        {
+            (void)TerrainId;
+            if (!Entry.PendingUpload)
+                continue;
+            const std::size_t Bytes = Entry.Mesh.Vertices.size() * sizeof(TerrainVertex);
+            SDL_memcpy(Mapped + Offset, Entry.Mesh.Vertices.data(), Bytes);
+            Offset += Bytes;
+        }
+        if (InstanceBytes != 0)
+        {
+            // What every CPU terrain vertex carries besides position, normal and UV: white colour and the
+            // default material (terrains have no material commands).
+            GpuVertex Constant{};
+            FillSurfaceMaterial(Constant, SurfaceStyle{});
+            SDL_memcpy(Mapped + Offset, &Constant, sizeof(Constant));
+            Offset += sizeof(Constant);
+        }
+        for (const PreparedViewGeometry& View : Geometry)
+        {
+            SDL_memcpy(Mapped + Offset, View.TerrainIndices.data(), View.TerrainIndices.size() * sizeof(uint32_t));
+            Offset += View.TerrainIndices.size() * sizeof(uint32_t);
+        }
+        SDL_UnmapGPUTransferBuffer(Device, TerrainTransfer_);
+
+        SDL_GPUCopyPass* Copy = SDL_BeginGPUCopyPass(Cmd);
+        if (!Copy)
+            return false;
+        Offset = 0;
+        for (auto& [TerrainId, Entry] : StaticTerrains_)
+        {
+            (void)TerrainId;
+            if (!Entry.PendingUpload)
+                continue;
+            const auto Bytes = static_cast<Uint32>(Entry.Mesh.Vertices.size() * sizeof(TerrainVertex));
+            const SDL_GPUTransferBufferLocation Source{TerrainTransfer_, static_cast<Uint32>(Offset)};
+            const SDL_GPUBufferRegion Destination{Entry.Vertices, 0, Bytes};
+            SDL_UploadToGPUBuffer(Copy, &Source, &Destination, false);
+            Offset += Bytes;
+            Entry.PendingUpload = false;
+            // The GPU now holds the grid; the blocks keep what visibility and LOD need.
+            Entry.Mesh.Vertices.clear();
+            Entry.Mesh.Vertices.shrink_to_fit();
+        }
+        if (InstanceBytes != 0)
+        {
+            const SDL_GPUTransferBufferLocation Source{TerrainTransfer_, static_cast<Uint32>(Offset)};
+            const SDL_GPUBufferRegion Destination{TerrainInstanceBuffer_, 0, sizeof(GpuVertex)};
+            SDL_UploadToGPUBuffer(Copy, &Source, &Destination, false);
+            Offset += sizeof(GpuVertex);
+            TerrainInstanceUploaded_ = true;
+        }
+        if (IndexBytes != 0)
+        {
+            const SDL_GPUTransferBufferLocation Source{TerrainTransfer_, static_cast<Uint32>(Offset)};
+            const SDL_GPUBufferRegion Destination{TerrainIndexBuffer_, 0, static_cast<Uint32>(IndexBytes)};
+            SDL_UploadToGPUBuffer(Copy, &Source, &Destination, true);
+        }
+        SDL_EndGPUCopyPass(Copy);
+        return true;
+    }
+
+    void RendererSystem::ReleaseStaticTerrains()
+    {
+        SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
+        if (Device)
+        {
+            for (auto& [TerrainId, Entry] : StaticTerrains_)
+            {
+                (void)TerrainId;
+                if (Entry.Vertices)
+                    SDL_ReleaseGPUBuffer(Device, Entry.Vertices);
+            }
+            if (TerrainIndexBuffer_)
+                SDL_ReleaseGPUBuffer(Device, TerrainIndexBuffer_);
+            if (TerrainInstanceBuffer_)
+                SDL_ReleaseGPUBuffer(Device, TerrainInstanceBuffer_);
+            if (TerrainTransfer_)
+                SDL_ReleaseGPUTransferBuffer(Device, TerrainTransfer_);
+        }
+        StaticTerrains_.clear();
+        TerrainIndexBuffer_ = nullptr;
+        TerrainInstanceBuffer_ = nullptr;
+        TerrainTransfer_ = nullptr;
+        TerrainIndexCapacity_ = 0;
+        TerrainTransferCapacity_ = 0;
+        TerrainInstanceUploaded_ = false;
+    }
 
     // =======================================================================
     // RendererSystem — public methods (delegate to file-local implementations)

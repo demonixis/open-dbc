@@ -3,10 +3,12 @@
 #include "../engine_math.hpp"
 #include "../engine_types.hpp"
 #include "render_view.hpp"
+#include "terrain_mesh.hpp"
 #include <optional>
 #include <span>
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -28,6 +30,9 @@ namespace dbc
         std::vector<Triangle> World, Reflected, Overlay, ShadowSources, Shadows;
         SDL_FColor ClearColor{};
         Uint32 VertexOffset = 0;
+        // Indices into static terrain vertex buffers, uploaded once per view at TerrainIndexOffset.
+        std::vector<uint32_t> TerrainIndices;
+        Uint32 TerrainIndexOffset = 0;
         bool HasReflection = false;
         bool HasShadow = false;
     };
@@ -189,6 +194,14 @@ namespace dbc
             CacheTris(World, {}, Overlay);
         }
 
+        // Terrains drawn from static GPU buffers rather than per-frame CPU triangles.
+        [[nodiscard]] bool DrawsTerrainOnGpu(const Matrix& Terrain) const;
+        // Triangles of static terrain in the last built view.
+        [[nodiscard]] std::size_t LastStaticTerrainTriangles() const
+        {
+            return LastStaticTerrainTriangles_;
+        }
+
         // STATISTIC(1): triangles sent to the GPU by the last presented frame.
         [[nodiscard]] int LastFramePolygons() const
         {
@@ -225,6 +238,18 @@ namespace dbc
         void ReportRenderError(const std::string& Error);
 
       private:
+        struct StaticTerrain
+        {
+            uint64_t Revision = 0;
+            TerrainMesh Mesh;
+            SDL_GPUBuffer* Vertices = nullptr;
+            bool PendingUpload = false;
+        };
+
+        void AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry);
+        bool UploadStaticTerrains(std::span<PreparedViewGeometry> Geometry, SDL_GPUCommandBuffer* Commands);
+        void ReleaseStaticTerrains();
+
         EngineKernel& Kernel_;
         bool RenderFailureReported_ = false;
         PreparedViewGeometry FrameHud_;
@@ -246,6 +271,14 @@ namespace dbc
         std::array<int, 3> GammaLevels_{255, 255, 255};
         bool MipmapModeOverride_ = false;
         int MipmapMode_ = 2;
+        std::unordered_map<int, StaticTerrain> StaticTerrains_;
+        SDL_GPUBuffer* TerrainIndexBuffer_ = nullptr;
+        Uint32 TerrainIndexCapacity_ = 0;
+        SDL_GPUBuffer* TerrainInstanceBuffer_ = nullptr;
+        bool TerrainInstanceUploaded_ = false;
+        SDL_GPUTransferBuffer* TerrainTransfer_ = nullptr;
+        Uint32 TerrainTransferCapacity_ = 0;
+        std::size_t LastStaticTerrainTriangles_ = 0;
     };
 
 } // namespace dbc

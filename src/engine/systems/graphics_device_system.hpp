@@ -104,6 +104,16 @@ namespace dbc
         [[nodiscard]] SDL_GPUGraphicsPipeline* SurfacePipeline(bool Transparent, bool AlphaDepthWrite, bool Additive,
                                                                bool Wireframe, bool DepthTest, bool DepthWrite,
                                                                bool StencilTest = false) const;
+        // Opaque, back-face culled pipeline for static world-space terrain buffers.
+        [[nodiscard]] SDL_GPUGraphicsPipeline* TerrainPipeline(bool Wireframe) const
+        {
+            return GpuTerrainPipelines_[Wireframe ? 1 : 0];
+        }
+        // Depth-only variant for the shadow depth pass.
+        [[nodiscard]] SDL_GPUGraphicsPipeline* TerrainDepthPipeline() const
+        {
+            return GpuTerrainPipelines_[2];
+        }
         [[nodiscard]] SDL_GPUGraphicsPipeline* ReflectionMaskPipeline() const
         {
             return GpuReflectionMaskPipeline_;
@@ -251,6 +261,7 @@ namespace dbc
         SDL_GPUGraphicsPipeline* GpuShadowVolumePipeline_ = nullptr;
         SDL_GPUGraphicsPipeline* GpuShadowOverlayPipeline_ = nullptr;
         std::array<SDL_GPUGraphicsPipeline*, 2> GpuSurfaceOpaqueNoDepthPipelines_{};
+        std::array<SDL_GPUGraphicsPipeline*, 3> GpuTerrainPipelines_{};
         std::array<SDL_GPUGraphicsPipeline*, 48> GpuSurfaceDepthPipelines_{};
         std::array<SDL_GPUGraphicsPipeline*, 80> GpuSurfaceGhostPipelines_{};
         SDL_GPUSampler* GpuSampler_ = nullptr;

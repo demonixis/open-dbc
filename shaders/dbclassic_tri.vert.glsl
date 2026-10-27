@@ -24,10 +24,16 @@ layout(set = 1, binding = 0, std140) uniform VertexUniforms {
     mat4 ViewProj;
 } ubo;
 
+// Identity for geometry already in view space; the world-to-view matrix for static world-space meshes.
+layout(set = 1, binding = 1, std140) uniform ModelUniforms {
+    mat4 ModelView;
+} model;
+
 void main() {
-    gl_Position = ubo.ViewProj * vec4(in_pos, 1.0);
-    out_view_pos = in_pos;
-    out_normal = in_normal;
+    vec4 view_pos = model.ModelView * vec4(in_pos, 1.0);
+    gl_Position = ubo.ViewProj * view_pos;
+    out_view_pos = view_pos.xyz;
+    out_normal = mat3(model.ModelView) * in_normal;
     out_uv = in_uv;
     out_color = in_color;
     out_box_tr = in_box_tr;
