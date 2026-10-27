@@ -75,5 +75,6 @@ examples/dbpro/tutorials/sound/sound1.dba.dbpro	dbpro	90	0.50	105
 examples/dbpro/tutorials/sprite/sprite1.dba.dbpro	dbpro	90	0.20	287
 examples/dbpro/tutorials/system/system1.dba.dbpro	dbpro	90	0.50	33
 examples/dbpro/tutorials/text/text1.dba.dbpro	dbpro	90	0.49	29
+examples/dbpro/tutorials/world/world1.dba.dbpro	dbpro	400	0.50	120
 examples/dbpro/tutorials/world/world2.dba.dbpro	dbpro	90	0.50	116
 examples/open-dbc/maze_runner/maze_runner.dba	dbpro	90	0.50	82

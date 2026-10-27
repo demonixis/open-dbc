@@ -41,47 +41,10 @@ Publication:
 
 ## DBPro BSP worlds
 
-Goal: `examples/dbpro/tutorials/world/world1.dba` runs with its level and camera
-collision. Behaviour follows the MIT DBPro sources (`Shared/Q3BSP/CBSPFile.cpp`
-dispatch, `Shared/CustomBSP/`).
+DBPro's own BSP format, its drawing and collision are done ([bsp.md](bsp.md)).
 
-Decisions:
-
-- `ikzdm1.BSP` is the snapshot file, byte for byte, in DBPro's own BSP format
-  (nodes, planes, leaves with polygon ranges, run-length PVS, 21-byte texture
-  names). The tutorial needs no Quake map, pk3 or replacement asset.
-- `LOAD BSP` keeps DBPro's order: Quake 3, Quake 1/2, own format, each tried with
-  the given name then inside the pk3's folder. OpenDBC reads the own format; a
-  Quake file fails with a runtime error naming its format.
-- Texture names keep their `.bmp` spelling; a missing file falls back to the
-  converted media with the same stem next to the map.
-- The world draws with the lit object pipeline (white material, wrapped linear
-  sampling). Each frame the leaf of the BSP camera (`SET BSP CAMERA`, default 0)
-  selects the PVS leaves, culled by the rendering camera's frustum; a BSP camera
-  in solid space draws nothing, as in DBPro.
-- Collision indices 1-24 (others raise DBPro's error) bind a camera or object to
-  an ellipsoid: radius r gives (r, 2r, r), the `RADIUS` forms give x, y, z.
-  Response 0 slides, 1 returns to the last free position; the height adjustment
-  offsets the centre. Collisions resolve at `SYNC` before drawing or on
-  `PROCESS BSP COLLISION`; start positions are captured after the frame.
-- The solver sweeps the ellipsoid against every triangle with at most 5 slide
-  steps and a 0.001 skin: DBPro's contract, not its numerical quirks.
-  `BSP COLLISION HIT` reads and clears; `BSP COLLISION X/Y/Z` return the resolved
-  minus the requested position.
-- `SET BSP COLLISION THRESHHOLD` is the minimum residual move (Quake 3 meaning);
-  the own-format default stays 0.003.
-- Collision commands do nothing while no world is loaded, as in DBPro.
-- `SET BSP MULTITEXTURING ON/OFF` only drive Quake 1/2 lightmaps in DBPro; they
-  stay unsupported until such a format is read.
-
-Remaining work:
-
-- [ ] Camera and object collision commands and functions, with solver unit tests;
-  `world1` lands on the floor (camera y about -30.5).
-- [ ] Qualification: `world1` verified in `dbpro_demo_expectations.tsv`, the corpus
-  expectations and `qualify_dbpro_examples.py`, with a frame row.
-- [ ] Later: Quake 3 maps from pk3 (zip reader, CC0 test map), Quake 1/2 maps with
-  lightmaps and multitexturing.
+- [ ] Quake 3 maps from pk3 archives: zip reader, shaders, patches, CC0 test map.
+- [ ] Quake 1/2 maps with lightmaps, then `SET BSP MULTITEXTURING ON/OFF`.
 
 ## Towards 1.0
 

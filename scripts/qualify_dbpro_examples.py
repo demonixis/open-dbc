@@ -28,7 +28,6 @@ FIXED_DISPOSITIONS = {
     "display1": "Never",
     "ftp1": "Never",
     "multiplayer1": "Deferred",
-    "world1": "Study",
 }
 REQUIRED_COLUMNS = (
     "demo", "descriptor", "entry", "disposition", "expected_stage", "expected_diagnostics",

@@ -41,7 +41,7 @@ ctest --preset default
 
 <!-- BEGIN GENERATED COMPATIBILITY METRICS -->
 - BASIC execution goldens: **74**.
-- Full corpus expectations: **92** sources, including **81** that reach verified bytecode.
+- Full corpus expectations: **92** sources, including **82** that reach verified bytecode.
 - Observable implemented-overload contracts: **1615**.
 <!-- END GENERATED COMPATIBILITY METRICS -->
 
@@ -53,6 +53,7 @@ ctest --preset default
 | Code layout, language pipeline, compatibility rules, tests | [docs/architecture.md](docs/architecture.md) |
 | Commands and their support state, per profile | [docs/reference/](docs/reference/) |
 | Desktop VR | [docs/vr.md](docs/vr.md) |
+| DBPro BSP worlds | [docs/bsp.md](docs/bsp.md) |
 | Example programs | [examples/README.md](examples/README.md) |
 | Contributing | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 | Remaining work | [docs/roadmap.md](docs/roadmap.md) |
