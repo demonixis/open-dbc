@@ -9,6 +9,7 @@
 #include "engine/systems/log.hpp"
 #include "engine/systems/renderer_system.hpp"
 #include "engine/systems/vr_system.hpp"
+#include "program_image.hpp"
 #include "runtime_startup.hpp"
 
 #include <algorithm>
@@ -18,11 +19,13 @@
 #include <charconv>
 #include <chrono>
 #include <csignal>
+#include <cstdint>
 #include <cstdio>
 #include <cwctype>
 #include <exception>
 #include <limits>
 #include <set>
+#include <span>
 #include <sstream>
 #include <thread>
 #include <utility>
@@ -51,9 +54,10 @@ namespace dbc::interpreter
             "Usage:\n"
             "  opendbc                              Open the Studio\n"
             "  opendbc studio [file-or-directory]   Open the Studio explicitly\n"
-            "  opendbc run <source.dba|project.dbpro> [--dialect <dbc|dbpro>] [options]\n"
+            "  opendbc run <source.dba|project.dbpro|program.obc> [--dialect <dbc|dbpro>] [options]\n"
             "  opendbc check <source.dba|project.dbpro> [--dialect <dbc|dbpro>]\n"
             "  opendbc inspect <source.dba|project.dbpro> [--json] [--dialect <dbc|dbpro>]\n"
+            "  opendbc build <source.dba|project.dbpro> [--dialect <dbc|dbpro>] --output <program.obc>\n"
             "  opendbc export <source.dba|project.dbpro> --dialect <dbc|dbpro>\n"
             "                 --target <desktop|ios|ios-simulator|android-apk|android-aab>\n"
             "                 --output <directory> [--unsigned]\n"
@@ -486,10 +490,52 @@ namespace dbc::interpreter
             return ResolveProject(Request);
         }
 
+        DiskRequestResult MakeImageRequest(const CommandLine& Command)
+        {
+            std::size_t Size = 0;
+            void* Bytes = SDL_LoadFile(Command.Path->string().c_str(), &Size);
+            if (Bytes == nullptr)
+                return {{}, {}, "Failed to read program image '" + Command.Path->string() + "'"};
+            const ProgramImageReadResult Read =
+                ReadProgramImage(std::span<const std::uint8_t>(static_cast<const std::uint8_t*>(Bytes), Size));
+            SDL_free(Bytes);
+            if (!Read.Image)
+                return {{}, {}, Command.Path->string() + ": " + Read.Error};
+            const language::LanguageProfile Profile = Read.Image->Bytecode->Profile;
+            if (Command.RequestedProfile && *Command.RequestedProfile != Profile)
+                return {{}, {}, Command.Path->string() + " was built for " + std::string(language::ProfileName(Profile))};
+
+            ResolvedProject Project;
+            Project.InputKind = ProjectInputKind::Source;
+            Project.Profile = Profile;
+            Project.InputPath = std::filesystem::absolute(*Command.Path).lexically_normal();
+            Project.ProjectRoot = Project.InputPath.parent_path();
+            Project.EntrySource = Project.InputPath;
+            Project.AssetRoot = Project.ProjectRoot;
+            Project.Startup = Read.Image->Startup;
+
+            ExecutionRequest Request;
+            Request.RootLogicalPath = Project.InputPath;
+            Request.Profile = Profile;
+            Request.InputKind = "program-image";
+            Request.Bytecode = Read.Image->Bytecode;
+            Request.Options = Command.Execution;
+            if (Request.Options.AssetRoot.empty())
+                Request.Options.AssetRoot = Project.AssetRoot;
+            Request.Options.CommandLine = Command.CommandLineOverride.value_or(Project.Startup.CommandLine);
+            return {std::move(Request), std::move(Project), {}};
+        }
+
         DiskRequestResult MakeDiskRequest(const CommandLine& Command, const CommandLineEnvironment& Environment)
         {
             if (!Command.Path)
                 return {{}, {}, "Missing source path"};
+            if (IsProgramImagePath(*Command.Path))
+            {
+                if (Command.Action != CommandLineAction::Run)
+                    return {{}, {}, "Only run accepts a program image: " + Command.Path->string()};
+                return MakeImageRequest(Command);
+            }
             ProjectResolveResult Resolved = ResolveCommandProject(Command, Environment);
             if (!Resolved)
                 return {{}, {}, std::move(Resolved.Error)};
@@ -635,6 +681,36 @@ namespace dbc::interpreter
                 }
             }
             Write(Environment.StandardOutput, stdout, Output.str());
+            return Exit(CommandLineExitCode::Success);
+        }
+
+        int DispatchBuild(const CommandLine& Command, const CommandLineEnvironment& Environment)
+        {
+            DiskRequestResult Loaded = MakeDiskRequest(Command, Environment);
+            if (!Loaded.Request)
+            {
+                Write(Environment.StandardError, stderr, Loaded.Error + "\n");
+                return Exit(CommandLineExitCode::Target);
+            }
+            for (const std::string& Blocker : Loaded.Project->RunBlockers)
+            {
+                Write(Environment.StandardError, stderr, "DBPro project option blocks execution: " + Blocker + "\n");
+                return Exit(CommandLineExitCode::Target);
+            }
+            const ProgramBuild Build = BuildProgram(std::move(*Loaded.Request));
+            WriteDiagnostics(Build.Diagnostics, Environment);
+            if (!Build.Bytecode)
+                return Exit(CommandLineExitCode::Source);
+            const std::vector<std::uint8_t> Image =
+                WriteProgramImage(*Build.Bytecode, Loaded.Project->Startup, Loaded.Project->ProjectRoot);
+            std::string Error;
+            if (!AtomicWriteText(Command.ExportOutput,
+                                 std::string_view(reinterpret_cast<const char*>(Image.data()), Image.size()), &Error))
+            {
+                Write(Environment.StandardError, stderr,
+                      "Failed to write program image '" + Command.ExportOutput.string() + "': " + Error + "\n");
+                return Exit(CommandLineExitCode::Target);
+            }
             return Exit(CommandLineExitCode::Success);
         }
 
@@ -879,6 +955,11 @@ namespace dbc::interpreter
                 Command.Action = CommandLineAction::Inspect;
                 ++Index;
             }
+            else if (First == "build")
+            {
+                Command.Action = CommandLineAction::Build;
+                ++Index;
+            }
             else if (First == "export")
             {
                 Command.Action = CommandLineAction::Export;
@@ -1062,7 +1143,8 @@ namespace dbc::interpreter
             return Result;
         }
         if ((Command.Action == CommandLineAction::Run || Command.Action == CommandLineAction::Check ||
-             Command.Action == CommandLineAction::Inspect || Command.Action == CommandLineAction::Export) &&
+             Command.Action == CommandLineAction::Inspect || Command.Action == CommandLineAction::Build ||
+             Command.Action == CommandLineAction::Export) &&
             !Command.Path)
         {
             Result.Error = "Missing source path";
@@ -1083,9 +1165,22 @@ namespace dbc::interpreter
                 return Result;
             }
         }
+        else if (Command.Action == CommandLineAction::Build)
+        {
+            if (!IsProgramImagePath(Command.ExportOutput))
+            {
+                Result.Error = "Build requires --output <program" + std::string(ProgramImageExtension) + ">";
+                return Result;
+            }
+            if (!Command.ExportTarget.empty())
+            {
+                Result.Error = "--target is only valid with export";
+                return Result;
+            }
+        }
         else if (!Command.ExportTarget.empty() || !Command.ExportOutput.empty())
         {
-            Result.Error = "--target and --output are only valid with export";
+            Result.Error = "--target is only valid with export, --output with build or export";
             return Result;
         }
         Result.Command = std::move(Command);
@@ -1105,6 +1200,8 @@ namespace dbc::interpreter
                 return Environment.LaunchStudio(Command);
             case CommandLineAction::Run:
                 return DispatchRun(Command, Environment);
+            case CommandLineAction::Build:
+                return DispatchBuild(Command, Environment);
             case CommandLineAction::Check:
             case CommandLineAction::Inspect:
                 return DispatchAnalysis(Command, Environment);

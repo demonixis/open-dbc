@@ -24,6 +24,9 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 - The VM never reparses text and has no engine dependency; the builtin bridge is
   the only layer that knows both VM values and engine calls.
 - `SYNC` and waits yield, so the Studio stays responsive and can stop a program.
+- A program image (`.obc`, `src/interpreter/program_image.cpp`) stores the
+  bytecode and project startup under the runtime fingerprint; loading it checks
+  the container, then the verifier runs as for freshly compiled bytecode.
 - `ExecutionService` turns the profile into one immutable
   `RuntimeCompatibilityPolicy`. Engine systems read that policy, never a file
   name or dialect string. Each run starts from a fresh policy.

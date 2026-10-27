@@ -14,6 +14,11 @@
 #include <string_view>
 #include <vector>
 
+namespace dbc::vm
+{
+    struct Module;
+}
+
 namespace dbc
 {
     class EngineKernel;
@@ -56,6 +61,8 @@ namespace dbc
             ExecutionOptions Options{};
             MissingSourceLoader LoadMissingSource{};
             std::optional<std::filesystem::path> ConfinedSourceRoot{};
+            // Bytecode from a program image replaces Sources; Prepare still verifies it.
+            std::shared_ptr<const vm::Module> Bytecode{};
         };
 
         enum class DiagnosticStage : std::uint8_t
@@ -178,6 +185,12 @@ namespace dbc
             bool Success() const;
         };
 
+        struct ProgramBuild
+        {
+            std::shared_ptr<vm::Module> Bytecode{};
+            std::vector<ExecutionDiagnostic> Diagnostics{};
+        };
+
         class ExecutionService
         {
           public:
@@ -206,5 +219,8 @@ namespace dbc
         std::optional<SourceUnit> LoadSourceUnitFromDisk(const std::filesystem::path& LogicalPath,
                                                          language::LanguageProfile Profile, std::string& Error);
         SourceAnalysis AnalyzeSources(ExecutionRequest Request);
+        // Compiles and verifies the sources of Request; Bytecode is null when a diagnostic is an error.
+        ProgramBuild BuildProgram(ExecutionRequest Request);
+        std::vector<ExecutionDiagnostic> VerifyBytecode(const vm::Module& Bytecode);
     } // namespace interpreter
 } // namespace dbc

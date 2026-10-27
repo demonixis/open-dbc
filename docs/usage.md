@@ -5,13 +5,21 @@
 ```text
 opendbc                                   open the Studio
 opendbc studio [file-or-directory]
-opendbc run     <source.dba|project.dbpro> [--dialect dbc|dbpro] [options]
+opendbc run     <source.dba|project.dbpro|program.obc> [--dialect dbc|dbpro] [options]
 opendbc check   <source.dba|project.dbpro> [--dialect dbc|dbpro]
 opendbc inspect <source.dba|project.dbpro> [--json] [--dialect dbc|dbpro]
+opendbc build   <source.dba|project.dbpro> [--dialect dbc|dbpro] --output <program.obc>
 opendbc export  <source.dba|project.dbpro> --dialect dbc|dbpro --target <target> --output <dir> [--unsigned]
 ```
 
 `check` and `inspect` never open a window. `opendbc --help` lists every option.
+
+`build` writes a program image: verified bytecode, the project's startup settings
+and source lines for run-time errors, with paths relative to the project. `run`
+verifies the image again and runs it without sources; assets resolve from the
+image's directory unless `--asset-root` says otherwise. An image only loads into
+the OpenDBC build that produced it (same runtime fingerprint); rebuild it after
+an update.
 
 | `run` option | Effect |
 | --- | --- |

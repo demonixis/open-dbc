@@ -63,8 +63,6 @@ Decisions:
 
 Work:
 
-- [ ] Versioned bytecode files bound to the runtime fingerprint, keeping line
-  information for run-time errors, verified at load.
 - [ ] `opendbc-runner` target without the BASIC frontend, ImGui or SDL_shadercross.
 - [ ] Desktop, iOS and Android exports use the runner as host and ship bytecode.
 - [ ] Studio packaging with the runner: nested macOS bundle signed inside out,

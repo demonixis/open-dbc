@@ -617,6 +617,79 @@ namespace dbc::interpreter
         }
     };
 
+    namespace
+    {
+        bool HasErrors(const std::vector<ExecutionDiagnostic>& Values)
+        {
+            return std::any_of(Values.begin(), Values.end(), [](const ExecutionDiagnostic& Value)
+                               { return Value.Severity == language::DiagnosticSeverity::Error; });
+        }
+
+        struct CompiledProgram
+        {
+            SourceInspection Inspection{};
+            std::shared_ptr<vm::Module> Bytecode{};
+            std::vector<ExecutionDiagnostic> Diagnostics{};
+        };
+
+        // Frontend, lowering and verification; Bytecode is set only when every stage succeeded.
+        CompiledProgram CompileProgram(ExecutionRequest& Request)
+        {
+            FrontendResult Frontend = CompileFrontend(Request);
+            CompiledProgram Result{std::move(Frontend.Inspection), {}, std::move(Frontend.Diagnostics)};
+            if (HasErrors(Result.Diagnostics))
+                return Result;
+
+            vm::CompileResult Compiled = vm::Lower(Frontend.Program);
+            if (!Compiled.Success())
+            {
+                std::vector<ExecutionDiagnostic> Diagnostics =
+                    ConvertDiagnostics(Compiled.Diagnostics, DiagnosticStage::Compiler);
+                Result.Diagnostics.insert(Result.Diagnostics.end(), std::make_move_iterator(Diagnostics.begin()),
+                                          std::make_move_iterator(Diagnostics.end()));
+                return Result;
+            }
+            std::vector<ExecutionDiagnostic> Diagnostics = VerifyBytecode(*Compiled.Bytecode);
+            const bool Verified = !HasErrors(Diagnostics);
+            Result.Diagnostics.insert(Result.Diagnostics.end(), std::make_move_iterator(Diagnostics.begin()),
+                                      std::make_move_iterator(Diagnostics.end()));
+            if (Verified)
+                Result.Bytecode = std::move(Compiled.Bytecode);
+            return Result;
+        }
+
+        bool UsesVr(const vm::Module& Bytecode)
+        {
+            for (const vm::Function& Function : Bytecode.Functions)
+                for (const vm::Instruction& Instruction : Function.Code)
+                {
+                    if (Instruction.Op != vm::OpCode::CallBuiltin && Instruction.Op != vm::OpCode::CallBuiltinArray)
+                        continue;
+                    switch (static_cast<language::SymbolId>(Instruction.A))
+                    {
+                        case language::SymbolId::Command_SetVrEnabled:
+                        case language::SymbolId::Command_SetTrackingSpace:
+                        case language::SymbolId::Command_RecenterVrCamera:
+                        case language::SymbolId::Command_GetVrControllerPosition:
+                        case language::SymbolId::Command_GetVrControllerRotation:
+                        case language::SymbolId::Command_GetVrHeadPosition:
+                        case language::SymbolId::Command_GetVrRotation:
+                        case language::SymbolId::Function_IsVrControllerTracked:
+                        case language::SymbolId::Function_IsVrHeadTracked:
+                        case language::SymbolId::Function_IsVrSupported:
+                        case language::SymbolId::Function_IsVrEnabled:
+                        case language::SymbolId::Command_SetVrPreviewMode:
+                        case language::SymbolId::Command_SetVrCameraHeight:
+                        case language::SymbolId::Function_GetVrCameraHeight:
+                            return true;
+                        default:
+                            break;
+                    }
+                }
+            return false;
+        }
+    } // namespace
+
     bool ExecutionResult::Success() const
     {
         return State == ExecutionState::Completed;
@@ -659,68 +732,25 @@ namespace dbc::interpreter
         Impl_->FrameCount = 0;
         Impl_->StopRequested.store(false, std::memory_order_release);
 
-        FrontendResult Frontend = CompileFrontend(Impl_->Request);
-        const bool FrontendFailed =
-            std::any_of(Frontend.Diagnostics.begin(), Frontend.Diagnostics.end(), [](const ExecutionDiagnostic& Value)
-                        { return Value.Severity == language::DiagnosticSeverity::Error; });
-        Impl_->Result.Diagnostics = std::move(Frontend.Diagnostics);
-        if (FrontendFailed)
+        std::shared_ptr<const vm::Module> Bytecode = std::move(Impl_->Request.Bytecode);
+        if (Bytecode)
+        {
+            Impl_->Result.Diagnostics = VerifyBytecode(*Bytecode);
+        }
+        else
+        {
+            CompiledProgram Compiled = CompileProgram(Impl_->Request);
+            Impl_->Result.Diagnostics = std::move(Compiled.Diagnostics);
+            Bytecode = std::move(Compiled.Bytecode);
+        }
+        if (!Bytecode || HasErrors(Impl_->Result.Diagnostics))
         {
             Impl_->Result.State = ExecutionState::Failed;
             Impl_->FinishBenchmark();
             return false;
         }
 
-        vm::CompileResult Compiled = vm::Lower(Frontend.Program);
-        if (!Compiled.Success())
-        {
-            Impl_->Result.State = ExecutionState::Failed;
-            std::vector<ExecutionDiagnostic> Diagnostics =
-                ConvertDiagnostics(Compiled.Diagnostics, DiagnosticStage::Compiler);
-            Impl_->Result.Diagnostics.insert(Impl_->Result.Diagnostics.end(),
-                                             std::make_move_iterator(Diagnostics.begin()),
-                                             std::make_move_iterator(Diagnostics.end()));
-            Impl_->FinishBenchmark();
-            return false;
-        }
-        const vm::VerificationResult Verification = vm::Verify(*Compiled.Bytecode);
-        if (!Verification.Success())
-        {
-            Impl_->Result.State = ExecutionState::Failed;
-            std::vector<ExecutionDiagnostic> Diagnostics =
-                ConvertDiagnostics(Verification.Diagnostics, DiagnosticStage::Verifier);
-            Impl_->Result.Diagnostics.insert(Impl_->Result.Diagnostics.end(),
-                                             std::make_move_iterator(Diagnostics.begin()),
-                                             std::make_move_iterator(Diagnostics.end()));
-            Impl_->FinishBenchmark();
-            return false;
-        }
-
-        const bool RequiresVr =
-            std::any_of(Frontend.Inspection.BuiltinOverloads.begin(), Frontend.Inspection.BuiltinOverloads.end(),
-                        [](const SourceInspection::BuiltinUse& Use)
-                        {
-                            switch (Use.Symbol)
-                            {
-                                case language::SymbolId::Command_SetVrEnabled:
-                                case language::SymbolId::Command_SetTrackingSpace:
-                                case language::SymbolId::Command_RecenterVrCamera:
-                                case language::SymbolId::Command_GetVrControllerPosition:
-                                case language::SymbolId::Command_GetVrControllerRotation:
-                                case language::SymbolId::Command_GetVrHeadPosition:
-                                case language::SymbolId::Command_GetVrRotation:
-                                case language::SymbolId::Function_IsVrControllerTracked:
-                                case language::SymbolId::Function_IsVrHeadTracked:
-                                case language::SymbolId::Function_IsVrSupported:
-                                case language::SymbolId::Function_IsVrEnabled:
-                                case language::SymbolId::Command_SetVrPreviewMode:
-                                case language::SymbolId::Command_SetVrCameraHeight:
-                                case language::SymbolId::Function_GetVrCameraHeight:
-                                    return true;
-                                default:
-                                    return false;
-                            }
-                        });
+        const bool RequiresVr = UsesVr(*Bytecode);
         std::string CapabilityError;
         if (!Impl_->Kernel.Vr().Configure(RequiresVr, &CapabilityError))
         {
@@ -762,7 +792,7 @@ namespace dbc::interpreter
                                                ? Impl_->Request.Options.PresentExitPrompt
                                                : ExitPromptPresenter(PresentExitPromptWithSdl);
         Impl_->Host = std::make_unique<detail::EngineBuiltinHost>(Impl_->Context);
-        if (!Impl_->Session.Prepare(std::move(Compiled.Bytecode), *Impl_->Host,
+        if (!Impl_->Session.Prepare(std::move(Bytecode), *Impl_->Host,
                                     !Impl_->Request.Options.BuiltinCoverageOutputPath.empty()))
         {
             Impl_->Result.State = ExecutionState::Failed;
@@ -892,29 +922,21 @@ namespace dbc::interpreter
 
     SourceAnalysis AnalyzeSources(ExecutionRequest Request)
     {
-        FrontendResult Frontend = CompileFrontend(Request);
-        SourceAnalysis Result{std::move(Frontend.Inspection), std::move(Frontend.Diagnostics)};
-        if (!Result.Success())
-            return Result;
+        CompiledProgram Compiled = CompileProgram(Request);
+        return {std::move(Compiled.Inspection), std::move(Compiled.Diagnostics)};
+    }
 
-        vm::CompileResult Compiled = vm::Lower(Frontend.Program);
-        if (!Compiled.Success())
-        {
-            std::vector<ExecutionDiagnostic> Diagnostics =
-                ConvertDiagnostics(Compiled.Diagnostics, DiagnosticStage::Compiler);
-            Result.Diagnostics.insert(Result.Diagnostics.end(), std::make_move_iterator(Diagnostics.begin()),
-                                      std::make_move_iterator(Diagnostics.end()));
-            return Result;
-        }
-
-        const vm::VerificationResult Verification = vm::Verify(*Compiled.Bytecode);
-        if (!Verification.Success())
-        {
-            std::vector<ExecutionDiagnostic> Diagnostics =
-                ConvertDiagnostics(Verification.Diagnostics, DiagnosticStage::Verifier);
-            Result.Diagnostics.insert(Result.Diagnostics.end(), std::make_move_iterator(Diagnostics.begin()),
-                                      std::make_move_iterator(Diagnostics.end()));
-        }
+    ProgramBuild BuildProgram(ExecutionRequest Request)
+    {
+        CompiledProgram Compiled = CompileProgram(Request);
+        ProgramBuild Result{std::move(Compiled.Bytecode), std::move(Compiled.Diagnostics)};
+        if (HasErrors(Result.Diagnostics))
+            Result.Bytecode.reset();
         return Result;
+    }
+
+    std::vector<ExecutionDiagnostic> VerifyBytecode(const vm::Module& Bytecode)
+    {
+        return ConvertDiagnostics(vm::Verify(Bytecode).Diagnostics, DiagnosticStage::Verifier);
     }
 } // namespace dbc::interpreter

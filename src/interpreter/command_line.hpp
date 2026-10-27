@@ -28,6 +28,7 @@ namespace dbc::interpreter
         Run,
         Check,
         Inspect,
+        Build,
         Export,
     };
 

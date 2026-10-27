@@ -105,6 +105,10 @@ add_executable(test_command_line test_command_line.cpp)
 target_link_libraries(test_command_line PRIVATE doctest_with_main dbc_interpreter)
 doctest_discover_tests(test_command_line PROPERTIES LABELS "unit-cli")
 
+add_executable(test_program_image test_program_image.cpp)
+target_link_libraries(test_program_image PRIVATE doctest_with_main dbc_interpreter)
+doctest_discover_tests(test_program_image PROPERTIES LABELS "unit-cli" RESOURCE_LOCK "opendbc_runtime")
+
 add_executable(test_project_resolver test_project_resolver.cpp)
 target_link_libraries(test_project_resolver PRIVATE doctest_with_main dbc_interpreter)
 doctest_discover_tests(test_project_resolver PROPERTIES LABELS "unit-cli;unit-language")
