@@ -1,0 +1,28 @@
+rem Test comma-separated GLOBAL and LOCAL declarations in DBPro mode
+sync on : sync rate 0
+
+global a, b
+a = 1 : b = 2
+global c as integer, d# as float, e$ as string
+c = 3 : d# = 4.5 : e$ = "six"
+global f as integer, g as integer = 7
+
+ShowGlobals()
+print "LOCALS="; ShowLocals(10)
+print "A_AFTER="; a
+
+print "TEST_DONE"
+sync
+end
+
+function ShowGlobals()
+    print "A="; a; " B="; b
+    print "C="; c; " D="; d#; " E="; e$
+    print "F="; f; " G="; g
+endfunction
+
+function ShowLocals(n)
+    local a, total as integer
+    a = n
+    total = a * 2
+endfunction total

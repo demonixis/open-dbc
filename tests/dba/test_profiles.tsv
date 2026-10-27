@@ -23,6 +23,7 @@ test_dbpro_input.dba	dbpro
 test_dbpro_file_memblock.dba	dbpro
 test_dbpro_dim_as.dba	dbpro
 test_dbpro_global.dba	dbpro
+test_dbpro_global_list.dba	dbpro
 test_dbpro_grammar.dba	dbpro
 test_dbpro_local.dba	dbpro
 test_dbpro_local_recursive.dba	dbpro
