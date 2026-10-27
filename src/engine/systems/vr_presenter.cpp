@@ -3,7 +3,6 @@
 #include "engine_kernel.hpp"
 #include "gpu_command_buffer.hpp"
 #include "graphics_device_system.hpp"
-#include "image_store.hpp"
 #include "log.hpp"
 #include "renderer_system.hpp"
 #include <limits>
@@ -104,12 +103,8 @@ namespace dbc
         if (auto It = Pipelines_.find(Format); It != Pipelines_.end())
             return It->second;
         auto& Gpu = Kernel_.Gpu();
-        std::string VertexPath, FragmentPath, Error;
-        if (!ImageStore::ResolveAssetPath(VertexPath, "shaders/vr_transfer.vert.spv", &Error) ||
-            !ImageStore::ResolveAssetPath(FragmentPath, "shaders/vr_transfer.frag.spv", &Error))
-            return nullptr;
-        auto* Vertex = Gpu.CreateGpuShaderFromSpirv(VertexPath, SDL_GPU_SHADERSTAGE_VERTEX, 0, 0);
-        auto* Fragment = Gpu.CreateGpuShaderFromSpirv(FragmentPath, SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 1);
+        auto* Vertex = Gpu.CreateEngineShader("vr_transfer", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0);
+        auto* Fragment = Gpu.CreateEngineShader("vr_transfer", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 1);
         SDL_GPUGraphicsPipeline* Pipeline = nullptr;
         if (Vertex && Fragment)
         {

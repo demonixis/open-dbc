@@ -66,8 +66,9 @@ namespace
         const fs::path HostShaders = Host.parent_path() / "shaders";
         fs::create_directories(ProductShaders);
         fs::create_directories(HostShaders);
-        for (const std::string_view Name : {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv",
-                                             "vr_transfer.vert.spv", "vr_transfer.frag.spv"})
+        for (const std::string_view Name :
+             {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
+              "vr_transfer.vert.spv", "vr_transfer.frag.spv", "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
         {
             fs::copy_file(SourceShaders / Name, ProductShaders / Name, fs::copy_options::overwrite_existing);
             fs::copy_file(SourceShaders / Name, HostShaders / Name, fs::copy_options::overwrite_existing);
@@ -713,7 +714,7 @@ TEST_CASE("artifact SHA-256 matches the standard abc vector")
           "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
 }
 
-TEST_CASE("artifact host shader validation rejects missing or changed SPIR-V")
+TEST_CASE("artifact host shader validation rejects missing or changed shaders")
 {
     TemporaryDirectory Directory("opendbc-artifact-shaders");
     const fs::path Product = fs::path(OPENDBC_TEST_SOURCE_DIR) / "shaders";
@@ -725,7 +726,15 @@ TEST_CASE("artifact host shader validation rejects missing or changed SPIR-V")
     CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
     fs::copy_file(Product / "vr_transfer.vert.spv", Host / "vr_transfer.vert.spv");
     fs::copy_file(Product / "vr_transfer.frag.spv", Host / "vr_transfer.frag.spv");
+    CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
+    for (const std::string_view Name :
+         {"dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl", "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
+        fs::copy_file(Product / Name, Host / Name);
     REQUIRE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
+    Write(Host / "dbclassic_tri.vert.msl", "changed");
+    CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
+    fs::copy_file(Product / "dbclassic_tri.vert.msl", Host / "dbclassic_tri.vert.msl",
+                  fs::copy_options::overwrite_existing);
     Write(Host / "vr_transfer.frag.spv", "changed");
     CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
     fs::copy_file(Product / "vr_transfer.frag.spv", Host / "vr_transfer.frag.spv", fs::copy_options::overwrite_existing);

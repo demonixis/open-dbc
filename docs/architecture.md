@@ -7,7 +7,7 @@ src/language/    profiles, lexer, parser, typed binder, catalogue (no engine, SD
 src/vm/          verified bytecode and cooperative VM
 src/interpreter/ typed bridge from VM builtins to the engine
 src/engine/      SDL_GPU renderer and runtime systems
-shaders/         GLSL 450 sources and their tracked SPIR-V
+shaders/         HLSL sources and their tracked SPIR-V and MSL
 tools/studio/    the opendbc Studio and CLI
 examples/        BASIC examples (see examples/README.md)
 tests/           unit tests, BASIC goldens, qualification manifests
@@ -51,9 +51,11 @@ the historical profiles ([vr.md](vr.md)). Anything else new waits for the future
 
 `EngineKernel` owns audio, cameras, window, diagnostics, 2D, files, GPU device,
 images, input, lights, matrices, DBPro BSP worlds, memblocks, objects, physics
-(Jolt for the ODE core), renderer, sprites, text and VR. Engine shaders are GLSL compiled to SPIR-V
-(converted to Metal on Apple platforms); `cmake --preset shader-verify` checks
-the tracked binaries byte for byte. There is no video playback and no FFmpeg.
+(Jolt for the ODE core), renderer, sprites, text and VR. Engine shaders are HLSL
+that the pinned DXC compiles to SPIR-V, then SDL_shadercross to MSL; the engine
+loads whichever the GPU device accepts. After `cmake --preset shader-verify`, the
+`shader-verify` build preset checks the tracked files byte for byte and
+`shader-update` regenerates them. There is no video playback and no FFmpeg.
 
 Most 3D geometry is transformed on the CPU into view-space triangles, rebuilt
 only when the camera or an object changes. Terrains are uploaded once as static

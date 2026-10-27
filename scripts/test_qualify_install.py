@@ -15,7 +15,7 @@ class InstalledShaderTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix="opendbc-install-shaders-")
         self.addCleanup(self.temporary.cleanup)
         self.resources = Path(self.temporary.name) / "OpenDBC installed product"
-        self.shaders = sorted((qualify_install.ROOT / "shaders").glob("*.spv"))
+        self.shaders = [qualify_install.ROOT / "shaders" / name for name in qualify_install.SHADER_NAMES]
 
     def write(self, relative: str, content: str = "") -> None:
         path = self.resources / relative

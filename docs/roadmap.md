@@ -58,15 +58,13 @@ Decisions:
 - Exports contain verified bytecode, shaders in the target backend's format and
   assets as they are, never sources. Assets keep their formats because programs
   build file names at run time.
-- Engine shaders move from GLSL to HLSL, compiled by the pinned DXC like effects.
+- Engine shaders are HLSL, compiled by the pinned DXC like effects.
 - Metal shaders ship as MSL source; the engine no longer transpiles SPIR-V at run time.
 
 Work:
 
-- [ ] Engine shaders in HLSL: DXC to SPIR-V, then MSL, tracked and checked by
-  `shader-verify` instead of glslang.
-- [ ] The engine loads shaders in the device's native format and stops linking
-  SDL_shadercross; **Compile HLSL Effect** also writes `.msl`.
+- [ ] **Compile HLSL Effect** also writes `.msl`, effects load it like engine
+  shaders, and the engine stops linking SDL_shadercross.
 - [ ] Versioned bytecode files bound to the runtime fingerprint, keeping line
   information for run-time errors, verified at load.
 - [ ] `opendbc-runner` target without the BASIC frontend, ImGui or SDL_shadercross.

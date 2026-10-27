@@ -19,7 +19,7 @@
 - `src/language/language_catalogue.inc` is the sole language inventory. Preserve stable `SymbolId`s, historical signatures and per-profile support states. Dispatch builtins by `SymbolId`.
 - Resolve profiles before lexing and keep them immutable. Engine compatibility uses `RuntimeCompatibilityPolicy`, never filenames or textual dialect checks.
 - Preserve historical Classic/Pro behavior. Only the shared VR forms and Classic Vector3 readers documented in `docs/vr.md` may extend these profiles; do not widen Pro while restoring Classic. Stubs are not implementations; unsupported forms keep explicit diagnostics.
-- Keep engine GLSL shaders, CPU layouts, bindings and CMake contracts consistent. Preserve include/export path confinement and secret handling.
+- Keep engine HLSL shaders, CPU layouts, bindings and CMake contracts consistent. Preserve include/export path confinement and secret handling.
 
 ## Build and validation
 - Use `cmake --preset default`, `cmake --build build`, then `ctest --preset default`. The local Classic qualification (`scripts/qualify_dbc_examples.py --corpus-root`, corpus not redistributed) remains macOS Debug only; no clean-first, Release, sanitizers or packaging/mobile builds for that gate.

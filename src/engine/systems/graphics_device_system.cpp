@@ -1105,15 +1105,8 @@ namespace dbc
             return false;
         }
 
-        std::string VertexPath, FragmentPath, PathError;
-        if (!ImageStore::ResolveAssetPath(VertexPath, "shaders/dbclassic_tri.vert.spv", &PathError) ||
-            !ImageStore::ResolveAssetPath(FragmentPath, "shaders/dbclassic_tri.frag.spv", &PathError))
-        {
-            DBC_LOG_ERROR("GPU shader path resolution failed: {}", PathError);
-            return false;
-        }
-        SDL_GPUShader* VertexShader = CreateGpuShaderFromSpirv(VertexPath, SDL_GPU_SHADERSTAGE_VERTEX, 0, 2);
-        SDL_GPUShader* FragmentShader = CreateGpuShaderFromSpirv(FragmentPath, SDL_GPU_SHADERSTAGE_FRAGMENT, 9, 2);
+        SDL_GPUShader* VertexShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_VERTEX, 0, 2);
+        SDL_GPUShader* FragmentShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_FRAGMENT, 9, 2);
 
         if (!VertexShader || !FragmentShader)
         {
@@ -2026,22 +2019,47 @@ namespace dbc
         return Bytes;
     }
 
-    [[nodiscard]] SDL_GPUShader* GraphicsDeviceSystem::CreateGpuShaderFromSpirv(const std::string& Path,
-                                                                                SDL_GPUShaderStage Stage,
-                                                                                Uint32 NumSamplers,
-                                                                                Uint32 NumUniformBuffers)
+    [[nodiscard]] SDL_GPUShader* GraphicsDeviceSystem::CreateEngineShader(std::string_view Name,
+                                                                          SDL_GPUShaderStage Stage, Uint32 NumSamplers,
+                                                                          Uint32 NumUniformBuffers)
     {
-        EffectStage Definition;
-        Definition.Bytecode = LoadFileBytes(Path);
-        Definition.EntryPoint = "main";
-        Definition.SamplerCount = NumSamplers;
-        Definition.UniformBufferCount = NumUniformBuffers;
-        if (Definition.Bytecode.empty())
+        if (!GpuDevice_)
+            return nullptr;
+        const SDL_GPUShaderFormat Formats = SDL_GetGPUShaderFormats(GpuDevice_);
+        const bool Spirv = (Formats & SDL_GPU_SHADERFORMAT_SPIRV) != 0;
+        if (!Spirv && (Formats & SDL_GPU_SHADERFORMAT_MSL) == 0)
+        {
+            DBC_LOG_ERROR("GPU device accepts neither SPIR-V nor MSL shaders");
+            return nullptr;
+        }
+        const bool Vertex = Stage == SDL_GPU_SHADERSTAGE_VERTEX;
+        const std::string Asset =
+            "shaders/" + std::string(Name) + (Vertex ? ".vert" : ".frag") + (Spirv ? ".spv" : ".msl");
+        std::string Path, Error;
+        if (!ImageStore::ResolveAssetPath(Path, Asset, &Error))
+        {
+            DBC_LOG_ERROR("GPU shader path resolution failed: {}", Error);
+            return nullptr;
+        }
+        const std::vector<Uint8> Code = LoadFileBytes(Path);
+        if (Code.empty())
         {
             DBC_LOG_ERROR("shader load failed: {}", Path);
             return nullptr;
         }
-        return CreateGpuShaderFromSpirv(Definition, Stage);
+
+        SDL_GPUShaderCreateInfo Info{};
+        Info.code_size = Code.size();
+        Info.code = Code.data();
+        Info.entrypoint = Vertex ? "VSMain" : "PSMain";
+        Info.format = Spirv ? SDL_GPU_SHADERFORMAT_SPIRV : SDL_GPU_SHADERFORMAT_MSL;
+        Info.stage = Stage;
+        Info.num_samplers = NumSamplers;
+        Info.num_uniform_buffers = NumUniformBuffers;
+        SDL_GPUShader* Shader = SDL_CreateGPUShader(GpuDevice_, &Info);
+        if (!Shader)
+            DBC_LOG_ERROR("GPU shader creation failed for {}: {}", Asset, SDL_GetError());
+        return Shader;
     }
 
     [[nodiscard]] SDL_GPUShader* GraphicsDeviceSystem::CreateGpuShaderFromSpirv(const EffectStage& EffectStageValue,

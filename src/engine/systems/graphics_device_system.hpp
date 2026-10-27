@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -232,8 +233,9 @@ namespace dbc
         // --- Private GPU helpers ---
 
         [[nodiscard]] static std::vector<Uint8> LoadFileBytes(const std::string& Path);
-        [[nodiscard]] SDL_GPUShader* CreateGpuShaderFromSpirv(const std::string& Path, SDL_GPUShaderStage Stage,
-                                                              Uint32 NumSamplers, Uint32 NumUniformBuffers);
+        // Loads a canonical engine shader (shaders/<Name>.<vert|frag>.<spv|msl>) in the device's native format.
+        [[nodiscard]] SDL_GPUShader* CreateEngineShader(std::string_view Name, SDL_GPUShaderStage Stage,
+                                                        Uint32 NumSamplers, Uint32 NumUniformBuffers);
         [[nodiscard]] SDL_GPUShader* CreateGpuShaderFromSpirv(const EffectStage& EffectStageValue,
                                                               SDL_GPUShaderStage Stage);
         [[nodiscard]] bool CreatePipelineSet(SDL_GPUShader* VertexShader, SDL_GPUShader* FragmentShader,

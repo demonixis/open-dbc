@@ -57,7 +57,7 @@ file(GLOB_RECURSE OPENDBC_RUNTIME_FINGERPRINT_INPUTS CONFIGURE_DEPENDS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     "src/*.cpp" "src/*.hpp" "src/*.inc"
     "tools/studio/src/*.cpp" "tools/studio/src/*.hpp"
-    "shaders/*.glsl" "shaders/*.vert" "shaders/*.frag" "shaders/*.spv"
+    "shaders/*.hlsl" "shaders/*.spv" "shaders/*.msl"
     "cmake/*.cmake" "cmake/*.patch")
 list(APPEND OPENDBC_RUNTIME_FINGERPRINT_INPUTS
     "CMakeLists.txt"
@@ -420,61 +420,25 @@ endif()
 
 set(OPENDBC_SHADER_SOURCE_DIR "${PROJECT_SOURCE_DIR}/shaders")
 set(OPENDBC_SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
-set(OPENDBC_SHADER_OUTPUTS
-    "${OPENDBC_SHADER_OUTPUT_DIR}/dbclassic_tri.vert.spv"
-    "${OPENDBC_SHADER_OUTPUT_DIR}/dbclassic_tri.frag.spv"
-    "${OPENDBC_SHADER_OUTPUT_DIR}/vr_transfer.vert.spv"
-    "${OPENDBC_SHADER_OUTPUT_DIR}/vr_transfer.frag.spv")
-set(OPENDBC_CANONICAL_SHADERS
-    "${OPENDBC_SHADER_SOURCE_DIR}/dbclassic_tri.vert.spv"
-    "${OPENDBC_SHADER_SOURCE_DIR}/dbclassic_tri.frag.spv"
-    "${OPENDBC_SHADER_SOURCE_DIR}/vr_transfer.vert.spv"
-    "${OPENDBC_SHADER_SOURCE_DIR}/vr_transfer.frag.spv")
+set(OPENDBC_SHADER_FILES
+    dbclassic_tri.vert.spv dbclassic_tri.frag.spv dbclassic_tri.vert.msl dbclassic_tri.frag.msl
+    vr_transfer.vert.spv vr_transfer.frag.spv vr_transfer.vert.msl vr_transfer.frag.msl)
+list(TRANSFORM OPENDBC_SHADER_FILES PREPEND "${OPENDBC_SHADER_OUTPUT_DIR}/" OUTPUT_VARIABLE OPENDBC_SHADER_OUTPUTS)
+list(TRANSFORM OPENDBC_SHADER_FILES PREPEND "${OPENDBC_SHADER_SOURCE_DIR}/" OUTPUT_VARIABLE OPENDBC_CANONICAL_SHADERS)
 
 add_custom_command(
     OUTPUT ${OPENDBC_SHADER_OUTPUTS}
     COMMAND ${CMAKE_COMMAND} -E make_directory "${OPENDBC_SHADER_OUTPUT_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPENDBC_SHADER_SOURCE_DIR}/dbclassic_tri.vert.spv"
-            "${OPENDBC_SHADER_OUTPUT_DIR}/dbclassic_tri.vert.spv"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPENDBC_SHADER_SOURCE_DIR}/dbclassic_tri.frag.spv"
-            "${OPENDBC_SHADER_OUTPUT_DIR}/dbclassic_tri.frag.spv"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPENDBC_SHADER_SOURCE_DIR}/vr_transfer.vert.spv"
-            "${OPENDBC_SHADER_OUTPUT_DIR}/vr_transfer.vert.spv"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPENDBC_SHADER_SOURCE_DIR}/vr_transfer.frag.spv"
-            "${OPENDBC_SHADER_OUTPUT_DIR}/vr_transfer.frag.spv"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENDBC_CANONICAL_SHADERS} "${OPENDBC_SHADER_OUTPUT_DIR}"
     DEPENDS ${OPENDBC_CANONICAL_SHADERS}
-    COMMENT "Copy canonical OpenDBC SPIR-V shaders"
+    COMMENT "Copy canonical OpenDBC shaders"
     VERBATIM
 )
 add_custom_target(opendbc_shaders ALL DEPENDS ${OPENDBC_SHADER_OUTPUTS})
 
-option(OPENDBC_VERIFY_CANONICAL_SHADERS "Build pinned glslang and verify canonical SPIR-V" OFF)
-if(OPENDBC_VERIFY_CANONICAL_SHADERS)
-    set(ENABLE_GLSLANG_BINARIES ON CACHE BOOL "" FORCE)
-    set(ENABLE_GLSLANG_JS OFF CACHE BOOL "" FORCE)
-    set(ENABLE_HLSL OFF CACHE BOOL "" FORCE)
-    set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
-    set(ENABLE_SPVREMAPPER OFF CACHE BOOL "" FORCE)
-    set(ENABLE_GLSLANG_INSTALL OFF CACHE BOOL "" FORCE)
-    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-    FetchContent_Declare(
-        glslang
-        GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
-        GIT_TAG 275822a6261ee689aadb1da5f09a0ec2f058685c)
-    FetchContent_MakeAvailable(glslang)
-    add_custom_target(opendbc_verify_shaders
-        COMMAND ${CMAKE_COMMAND}
-            -DOPENDBC_GLSLANG=$<TARGET_FILE:glslang-standalone>
-            -DOPENDBC_SHADER_SOURCE_DIR=${OPENDBC_SHADER_SOURCE_DIR}
-            -DOPENDBC_SHADER_VERIFY_DIR=${CMAKE_BINARY_DIR}/verified-shaders
-            -P ${CMAKE_SOURCE_DIR}/cmake/verify_shaders.cmake
-        DEPENDS glslang-standalone
-        COMMENT "Verify canonical SPIR-V with pinned glslang"
-        VERBATIM)
+option(OPENDBC_VERIFY_CANONICAL_SHADERS "Build opendbc_shaderc and verify the canonical shaders" OFF)
+if(OPENDBC_VERIFY_CANONICAL_SHADERS AND NOT SDLSHADERCROSS_DXC)
+    message(FATAL_ERROR "Canonical shader verification needs SDL_shadercross with DXC")
 endif()
 
 # Deploy canonical shaders as regular files next to each executable.
@@ -575,6 +539,9 @@ add_subdirectory(src/interpreter)
 # The Studio is the product on every platform; mobile builds use its sandboxed
 # configuration selected in tools/studio/src/core/platform.hpp.
 add_subdirectory(tools/studio)
+if(OPENDBC_VERIFY_CANONICAL_SHADERS)
+    add_subdirectory(tools/shaderc)
+endif()
 
 # --- Regression Tests ---
 option(BUILD_TESTS "Build DBA regression tests" ON)

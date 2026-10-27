@@ -24,7 +24,7 @@
     },
     {
       "name": "shader-verify",
-      "displayName": "Canonical SPIR-V verification",
+      "displayName": "Canonical shader verification",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build-shader-verify",
       "cacheVariables": {
@@ -99,6 +99,11 @@
       "configurePreset": "shader-verify",
       "jobs": 2,
       "targets": ["opendbc_verify_shaders"]
+    },
+    {
+      "name": "shader-update",
+      "configurePreset": "shader-verify",
+      "targets": ["opendbc_update_shaders"]
     },
     {
       "name": "ios",

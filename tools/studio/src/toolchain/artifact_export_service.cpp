@@ -1999,8 +1999,9 @@ namespace dbc::studio
         bool detail::ValidateArtifactShaders(const std::filesystem::path& HostShaderRoot,
                                              const std::filesystem::path& ProductShaderRoot, std::string& Error)
         {
-            for (const std::string_view Name : {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv",
-                                                "vr_transfer.vert.spv", "vr_transfer.frag.spv"})
+            for (const std::string_view Name :
+                 {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
+                  "vr_transfer.vert.spv", "vr_transfer.frag.spv", "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
             {
                 const std::optional<std::string> HostHash = Sha256File(HostShaderRoot / Name);
                 const std::optional<std::string> ProductHash = Sha256File(ProductShaderRoot / Name);

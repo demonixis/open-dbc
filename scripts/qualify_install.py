@@ -21,7 +21,12 @@ REFERENCE_SOURCES = tuple(
     for Name in ("darkbasic_reference.md", "dbpro_reference.md", "open-dbc_reference.md")
 )
 OPENXR_LOADER_PREFIXES = ("libopenxr_loader", "openxr_loader")
-SHADER_NAMES = ("dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "vr_transfer.vert.spv", "vr_transfer.frag.spv")
+SHADER_NAMES = tuple(
+    f"{shader}.{stage}.{format}"
+    for shader in ("dbclassic_tri", "vr_transfer")
+    for format in ("spv", "msl")
+    for stage in ("vert", "frag")
+)
 REQUIRED_LICENSES = ("LICENSE", "Dark-Basic-Pro-LICENSE.md", "MuseScore-General-SoundFont-LICENSE.md", "RapidJSON.txt")
 
 

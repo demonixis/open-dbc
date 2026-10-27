@@ -1,0 +1,576 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+#pragma clang diagnostic ignored "-Wmissing-braces"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+template<typename T, size_t Num>
+struct spvUnsafeArray
+{
+    T elements[Num ? Num : 1];
+    
+    thread T& operator [] (size_t pos) thread
+    {
+        return elements[pos];
+    }
+    constexpr const thread T& operator [] (size_t pos) const thread
+    {
+        return elements[pos];
+    }
+    
+    device T& operator [] (size_t pos) device
+    {
+        return elements[pos];
+    }
+    constexpr const device T& operator [] (size_t pos) const device
+    {
+        return elements[pos];
+    }
+    
+    constexpr const constant T& operator [] (size_t pos) const constant
+    {
+        return elements[pos];
+    }
+    
+    threadgroup T& operator [] (size_t pos) threadgroup
+    {
+        return elements[pos];
+    }
+    constexpr const threadgroup T& operator [] (size_t pos) const threadgroup
+    {
+        return elements[pos];
+    }
+};
+
+struct type_VertexUniforms
+{
+    float4x4 ViewProj;
+};
+
+struct type_ModelUniforms
+{
+    float4x4 ModelView;
+};
+
+struct type_FragmentUniforms
+{
+    float4 dir_light_direction;
+    float4 dir_light_color;
+    float4 ambient_color;
+    float4 fog_color_dist;
+    float4 flags;
+    int4 light_counts;
+    float4 point_lights[24];
+    float4 spot_lights[18];
+};
+
+struct type_TextureStageUniforms
+{
+    int4 stages[8];
+};
+
+struct PSMain_out
+{
+    float4 out_var_SV_Target0 [[color(0)]];
+};
+
+struct PSMain_in
+{
+    float3 in_var_TEXCOORD0 [[user(locn0)]];
+    float3 in_var_TEXCOORD1 [[user(locn1)]];
+    float2 in_var_TEXCOORD2 [[user(locn2)]];
+    float4 in_var_TEXCOORD3 [[user(locn3)]];
+    float4 in_var_TEXCOORD4 [[user(locn4)]];
+    float4 in_var_TEXCOORD5 [[user(locn5)]];
+    float4 in_var_TEXCOORD6 [[user(locn6)]];
+    float2 in_var_TEXCOORD7 [[user(locn7)]];
+    float2 in_var_TEXCOORD8 [[user(locn8)]];
+    float2 in_var_TEXCOORD9 [[user(locn9)]];
+    float2 in_var_TEXCOORD10 [[user(locn10)]];
+    float2 in_var_TEXCOORD11 [[user(locn11)]];
+    float2 in_var_TEXCOORD12 [[user(locn12)]];
+    float2 in_var_TEXCOORD13 [[user(locn13)]];
+    float3 in_var_TEXCOORD14 [[user(locn14)]];
+};
+
+fragment PSMain_out PSMain(PSMain_in in [[stage_in]], constant type_FragmentUniforms& FragmentUniforms [[buffer(0)]], constant type_TextureStageUniforms& TextureStageUniforms [[buffer(1)]], texture2d<float> tex0 [[texture(0)]], texture2d<float> tex1 [[texture(1)]], texture2d<float> tex2 [[texture(2)]], texture2d<float> tex3 [[texture(3)]], texture2d<float> tex4 [[texture(4)]], texture2d<float> tex5 [[texture(5)]], texture2d<float> tex6 [[texture(6)]], texture2d<float> tex7 [[texture(7)]], texturecube<float> cube_tex [[texture(8)]], sampler sampler0 [[sampler(0)]], sampler sampler1 [[sampler(1)]], sampler sampler2 [[sampler(2)]], sampler sampler3 [[sampler(3)]], sampler sampler4 [[sampler(4)]], sampler sampler5 [[sampler(5)]], sampler sampler6 [[sampler(6)]], sampler sampler7 [[sampler(7)]], sampler cube_sampler [[sampler(8)]])
+{
+    PSMain_out out = {};
+    float4 _876;
+    do
+    {
+        if (in.in_var_TEXCOORD4.w > 0.5)
+        {
+            float4 _170 = float4(in.in_var_TEXCOORD2.x);
+            _876 = mix(mix(in.in_var_TEXCOORD3, in.in_var_TEXCOORD4, _170), mix(in.in_var_TEXCOORD6, in.in_var_TEXCOORD5, _170), float4(in.in_var_TEXCOORD2.y));
+            break;
+        }
+        spvUnsafeArray<float2, 7> _177 = spvUnsafeArray<float2, 7>({ in.in_var_TEXCOORD7, in.in_var_TEXCOORD8, in.in_var_TEXCOORD9, in.in_var_TEXCOORD10, in.in_var_TEXCOORD11, in.in_var_TEXCOORD12, in.in_var_TEXCOORD13 });
+        spvUnsafeArray<float2, 7> _145 = _177;
+        float4 _181 = tex0.sample(sampler0, in.in_var_TEXCOORD2);
+        bool _184 = TextureStageUniforms.stages[0].z == 2;
+        float4 _510;
+        if (_184)
+        {
+            _510 = (tex0.sample(sampler0, in.in_var_TEXCOORD2) * tex1.sample(sampler1, _145[0])) * in.in_var_TEXCOORD3;
+        }
+        else
+        {
+            float4 _499;
+            if (TextureStageUniforms.stages[0].z == 3)
+            {
+                float4 _475 = tex0.sample(sampler0, in.in_var_TEXCOORD2);
+                float4 _481 = tex1.sample(sampler1, _145[0]);
+                float _483 = _475.w;
+                float _486 = _481.w;
+                _499 = float4(fast::clamp((((_475.xyz * _483) * 2.0) + float3(_486)) - float3(0.5), float3(0.0), float3(1.0)), (_483 * _486) * in.in_var_TEXCOORD3.w);
+            }
+            else
+            {
+                float4 _193;
+                _193 = in.in_var_TEXCOORD3;
+                float4 _194;
+                for (int _196 = 0; _196 < 8; _193 = _194, _196++)
+                {
+                    if (TextureStageUniforms.stages[_196].x == 0)
+                    {
+                        _194 = _193;
+                        continue;
+                    }
+                    if (TextureStageUniforms.stages[_196].x == 1)
+                    {
+                        break;
+                    }
+                    bool _209 = _196 == 0;
+                    float2 _216;
+                    if (_209)
+                    {
+                        _216 = in.in_var_TEXCOORD2;
+                    }
+                    else
+                    {
+                        _216 = _145[_196 - 1];
+                    }
+                    float4 _281;
+                    if (TextureStageUniforms.stages[_196].y != 0)
+                    {
+                        _281 = cube_tex.sample(cube_sampler, fast::normalize(in.in_var_TEXCOORD14));
+                    }
+                    else
+                    {
+                        float4 _275;
+                        do
+                        {
+                            if (_209)
+                            {
+                                _275 = tex0.sample(sampler0, _216);
+                                break;
+                            }
+                            if (_196 == 1)
+                            {
+                                _275 = tex1.sample(sampler1, _216);
+                                break;
+                            }
+                            if (_196 == 2)
+                            {
+                                _275 = tex2.sample(sampler2, _216);
+                                break;
+                            }
+                            if (_196 == 3)
+                            {
+                                _275 = tex3.sample(sampler3, _216);
+                                break;
+                            }
+                            if (_196 == 4)
+                            {
+                                _275 = tex4.sample(sampler4, _216);
+                                break;
+                            }
+                            if (_196 == 5)
+                            {
+                                _275 = tex5.sample(sampler5, _216);
+                                break;
+                            }
+                            if (_196 == 6)
+                            {
+                                _275 = tex6.sample(sampler6, _216);
+                                break;
+                            }
+                            _275 = tex7.sample(sampler7, _216);
+                            break;
+                        } while(false);
+                        _281 = _275;
+                    }
+                    float4 _473;
+                    if (TextureStageUniforms.stages[_196].x == 27)
+                    {
+                        _473 = float4(precise::min(_181.xyz + in.in_var_TEXCOORD3.xyz, float3(1.0)) * _281.xyz, _193.w * _281.w);
+                    }
+                    else
+                    {
+                        float4 _458;
+                        do
+                        {
+                            if (TextureStageUniforms.stages[_196].x == 2)
+                            {
+                                _458 = _281;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 3)
+                            {
+                                _458 = _193;
+                                break;
+                            }
+                            bool _299;
+                            if (!(TextureStageUniforms.stages[_196].x == 4))
+                            {
+                                _299 = TextureStageUniforms.stages[_196].x == 17;
+                            }
+                            else
+                            {
+                                _299 = true;
+                            }
+                            if (_299)
+                            {
+                                _458 = _281 * _193;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 5)
+                            {
+                                _458 = (_281 * _193) * 2.0;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 6)
+                            {
+                                _458 = (_281 * _193) * 4.0;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 7)
+                            {
+                                _458 = _281 + _193;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 8)
+                            {
+                                _458 = (_281 + _193) - float4(0.5);
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 9)
+                            {
+                                _458 = ((_281 + _193) - float4(0.5)) * 2.0;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 10)
+                            {
+                                _458 = _281 - _193;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 11)
+                            {
+                                _458 = (_281 + _193) - (_281 * _193);
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 12)
+                            {
+                                _458 = mix(_193, _281, float4(in.in_var_TEXCOORD3.w));
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 13)
+                            {
+                                _458 = mix(_193, _281, float4(_281.w));
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 14)
+                            {
+                                _458 = _281;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 15)
+                            {
+                                _458 = _281 + (_193 * (1.0 - _281.w));
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 16)
+                            {
+                                _458 = mix(_193, _281, float4(_193.w));
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 18)
+                            {
+                                _458 = float4(_281.xyz + (_193.xyz * _281.w), _281.w * _193.w);
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 19)
+                            {
+                                _458 = float4((_281.xyz * _193.xyz) + float3(_281.w), _281.w * _193.w);
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 20)
+                            {
+                                _458 = float4(_281.xyz + (_193.xyz * (1.0 - _281.w)), _281.w * _193.w);
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 21)
+                            {
+                                _458 = float4(((float3(1.0) - _281.xyz) * _193.xyz) + float3(_281.w), _281.w * _193.w);
+                                break;
+                            }
+                            bool _432;
+                            if (!(TextureStageUniforms.stages[_196].x == 22))
+                            {
+                                _432 = TextureStageUniforms.stages[_196].x == 23;
+                            }
+                            else
+                            {
+                                _432 = true;
+                            }
+                            if (_432)
+                            {
+                                _458 = _193;
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 24)
+                            {
+                                float _444 = dot((_281.xyz * 2.0) - float3(1.0), (_193.xyz * 2.0) - float3(1.0));
+                                _458 = float4(_444, _444, _444, _281.w * _193.w);
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 25)
+                            {
+                                _458 = _281 + (_193 * in.in_var_TEXCOORD3);
+                                break;
+                            }
+                            if (TextureStageUniforms.stages[_196].x == 26)
+                            {
+                                _458 = mix(_193, _281, in.in_var_TEXCOORD3);
+                                break;
+                            }
+                            _458 = _193;
+                            break;
+                        } while(false);
+                        _473 = fast::clamp(_458, float4(0.0), float4(1.0));
+                    }
+                    _194 = _473;
+                }
+                _499 = _193;
+            }
+            _510 = _499;
+        }
+        float4 _517;
+        if (in.in_var_TEXCOORD4.w < (-0.5))
+        {
+            float4 _516 = _510;
+            _516.w = fast::clamp((-1.0) - in.in_var_TEXCOORD4.w, 0.0, 1.0);
+            _517 = _516;
+        }
+        else
+        {
+            _517 = _510;
+        }
+        bool _530;
+        if (!(_517.w <= 0.001000000047497451305389404296875))
+        {
+            bool _529;
+            if (in.in_var_TEXCOORD6.w > 0.0)
+            {
+                _529 = _517.w < in.in_var_TEXCOORD6.w;
+            }
+            else
+            {
+                _529 = false;
+            }
+            _530 = _529;
+        }
+        else
+        {
+            _530 = true;
+        }
+        if (_530)
+        {
+            discard_fragment();
+        }
+        bool _537;
+        if (!_184)
+        {
+            _537 = TextureStageUniforms.stages[0].z == 3;
+        }
+        else
+        {
+            _537 = true;
+        }
+        if (_537)
+        {
+            float3 _569;
+            if (FragmentUniforms.flags.y > 0.5)
+            {
+                float _546 = length(in.in_var_TEXCOORD0);
+                float _552 = FragmentUniforms.fog_color_dist.w - FragmentUniforms.dir_light_direction.w;
+                float _562;
+                if (abs(_552) > 9.9999999747524270787835121154785e-07)
+                {
+                    _562 = fast::clamp((_546 - FragmentUniforms.dir_light_direction.w) / _552, 0.0, 1.0);
+                }
+                else
+                {
+                    _562 = step(FragmentUniforms.dir_light_direction.w, _546);
+                }
+                _569 = mix(_517.xyz, powr(precise::max(FragmentUniforms.fog_color_dist.xyz, float3(0.0)), float3(2.2000000476837158203125)), float3(_562));
+            }
+            else
+            {
+                _569 = _517.xyz;
+            }
+            _876 = float4(powr(precise::max(_569, float3(0.0)), float3(0.4545454680919647216796875)), _517.w);
+            break;
+        }
+        float _576 = length(in.in_var_TEXCOORD1);
+        if (!(_576 > 0.00999999977648258209228515625))
+        {
+            float3 _610;
+            if (FragmentUniforms.flags.y > 0.5)
+            {
+                float _587 = length(in.in_var_TEXCOORD0);
+                float _593 = FragmentUniforms.fog_color_dist.w - FragmentUniforms.dir_light_direction.w;
+                float _603;
+                if (abs(_593) > 9.9999999747524270787835121154785e-07)
+                {
+                    _603 = fast::clamp((_587 - FragmentUniforms.dir_light_direction.w) / _593, 0.0, 1.0);
+                }
+                else
+                {
+                    _603 = step(FragmentUniforms.dir_light_direction.w, _587);
+                }
+                _610 = mix(_517.xyz, powr(precise::max(FragmentUniforms.fog_color_dist.xyz, float3(0.0)), float3(2.2000000476837158203125)), float3(_603));
+            }
+            else
+            {
+                _610 = _517.xyz;
+            }
+            _876 = float4(powr(precise::max(_610, float3(0.0)), float3(0.4545454680919647216796875)), _517.w);
+            break;
+        }
+        float _617 = fast::clamp(_576, 0.0, 10.0);
+        float3 _619 = in.in_var_TEXCOORD1 / float3(_576);
+        float3 _621 = fast::normalize(-in.in_var_TEXCOORD0);
+        float3 _660;
+        if (TextureStageUniforms.stages[0].z == 1)
+        {
+            float3 _627 = in.in_var_TEXCOORD14 - (_619 * dot(in.in_var_TEXCOORD14, _619));
+            float3 _638;
+            if (length(_627) < 9.9999997473787516355514526367188e-05)
+            {
+                _638 = cross(select(float3(1.0, 0.0, 0.0), float3(0.0, 1.0, 0.0), bool3(abs(_619.y) < 0.9900000095367431640625)), _619);
+            }
+            else
+            {
+                _638 = _627;
+            }
+            float3 _639 = fast::normalize(_638);
+            float3 _650 = (powr(precise::max(tex1.sample(sampler1, in.in_var_TEXCOORD2).xyz, float3(0.0)), float3(0.4545454680919647216796875)) * 2.0) - float3(1.0);
+            _660 = fast::normalize(((_639 * _650.x) + (fast::normalize(cross(_619, _639)) * _650.y)) + (_619 * _650.z));
+        }
+        else
+        {
+            _660 = _619;
+        }
+        float _663 = precise::max(in.in_var_TEXCOORD5.w, 1.0);
+        float3 _676 = (powr(precise::max(FragmentUniforms.ambient_color.xyz, float3(0.0)), float3(2.2000000476837158203125)) * FragmentUniforms.ambient_color.w) * powr(precise::max(in.in_var_TEXCOORD4.xyz, float3(0.0)), float3(2.2000000476837158203125));
+        float3 _705;
+        float3 _706;
+        if (FragmentUniforms.dir_light_color.w > 0.0)
+        {
+            float3 _687 = fast::normalize(-FragmentUniforms.dir_light_direction.xyz);
+            float3 _691 = powr(precise::max(FragmentUniforms.dir_light_color.xyz, float3(0.0)), float3(2.2000000476837158203125));
+            _705 = ((_691 * powr(precise::max(dot(_660, fast::normalize(_687 + _621)), 0.0), _663)) * 0.1500000059604644775390625) * _617;
+            _706 = _676 + ((_691 * precise::max(dot(_660, _687), 0.0)) * _617);
+        }
+        else
+        {
+            _705 = float3(0.0);
+            _706 = _676;
+        }
+        float3 _710;
+        float3 _713;
+        _710 = _705;
+        _713 = _706;
+        float3 _711;
+        float3 _714;
+        for (int _715 = 0; _715 < FragmentUniforms.light_counts.x; _710 = _711, _713 = _714, _715++)
+        {
+            int _720 = _715 * 2;
+            float3 _727 = FragmentUniforms.point_lights[_720].xyz - in.in_var_TEXCOORD0;
+            float _728 = length(_727);
+            if (_728 < FragmentUniforms.point_lights[_720].w)
+            {
+                float3 _735 = _727 / float3(precise::max(_728, 9.9999997473787516355514526367188e-05));
+                float _738 = fast::clamp(1.0 - (_728 / FragmentUniforms.point_lights[_720].w), 0.0, 1.0);
+                float _739 = _738 * _738;
+                float3 _742 = powr(precise::max(FragmentUniforms.point_lights[_720 + 1].xyz, float3(0.0)), float3(2.2000000476837158203125));
+                _711 = _710 + ((((_742 * powr(precise::max(dot(_660, fast::normalize(_735 + _621)), 0.0), _663)) * 0.1500000059604644775390625) * _739) * _617);
+                _714 = _713 + (((_742 * precise::max(dot(_660, _735), 0.0)) * _739) * _617);
+            }
+            else
+            {
+                _711 = _710;
+                _714 = _713;
+            }
+        }
+        float3 _762;
+        float3 _765;
+        _762 = _710;
+        _765 = _713;
+        float3 _763;
+        float3 _766;
+        for (int _767 = 0; _767 < FragmentUniforms.light_counts.y; _762 = _763, _765 = _766, _767++)
+        {
+            int _772 = _767 * 3;
+            int _775 = _772 + 1;
+            int _778 = _772 + 2;
+            float3 _782 = FragmentUniforms.spot_lights[_772].xyz - in.in_var_TEXCOORD0;
+            float _783 = length(_782);
+            if (_783 < FragmentUniforms.spot_lights[_772].w)
+            {
+                float3 _790 = _782 / float3(precise::max(_783, 9.9999997473787516355514526367188e-05));
+                float _801 = fast::clamp((dot(-_790, fast::normalize(FragmentUniforms.spot_lights[_775].xyz)) - FragmentUniforms.spot_lights[_778].w) / precise::max(FragmentUniforms.spot_lights[_775].w - FragmentUniforms.spot_lights[_778].w, 9.9999997473787516355514526367188e-05), 0.0, 1.0);
+                float _804 = fast::clamp(1.0 - (_783 / FragmentUniforms.spot_lights[_772].w), 0.0, 1.0);
+                float _805 = _804 * _804;
+                float3 _808 = powr(precise::max(FragmentUniforms.spot_lights[_778].xyz, float3(0.0)), float3(2.2000000476837158203125));
+                _763 = _762 + (((((_808 * powr(precise::max(dot(_660, fast::normalize(_790 + _621)), 0.0), _663)) * 0.1500000059604644775390625) * _805) * _801) * _617);
+                _766 = _765 + ((((_808 * precise::max(dot(_660, _790), 0.0)) * _805) * _801) * _617);
+            }
+            else
+            {
+                _763 = _762;
+                _766 = _765;
+            }
+        }
+        float3 _840 = ((_517.xyz * fast::clamp(_765, float3(0.0), float3(precise::max(2.0, 2.0 * _617)))) + (_762 * powr(precise::max(in.in_var_TEXCOORD5.xyz, float3(0.0)), float3(2.2000000476837158203125)))) + powr(precise::max(in.in_var_TEXCOORD6.xyz, float3(0.0)), float3(2.2000000476837158203125));
+        float3 _869;
+        if (FragmentUniforms.flags.y > 0.5)
+        {
+            float _846 = length(in.in_var_TEXCOORD0);
+            float _852 = FragmentUniforms.fog_color_dist.w - FragmentUniforms.dir_light_direction.w;
+            float _862;
+            if (abs(_852) > 9.9999999747524270787835121154785e-07)
+            {
+                _862 = fast::clamp((_846 - FragmentUniforms.dir_light_direction.w) / _852, 0.0, 1.0);
+            }
+            else
+            {
+                _862 = step(FragmentUniforms.dir_light_direction.w, _846);
+            }
+            _869 = mix(_840, powr(precise::max(FragmentUniforms.fog_color_dist.xyz, float3(0.0)), float3(2.2000000476837158203125)), float3(_862));
+        }
+        else
+        {
+            _869 = _840;
+        }
+        _876 = float4(powr(precise::max(_869, float3(0.0)), float3(0.4545454680919647216796875)), _517.w);
+        break;
+    } while(false);
+    out.out_var_SV_Target0 = _876;
+    return out;
+}
+
