@@ -541,9 +541,7 @@ add_subdirectory(src/interpreter)
 
 # The Studio is the product on every platform; mobile builds use its sandboxed
 # configuration selected in tools/studio/src/core/platform.hpp.
-if(NOT ANDROID AND NOT IOS)
-    add_subdirectory(tools/runner)
-endif()
+add_subdirectory(tools/runner)
 add_subdirectory(tools/studio)
 if(OPENDBC_VERIFY_CANONICAL_SHADERS)
     add_subdirectory(tools/shaderc)

@@ -1199,10 +1199,10 @@ namespace dbc::studio
 
         bool ValidateIosHost(const fs::path& App, bool Simulator, std::string& Error)
         {
-            const fs::path Executable = App / "opendbc";
+            const fs::path Executable = App / "opendbc-runner";
             if (!fs::is_regular_file(Executable))
             {
-                Error = "The iOS export host has no OpenDBC executable";
+                Error = "The iOS export host has no opendbc-runner executable";
                 return false;
             }
             const std::optional<std::string> Build =
@@ -1613,7 +1613,7 @@ namespace dbc::studio
                 return Result;
             }
             if (!toolchain::detail::ValidateArtifactHostIdentity(
-                    Host.parent_path() / "opendbc-host.json", Host / "opendbc",
+                    Host.parent_path() / "opendbc-host.json", Host / "opendbc-runner",
                     Request.HostResources / "opendbc-runtime.json", Result.Error))
                 return Result;
             if (Request.Sign && Request.Settings.IosTeamId.empty())
@@ -1680,7 +1680,7 @@ namespace dbc::studio
                 return Result;
             }
             if (!toolchain::detail::ValidateArtifactHostIdentity(
-                    Host.parent_path() / "opendbc-host.json", Host / "opendbc",
+                    Host.parent_path() / "opendbc-host.json", Host / "opendbc-runner",
                     Request.HostResources / "opendbc-runtime.json", Result.Error))
                 return Result;
             const std::string ProductName = SafeProductName(Request.Settings, Request.EntrySource);

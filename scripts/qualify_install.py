@@ -89,9 +89,9 @@ def verify_export_hosts(resources: Path) -> None:
     simulator = resources / "export-hosts/ios-simulator"
     android = resources / "export-hosts/android/template"
     required = (
-        ios / "OpenDBC.app/opendbc",
+        ios / "OpenDBC.app/opendbc-runner",
         ios / "opendbc-host.json",
-        simulator / "OpenDBC.app/opendbc",
+        simulator / "OpenDBC.app/opendbc-runner",
         simulator / "opendbc-host.json",
         android / "app/src/main/jniLibs/arm64-v8a/libmain.so",
         android / "app/src/main/assets/opendbc-host.json",

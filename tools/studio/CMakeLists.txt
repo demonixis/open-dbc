@@ -226,50 +226,6 @@ target_compile_definitions(opendbc PRIVATE
 )
 dbc_enable_warnings(opendbc)
 
-if(ANDROID)
-    set(OPENDBC_HOST_MANIFEST_OUTPUT "$<TARGET_FILE_DIR:opendbc>/opendbc-host.json")
-    add_custom_target(opendbc_export_host_manifest ALL
-        COMMAND ${CMAKE_COMMAND}
-            -DOPENDBC_RUNTIME_MANIFEST=${OPENDBC_RUNTIME_MANIFEST}
-            -DOPENDBC_HOST_BINARY=$<TARGET_FILE:opendbc>
-            -DOPENDBC_HOST_MANIFEST=${OPENDBC_HOST_MANIFEST_OUTPUT}
-            -DOPENDBC_ANDROID_HOST=1
-            -DOPENDBC_OBJDUMP=${CMAKE_OBJDUMP}
-            -P ${CMAKE_SOURCE_DIR}/cmake/write_host_manifest.cmake
-        DEPENDS opendbc
-        COMMENT "Binding the OpenDBC runtime fingerprint to the mobile host binary"
-        VERBATIM)
-elseif(IOS)
-    # Generate the descriptor in a dependent target so it hashes the final host
-    # Mach-O. Artifact signing happens after every later packaging mutation.
-    set(OPENDBC_HOST_MANIFEST_OUTPUT "$<TARGET_BUNDLE_DIR:opendbc>.opendbc-host.json")
-    set(OPENDBC_APPLE_HOST_ARGS)
-    if(CMAKE_GENERATOR STREQUAL "Xcode")
-        # Xcode leaves EFFECTIVE_PLATFORM_NAME as a build-setting expression in
-        # generator-expression paths used by aggregate target scripts. Resolve
-        # the product directory from the build environment inside the script.
-        set(OPENDBC_APPLE_HOST_ARGS
-            -DOPENDBC_XCODE_HOST=1
-            -DOPENDBC_XCODE_PRODUCT_ROOT=${CMAKE_CURRENT_BINARY_DIR})
-    else()
-        set(OPENDBC_APPLE_HOST_ARGS
-            -DOPENDBC_HOST_BINARY=$<TARGET_FILE:opendbc>
-            -DOPENDBC_HOST_MANIFEST=${OPENDBC_HOST_MANIFEST_OUTPUT})
-    endif()
-    add_custom_target(opendbc_export_host_manifest ALL
-        COMMAND ${CMAKE_COMMAND}
-            -DOPENDBC_RUNTIME_MANIFEST=${OPENDBC_RUNTIME_MANIFEST}
-            ${OPENDBC_APPLE_HOST_ARGS}
-            -P ${CMAKE_SOURCE_DIR}/cmake/write_host_manifest.cmake
-        DEPENDS opendbc
-        COMMENT "Qualifying the OpenDBC Apple export host"
-        VERBATIM)
-    if(CMAKE_GENERATOR STREQUAL "Xcode")
-        set_target_properties(opendbc_export_host_manifest PROPERTIES
-            XCODE_GENERATE_SCHEME ON)
-    endif()
-endif()
-
 set(OPENDBC_REFERENCE_FILES
     "${CMAKE_SOURCE_DIR}/docs/reference/darkbasic_reference.md"
     "${CMAKE_SOURCE_DIR}/docs/reference/dbpro_reference.md"
@@ -315,7 +271,7 @@ else()
 endif()
 
 # Desktop exports start from opendbc-runner, which ships inside the Studio product.
-if(TARGET opendbc-runner)
+if(NOT ANDROID AND NOT IOS)
     add_dependencies(opendbc opendbc-runner)
     if(APPLE)
         add_custom_command(TARGET opendbc POST_BUILD
@@ -447,14 +403,14 @@ if(NOT IOS AND NOT ANDROID)
         if(NOT IS_DIRECTORY "${OPENDBC_IOS_EXPORT_HOST}")
             message(FATAL_ERROR "OPENDBC_IOS_EXPORT_HOST must name an iOS .app directory")
         endif()
-        if(NOT EXISTS "${OPENDBC_IOS_EXPORT_HOST}/opendbc")
+        if(NOT EXISTS "${OPENDBC_IOS_EXPORT_HOST}/opendbc-runner")
             message(FATAL_ERROR "OPENDBC_IOS_EXPORT_HOST has no OpenDBC executable")
         endif()
         opendbc_require_matching_host("${OPENDBC_IOS_EXPORT_HOST_MANIFEST}"
-            "${OPENDBC_IOS_EXPORT_HOST}/opendbc" "OPENDBC_IOS_EXPORT_HOST")
+            "${OPENDBC_IOS_EXPORT_HOST}/opendbc-runner" "OPENDBC_IOS_EXPORT_HOST")
         opendbc_require_canonical_host_shaders("${OPENDBC_IOS_EXPORT_HOST}" "OPENDBC_IOS_EXPORT_HOST")
         execute_process(COMMAND /usr/bin/xcrun vtool -show-build
-            "${OPENDBC_IOS_EXPORT_HOST}/opendbc"
+            "${OPENDBC_IOS_EXPORT_HOST}/opendbc-runner"
             RESULT_VARIABLE OPENDBC_IOS_HOST_STATUS OUTPUT_VARIABLE OPENDBC_IOS_HOST_BUILD)
         if(NOT OPENDBC_IOS_HOST_STATUS EQUAL 0 OR
            NOT OPENDBC_IOS_HOST_BUILD MATCHES "platform IOS" OR
@@ -468,27 +424,21 @@ if(NOT IOS AND NOT ANDROID)
                 "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios/OpenDBC.app"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OPENDBC_IOS_EXPORT_HOST_MANIFEST}"
                 "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios/opendbc-host.json"
-            COMMAND ${CMAKE_COMMAND} -E remove_directory
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios/OpenDBC.app/samples"
-            COMMAND ${CMAKE_COMMAND} -E rm -f
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios/OpenDBC.app/darkbasic_reference.md"
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios/OpenDBC.app/dbpro_reference.md"
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios/OpenDBC.app/open-dbc_reference.md"
             COMMENT "Embedding the qualified iOS export host" VERBATIM)
     endif()
     if(APPLE AND OPENDBC_IOS_SIMULATOR_EXPORT_HOST)
         set(OPENDBC_IOS_SIMULATOR_EXPORT_HOST_MANIFEST
             "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}.opendbc-host.json")
         if(NOT IS_DIRECTORY "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}" OR
-           NOT EXISTS "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc")
+           NOT EXISTS "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc-runner")
             message(FATAL_ERROR "OPENDBC_IOS_SIMULATOR_EXPORT_HOST must name an iOS Simulator .app")
         endif()
         opendbc_require_matching_host("${OPENDBC_IOS_SIMULATOR_EXPORT_HOST_MANIFEST}"
-            "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc" "OPENDBC_IOS_SIMULATOR_EXPORT_HOST")
+            "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc-runner" "OPENDBC_IOS_SIMULATOR_EXPORT_HOST")
         opendbc_require_canonical_host_shaders(
             "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}" "OPENDBC_IOS_SIMULATOR_EXPORT_HOST")
         execute_process(COMMAND /usr/bin/xcrun vtool -show-build
-            "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc"
+            "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc-runner"
             RESULT_VARIABLE OPENDBC_IOS_SIM_HOST_STATUS OUTPUT_VARIABLE OPENDBC_IOS_SIM_HOST_BUILD)
         if(NOT OPENDBC_IOS_SIM_HOST_STATUS EQUAL 0 OR
            NOT OPENDBC_IOS_SIM_HOST_BUILD MATCHES "platform IOSSIMULATOR")
@@ -502,12 +452,6 @@ if(NOT IOS AND NOT ANDROID)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST_MANIFEST}"
                 "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios-simulator/opendbc-host.json"
-            COMMAND ${CMAKE_COMMAND} -E remove_directory
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios-simulator/OpenDBC.app/samples"
-            COMMAND ${CMAKE_COMMAND} -E rm -f
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios-simulator/OpenDBC.app/darkbasic_reference.md"
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios-simulator/OpenDBC.app/dbpro_reference.md"
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios-simulator/OpenDBC.app/open-dbc_reference.md"
             COMMENT "Embedding the qualified iOS Simulator host" VERBATIM)
     endif()
     if(OPENDBC_ANDROID_EXPORT_HOST_LIBRARY)

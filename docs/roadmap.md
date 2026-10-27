@@ -63,7 +63,6 @@ Decisions:
 
 Work:
 
-- [ ] iOS and Android export hosts built from `opendbc-runner` instead of the Studio.
 - [ ] Studio packaging with the runner: nested macOS bundle signed inside out,
   shared folder on Windows and Linux.
 

@@ -94,7 +94,7 @@ come from `OPENDBC_ANDROID_KEYSTORE_PASSWORD` and `OPENDBC_ANDROID_KEY_PASSWORD`
 and are never stored. `--unsigned` macOS exports get an ad hoc signature: they
 launch locally but cannot be notarised.
 
-Mobile targets need their runtime hosts built first (macOS, Android NDK
+Mobile targets need their `opendbc-runner` hosts built first (macOS, Android NDK
 `26.3.11579264`):
 
 ```bash
@@ -102,9 +102,9 @@ cmake --preset ios && cmake --build --preset ios
 cmake --preset ios-simulator && cmake --build --preset ios-simulator
 cmake --preset android-host && cmake --build --preset android-host
 cmake --preset default \
-  -DOPENDBC_IOS_EXPORT_HOST="$PWD/build-ios/tools/studio/Release-iphoneos/opendbc.app" \
-  -DOPENDBC_IOS_SIMULATOR_EXPORT_HOST="$PWD/build-ios-simulator/tools/studio/Release-iphonesimulator/opendbc.app" \
-  -DOPENDBC_ANDROID_EXPORT_HOST_LIBRARY="$PWD/build-android-host/tools/studio/libmain.so"
+  -DOPENDBC_IOS_EXPORT_HOST="$PWD/build-ios/tools/runner/Release-iphoneos/opendbc-runner.app" \
+  -DOPENDBC_IOS_SIMULATOR_EXPORT_HOST="$PWD/build-ios-simulator/tools/runner/Release-iphonesimulator/opendbc-runner.app" \
+  -DOPENDBC_ANDROID_EXPORT_HOST_LIBRARY="$PWD/build-android-host/tools/runner/libmain.so"
 cmake --build --preset default
 ```
 

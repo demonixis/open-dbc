@@ -60,7 +60,7 @@ class InstalledShaderTests(unittest.TestCase):
 
     def test_mobile_hosts_require_every_canonical_shader(self) -> None:
         for host in ("ios", "ios-simulator"):
-            self.write(f"export-hosts/{host}/OpenDBC.app/opendbc")
+            self.write(f"export-hosts/{host}/OpenDBC.app/opendbc-runner")
             self.write(f"export-hosts/{host}/opendbc-host.json", "{}")
         android = "export-hosts/android/template"
         self.write(f"{android}/app/src/main/jniLibs/arm64-v8a/libmain.so")
