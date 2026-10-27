@@ -2286,6 +2286,10 @@ namespace dbc
                                                             (UseMaterial ? MeshValue.MaterialColor.b : 1.0f),
                                                         0.0f, 1.0f),
                                              std::clamp(Object.Alpha, 0.0f, 1.0f)};
+                        // As in DBPro's fixed pipeline, vertex alpha only matters to objects that blend or
+                        // alpha-test. An opaque object stays opaque when RGB() leaves the alpha byte at zero.
+                        const bool UsesVertexAlpha = Object.Ghosted || Object.Alpha < 0.999f ||
+                                                     Object.AlphaMapping || Object.TransparentBlack;
                         const auto VertexColor = [&](uint32_t Index)
                         {
                             const uint32_t Packed =
@@ -2294,7 +2298,7 @@ namespace dbc
                                 Col.r * static_cast<float>((Packed >> 16u) & 0xFFu) / 255.0f,
                                 Col.g * static_cast<float>((Packed >> 8u) & 0xFFu) / 255.0f,
                                 Col.b * static_cast<float>(Packed & 0xFFu) / 255.0f,
-                                Col.a * static_cast<float>((Packed >> 24u) & 0xFFu) / 255.0f,
+                                UsesVertexAlpha ? Col.a * static_cast<float>((Packed >> 24u) & 0xFFu) / 255.0f : Col.a,
                             };
                         };
                         const SDL_FColor Color0 = VertexColor(I0);

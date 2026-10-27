@@ -91,6 +91,21 @@ namespace dbc::interpreter::detail
         return true;
     }
 
+    bool BuiltinValue::AsDword(std::uint32_t& Output, std::string* Error) const
+    {
+        std::int64_t Value = 0;
+        std::string ConversionError;
+        if (!language::ConvertInteger(AsNumber(), Value, &ConversionError) ||
+            Value < std::numeric_limits<std::int32_t>::min() || Value > std::numeric_limits<std::uint32_t>::max())
+        {
+            if (Error)
+                *Error = ConversionError.empty() ? "Numeric value is out of DWORD range" : std::move(ConversionError);
+            return false;
+        }
+        Output = static_cast<std::uint32_t>(Value);
+        return true;
+    }
+
     bool BuiltinValue::AsBool() const
     {
         return IsString ? !Text.empty() : Number != 0.0;
