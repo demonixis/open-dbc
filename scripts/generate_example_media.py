@@ -296,6 +296,81 @@ def surf(rate: int = 11025):
     return output
 
 
+def hop(rate: int = 22050):
+    # A soft rising whistle for jumps.
+    count = int(rate * 0.22)
+    phase, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        phase += 2 * math.pi * (380.0 + 520.0 * t * t) / rate
+        output.append(0.45 * math.sin(math.pi * t) * (math.sin(phase) + 0.25 * math.sin(2 * phase)))
+    return output
+
+
+def thud(rate: int = 22050):
+    count = int(rate * 0.25)
+    return [math.exp(-14.0 * i / count) * (0.5 * math.sin(2 * math.pi * 90 * i / rate) +
+                                           0.25 * (hash01(i, 0, 211) * 2.0 - 1.0)) for i in range(count)]
+
+
+def sparkle(rate: int = 22050):
+    # Three quick bell notes climbing a major triad.
+    output = [0.0] * int(rate * 0.9)
+    for index, frequency in enumerate((1046.5, 1318.5, 1568.0)):
+        start = int(index * rate * 0.07)
+        for i, value in enumerate(tone(frequency, 0.7, 6.0, rate, harmonics=(1.0, 0.3, 0.1))):
+            if start + i < len(output):
+                output[start + i] += 0.3 * value
+    return output
+
+
+def boing(rate: int = 22050):
+    count = int(rate * 0.6)
+    phase, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        frequency = 140.0 + 420.0 * t + 40.0 * math.sin(2 * math.pi * 18 * t)
+        phase += 2 * math.pi * frequency / rate
+        output.append(0.5 * math.exp(-3.0 * t) * math.sin(phase))
+    return output
+
+
+def bell_chord(rate: int = 22050):
+    output = [0.0] * int(rate * 1.6)
+    for index, frequency in enumerate((523.25, 659.25, 783.99, 1046.5)):
+        start = int(index * rate * 0.12)
+        for i, value in enumerate(tone(frequency, 1.4, 2.8, rate, harmonics=(1.0, 0.4, 0.2))):
+            if start + i < len(output):
+                output[start + i] += 0.22 * value
+    return output
+
+
+def whoosh(rate: int = 22050):
+    # Falling filtered noise: a one-pole low-pass whose cutoff drops.
+    count = int(rate * 1.0)
+    state, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        alpha = 0.25 * (1.0 - t) + 0.02
+        state += alpha * ((hash01(i, 1, 223) * 2.0 - 1.0) - state)
+        output.append(1.4 * math.sin(math.pi * t) * state)
+    return output
+
+
+def bloom(rate: int = 22050):
+    # A pentatonic arpeggio over a held fifth: the shrine wakes.
+    output = [0.0] * int(rate * 3.2)
+    for frequency in (261.63, 392.0):
+        for i, value in enumerate(tone(frequency, 3.2, 0.9, rate, harmonics=(1.0, 0.5, 0.25))):
+            output[i] += 0.12 * value
+    for index, frequency in enumerate((523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.5)):
+        start = int(index * rate * 0.14)
+        for i, value in enumerate(tone(frequency, 1.6, 3.0, rate, harmonics=(1.0, 0.3, 0.1))):
+            if start + i < len(output):
+                output[start + i] += 0.16 * value
+    return output
+
+
 def media() -> dict[str, bytes]:
     files = {}
     cavern = "examples/dbc/demos/cavern_dash/"
@@ -345,6 +420,15 @@ def media() -> dict[str, bytes]:
     files[rally + "lap.wav"] = wav(chime(), 16)
     files[rally + "finish.wav"] = wav(fanfare(), 16)
     files[rally + "bump.wav"] = wav(noise_burst(0.5, 7.0, 73, 60.0), 16)
+    gardens = "examples/dbpro/demos/sky_gardens/"
+    files[gardens + "jump.wav"] = wav(hop(), 16)
+    files[gardens + "land.wav"] = wav(thud(), 16)
+    files[gardens + "seed.wav"] = wav(sparkle(), 16)
+    files[gardens + "bounce.wav"] = wav(boing(), 16)
+    files[gardens + "checkpoint.wav"] = wav(bell_chord(), 16)
+    files[gardens + "fall.wav"] = wav(whoosh(), 16)
+    files[gardens + "bloom.wav"] = wav(bloom(), 16)
+    files[gardens + "wind.wav"] = wav(wind(), 8, 11025)
     music = "examples/dbc/tutorials/music/"
     for name, (notes, tempo) in (("harbour_waltz", harbour_waltz()), ("night_march", night_march())):
         files[music + name + ".mid"] = midi(notes, tempo)
