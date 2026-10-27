@@ -25,6 +25,7 @@ namespace dbc::studio
         constexpr const char* KPanelOutput = "Output";
         constexpr const char* KPanelPreview = "Preview";
         constexpr const char* KPanelCode = "Code";
+        constexpr const char* KPanelMedia = "Media";
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
 
         enum class ToolIcon
@@ -141,6 +142,14 @@ namespace dbc::studio
 
         Project_.SetOnActivate([this](const std::filesystem::path& Path) { OpenFile(Path); });
         Code_.SetOnSelect([this](std::uint32_t Line) { Editor_.GoToLine(Line); });
+        Media_.SetOnActivate(
+            [this](const std::filesystem::path& Path)
+            {
+                if (panels::AssetPreview::KindOf(Path) == panels::AssetPreview::Kind::None)
+                    Status_ = "No preview for " + Path.filename().string();
+                else
+                    OpenFile(Path);
+            });
 
         Settings_ = core::Settings::Load();
         SettingsLoaded_ = true;
@@ -381,6 +390,7 @@ namespace dbc::studio
         }
         DialectLocked_ = false;
         Project_.SetRoot(Folder);
+        Media_.SetRoot(Folder);
         ProjectSettings_ = std::move(LoadedSettings);
         const std::string PreviousFolder = Settings_.ProjectFolder;
         Settings_.ProjectFolder = Folder.string();
@@ -404,6 +414,7 @@ namespace dbc::studio
                 return;
             }
             Project_.SetRoot(File.parent_path());
+            Media_.SetRoot(File.parent_path());
             ProjectSettings_ = std::move(LoadedSettings);
             Settings_.ProjectFolder = File.parent_path().string();
             Settings_.Save();
@@ -486,6 +497,8 @@ namespace dbc::studio
         Editor_.SetProfile(ResolvedProject_->Profile);
         Project_.SetDbProProject(ResolvedProject_->DescriptorPath, ResolvedProject_->OrderedSources,
                                  ResolvedProject_->AssetRoot);
+        Media_.SetRoot(ResolvedProject_->AssetRoot.empty() ? ResolvedProject_->ProjectRoot
+                                                           : ResolvedProject_->AssetRoot);
         if (ResolvedProject_->DescriptorPath)
             Launcher_.SetProject(*ResolvedProject_);
         else
@@ -833,6 +846,14 @@ namespace dbc::studio
             ImGui::End();
         }
 
+        if (ShowMedia_)
+        {
+            if (ProjectDockId_ != 0)
+                ImGui::SetNextWindowDockID(ProjectDockId_, ImGuiCond_FirstUseEver);
+            if (ImGui::Begin(KPanelMedia, &ShowMedia_))
+                Media_.Draw();
+            ImGui::End();
+        }
 
         ImGui::Begin(KPanelEditor, nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         EditorDockId_ = ImGui::GetWindowDockID();
@@ -887,6 +908,7 @@ namespace dbc::studio
         const ImGuiID Bottom = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Down, 0.28f, nullptr, &Center);
 
         ImGui::DockBuilderDockWindow(KPanelCode, Left);
+        ImGui::DockBuilderDockWindow(KPanelMedia, Left);
         ImGui::DockBuilderDockWindow(KPanelProject, Left);
         ImGui::DockBuilderDockWindow(KPanelEditor, Center);
         ImGui::DockBuilderDockWindow(KPanelPreview, Center);
@@ -1098,6 +1120,7 @@ namespace dbc::studio
             ImGui::Separator();
             ImGui::MenuItem(KPanelProject, nullptr, &ShowProject_);
             ImGui::MenuItem(KPanelCode, nullptr, &ShowCode_);
+            ImGui::MenuItem(KPanelMedia, nullptr, &ShowMedia_);
             ImGui::MenuItem(KPanelOutput, nullptr, &ShowOutput_);
             ImGui::Separator();
             if (ImGui::MenuItem("Reset Layout"))

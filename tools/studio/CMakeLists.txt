@@ -136,6 +136,8 @@ set(STUDIO_SOURCES
 
     src/core/file_dialog.cpp
     src/core/file_dialog.hpp
+    src/core/media_catalogue.cpp
+    src/core/media_catalogue.hpp
     src/core/paths.cpp
     src/core/paths.hpp
     src/core/project_settings.cpp
@@ -165,6 +167,8 @@ set(STUDIO_SOURCES
     src/panels/editor_panel.hpp
     src/panels/launcher_window.cpp
     src/panels/launcher_window.hpp
+    src/panels/media_panel.cpp
+    src/panels/media_panel.hpp
     src/panels/output_panel.cpp
     src/panels/output_panel.hpp
     src/panels/project_panel.cpp

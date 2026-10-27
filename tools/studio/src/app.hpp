@@ -25,6 +25,7 @@
 #include "panels/code_panel.hpp"
 #include "panels/editor_panel.hpp"
 #include "panels/launcher_window.hpp"
+#include "panels/media_panel.hpp"
 #include "panels/output_panel.hpp"
 #include "panels/project_panel.hpp"
 #include "panels/project_settings_window.hpp"
@@ -97,6 +98,7 @@ namespace dbc::studio
         bool ShowProject_ = true;
         bool ShowOutput_ = true;
         bool ShowCode_ = true;
+        bool ShowMedia_ = true;
         bool ShowDemo_ = false;
         bool ShowAbout_ = false;
         bool QuitRequested_ = false;
@@ -107,6 +109,7 @@ namespace dbc::studio
         panels::OutputPanel Output_;
         panels::AssetPreview Preview_;
         panels::CodePanel Code_;
+        panels::MediaPanel Media_;
         panels::LauncherWindow Launcher_;
 
         dba::Reference Reference_;

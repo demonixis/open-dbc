@@ -33,6 +33,14 @@ if(NOT ANDROID AND NOT IOS)
     target_link_libraries(test_studio_language PRIVATE doctest_with_main dbc_language)
     doctest_discover_tests(test_studio_language PROPERTIES LABELS "unit-language-studio")
 
+    add_executable(test_studio_media
+        test_studio_media.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
+    )
+    target_include_directories(test_studio_media PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
+    target_link_libraries(test_studio_media PRIVATE doctest_with_main)
+    doctest_discover_tests(test_studio_media PROPERTIES LABELS "unit-studio")
+
     add_executable(test_studio_run_plan
         test_studio_run_plan.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/active_run_planner.cpp
