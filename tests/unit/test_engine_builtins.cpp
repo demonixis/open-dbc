@@ -2018,6 +2018,124 @@ TEST_CASE("DBPro BSP worlds load, draw the leaves their camera sees and delete")
     std::filesystem::remove_all(Root);
 }
 
+TEST_CASE("DBPro BSP collision keeps cameras and objects on the world's open side")
+{
+    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::filesystem::path Root =
+        std::filesystem::temp_directory_path() / ("opendbc-bsp-collision-" + std::to_string(Suffix));
+    REQUIRE(std::filesystem::create_directories(Root));
+    REQUIRE(std::filesystem::copy_file(
+        std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/world/ikzdm1.BSP", Root / "ikzdm1.BSP"));
+
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("bsp-collision", 32, 24));
+    Kernel.Camera().SetAutoCamOff();
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    Context.AssetRoot = Root;
+    std::string Error;
+    const auto Command = [&](dbc::language::SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        std::vector<BuiltinValue> Values;
+        for (const double Value : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Value));
+        Error.clear();
+        return InvokeCommand(Context, Symbol, Values, Error);
+    };
+    const auto Function = [&](dbc::language::SymbolId Symbol, double Index)
+    {
+        BuiltinValue Result;
+        Error.clear();
+        REQUIRE(InvokeFunction(Context, Symbol, {BuiltinValue::FromNumber(Index)}, Result, Error));
+        return Result.AsNumber();
+    };
+    const auto CameraY = [&] { return Kernel.Camera().PositionY(); };
+    using dbc::language::SymbolId;
+
+    // Before LOAD BSP the setup is accepted and ignored, as in DBPro; indices stay validated.
+    CHECK(Command(SymbolId::Command_SetBspCameraCollision, {1, 0, 0.75, 0}));
+    CHECK_FALSE(Command(SymbolId::Command_SetBspCameraCollision, {25, 0, 0.75, 0}));
+    CHECK(Error.find("between 1 and 24") != std::string::npos);
+    CHECK_FALSE(Command(SymbolId::Command_ProcessBspCollision, {0}));
+    CHECK(Error.find("between 1 and 24") != std::string::npos);
+
+    REQUIRE(InvokeCommand(Context, SymbolId::Command_LoadBsp,
+                          {BuiltinValue::FromString(""), BuiltinValue::FromString("ikzdm1.bsp")}, Error));
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, 3.0f, 2.0f));
+    Kernel.Core().Sync();
+    // The earlier setup did not survive: the camera falls through the floor.
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -40.0f, 2.0f));
+    Kernel.Core().Sync();
+    CHECK(CameraY() == doctest::Approx(-40.0f));
+
+    // world1.dba: radius 0.75 is a (0.75, 1.5, 0.75) ellipsoid and the floor is at y = -32.
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, 3.0f, 2.0f));
+    REQUIRE(Command(SymbolId::Command_SetBspCameraCollision, {1, 0, 0.75, 0}));
+    REQUIRE(Command(SymbolId::Command_SetBspCollisionThreshhold, {1, 0.001}));
+    for (int Frame = 0; Frame < 400; ++Frame)
+    {
+        REQUIRE(Kernel.Camera().PositionCamera(2.0f, CameraY() - 0.1f, 2.0f));
+        Kernel.Core().Sync();
+    }
+    CHECK(CameraY() == doctest::Approx(-30.5f).epsilon(0.001));
+    CHECK(Function(SymbolId::Function_BspCollisionHit, 1) == 1);
+    CHECK(Function(SymbolId::Function_BspCollisionHit, 1) == 0);
+    CHECK(Function(SymbolId::Function_BspCollisionY, 1) > 0.05);
+    CHECK(Function(SymbolId::Function_BspCollisionX, 1) == doctest::Approx(0.0));
+
+    // PROCESS BSP COLLISION resolves at once, before the next SYNC.
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -40.0f, 2.0f));
+    REQUIRE(Command(SymbolId::Command_ProcessBspCollision, {1}));
+    CHECK(CameraY() == doctest::Approx(-30.5f).epsilon(0.001));
+
+    // The height adjustment lowers the collision centre below the camera. Like DBPro, the solver does
+    // not push out an ellipsoid that already overlaps the floor, so the camera rises before falling.
+    REQUIRE(Command(SymbolId::Command_SetBspCollisionHeightAdjustment, {1, 1.0}));
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -25.0f, 2.0f));
+    Kernel.Core().Sync();
+    for (int Frame = 0; Frame < 60; ++Frame)
+    {
+        REQUIRE(Kernel.Camera().PositionCamera(2.0f, CameraY() - 0.1f, 2.0f));
+        Kernel.Core().Sync();
+    }
+    CHECK(CameraY() == doctest::Approx(-29.5f).epsilon(0.001));
+
+    REQUIRE(Command(SymbolId::Command_SetBspCollisionOff, {1}));
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -40.0f, 2.0f));
+    Kernel.Core().Sync();
+    CHECK(CameraY() == doctest::Approx(-40.0f));
+
+    // Response 1 puts an object back where it was before the blocked move.
+    Kernel.Objects().MakeObjectCube(1, 1.0f);
+    Kernel.Objects().PositionObject(1, 2.0f, -20.0f, 2.0f);
+    REQUIRE(Command(SymbolId::Command_SetBspObjectCollision, {2, 1, 0.5, 1}));
+    Kernel.Objects().PositionObject(1, 2.0f, -40.0f, 2.0f);
+    Kernel.Core().Sync();
+    REQUIRE(Kernel.Objects().GetObject(1) != nullptr);
+    CHECK(Kernel.Objects().GetObject(1)->PosY == doctest::Approx(-20.0f));
+    CHECK(Function(SymbolId::Function_BspCollisionHit, 2) == 1);
+
+    // The radius form sets the ellipsoid directly and keeps the slot's response.
+    REQUIRE(Command(SymbolId::Command_SetBspObjectCollisionRadius, {2, 1, 2, 4, 2}));
+    Kernel.Objects().PositionObject(1, 2.0f, -40.0f, 2.0f);
+    Kernel.Core().Sync();
+    CHECK(Kernel.Objects().GetObject(1)->PosY == doctest::Approx(-20.0f));
+    REQUIRE(Command(SymbolId::Command_SetBspCameraCollisionRadius, {3, 0, 1, 1, 1}));
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -40.0f, 2.0f));
+    Kernel.Core().Sync();
+    CHECK(CameraY() == doctest::Approx(-40.0f));
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -20.0f, 2.0f));
+    Kernel.Core().Sync();
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -40.0f, 2.0f));
+    Kernel.Core().Sync();
+    CHECK(CameraY() == doctest::Approx(-31.0f).epsilon(0.001));
+
+    Kernel.Shutdown();
+    std::filesystem::remove_all(Root);
+}
+
 TEST_CASE("Portable terrain matrices preserve DBPro grid texture normal and vector contracts")
 {
     dbc::EngineKernel Kernel;

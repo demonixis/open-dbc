@@ -4872,6 +4872,9 @@ namespace dbc
 
     void RendererSystem::RenderScene(bool Retain2d)
     {
+        // As in DBPro's SYNC: BSP collisions resolve before drawing and record their next start after.
+        Kernel_.BspWorld().ResolveCollisions();
+        bool Rendered = false;
         if (Kernel_.Vr().Enabled())
         {
             const auto Now = SDL_GetTicks();
@@ -4880,10 +4883,12 @@ namespace dbc
             if (Kernel_.Vr().RenderFrame(Delta, Retain2d))
             {
                 Previous = Now;
-                return;
+                Rendered = true;
             }
         }
-        dbc::RenderScene(Kernel_, Retain2d);
+        if (!Rendered)
+            dbc::RenderScene(Kernel_, Retain2d);
+        Kernel_.BspWorld().CaptureCollisionStarts();
     }
 
     SDL_Surface* RendererSystem::CaptureScreen()

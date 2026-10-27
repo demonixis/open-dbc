@@ -912,6 +912,7 @@ dbpro	377	568	Command	POSITION SOUND	audio-state	test_engine_builtins.cpp::Porta
 dbpro	379	569	Command	POSITION TERRAIN	golden-output	test_dbpro_terrain.dba	41da670a2b8be5fcd73eb30733fa91c021f414378e052ccd9b77bd32673b3310
 dbpro	380	571	Command	PREPARE MATRIX TEXTURE	golden-output	test_dbpro_matrix.dba	30249d63af2c68ea4bd5e89b776ddc8b417c3da3efe3e2ea7615212e0196b210
 dbpro	381	573	Command	PRINT	golden-output	test_box_gradient.dba	25d6a800154f8ffb87209b8ad140052f799225258680e30e01b871d8c3dc80f2
+dbpro	382	574	Command	PROCESS BSP COLLISION	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
 dbpro	383	575	Command	PROJECTION MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	384	577	Command	RANDOMIZE	rng-state	test_engine_builtins.cpp::DBPro math and screen compatibility functions retain deterministic values	-
 dbpro	385	579	Command	RANDOMIZE MATRIX	golden-output	test_dbpro_matrix.dba	30249d63af2c68ea4bd5e89b776ddc8b417c3da3efe3e2ea7615212e0196b210
@@ -967,6 +968,13 @@ dbpro	454	694	Command	SET AMBIENT LIGHT	engine-state	test_engine_builtins.cpp::P
 dbpro	455	695	Command	SET BLEND MAPPING ON	material-pixel	test_engine_builtins.cpp::DBPro blend operations and cube faces reach the portable stock shader	-
 dbpro	455	696	Command	SET BLEND MAPPING ON	material-pixel	test_engine_builtins.cpp::DBPro blend operations and cube faces reach the portable stock shader	-
 dbpro	457	698	Command	SET BSP CAMERA	bsp-world	test_engine_builtins.cpp::DBPro BSP worlds load, draw the leaves their camera sees and delete	-
+dbpro	458	699	Command	SET BSP CAMERA COLLISION	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	459	700	Command	SET BSP CAMERA COLLISION RADIUS	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	460	701	Command	SET BSP COLLISION HEIGHT ADJUSTMENT	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	461	702	Command	SET BSP COLLISION OFF	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	462	703	Command	SET BSP COLLISION THRESHHOLD	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	465	704	Command	SET BSP OBJECT COLLISION	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	466	705	Command	SET BSP OBJECT COLLISION RADIUS	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
 dbpro	467	706	Command	SET BUMP MAPPING ON	material-pixel	test_engine_builtins.cpp::DBPro bump cartoon and rainbow effects reach the portable stock shader	-
 dbpro	468	707	Command	SET CAMERA ASPECT	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6
 dbpro	469	709	Command	SET CAMERA FOV	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6
@@ -1175,6 +1183,10 @@ dbpro	728	1102	Function	BITMAP FLIPPED	golden-output	test_dbpro_display_image_te
 dbpro	729	1104	Function	BITMAP HEIGHT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	730	1106	Function	BITMAP MIRRORED	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	731	1108	Function	BITMAP WIDTH	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	747	1123	Function	BSP COLLISION HIT	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	748	1124	Function	BSP COLLISION X	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	749	1125	Function	BSP COLLISION Y	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
+dbpro	750	1126	Function	BSP COLLISION Z	bsp-collision	test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side	-
 dbpro	752	1129	Function	CAMERA ANGLE X	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6
 dbpro	753	1131	Function	CAMERA ANGLE Y	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6
 dbpro	754	1133	Function	CAMERA ANGLE Z	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6

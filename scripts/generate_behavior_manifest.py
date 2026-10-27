@@ -1358,6 +1358,24 @@ UNIT_WITNESSES += tuple(
         ("SET BSP CAMERA", "set bsp camera 1\n"),
     )
 )
+BSP_COLLISION_TEST = "test_engine_builtins.cpp::DBPro BSP collision keeps cameras and objects on the world's open side"
+UNIT_WITNESSES += tuple(
+    ("dbpro", kind, name, code, "bsp-collision", BSP_COLLISION_TEST)
+    for kind, name, code in (
+        ("Command", "SET BSP CAMERA COLLISION", "set bsp camera collision 1, 0, 0.75, 0\n"),
+        ("Command", "SET BSP OBJECT COLLISION", "set bsp object collision 2, 1, 0.5, 1\n"),
+        ("Command", "SET BSP CAMERA COLLISION RADIUS", "set bsp camera collision radius 3, 0, 1, 1, 1\n"),
+        ("Command", "SET BSP OBJECT COLLISION RADIUS", "set bsp object collision radius 2, 1, 2, 4, 2\n"),
+        ("Command", "SET BSP COLLISION OFF", "set bsp collision off 1\n"),
+        ("Command", "SET BSP COLLISION THRESHHOLD", "set bsp collision threshhold 1, 0.001\n"),
+        ("Command", "SET BSP COLLISION HEIGHT ADJUSTMENT", "set bsp collision height adjustment 1, 1.0\n"),
+        ("Command", "PROCESS BSP COLLISION", "process bsp collision 1\n"),
+        ("Function", "BSP COLLISION HIT", "value = bsp collision hit(1)\n"),
+        ("Function", "BSP COLLISION X", "value# = bsp collision x(1)\n"),
+        ("Function", "BSP COLLISION Y", "value# = bsp collision y(1)\n"),
+        ("Function", "BSP COLLISION Z", "value# = bsp collision z(1)\n"),
+    )
+)
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Regenerate catalogue-linked BASIC behavior witnesses")

@@ -4,14 +4,17 @@
 #include "engine_kernel.hpp"
 #include "image_store.hpp"
 #include "log.hpp"
+#include "object_manager.hpp"
 #include "renderer_system.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <limits>
+#include <unordered_map>
 
 namespace dbc
 {
@@ -373,6 +376,7 @@ namespace dbc
         Delete();
         Map_ = std::move(Parsed);
         LoadTextures(Found.parent_path().string());
+        BuildCollisionTriangles();
         Loaded_ = true;
         Kernel_.Renderer().InvalidateTriCache();
         return true;
@@ -380,38 +384,52 @@ namespace dbc
 
     void BspWorldSystem::LoadTextures(const std::string& MapDirectory)
     {
-        static constexpr std::array<const char*, 5> KConvertedExtensions{".png", ".jpg", ".dds", ".tga", ".bmp"};
         TextureImages_.assign(Map_.TextureNames.size(), 0);
+        // Slots often repeat a name: each distinct file is resolved and reported once.
+        std::unordered_map<std::string, int> Resolved;
         for (std::size_t Index = 0; Index < Map_.TextureNames.size(); ++Index)
         {
             const std::string& Name = Map_.TextureNames[Index];
-            if (!ConfinedTextureName(Name))
+            if (const auto Found = Resolved.find(Name); Found != Resolved.end())
             {
-                DBC_LOG_WARN("LOAD BSP ignores texture '{}' outside the map folder", Name);
+                TextureImages_[Index] = Found->second;
                 continue;
             }
-            const fs::path Directory(MapDirectory);
-            fs::path Resolved;
-            std::string ResolveError;
-            if (!ResolveCaseInsensitivePath(Resolved, Directory, fs::path(Name), &ResolveError))
-                DBC_LOG_WARN("LOAD BSP cannot inspect texture '{}': {}", Name, ResolveError);
-            // The shipped examples carry converted media: the same stem with another image extension.
-            for (std::size_t Extension = 0; Resolved.empty() && Extension < KConvertedExtensions.size(); ++Extension)
-            {
-                fs::path Alternative = fs::path(Name).replace_extension(KConvertedExtensions[Extension]);
-                if (!ResolveCaseInsensitivePath(Resolved, Directory, Alternative, nullptr))
-                    Resolved.clear();
-            }
-            if (Resolved.empty())
-            {
-                // DBPro drew the polygons untextured when a texture failed to load.
-                DBC_LOG_WARN("LOAD BSP cannot find texture '{}'", Name);
-                continue;
-            }
-            TextureImages_[Index] = Kernel_.ImageStoreRef().LoadImageInternalFromPath(Resolved.string());
-            if (TextureImages_[Index] == 0)
-                DBC_LOG_WARN("LOAD BSP cannot load texture '{}'", Resolved.string());
+            TextureImages_[Index] = LoadTexture(MapDirectory, Name);
+            Resolved.emplace(Name, TextureImages_[Index]);
         }
+    }
+
+    int BspWorldSystem::LoadTexture(const std::string& MapDirectory, const std::string& Name)
+    {
+        if (!ConfinedTextureName(Name))
+        {
+            DBC_LOG_WARN("LOAD BSP ignores texture '{}' outside the map folder", Name);
+            return 0;
+        }
+        static constexpr std::array<const char*, 5> KConvertedExtensions{".png", ".jpg", ".dds", ".tga", ".bmp"};
+        const fs::path Directory(MapDirectory);
+        fs::path Resolved;
+        std::string ResolveError;
+        if (!ResolveCaseInsensitivePath(Resolved, Directory, fs::path(Name), &ResolveError))
+            DBC_LOG_WARN("LOAD BSP cannot inspect texture '{}': {}", Name, ResolveError);
+        // The shipped examples carry converted media: the same stem with another image extension.
+        for (std::size_t Extension = 0; Resolved.empty() && Extension < KConvertedExtensions.size(); ++Extension)
+        {
+            fs::path Alternative = fs::path(Name).replace_extension(KConvertedExtensions[Extension]);
+            if (!ResolveCaseInsensitivePath(Resolved, Directory, Alternative, nullptr))
+                Resolved.clear();
+        }
+        if (Resolved.empty())
+        {
+            // DBPro drew the polygons untextured when a texture failed to load.
+            DBC_LOG_WARN("LOAD BSP cannot find texture '{}'", Name);
+            return 0;
+        }
+        const int ImageId = Kernel_.ImageStoreRef().LoadImageInternalFromPath(Resolved.string());
+        if (ImageId == 0)
+            DBC_LOG_WARN("LOAD BSP cannot load texture '{}'", Resolved.string());
+        return ImageId;
     }
 
     void BspWorldSystem::Delete()
@@ -420,6 +438,7 @@ namespace dbc
             return;
         Map_ = BspMap{};
         TextureImages_.clear();
+        Triangles_.clear();
         Loaded_ = false;
         Kernel_.Renderer().InvalidateTriCache();
     }
@@ -435,6 +454,204 @@ namespace dbc
     {
         CullingCamera_ = CameraId;
         Kernel_.Renderer().InvalidateTriCache();
+    }
+
+    void BspWorldSystem::BuildCollisionTriangles()
+    {
+        Triangles_.clear();
+        for (const BspPolygon& Polygon : Map_.Polygons)
+        {
+            for (std::size_t Index = 0; Index + 2 < Polygon.Indices.size(); Index += 3)
+            {
+                const Vec3& A = Polygon.Vertices[Polygon.Indices[Index]].Position;
+                const Vec3& B = Polygon.Vertices[Polygon.Indices[Index + 1]].Position;
+                const Vec3& C = Polygon.Vertices[Polygon.Indices[Index + 2]].Position;
+                // The stored normal decides the solid side whatever the winding.
+                const bool Agrees = Vec3Dot(Vec3Cross(Vec3Sub(B, A), Vec3Sub(C, A)), Polygon.Normal) >= 0.0f;
+                Triangles_.push_back(Agrees ? MakeSlideTriangle(A, B, C) : MakeSlideTriangle(A, C, B));
+            }
+        }
+    }
+
+    bool BspWorldSystem::AcceptsSetup(int Index, const char* Command, std::string* Error)
+    {
+        if (Index < 1 || Index > KMaxCollisionIndex)
+            return Fail(Error, std::string(Command) + " collision index must be between 1 and 24");
+        if (Loaded_)
+            return true;
+        if (!WarnedSetupWithoutWorld_)
+        {
+            DBC_LOG_WARN("{} has no effect before LOAD BSP", Command);
+            WarnedSetupWithoutWorld_ = true;
+        }
+        return true;
+    }
+
+    bool BspWorldSystem::EntityPosition(const Collision& Slot, Vec3& Output) const
+    {
+        if (Slot.Object)
+        {
+            const Object3D* Object = Kernel_.Objects().GetObject(Slot.Entity);
+            if (!Object)
+                return false;
+            Output = {Object->PosX, Object->PosY - Slot.HeightAdjustment, Object->PosZ};
+            return true;
+        }
+        const CameraSystem& Camera = Kernel_.Camera();
+        if (Camera.CameraExist(Slot.Entity) == 0 || !Camera.PositionX(Output.X, Slot.Entity) ||
+            !Camera.PositionY(Output.Y, Slot.Entity) || !Camera.PositionZ(Output.Z, Slot.Entity))
+            return false;
+        Output.Y -= Slot.HeightAdjustment;
+        return true;
+    }
+
+    void BspWorldSystem::MoveEntity(const Collision& Slot, const Vec3& Position)
+    {
+        const float Y = Position.Y + Slot.HeightAdjustment;
+        if (Slot.Object)
+            Kernel_.Objects().PositionObject(Slot.Entity, Position.X, Y, Position.Z);
+        else
+            Kernel_.Camera().PositionCamera(Slot.Entity, Position.X, Y, Position.Z);
+    }
+
+    void BspWorldSystem::CaptureStart(Collision& Slot)
+    {
+        Vec3 Position;
+        if (EntityPosition(Slot, Position))
+            Slot.Start = Position;
+    }
+
+    bool BspWorldSystem::SetCollision(int Index, bool Object, int Entity, const Vec3& Radii, int Response,
+                                      const char* Command, std::string* Error)
+    {
+        if (!AcceptsSetup(Index, Command, Error))
+            return false;
+        if (!Loaded_)
+            return true;
+        Collision& Slot = Collisions_[static_cast<std::size_t>(Index)];
+        Slot.Active = true;
+        Slot.Object = Object;
+        Slot.Entity = Entity;
+        Slot.Radii = Radii;
+        Slot.Response = Response;
+        Slot.Hit = false;
+        CaptureStart(Slot);
+        return true;
+    }
+
+    bool BspWorldSystem::SetCollisionRadius(int Index, bool Object, int Entity, const Vec3& Radii,
+                                            const char* Command, std::string* Error)
+    {
+        if (!AcceptsSetup(Index, Command, Error))
+            return false;
+        if (!Loaded_)
+            return true;
+        // DBPro's radius forms keep the slot's response and hit flag.
+        Collision& Slot = Collisions_[static_cast<std::size_t>(Index)];
+        Slot.Active = true;
+        Slot.Object = Object;
+        Slot.Entity = Entity;
+        Slot.Radii = Radii;
+        CaptureStart(Slot);
+        return true;
+    }
+
+    bool BspWorldSystem::SetCollisionOff(int Index, std::string* Error)
+    {
+        if (!AcceptsSetup(Index, "SET BSP COLLISION OFF", Error))
+            return false;
+        if (!Loaded_)
+            return true;
+        Collision& Slot = Collisions_[static_cast<std::size_t>(Index)];
+        if (Slot.Active)
+        {
+            Slot.Active = false;
+            CaptureStart(Slot);
+        }
+        return true;
+    }
+
+    bool BspWorldSystem::SetCollisionThreshold(int Index, float Threshold, std::string* Error)
+    {
+        if (!AcceptsSetup(Index, "SET BSP COLLISION THRESHHOLD", Error))
+            return false;
+        if (Loaded_)
+            Collisions_[static_cast<std::size_t>(Index)].Threshold = std::max(Threshold, 0.0f);
+        return true;
+    }
+
+    bool BspWorldSystem::SetCollisionHeightAdjustment(int Index, float Height, std::string* Error)
+    {
+        if (!AcceptsSetup(Index, "SET BSP COLLISION HEIGHT ADJUSTMENT", Error))
+            return false;
+        if (!Loaded_)
+            return true;
+        Collision& Slot = Collisions_[static_cast<std::size_t>(Index)];
+        Slot.HeightAdjustment = Height;
+        CaptureStart(Slot);
+        return true;
+    }
+
+    bool BspWorldSystem::ProcessCollision(int Index, std::string* Error)
+    {
+        if (Index < 1 || Index > KMaxCollisionIndex)
+            return Fail(Error, "PROCESS BSP COLLISION collision index must be between 1 and 24");
+        Resolve(Collisions_[static_cast<std::size_t>(Index)]);
+        return true;
+    }
+
+    bool BspWorldSystem::CollisionHit(int& Output, int Index, std::string* Error)
+    {
+        if (Index < 1 || Index > KMaxCollisionIndex)
+            return Fail(Error, "BSP COLLISION HIT collision index must be between 1 and 24");
+        Collision& Slot = Collisions_[static_cast<std::size_t>(Index)];
+        Output = Slot.Hit ? 1 : 0;
+        Slot.Hit = false;
+        return true;
+    }
+
+    bool BspWorldSystem::CollisionOffset(float& Output, int Index, int Axis, const char* Command,
+                                         std::string* Error) const
+    {
+        if (Index < 1 || Index > KMaxCollisionIndex)
+            return Fail(Error, std::string(Command) + " collision index must be between 1 and 24");
+        const Vec3& Offset = Collisions_[static_cast<std::size_t>(Index)].Offset;
+        Output = Axis == 0 ? Offset.X : (Axis == 1 ? Offset.Y : Offset.Z);
+        return true;
+    }
+
+    void BspWorldSystem::Resolve(Collision& Slot)
+    {
+        Vec3 Requested;
+        if (!Slot.Active || Triangles_.empty() || !EntityPosition(Slot, Requested))
+            return;
+        EllipsoidSlideSettings Settings;
+        Settings.MinimumMove = Slot.Threshold;
+        const EllipsoidSlideResult Result = SlideEllipsoid(Triangles_, Slot.Start, Requested, Slot.Radii, Settings);
+        Slot.Offset = Vec3Sub(Result.Position, Requested);
+        if (!Result.Clipped)
+            return;
+        Slot.Hit = true;
+        // Response 1 returns to the last free position; 0 keeps the slide.
+        if (Slot.Response == 1)
+            MoveEntity(Slot, Slot.Start);
+        else if (Slot.Response == 0)
+            MoveEntity(Slot, Result.Position);
+    }
+
+    void BspWorldSystem::ResolveCollisions()
+    {
+        for (Collision& Slot : Collisions_)
+            Resolve(Slot);
+    }
+
+    void BspWorldSystem::CaptureCollisionStarts()
+    {
+        for (Collision& Slot : Collisions_)
+        {
+            if (Slot.Active)
+                CaptureStart(Slot);
+        }
     }
 
     Vec3 BspWorldSystem::CullingPosition() const
