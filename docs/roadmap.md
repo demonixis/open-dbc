@@ -46,6 +46,34 @@ DBPro's own BSP format, its drawing and collision are done ([bsp.md](bsp.md)).
 - [ ] Quake 3 maps from pk3 archives: zip reader, shaders, patches, CC0 test map.
 - [ ] Quake 1/2 maps with lightmaps, then `SET BSP MULTITEXTURING ON/OFF`.
 
+## Standalone runtime
+
+Decisions:
+
+- An exported game ships `opendbc-runner`, not the Studio: VM, engine and asset
+  loaders, without the editor, the BASIC frontend, ImGui or DXC. The Studio keeps
+  DXC and still runs unbuilt projects directly.
+- A Studio release packages the runner beside it: `Contents/Helpers/opendbc-runner.app`
+  inside the macOS bundle, sibling executables in the Windows and Linux folders.
+- Exports contain verified bytecode, shaders in the target backend's format and
+  assets as they are, never sources. Assets keep their formats because programs
+  build file names at run time.
+- Engine shaders move from GLSL to HLSL, compiled by the pinned DXC like effects.
+- Metal shaders ship as MSL source; the engine no longer transpiles SPIR-V at run time.
+
+Work:
+
+- [ ] Engine shaders in HLSL: DXC to SPIR-V, then MSL, tracked and checked by
+  `shader-verify` instead of glslang.
+- [ ] The engine loads shaders in the device's native format and stops linking
+  SDL_shadercross; **Compile HLSL Effect** also writes `.msl`.
+- [ ] Versioned bytecode files bound to the runtime fingerprint, keeping line
+  information for run-time errors, verified at load.
+- [ ] `opendbc-runner` target without the BASIC frontend, ImGui or SDL_shadercross.
+- [ ] Desktop, iOS and Android exports use the runner as host and ship bytecode.
+- [ ] Studio packaging with the runner: nested macOS bundle signed inside out,
+  shared folder on Windows and Linux.
+
 ## Towards 1.0
 
 - [ ] Decide whether to keep the `DbcNew` / `DbProNew` profiles.

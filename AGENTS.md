@@ -14,7 +14,7 @@
 - Use `DBC_LOG_*`. Do not swallow errors or flood logs every frame.
 
 ## Architecture and compatibility
-- Keep **OpenDBC** as the product name. Preserve the single `opendbc` Studio/CLI binary and SDL_GPU architecture; no public C++ command API.
+- Keep **OpenDBC** as the product name. Preserve the single `opendbc` Studio/CLI binary and SDL_GPU architecture; exported games use a separate runner without Studio code. No public C++ command API.
 - Keep `dbc_language` independent of engine, SDL and UI. Use the typed frontend and verified VM; never add text-execution fallbacks or bypass bytecode verification.
 - `src/language/language_catalogue.inc` is the sole language inventory. Preserve stable `SymbolId`s, historical signatures and per-profile support states. Dispatch builtins by `SymbolId`.
 - Resolve profiles before lexing and keep them immutable. Engine compatibility uses `RuntimeCompatibilityPolicy`, never filenames or textual dialect checks.
