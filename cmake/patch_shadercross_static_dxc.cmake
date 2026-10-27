@@ -37,11 +37,16 @@ file(READ "${DXC_ENTRY}" DXC_ENTRY_CONTENTS)
 if(NOT DXC_ENTRY_CONTENTS MATCHES "OPENDBC_DXC_STATIC")
     string(REPLACE "#if defined(LLVM_ON_UNIX)\n"
         [=[#if defined(OPENDBC_DXC_STATIC)
+// A static library has no DllMain, and a global initializer would run before the
+// LLVMSupport globals InitMaybeFail uses (the Windows file-system TLS slot), so DXC
+// initializes on its first DxcCreateInstance call instead.
 namespace {
 class DxcStaticLifetime {
 public:
-  DxcStaticLifetime() { InitMaybeFail(); }
+  DxcStaticLifetime() : Result(InitMaybeFail()) {}
   ~DxcStaticLifetime() {
+    if (FAILED(Result))
+      return;
     DxcSetThreadMallocToDefault();
     ::hlsl::options::cleanupHlslOptTable();
     ::llvm::sys::fs::CleanupPerThreadFileSystem();
@@ -52,10 +57,14 @@ public:
     DxcClearThreadMalloc();
     DxcCleanupThreadMalloc();
   }
+  HRESULT Result;
 };
-
-DxcStaticLifetime StaticLifetime;
 } // namespace
+
+HRESULT OpenDbcInitializeDxc() {
+  static DxcStaticLifetime Lifetime;
+  return Lifetime.Result;
+}
 #elif defined(LLVM_ON_UNIX)
 ]=]
         DXC_ENTRY_CONTENTS "${DXC_ENTRY_CONTENTS}")
@@ -70,6 +79,19 @@ string(REPLACE "HRESULT CreateDxcIntelliSense(REFIID riid, _Out_ LPVOID *ppv);\n
 string(REPLACE
     "  } else if (IsEqualCLSID(rclsid, CLSID_DxcIntelliSense)) {\n    hr = CreateDxcIntelliSense(riid, ppv);\n"
     "" DXC_API_CONTENTS "${DXC_API_CONTENTS}")
+if(NOT DXC_API_CONTENTS MATCHES "OpenDbcInitializeDxc")
+    string(REPLACE "#include \"dxc/Support/Global.h\"\n"
+        "#include \"dxc/Support/Global.h\"\nHRESULT OpenDbcInitializeDxc();\n"
+        DXC_API_CONTENTS "${DXC_API_CONTENTS}")
+    string(REPLACE "  if (ppv == nullptr) {\n    return E_POINTER;\n  }\n"
+        "  if (ppv == nullptr) {\n    return E_POINTER;\n  }\n  HRESULT InitResult = OpenDbcInitializeDxc();\n  if (FAILED(InitResult)) {\n    return InitResult;\n  }\n"
+        DXC_API_CONTENTS "${DXC_API_CONTENTS}")
+    string(REGEX MATCHALL "OpenDbcInitializeDxc\\(\\)" DXC_API_INIT_CALLS "${DXC_API_CONTENTS}")
+    list(LENGTH DXC_API_INIT_CALLS DXC_API_INIT_CALL_COUNT)
+    if(NOT DXC_API_INIT_CALL_COUNT EQUAL 3)
+        message(FATAL_ERROR "Pinned DXC entry points changed; update the static-link patch")
+    endif()
+endif()
 file(WRITE "${DXC_API}" "${DXC_API_CONTENTS}")
 
 set(SHADERCROSS_CMAKE "${SOURCE_DIR}/CMakeLists.txt")
