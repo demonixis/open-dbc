@@ -578,11 +578,58 @@ namespace dbc::language::detail
                     {
                         std::vector<Token> Tokens(Line.begin() + static_cast<std::ptrdiff_t>(Begin),
                                                   Line.begin() + static_cast<std::ptrdiff_t>(Index));
-                        Result.push_back(
-                            {std::move(Tokens), Merge(Line[Begin].Span, Line[Index - 1].Span), Split, Begin == 0});
+                        AppendDeclarationList(
+                            {std::move(Tokens), Merge(Line[Begin].Span, Line[Index - 1].Span), Split, Begin == 0},
+                            Result);
                     }
                     Begin = Index + 1;
                 }
+            }
+
+            // DBPro's GLOBAL and LOCAL declare every comma-separated name, each with its own optional
+            // AS type; an '=' initializer takes the rest of the statement. Each name becomes its own
+            // declaration segment so an empty item still reports a missing name.
+            void AppendDeclarationList(Segment Value, std::vector<Segment>& Result) const
+            {
+                if (!FirstIs(Value, "GLOBAL") && !FirstIs(Value, "LOCAL"))
+                {
+                    Result.push_back(std::move(Value));
+                    return;
+                }
+                const Token Keyword = Value.Tokens.front();
+                std::size_t Begin = 1;
+                int Depth = 0;
+                for (std::size_t Index = 1; Index < Value.Tokens.size(); ++Index)
+                {
+                    const TokenKind Kind = Value.Tokens[Index].Kind;
+                    if (Kind == TokenKind::LeftParen)
+                        ++Depth;
+                    if (Kind == TokenKind::RightParen)
+                        --Depth;
+                    if (Depth == 0 && Kind == TokenKind::Equal)
+                        break;
+                    if (Depth != 0 || Kind != TokenKind::Comma)
+                        continue;
+                    std::vector<Token> Tokens{Keyword};
+                    Tokens.insert(Tokens.end(), Value.Tokens.begin() + static_cast<std::ptrdiff_t>(Begin),
+                                  Value.Tokens.begin() + static_cast<std::ptrdiff_t>(Index));
+                    const SourceSpan Span = Merge(Begin == 1 ? Keyword.Span : Value.Tokens[Begin].Span,
+                                                  Value.Tokens[Index].Span);
+                    Result.push_back({std::move(Tokens), Span, false, Begin == 1 && Value.StartsLine});
+                    Begin = Index + 1;
+                }
+                if (Begin == 1)
+                {
+                    Result.push_back(std::move(Value));
+                    return;
+                }
+                std::vector<Token> Tokens{Keyword};
+                Tokens.insert(Tokens.end(), Value.Tokens.begin() + static_cast<std::ptrdiff_t>(Begin),
+                              Value.Tokens.end());
+                const SourceSpan Span =
+                    Merge(Begin < Value.Tokens.size() ? Value.Tokens[Begin].Span : Value.Tokens.back().Span,
+                          Value.Tokens.back().Span);
+                Result.push_back({std::move(Tokens), Span, Value.EndedByColon, false});
             }
 
             static bool IsTerminatorWord(std::string_view Word)
@@ -1280,7 +1327,10 @@ namespace dbc::language::detail
                         }
                         else
                         {
-                            Result.push_back(ParseSimple(std::move(Value)));
+                            std::vector<Segment> Declarations;
+                            AppendDeclarationList(std::move(Value), Declarations);
+                            for (Segment& Declaration : Declarations)
+                                Result.push_back(ParseSimple(std::move(Declaration)));
                         }
                     }
                     PartBegin = Index + 1;

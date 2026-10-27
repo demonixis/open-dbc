@@ -357,6 +357,29 @@ TEST_CASE("DBPro GLOBAL references inside functions reuse a compatible global de
     CHECK(HasCode(Conflicting, "DBC2019"));
 }
 
+TEST_CASE("DBPro GLOBAL and LOCAL declare every name of a comma list")
+{
+    const dbc::language::Program Listed =
+        dbc::language::Compile(Source("global a, b as integer, c# = 1.5\n"
+                                      "function Work()\n"
+                                      "  local d$, e as float\n"
+                                      "endfunction\n",
+                                      dbc::language::LanguageProfile::DbPro, "global-list.dba"));
+    for (const auto& Diagnostic : Listed.Diagnostics)
+        INFO(dbc::language::FormatDiagnostic(*Listed.Source, Diagnostic));
+    CHECK_FALSE(Listed.HasErrors());
+    REQUIRE(Listed.Statements.size() == 3);
+    CHECK(Listed.Statements[0].Name == "A");
+    CHECK(Listed.Statements[1].Name == "B");
+    CHECK(Listed.Statements[1].HasExplicitType);
+    CHECK(Listed.Statements[2].Name == "C#");
+    CHECK(Listed.Statements[2].Expressions.size() == 1);
+
+    const dbc::language::Program Empty = dbc::language::Compile(
+        Source("global a,\n", dbc::language::LanguageProfile::DbPro, "global-empty-item.dba"));
+    CHECK(HasCode(Empty, "DBC1209"));
+}
+
 TEST_CASE("Binder diagnoses profile availability and discontinuous arity")
 {
     const dbc::language::Program Classic =
