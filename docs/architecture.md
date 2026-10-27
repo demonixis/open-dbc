@@ -84,6 +84,9 @@ Choices where the original cannot be reproduced portably:
   black;
 - audits and generator checks.
 
+Checks whose result does not depend on the host carry the `portable` label:
+`ctest -L portable` runs them alone and `ctest -LE portable` skips them.
+
 Generated files are never edited by hand; each has a `--check` gate:
 
 | File | Generator | Input |

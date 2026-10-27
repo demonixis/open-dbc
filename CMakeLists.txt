@@ -582,12 +582,15 @@ if(BUILD_TESTS)
     enable_testing()
 
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    # "portable" marks checks whose result does not depend on the host platform (committed data,
+    # generated references, frontend output), so one host can run them; the dba_* tests still
+    # execute every behavior witness on each platform.
     add_test(
         NAME language_catalogue_audit
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/audit_language_catalogue.py
     )
     set_tests_properties(language_catalogue_audit PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
     )
 
     add_test(
@@ -595,7 +598,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/audit_dbpro_projects.py
     )
     set_tests_properties(dbpro_project_evidence_audit PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
     )
 
     add_test(
@@ -604,7 +607,7 @@ if(BUILD_TESTS)
             --inventory-only
     )
     set_tests_properties(dbpro_demo_qualification_inventory PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
     )
 
     add_test(
@@ -612,7 +615,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_language_signatures.py --check
     )
     set_tests_properties(language_signature_regeneration PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
     )
 
     add_test(
@@ -620,7 +623,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_dbpro_extension_evidence.py --check
     )
     set_tests_properties(dbpro_extension_evidence_regeneration PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
     )
 
     add_test(
@@ -628,7 +631,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_language_references.py --check
     )
     set_tests_properties(language_reference_regeneration PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
     )
 
     add_test(
@@ -636,7 +639,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_api_docs.py --check
     )
     set_tests_properties(api_documentation_generation PROPERTIES
-        LABELS "unit;documentation;qualification"
+        LABELS "unit;documentation;qualification;portable"
     )
 
     add_test(
@@ -644,7 +647,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/audit_personal_paths.py
     )
     set_tests_properties(personal_path_audit PROPERTIES
-        LABELS "unit;qualification"
+        LABELS "unit;qualification;portable"
     )
 
     add_test(
@@ -652,7 +655,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_classic_fixtures.py --check
     )
     set_tests_properties(classic_fixture_regeneration PROPERTIES
-        LABELS "unit;media;qualification"
+        LABELS "unit;media;qualification;portable"
     )
 
     add_test(
@@ -660,7 +663,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_example_media.py --check
     )
     set_tests_properties(example_media_regeneration PROPERTIES
-        LABELS "unit;media;qualification"
+        LABELS "unit;media;qualification;portable"
     )
 
     add_test(
@@ -668,7 +671,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/audit_example_assets.py
     )
     set_tests_properties(example_asset_provenance PROPERTIES
-        LABELS "unit;media;qualification"
+        LABELS "unit;media;qualification;portable"
     )
 
     add_test(
@@ -676,7 +679,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_dbc_midi_fallbacks.py --check
     )
     set_tests_properties(dbc_midi_fallback_regeneration PROPERTIES
-        LABELS "unit;media;qualification"
+        LABELS "unit;media;qualification;portable"
     )
 
     add_test(
@@ -685,7 +688,7 @@ if(BUILD_TESTS)
             --check
     )
     set_tests_properties(unsupported_compatibility_manifest_regeneration PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
     )
 
     add_test(
@@ -694,7 +697,7 @@ if(BUILD_TESTS)
             --check --require-no-temporary
     )
     set_tests_properties(compatibility_stub_manifest_regeneration PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
     )
 
     add_test(
@@ -711,7 +714,7 @@ if(BUILD_TESTS)
             --opendbc $<TARGET_FILE:opendbc> --check
     )
     set_tests_properties(behavior_manifest_regeneration PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
         RESOURCE_LOCK "opendbc_runtime"
     )
 
@@ -721,7 +724,7 @@ if(BUILD_TESTS)
             --opendbc $<TARGET_FILE:opendbc> --check
     )
     set_tests_properties(corpus_expectations_regeneration PROPERTIES
-        LABELS "unit;language;qualification"
+        LABELS "unit;language;qualification;portable"
         RESOURCE_LOCK "opendbc_runtime"
     )
 
@@ -741,7 +744,7 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_readme_metrics.py --check
     )
     set_tests_properties(readme_metrics_regeneration PROPERTIES
-        LABELS "unit;qualification"
+        LABELS "unit;qualification;portable"
     )
 
     # DBA script regression tests
