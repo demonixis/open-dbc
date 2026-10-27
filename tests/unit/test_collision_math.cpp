@@ -1,4 +1,5 @@
 #include "engine/systems/collision_math.hpp"
+#include "engine/systems/ellipsoid_collision.hpp"
 #include "engine/systems/polygon_collision.hpp"
 #include <doctest/doctest.h>
 
@@ -201,4 +202,74 @@ TEST_CASE("polygon contact MTV comes from the intersecting triangle pair")
     CHECK(Repeated.Correction.Z == doctest::Approx(Geometric.Correction.Z));
     CHECK(Reversed.Depth == doctest::Approx(Geometric.Depth));
     CHECK(Vec3Dot(Reversed.Correction, Geometric.Correction) < 0.0f);
+}
+
+namespace
+{
+    // A 20 x 20 floor at y = 0 whose collision side faces up.
+    std::vector<SlideTriangle> SlideFloor()
+    {
+        return {MakeSlideTriangle({-10, 0, -10}, {-10, 0, 10}, {10, 0, 10}),
+                MakeSlideTriangle({-10, 0, -10}, {10, 0, 10}, {10, 0, -10})};
+    }
+} // namespace
+
+TEST_CASE("ellipsoid slide - a falling ellipsoid rests one skin above the floor")
+{
+    const std::vector<SlideTriangle> Floor = SlideFloor();
+    const EllipsoidSlideResult Result = SlideEllipsoid(Floor, {0, 5, 0}, {0, -5, 0}, {0.75f, 1.5f, 0.75f});
+    CHECK(Result.Clipped);
+    CHECK(Result.Position.X == doctest::Approx(0.0f));
+    CHECK(Result.Position.Y == doctest::Approx(1.5015f).epsilon(0.0005));
+    CHECK(Result.Position.Z == doctest::Approx(0.0f));
+}
+
+TEST_CASE("ellipsoid slide - the move continues along the contact plane")
+{
+    const std::vector<SlideTriangle> Floor = SlideFloor();
+    const EllipsoidSlideResult Result = SlideEllipsoid(Floor, {0, 1.6f, 0}, {3, 1.0f, 0}, {0.75f, 1.5f, 0.75f});
+    CHECK(Result.Clipped);
+    CHECK(Result.Position.X == doctest::Approx(3.0f).epsilon(0.01));
+    CHECK(Result.Position.Y == doctest::Approx(1.5f).epsilon(0.01));
+}
+
+TEST_CASE("ellipsoid slide - triangles only block their front side and tiny moves are not tested")
+{
+    const std::vector<SlideTriangle> Floor = SlideFloor();
+    const EllipsoidSlideResult FromBelow = SlideEllipsoid(Floor, {0, -5, 0}, {0, 5, 0}, {1, 1, 1});
+    CHECK_FALSE(FromBelow.Clipped);
+    CHECK(FromBelow.Position.Y == doctest::Approx(5.0f));
+
+    // 0.002 units over a radius of 1 is below the 0.003 minimum move: the requested position stands.
+    const EllipsoidSlideResult Tiny = SlideEllipsoid(Floor, {0, 1.001f, 0}, {0, 0.999f, 0}, {1, 1, 1});
+    CHECK_FALSE(Tiny.Clipped);
+    CHECK(Tiny.Position.Y == doctest::Approx(0.999f));
+    EllipsoidSlideSettings Fine;
+    Fine.MinimumMove = 0.001f;
+    CHECK(SlideEllipsoid(Floor, {0, 1.001f, 0}, {0, 0.999f, 0}, {1, 1, 1}, Fine).Clipped);
+}
+
+TEST_CASE("ellipsoid slide - edges catch a sphere moving parallel to their plane and lift it over")
+{
+    // The sphere centre passes 0.5 above the plane of a floor whose edge lies along x = 0, y = 0.
+    const std::vector<SlideTriangle> Floor{MakeSlideTriangle({0, 0, -5}, {0, 0, 5}, {5, 0, 5})};
+    const EllipsoidSlideResult Result = SlideEllipsoid(Floor, {-3, 0.5f, 0}, {-0.5f, 0.5f, 0}, {1, 1, 1});
+    CHECK(Result.Clipped);
+    const float EdgeDistance = std::sqrt(Result.Position.X * Result.Position.X + Result.Position.Y * Result.Position.Y);
+    // The slide follows the tangent plane at the contact, so it never comes closer than the radius.
+    CHECK(EdgeDistance >= 1.0f);
+    CHECK(EdgeDistance < 1.05f);
+    CHECK(Result.Position.X < 0.0f);
+    CHECK(Result.Position.Y > 0.5f);
+}
+
+TEST_CASE("ellipsoid slide - a wall keeps the ellipsoid at its radius while it slides sideways")
+{
+    // Wall at x = 5 facing -X.
+    const std::vector<SlideTriangle> Wall{MakeSlideTriangle({5, -10, -10}, {5, 10, 10}, {5, 10, -10}),
+                                          MakeSlideTriangle({5, -10, -10}, {5, -10, 10}, {5, 10, 10})};
+    const EllipsoidSlideResult Result = SlideEllipsoid(Wall, {0, 0, 0}, {8, 0, 4}, {0.75f, 1.5f, 0.75f});
+    CHECK(Result.Clipped);
+    CHECK(Result.Position.X == doctest::Approx(4.25f).epsilon(0.002));
+    CHECK(Result.Position.Z == doctest::Approx(4.0f).epsilon(0.01));
 }
