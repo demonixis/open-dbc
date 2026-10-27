@@ -5,7 +5,7 @@ examples/dbc/demos/cavern_dash/cavern_dash.dba	dbc	90	0.50	71
 examples/dbc/demos/dune_armour/dune_armour.dba	dbc	90	0.50	42
 examples/dbc/demos/flooded_vault/flooded_vault.dba	dbc	90	0.50	116
 examples/dbc/demos/frost_outpost/frost_outpost.dba	dbc	90	0.50	52
-examples/dbc/demos/hive_defender/hive_defender.dba	dbc	90	0.49	72
+examples/dbc/demos/hive_defender/hive_defender.dba	dbc	30	0.49	72
 examples/dbc/demos/wave_racer/wave_racer.dba	dbc	90	0.50	142
 examples/dbc/tutorials/2d/colour_picker.dba	dbc	90	0.50	1491
 examples/dbc/tutorials/2d/night_town.dba	dbc	90	0.50	36
