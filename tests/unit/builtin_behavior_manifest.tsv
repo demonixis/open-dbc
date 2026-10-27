@@ -364,13 +364,13 @@ dbc	704	1055	Command	YROTATE OBJECT	engine-state	test_engine_builtins.cpp::Class
 dbc	705	1057	Command	ZROTATE CAMERA	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbc	706	1059	Command	ZROTATE OBJECT	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
 dbc	708	1062	Function	ABS	golden-output	test_math.dba	fbc34ac7b482ab61efa6ba907ab95916bd1c2d43b6bb1b157077bc6b0e75eb82
-dbc	709	1064	Function	ACOS	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
+dbc	709	1064	Function	ACOS	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	710	1066	Function	ALPHABLENDING AVAILABLE	gpu-capability	test_engine_builtins.cpp::Classic backdrop and fog commands update draw state	-
 dbc	720	1085	Function	APPNAME$	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
 dbc	721	1087	Function	ASC	golden-output	test_strings.dba	8b0d4b36993049906cab297218b9fea5c961d9cd99d88755769c34b78ca7093d
-dbc	722	1089	Function	ASIN	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
-dbc	723	1091	Function	ATAN	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
-dbc	724	1093	Function	ATANFULL	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
+dbc	722	1089	Function	ASIN	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
+dbc	723	1091	Function	ATAN	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
+dbc	724	1093	Function	ATANFULL	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	725	1095	Function	BIN$	golden-output	test_strings.dba	8b0d4b36993049906cab297218b9fea5c961d9cd99d88755769c34b78ca7093d
 dbc	726	1097	Function	BITMAP DEPTH	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
 dbc	727	1099	Function	BITMAP EXIST	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
@@ -420,7 +420,7 @@ dbc	780	1181	Function	CURVEVALUE	golden-output	test_math.dba	fbc34ac7b482ab61efa
 dbc	785	1189	Function	DOWNKEY	input-state	test_engine_builtins.cpp::Classic input functions preserve held keys absolute mouse state and button masks	-
 dbc	788	1193	Function	ENTRY$	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbc	789	1195	Function	ESCAPEKEY	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
-dbc	790	1197	Function	EXP	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
+dbc	790	1197	Function	EXP	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	791	1199	Function	FILE END	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
 dbc	792	1201	Function	FILE EXIST	golden-output	test_file_io.dba	ad8ff6ee761d1c558fbe3a217c9dec0200a69c06cd85dcd722e75050ceff022e
 dbc	793	1203	Function	FILE OPEN	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
@@ -542,9 +542,9 @@ dbc	954	1480	Function	MUSIC EXIST	audio-state	test_engine_builtins.cpp::Portable
 dbc	955	1482	Function	MUSIC LOOPING	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	956	1484	Function	MUSIC PAUSED	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	957	1486	Function	MUSIC PLAYING	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
-dbc	970	1512	Function	NEWXVALUE	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
-dbc	971	1514	Function	NEWYVALUE	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
-dbc	972	1516	Function	NEWZVALUE	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
+dbc	970	1512	Function	NEWXVALUE	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
+dbc	971	1514	Function	NEWYVALUE	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
+dbc	972	1516	Function	NEWZVALUE	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	973	1518	Function	OBJECT ANGLE X	golden-output	test_object_position.dba	9f87ea8277a9665465c482532e0ac36a160c23668fcb05060463b94e6901b5e9
 dbc	974	1520	Function	OBJECT ANGLE Y	golden-output	test_object_position.dba	9f87ea8277a9665465c482532e0ac36a160c23668fcb05060463b94e6901b5e9
 dbc	975	1522	Function	OBJECT ANGLE Z	golden-output	test_object_position.dba	9f87ea8277a9665465c482532e0ac36a160c23668fcb05060463b94e6901b5e9
@@ -623,7 +623,7 @@ dbc	1080	1685	Function	STR$	golden-output	test_strings.dba	8b0d4b36993049906cab2
 dbc	1081	1687	Function	SYSTEM DMEM AVAILABLE	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
 dbc	1082	1689	Function	SYSTEM SMEM AVAILABLE	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
 dbc	1083	1691	Function	SYSTEM TMEM AVAILABLE	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
-dbc	1084	1693	Function	TAN	golden-output	test_math_extended.dba	bef014a348addd1e853d78ce01aa4683c1d1d0d95c9bef3a4b133aedd3bce55c
+dbc	1084	1693	Function	TAN	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	1089	1699	Function	TEXT BACKGROUND TYPE	golden-output	test_draw2d.dba	0bf46cb87cea566577df5be7d9cbcd8baa49a7d6dce3b45b4771b38d85eb95dd
 dbc	1090	1701	Function	TEXT FONT$	golden-output	test_draw2d.dba	0bf46cb87cea566577df5be7d9cbcd8baa49a7d6dce3b45b4771b38d85eb95dd
 dbc	1091	1703	Function	TEXT HEIGHT	golden-output	test_draw2d.dba	0bf46cb87cea566577df5be7d9cbcd8baa49a7d6dce3b45b4771b38d85eb95dd

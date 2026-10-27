@@ -9,7 +9,9 @@ namespace dbc
     class EngineKernel;
 
     inline constexpr float KDegreesToRadians = std::numbers::pi_v<float> / 180.0f;
-    inline constexpr float KRadiansToDegrees = 180.0f / std::numbers::pi_v<float>;
+    // Inverse trigonometry runs in double: single-precision libm results differ across
+    // platforms (Apple asinf(1) is one ulp below pi/2), which would make BASIC output vary.
+    inline constexpr double KRadiansToDegrees = 180.0 / std::numbers::pi;
 
     void Randomize(EngineKernel& K, int Seed);
     int Rnd(EngineKernel& K, int MaxValue);
@@ -77,19 +79,19 @@ namespace dbc
 
     inline float Acos(float Value)
     {
-        const float Clamped = std::clamp(Value, -1.0f, 1.0f);
-        return std::acos(Clamped) * KRadiansToDegrees;
+        const double Clamped = std::clamp(static_cast<double>(Value), -1.0, 1.0);
+        return static_cast<float>(std::acos(Clamped) * KRadiansToDegrees);
     }
 
     inline float Asin(float Value)
     {
-        const float Clamped = std::clamp(Value, -1.0f, 1.0f);
-        return std::asin(Clamped) * KRadiansToDegrees;
+        const double Clamped = std::clamp(static_cast<double>(Value), -1.0, 1.0);
+        return static_cast<float>(std::asin(Clamped) * KRadiansToDegrees);
     }
 
     inline float Atan(float Value)
     {
-        float Angle = std::atan(Value) * KRadiansToDegrees;
+        float Angle = static_cast<float>(std::atan(static_cast<double>(Value)) * KRadiansToDegrees);
         if (Angle < 0.0f)
         {
             Angle += 360.0f;
