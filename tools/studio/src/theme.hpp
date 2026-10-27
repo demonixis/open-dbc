@@ -33,6 +33,7 @@ namespace dbc::studio
         inline constexpr ImU32 Control = IM_COL32(0xc5, 0x86, 0xc0, 0xff);
         inline constexpr ImU32 Error = IM_COL32(0xff, 0x66, 0x66, 0xff);
         inline constexpr ImU32 ErrorLine = IM_COL32(0x5a, 0x1d, 0x1d, 0xff);
+        inline constexpr ImU32 Run = IM_COL32(0x4e, 0xc9, 0x6b, 0xff);
 
         // Applies colors, rounding and spacing to the current ImGui style.
         // `scale` is the display content scale used to bake sizes.

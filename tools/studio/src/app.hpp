@@ -47,6 +47,7 @@ namespace dbc::studio
 
         void DrawDockSpace();
         void DrawMenuBar();
+        void DrawToolbar();
         void DrawStatusBar();
         void DrawAbout();
         void DrawQuitConfirm();
@@ -57,6 +58,7 @@ namespace dbc::studio
 
         void OpenFolder(const std::filesystem::path& Folder);
         void OpenFile(const std::filesystem::path& File);
+        void ShowOpenFileDialog();
         bool ResolveWorkspace(const std::filesystem::path& Target,
                               std::optional<dbc::language::LanguageProfile> Forced = std::nullopt);
         void ApplyResolvedProject(dbc::interpreter::ResolvedProject Project);

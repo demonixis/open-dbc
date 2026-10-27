@@ -1,6 +1,7 @@
 #include "app.hpp"
 #include "engine/systems/log.hpp"
 
+#include <algorithm>
 #include <array>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlgpu3.h>
@@ -24,6 +25,82 @@ namespace dbc::studio
         constexpr const char* KPanelOutput = "Output";
         constexpr const char* KPanelPreview = "Preview";
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
+
+        enum class ToolIcon
+        {
+            New,
+            Open,
+            Save,
+            Run,
+            Stop,
+        };
+
+        // Toolbar buttons are drawn as vector shapes on a 16-unit grid, so they stay
+        // sharp at any DPI without an icon font or texture.
+        bool ToolbarButton(const char* Id, ToolIcon Icon, bool Enabled, const char* Tooltip)
+        {
+            const float Size = ImGui::GetFrameHeight();
+            ImGui::BeginDisabled(!Enabled);
+            const bool Pressed = ImGui::InvisibleButton(Id, ImVec2(Size, Size));
+            ImGui::EndDisabled();
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                ImGui::SetTooltip("%s", Tooltip);
+
+            const ImVec2 Min = ImGui::GetItemRectMin();
+            ImDrawList* Draw = ImGui::GetWindowDrawList();
+            if (Enabled && ImGui::IsItemHovered())
+                Draw->AddRectFilled(Min, ImGui::GetItemRectMax(),
+                                    ImGui::IsItemActive() ? Theme::Selection : Theme::Hover,
+                                    ImGui::GetStyle().FrameRounding);
+
+            const float Unit = Size / 16.0f;
+            const float Thickness = std::max(1.0f, Unit * 1.2f);
+            const auto At = [&](float X, float Y) { return ImVec2(Min.x + X * Unit, Min.y + Y * Unit); };
+            const auto Tint = [Enabled](ImU32 Color)
+            { return Enabled ? Color : (Color & ~IM_COL32_A_MASK) | IM_COL32(0, 0, 0, 0x60); };
+            const ImU32 Ink = Tint(Theme::Text);
+            switch (Icon)
+            {
+                case ToolIcon::New:
+                {
+                    const ImVec2 Page[] = {At(4, 2), At(9.5f, 2), At(12.5f, 5), At(12.5f, 14), At(4, 14)};
+                    Draw->AddPolyline(Page, 5, Ink, ImDrawFlags_Closed, Thickness);
+                    const ImVec2 Fold[] = {At(9.5f, 2), At(9.5f, 5), At(12.5f, 5)};
+                    Draw->AddPolyline(Fold, 3, Ink, ImDrawFlags_None, Thickness);
+                    break;
+                }
+                case ToolIcon::Open:
+                {
+                    const ImVec2 Folder[] = {At(2, 4), At(6, 4), At(7.5f, 5.5f), At(14, 5.5f), At(14, 13), At(2, 13)};
+                    Draw->AddPolyline(Folder, 6, Tint(Theme::String), ImDrawFlags_Closed, Thickness);
+                    break;
+                }
+                case ToolIcon::Save:
+                    Draw->AddRect(At(2.5f, 2.5f), At(13.5f, 13.5f), Tint(Theme::Keyword), Unit, ImDrawFlags_None,
+                                  Thickness);
+                    Draw->AddRectFilled(At(5, 2.5f), At(11, 6.5f), Tint(Theme::Keyword));
+                    Draw->AddRect(At(5, 9), At(11, 13.5f), Tint(Theme::Keyword), 0.0f, ImDrawFlags_None, Thickness);
+                    break;
+                case ToolIcon::Run:
+                    Draw->AddTriangleFilled(At(4.5f, 2.5f), At(13.5f, 8), At(4.5f, 13.5f), Tint(Theme::Run));
+                    break;
+                case ToolIcon::Stop:
+                    Draw->AddRectFilled(At(4, 4), At(12, 12), Tint(Theme::Error), Unit);
+                    break;
+            }
+            return Pressed;
+        }
+
+        void ToolbarSeparator()
+        {
+            ImGui::SameLine();
+            const ImVec2 Cursor = ImGui::GetCursorScreenPos();
+            const float Height = ImGui::GetFrameHeight();
+            ImGui::GetWindowDrawList()->AddLine(ImVec2(Cursor.x, Cursor.y + Height * 0.2f),
+                                                ImVec2(Cursor.x, Cursor.y + Height * 0.8f), Theme::Border);
+            ImGui::Dummy(ImVec2(1.0f, Height));
+            ImGui::SameLine();
+        }
 
         constexpr const char* KDbaFilter = "dba;dbpro";
 #if !defined(DBC_STUDIO_SANDBOXED)
@@ -364,6 +441,17 @@ namespace dbc::studio
         Status_ = File.filename().string();
     }
 
+    void App::ShowOpenFileDialog()
+    {
+        const std::string Start = Project_.Root().empty() ? std::string() : Project_.Root().string();
+        Dialog_.OpenFile(Window_, Start, "DBA source", KDbaFilter,
+                         [this](const std::string& Path)
+                         {
+                             if (!Path.empty())
+                                 OpenFile(Path);
+                         });
+    }
+
     bool App::ResolveWorkspace(const std::filesystem::path& Target,
                                std::optional<dbc::language::LanguageProfile> Forced)
     {
@@ -695,6 +783,7 @@ namespace dbc::studio
         ImGui::PopStyleVar(3);
 
         DrawMenuBar();
+        DrawToolbar();
 
         // The default layout is only built on a first run: after that the dock node
         // is restored from the ini file, so it must be tested before DockSpace()
@@ -806,13 +895,7 @@ namespace dbc::studio
             {
                 if (ImGui::MenuItem("Open File...", "Ctrl+O"))
                 {
-                    const std::string Start = Project_.Root().empty() ? std::string() : Project_.Root().string();
-                    Dialog_.OpenFile(Window_, Start, "DBA source", KDbaFilter,
-                                     [this](const std::string& Path)
-                                     {
-                                         if (!Path.empty())
-                                             OpenFile(Path);
-                                     });
+                    ShowOpenFileDialog();
                 }
                 if (ImGui::MenuItem("Open Folder...", "Ctrl+Shift+O"))
                 {
@@ -1061,6 +1144,36 @@ namespace dbc::studio
             }
         }
         ImGui::End();
+    }
+
+    void App::DrawToolbar()
+    {
+        const ImGuiStyle& Style = ImGui::GetStyle();
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(Theme::Panel));
+        ImGui::BeginChild("##Toolbar", ImVec2(0.0f, ImGui::GetFrameHeight() + Style.FramePadding.y * 2.0f),
+                          ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::SetCursorPos(ImVec2(Style.ItemSpacing.x, Style.FramePadding.y));
+
+        if (ToolbarButton("##new", ToolIcon::New, true, "New (Ctrl+N)"))
+            Editor_.NewFile();
+        if constexpr (core::platform::HasNativeFileDialog())
+        {
+            ImGui::SameLine();
+            if (ToolbarButton("##open", ToolIcon::Open, true, "Open File..."))
+                ShowOpenFileDialog();
+        }
+        ImGui::SameLine();
+        if (ToolbarButton("##save", ToolIcon::Save, Editor_.HasDocument(), "Save (Ctrl+S)"))
+            SaveCurrent();
+        ToolbarSeparator();
+        if (ToolbarButton("##run", ToolIcon::Run, !ExecutionBusy_, "Run (F5)"))
+            RunActiveDocument();
+        ImGui::SameLine();
+        if (ToolbarButton("##stop", ToolIcon::Stop, ExecutionBusy_, "Stop (Shift+F5)"))
+            StopRun();
+
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
     }
 
     void App::DrawStatusBar()
