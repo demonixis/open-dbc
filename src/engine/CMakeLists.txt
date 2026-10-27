@@ -44,7 +44,6 @@ dbc_enable_warnings(dbc_engine)
 
 
 if(APPLE)
-    target_link_libraries(dbc_engine PUBLIC SDL3_shadercross::SDL3_shadercross)
     target_link_libraries(dbc_engine PUBLIC "-framework Foundation" "-framework AVFoundation")
 endif()
 

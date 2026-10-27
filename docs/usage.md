@@ -56,8 +56,9 @@ filtered by kind and name; double-clicking an image or sound previews it.
 outline or Run.
 
 **Build → Compile HLSL Effect…** compiles a `.fx` or `.hlsl` file with `VSMain`
-and `PSMain` entry points into `<name>.vert.spv`, `<name>.frag.spv` and
-`<name>.effect.json`, which DBPro `LOAD EFFECT` loads. More techniques are
+and `PSMain` entry points into SPIR-V and MSL stages (`<name>.vert.spv`,
+`<name>.vert.msl`, `<name>.frag.spv`, `<name>.frag.msl`) and `<name>.effect.json`,
+which DBPro `LOAD EFFECT` loads. More techniques are
 declared with `// opendbc:technique <name> <VS> <PS>`. Effect inputs: vertex
 locations 0–6 (position, normal, colour, UV, three gradient colours), vertex
 constants `b0, space1` (with an automatic `ViewProj`), fragment texture

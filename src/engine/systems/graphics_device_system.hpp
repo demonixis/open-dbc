@@ -60,7 +60,6 @@ namespace dbc
         [[nodiscard]] bool ApplyFinalColorScale(float Red, float Green, float Blue);
         [[nodiscard]] bool EnsureGpuVertexCapacity(Uint32 VertexCount);
         void DestroyGpuBackend();
-        bool InitializeShaderCross();
         SDL_GPUTextureFormat GpuColorFormat() const
         {
             return GpuColorFormat_;
@@ -204,8 +203,11 @@ namespace dbc
 
         struct EffectStage
         {
+            // Both forms are loaded because LOAD EFFECT may run before the GPU device exists.
             std::vector<Uint8> Bytecode;
             std::string EntryPoint;
+            std::vector<Uint8> Msl;
+            std::string MslEntryPoint;
             Uint32 SamplerCount = 0;
             Uint32 UniformBufferCount = 0;
             std::vector<Uint8> UniformData;
@@ -236,8 +238,9 @@ namespace dbc
         // Loads a canonical engine shader (shaders/<Name>.<vert|frag>.<spv|msl>) in the device's native format.
         [[nodiscard]] SDL_GPUShader* CreateEngineShader(std::string_view Name, SDL_GPUShaderStage Stage,
                                                         Uint32 NumSamplers, Uint32 NumUniformBuffers);
-        [[nodiscard]] SDL_GPUShader* CreateGpuShaderFromSpirv(const EffectStage& EffectStageValue,
-                                                              SDL_GPUShaderStage Stage);
+        // MSL when the device cannot take SPIR-V (Metal); compiled shaders ship both forms.
+        [[nodiscard]] SDL_GPUShaderFormat NativeShaderFormat() const;
+        [[nodiscard]] SDL_GPUShader* CreateGpuShader(const EffectStage& EffectStageValue, SDL_GPUShaderStage Stage);
         [[nodiscard]] bool CreatePipelineSet(SDL_GPUShader* VertexShader, SDL_GPUShader* FragmentShader,
                                              std::array<SDL_GPUGraphicsPipeline*, 64>& Pipelines);
         bool LoadEffectResource(const std::string& Path, int EffectId, int TextureFlag, int DoNotGenerateExtraData,
@@ -279,7 +282,6 @@ namespace dbc
         SDL_GPUTextureFormat GpuCaptureFormat_ = SDL_GPU_TEXTUREFORMAT_INVALID;
         Uint32 GpuCaptureWidth_ = 0;
         Uint32 GpuCaptureHeight_ = 0;
-        bool ShaderCrossInitialized_ = false;
         SDL_GPUTextureFormat GpuColorFormat_ = SDL_GPU_TEXTUREFORMAT_INVALID;
         SDL_GPUTextureFormat GpuDepthFormat_ = SDL_GPU_TEXTUREFORMAT_INVALID;
         bool GpuStencilSupported_ = false;

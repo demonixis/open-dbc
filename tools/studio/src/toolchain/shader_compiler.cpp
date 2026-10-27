@@ -9,6 +9,8 @@
 #include <regex>
 #include <set>
 #include <sstream>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include <SDL3/SDL.h>
@@ -62,6 +64,7 @@ namespace dbc::studio
         struct CompiledStage
         {
             std::vector<std::uint8_t> Bytes;
+            std::string Msl;
             nlohmann::json Metadata;
         };
 
@@ -315,10 +318,33 @@ namespace dbc::studio
             const auto& Resources = Metadata.Value->resource_info;
             const auto* Bytes = static_cast<const std::uint8_t*>(Buffer.Value);
             Result.Bytes.assign(Bytes, Bytes + ByteCount);
+
+            SDL_ShaderCross_SPIRV_Info SpirvInfo{};
+            SpirvInfo.bytecode = Bytes;
+            SpirvInfo.bytecode_size = ByteCount;
+            SpirvInfo.entrypoint = EntryPoint;
+            SpirvInfo.shader_stage = Stage;
+            SdlBuffer Msl;
+            Msl.Value = SDL_ShaderCross_TranspileMSLFromSPIRV(&SpirvInfo);
+            if (!Msl.Value)
+            {
+                Error = std::string(EntryPoint) + ": MSL transpilation failed: " + SDL_GetError();
+                return false;
+            }
+            Result.Msl = static_cast<const char*>(Msl.Value);
+            // SPIRV-Cross renames entry points that MSL reserves, such as main -> main0.
+            static const std::regex MslEntryPoint(R"(\b(?:vertex|fragment)\s+\S+\s+(\w+)\s*\()");
+            std::smatch MslEntryMatch;
+            if (!std::regex_search(Result.Msl, MslEntryMatch, MslEntryPoint))
+            {
+                Error = std::string(EntryPoint) + ": transpiled MSL has no entry point";
+                return false;
+            }
             try
             {
                 Result.Metadata = {
                     {"entry_point", EntryPoint},
+                    {"msl_entry_point", MslEntryMatch[1].str()},
                     {"resources",
                      {{"samplers", Resources.num_samplers},
                       {"storage_textures", Resources.num_storage_textures},
@@ -506,16 +532,19 @@ namespace dbc::studio
             Result.FragmentPath = Stem.string() + ".frag.spv";
             Result.ManifestPath = Stem.string() + ".effect.json";
 
-            Vertex.Metadata["file"] = Result.VertexPath.filename().generic_string();
-            Fragment.Metadata["file"] = Result.FragmentPath.filename().generic_string();
+            const auto NameStage = [](CompiledStage& Stage, const std::filesystem::path& StageStem)
+            {
+                Stage.Metadata["file"] = StageStem.filename().generic_string() + ".spv";
+                Stage.Metadata["msl_file"] = StageStem.filename().generic_string() + ".msl";
+            };
+            NameStage(Vertex, Stem.string() + ".vert");
+            NameStage(Fragment, Stem.string() + ".frag");
             nlohmann::json TechniqueManifest = nlohmann::json::array();
             for (CompiledTechnique& Technique : Techniques)
             {
                 const std::filesystem::path TechniqueStem = Stem.string() + "." + Technique.Definition.Name;
-                const std::filesystem::path VertexPath = TechniqueStem.string() + ".vert.spv";
-                const std::filesystem::path FragmentPath = TechniqueStem.string() + ".frag.spv";
-                Technique.Vertex.Metadata["file"] = VertexPath.filename().generic_string();
-                Technique.Fragment.Metadata["file"] = FragmentPath.filename().generic_string();
+                NameStage(Technique.Vertex, TechniqueStem.string() + ".vert");
+                NameStage(Technique.Fragment, TechniqueStem.string() + ".frag");
                 TechniqueManifest.push_back(
                     {{"name", Technique.Definition.Name},
                      {"stages", {{"vertex", Technique.Vertex.Metadata}, {"fragment", Technique.Fragment.Metadata}}}});
@@ -529,23 +558,30 @@ namespace dbc::studio
             };
             const std::string ManifestText = Manifest.dump(2) + '\n';
 
-            std::vector<std::filesystem::path> Targets{Result.VertexPath, Result.FragmentPath};
-            std::vector<const std::vector<std::uint8_t>*> Payloads{&Vertex.Bytes, &Fragment.Bytes};
+            std::vector<std::filesystem::path> Targets;
+            std::vector<std::pair<const void*, std::size_t>> Payloads;
+            const auto AddStage = [&](const CompiledStage& Stage, const std::filesystem::path& StageStem)
+            {
+                Targets.push_back(StageStem.string() + ".spv");
+                Payloads.emplace_back(Stage.Bytes.data(), Stage.Bytes.size());
+                Targets.push_back(StageStem.string() + ".msl");
+                Payloads.emplace_back(Stage.Msl.data(), Stage.Msl.size());
+            };
+            AddStage(Vertex, Stem.string() + ".vert");
+            AddStage(Fragment, Stem.string() + ".frag");
             for (const CompiledTechnique& Technique : Techniques)
             {
                 const std::filesystem::path TechniqueStem = Stem.string() + "." + Technique.Definition.Name;
-                Targets.push_back(TechniqueStem.string() + ".vert.spv");
-                Payloads.push_back(&Technique.Vertex.Bytes);
-                Targets.push_back(TechniqueStem.string() + ".frag.spv");
-                Payloads.push_back(&Technique.Fragment.Bytes);
+                AddStage(Technique.Vertex, TechniqueStem.string() + ".vert");
+                AddStage(Technique.Fragment, TechniqueStem.string() + ".frag");
             }
             Targets.push_back(Result.ManifestPath);
 
             std::vector<std::filesystem::path> Temporaries(Targets.size());
             for (std::size_t Index = 0; Index < Payloads.size(); ++Index)
             {
-                if (!WriteTemporary(Targets[Index], Payloads[Index]->data(), Payloads[Index]->size(),
-                                    Temporaries[Index], Result.Error))
+                if (!WriteTemporary(Targets[Index], static_cast<const std::uint8_t*>(Payloads[Index].first),
+                                    Payloads[Index].second, Temporaries[Index], Result.Error))
                 {
                     RemoveTemporaries(Temporaries);
                     return Result;

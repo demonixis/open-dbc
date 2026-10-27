@@ -52,8 +52,9 @@ the historical profiles ([vr.md](vr.md)). Anything else new waits for the future
 `EngineKernel` owns audio, cameras, window, diagnostics, 2D, files, GPU device,
 images, input, lights, matrices, DBPro BSP worlds, memblocks, objects, physics
 (Jolt for the ODE core), renderer, sprites, text and VR. Engine shaders are HLSL
-that the pinned DXC compiles to SPIR-V, then SDL_shadercross to MSL; the engine
-loads whichever the GPU device accepts. After `cmake --preset shader-verify`, the
+that the pinned DXC compiles to SPIR-V, then SDL_shadercross to MSL, as the Studio
+does for effects; the engine loads whichever the GPU device accepts and never
+transpiles at run time. After `cmake --preset shader-verify`, the
 `shader-verify` build preset checks the tracked files byte for byte and
 `shader-update` regenerates them. There is no video playback and no FFmpeg.
 

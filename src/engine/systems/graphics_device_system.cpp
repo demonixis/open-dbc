@@ -18,14 +18,6 @@
 
 #include <nlohmann/json.hpp>
 
-#if defined(__APPLE__)
-#if __has_include(<SDL3_shadercross/SDL_shadercross.h>)
-#include <SDL3_shadercross/SDL_shadercross.h>
-#elif __has_include(<SDL_shadercross.h>)
-#include <SDL_shadercross.h>
-#endif
-#endif
-
 namespace dbc
 {
     namespace
@@ -896,13 +888,27 @@ namespace dbc
             const auto ReadStage =
                 [&](const nlohmann::json& Node, const std::string& Name, EffectStage& Stage, bool Vertex)
             {
-                const fs::path File = Node.at("file").get<std::string>();
-                if (File.empty() || File.is_absolute() || File.has_parent_path() || File == "." || File == ".." ||
-                    File.string().find_first_of("\\:") != std::string::npos)
-                    return ManifestFailure(Name + " stage file must be a sibling filename");
-                Stage.EntryPoint = Node.at("entry_point").get<std::string>();
-                if (Stage.EntryPoint.empty() || Stage.EntryPoint.find_first_of(" \t\r\n") != std::string::npos)
-                    return ManifestFailure(Name + " stage entry point is invalid");
+                const auto ReadSibling = [&](const char* Field, fs::path& File)
+                {
+                    File = Node.at(Field).get<std::string>();
+                    if (File.empty() || File.is_absolute() || File.has_parent_path() || File == "." ||
+                        File == ".." || File.string().find_first_of("\\:") != std::string::npos)
+                        return ManifestFailure(Name + " stage file must be a sibling filename");
+                    return true;
+                };
+                const auto ReadEntryPoint = [&](const char* Field, std::string& EntryPoint)
+                {
+                    EntryPoint = Node.at(Field).get<std::string>();
+                    if (EntryPoint.empty() || EntryPoint.find_first_of(" \t\r\n") != std::string::npos)
+                        return ManifestFailure(Name + " stage entry point is invalid");
+                    return true;
+                };
+                fs::path File;
+                fs::path MslFile;
+                if (!ReadSibling("file", File) || !ReadSibling("msl_file", MslFile) ||
+                    !ReadEntryPoint("entry_point", Stage.EntryPoint) ||
+                    !ReadEntryPoint("msl_entry_point", Stage.MslEntryPoint))
+                    return false;
 
                 const nlohmann::json& Resources = Node.at("resources");
                 int Samplers{};
@@ -1015,6 +1021,12 @@ namespace dbc
                 const fs::path StagePath = fs::weakly_canonical(StageRoot / File, PathError);
                 if (PathError || StagePath.parent_path() != StageRoot)
                     return ManifestFailure(Name + " stage file must remain inside its manifest directory");
+                const fs::path MslPath = fs::weakly_canonical(StageRoot / MslFile, PathError);
+                if (PathError || MslPath.parent_path() != StageRoot)
+                    return ManifestFailure(Name + " stage file must remain inside its manifest directory");
+                Stage.Msl = LoadFileBytes(MslPath.string());
+                if (Stage.Msl.empty() || std::find(Stage.Msl.begin(), Stage.Msl.end(), Uint8{0}) != Stage.Msl.end())
+                    return ManifestFailure(Name + " stage is not valid MSL source");
                 Stage.Bytecode = LoadFileBytes(StagePath.string());
                 std::uint32_t Magic = 0;
                 if (Stage.Bytecode.size() < sizeof(Magic) || Stage.Bytecode.size() % sizeof(Magic) != 0)
@@ -1564,8 +1576,8 @@ namespace dbc
         if (Technique.Pipelines[PipelineIndex])
             return Technique.Pipelines[PipelineIndex];
 
-        SDL_GPUShader* VertexShader = CreateGpuShaderFromSpirv(Technique.Vertex, SDL_GPU_SHADERSTAGE_VERTEX);
-        SDL_GPUShader* FragmentShader = CreateGpuShaderFromSpirv(Technique.Fragment, SDL_GPU_SHADERSTAGE_FRAGMENT);
+        SDL_GPUShader* VertexShader = CreateGpuShader(Technique.Vertex, SDL_GPU_SHADERSTAGE_VERTEX);
+        SDL_GPUShader* FragmentShader = CreateGpuShader(Technique.Fragment, SDL_GPU_SHADERSTAGE_FRAGMENT);
         if (!VertexShader || !FragmentShader)
         {
             if (VertexShader)
@@ -1937,17 +1949,6 @@ namespace dbc
         return true;
     }
 
-    bool GraphicsDeviceSystem::InitializeShaderCross()
-    {
-#if defined(__APPLE__)
-        if (!ShaderCrossInitialized_)
-            ShaderCrossInitialized_ = SDL_ShaderCross_Init();
-        return ShaderCrossInitialized_;
-#else
-        return true;
-#endif
-    }
-
     void GraphicsDeviceSystem::DestroyGpuBackend()
     {
         ReleaseGpuPipelineResources();
@@ -1980,13 +1981,6 @@ namespace dbc
             SDL_DestroyGPUDevice(GpuDevice_);
             GpuDevice_ = nullptr;
         }
-#if defined(__APPLE__)
-        if (ShaderCrossInitialized_)
-        {
-            SDL_ShaderCross_Quit();
-            ShaderCrossInitialized_ = false;
-        }
-#endif
     }
 
     void GraphicsDeviceSystem::SetDrawColorInt(int Packed)
@@ -2019,88 +2013,70 @@ namespace dbc
         return Bytes;
     }
 
+    [[nodiscard]] SDL_GPUShaderFormat GraphicsDeviceSystem::NativeShaderFormat() const
+    {
+        if (GpuDevice_ && (SDL_GetGPUShaderFormats(GpuDevice_) & SDL_GPU_SHADERFORMAT_SPIRV) == 0)
+            return SDL_GPU_SHADERFORMAT_MSL;
+        return SDL_GPU_SHADERFORMAT_SPIRV;
+    }
+
     [[nodiscard]] SDL_GPUShader* GraphicsDeviceSystem::CreateEngineShader(std::string_view Name,
                                                                           SDL_GPUShaderStage Stage, Uint32 NumSamplers,
                                                                           Uint32 NumUniformBuffers)
     {
         if (!GpuDevice_)
             return nullptr;
-        const SDL_GPUShaderFormat Formats = SDL_GetGPUShaderFormats(GpuDevice_);
-        const bool Spirv = (Formats & SDL_GPU_SHADERFORMAT_SPIRV) != 0;
-        if (!Spirv && (Formats & SDL_GPU_SHADERFORMAT_MSL) == 0)
-        {
-            DBC_LOG_ERROR("GPU device accepts neither SPIR-V nor MSL shaders");
-            return nullptr;
-        }
+        const bool Msl = NativeShaderFormat() == SDL_GPU_SHADERFORMAT_MSL;
         const bool Vertex = Stage == SDL_GPU_SHADERSTAGE_VERTEX;
         const std::string Asset =
-            "shaders/" + std::string(Name) + (Vertex ? ".vert" : ".frag") + (Spirv ? ".spv" : ".msl");
+            "shaders/" + std::string(Name) + (Vertex ? ".vert" : ".frag") + (Msl ? ".msl" : ".spv");
         std::string Path, Error;
         if (!ImageStore::ResolveAssetPath(Path, Asset, &Error))
         {
             DBC_LOG_ERROR("GPU shader path resolution failed: {}", Error);
             return nullptr;
         }
-        const std::vector<Uint8> Code = LoadFileBytes(Path);
+        EffectStage Definition;
+        std::vector<Uint8>& Code = Msl ? Definition.Msl : Definition.Bytecode;
+        Code = LoadFileBytes(Path);
         if (Code.empty())
         {
             DBC_LOG_ERROR("shader load failed: {}", Path);
             return nullptr;
         }
-
-        SDL_GPUShaderCreateInfo Info{};
-        Info.code_size = Code.size();
-        Info.code = Code.data();
-        Info.entrypoint = Vertex ? "VSMain" : "PSMain";
-        Info.format = Spirv ? SDL_GPU_SHADERFORMAT_SPIRV : SDL_GPU_SHADERFORMAT_MSL;
-        Info.stage = Stage;
-        Info.num_samplers = NumSamplers;
-        Info.num_uniform_buffers = NumUniformBuffers;
-        SDL_GPUShader* Shader = SDL_CreateGPUShader(GpuDevice_, &Info);
+        Definition.EntryPoint = Vertex ? "VSMain" : "PSMain";
+        Definition.MslEntryPoint = Definition.EntryPoint;
+        Definition.SamplerCount = NumSamplers;
+        Definition.UniformBufferCount = NumUniformBuffers;
+        SDL_GPUShader* Shader = CreateGpuShader(Definition, Stage);
         if (!Shader)
             DBC_LOG_ERROR("GPU shader creation failed for {}: {}", Asset, SDL_GetError());
         return Shader;
     }
 
-    [[nodiscard]] SDL_GPUShader* GraphicsDeviceSystem::CreateGpuShaderFromSpirv(const EffectStage& EffectStageValue,
-                                                                                SDL_GPUShaderStage Stage)
+    [[nodiscard]] SDL_GPUShader* GraphicsDeviceSystem::CreateGpuShader(const EffectStage& EffectStageValue,
+                                                                       SDL_GPUShaderStage Stage)
     {
-        if (!GpuDevice_ || EffectStageValue.Bytecode.empty())
+        if (!GpuDevice_)
+            return nullptr;
+        const bool Msl = NativeShaderFormat() == SDL_GPU_SHADERFORMAT_MSL;
+        if (Msl && (SDL_GetGPUShaderFormats(GpuDevice_) & SDL_GPU_SHADERFORMAT_MSL) == 0)
+        {
+            SDL_SetError("GPU device accepts neither SPIR-V nor MSL shaders");
+            return nullptr;
+        }
+        const std::vector<Uint8>& Code = Msl ? EffectStageValue.Msl : EffectStageValue.Bytecode;
+        if (Code.empty())
             return nullptr;
 
-#if defined(__APPLE__)
-        if (const char* Driver = SDL_GetGPUDeviceDriver(GpuDevice_); Driver && SDL_strcasecmp(Driver, "metal") == 0)
-        {
-            SDL_ShaderCross_SPIRV_Info Info{};
-            Info.bytecode = EffectStageValue.Bytecode.data();
-            Info.bytecode_size = EffectStageValue.Bytecode.size();
-            Info.entrypoint = EffectStageValue.EntryPoint.c_str();
-            Info.shader_stage = (Stage == SDL_GPU_SHADERSTAGE_VERTEX) ? SDL_SHADERCROSS_SHADERSTAGE_VERTEX
-                                                                      : SDL_SHADERCROSS_SHADERSTAGE_FRAGMENT;
-            Info.props = 0;
-
-            SDL_ShaderCross_GraphicsShaderResourceInfo Resource{};
-            Resource.num_samplers = EffectStageValue.SamplerCount;
-            Resource.num_storage_textures = 0;
-            Resource.num_storage_buffers = 0;
-            Resource.num_uniform_buffers = EffectStageValue.UniformBufferCount;
-
-            SDL_GPUShader* Shader = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(GpuDevice_, &Info, &Resource, 0);
-            return Shader;
-        }
-#endif
-
         SDL_GPUShaderCreateInfo Info{};
-        Info.code_size = EffectStageValue.Bytecode.size();
-        Info.code = EffectStageValue.Bytecode.data();
-        Info.entrypoint = EffectStageValue.EntryPoint.c_str();
-        Info.format = SDL_GPU_SHADERFORMAT_SPIRV;
+        Info.code_size = Code.size();
+        Info.code = Code.data();
+        Info.entrypoint = Msl ? EffectStageValue.MslEntryPoint.c_str() : EffectStageValue.EntryPoint.c_str();
+        Info.format = Msl ? SDL_GPU_SHADERFORMAT_MSL : SDL_GPU_SHADERFORMAT_SPIRV;
         Info.stage = Stage;
         Info.num_samplers = EffectStageValue.SamplerCount;
-        Info.num_storage_textures = 0;
-        Info.num_storage_buffers = 0;
         Info.num_uniform_buffers = EffectStageValue.UniformBufferCount;
-        Info.props = 0;
         return SDL_CreateGPUShader(GpuDevice_, &Info);
     }
 

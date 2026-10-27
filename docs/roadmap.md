@@ -63,8 +63,6 @@ Decisions:
 
 Work:
 
-- [ ] **Compile HLSL Effect** also writes `.msl`, effects load it like engine
-  shaders, and the engine stops linking SDL_shadercross.
 - [ ] Versioned bytecode files bound to the runtime fingerprint, keeping line
   information for run-time errors, verified at load.
 - [ ] `opendbc-runner` target without the BASIC frontend, ImGui or SDL_shadercross.

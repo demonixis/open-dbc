@@ -13,6 +13,7 @@ TEST_CASE("Studio media are classified by extension")
     CHECK(core::ClassifyMedia("theme.mid") == core::MediaKind::Audio);
     CHECK(core::ClassifyMedia("mech.X") == core::MediaKind::Model);
     CHECK(core::ClassifyMedia("bump.fx") == core::MediaKind::Effect);
+    CHECK(core::ClassifyMedia("bump.frag.msl") == core::MediaKind::Effect);
     CHECK(core::ClassifyMedia("intro.avi") == core::MediaKind::Video);
     CHECK(core::ClassifyMedia("hud.ttf") == core::MediaKind::Font);
     CHECK_FALSE(core::ClassifyMedia("game.dba"));

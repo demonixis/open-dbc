@@ -49,9 +49,9 @@ namespace dbc::studio
                 {".md3", MediaKind::Model},  {".mdl", MediaKind::Model},   {".b3d", MediaKind::Model},
                 {".dae", MediaKind::Model},  {".gltf", MediaKind::Model},  {".glb", MediaKind::Model},
                 {".fx", MediaKind::Effect},  {".hlsl", MediaKind::Effect}, {".spv", MediaKind::Effect},
-                {".avi", MediaKind::Video},  {".mpg", MediaKind::Video},   {".mpeg", MediaKind::Video},
-                {".wmv", MediaKind::Video},  {".mp4", MediaKind::Video},   {".ttf", MediaKind::Font},
-                {".otf", MediaKind::Font},
+                {".msl", MediaKind::Effect}, {".avi", MediaKind::Video},   {".mpg", MediaKind::Video},
+                {".mpeg", MediaKind::Video}, {".wmv", MediaKind::Video},   {".mp4", MediaKind::Video},
+                {".ttf", MediaKind::Font},   {".otf", MediaKind::Font},
             };
 
             std::string Name = Path.extension().string();

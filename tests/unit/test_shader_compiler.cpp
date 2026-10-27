@@ -122,6 +122,12 @@ float4 PSMain(PixelInput Input) : SV_Target0
     CHECK(Manifest.at("stages").at("fragment").at("entry_point") == "PSMain");
     CHECK(Manifest.at("stages").at("vertex").at("resources").at("uniform_buffers") == 1);
     CHECK(Manifest.at("stages").at("fragment").at("resources").at("samplers") == 1);
+    CHECK(Manifest.at("stages").at("vertex").at("msl_file") == "tint.vert.msl");
+    CHECK(Manifest.at("stages").at("fragment").at("msl_file") == "tint.frag.msl");
+    CHECK(Manifest.at("stages").at("vertex").at("msl_entry_point") == "VSMain");
+    CHECK(Manifest.at("stages").at("fragment").at("msl_entry_point") == "PSMain");
+    CHECK(std::filesystem::file_size(Directory.Path / "tint.vert.msl") > 0);
+    CHECK(std::filesystem::file_size(Directory.Path / "tint.frag.msl") > 0);
 
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("test", 64, 48));
@@ -224,6 +230,24 @@ float4 PSMain(PixelInput Input) : SV_Target0
         REQUIRE(Kernel.Gpu().EffectErrors().size() == 1);
         CHECK(Kernel.Gpu().EffectErrors().front() == EffectError);
     }
+    {
+        auto WithoutMsl = Manifest;
+        WithoutMsl["stages"]["fragment"].erase("msl_file");
+        std::ofstream ManifestFile(Result.ManifestPath, std::ios::binary | std::ios::trunc);
+        ManifestFile << WithoutMsl.dump();
+        ManifestFile.close();
+        CHECK_FALSE(Kernel.Gpu().LoadEffect(Source.string(), 9, 0, 0, &EffectError));
+        CHECK(Kernel.Gpu().EffectExist(9) == 0);
+    }
+    {
+        auto EscapingMsl = Manifest;
+        EscapingMsl["stages"]["vertex"]["msl_file"] = "../tint.vert.msl";
+        std::ofstream ManifestFile(Result.ManifestPath, std::ios::binary | std::ios::trunc);
+        ManifestFile << EscapingMsl.dump();
+        ManifestFile.close();
+        CHECK_FALSE(Kernel.Gpu().LoadEffect(Source.string(), 9, 0, 0, &EffectError));
+        CHECK(EffectError.find("sibling filename") != std::string::npos);
+    }
     TemporaryDirectory Outside;
     const auto ExternalStage = Outside.Path / "external.vert.spv";
     REQUIRE(std::filesystem::copy_file(Result.VertexPath, ExternalStage));
@@ -246,6 +270,38 @@ float4 PSMain(PixelInput Input) : SV_Target0
     const std::array<SDL_Surface*, 6> Faces{&Oversized, &Oversized, &Oversized, &Oversized, &Oversized, &Oversized};
     CHECK(Kernel.Gpu().CreateGpuCubeTextureFromSurfaces(Faces) == nullptr);
     CHECK(std::string(SDL_GetError()).find("GPU transfer limit") != std::string::npos);
+}
+
+TEST_CASE("Studio records the MSL entry point SPIRV-Cross renames")
+{
+    std::string EffectError;
+    TemporaryDirectory Directory;
+    const std::filesystem::path Source = Directory.Path / "renamed.fx";
+    std::ofstream Stream(Source, std::ios::binary);
+    Stream << R"(
+// opendbc:technique plain main PSMain
+
+float4 VSMain(float3 Position : POSITION) : SV_Position { return float4(Position, 1.0); }
+float4 main(float3 Position : POSITION) : SV_Position { return float4(Position * 0.5, 1.0); }
+float4 PSMain() : SV_Target0 { return float4(1.0, 1.0, 1.0, 1.0); }
+)";
+    Stream.close();
+    REQUIRE(Stream.good());
+
+    const toolchain::ShaderCompileResult Result = toolchain::ShaderCompiler().CompileHlslEffect(Source);
+    INFO(Result.Error);
+    REQUIRE(Result.Success);
+    std::ifstream ManifestStream(Result.ManifestPath, std::ios::binary);
+    const nlohmann::json Manifest = nlohmann::json::parse(ManifestStream);
+    const nlohmann::json& Vertex = Manifest.at("techniques").at(0).at("stages").at("vertex");
+    CHECK(Vertex.at("entry_point") == "main");
+    CHECK(Vertex.at("msl_entry_point") == "main0");
+    CHECK(Vertex.at("msl_file") == "renamed.plain.vert.msl");
+    CHECK(std::filesystem::exists(Directory.Path / "renamed.plain.vert.msl"));
+
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 64, 48));
+    CHECK_MESSAGE(Kernel.Gpu().LoadEffect(Source.string(), 1, 0, 0, &EffectError), EffectError);
 }
 
 TEST_CASE("Compiled HLSL effects replace the portable object pipeline at runtime")

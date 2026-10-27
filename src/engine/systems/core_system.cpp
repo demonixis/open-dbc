@@ -21,14 +21,6 @@
 #include <SDL_mixer.h>
 #endif
 
-#if defined(__APPLE__)
-#if __has_include(<SDL3_shadercross/SDL_shadercross.h>)
-#include <SDL3_shadercross/SDL_shadercross.h>
-#elif __has_include(<SDL_shadercross.h>)
-#include <SDL_shadercross.h>
-#endif
-#endif
-
 namespace dbc
 {
     CoreSystem::CoreSystem(EngineKernel& Kernel) : Kernel_(Kernel) {}
@@ -163,8 +155,6 @@ namespace dbc
         const auto SetupDevice = [&]()
         {
             if (!Gpu.GpuDevice() || !SDL_ClaimWindowForGPUDevice(Gpu.GpuDevice(), Window_))
-                return false;
-            if (SDL_strcasecmp(SDL_GetGPUDeviceDriver(Gpu.GpuDevice()), "metal") == 0 && !Gpu.InitializeShaderCross())
                 return false;
             Gpu.Renderer() = SDL_CreateGPURenderer(Gpu.GpuDevice(), nullptr);
             return Gpu.Renderer() && Gpu.CreateGpuWhiteTexture() && Gpu.CreateGpuPipeline();
