@@ -1,4 +1,5 @@
 #include "engine/systems/audio_system.hpp"
+#include "engine/systems/bsp_world.hpp"
 #include "engine/systems/camera_system.hpp"
 #include "engine/systems/core_system.hpp"
 #include "engine/systems/debug_system.hpp"
@@ -1933,6 +1934,88 @@ TEST_CASE("Portable object visibility and GPU capability queries preserve DBPro 
     CHECK(Function(dbc::language::SymbolId::Function_Statistic, {BuiltinValue::FromNumber(999)}) == 0.0);
     CHECK(Kernel.Renderer().LastFramePolygons() > 0);
     CHECK(Kernel.Renderer().LastFrameDrawCalls() > 0);
+}
+
+TEST_CASE("DBPro BSP worlds load, draw the leaves their camera sees and delete")
+{
+    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::filesystem::path Root =
+        std::filesystem::temp_directory_path() / ("opendbc-bsp-" + std::to_string(Suffix));
+    REQUIRE(std::filesystem::create_directories(Root / "maps"));
+    const std::filesystem::path Tutorial = std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/world";
+    for (const char* Name : {"ikzdm1.BSP", "CYGRASS1.png", "CYWALLT.png"})
+        REQUIRE(std::filesystem::copy_file(Tutorial / Name, Root / "maps" / Name));
+    {
+        std::ofstream Quake3(Root / "maps/q3.bsp", std::ios::binary);
+        Quake3.write("IBSP\x2E\0\0\0", 8);
+        Quake3 << std::string(136, '\0');
+    }
+    {
+        std::ofstream Archive(Root / "maps/pack.pk3", std::ios::binary);
+        Archive << "PK";
+    }
+
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("bsp", 64, 48));
+    Kernel.Camera().SetAutoCamOff();
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    Context.AssetRoot = Root;
+    std::string Error;
+    const auto Load = [&](const char* Pk3, const char* Map)
+    {
+        Error.clear();
+        return InvokeCommand(Context, dbc::language::SymbolId::Command_LoadBsp,
+                             {BuiltinValue::FromString(Pk3), BuiltinValue::FromString(Map)}, Error);
+    };
+    const auto WorldTriangles = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        return Kernel.Renderer().CachedWorldTris().size();
+    };
+
+    CHECK_FALSE(Load("", "maps/missing.bsp"));
+    CHECK(Error.find("cannot find BSP file") != std::string::npos);
+    CHECK_FALSE(Load("", "maps/q3.bsp"));
+    CHECK(Error.find("Quake 3 maps") != std::string::npos);
+    CHECK_FALSE(Load("maps/pack.pk3", "inside.bsp"));
+    CHECK(Error.find("pk3 archives") != std::string::npos);
+    CHECK_FALSE(Kernel.BspWorld().HasWorld());
+
+    // As in the tutorial: the pk3 does not exist, the map is found in the pk3's folder whatever its case,
+    // and the .bmp texture names fall back to the converted media next to the map.
+    REQUIRE_MESSAGE(Load("maps/ikzdm1.pk3", "ikzdm1.bsp"), Error);
+    REQUIRE(Kernel.BspWorld().HasWorld());
+    CHECK(Kernel.BspWorld().TextureImage(0) != 0);
+    CHECK(Kernel.BspWorld().TextureImage(19) != 0);
+
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -30.0f, 2.0f));
+    const std::size_t Inside = WorldTriangles();
+    CHECK(Inside > 0);
+
+    // A BSP camera that does not exist culls from the origin, which is in the same open leaf.
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetBspCamera, {BuiltinValue::FromNumber(5)},
+                          Error));
+    CHECK(Kernel.BspWorld().CullingCamera() == 5);
+    CHECK(WorldTriangles() == Inside);
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetBspCamera, {BuiltinValue::FromNumber(0)},
+                          Error));
+    // From solid space under the floor nothing is drawn.
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -40.0f, 2.0f));
+    CHECK(WorldTriangles() == 0);
+
+    REQUIRE(Kernel.Camera().PositionCamera(2.0f, -30.0f, 2.0f));
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_DeleteBsp, {}, Error));
+    CHECK_FALSE(Kernel.BspWorld().HasWorld());
+    CHECK(WorldTriangles() == 0);
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_DeleteBsp, {}, Error));
+
+    Kernel.Shutdown();
+    std::filesystem::remove_all(Root);
 }
 
 TEST_CASE("Portable terrain matrices preserve DBPro grid texture normal and vector contracts")

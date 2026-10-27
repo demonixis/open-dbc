@@ -714,6 +714,7 @@ dbpro	68	100	Command	CREATE BITMAP	golden-output	test_box_gradient.dba	25d6a8001
 dbpro	72	105	Command	CROSS PRODUCT VECTOR3	golden-output	test_dbpro_vector3.dba	659ac5b90a10d29c88abf6699989dc61a5e407016c77c6353a79e384ede0d4f4
 dbpro	73	107	Command	DATA	vm-state	test_vm.cpp::DATA READ and RESTORE use the typed module pool	-
 dbpro	75	111	Command	DELETE BITMAP	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	77	113	Command	DELETE BSP	bsp-world	test_engine_builtins.cpp::DBPro BSP worlds load, draw the leaves their camera sees and delete	-
 dbpro	78	114	Command	DELETE CAMERA	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	79	116	Command	DELETE DIRECTORY	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	81	119	Command	DELETE EFFECT	effect-state	test_shader_compiler.cpp::Studio compiles a relocatable HLSL effect package	-
@@ -795,6 +796,7 @@ dbpro	204	317	Command	LINK LIMB	engine-state	test_engine_builtins.cpp::Portable 
 dbpro	205	319	Command	LOAD 3DSOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	207	323	Command	LOAD ARRAY	vm-state	test_vm.cpp::Output commands store typed results and whole-array calls are explicit	-
 dbpro	208	325	Command	LOAD BITMAP	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	209	326	Command	LOAD BSP	bsp-world	test_engine_builtins.cpp::DBPro BSP worlds load, draw the leaves their camera sees and delete	-
 dbpro	213	332	Command	LOAD EFFECT	effect-state	test_shader_compiler.cpp::Studio compiles a relocatable HLSL effect package	-
 dbpro	214	334	Command	LOAD IMAGE	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	215	336	Command	LOAD MESH	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
@@ -964,6 +966,7 @@ dbpro	452	692	Command	SET ALPHA MAPPING ON	pixel-capture	test_engine_builtins.cp
 dbpro	454	694	Command	SET AMBIENT LIGHT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	455	695	Command	SET BLEND MAPPING ON	material-pixel	test_engine_builtins.cpp::DBPro blend operations and cube faces reach the portable stock shader	-
 dbpro	455	696	Command	SET BLEND MAPPING ON	material-pixel	test_engine_builtins.cpp::DBPro blend operations and cube faces reach the portable stock shader	-
+dbpro	457	698	Command	SET BSP CAMERA	bsp-world	test_engine_builtins.cpp::DBPro BSP worlds load, draw the leaves their camera sees and delete	-
 dbpro	467	706	Command	SET BUMP MAPPING ON	material-pixel	test_engine_builtins.cpp::DBPro bump cartoon and rainbow effects reach the portable stock shader	-
 dbpro	468	707	Command	SET CAMERA ASPECT	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6
 dbpro	469	709	Command	SET CAMERA FOV	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6

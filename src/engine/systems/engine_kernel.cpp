@@ -1,5 +1,6 @@
 #include "engine_kernel.hpp"
 #include "audio_system.hpp"
+#include "bsp_world.hpp"
 #include "camera_system.hpp"
 #include "core_system.hpp"
 #include "debug_system.hpp"
@@ -50,6 +51,7 @@ namespace dbc
         Audio_ = std::make_unique<AudioSystem>(*this);
         Input_ = std::make_unique<InputSystem>(*this);
         Matrices_ = std::make_unique<MatrixManager>(*this);
+        BspWorld_ = std::make_unique<BspWorldSystem>(*this);
         Lights_ = std::make_unique<LightManager>(*this);
         GraphicsDevice_ = std::make_unique<GraphicsDeviceSystem>(*this);
         Vr_ = std::make_unique<VrSystem>(*this);
@@ -82,6 +84,7 @@ namespace dbc
         MemblockSystem_.reset();
         PhysicsSystem_.reset();
         ObjectManager_.reset();
+        BspWorld_.reset();
         Matrices_.reset();
         ImageStore_.reset();
         Input_.reset();
@@ -186,6 +189,16 @@ namespace dbc
     const MatrixManager& EngineKernel::Matrices() const
     {
         return *Matrices_;
+    }
+
+    BspWorldSystem& EngineKernel::BspWorld()
+    {
+        return *BspWorld_;
+    }
+
+    const BspWorldSystem& EngineKernel::BspWorld() const
+    {
+        return *BspWorld_;
     }
 
     LightManager& EngineKernel::Lights()

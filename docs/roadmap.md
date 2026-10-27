@@ -76,10 +76,6 @@ Decisions:
 
 Remaining work:
 
-- [ ] Catalogue: string parameters for `LOAD BSP`, integer `BSP COLLISION HIT`;
-  regenerate references and manifests on each promotion.
-- [ ] `LOAD BSP` / `DELETE BSP` / `SET BSP CAMERA`: own-format reader with typed
-  errors, PVS and frustum drawing, unit tests on the shipped map.
 - [ ] Camera and object collision commands and functions, with solver unit tests;
   `world1` lands on the floor (camera y about -30.5).
 - [ ] Qualification: `world1` verified in `dbpro_demo_expectations.tsv`, the corpus

@@ -1,4 +1,5 @@
 #include "renderer_system.hpp"
+#include "bsp_world.hpp"
 #include "camera_system.hpp"
 #include "core_system.hpp"
 #include "debug_system.hpp"
@@ -1685,6 +1686,92 @@ namespace dbc
         }
     }
 
+    // DBPro draws only the leaves the BSP camera's leaf can see (PVS) that also meet the view frustum.
+    void RenderBspWorld(EngineKernel& K, std::vector<Triangle>& Tris)
+    {
+        const BspWorldSystem& World = K.BspWorld();
+        if (!World.HasWorld())
+            return;
+        const BspMap& Map = World.Map();
+        const bool Reflection = K.Renderer().ReflectionViewEnabled();
+        const int Leaf = FindBspLeaf(Map, Reflection ? ActiveCameraPosition(K) : World.CullingPosition());
+        if (Leaf < 0)
+            return;
+        std::vector<uint8_t> Visible;
+        DecodeBspPvs(Map, Leaf, Visible);
+
+        std::optional<RenderView> CameraView;
+        const RenderView* View = K.Renderer().ActiveView();
+        if (!View)
+        {
+            CameraView.emplace(K.Renderer().CameraView(K.Core().WindowWidth(), K.Core().WindowHeight()));
+            View = &*CameraView;
+        }
+        const Vec3 Camera = ActiveCameraPosition(K);
+
+        std::vector<SDL_Texture*> Textures(Map.TextureNames.size(), nullptr);
+        std::vector<SDL_GPUTexture*> GpuTextures(Map.TextureNames.size(), nullptr);
+        for (std::size_t Index = 0; Index < Map.TextureNames.size(); ++Index)
+        {
+            if (Image* Img = K.ImageStoreRef().GetImage(World.TextureImage(static_cast<int>(Index))))
+            {
+                Textures[Index] = Img->Texture;
+                GpuTextures[Index] = dbc::ImageGpuTexture(K, *Img, false);
+            }
+        }
+
+        const SurfaceStyle Style{};
+        for (std::size_t LeafIndex = 0; LeafIndex < Map.Leaves.size(); ++LeafIndex)
+        {
+            if (!Visible[LeafIndex])
+                continue;
+            const BspLeaf& LeafValue = Map.Leaves[LeafIndex];
+            const Vec3 Center{(LeafValue.BoxMin.X + LeafValue.BoxMax.X) * 0.5f,
+                              (LeafValue.BoxMin.Y + LeafValue.BoxMax.Y) * 0.5f,
+                              (LeafValue.BoxMin.Z + LeafValue.BoxMax.Z) * 0.5f};
+            const Vec3 Half = Vec3Sub(LeafValue.BoxMax, Center);
+            const Vec3 ViewCenter = dbc::WorldToViewPoint(K, Center.X, Center.Y, Center.Z);
+            if (!View->ContainsSphere(glm::vec3(ViewCenter.X, ViewCenter.Y, ViewCenter.Z),
+                                      std::sqrt(Vec3Dot(Half, Half))))
+                continue;
+            for (int32_t PolygonIndex = LeafValue.FirstPolygon; PolygonIndex < LeafValue.EndPolygon; ++PolygonIndex)
+            {
+                const BspPolygon& Polygon = Map.Polygons[static_cast<std::size_t>(PolygonIndex)];
+                if (Polygon.Vertices.empty())
+                    continue;
+                // Stored normals face open space; DBPro culled the other side except in reflections.
+                const Vec3 ToCamera = Vec3Sub(Camera, Polygon.Vertices.front().Position);
+                if (!Reflection && Vec3Dot(Polygon.Normal, ToCamera) <= 0.0f)
+                    continue;
+                const Vec3 Normal = dbc::WorldToViewDirection(K, Polygon.Normal.X, Polygon.Normal.Y, Polygon.Normal.Z);
+                std::array<ViewVertex, 3> Corners{};
+                for (std::size_t Index = 0; Index + 2 < Polygon.Indices.size(); Index += 3)
+                {
+                    for (std::size_t Corner = 0; Corner < 3; ++Corner)
+                    {
+                        const BspVertex& Source = Polygon.Vertices[Polygon.Indices[Index + Corner]];
+                        const Vec3 Point =
+                            dbc::WorldToViewPoint(K, Source.Position.X, Source.Position.Y, Source.Position.Z);
+                        ViewVertex& Target = Corners[Corner];
+                        Target.X = Point.X;
+                        Target.Y = Point.Y;
+                        Target.Z = Point.Z;
+                        Target.Nx = Normal.X;
+                        Target.Ny = Normal.Y;
+                        Target.Nz = Normal.Z;
+                        Target.Uv = SDL_FPoint{Source.U, Source.V};
+                        Target.Color = SDL_FColor{static_cast<float>((Source.Color >> 16) & 0xFFu) / 255.0f,
+                                                  static_cast<float>((Source.Color >> 8) & 0xFFu) / 255.0f,
+                                                  static_cast<float>(Source.Color & 0xFFu) / 255.0f,
+                                                  static_cast<float>((Source.Color >> 24) & 0xFFu) / 255.0f};
+                    }
+                    dbc::AppendClippedViewTriangle(K, Corners[0], Corners[1], Corners[2], Textures[Polygon.Texture],
+                                                   GpuTextures[Polygon.Texture], false, Tris, false, Style);
+                }
+            }
+        }
+    }
+
     void RenderObjectBounds(EngineKernel& K, const Object3D& Object, std::vector<Triangle>& Tris)
     {
         if (!Object.DrawBounds || Object.Meshes.empty() || Object.LockToScreen)
@@ -3158,6 +3245,7 @@ namespace dbc
                                            { dbc::RenderMatrix(K, MatrixValue, Tris); });
                 K.Matrices().ForEachTerrain([&](int /*id*/, const Matrix& Terrain)
                                             { dbc::RenderMatrix(K, Terrain, Tris); });
+                dbc::RenderBspWorld(K, Tris);
                 dbc::RenderObjects(K, Tris, OverlayTris);
                 dbc::RenderParticles(K, Tris);
                 const auto Phase = [](const Triangle& TriangleValue)
@@ -3185,6 +3273,7 @@ namespace dbc
                                                { dbc::RenderMatrix(K, MatrixValue, ReflectedTris); });
                     K.Matrices().ForEachTerrain([&](int /*id*/, const Matrix& Terrain)
                                                 { dbc::RenderMatrix(K, Terrain, ReflectedTris); });
+                    dbc::RenderBspWorld(K, ReflectedTris);
                     dbc::RenderObjects(K, ReflectedTris, IgnoredOverlay);
                     dbc::RenderParticles(K, ReflectedTris);
                     K.Renderer().ClearReflectionView();

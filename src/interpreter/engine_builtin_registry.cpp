@@ -3,6 +3,7 @@
 #include "dba_matrix4.hpp"
 #include "dba_vecmath.hpp"
 #include "engine/systems/audio_system.hpp"
+#include "engine/systems/bsp_world.hpp"
 #include "engine/systems/camera_system.hpp"
 #include "engine/systems/core_system.hpp"
 #include "engine/systems/debug_system.hpp"
@@ -1476,6 +1477,18 @@ namespace dbc::interpreter::detail
         std::string ResolveAssetPath(const BuiltinContext& Ctx, const std::string& Input)
         {
             return ResolveBasicPath(Ctx.AssetRoot, fs::path(Input)).string();
+        }
+
+        // DBPro tried the map name as given, then the same name in the pk3's folder.
+        bool LoadBspCommand(BuiltinContext& Ctx, const std::string& Pk3, const std::string& MapName,
+                            std::string* Error)
+        {
+            std::vector<std::string> Candidates{ResolveAssetPath(Ctx, MapName)};
+            const std::size_t Separator = Pk3.find_last_of("/\\");
+            if (Separator != std::string::npos)
+                Candidates.push_back(ResolveAssetPath(Ctx, Pk3.substr(0, Separator + 1) + MapName));
+            return Ctx.Kernel->BspWorld().Load(Pk3.empty() ? std::string{} : ResolveAssetPath(Ctx, Pk3), Candidates,
+                                               Error);
         }
 
         bool LoadEffectCommand(BuiltinContext& Context, const std::vector<BuiltinValue>& Arguments,

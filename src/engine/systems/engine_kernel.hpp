@@ -13,6 +13,7 @@ namespace dbc
     class AudioSystem;
     class InputSystem;
     class MatrixManager;
+    class BspWorldSystem;
     class LightManager;
     class ImageStore;
     class ObjectManager;
@@ -57,6 +58,8 @@ namespace dbc
         const InputSystem& Input() const;
         MatrixManager& Matrices();
         const MatrixManager& Matrices() const;
+        BspWorldSystem& BspWorld();
+        const BspWorldSystem& BspWorld() const;
         LightManager& Lights();
         const LightManager& Lights() const;
         ImageStore& ImageStoreRef();
@@ -90,6 +93,7 @@ namespace dbc
         std::unique_ptr<AudioSystem> Audio_;
         std::unique_ptr<InputSystem> Input_;
         std::unique_ptr<MatrixManager> Matrices_;
+        std::unique_ptr<BspWorldSystem> BspWorld_;
         std::unique_ptr<LightManager> Lights_;
         std::unique_ptr<ImageStore> ImageStore_;
         std::unique_ptr<ObjectManager> ObjectManager_;

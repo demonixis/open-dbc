@@ -42,7 +42,7 @@ ctest --preset default
 <!-- BEGIN GENERATED COMPATIBILITY METRICS -->
 - BASIC execution goldens: **74**.
 - Full corpus expectations: **92** sources, including **81** that reach verified bytecode.
-- Observable implemented-overload contracts: **1600**.
+- Observable implemented-overload contracts: **1603**.
 <!-- END GENERATED COMPATIBILITY METRICS -->
 
 ## Documentation

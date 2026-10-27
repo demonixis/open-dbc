@@ -79,6 +79,12 @@ target_include_directories(test_collision_math PRIVATE ${ENGINE_SRC_DIR})
 target_link_libraries(test_collision_math PRIVATE doctest_with_main dbc_engine)
 doctest_discover_tests(test_collision_math PROPERTIES LABELS "unit")
 
+add_executable(test_bsp_world test_bsp_world.cpp)
+target_compile_definitions(test_bsp_world PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(test_bsp_world PRIVATE ${ENGINE_SRC_DIR})
+target_link_libraries(test_bsp_world PRIVATE doctest_with_main dbc_engine)
+doctest_discover_tests(test_bsp_world PROPERTIES LABELS "unit")
+
 # --- Test: typed engine builtins ---
 add_executable(test_engine_builtins test_engine_builtins.cpp)
 target_compile_definitions(test_engine_builtins PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -167,7 +173,7 @@ endif()
 # The tests are OpenDBC code too.
 foreach(test_target IN ITEMS test_language_profile test_language_catalogue test_frontend test_vm test_studio_language
         test_studio_run_plan
-        test_engine_math test_collision_math test_engine_builtins test_input_haptics test_command_line
+        test_engine_math test_collision_math test_bsp_world test_engine_builtins test_input_haptics test_command_line
         test_project_resolver test_debug_system
         test_shader_compiler test_project_settings test_artifact_export)
     if(TARGET ${test_target})

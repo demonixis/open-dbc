@@ -1349,6 +1349,16 @@ UNIT_WITNESSES += tuple(
 )
 
 
+BSP_WORLD_TEST = "test_engine_builtins.cpp::DBPro BSP worlds load, draw the leaves their camera sees and delete"
+UNIT_WITNESSES += tuple(
+    ("dbpro", "Command", name, code, "bsp-world", BSP_WORLD_TEST)
+    for name, code in (
+        ("LOAD BSP", 'load bsp "ikzdm1.pk3", "ikzdm1.bsp"\n'),
+        ("DELETE BSP", "delete bsp\n"),
+        ("SET BSP CAMERA", "set bsp camera 1\n"),
+    )
+)
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Regenerate catalogue-linked BASIC behavior witnesses")
     parser.add_argument("--opendbc", type=Path, required=True)

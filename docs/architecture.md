@@ -50,8 +50,8 @@ the historical profiles ([vr.md](vr.md)). Anything else new waits for the future
 ## Engine
 
 `EngineKernel` owns audio, cameras, window, diagnostics, 2D, files, GPU device,
-images, input, lights, matrices, memblocks, objects, physics (Jolt for the ODE
-core), renderer, sprites, text and VR. Engine shaders are GLSL compiled to SPIR-V
+images, input, lights, matrices, DBPro BSP worlds, memblocks, objects, physics
+(Jolt for the ODE core), renderer, sprites, text and VR. Engine shaders are GLSL compiled to SPIR-V
 (converted to Metal on Apple platforms); `cmake --preset shader-verify` checks
 the tracked binaries byte for byte. There is no video playback and no FFmpeg.
 
