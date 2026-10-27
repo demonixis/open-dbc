@@ -21,6 +21,9 @@ image's directory unless `--asset-root` says otherwise. An image only loads into
 the OpenDBC build that produced it (same runtime fingerprint); rebuild it after
 an update.
 
+`opendbc-runner [program.obc] [run options]` runs an image without the Studio;
+without a path it runs `program.obc` from its own resources.
+
 | `run` option | Effect |
 | --- | --- |
 | `--asset-root DIR` | Base directory for media and file paths (default: the source's directory) |

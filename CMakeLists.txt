@@ -539,6 +539,9 @@ add_subdirectory(src/interpreter)
 # The Studio is the product on every platform; mobile builds use its sandboxed
 # configuration selected in tools/studio/src/core/platform.hpp.
 add_subdirectory(tools/studio)
+if(NOT ANDROID AND NOT IOS)
+    add_subdirectory(tools/runner)
+endif()
 if(OPENDBC_VERIFY_CANONICAL_SHADERS)
     add_subdirectory(tools/shaderc)
 endif()
@@ -751,8 +754,35 @@ if(BUILD_TESTS)
                 LABELS "dba;runtime"
                 RESOURCE_LOCK "opendbc_runtime"
             )
+            if(TARGET opendbc-runner)
+                add_test(
+                    NAME "dba_image_${test_name}"
+                    COMMAND ${CMAKE_COMMAND}
+                        -DOPENDBC=$<TARGET_FILE:opendbc>
+                        -DRUNNER=$<TARGET_FILE:opendbc-runner>
+                        -DTEST_SCRIPT=${test_script}
+                        -DDIALECT=${test_dialect}
+                        -DEXPECTED_FILE=${expected_file}
+                        -DOUTPUT_FILE=${CMAKE_BINARY_DIR}/tests/images/${test_name}.out
+                        -P ${CMAKE_SOURCE_DIR}/tests/dba/run_image_test.cmake
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                )
+                set_tests_properties("dba_image_${test_name}" PROPERTIES
+                    TIMEOUT 60
+                    LABELS "dba;runtime;runner"
+                    RESOURCE_LOCK "opendbc_runtime"
+                )
+            endif()
         endif()
     endforeach()
+    if(TARGET opendbc-runner AND CMAKE_NM)
+        add_test(
+            NAME runner_links_no_frontend
+            COMMAND ${CMAKE_COMMAND} -DNM=${CMAKE_NM} -DRUNNER=$<TARGET_FILE:opendbc-runner>
+                -P ${CMAKE_SOURCE_DIR}/tests/dba/check_runner_symbols.cmake
+        )
+        set_tests_properties(runner_links_no_frontend PROPERTIES LABELS "unit;runner")
+    endif()
 
     # C++ unit tests (doctest)
     set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)

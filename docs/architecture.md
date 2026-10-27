@@ -9,6 +9,8 @@ src/interpreter/ typed bridge from VM builtins to the engine
 src/engine/      SDL_GPU renderer and runtime systems
 shaders/         HLSL sources and their tracked SPIR-V and MSL
 tools/studio/    the opendbc Studio and CLI
+tools/runner/    opendbc-runner, which runs program images for exported games
+tools/shaderc/   opendbc_shaderc, which compiles the engine shaders (shader-verify only)
 examples/        BASIC examples (see examples/README.md)
 tests/           unit tests, BASIC goldens, qualification manifests
 scripts/         generators, audits and their input data (scripts/data/)
@@ -27,6 +29,10 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 - A program image (`.obc`, `src/interpreter/program_image.cpp`) stores the
   bytecode and project startup under the runtime fingerprint; loading it checks
   the container, then the verifier runs as for freshly compiled bytecode.
+- `opendbc-runner` links the VM, the engine and the builtin bridge but not the
+  frontend, ImGui or SDL_shadercross. Source compilation therefore stays in
+  `program_build.cpp` and `command_line.cpp`; runtime translation units must not
+  reference it. The `runner_links_no_frontend` test checks the binary's symbols.
 - `ExecutionService` turns the profile into one immutable
   `RuntimeCompatibilityPolicy`. Engine systems read that policy, never a file
   name or dialect string. Each run starts from a fresh policy.

@@ -91,16 +91,6 @@ namespace dbc::language
         }
     } // namespace
 
-    bool Type::IsNumeric() const
-    {
-        return Kind == TypeKind::Boolean || Kind == TypeKind::Integer || Kind == TypeKind::Real;
-    }
-
-    bool Type::operator==(const Type& Other) const
-    {
-        return Kind == Other.Kind && detail::Canonical(Name) == detail::Canonical(Other.Name);
-    }
-
     bool Program::HasErrors() const
     {
         return std::any_of(Diagnostics.begin(), Diagnostics.end(),
@@ -187,27 +177,6 @@ namespace dbc::language
 
 namespace dbc::language::detail
 {
-    std::string Canonical(std::string_view Text)
-    {
-        std::string Result;
-        Result.reserve(Text.size());
-        bool PendingSpace = false;
-        for (const unsigned char Character : Text)
-        {
-            if (std::isspace(Character) != 0)
-            {
-                PendingSpace = !Result.empty();
-                continue;
-            }
-            if (PendingSpace)
-            {
-                Result.push_back(' ');
-                PendingSpace = false;
-            }
-            Result.push_back(static_cast<char>(std::toupper(Character)));
-        }
-        return Result;
-    }
 
     std::string TokenText(const SourceDocument& Source, const Token& Value)
     {

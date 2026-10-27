@@ -200,7 +200,10 @@ namespace dbc
             ExecutionService(const ExecutionService&) = delete;
             ExecutionService& operator=(const ExecutionService&) = delete;
 
+            // Compiles Request.Sources unless Request.Bytecode is set, then verifies and starts the program.
             bool Prepare(ExecutionRequest Request);
+            // Verifies and starts Request.Bytecode without the BASIC frontend.
+            bool PrepareBytecode(ExecutionRequest Request);
             void StartFrameMeasurements();
             ExecutionTick Tick(std::size_t InstructionBudget = 0);
             // A frame presented while the program waits for input counts toward MaxFrames like a SYNC does,
@@ -212,6 +215,9 @@ namespace dbc
             const ExecutionResult& Result() const;
 
           private:
+            bool Start(ExecutionRequest Request, std::vector<ExecutionDiagnostic> Diagnostics,
+                       std::chrono::steady_clock::time_point Started);
+
             struct Impl;
             std::unique_ptr<Impl> Impl_;
         };

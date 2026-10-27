@@ -7,6 +7,7 @@ add_library(dbc_language STATIC
     frontend_parser.cpp
     language_catalogue.cpp
     language_profile.cpp
+    language_type.cpp
 )
 
 target_include_directories(dbc_language

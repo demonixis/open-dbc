@@ -1,8 +1,12 @@
 add_library(dbc_interpreter STATIC
   command_line.cpp
   command_line.hpp
+  command_line_detail.hpp
+  command_line_run.cpp
   execution_service.cpp
   execution_service.hpp
+  execution_diagnostics.hpp
+  program_build.cpp
   program_image.cpp
   program_image.hpp
   project_resolver.cpp

@@ -76,4 +76,6 @@ namespace dbc::interpreter
     int DispatchCommandLine(const CommandLine& Command, const CommandLineEnvironment& Environment = {});
     int DispatchCommandLine(std::span<const std::string_view> Arguments,
                             const CommandLineEnvironment& Environment = {});
+    // Runs Command.Path as a program image, without the BASIC frontend.
+    int RunProgramImage(const CommandLine& Command, const CommandLineEnvironment& Environment = {});
 } // namespace dbc::interpreter
