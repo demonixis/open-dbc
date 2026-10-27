@@ -733,7 +733,8 @@ namespace dbc::interpreter
 
         if (!Impl_->Request.Options.LogOutputPath.empty())
         {
-            Impl_->Log.reset(std::fopen(Impl_->Request.Options.LogOutputPath.string().c_str(), "w"));
+            // Binary mode: Windows text mode would turn each '\n' into "\r\n" and break the golden outputs.
+            Impl_->Log.reset(std::fopen(Impl_->Request.Options.LogOutputPath.string().c_str(), "wb"));
             if (!Impl_->Log)
             {
                 Impl_->Result.State = ExecutionState::Failed;
