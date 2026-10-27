@@ -35,6 +35,10 @@ namespace dbc
         Uint32 TerrainIndexOffset = 0;
         bool HasReflection = false;
         bool HasShadow = false;
+        // Set by the caller when several cameras share the screen: the 2D layer is drawn with one of them only,
+        // and each later camera draws over the earlier ones.
+        bool Hud = true;
+        bool OverPreviousCamera = false;
     };
 
     class RendererSystem

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <unordered_map>
+#include <vector>
 
 namespace dbc
 {
@@ -23,6 +24,11 @@ namespace dbc
         {
             return CurrentCameraId_;
         }
+        // Every camera draws to the screen at SYNC, camera zero first and the others by number.
+        [[nodiscard]] std::vector<int> ScreenCameraIds() const;
+        // Lets the renderer read an existing camera through the current-camera accessors without
+        // marking it dirty; it returns the previous current camera, which the renderer restores.
+        int SelectRenderCamera(int CameraId);
         bool EnableBackdrop(std::string* Error = nullptr);
         bool EnableBackdrop(int CameraId, std::string* Error = nullptr);
         bool DisableBackdrop(std::string* Error = nullptr);
@@ -126,9 +132,10 @@ namespace dbc
         {
             return Current().ClearColor;
         }
-        void ConsumeClearRequest()
+        void ConsumeClearRequests()
         {
-            Current().ClearRequested = false;
+            for (auto& [Id, Camera] : Cameras_)
+                Camera.ClearRequested = false;
         }
         bool HasCameraView() const
         {
