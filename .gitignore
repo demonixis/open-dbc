@@ -78,3 +78,4 @@ Desktop.ini
 !shaders/vr_transfer.vert.spv
 !shaders/vr_transfer.frag.spv
 examples/dbc/demos/.opendbc-project.json
+examples/dbpro/tutorials/world/.opendbc-project.json
