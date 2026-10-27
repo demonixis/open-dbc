@@ -1166,11 +1166,11 @@ TEST_CASE("Historical DDS and TGA assets decode to stable RGBA pixels")
         uint64_t Fnv1a;
     };
     const std::array<AssetExpectation, 5> Assets = {
-        AssetExpectation{"examples/dbpro/tutorials/bitmap/2DFiles/logo.DDS", 320, 240, UINT64_C(0x0e8c93894e3b976f)},
-        AssetExpectation{"examples/dbpro/tutorials/basic3d/edge.DDS", 128, 1, UINT64_C(0xbe78bcdbd952dd25)},
+        AssetExpectation{"examples/dbpro/tutorials/bitmap/2DFiles/logo.dds", 320, 240, UINT64_C(0x0e8c93894e3b976f)},
+        AssetExpectation{"examples/dbpro/tutorials/basic3d/edge.dds", 128, 1, UINT64_C(0xbe78bcdbd952dd25)},
         AssetExpectation{"examples/dbpro/tutorials/world/sky/sb1.DDS", 256, 256, UINT64_C(0x6fd8739a5b726975)},
         AssetExpectation{"examples/dbpro/tutorials/basic3d/models/ninja.DDS", 256, 256, UINT64_C(0x160efb16beef2a86)},
-        AssetExpectation{"examples/dbpro/tutorials/bitmap/2DFiles/logo.TGA", 320, 240, UINT64_C(0x3d94287d0dd997c5)},
+        AssetExpectation{"examples/dbpro/tutorials/bitmap/2DFiles/logo.tga", 320, 240, UINT64_C(0x3d94287d0dd997c5)},
     };
 
     for (const AssetExpectation& Asset : Assets)
@@ -1271,7 +1271,7 @@ TEST_CASE("DBPro bitmap source containers load through the shared surface path")
 {
     const std::filesystem::path Root =
         std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/bitmap/2DFiles";
-    for (const char* Name : {"logo.DDS", "logo.RLE", "logo.TGA", "logo.bmp", "logo.dib", "logo.jpg", "logo.png"})
+    for (const char* Name : {"logo.dds", "logo.rle", "logo.tga", "logo.bmp", "logo.dib", "logo.jpg", "logo.png"})
     {
         CAPTURE(std::string(Name));
         SDL_Surface* Surface = dbc::LoadSurface((Root / Name).string());
