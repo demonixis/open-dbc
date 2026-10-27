@@ -1,8 +1,9 @@
 #include "artifact_export_service.hpp"
 #include "interpreter/basic_path.hpp"
-#include "artifact_runtime.hpp"
 
+#include "interpreter/embedded_artifact.hpp"
 #include "interpreter/execution_service.hpp"
+#include "interpreter/program_image.hpp"
 #include "language/language_profile.hpp"
 
 #include <algorithm>
@@ -44,7 +45,7 @@ namespace dbc::studio
     {
         namespace fs = std::filesystem;
 
-        constexpr std::string_view ManifestName = "opendbc-artifact.json";
+        constexpr std::string_view ProgramImageName = "program.obc";
 
         std::string Lower(std::string Value)
         {
@@ -233,6 +234,14 @@ namespace dbc::studio
         bool IsProjectMetadata(const fs::path& Path)
         {
             return Lower(Path.filename().string()) == ".opendbc-project.json";
+        }
+
+        // Exports ship the program image they compile, never BASIC sources, project descriptors or
+        // other images.
+        bool IsBasicSource(const fs::path& Path)
+        {
+            const std::string Extension = Lower(Path.extension().string());
+            return Extension == ".dba" || Extension == ".dbpro" || Extension == ".obc";
         }
 
         bool ValidateAndroidHostLibrary(const fs::path& Path, std::string& Error)
@@ -578,23 +587,25 @@ namespace dbc::studio
 
         std::optional<std::string> HashFile(const fs::path& Path)
         {
-            return toolchain::detail::ArtifactContentHashFile(Path);
+            return dbc::interpreter::detail::ArtifactContentHashFile(Path);
         }
 
-        bool ValidateExportProgram(const toolchain::ArtifactExportRequest& Request, std::string& Error,
-                                   bool ConfineSources = false)
+        // Compiles the project in place. Its ordered sources may live anywhere, but #INCLUDE files read
+        // from disk must stay inside the project.
+        bool BuildExportProgram(const toolchain::ArtifactExportRequest& Request, std::vector<std::uint8_t>& Image,
+                                std::string& Error)
         {
             if (!dbc::language::IsLanguageSource(Request.EntrySource))
             {
                 Error = "BASIC artifact entry must use the .dba extension";
                 return false;
             }
-            dbc::interpreter::ExecutionRequest AnalysisRequest;
-            AnalysisRequest.RootLogicalPath = Request.EntrySource;
-            AnalysisRequest.Profile = Request.Profile;
-            AnalysisRequest.OrderedProjectSources =
+            dbc::interpreter::ExecutionRequest BuildRequest;
+            BuildRequest.RootLogicalPath = Request.EntrySource;
+            BuildRequest.Profile = Request.Profile;
+            BuildRequest.OrderedProjectSources =
                 Request.OrderedSources.empty() ? std::vector<fs::path>{Request.EntrySource} : Request.OrderedSources;
-            for (const fs::path& Source : AnalysisRequest.OrderedProjectSources)
+            for (const fs::path& Source : BuildRequest.OrderedProjectSources)
             {
                 std::string LoadError;
                 std::optional<dbc::interpreter::SourceUnit> Unit =
@@ -604,33 +615,33 @@ namespace dbc::studio
                     Error = std::move(LoadError);
                     return false;
                 }
-                AnalysisRequest.Sources.push_back(std::move(*Unit));
+                BuildRequest.Sources.push_back(std::move(*Unit));
             }
-            AnalysisRequest.LoadMissingSource =
+            BuildRequest.LoadMissingSource =
                 [Root = Request.ProjectRoot](const fs::path& Path, dbc::language::LanguageProfile Profile,
                                              std::string& LoadError) -> std::optional<dbc::interpreter::SourceUnit>
             {
                 fs::path Canonical;
                 if (!dbc::interpreter::ResolveConfinedBasicPath(Root, Path, Canonical, &LoadError))
                 {
-                    LoadError =
-                        "#INCLUDE paths in an embedded artifact must be relative and remain inside its payload: " +
-                        LoadError;
+                    LoadError = "#INCLUDE in an exported artifact must remain inside its project: " + LoadError;
                     return std::nullopt;
                 }
                 return dbc::interpreter::LoadSourceUnitFromDisk(Path, Profile, LoadError);
             };
-            if (ConfineSources)
-                AnalysisRequest.ConfinedSourceRoot = Request.ProjectRoot;
-            const dbc::interpreter::SourceAnalysis Analysis =
-                dbc::interpreter::AnalyzeSources(std::move(AnalysisRequest));
-            if (Analysis.Success())
-                return true;
-            if (Analysis.Diagnostics.empty())
-                Error = "BASIC artifact validation failed";
-            else
-                Error = Analysis.Diagnostics.front().Code + ": " + Analysis.Diagnostics.front().Message;
-            return false;
+            const dbc::interpreter::ProgramBuild Build = dbc::interpreter::BuildProgram(std::move(BuildRequest));
+            if (!Build.Bytecode)
+            {
+                const auto First = std::find_if(Build.Diagnostics.begin(), Build.Diagnostics.end(),
+                                                [](const dbc::interpreter::ExecutionDiagnostic& Value) {
+                                                    return Value.Severity == dbc::language::DiagnosticSeverity::Error;
+                                                });
+                Error = First == Build.Diagnostics.end() ? "BASIC artifact compilation failed"
+                                                         : First->Code + ": " + First->Message;
+                return false;
+            }
+            Image = dbc::interpreter::WriteProgramImage(*Build.Bytecode, Request.Startup, Request.ProjectRoot);
+            return true;
         }
 
         [[maybe_unused]] std::optional<std::string> ReadFile(const fs::path& Path)
@@ -642,8 +653,8 @@ namespace dbc::studio
         }
 
         bool CopyPayload(const toolchain::ArtifactExportRequest& Request, const fs::path& PayloadRoot,
-                         fs::path& RelativeEntry, fs::path& RelativeAssetRoot, std::vector<fs::path>& RelativeSources,
-                         std::vector<toolchain::detail::ArtifactFile>& Files, std::string& Error)
+                         fs::path& RelativeAssetRoot, std::vector<dbc::interpreter::detail::ArtifactFile>& Files,
+                         std::string& Error)
         {
             std::error_code FileError;
             const fs::path ProjectRoot = fs::weakly_canonical(Request.ProjectRoot, FileError);
@@ -733,7 +744,7 @@ namespace dbc::studio
                     continue;
                 }
                 if (!fs::is_regular_file(Status) || IsProjectMetadata(It->path()) || IsToolingSource(It->path()) ||
-                    IsGeneratedRuntimeOutput(It->path()))
+                    IsGeneratedRuntimeOutput(It->path()) || IsBasicSource(It->path()))
                     continue;
                 if (ConfiguredKeystore)
                 {
@@ -773,60 +784,6 @@ namespace dbc::studio
                 Error = "Cannot inspect project files: " + FileError.message();
                 return false;
             }
-            const std::vector<fs::path> OrderedSources =
-                Request.OrderedSources.empty() ? std::vector<fs::path>{Entry} : Request.OrderedSources;
-            toolchain::ArtifactExportRequest CopiedRequest = Request;
-            CopiedRequest.ProjectRoot = PayloadRoot;
-            CopiedRequest.OrderedSources.clear();
-            for (std::size_t Index = 0; Index < OrderedSources.size(); ++Index)
-            {
-                const fs::path Source = fs::weakly_canonical(OrderedSources[Index], FileError);
-                const fs::file_status Status = fs::symlink_status(OrderedSources[Index], FileError);
-                if (FileError || !fs::is_regular_file(Status) || fs::is_symlink(Status) ||
-                    Lower(Source.extension().string()) != ".dba")
-                {
-                    Error = "DBPro project sources must be regular non-symlink .dba files";
-                    return false;
-                }
-                fs::path Relative = fs::relative(Source, ProjectRoot, FileError);
-                const bool External = FileError || !IsSafeRelative(Relative);
-                FileError.clear();
-                if (External)
-                {
-                    Relative = fs::path("__external/sources") / std::to_string(Index) / Source.filename();
-                    if (IsSensitive(Source) || !CopyFile(Source, PayloadRoot / Relative, Error))
-                    {
-                        if (Error.empty())
-                            Error = "External DBPro source looks sensitive: " + Source.string();
-                        return false;
-                    }
-                    const std::optional<std::string> Hash = HashFile(PayloadRoot / Relative);
-                    if (!Hash)
-                    {
-                        Error = "Cannot hash external DBPro source";
-                        return false;
-                    }
-                    Files.push_back({Relative, *Hash});
-                }
-                if (!fs::is_regular_file(PayloadRoot / Relative, FileError))
-                {
-                    Error = "A DBPro project source was excluded from the artifact payload";
-                    return false;
-                }
-                CopiedRequest.OrderedSources.push_back(PayloadRoot / Relative);
-                RelativeSources.push_back(Relative);
-                if (Source == Entry)
-                {
-                    RelativeEntry = Relative;
-                    CopiedRequest.EntrySource = PayloadRoot / Relative;
-                }
-            }
-            if (RelativeEntry.empty())
-            {
-                Error = "The BASIC entry is not present in the ordered project sources";
-                return false;
-            }
-
             const fs::path AssetRoot =
                 fs::weakly_canonical(Request.AssetRoot.empty() ? ProjectRoot : Request.AssetRoot, FileError);
             if (FileError || !fs::is_directory(AssetRoot, FileError))
@@ -878,7 +835,7 @@ namespace dbc::studio
                     }
                     if (!fs::is_regular_file(Status))
                         continue;
-                    if (IsGeneratedRuntimeOutput(It->path()))
+                    if (IsGeneratedRuntimeOutput(It->path()) || IsBasicSource(It->path()))
                         continue;
                     if (ConfiguredKeystore && It->path().lexically_normal() == *ConfiguredKeystore)
                         continue;
@@ -906,38 +863,28 @@ namespace dbc::studio
                 Error = "Cannot inspect remapped DBPro media: " + FileError.message();
                 return false;
             }
-            CopiedRequest.AssetRoot = RelativeAssetRoot.empty() ? PayloadRoot : PayloadRoot / RelativeAssetRoot;
-            if (!ValidateExportProgram(CopiedRequest, Error, true))
-            {
-                Error = "Copied artifact payload is not self-contained: " + Error;
-                return false;
-            }
             std::sort(Files.begin(), Files.end(), [](const auto& Left, const auto& Right)
                       { return Left.RelativePath.generic_string() < Right.RelativePath.generic_string(); });
             return true;
         }
 
         bool WriteManifest(const toolchain::ArtifactExportRequest& Request, const fs::path& ResourceRoot,
-                           const fs::path& RelativeEntry, const fs::path& RelativeAssetRoot,
-                           const std::vector<fs::path>& RelativeSources,
-                           const std::vector<toolchain::detail::ArtifactFile>& Files, std::string& Error)
+                           const fs::path& RelativeAssetRoot,
+                           const std::vector<dbc::interpreter::detail::ArtifactFile>& Files, std::string& Error)
         {
             nlohmann::json Manifest;
-            Manifest["format"] = 5;
-            Manifest["orderedSources"] = nlohmann::json::array();
-            for (const fs::path& Source : RelativeSources)
-                Manifest["orderedSources"].push_back(Source.generic_string());
-            Manifest["entry"] = RelativeEntry.generic_string();
-            Manifest["dialect"] = Request.Profile == dbc::language::LanguageProfile::Dbc ? "dbc" : "dbpro";
+            Manifest["format"] = dbc::interpreter::EmbeddedArtifactFormat;
+            Manifest["program"] = ProgramImageName;
             Manifest["assetRoot"] = RelativeAssetRoot.generic_string();
             const std::string StorageSeed = Request.Settings.BundleId.empty()
                                                 ? fs::absolute(Request.ProjectRoot).lexically_normal().generic_string()
                                                 : Request.Settings.BundleId;
-            Manifest["storage"] = "artifact-" + toolchain::detail::ArtifactContentHash(StorageSeed);
+            Manifest["storage"] = "artifact-" + dbc::interpreter::detail::ArtifactContentHash(StorageSeed);
             Manifest["files"] = nlohmann::json::array();
-            for (const toolchain::detail::ArtifactFile& File : Files)
+            for (const dbc::interpreter::detail::ArtifactFile& File : Files)
                 Manifest["files"].push_back({{"path", File.RelativePath.generic_string()}, {"hash", File.ContentHash}});
-            std::ofstream Output(ResourceRoot / ManifestName, std::ios::binary | std::ios::trunc);
+            std::ofstream Output(ResourceRoot / dbc::interpreter::EmbeddedArtifactManifestName,
+                                 std::ios::binary | std::ios::trunc);
             if (!Output)
             {
                 Error = "Cannot write the embedded artifact manifest";
@@ -950,6 +897,30 @@ namespace dbc::studio
                 return false;
             }
             return true;
+        }
+
+        // Writes program.obc, the assets and the manifest into ResourceRoot.
+        bool WriteArtifact(const toolchain::ArtifactExportRequest& Request, const std::vector<std::uint8_t>& Image,
+                           const fs::path& ResourceRoot, std::vector<dbc::interpreter::detail::ArtifactFile>& Files,
+                           std::string& Error)
+        {
+            fs::path RelativeAssetRoot;
+            if (!CopyPayload(Request, ResourceRoot / "artifact", RelativeAssetRoot, Files, Error))
+                return false;
+            // The image travels with the payload to writable storage, where the run log is written too.
+            const std::string_view Bytes(reinterpret_cast<const char*>(Image.data()), Image.size());
+            std::ofstream Output(ResourceRoot / "artifact" / ProgramImageName, std::ios::binary | std::ios::trunc);
+            Output.write(Bytes.data(), static_cast<std::streamsize>(Bytes.size()));
+            Output.close();
+            if (!Output)
+            {
+                Error = "Cannot write the artifact program image";
+                return false;
+            }
+            Files.push_back({fs::path(ProgramImageName), dbc::interpreter::detail::ArtifactContentHash(Bytes)});
+            std::sort(Files.begin(), Files.end(), [](const auto& Left, const auto& Right)
+                      { return Left.RelativePath.generic_string() < Right.RelativePath.generic_string(); });
+            return WriteManifest(Request, ResourceRoot, RelativeAssetRoot, Files, Error);
         }
 
         bool RunProcess(const std::vector<std::string>& Arguments, std::string& Error)
@@ -1507,21 +1478,17 @@ namespace dbc::studio
             return true;
         }
 
-        bool PrepareIosApplication(const toolchain::ArtifactExportRequest& Request, const fs::path& Host,
+        bool PrepareIosApplication(const toolchain::ArtifactExportRequest& Request,
+                                   const std::vector<std::uint8_t>& Image, const fs::path& Host,
                                    const fs::path& App, const std::string& ProductName, bool Simulator,
-                                   std::vector<toolchain::detail::ArtifactFile>& Files, std::string& Error)
+                                   std::vector<dbc::interpreter::detail::ArtifactFile>& Files, std::string& Error)
         {
             if (!toolchain::detail::ValidateArtifactShaders(Host / "shaders", Request.HostResources / "shaders",
                                                             Error) ||
                 !CopyTree(Host, App, Error) || !ValidateIosHost(App, Simulator, Error))
                 return false;
-            fs::path RelativeEntry;
-            std::vector<fs::path> RelativeSources;
-            fs::path RelativeAssetRoot;
             fs::path Entitlements;
-            if (!CopyPayload(Request, App / "artifact", RelativeEntry, RelativeAssetRoot, RelativeSources, Files,
-                             Error) ||
-                !WriteManifest(Request, App, RelativeEntry, RelativeAssetRoot, RelativeSources, Files, Error) ||
+            if (!WriteArtifact(Request, Image, App, Files, Error) ||
                 !SetIosMetadata(App, Request.Settings, ProductName, Request.Sign && !Simulator, Error) ||
                 !PrepareIosIcon(Request, App, Simulator, Error) ||
                 !PrepareIosProvisioning(App, Request.Settings, Simulator, Request.Sign, Entitlements, Error))
@@ -1534,7 +1501,8 @@ namespace dbc::studio
         }
 #endif
 
-        toolchain::ArtifactExportResult ExportDesktop(const toolchain::ArtifactExportRequest& Request)
+        toolchain::ArtifactExportResult ExportDesktop(const toolchain::ArtifactExportRequest& Request,
+                                                      const std::vector<std::uint8_t>& Image)
         {
             toolchain::ArtifactExportResult Result;
             const std::string ProductName = SafeProductName(Request.Settings, Request.EntrySource);
@@ -1563,57 +1531,50 @@ namespace dbc::studio
                 }
             } Cleanup{Stage};
 
+            // The host is opendbc-runner, built with this Studio; its manifest binds it to the runtime the
+            // program image was compiled for.
+#if defined(__APPLE__)
+            const fs::path HostResources = Request.HostProduct / "Contents/Resources";
+            const fs::path HostBinary = Request.HostProduct / "Contents/MacOS/opendbc-runner";
+            const fs::path HostManifest = HostResources / "opendbc-host.json";
+#else
+            const fs::path HostResources = Request.HostResources;
+            const fs::path HostBinary = Request.HostProduct;
+            const fs::path HostManifest = Request.HostProduct.parent_path() / "opendbc-runner-host.json";
+#endif
+            if (!toolchain::detail::ValidateArtifactHostIdentity(HostManifest, HostBinary,
+                                                                 Request.HostResources / "opendbc-runtime.json",
+                                                                 Result.Error) ||
+                !toolchain::detail::ValidateArtifactShaders(HostResources / "shaders", Request.HostResources / "shaders",
+                                                            Result.Error))
+                return Result;
 #if defined(__APPLE__)
             if (!CopyTree(Request.HostProduct, Stage, Result.Error))
                 return Result;
             const fs::path Resources = Stage / "Contents/Resources";
-            if (!RemoveRequired(Resources / "export-hosts", Result.Error) ||
-                !RemoveRequired(Resources / "samples", Result.Error))
-                return Result;
-            for (const std::string_view Reference :
-                 {"darkbasic_reference.md", "dbpro_reference.md", "open-dbc_reference.md"})
-            {
-                if (!RemoveRequired(Resources / Reference, Result.Error))
-                    return Result;
-            }
 #else
             if (!Request.Settings.IconSource.empty())
             {
                 Result.Error = "Custom Desktop artifact icons are currently supported only on macOS";
                 return Result;
             }
-            if (fs::is_directory(Request.HostProduct, FileError))
-            {
-                if (!CopyTree(Request.HostProduct, Stage, Result.Error))
-                    return Result;
-            }
-            else if (!CopyFile(Request.HostProduct, Stage / Request.HostProduct.filename(), Result.Error))
-            {
+            if (!CopyFile(Request.HostProduct, Stage / Request.HostProduct.filename(), Result.Error))
                 return Result;
-            }
             const fs::path Resources = Stage;
 #if defined(_WIN32)
             constexpr auto XrLoader = "openxr_loader.dll";
 #else
             constexpr auto XrLoader = "libopenxr_loader.so.1";
 #endif
-            if (!CopyFile(Request.HostResources / XrLoader, Resources / XrLoader, Result.Error))
+            if (!CopyFile(Request.HostResources / XrLoader, Resources / XrLoader, Result.Error) ||
+                !CopyTree(Request.HostResources / "shaders", Resources / "shaders", Result.Error))
                 return Result;
-            const fs::path ShaderSource = Request.HostResources / "shaders";
-            if (!CopyTree(ShaderSource, Resources / "shaders", Result.Error))
-                return Result;
+#endif
             if (!CopyFile(Request.HostResources / "NOTICE.md", Resources / "NOTICE.md", Result.Error) ||
                 !CopyTree(Request.HostResources / "licenses", Resources / "licenses", Result.Error))
                 return Result;
-#endif
-            fs::path RelativeEntry;
-            std::vector<fs::path> RelativeSources;
-            fs::path RelativeAssetRoot;
-            std::vector<toolchain::detail::ArtifactFile> Files;
-            if (!CopyPayload(Request, Resources / "artifact", RelativeEntry, RelativeAssetRoot, RelativeSources, Files,
-                             Result.Error) ||
-                !WriteManifest(Request, Resources, RelativeEntry, RelativeAssetRoot, RelativeSources, Files,
-                               Result.Error))
+            std::vector<dbc::interpreter::detail::ArtifactFile> Files;
+            if (!WriteArtifact(Request, Image, Resources, Files, Result.Error))
                 return Result;
 #if defined(__APPLE__)
             if (!PrepareMacIcon(Request, Stage, Result.Error))
@@ -1629,16 +1590,18 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported " + std::to_string(Files.size()) + " BASIC/source asset files");
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
             Result.Messages.push_back("Published " + Result.OutputPath.string());
             return Result;
         }
 
-        toolchain::ArtifactExportResult ExportIos(const toolchain::ArtifactExportRequest& Request)
+        toolchain::ArtifactExportResult ExportIos(const toolchain::ArtifactExportRequest& Request,
+                                                  const std::vector<std::uint8_t>& Image)
         {
             toolchain::ArtifactExportResult Result;
 #if !defined(__APPLE__)
             (void)Request;
+            (void)Image;
             Result.Error = "iOS artifacts can only be exported on macOS";
             return Result;
 #else
@@ -1679,8 +1642,8 @@ namespace dbc::studio
                 }
             } Cleanup{Stage};
             const fs::path App = Stage / "Payload" / (ProductName + ".app");
-            std::vector<toolchain::detail::ArtifactFile> Files;
-            if (!PrepareIosApplication(Request, Host, App, ProductName, false, Files, Result.Error))
+            std::vector<dbc::interpreter::detail::ArtifactFile> Files;
+            if (!PrepareIosApplication(Request, Image, Host, App, ProductName, false, Files, Result.Error))
                 return Result;
             const fs::path Archive = Stage / "artifact.ipa";
             if (!RunProcess({"/usr/bin/ditto", "-c", "-k", "--norsrc", "--noextattr", "--keepParent",
@@ -1693,17 +1656,19 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported " + std::to_string(Files.size()) + " BASIC/source asset files");
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
             Result.Messages.push_back("Published " + Result.OutputPath.string());
             return Result;
 #endif
         }
 
-        toolchain::ArtifactExportResult ExportIosSimulator(const toolchain::ArtifactExportRequest& Request)
+        toolchain::ArtifactExportResult ExportIosSimulator(const toolchain::ArtifactExportRequest& Request,
+                                                           const std::vector<std::uint8_t>& Image)
         {
             toolchain::ArtifactExportResult Result;
 #if !defined(__APPLE__)
             (void)Request;
+            (void)Image;
             Result.Error = "iOS Simulator artifacts can only be exported on macOS";
             return Result;
 #else
@@ -1739,8 +1704,8 @@ namespace dbc::studio
                 }
             } Cleanup{Stage};
             const fs::path App = Stage / (ProductName + ".app");
-            std::vector<toolchain::detail::ArtifactFile> Files;
-            if (!PrepareIosApplication(Request, Host, App, ProductName, true, Files, Result.Error))
+            std::vector<dbc::interpreter::detail::ArtifactFile> Files;
+            if (!PrepareIosApplication(Request, Image, Host, App, ProductName, true, Files, Result.Error))
                 return Result;
             if (!PublishAndRemoveStage(App, Result.OutputPath, Stage, Result.Error))
             {
@@ -1748,13 +1713,14 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported " + std::to_string(Files.size()) + " BASIC/source asset files");
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
             Result.Messages.push_back("Published " + Result.OutputPath.string());
             return Result;
 #endif
         }
 
-        toolchain::ArtifactExportResult ExportAndroid(const toolchain::ArtifactExportRequest& Request, bool Bundle)
+        toolchain::ArtifactExportResult ExportAndroid(const toolchain::ArtifactExportRequest& Request,
+                                                      const std::vector<std::uint8_t>& Image, bool Bundle)
         {
             toolchain::ArtifactExportResult Result;
             const fs::path Host = Request.HostResources / "export-hosts/android/template";
@@ -1801,14 +1767,8 @@ namespace dbc::studio
             if (!CopyTree(Host, Project, Result.Error))
                 return Result;
             const fs::path Injection = Project / "app/src/main/assets";
-            fs::path RelativeEntry;
-            std::vector<fs::path> RelativeSources;
-            fs::path RelativeAssetRoot;
-            std::vector<toolchain::detail::ArtifactFile> Files;
-            if (!CopyPayload(Request, Injection / "artifact", RelativeEntry, RelativeAssetRoot, RelativeSources, Files,
-                             Result.Error) ||
-                !WriteManifest(Request, Injection, RelativeEntry, RelativeAssetRoot, RelativeSources, Files,
-                               Result.Error))
+            std::vector<dbc::interpreter::detail::ArtifactFile> Files;
+            if (!WriteArtifact(Request, Image, Injection, Files, Result.Error))
                 return Result;
 
             const std::string BundleId =
@@ -1961,7 +1921,7 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported " + std::to_string(Files.size()) + " BASIC/source asset files");
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
             Result.Messages.push_back("Published " + Result.OutputPath.string());
             return Result;
         }
@@ -2062,21 +2022,22 @@ namespace dbc::studio
             std::error_code Error;
             if (!fs::is_directory(Request.OutputDirectory, Error))
                 return {{}, {}, "Export destination is not a directory: " + Request.OutputDirectory.string()};
+            std::vector<std::uint8_t> Image;
             std::string ProgramError;
-            if (!ValidateExportProgram(Request, ProgramError))
+            if (!BuildExportProgram(Request, Image, ProgramError))
                 return {{}, {}, std::move(ProgramError)};
             switch (Request.Target)
             {
                 case ArtifactTarget::Desktop:
-                    return ExportDesktop(Request);
+                    return ExportDesktop(Request, Image);
                 case ArtifactTarget::Ios:
-                    return ExportIos(Request);
+                    return ExportIos(Request, Image);
                 case ArtifactTarget::IosSimulator:
-                    return ExportIosSimulator(Request);
+                    return ExportIosSimulator(Request, Image);
                 case ArtifactTarget::AndroidApk:
-                    return ExportAndroid(Request, false);
+                    return ExportAndroid(Request, Image, false);
                 case ArtifactTarget::AndroidBundle:
-                    return ExportAndroid(Request, true);
+                    return ExportAndroid(Request, Image, true);
             }
             return {{}, {}, "Unknown artifact target"};
         }

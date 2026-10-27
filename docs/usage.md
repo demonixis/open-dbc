@@ -84,8 +84,11 @@ opendbc export game.dbpro --dialect dbpro --target android-apk --output dist
 ```
 
 Targets: `desktop` (host OS), `ios`, `ios-simulator`, `android-apk`,
-`android-aab`. An export embeds the runtime, sources and assets; it refuses path
-traversal, symbolic links and secret files. Per-project settings (identity,
+`android-aab`. An export holds `opendbc-runner`, the compiled program image and
+the project's assets, never its `.dba` or `.dbpro` files; it refuses path
+traversal, symbolic links, secret files and `#INCLUDE` files outside the project.
+At first launch the payload is copied to per-user storage, where the program
+writes its files and log. Per-project settings (identity,
 icons, signing, permissions) live in `.opendbc-project.json`. Android passwords
 come from `OPENDBC_ANDROID_KEYSTORE_PASSWORD` and `OPENDBC_ANDROID_KEY_PASSWORD`
 and are never stored. `--unsigned` macOS exports get an ad hoc signature: they

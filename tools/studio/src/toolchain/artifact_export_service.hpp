@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/project_settings.hpp"
+#include "interpreter/project_resolver.hpp"
 #include "language/language_profile.hpp"
 
 #include <filesystem>
@@ -28,6 +29,7 @@ namespace dbc::studio
             std::filesystem::path EntrySource;
             dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
             std::vector<std::filesystem::path> OrderedSources;
+            dbc::interpreter::ProjectStartup Startup;
             std::optional<std::filesystem::path> ProjectFile;
             std::filesystem::path AssetRoot;
             std::filesystem::path OutputDirectory;

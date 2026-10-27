@@ -164,7 +164,6 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     add_executable(test_artifact_export
         test_artifact_export.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/artifact_export_service.cpp
-        ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/artifact_runtime.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/project_settings.cpp
     )
     target_include_directories(test_artifact_export PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
@@ -174,7 +173,6 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         nlohmann_json::nlohmann_json
     )
     target_compile_definitions(test_artifact_export PRIVATE
-        OPENDBC_TESTING=1
         OPENDBC_TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     doctest_discover_tests(test_artifact_export PROPERTIES LABELS "unit-studio-packaging" RESOURCE_LOCK "opendbc_runtime")
 endif()

@@ -15,6 +15,8 @@ namespace dbc::studio
 
         // Executable on Windows/Linux, application bundle on Apple platforms.
         std::filesystem::path ProductPath();
+        // opendbc-runner, the host every desktop export starts from.
+        std::filesystem::path RunnerProduct();
 
         // Per-user writable directory for settings and layout.
         const std::filesystem::path& PrefDir();

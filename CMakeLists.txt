@@ -74,6 +74,9 @@ foreach(OPENDBC_RUNTIME_INPUT IN LISTS OPENDBC_RUNTIME_FINGERPRINT_INPUTS)
         "${OPENDBC_RUNTIME_INPUT}:${OPENDBC_RUNTIME_INPUT_HASH}\n")
 endforeach()
 string(SHA256 OPENDBC_RUNTIME_FINGERPRINT "${OPENDBC_RUNTIME_FINGERPRINT_MATERIAL}")
+# Shipped by the Studio; export hosts record its hash to prove they run the same runtime.
+set(OPENDBC_RUNTIME_MANIFEST "${CMAKE_BINARY_DIR}/opendbc-runtime.json")
+configure_file(cmake/opendbc-runtime.json.in "${OPENDBC_RUNTIME_MANIFEST}" @ONLY)
 message(STATUS "open-dbc version ${OPENDBC_VERSION} build ${OPENDBC_BUILD_NUMBER}")
 
 # --- Bundle identity -------------------------------------------------------
@@ -538,10 +541,10 @@ add_subdirectory(src/interpreter)
 
 # The Studio is the product on every platform; mobile builds use its sandboxed
 # configuration selected in tools/studio/src/core/platform.hpp.
-add_subdirectory(tools/studio)
 if(NOT ANDROID AND NOT IOS)
     add_subdirectory(tools/runner)
 endif()
+add_subdirectory(tools/studio)
 if(OPENDBC_VERIFY_CANONICAL_SHADERS)
     add_subdirectory(tools/shaderc)
 endif()

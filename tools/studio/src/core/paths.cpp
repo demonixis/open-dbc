@@ -62,6 +62,17 @@ namespace dbc::studio
 #endif
         }
 
+        fs::path RunnerProduct()
+        {
+#if defined(__APPLE__)
+            return ProductPath() / "Contents/Helpers/opendbc-runner.app";
+#elif defined(_WIN32)
+            return ExecutableDir() / "opendbc-runner.exe";
+#else
+            return ExecutableDir() / "opendbc-runner";
+#endif
+        }
+
         const fs::path& PrefDir()
         {
             static const fs::path Dir = []

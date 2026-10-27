@@ -13,7 +13,6 @@
 #include "core/paths.hpp"
 #include "interpreter/command_line.hpp"
 #include "toolchain/artifact_export_service.hpp"
-#include "toolchain/artifact_runtime.hpp"
 
 namespace dbc::studio
 {
@@ -49,10 +48,11 @@ namespace dbc::studio
             Request.EntrySource = Project.EntrySource;
             Request.Profile = Project.Profile;
             Request.OrderedSources = Project.OrderedSources;
+            Request.Startup = Project.Startup;
             Request.ProjectFile = Project.DescriptorPath;
             Request.AssetRoot = Project.AssetRoot;
             Request.OutputDirectory = std::filesystem::absolute(Command.ExportOutput).lexically_normal();
-            Request.HostProduct = core::paths::ProductPath();
+            Request.HostProduct = core::paths::RunnerProduct();
             Request.HostResources = core::paths::ResourceDir();
             Request.Settings = core::ProjectSettings::Load(Request.ProjectRoot);
             if (!Request.Settings.LoadError.empty())
@@ -93,41 +93,15 @@ using namespace dbc::studio;
 
 int main(int Argc, char* Argv[])
 {
-    const toolchain::EmbeddedArtifactResult Embedded = toolchain::FindEmbeddedArtifact(core::paths::ResourceDir());
-    if (!Embedded.Error.empty())
-    {
-        Write(stderr, Embedded.Error + "\n");
-        return static_cast<int>(dbc::interpreter::CommandLineExitCode::Target);
-    }
-
     std::vector<std::string_view> Arguments;
-    std::vector<std::string> EmbeddedArguments;
-    if (Embedded.Artifact)
-    {
-        EmbeddedArguments = {
-            "run",          Embedded.Artifact->EntryPath.string(),
-            "--asset-root", Embedded.Artifact->AssetRoot.string(),
-            "--dialect",    Embedded.Artifact->Profile == dbc::language::LanguageProfile::Dbc ? "dbc" : "dbpro"};
-        Arguments.reserve(EmbeddedArguments.size());
-        for (const std::string& Argument : EmbeddedArguments)
-            Arguments.emplace_back(Argument);
-    }
-    else
-    {
-        Arguments.reserve(Argc > 1 ? static_cast<std::size_t>(Argc - 1) : 0);
-        for (int Index = 1; Index < Argc; ++Index)
-            Arguments.emplace_back(Argv[Index]);
-    }
+    Arguments.reserve(Argc > 1 ? static_cast<std::size_t>(Argc - 1) : 0);
+    for (int Index = 1; Index < Argc; ++Index)
+        Arguments.emplace_back(Argv[Index]);
 
     dbc::interpreter::CommandLineEnvironment Environment;
     Environment.StandardOutput = [](std::string_view Text) { Write(stdout, Text); };
     Environment.StandardError = [](std::string_view Text) { Write(stderr, Text); };
     Environment.LaunchStudio = LaunchStudio;
     Environment.ExportArtifact = ExportArtifact;
-    if (Embedded.Artifact)
-    {
-        Environment.ConfinedSourceRoot = Embedded.Artifact->PayloadRoot;
-        Environment.OrderedProjectSources = Embedded.Artifact->OrderedSources;
-    }
     return dbc::interpreter::DispatchCommandLine(std::span<const std::string_view>(Arguments), Environment);
 }

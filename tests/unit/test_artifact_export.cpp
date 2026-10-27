@@ -2,8 +2,9 @@
 
 #include "interpreter/atomic_file.hpp"
 #include "interpreter/command_line.hpp"
+#include "interpreter/embedded_artifact.hpp"
+#include "interpreter/program_image.hpp"
 #include "toolchain/artifact_export_service.hpp"
-#include "toolchain/artifact_runtime.hpp"
 #include <nlohmann/json.hpp>
 
 #include <SDL3/SDL.h>
@@ -81,41 +82,87 @@ namespace
                         BinaryHash + "\",\"needed\":[\"libc.so\"]}\n");
     }
 
-    fs::path FakeHost(const fs::path& Root)
+    constexpr std::array<std::string_view, 8> CanonicalShaders{
+        "dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
+        "vr_transfer.vert.spv",   "vr_transfer.frag.spv",   "vr_transfer.vert.msl",   "vr_transfer.frag.msl"};
+
+    void CopyCanonicalShaders(const fs::path& Destination)
+    {
+        fs::create_directories(Destination);
+        for (const std::string_view Name : CanonicalShaders)
+            fs::copy_file(fs::path(OPENDBC_TEST_SOURCE_DIR) / "shaders" / Name, Destination / Name,
+                          fs::copy_options::overwrite_existing);
+    }
+
+    // The Studio resources an export reads: runtime manifest, notices, licenses and canonical shaders.
+    fs::path FakeHostResources(const fs::path& Root)
     {
 #if defined(__APPLE__)
-        const fs::path Host = Root / "OpenDBC.app";
-        Write(Host / "Contents/MacOS/opendbc", "host");
-        Write(Host / "Contents/Resources/shaders/runtime.spv", "shader");
-        Write(Host / "Contents/Resources/NOTICE.md", "notice");
-        Write(Host / "Contents/Resources/licenses/OpenDBC.txt", "license");
-        Write(Host / "Contents/Resources/licenses/MuseScore-General-SoundFont-LICENSE.md", "soundfont license");
+        const fs::path Resources = Root / "OpenDBC.app/Contents/Resources";
+#else
+        const fs::path Resources = Root;
+#if defined(_WIN32)
+        Write(Resources / "openxr_loader.dll", "loader");
+#else
+        Write(Resources / "libopenxr_loader.so.1", "loader");
+#endif
+#endif
+        Write(Resources / "opendbc-runtime.json", "{\"fingerprint\":\"test\"}\n");
+        Write(Resources / "NOTICE.md", "notice");
+        Write(Resources / "licenses/OpenDBC.txt", "license");
+        Write(Resources / "licenses/MuseScore-General-SoundFont-LICENSE.md", "soundfont license");
+        CopyCanonicalShaders(Resources / "shaders");
+        return Resources;
+    }
+
+    // Writes the host manifest the build produces for opendbc-runner, for the runner's current bytes.
+    void BindFakeRunner(const fs::path& Root)
+    {
+#if defined(__APPLE__)
+        const fs::path Runner = Root / "OpenDBC.app/Contents/Helpers/opendbc-runner.app";
+        const fs::path Binary = Runner / "Contents/MacOS/opendbc-runner";
+        const fs::path Manifest = Runner / "Contents/Resources/opendbc-host.json";
+#else
+        const fs::path Binary = Root / "opendbc-runner";
+        const fs::path Manifest = Root / "opendbc-runner-host.json";
+#endif
+        const fs::path RuntimeManifest = FakeHostResources(Root) / "opendbc-runtime.json";
+        Write(Manifest, "{\"format\":1,\"runtime_manifest_sha256\":\"" +
+                            *toolchain::detail::ArtifactSha256File(RuntimeManifest) + "\",\"binary_sha256\":\"" +
+                            *toolchain::detail::ArtifactSha256File(Binary) + "\",\"needed\":[]}\n");
+    }
+
+    // Returns the opendbc-runner product a Studio ships, bound to the fake Studio resources.
+    fs::path FakeHost(const fs::path& Root)
+    {
+        FakeHostResources(Root);
+#if defined(__APPLE__)
+        const fs::path Host = Root / "OpenDBC.app/Contents/Helpers/opendbc-runner.app";
+        Write(Host / "Contents/MacOS/opendbc-runner", "runner");
+        CopyCanonicalShaders(Host / "Contents/Resources/shaders");
         Write(Host / "Contents/Info.plist", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                                             "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
                                             "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
                                             "<plist version=\"1.0\"><dict>"
-                                            "<key>CFBundleIdentifier</key><string>net.demonixis.opendbc</string>"
-                                            "<key>CFBundleDisplayName</key><string>OpenDBC</string>"
-                                            "<key>CFBundleName</key><string>OpenDBC</string>"
+                                            "<key>CFBundleExecutable</key><string>opendbc-runner</string>"
+                                            "<key>CFBundleIdentifier</key><string>net.demonixis.opendbc.runner</string>"
+                                            "<key>CFBundleDisplayName</key><string>OpenDBC Runner</string>"
+                                            "<key>CFBundleName</key><string>OpenDBC Runner</string>"
                                             "<key>CFBundleShortVersionString</key><string>0.3</string>"
                                             "<key>CFBundleVersion</key><string>1</string>"
-                                            "<key>CFBundleIconFile</key><string>editor.icns</string>"
                                             "</dict></plist>\n");
 #else
-        const fs::path Host = Root / "opendbc";
-        Write(Host, "host");
-#if defined(_WIN32)
-        Write(Root / "openxr_loader.dll", "loader");
-#else
-        Write(Root / "libopenxr_loader.so.1", "loader");
+        const fs::path Host = Root / "opendbc-runner";
+        Write(Host, "runner");
 #endif
-        Write(Root / "shaders/dbclassic_tri.vert.spv", "vertex shader");
-        Write(Root / "shaders/dbclassic_tri.frag.spv", "fragment shader");
-        Write(Root / "NOTICE.md", "notice");
-        Write(Root / "licenses/OpenDBC.txt", "license");
-        Write(Root / "licenses/MuseScore-General-SoundFont-LICENSE.md", "soundfont license");
-#endif
+        BindFakeRunner(Root);
         return Host;
+    }
+
+    void UseFakeHost(toolchain::ArtifactExportRequest& Request, const fs::path& Root)
+    {
+        Request.HostProduct = FakeHost(Root);
+        Request.HostResources = FakeHostResources(Root);
     }
 
     fs::path ExportResourceRoot(const fs::path& Output)
@@ -146,7 +193,7 @@ namespace
 #endif
 } // namespace
 
-TEST_CASE("desktop artifact export embeds only BASIC sources and assets")
+TEST_CASE("desktop artifact export ships the runner, the program image and assets without sources")
 {
     TemporaryDirectory Directory("opendbc-artifact-export");
     const fs::path Project = Directory.Root / "project";
@@ -172,8 +219,7 @@ TEST_CASE("desktop artifact export embeds only BASIC sources and assets")
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Settings.AppName = "Sample Product";
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
@@ -183,8 +229,14 @@ TEST_CASE("desktop artifact export embeds only BASIC sources and assets")
     REQUIRE(Result);
     const fs::path Resources = ExportResourceRoot(Result.OutputPath);
     CHECK(fs::is_regular_file(Resources / "opendbc-artifact.json"));
-    CHECK(fs::is_regular_file(Resources / "artifact/main.dba"));
-    CHECK(fs::is_regular_file(Resources / "artifact/include/shared.dba"));
+    CHECK(fs::is_regular_file(Resources / "artifact/program.obc"));
+    CHECK_FALSE(fs::exists(Resources / "artifact/main.dba"));
+    CHECK_FALSE(fs::exists(Resources / "artifact/include/shared.dba"));
+#if defined(__APPLE__)
+    CHECK(fs::is_regular_file(Result.OutputPath / "Contents/MacOS/opendbc-runner"));
+#else
+    CHECK(fs::is_regular_file(Result.OutputPath / "opendbc-runner"));
+#endif
     CHECK(fs::is_regular_file(Resources / "artifact/media/pixel.png"));
     CHECK(fs::is_regular_file(Resources / "artifact/media/level.pak"));
     CHECK(fs::is_regular_file(Resources / "artifact/media/effect.fx"));
@@ -210,23 +262,31 @@ TEST_CASE("desktop artifact export embeds only BASIC sources and assets")
     CHECK(Manifest.find("media/music.mp3") != std::string::npos);
 
     const fs::path DataRoot = Directory.Root / "data";
-    fs::create_directories(DataRoot);
-    REQUIRE(SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "OPENDBC_TEST_ARTIFACT_DATA_ROOT",
-                                       DataRoot.string().c_str(), true));
-    const toolchain::EmbeddedArtifactResult Embedded = toolchain::FindEmbeddedArtifact(Resources);
+    const dbc::interpreter::EmbeddedArtifactResult Embedded = dbc::interpreter::FindEmbeddedArtifact(Resources, DataRoot);
     INFO(Embedded.Error);
     REQUIRE(Embedded.Artifact.has_value());
-    CHECK(Embedded.Artifact->Profile == dbc::language::LanguageProfile::Dbc);
-    CHECK(Embedded.Artifact->EntryPath.parent_path() == Embedded.Artifact->AssetRoot);
-    CHECK(fs::is_regular_file(Embedded.Artifact->EntryPath));
+    CHECK(Embedded.Artifact->ProgramPath.parent_path() == Embedded.Artifact->AssetRoot);
     CHECK(Embedded.Artifact->AssetRoot.string().starts_with(DataRoot.string()));
+
+    // The runner path: the copied image runs without any BASIC source.
+    dbc::interpreter::CommandLine Command;
+    Command.Action = dbc::interpreter::CommandLineAction::Run;
+    Command.Path = Embedded.Artifact->ProgramPath;
+    Command.Headless = true;
+    Command.Execution.AssetRoot = Embedded.Artifact->AssetRoot;
+    std::string Output;
+    dbc::interpreter::CommandLineEnvironment Environment;
+    Environment.StandardOutput = [&](std::string_view Text) { Output += Text; };
+    Environment.StandardError = [&](std::string_view Text) { Output += Text; };
+    CHECK(dbc::interpreter::RunProgramImage(Command, Environment) == 0);
+    CHECK(Output.find("42") != std::string::npos);
 
     const toolchain::ArtifactExportResult Duplicate = toolchain::ArtifactExportService().Export(Request);
     CHECK_FALSE(Duplicate);
     CHECK(Duplicate.Error.find("already exists") != std::string::npos);
 }
 
-TEST_CASE("DBPro artifact manifest v5 keeps a DBA entry and descriptor provenance")
+TEST_CASE("DBPro artifact images carry the project startup instead of its descriptor")
 {
     TemporaryDirectory Directory("opendbc-artifact-dbpro");
     const fs::path Project = Directory.Root / "project";
@@ -241,9 +301,11 @@ TEST_CASE("DBPro artifact manifest v5 keeps a DBA entry and descriptor provenanc
     Request.ProjectFile = Project / "game.dbpro";
     Request.AssetRoot = Project;
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Settings.AppName = "DBPro Product";
+    Request.Startup.Title = "Professional Title";
+    Request.Startup.Width = 1024;
+    Request.Startup.Height = 768;
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
 
@@ -251,12 +313,20 @@ TEST_CASE("DBPro artifact manifest v5 keeps a DBA entry and descriptor provenanc
     INFO(Result.Error);
     REQUIRE(Result);
     const fs::path Resources = ExportResourceRoot(Result.OutputPath);
-    CHECK(fs::is_regular_file(Resources / "artifact/game.dbpro"));
+    CHECK_FALSE(fs::exists(Resources / "artifact/game.dbpro"));
     std::ifstream Input(Resources / "opendbc-artifact.json");
-    const std::string Manifest{std::istreambuf_iterator<char>(Input), std::istreambuf_iterator<char>()};
-    CHECK(Manifest.find("\"format\": 5") != std::string::npos);
-    CHECK(Manifest.find("\"dialect\": \"dbpro\"") != std::string::npos);
-    CHECK(Manifest.find("\"entry\": \"main.dba\"") != std::string::npos);
+    const nlohmann::json Manifest = nlohmann::json::parse(Input);
+    CHECK(Manifest.at("format") == dbc::interpreter::EmbeddedArtifactFormat);
+    CHECK(Manifest.at("program") == "program.obc");
+    std::ifstream ImageInput(Resources / "artifact/program.obc", std::ios::binary);
+    const std::vector<std::uint8_t> Bytes{std::istreambuf_iterator<char>(ImageInput), std::istreambuf_iterator<char>()};
+    const dbc::interpreter::ProgramImageReadResult Image = dbc::interpreter::ReadProgramImage(Bytes);
+    INFO(Image.Error);
+    REQUIRE(Image.Image);
+    CHECK(Image.Image->Bytecode->Profile == dbc::language::LanguageProfile::DbPro);
+    CHECK(Image.Image->Startup.Title == "Professional Title");
+    CHECK(Image.Image->Startup.Width == 1024);
+    CHECK(Image.Image->Startup.Height == 768);
 }
 
 TEST_CASE("artifact export rejects files that may contain secrets")
@@ -270,8 +340,7 @@ TEST_CASE("artifact export rejects files that may contain secrets")
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
 
@@ -291,8 +360,7 @@ TEST_CASE("artifact export excludes only the explicitly configured Android keyst
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Settings.AndroidKeystorePath = "release.jks";
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
@@ -318,8 +386,7 @@ TEST_CASE("artifact export rejects project symlinks")
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
 
@@ -340,8 +407,7 @@ TEST_CASE("artifact export confines relative and absolute includes to the projec
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Sign = false;
 
     SUBCASE("parent traversal")
@@ -349,18 +415,18 @@ TEST_CASE("artifact export confines relative and absolute includes to the projec
         Write(Request.EntrySource, "#include \"../outside.dba\"\n");
         const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request);
         CHECK_FALSE(Result);
-        CHECK(Result.Error.find("remain inside its payload") != std::string::npos);
+        CHECK(Result.Error.find("remain inside its project") != std::string::npos);
     }
     SUBCASE("absolute path")
     {
         Write(Request.EntrySource, "#include \"" + Outside.generic_string() + "\"\n");
         const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request);
         CHECK_FALSE(Result);
-        CHECK(Result.Error.find("must be relative") != std::string::npos);
+        CHECK(Result.Error.find("remain inside its project") != std::string::npos);
     }
 }
 
-TEST_CASE("artifact export rejects includes excluded from the copied payload")
+TEST_CASE("artifact export compiles includes from excluded directories without shipping them")
 {
     TemporaryDirectory Directory("opendbc-artifact-excluded-include");
     const fs::path Project = Directory.Root / "project";
@@ -372,13 +438,15 @@ TEST_CASE("artifact export rejects includes excluded from the copied payload")
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Sign = false;
 
     const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request);
-    CHECK_FALSE(Result);
-    CHECK(Result.Error.find("not self-contained") != std::string::npos);
+    INFO(Result.Error);
+    REQUIRE(Result);
+    const fs::path Resources = ExportResourceRoot(Result.OutputPath);
+    CHECK_FALSE(fs::exists(Resources / "artifact/dist"));
+    CHECK(fs::is_regular_file(Resources / "artifact/program.obc"));
 }
 
 TEST_CASE("artifact export excludes an output subtree inside the project")
@@ -392,8 +460,7 @@ TEST_CASE("artifact export excludes an output subtree inside the project")
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Project / "release";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Sign = false;
 
     const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request);
@@ -410,19 +477,20 @@ TEST_CASE("macOS unsigned desktop artifact export refreshes its ad hoc signature
     const fs::path Project = Directory.Root / "project";
     Write(Project / "main.dba", "print \"hello\"\n");
     const fs::path Host = FakeHost(Directory.Root);
-    const fs::path Executable = Host / "Contents/MacOS/opendbc";
+    const fs::path Executable = Host / "Contents/MacOS/opendbc-runner";
     fs::copy_file("/usr/bin/true", Executable, fs::copy_options::overwrite_existing);
     fs::permissions(Executable, fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec,
                     fs::perm_options::add);
     REQUIRE(RunTestProcess({"/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none", Host.string()}) == 0);
     REQUIRE(fs::is_directory(Host / "Contents/_CodeSignature"));
+    BindFakeRunner(Directory.Root);
 
     toolchain::ArtifactExportRequest Request;
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
     Request.HostProduct = Host;
-    Request.HostResources = Host.parent_path();
+    Request.HostResources = FakeHostResources(Directory.Root);
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
 
@@ -443,8 +511,7 @@ TEST_CASE("macOS desktop artifact export applies the configured project icon")
     Request.ProjectRoot = Project;
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Settings.IconSource = fs::path(OPENDBC_TEST_SOURCE_DIR) / "resources/editor.png";
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
@@ -460,22 +527,24 @@ TEST_CASE("embedded artifact manifest rejects path traversal")
 {
     TemporaryDirectory Directory("opendbc-artifact-manifest");
     Write(Directory.Root / "opendbc-artifact.json",
-          "{\"format\":4,\"dialect\":\"dbc\",\"entry\":\"../main.dba\",\"storage\":\"artifact-test\","
-          "\"files\":[{\"path\":\"../main.dba\",\"hash\":\"0000000000000000\"}]}\n");
-    const toolchain::EmbeddedArtifactResult Result = toolchain::FindEmbeddedArtifact(Directory.Root);
+          "{\"format\":6,\"program\":\"../program.obc\",\"storage\":\"artifact-test\","
+          "\"files\":[{\"path\":\"../program.obc\",\"hash\":\"0000000000000000\"}]}\n");
+    const dbc::interpreter::EmbeddedArtifactResult Result =
+        dbc::interpreter::FindEmbeddedArtifact(Directory.Root, Directory.Root / "data");
     CHECK_FALSE(Result.Artifact.has_value());
-    CHECK(Result.Error.find("safe relative path") != std::string::npos);
+    CHECK(Result.Error.find("relative .obc path") != std::string::npos);
 }
 
 TEST_CASE("embedded artifact manifest requires an exact payload inventory")
 {
     TemporaryDirectory Directory("opendbc-artifact-inventory");
     Write(Directory.Root / "opendbc-artifact.json",
-          "{\"format\":4,\"dialect\":\"dbpro\",\"entry\":\"MAIN.DBA\",\"storage\":\"artifact-test\","
+          "{\"format\":6,\"program\":\"program.obc\",\"storage\":\"artifact-test\","
           "\"files\":[{\"path\":\"media/pixel.png\",\"hash\":\"0000000000000000\"}]}\n");
-    const toolchain::EmbeddedArtifactResult Result = toolchain::FindEmbeddedArtifact(Directory.Root);
+    const dbc::interpreter::EmbeddedArtifactResult Result =
+        dbc::interpreter::FindEmbeddedArtifact(Directory.Root, Directory.Root / "data");
     CHECK_FALSE(Result.Artifact.has_value());
-    CHECK(Result.Error.find("does not contain its BASIC entry") != std::string::npos);
+    CHECK(Result.Error.find("does not contain its program image") != std::string::npos);
 }
 
 TEST_CASE("artifact payload synchronization preserves data changes and removes obsolete assets")
@@ -485,19 +554,19 @@ TEST_CASE("artifact payload synchronization preserves data changes and removes o
     const fs::path Destination = Directory.Root / "destination";
     Write(Source / "save.dat", "initial\n");
     Write(Source / "obsolete.dat", "obsolete\n");
-    std::vector<toolchain::detail::ArtifactFile> Initial = {
-        {"save.dat", toolchain::detail::ArtifactContentHash("initial\n")},
-        {"obsolete.dat", toolchain::detail::ArtifactContentHash("obsolete\n")},
+    std::vector<dbc::interpreter::detail::ArtifactFile> Initial = {
+        {"save.dat", dbc::interpreter::detail::ArtifactContentHash("initial\n")},
+        {"obsolete.dat", dbc::interpreter::detail::ArtifactContentHash("obsolete\n")},
     };
     std::string Error;
-    REQUIRE(toolchain::detail::SynchronizeArtifactPayload(Source, Destination, Initial, Error));
+    REQUIRE(dbc::interpreter::detail::SynchronizeArtifactPayload(Source, Destination, Initial, Error));
     Write(Destination / "save.dat", "player progress\n");
     Write(Source / "save.dat", "new packaged default\n");
 
-    const std::vector<toolchain::detail::ArtifactFile> Updated = {
-        {"save.dat", toolchain::detail::ArtifactContentHash("new packaged default\n")},
+    const std::vector<dbc::interpreter::detail::ArtifactFile> Updated = {
+        {"save.dat", dbc::interpreter::detail::ArtifactContentHash("new packaged default\n")},
     };
-    REQUIRE(toolchain::detail::SynchronizeArtifactPayload(Source, Destination, Updated, Error));
+    REQUIRE(dbc::interpreter::detail::SynchronizeArtifactPayload(Source, Destination, Updated, Error));
 
     std::ifstream Save(Destination / "save.dat", std::ios::binary);
     const std::string Saved((std::istreambuf_iterator<char>(Save)), std::istreambuf_iterator<char>());
@@ -519,11 +588,11 @@ TEST_CASE("artifact payload synchronization rejects symlinked parent directories
     if (LinkError)
         return;
 
-    const std::vector<toolchain::detail::ArtifactFile> Files = {
-        {"media/value.dat", toolchain::detail::ArtifactContentHash("packaged\n")},
+    const std::vector<dbc::interpreter::detail::ArtifactFile> Files = {
+        {"media/value.dat", dbc::interpreter::detail::ArtifactContentHash("packaged\n")},
     };
     std::string Error;
-    CHECK_FALSE(toolchain::detail::SynchronizeArtifactPayload(Source, Destination, Files, Error));
+    CHECK_FALSE(dbc::interpreter::detail::SynchronizeArtifactPayload(Source, Destination, Files, Error));
     CHECK(Error.find("unsafe directory") != std::string::npos);
     CHECK_FALSE(fs::exists(Outside / "value.dat"));
 }
@@ -542,11 +611,11 @@ TEST_CASE("artifact payload synchronization never follows the legacy predictable
     if (LinkError)
         return;
 
-    const std::vector<toolchain::detail::ArtifactFile> Files = {
-        {"save.dat", toolchain::detail::ArtifactContentHash("packaged\n")},
+    const std::vector<dbc::interpreter::detail::ArtifactFile> Files = {
+        {"save.dat", dbc::interpreter::detail::ArtifactContentHash("packaged\n")},
     };
     std::string Error;
-    REQUIRE(toolchain::detail::SynchronizeArtifactPayload(Source, Destination, Files, Error));
+    REQUIRE(dbc::interpreter::detail::SynchronizeArtifactPayload(Source, Destination, Files, Error));
 
     std::ifstream OutsideInput(Outside, std::ios::binary);
     const std::string OutsideText((std::istreambuf_iterator<char>(OutsideInput)), std::istreambuf_iterator<char>());
@@ -770,8 +839,7 @@ TEST_CASE("DBPro artifacts execute ordered sources with independent media and in
     Request.AssetRoot = Directory.Root / "media";
     Request.Settings.AndroidKeystorePath = "../media/signing.bin";
     Request.OutputDirectory = Directory.Root / "output";
-    Request.HostProduct = FakeHost(Directory.Root);
-    Request.HostResources = Request.HostProduct.parent_path();
+    UseFakeHost(Request, Directory.Root);
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
     const auto Exported = toolchain::ArtifactExportService().Export(Request);
@@ -782,43 +850,27 @@ TEST_CASE("DBPro artifacts execute ordered sources with independent media and in
     std::ifstream ManifestInput(Resources / "opendbc-artifact.json");
     auto Manifest = nlohmann::json::parse(ManifestInput);
     CHECK(Manifest.dump().find("signing.bin") == std::string::npos);
-    const auto DataRoot = Directory.Root / "data";
-    fs::create_directories(DataRoot);
-    REQUIRE(SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "OPENDBC_TEST_ARTIFACT_DATA_ROOT",
-                                       DataRoot.string().c_str(), true));
-    const auto Embedded = toolchain::FindEmbeddedArtifact(Resources);
+    CHECK_FALSE(fs::exists(Resources / "artifact/__external/sources"));
+    const auto Embedded = dbc::interpreter::FindEmbeddedArtifact(Resources, Directory.Root / "data");
     INFO(Embedded.Error);
     REQUIRE(Embedded.Artifact);
-    REQUIRE(Embedded.Artifact->OrderedSources.size() == 2);
     CHECK(Embedded.Artifact->PayloadRoot != Embedded.Artifact->AssetRoot);
+    CHECK(fs::is_regular_file(Embedded.Artifact->AssetRoot / "pixel.txt"));
     dbc::interpreter::CommandLine Command;
     Command.Action = dbc::interpreter::CommandLineAction::Run;
-    Command.Path = Embedded.Artifact->EntryPath;
-    Command.RequestedProfile = Embedded.Artifact->Profile;
+    Command.Path = Embedded.Artifact->ProgramPath;
+    Command.Headless = true;
     Command.Execution.AssetRoot = Embedded.Artifact->AssetRoot;
     dbc::interpreter::CommandLineEnvironment Environment;
-    Environment.ConfinedSourceRoot = Embedded.Artifact->PayloadRoot;
-    Environment.OrderedProjectSources = Embedded.Artifact->OrderedSources;
     std::string Output;
     Environment.StandardOutput = [&](std::string_view Text) { Output += Text; };
     Environment.StandardError = [&](std::string_view Text) { Output += Text; };
-    CHECK(dbc::interpreter::DispatchCommandLine(Command, Environment) == 0);
+    CHECK(dbc::interpreter::RunProgramImage(Command, Environment) == 0);
     CHECK(Output.find("42") != std::string::npos);
 
-    Write(Embedded.Artifact->PayloadRoot.parent_path() / "outside.dba", "print 99\n");
-    Write(Embedded.Artifact->EntryPath, "#include \"../outside.dba\"\n");
-    Command.Action = dbc::interpreter::CommandLineAction::Check;
-    CHECK(dbc::interpreter::DispatchCommandLine(Command, Environment) != 0);
-
-    Manifest["orderedSources"].push_back("../outside.dba");
-    Write(Resources / "opendbc-artifact.json", Manifest.dump());
-    CHECK_FALSE(toolchain::FindEmbeddedArtifact(Resources).Artifact);
-    Manifest["format"] = 4;
-    Manifest.erase("orderedSources");
-    Write(Resources / "opendbc-artifact.json", Manifest.dump());
-    const auto Legacy = toolchain::FindEmbeddedArtifact(Resources);
-    REQUIRE(Legacy.Artifact);
-    CHECK(Legacy.Artifact->OrderedSources.size() == 1);
+    // A tampered payload no longer matches its inventory.
+    Write(Resources / "artifact/program.obc", "tampered");
+    CHECK_FALSE(dbc::interpreter::FindEmbeddedArtifact(Resources, Directory.Root / "data2").Artifact);
 }
 
 TEST_CASE("artifact manifest format requires a bounded integer")
@@ -828,7 +880,7 @@ TEST_CASE("artifact manifest format requires a bounded integer")
                                nlohmann::json(4.0), nlohmann::json(UINT64_MAX)})
     {
         Write(Directory.Root / "opendbc-artifact.json", nlohmann::json{{"format", Format}}.dump());
-        const auto Result = toolchain::FindEmbeddedArtifact(Directory.Root);
+        const auto Result = dbc::interpreter::FindEmbeddedArtifact(Directory.Root, Directory.Root / "data");
         CHECK_FALSE(Result.Artifact);
         CHECK_FALSE(Result.Error.empty());
     }

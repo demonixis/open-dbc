@@ -3,6 +3,8 @@ add_library(dbc_interpreter STATIC
   command_line.hpp
   command_line_detail.hpp
   command_line_run.cpp
+  embedded_artifact.cpp
+  embedded_artifact.hpp
   execution_service.cpp
   execution_service.hpp
   execution_diagnostics.hpp

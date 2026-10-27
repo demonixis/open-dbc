@@ -66,8 +66,6 @@ FetchContent_MakeAvailable(nlohmann_json)
 
 set(OPENDBC_GENERATED_LICENSE_DIR "${CMAKE_BINARY_DIR}/licenses/third-party")
 file(MAKE_DIRECTORY "${OPENDBC_GENERATED_LICENSE_DIR}")
-set(OPENDBC_RUNTIME_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/opendbc-runtime.json")
-configure_file(opendbc-runtime.json.in "${OPENDBC_RUNTIME_MANIFEST}" @ONLY)
 set(OPENDBC_THIRD_PARTY_LICENSES
     "${sdl3_SOURCE_DIR}/LICENSE.txt|SDL3.txt"
     "${sdl3_image_SOURCE_DIR}/LICENSE.txt|SDL3_image.txt"
@@ -129,8 +127,6 @@ set(STUDIO_SOURCES
     src/toolchain/active_run_planner.hpp
     src/toolchain/artifact_export_service.cpp
     src/toolchain/artifact_export_service.hpp
-    src/toolchain/artifact_runtime.cpp
-    src/toolchain/artifact_runtime.hpp
     src/toolchain/icon_generator.cpp
     src/toolchain/icon_generator.hpp
 
@@ -316,6 +312,27 @@ else()
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENDBC_REPOSITORY_LICENSES}
             ${OPENDBC_GENERATED_LICENSES} "$<TARGET_FILE_DIR:opendbc>/licenses"
         COMMENT "Copying OpenDBC notices and dependency licenses" VERBATIM)
+endif()
+
+# Desktop exports start from opendbc-runner, which ships inside the Studio product.
+if(TARGET opendbc-runner)
+    add_dependencies(opendbc opendbc-runner)
+    if(APPLE)
+        add_custom_command(TARGET opendbc POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Helpers/opendbc-runner.app"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "$<TARGET_BUNDLE_DIR:opendbc-runner>"
+                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Helpers/opendbc-runner.app"
+            COMMENT "Embedding opendbc-runner in the Studio bundle" VERBATIM)
+    else()
+        add_custom_command(TARGET opendbc POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:opendbc-runner>"
+                "$<TARGET_FILE_DIR:opendbc-runner>/opendbc-runner-host.json" "$<TARGET_FILE_DIR:opendbc>"
+            COMMENT "Placing opendbc-runner beside the Studio" VERBATIM)
+        # PROGRAMS installs the file as built, so its hash still matches the host manifest.
+        install(PROGRAMS "$<TARGET_FILE:opendbc-runner>" DESTINATION bin COMPONENT Runtime)
+        install(FILES "$<TARGET_FILE_DIR:opendbc-runner>/opendbc-runner-host.json" DESTINATION bin
+            COMPONENT Runtime)
+    endif()
 endif()
 
 if(IOS)
