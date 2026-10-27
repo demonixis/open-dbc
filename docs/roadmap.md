@@ -66,6 +66,22 @@ Work:
 - [ ] Studio packaging with the runner: nested macOS bundle signed inside out,
   shared folder on Windows and Linux.
 
+## Rendering and media
+
+- [ ] `SET SHADOW SHADING ON` indoors: a cube in a closed box room, lit by a
+  point light inside it (`SET SHADOW POSITION 1, ...` or the same fixed
+  position), casts no visible shadow, and a lighter patch appears where the
+  shadow should be when the room's normals face outwards. Check the z-fail
+  volumes against room geometry and the far plane.
+- [ ] Reproducible example meshes: Blender 5.1's Subdivision Surface modifier
+  returns its vertices in a different order, with last-bit differences, on
+  every evaluation, even in one process with one thread, so `xexport.py` output
+  changes on each run. Sorting or rounding in the exporter cannot fix it;
+  replace the modifier in the generators with deterministic geometry.
+- [ ] Regenerate the baked textures: `bake_textures.save_jpeg` now writes the
+  exact sRGB encoding (linear 0.5 gives 188, the committed JPEGs have 170), so
+  every texture gets brighter; review the examples when regenerating.
+
 ## Towards 1.0
 
 - [ ] Decide whether to keep the `DbcNew` / `DbProNew` profiles.
