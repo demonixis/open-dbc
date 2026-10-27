@@ -46,6 +46,13 @@ A standalone source finds its media beside itself; a DBPro project uses its
 descriptor's media root and source order. The Output panel shows the source and
 asset root of each run, and diagnostics are marked in the matching tab.
 
+The toolbar holds New, Open, Save, Run and Stop. Beside the Project panel, the
+**Code** panel outlines the active tab: functions with their call counts, labels
+with their GOTO/GOSUB jumps, types and main-program variables; selecting one
+goes to its line. Counts cover that file only, not its includes. The **Media**
+panel lists the asset root's images, audio, models, effects, videos and fonts,
+filtered by kind and name; double-clicking an image or sound previews it.
+
 **Build → Compile HLSL Effect…** compiles a `.fx` or `.hlsl` file with `VSMain`
 and `PSMain` entry points into `<name>.vert.spv`, `<name>.frag.spv` and
 `<name>.effect.json`, which DBPro `LOAD EFFECT` loads. More techniques are
