@@ -8405,6 +8405,28 @@ TEST_CASE("Classic authored object keyframes round-trip through the portable ani
     std::filesystem::remove_all(Root, CleanupError);
 }
 
+TEST_CASE("Cloned imported objects keep their animation after the source is deleted")
+{
+    const std::filesystem::path Model =
+        std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/walk.x";
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("cloned-imported-animation", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Objects().LoadObject(Model.string(), 1));
+    REQUIRE(Kernel.Objects().TotalObjectFrames(1) > 1);
+    Kernel.Objects().CloneObject(2, 1);
+    Kernel.Objects().DeleteObject(1);
+    const dbc::Object3D* Clone = Kernel.Objects().GetObject(2);
+    REQUIRE(Clone != nullptr);
+    REQUIRE(Clone->AssimpScene != nullptr);
+    CHECK(Clone->LimbNodes.size() > 1);
+    REQUIRE(Kernel.Objects().LoopObject(2));
+    CHECK(Kernel.Objects().ObjectFrame(2) == 0);
+    Kernel.Renderer().PrepareFrameSimulation(0.5);
+    CHECK(Kernel.Objects().ObjectPlaying(2) == 1);
+    CHECK(Kernel.Objects().ObjectFrame(2) > 0);
+}
+
 TEST_CASE("Classic imported object animation saves every moving frame and appends losslessly")
 {
     const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
