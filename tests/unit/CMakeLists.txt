@@ -24,6 +24,7 @@ doctest_discover_tests(test_vm PROPERTIES LABELS "unit-language-vm")
 if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_language
         test_studio_language.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/code_outline.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/command_database.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/program_info.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/reference.cpp

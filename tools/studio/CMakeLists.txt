@@ -146,6 +146,8 @@ set(STUDIO_SOURCES
     src/core/workspace.cpp
     src/core/workspace.hpp
 
+    src/dba/code_outline.cpp
+    src/dba/code_outline.hpp
     src/dba/command_database.cpp
     src/dba/command_database.hpp
     src/dba/language.cpp
@@ -157,6 +159,8 @@ set(STUDIO_SOURCES
 
     src/panels/asset_preview.cpp
     src/panels/asset_preview.hpp
+    src/panels/code_panel.cpp
+    src/panels/code_panel.hpp
     src/panels/editor_panel.cpp
     src/panels/editor_panel.hpp
     src/panels/launcher_window.cpp

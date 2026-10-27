@@ -24,6 +24,7 @@ namespace dbc::studio
         constexpr const char* KPanelEditor = "Editor";
         constexpr const char* KPanelOutput = "Output";
         constexpr const char* KPanelPreview = "Preview";
+        constexpr const char* KPanelCode = "Code";
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
 
         enum class ToolIcon
@@ -139,6 +140,7 @@ namespace dbc::studio
                               [this](const std::filesystem::path& Path) { OpenFile(Path); });
 
         Project_.SetOnActivate([this](const std::filesystem::path& Path) { OpenFile(Path); });
+        Code_.SetOnSelect([this](std::uint32_t Line) { Editor_.GoToLine(Line); });
 
         Settings_ = core::Settings::Load();
         SettingsLoaded_ = true;
@@ -812,9 +814,25 @@ namespace dbc::studio
         if (ShowProject_)
         {
             ImGui::Begin(KPanelProject, &ShowProject_);
+            ProjectDockId_ = ImGui::GetWindowDockID();
             Project_.Draw();
             ImGui::End();
         }
+
+        if (ShowCode_)
+        {
+            if (ProjectDockId_ != 0)
+                ImGui::SetNextWindowDockID(ProjectDockId_, ImGuiCond_FirstUseEver);
+            // Only a visible panel parses: a hidden tab costs nothing while typing.
+            if (ImGui::Begin(KPanelCode, &ShowCode_))
+            {
+                Code_.Update(Editor_.CurrentEditor(), Editor_.CurrentPath(), Editor_.CurrentProfile(),
+                             ImGui::GetTime());
+                Code_.Draw();
+            }
+            ImGui::End();
+        }
+
 
         ImGui::Begin(KPanelEditor, nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         EditorDockId_ = ImGui::GetWindowDockID();
@@ -868,6 +886,7 @@ namespace dbc::studio
         const ImGuiID Left = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Left, 0.20f, nullptr, &Center);
         const ImGuiID Bottom = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Down, 0.28f, nullptr, &Center);
 
+        ImGui::DockBuilderDockWindow(KPanelCode, Left);
         ImGui::DockBuilderDockWindow(KPanelProject, Left);
         ImGui::DockBuilderDockWindow(KPanelEditor, Center);
         ImGui::DockBuilderDockWindow(KPanelPreview, Center);
@@ -1078,6 +1097,7 @@ namespace dbc::studio
             }
             ImGui::Separator();
             ImGui::MenuItem(KPanelProject, nullptr, &ShowProject_);
+            ImGui::MenuItem(KPanelCode, nullptr, &ShowCode_);
             ImGui::MenuItem(KPanelOutput, nullptr, &ShowOutput_);
             ImGui::Separator();
             if (ImGui::MenuItem("Reset Layout"))

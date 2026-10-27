@@ -260,6 +260,17 @@ namespace dbc::studio
             return HasDocument() ? Documents_[Current_]->Editor.get() : nullptr;
         }
 
+        void EditorPanel::GoToLine(std::uint32_t Line)
+        {
+            TextEditor* Editor = CurrentEditor();
+            if (Editor == nullptr || Line == 0)
+                return;
+            // SetCursor before ScrollToLine: the scroll request overrides the cursor's.
+            Editor->SetCursor(TextEditor::DocPos(Line - 1, 0));
+            Editor->ScrollToLine(Line - 1, TextEditor::Scroll::alignMiddle);
+            Editor->SetFocus();
+        }
+
         bool EditorPanel::WriteDocument(Document& Doc, const std::filesystem::path& Path)
         {
             if (!dbc::language::IsLanguageSource(Path))

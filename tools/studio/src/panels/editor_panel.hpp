@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -50,6 +51,10 @@ namespace dbc::studio
             std::filesystem::path CurrentPath() const;
             std::vector<BufferedSource> DirtySources(dbc::language::LanguageProfile Profile) const;
             TextEditor* CurrentEditor();
+            dbc::language::LanguageProfile CurrentProfile() const;
+
+            // Moves the current tab's cursor to a 1-based line and focuses it.
+            void GoToLine(std::uint32_t Line);
 
             // Writes the current document; false when it has no path yet.
             bool SaveCurrent();
@@ -78,7 +83,6 @@ namespace dbc::studio
             void AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile,
                              const std::string& Text);
             void ConfigureEditor(TextEditor& Editor, dbc::language::LanguageProfile Profile) const;
-            dbc::language::LanguageProfile CurrentProfile() const;
             bool WriteDocument(Document& Doc, const std::filesystem::path& Path);
             static bool IsDirty(const Document& Doc);
             void DrawCloseConfirm();
