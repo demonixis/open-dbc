@@ -318,6 +318,7 @@ TEST_CASE("artifact export rejects project symlinks")
     Request.EntrySource = Project / "main.dba";
     Request.OutputDirectory = Directory.Root / "output";
     Request.HostProduct = FakeHost(Directory.Root);
+    Request.HostResources = Request.HostProduct.parent_path();
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
 
@@ -666,6 +667,8 @@ TEST_CASE("artifact staging refuses a pre-existing symlink")
     CHECK(fs::is_empty(Outside));
 }
 
+// Opaque icons are flattened with sips, so only macOS can produce them.
+#if defined(__APPLE__)
 TEST_CASE("iOS artifact icon generation removes the alpha channel")
 {
     TemporaryDirectory Directory("opendbc-artifact-ios-icon");
@@ -679,6 +682,7 @@ TEST_CASE("iOS artifact icon generation removes the alpha channel")
     REQUIRE(Input.gcount() == static_cast<std::streamsize>(Header.size()));
     CHECK((Header[25] == 2 || Header[25] == 3));
 }
+#endif
 
 TEST_CASE("mobile host identity binds its runtime manifest to its binary")
 {
@@ -758,6 +762,7 @@ TEST_CASE("DBPro artifacts execute ordered sources with independent media and in
     Request.Settings.AndroidKeystorePath = "../media/signing.bin";
     Request.OutputDirectory = Directory.Root / "output";
     Request.HostProduct = FakeHost(Directory.Root);
+    Request.HostResources = Request.HostProduct.parent_path();
     Request.Sign = false;
     fs::create_directories(Request.OutputDirectory);
     const auto Exported = toolchain::ArtifactExportService().Export(Request);
