@@ -1,0 +1,19 @@
+; **** Dark BASIC Professional Project File ****
+version=DBP1.00
+project name=Reactor Breach
+
+; **** source file information ****
+main=reactor_breach.dba
+
+; **** Executable Information  ***
+; build types: exe, media, installer, alone
+executable=reactor_breach.exe
+build type=exe
+
+; **** display mode information ****
+app title=Reactor Breach
+
+; graphics mode options: fullscreen, window, desktop, fulldesktop, hidden
+graphics mode=window
+fullscreen resolution=1280x720x32
+window resolution=1280x720

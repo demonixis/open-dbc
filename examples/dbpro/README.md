@@ -1,5 +1,10 @@
 # DarkBASIC Professional examples
 
+`demos/` holds complete games written for OpenDBC; their media are project-made
+(CC0, listed in `../ASSETS.tsv`, built by `assets-src/blender/` and
+`scripts/generate_example_media.py`). Everything else in this folder is the
+official help example import described below.
+
 Imported from `Install/Help/examples` in the official
 [Dark-Basic-Pro source snapshot](https://github.com/Dark-Basic-Software-Limited/Dark-Basic-Pro/tree/af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9/Install/Help/examples),
 commit `af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9`, MIT-licensed,

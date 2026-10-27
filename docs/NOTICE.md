@@ -15,7 +15,7 @@ sponsored by The Game Creators Ltd or Dark Basic Software Limited.
 
 | Path | Origin | Licence |
 | --- | --- | --- |
-| `examples/dbpro/` | Help examples from the [pinned Dark-Basic-Pro snapshot](https://github.com/Dark-Basic-Software-Limited/Dark-Basic-Pro/tree/af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9) | MIT, © 1999-2015 The Game Creators Ltd; see [Dark-Basic-Pro-LICENSE.md](../licenses/Dark-Basic-Pro-LICENSE.md) |
+| `examples/dbpro/tutorials/`, `examples/dbpro/Hello World/` | Help examples from the [pinned Dark-Basic-Pro snapshot](https://github.com/Dark-Basic-Software-Limited/Dark-Basic-Pro/tree/af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9) | MIT, © 1999-2015 The Game Creators Ltd; see [Dark-Basic-Pro-LICENSE.md](../licenses/Dark-Basic-Pro-LICENSE.md) |
 | DBO block codes in `src/engine/systems/object_manager.cpp`; DBPro extension inventory in `scripts/data/` and the catalogue | Same DBPro snapshot | MIT, as above; the licence ships with every binary |
 | `src/engine/noto_sans_regular_ttf.hpp` | Noto Sans Regular, embedded as a byte array | SIL Open Font License; see [NotoSans-LICENSE.md](../licenses/NotoSans-LICENSE.md) |
 
@@ -39,7 +39,7 @@ argument counts and help folders taken from the Classic help index.
 
 ## Example media
 
-Every media file under `examples/` outside `examples/dbpro/` is made by the
+Every other media file under `examples/`, including `examples/dbpro/demos/`, is made by the
 project and released under CC0 1.0: textures and models come from the Blender
 scripts in `assets-src/blender/`, sounds and music from
 `scripts/generate_example_media.py`. Their digests and sources are listed in

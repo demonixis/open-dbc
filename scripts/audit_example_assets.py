@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Audit the provenance of every media file shipped with the examples.
 
-- Every media file under examples/ (except the MIT DBPro import, covered by
+- Every media file under examples/ (except the MIT DBPro import in
+  examples/dbpro/tutorials and examples/dbpro/Hello World, covered by
   docs/NOTICE.md, and the Android export template) needs a row in
   examples/ASSETS.tsv with its SHA-256, licence, source and author.
 - No tracked file may match a digest of the removed DarkBASIC Classic content
@@ -27,7 +28,8 @@ COLUMNS = ("path", "sha256", "licence", "source", "author")
 LICENCES = {"MIT", "CC0-1.0"}
 MEDIA_SUFFIXES = {".bmp", ".jpg", ".jpeg", ".png", ".tga", ".dds", ".x", ".3ds", ".obj", ".fbx", ".glb",
                   ".gltf", ".wav", ".mp3", ".mid", ".midi", ".ogg", ".avi", ".dat"}
-EXEMPT_PREFIXES = ("examples/dbpro/", "examples/android/")
+DBPRO_IMPORT_PREFIXES = ("examples/dbpro/tutorials/", "examples/dbpro/Hello World/")
+EXEMPT_PREFIXES = (*DBPRO_IMPORT_PREFIXES, "examples/android/")
 
 
 def sha256(path: Path) -> str:
@@ -87,7 +89,7 @@ def main() -> None:
 
     forbidden = {line.strip() for line in DBC_DIGESTS.read_text(encoding="utf-8").splitlines()
                  if line.strip() and not line.startswith("#")}
-    allowed = {sha256(ROOT / path) for path in files if path.startswith("examples/dbpro/")}
+    allowed = {sha256(ROOT / path) for path in files if path.startswith(DBPRO_IMPORT_PREFIXES)}
     for path in files:
         if Path(path).suffix.lower() in MEDIA_SUFFIXES | {".dba", ".htm", ".txt"}:
             digest = sha256(ROOT / path)

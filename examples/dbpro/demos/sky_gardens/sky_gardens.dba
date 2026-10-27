@@ -1,0 +1,1263 @@
+rem ==================================================================
+rem Sky Gardens - an OpenDBC example for the DarkBASIC Professional profile
+rem Run, jump and wall-jump across floating garden islands at golden
+rem hour, gather the thirty glowing seeds and wake the shrine at the top.
+rem WASD or arrows move, SPACE jumps (again in the air for a double jump,
+rem against a tall wall for a wall jump), the mouse orbits the camera,
+rem ESC quits. The title screen plays itself until a key or click.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+set display mode 1280, 720, 32
+sync on : sync rate 60
+autocam off
+hide mouse
+randomize 7
+
+#constant GRAVITY 0.032
+#constant JUMP_SPEED 0.56
+#constant BOUNCE_SPEED 1.2
+#constant RUN_SPEED 0.30
+#constant PLAYER_RADIUS 0.6
+#constant PLAYER_HEIGHT 2.9
+#constant SEED_TOTAL 30
+#constant FIRST_OBJECT 100
+#constant FOG_RGB rgb(250, 214, 172)
+
+rem Animation timeline of explorer.x: looping clips end on their first pose
+#constant ANIM_IDLE 1
+#constant ANIM_RUN 2
+#constant ANIM_JUMP 3
+#constant ANIM_FALL 4
+#constant ANIM_WALL 5
+
+type Solid
+   kind as integer
+   x as float
+   z as float
+   hx as float
+   hz as float
+   bottom as float
+   top as float
+   obj as integer
+   bounce as integer
+   wall as integer
+endtype
+
+type Mover
+   solid as integer
+   ox as float
+   oy as float
+   oz as float
+   ax as float
+   ay as float
+   az as float
+   period as float
+   phase as float
+   dx as float
+   dy as float
+   dz as float
+endtype
+
+type Seed
+   obj as integer
+   halo as integer
+   x as float
+   y as float
+   z as float
+   mover as integer
+   taken as integer
+   shown as integer
+endtype
+
+type Checkpoint
+   obj as integer
+   x as float
+   y as float
+   z as float
+   lit as integer
+   route as integer
+endtype
+
+type Waypoint
+   x as float
+   z as float
+   mover as integer
+   leap as integer
+   chimney as integer
+endtype
+
+dim solids(120) as Solid
+dim movers(6) as Mover
+dim seeds(SEED_TOTAL) as Seed
+dim checks(6) as Checkpoint
+dim route(60) as Waypoint
+dim lanterns(12) as integer
+dim best#(3)
+dim bestSeed(3)
+rem Physics only tests the solids near the explorer, refreshed every few frames
+dim nearSolid(120)
+dim nearSeed(SEED_TOTAL)
+rem Small scenery hides beyond its range: OpenDBC rebuilds every visible triangle each frame
+dim cullObj(200)
+dim cullX#(200)
+dim cullZ#(200)
+dim cullRange#(200)
+dim cullShown(200)
+
+rem One name per GLOBAL: a comma list would only make the first one global
+global solidCount : global moverCount : global seedCount : global checkCount : global routeCount : global lanternCount : global nextObject
+global px# : global py# : global pz# : global vx# : global vy# : global vz# : global heading# : global onGround : global groundSolid : global coyote : global jumps : global lastJump
+global wallTimer : global wallNx# : global wallNz# : global controlLock : global anim : global landDust
+global camYaw# : global camPitch# : global camX# : global camY# : global camZ# : global idleCamera
+global seedsTaken : global lastCheck : global startTime : global finishTime : global finished : global attract : global message$ : global messageTime
+global inputX# : global inputZ# : global inputJump : global holdJump
+global autoStep : global autoWait
+global sunX# : global sunY# : global sunZ# : global frame
+global nearCount : global nearSeedCount : global cullCount : global autoTop# : global autoTopStep
+
+gosub load_media
+gosub build_level
+gosub build_route
+attract = 1
+gosub new_run
+
+rem ------------------------------------------------------------------
+do
+   inc frame
+   if attract = 1
+      gosub autopilot
+      if scancode() > 1 or mouseclick() > 0
+         attract = 0
+         for i = 1 to 3 : hide sprite i : next i
+         show sprite 4
+         gosub new_run
+      endif
+   else
+      gosub read_controls
+   endif
+   if escapekey() = 1 then end
+
+   update_movers()
+   if finished = 0 then gosub move_player
+   gosub collect_seeds
+   gosub check_progress
+   gosub animate_player
+   gosub update_camera
+   gosub update_scenery
+   gosub draw_hud
+   sync
+loop
+
+rem ------------------------------------------------------------------
+load_media:
+   backdrop on : color backdrop FOG_RGB
+   set camera range 0.5, 4000
+   set camera fov 65
+   fog on : fog color FOG_RGB : fog distance 200, 1600
+
+   rem Low golden sun behind the start, so shadows fall along the route
+   sunX# = -0.42 : sunY# = 0.52 : sunZ# = -0.74
+   set directional light 0, 0 - sunX#, 0 - sunY#, 0 - sunZ#
+   color light 0, rgb(255, 214, 168)
+   set ambient light 46
+   color ambient light rgb(160, 150, 190)
+
+   load image "sky.jpg", 1
+   load image "clouds.jpg", 2
+   load image "wisps.jpg", 3
+   load image "ruin.jpg", 4
+   load image "ruin_normal.jpg", 5
+   load image "glow.jpg", 6
+   load image "wood.jpg", 7
+   load image "fern.png", 8
+   load image "seed_icon.png", 9
+   load image "rock_normal.jpg", 10
+
+   rem Sky dome around the camera, seen from inside
+   make object sphere 3, 3200, 16, 12
+   texture object 3, 1
+   set object cull 3, 0
+   set object light 3, 0
+   set object fog 3, 0
+   disable object zwrite 3
+
+   rem The sun: a soft additive disc kept far along the light direction
+   make object plain 6, 420, 420
+   texture object 6, 6
+   ghost object on 6
+   set object light 6, 0
+   set object fog 6, 0
+   disable object zwrite 6
+
+   rem Cloud sea far below and a faster layer of wisps above it
+   make object plain 4, 4000, 4000
+   xrotate object 4, 270
+   texture object 4, 2
+   scale object texture 4, 10, 10
+   set object light 4, 0
+   make object plain 5, 3000, 3000
+   xrotate object 5, 270
+   texture object 5, 3
+   scale object texture 5, 10, 10
+   ghost object on 5
+   set object light 5, 0
+
+   rem Reusable pieces, hidden and cloned into the level
+   load object "island.x", 900
+   load object "arch.x", 901
+   load object "tree.x", 902
+   load object "lantern.x", 903
+   load object "banner.x", 904
+   load object "mushroom.x", 905
+   load object "shrine.x", 906
+   load object "seed.x", 907
+   for o = 900 to 907 : hide object o : next o
+
+   load object "explorer.x", 1
+   set object interpolation 1, 30
+   rem The explorer casts a real stencil shadow from a low pill-shaped proxy mesh, whose
+   rem volume is rebuilt every frame on the CPU; it is kept short so it never reaches the clouds
+   make object cylinder 10, 1
+   lock vertexdata for limb 10, 0
+   for v = 0 to get vertexdata vertex count() - 1
+      set vertexdata position v, get vertexdata position x(v) * 0.9, (get vertexdata position y(v) + 0.5) * 3.0, get vertexdata position z(v) * 0.6
+   next v
+   unlock vertexdata
+   make mesh from object 1, 10
+   delete object 10
+   set shadow shading on 1, 1, 40, 0
+   set object specular 1, rgb(90, 90, 90)
+   set object specular power 1, 12
+
+   rem Burst of light when a seed is gathered, dust on landing
+   make particles 1, 6, 1, 1.5
+   color particles 1, 120, 255, 210
+   set particle velocity 1, 1
+   set particle gravity 1, 1
+   set particle life 1, 40
+   set particle emissions 1, 0
+   ghost particles on 1, 0
+   make particles 2, 6, 1, 0.8
+   color particles 2, 255, 230, 200
+   set particle velocity 2, 1
+   set particle gravity 2, 0
+   set particle life 2, 25
+   set particle emissions 2, 0
+   ghost particles on 2, 0
+
+   rem Pooled point lights: 1-3 follow the nearest seeds, 4 the nearest lantern,
+   rem 5 the shrine, 6 a flash where a seed was just gathered
+   for l = 1 to 6 : make light l : set point light l, 0, 0, 0 : next l
+   for l = 1 to 3
+      color light l, rgb(120, 230, 190)
+      set light range l, 10
+   next l
+   color light 4, rgb(255, 190, 90) : set light range 4, 18
+   color light 5, rgb(255, 200, 110) : set light range 5, 45
+   color light 6, rgb(160, 255, 220) : set light range 6, 1 : hide light 6
+
+   load sound "jump.wav", 1
+   load sound "land.wav", 2
+   load sound "seed.wav", 3
+   load sound "bounce.wav", 4
+   load sound "checkpoint.wav", 5
+   load sound "fall.wav", 6
+   load sound "bloom.wav", 7
+   load sound "wind.wav", 8
+   loop sound 8
+   set sound volume 8, 70
+
+   set text font "Arial"
+   set text to bold
+
+   rem Title texts are drawn once into images and shown as sprites: TEXT blits on the CPU
+   rem every frame, a sprite is a single textured quad. Black is the transparent colour.
+   create bitmap 1, 1280, 120
+   set text size 72 : title_image(30, "SKY GARDENS", 110)
+   set text size 26 : title_image(31, "PRESS ANY KEY OR CLICK TO EXPLORE", 44)
+   set text size 20 : title_image(32, "WASD / ARROWS RUN   SPACE JUMP, DOUBLE JUMP, WALL JUMP   MOUSE LOOKS AROUND", 36)
+   set current bitmap 0
+   delete bitmap 1
+   sprite 1, 0, 80, 30
+   sprite 2, 0, 186, 31
+   sprite 3, 0, 662, 32
+   sprite 4, 24, 20, 9
+   hide sprite 4
+return
+
+rem ------------------------------------------------------------------
+rem Level: every piece is placed from the DATA below. Heights are tops
+rem of walkable surfaces; blocks and pillars give their bottom.
+build_level:
+   nextObject = FIRST_OBJECT
+   restore level_data
+   repeat
+      read kind$
+      select kind$
+         case "island"
+            read x#, y#, z#, r#
+            o = new_object()
+            clone object o, 900
+            show object o
+            position object o, x#, y#, z#
+            scale object o, r# * 100, (r# * 0.6 + 2.0) * 100, r# * 100
+            yrotate object o, rnd(359)
+            scale object texture o, r# / 3.0, r# / 3.0
+            set bump mapping on o, 10
+            add_solid(2, x#, z#, r#, r#, y# - 1.5, y#, o)
+            scatter_ferns(x#, y#, z#, r#)
+         endcase
+         case "block"
+            read x#, y#, z#, w#, h#, d#
+            o = make_block(x#, y#, z#, w#, h#, d#, 4)
+            s = add_solid(1, x#, z#, w# / 2, d# / 2, y#, y# + h#, o)
+            if h# >= 6 then solids(s).wall = 1
+         endcase
+         case "pillar"
+            read x#, y#, z#, r#, h#
+            o = new_object()
+            make object cylinder o, 1
+            scale object o, r# * 200, h# * 100, r# * 200
+            position object o, x#, y# + h# / 2, z#
+            texture object o, 4
+            scale object texture o, 2, h# / 4
+            set bump mapping on o, 5
+            add_solid(2, x#, z#, r#, r#, y#, y# + h#, o)
+         endcase
+         case "mover"
+            read x#, y#, z#, w#, d#, ax#, ay#, az#, period#
+            o = make_block(x#, y#, z#, w#, 1.0, d#, 7)
+            inc moverCount
+            movers(moverCount).solid = add_solid(1, x#, z#, w# / 2, d# / 2, y#, y# + 1.0, o)
+            movers(moverCount).ox = x# : movers(moverCount).oy = y# : movers(moverCount).oz = z#
+            movers(moverCount).ax = ax# : movers(moverCount).ay = ay# : movers(moverCount).az = az#
+            movers(moverCount).period = period#
+            movers(moverCount).phase = moverCount * 120.0
+         endcase
+         case "seed"
+            read x#, y#, z#, m
+            add_seed(x#, y#, z#, m)
+         endcase
+         case "check"
+            read x#, y#, z#, r
+            inc checkCount
+            o = new_object()
+            clone object o, 904
+            show object o
+            position object o, x#, y#, z#
+            yrotate object o, 200
+            color limb o, 2, rgb(150, 150, 160)
+            cull_add(o, x#, z#, 150)
+            checks(checkCount).obj = o
+            checks(checkCount).x = x# : checks(checkCount).y = y# : checks(checkCount).z = z#
+            checks(checkCount).route = r
+            add_solid(2, x#, z#, 0.3, 0.3, y#, y# + 6.0, o)
+         endcase
+         case "arch"
+            read x#, y#, z#
+            o = new_object()
+            clone object o, 901
+            show object o
+            position object o, x#, y#, z#
+            set bump mapping on o, 5
+            cull_add(o, x#, z#, 180)
+            add_solid(1, x# - 3.5, z#, 0.7, 0.7, y#, y# + 7.0, 0)
+            add_solid(1, x# + 3.5, z#, 0.7, 0.7, y#, y# + 7.0, 0)
+            add_solid(1, x#, z#, 4.7, 0.9, y# + 7.0, y# + 8.4, 0)
+         endcase
+         case "tree"
+            read x#, y#, z#, s#
+            o = new_object()
+            clone object o, 902
+            show object o
+            position object o, x#, y#, z#
+            scale object o, s# * 100, s# * 100, s# * 100
+            yrotate object o, rnd(359)
+            cull_add(o, x#, z#, 160)
+            add_solid(2, x#, z#, 0.45 * s#, 0.45 * s#, y#, y# + 4.6 * s#, o)
+         endcase
+         case "lantern"
+            read x#, y#, z#
+            o = new_object()
+            clone object o, 903
+            show object o
+            position object o, x#, y#, z#
+            set object emissive o, rgb(70, 50, 20)
+            inc lanternCount
+            lanterns(lanternCount) = o
+            cull_add(o, x#, z#, 120)
+            add_solid(1, x#, z#, 0.4, 0.4, y#, y# + 3.3, o)
+         endcase
+         case "pad"
+            read x#, y#, z#
+            o = new_object()
+            clone object o, 905
+            show object o
+            rem Sunk into the grass so the cap is a step the explorer runs onto
+            position object o, x#, y# - 1.5, z#
+            set object specular o, rgb(255, 255, 255)
+            set object specular power o, 20
+            cull_add(o, x#, z#, 150)
+            s = add_solid(2, x#, z#, 2.0, 2.0, y# - 1.5, y# + 0.4, o)
+            solids(s).bounce = 1
+         endcase
+         case "shrine"
+            read x#, y#, z#
+            o = new_object()
+            clone object o, 906
+            show object o
+            rem The dais is sunk to a single step
+            position object o, x#, y# - 0.4, z#
+            set bump mapping on o, 5
+            set object specular o, rgb(255, 220, 160)
+            set object specular power o, 18
+            shrineX# = x# : shrineY# = y# + 0.4 : shrineZ# = z#
+            add_solid(2, x#, z#, 6.0, 6.0, y# - 0.4, y# + 0.4, o)
+            for c = 0 to 5
+               add_solid(2, x# + 5 * cos(c * 60), z# + 5 * sin(c * 60), 0.5, 0.5, y#, y# + 9.0, 0)
+            next c
+            rem The crystal the seeds wake up
+            o = new_object()
+            clone object o, 907
+            show object o
+            scale object o, 260, 260, 260
+            position object o, x#, y# + 5.0, z#
+            set object emissive o, rgb(60, 60, 60)
+            set sphere mapping on o, 1
+            shrineCrystal = o
+            position light 5, x#, y# + 6.0, z#
+         endcase
+      endselect
+   until kind$ = "end"
+return
+
+rem ------------------------------------------------------------------
+rem The attract route: where the autopilot runs, leaps or waits for a mover
+build_route:
+   restore route_data
+   repeat
+      read x#, z#, m, leap, chimney
+      if x# > -999
+         inc routeCount
+         route(routeCount).x = x# : route(routeCount).z = z#
+         route(routeCount).mover = m : route(routeCount).leap = leap : route(routeCount).chimney = chimney
+      endif
+   until x# <= -999
+return
+
+rem ------------------------------------------------------------------
+new_run:
+   for s = 1 to seedCount
+      seeds(s).taken = 0 : seeds(s).shown = 0
+      hide object seeds(s).obj : hide object seeds(s).halo
+   next s
+   nearSeedCount = -1
+   for c = 1 to checkCount
+      checks(c).lit = 0
+      color limb checks(c).obj, 2, rgb(150, 150, 160)
+   next c
+   seedsTaken = 0 : finished = 0 : finishTime = 0
+   lastCheck = 1
+   activate_check(1)
+   respawn()
+   camYaw# = 0 : camPitch# = 18 : camX# = px# : camY# = py# + 6 : camZ# = pz# - 14
+   startTime = timer()
+   message$ = "" : messageTime = 0
+   set object emissive shrineCrystal, rgb(60, 60, 60)
+   set light range 5, 45
+return
+
+rem ------------------------------------------------------------------
+read_controls:
+   fx# = sin(camYaw#) : fz# = cos(camYaw#)
+   ax# = 0.0 : az# = 0.0
+   if upkey() = 1 or keystate(17) = 1 then ax# = ax# + fx# : az# = az# + fz#
+   if downkey() = 1 or keystate(31) = 1 then ax# = ax# - fx# : az# = az# - fz#
+   if rightkey() = 1 or keystate(32) = 1 then ax# = ax# + fz# : az# = az# - fx#
+   if leftkey() = 1 or keystate(30) = 1 then ax# = ax# - fz# : az# = az# + fx#
+   length# = sqrt(ax# * ax# + az# * az#)
+   if length# > 0.01 then ax# = ax# / length# : az# = az# / length#
+   inputX# = ax# : inputZ# = az#
+   inputJump = spacekey() : holdJump = inputJump
+   mx = mousemovex() : my = mousemovey()
+   if mx <> 0 or my <> 0
+      camYaw# = wrapvalue(camYaw# + mx * 0.25)
+      camPitch# = camPitch# + my * 0.2
+      if camPitch# < 4 then camPitch# = 4
+      if camPitch# > 60 then camPitch# = 60
+      idleCamera = 0
+   else
+      inc idleCamera
+   endif
+   if finished = 1 and inputJump = 1 and lastSpace = 0 then gosub new_run
+   lastSpace = inputJump
+return
+
+rem ------------------------------------------------------------------
+rem The autopilot presses the same virtual controls as the player
+autopilot:
+   inputX# = 0.0 : inputZ# = 0.0 : inputJump = 0 : holdJump = 0
+   idleCamera = 100
+   if finished = 1
+      inc autoWait
+      if autoWait > 240 then gosub new_run
+      return
+   endif
+   if autoStep > routeCount or py# < -20 then return
+   tx# = route(autoStep).x : tz# = route(autoStep).z
+   m = route(autoStep).mover
+   if m > 0 then tx# = solids(movers(m).solid).x : tz# = solids(movers(m).solid).z
+
+   rem Climb the chimney: jump at one wall, then at every wall touched
+   if route(autoStep).chimney = 1 and abs(tz# - pz#) < 4.5
+      if py# >= 27.0
+         inc autoStep
+         return
+      endif
+      holdJump = 1
+      if onGround = 1
+         inputX# = 1.0 : inputJump = frame mod 2
+      else
+         speed# = sqrt(vx# * vx# + vz# * vz#)
+         if speed# > 0.05 then inputX# = vx# / speed#
+         if wallTimer > 0 then inputJump = frame mod 2
+      endif
+      return
+   endif
+
+   dx# = tx# - px# : dz# = tz# - pz#
+   distance# = sqrt(dx# * dx# + dz# * dz#)
+   if onGround = 1
+      arrived = 0
+      if m > 0
+         if groundSolid = movers(m).solid then arrived = 1
+      else
+         if distance# < 1.2 then arrived = 1
+      endif
+      if arrived = 1
+         if route(autoStep).leap = 0 or autoStep = routeCount
+            inc autoStep
+            return
+         endif
+         rem Leap points wait until the next platform lines up
+         nx# = route(autoStep + 1).x : nz# = route(autoStep + 1).z
+         ready = 1
+         nm = route(autoStep + 1).mover
+         if nm > 0
+            nx# = solids(movers(nm).solid).x : nz# = solids(movers(nm).solid).z
+            if abs(nx# - px#) > 1.2 then ready = 0
+         else
+            if m > 0
+               if abs(solids(movers(m).solid).x - movers(m).ox) > 1.5 then ready = 0
+            endif
+         endif
+         if ready = 0
+            if distance# > 0.8 then inputX# = dx# / distance# * 0.4 : inputZ# = dz# / distance# * 0.4
+            return
+         endif
+         inc autoStep
+         dx# = nx# - px# : dz# = nz# - pz# : distance# = sqrt(dx# * dx# + dz# * dz#)
+         inputJump = 1 : holdJump = 1
+         inputX# = dx# / distance# : inputZ# = dz# / distance#
+         return
+      endif
+      rem Ease off before a stop so the explorer does not overshoot it
+      scale# = 1.0
+      if route(autoStep).leap = 0 and distance# < 2.0 then scale# = distance# / 2.0 + 0.2
+      if distance# > 0.1 then inputX# = dx# / distance# * scale# : inputZ# = dz# / distance# * scale#
+   else
+      rem In the air: aim for the landing surface, double jump if it is out of reach
+      holdJump = 1
+      if vy# > 0.8 and distance# < 3.0
+         rem Launched by the mushroom: head for the next stop
+         inc autoStep
+         return
+      endif
+      if autoTopStep <> autoStep then autoTop# = top_at(tx#, tz#) : autoTopStep = autoStep
+      disc# = vy# * vy# + 2.0 * GRAVITY * (py# - autoTop#)
+      if disc# < 0
+         t# = vy# / GRAVITY
+      else
+         t# = (vy# + sqrt(disc#)) / GRAVITY
+      endif
+      if t# < 1 then t# = 1
+      if jumps = 1 and vy# < 0.05 and (disc# < 0 or distance# > t# * 0.27) then inputJump = 1
+      scale# = distance# / t# / RUN_SPEED
+      if scale# > 1.0 then scale# = 1.0
+      if distance# > 0.1 then inputX# = dx# / distance# * scale# : inputZ# = dz# / distance# * scale#
+   endif
+return
+
+rem ------------------------------------------------------------------
+move_player:
+   if frame mod 8 = 0 or nearCount = 0 then gather_near()
+
+   rem Ride the platform under the feet
+   if onGround = 1 and groundSolid > 0
+      for m = 1 to moverCount
+         if movers(m).solid = groundSolid then px# = px# + movers(m).dx : py# = py# + movers(m).dy : pz# = pz# + movers(m).dz
+      next m
+   endif
+
+   rem Run: accelerate towards the stick, less grip in the air
+   grip# = 0.20
+   if onGround = 0 then grip# = 0.07
+   if controlLock > 0 then dec controlLock : grip# = 0.0
+   vx# = vx# + (inputX# * RUN_SPEED - vx#) * grip#
+   vz# = vz# + (inputZ# * RUN_SPEED - vz#) * grip#
+   speed# = sqrt(vx# * vx# + vz# * vz#)
+   if speed# > 0.03 then heading# = curveangle(atanfull(vx#, vz#), heading#, 5)
+
+   rem Jump, double jump and wall jump on the press, not while held
+   pressed = 0
+   if inputJump = 1 and lastJump = 0 then pressed = 1
+   lastJump = inputJump
+   if pressed = 1
+      if onGround = 1 or coyote > 0
+         vy# = JUMP_SPEED : jumps = 1 : onGround = 0 : coyote = 0
+         play sound 1
+      else
+         if wallTimer > 0
+            vy# = JUMP_SPEED * 0.95 : vx# = wallNx# * 0.34 : vz# = wallNz# * 0.34
+            heading# = atanfull(vx#, vz#) : controlLock = 10 : jumps = 1 : wallTimer = 0
+            play sound 1
+         else
+            if jumps < 2
+               vy# = JUMP_SPEED * 0.85 : jumps = 2
+               set sound speed 1, 26000 : play sound 1 : set sound speed 1, 22050
+               landDust = 6
+            endif
+         endif
+      endif
+   endif
+   rem A short tap gives a short hop
+   if holdJump = 0 and vy# > 0.15 then vy# = vy# - 0.03
+
+   px# = px# + vx# : pz# = pz# + vz#
+   push_out()
+   if wallTimer > 0 then dec wallTimer
+
+   vy# = vy# - GRAVITY
+   if wallTimer > 0 and vy# < -0.10 then vy# = -0.10
+   if vy# < -1.2 then vy# = -1.2
+   ceiling_check()
+   wasGround = onGround
+   ground# = find_ground()
+   if vy# <= 0 and py# + vy# <= ground#
+      py# = ground#
+      if wasGround = 0 and vy# < -0.3 then play sound 2 : landDust = 5
+      vy# = 0.0 : onGround = 1 : jumps = 0 : coyote = 6
+      if solids(groundSolid).bounce = 1
+         vy# = BOUNCE_SPEED : onGround = 0 : jumps = 1
+         play sound 4
+         bounceSquash = 12
+      endif
+   else
+      py# = py# + vy#
+      onGround = 0
+      if coyote > 0 then dec coyote
+   endif
+
+   if py# < -40 then play sound 6 : respawn()
+return
+
+rem ------------------------------------------------------------------
+collect_seeds:
+   rem Only seeds near the explorer are shown, animated and tested
+   if frame mod 10 = 0 or nearSeedCount < 0
+      nearSeedCount = 0
+      for s = 1 to seedCount
+         if seeds(s).taken = 0
+            seed_on_mover(s)
+            if (seeds(s).x - px#) ^ 2 + (seeds(s).z - pz#) ^ 2 < 12000
+               inc nearSeedCount
+               nearSeed(nearSeedCount) = s
+               if seeds(s).shown = 0 then show object seeds(s).obj : show object seeds(s).halo : seeds(s).shown = 1
+            else
+               if seeds(s).shown = 1 then hide object seeds(s).obj : hide object seeds(s).halo : seeds(s).shown = 0
+            endif
+         endif
+      next s
+   endif
+   for n = 1 to nearSeedCount
+      s = nearSeed(n)
+      if seeds(s).taken = 0
+         seed_on_mover(s)
+         bob# = sin(frame * 3 + s * 40) * 0.25
+         position object seeds(s).obj, seeds(s).x, seeds(s).y + bob#, seeds(s).z
+         yrotate object seeds(s).obj, wrapvalue(frame * 2 + s * 30)
+         position object seeds(s).halo, seeds(s).x, seeds(s).y + bob#, seeds(s).z
+         point object seeds(s).halo, camX#, camY#, camZ#
+         dx# = seeds(s).x - px# : dy# = seeds(s).y - (py# + 1.4) : dz# = seeds(s).z - pz#
+         if dx# * dx# + dy# * dy# + dz# * dz# < 4.8
+            seeds(s).taken = 1
+            inc seedsTaken
+            hide object seeds(s).obj : hide object seeds(s).halo
+            play sound 3
+            position particles 1, seeds(s).x, seeds(s).y, seeds(s).z
+            set particle emissions 1, 12
+            burst = 4
+            position light 6, seeds(s).x, seeds(s).y, seeds(s).z
+            show light 6 : flash = 20
+         endif
+      endif
+   next n
+   if burst > 0
+      dec burst
+      if burst = 0 then set particle emissions 1, 0
+   endif
+   if flash > 0
+      dec flash
+      set light range 6, flash * 1.2
+      if flash = 0 then hide light 6
+   endif
+return
+
+rem ------------------------------------------------------------------
+check_progress:
+   for c = 1 to checkCount
+      if checks(c).lit = 0
+         dx# = checks(c).x - px# : dz# = checks(c).z - pz#
+         if dx# * dx# + dz# * dz# < 36 and abs(checks(c).y - py#) < 3
+            activate_check(c)
+            play sound 5
+            message$ = "CHECKPOINT" : messageTime = 120
+         endif
+      endif
+      rotate limb checks(c).obj, 2, 0, sin(frame * 2 + c * 50) * 12, 0
+   next c
+
+   rem The shrine wakes once the explorer stands in its ring
+   if finished = 0
+      dx# = shrineX# - px# : dz# = shrineZ# - pz#
+      if dx# * dx# + dz# * dz# < 12 and py# >= shrineY# - 0.1
+         finished = 1 : finishTime = timer() - startTime : autoWait = 0
+         vx# = 0 : vz# = 0
+         play sound 7
+         set object emissive shrineCrystal, rgb(255, 230, 160)
+         set light range 5, 90
+         position particles 1, shrineX#, shrineY# + 5, shrineZ#
+         set particle emissions 1, 20
+         burst = 40
+         if seedsTaken = SEED_TOTAL
+            message$ = "THE GARDEN BLOOMS - EVERY SEED FOUND"
+         else
+            message$ = "SHRINE AWAKENED - " + str$(seedsTaken) + " OF " + str$(SEED_TOTAL) + " SEEDS"
+         endif
+         messageTime = 100000
+      endif
+   endif
+return
+
+rem ------------------------------------------------------------------
+animate_player:
+   position object 1, px#, py#, pz#
+   yrotate object 1, heading#
+   speed# = sqrt(vx# * vx# + vz# * vz#)
+   if onGround = 1
+      if speed# > 0.04
+         set_anim(ANIM_RUN)
+         set object speed 1, 12 + speed# * 110
+      else
+         set_anim(ANIM_IDLE)
+         set object speed 1, 20
+      endif
+   else
+      if wallTimer > 0 and vy# < 0
+         set_anim(ANIM_WALL)
+      else
+         if vy# > 0.05 then set_anim(ANIM_JUMP) else set_anim(ANIM_FALL)
+      endif
+      set object speed 1, 30
+   endif
+
+   if landDust > 0
+      dec landDust
+      position particles 2, px#, py# + 0.2, pz#
+      set particle emissions 2, 3
+      if landDust = 0 then set particle emissions 2, 0
+   endif
+
+   rem The bounce mushroom squashes and springs back
+   if bounceSquash > 0
+      dec bounceSquash
+      for s = 1 to solidCount
+         if solids(s).bounce = 1
+            squash# = 100 - sin(bounceSquash * 15) * 25
+            scale limb solids(s).obj, 1, 100 + (100 - squash#), squash#, 100 + (100 - squash#)
+         endif
+      next s
+   endif
+
+   rem Short stencil shadows: the light sits far along the sun direction
+   set shadow position -1, px# + sunX# * 300, py# + sunY# * 300, pz# + sunZ# * 300
+return
+
+rem ------------------------------------------------------------------
+update_camera:
+   rem When nobody touches the mouse, swing round behind the explorer
+   speed# = sqrt(vx# * vx# + vz# * vz#)
+   if idleCamera > 40 and speed# > 0.1 then camYaw# = curveangle(heading#, camYaw#, 45)
+   if attract = 1 then camYaw# = curveangle(heading#, camYaw#, 60) : camPitch# = curvevalue(16 + sin(frame * 0.3) * 6, camPitch#, 60)
+   distance# = 12.0
+   targetY# = py# + 2.2
+   wantX# = px# - sin(camYaw#) * cos(camPitch#) * distance#
+   wantY# = targetY# + sin(camPitch#) * distance#
+   wantZ# = pz# - cos(camYaw#) * cos(camPitch#) * distance#
+   camX# = curvevalue(wantX#, camX#, 6)
+   camY# = curvevalue(wantY#, camY#, 8)
+   camZ# = curvevalue(wantZ#, camZ#, 6)
+   position camera camX#, camY#, camZ#
+   point camera px#, targetY#, pz#
+return
+
+rem ------------------------------------------------------------------
+update_scenery:
+   rem Sky, sun and cloud layers follow the camera; the clouds snap to
+   rem whole texture tiles so their pattern never slides with it
+   position object 3, camX#, camY#, camZ#
+   position object 6, camX# + sunX# * 1300, camY# + sunY# * 1300, camZ# + sunZ# * 1300
+   point object 6, camX#, camY#, camZ#
+   position object 4, int(camX# / 400) * 400, -46, int(camZ# / 400) * 400
+   position object 5, int(camX# / 300) * 300, -30, int(camZ# / 300) * 300
+   scroll limb texture 5, 0, 0.0004, 0.0002
+   scroll limb texture 4, 0, 0.0001, 0.00005
+
+   if frame mod 10 = 0 then cull_scenery()
+
+   rem Pooled lights: the three nearest seeds and the nearest lantern glow
+   if frame mod 5 = 0 then gosub nearest_lights
+   for l = 1 to 3
+      if bestSeed(l) > 0
+         if seeds(bestSeed(l)).taken = 1 then bestSeed(l) = 0
+      endif
+      if bestSeed(l) > 0
+         show light l
+         position light l, seeds(bestSeed(l)).x, seeds(bestSeed(l)).y + 0.5, seeds(bestSeed(l)).z
+      else
+         hide light l
+      endif
+   next l
+   set light range 4, 16 + sin(frame * 7) * 1.5
+   if finished = 1 then yrotate object shrineCrystal, wrapvalue(frame * 3)
+return
+
+nearest_lights:
+   for l = 1 to 3 : best#(l) = 1000000 : bestSeed(l) = 0 : next l
+   for s = 1 to seedCount
+      if seeds(s).taken = 0
+         d# = (seeds(s).x - px#) ^ 2 + (seeds(s).z - pz#) ^ 2
+         for l = 1 to 3
+            if d# < best#(l)
+               for k = 3 to l + 1 step -1 : best#(k) = best#(k - 1) : bestSeed(k) = bestSeed(k - 1) : next k
+               best#(l) = d# : bestSeed(l) = s
+               exit
+            endif
+         next l
+      endif
+   next s
+   nearest# = 1000000
+   for k = 1 to lanternCount
+      d# = (object position x(lanterns(k)) - px#) ^ 2 + (object position z(lanterns(k)) - pz#) ^ 2
+      if d# < nearest# then nearest# = d# : lamp = lanterns(k)
+   next k
+   if lanternCount > 0 then position light 4, object position x(lamp), object position y(lamp) + 2.6, object position z(lamp)
+return
+
+rem ------------------------------------------------------------------
+draw_hud:
+   if attract = 1
+      if (frame / 30) mod 2 = 0 then show sprite 2 else hide sprite 2
+      return
+   endif
+   set text size 34
+   shadow_text(100, 30, str$(seedsTaken) + " / " + str$(SEED_TOTAL), 0)
+   elapsed = timer() - startTime
+   if finished = 1 then elapsed = finishTime
+   seconds = elapsed / 1000
+   tenths$ = str$((elapsed mod 1000) / 100)
+   secs$ = str$(seconds mod 60)
+   if len(secs$) < 2 then secs$ = "0" + secs$
+   set text size 28
+   shadow_text(screen width() - 170, 30, str$(seconds / 60) + ":" + secs$ + "." + tenths$, 0)
+   if messageTime > 0
+      dec messageTime
+      set text size 40
+      shadow_text(screen width() / 2, 150, message$, 1)
+      if finished = 1
+         set text size 24
+         shadow_text(screen width() / 2, 205, "PRESS SPACE TO PLAY AGAIN", 1)
+      endif
+   endif
+return
+
+rem ------------------------------------------------------------------
+level_data:
+rem Start island with its arch, trees and lanterns
+data "island", 0, 0, 0, 16
+data "arch", 0, 0, 6
+data "tree", -10, 0, -3, 1.2, "tree", 10, 0, 3, 1.0, "tree", -6, 0, 11, 0.8
+data "lantern", -5, 0, -12, "lantern", 6, 0, 12
+data "check", 4, 0, -10, 1
+data "seed", 0, 1.6, 6, 0, "seed", -7, 1.6, 9, 0, "seed", 8, 1.6, -4, 0, "seed", 12, 1.6, -8, 0
+rem A chain of small islands climbing gently
+data "island", 0, 1.5, 27, 6, "seed", 0, 3.1, 27, 0
+data "island", 7, 3, 41, 5, "seed", 7, 4.6, 41, 0
+data "island", 0, 4.5, 55, 6, "seed", 0, 6.1, 55, 0
+data "seed", 0, 10, 65, 0
+rem Ruined courtyard with steps up to the moving platforms
+data "island", 0, 6, 80, 11
+data "block", -8, 6, 80, 2, 5, 10, "block", 8, 6, 82, 2, 3, 8
+data "block", 0, 6, 84, 6, 2, 3, "block", 0, 6, 87, 6, 4, 3
+data "lantern", -4, 6, 73, "lantern", 4, 6, 73
+data "tree", -6, 6, 86, 0.9
+data "check", 5, 6, 75, 9
+data "seed", -5, 7.6, 78, 0, "seed", 5, 7.6, 84, 0, "seed", 0, 11.6, 87, 0
+rem Three sliding platforms over the gap, each carrying a seed
+data "mover", 0, 9, 97, 5, 5, 7, 0, 0, 240
+data "mover", 0, 10, 108, 5, 5, 7, 0, 0, 220
+data "mover", 0, 11, 119, 5, 5, 6, 0, 0, 200
+data "seed", 0, 0, 0, 1, "seed", 0, 0, 0, 2, "seed", 0, 0, 0, 3
+rem Landing island and the wall-jump chimney
+data "island", 0, 12, 136, 8
+data "check", 5, 12, 132, 16
+data "lantern", -5, 12, 131
+data "seed", -4, 13.6, 138, 0, "seed", 4, 13.6, 140, 0
+data "block", 0, 11, 146, 5, 1, 8
+data "block", -3.5, 12, 146, 2, 18, 8, "block", 3.5, 12, 146, 2, 18, 8
+data "block", 0, 12, 151, 9, 18, 2
+data "seed", 0, 17, 146, 0, "seed", 0, 23, 146, 0, "seed", 0, 32, 151, 0
+rem High island with the bounce mushroom
+data "island", 0, 30, 165, 7, "seed", -3, 31.6, 163, 0, "seed", 3, 31.6, 163, 0
+data "pad", 0, 30, 170
+data "seed", 0, 42.5, 173, 0, "seed", 0, 49.5, 176, 0
+data "island", 0, 44, 192, 8
+data "check", 5, 44, 188, 22
+data "tree", -5, 44, 194, 0.9, "lantern", 4, 44, 196
+data "seed", -3, 45.6, 190, 0
+rem Pillar hops to the shrine
+data "pillar", 0, 30, 205, 2, 15, "pillar", -4, 30, 214, 2, 16, "pillar", 2, 30, 223, 2, 17
+data "seed", 0, 46.6, 205, 0, "seed", -4, 47.6, 214, 0, "seed", 2, 48.6, 223, 0
+data "island", 0, 48, 245, 14
+data "arch", 0, 48, 236
+data "tree", -9, 48, 248, 1.3, "tree", 9, 48, 246, 1.1
+data "lantern", -5, 48, 240, "lantern", 5, 48, 240
+data "seed", -8, 49.6, 240, 0, "seed", 8, 49.6, 240, 0, "seed", 0, 49.6, 233, 0
+data "shrine", 0, 48, 250
+data "end"
+
+rem Route for the autopilot: x, z, mover to follow, leap from here, chimney climb
+route_data:
+data 0, -4, 0, 0, 0
+data 0, 14.5, 0, 1, 0
+data 0, 27, 0, 0, 0
+data 2.5, 31.5, 0, 1, 0
+data 7, 41, 0, 0, 0
+data 5, 45, 0, 1, 0
+data 0, 55, 0, 0, 0
+data 0, 60, 0, 1, 0
+data 0, 78, 0, 0, 0
+data 0, 81, 0, 1, 0
+data 0, 84, 0, 1, 0
+data 0, 87.5, 0, 1, 0
+data 0, 0, 1, 1, 0
+data 0, 0, 2, 1, 0
+data 0, 0, 3, 1, 0
+data 0, 131, 0, 0, 0
+data 0, 140, 0, 0, 0
+data 0, 146, 0, 0, 1
+data 0, 151, 0, 1, 0
+data 0, 165, 0, 0, 0
+data 0, 170, 0, 0, 0
+data 0, 192, 0, 0, 0
+data 0, 199, 0, 1, 0
+data 0, 205, 0, 1, 0
+data -4, 214, 0, 1, 0
+data 2, 223, 0, 1, 0
+data 0, 240, 0, 0, 0
+data 0, 250, 0, 0, 0
+data -1000, 0, 0, 0, 0
+
+rem ------------------------------------------------------------------
+function new_object()
+   o = nextObject
+   inc nextObject
+endfunction o
+
+function add_solid(kind, x#, z#, hx#, hz#, bottom#, top#, o)
+   inc solidCount
+   solids(solidCount).kind = kind
+   solids(solidCount).x = x# : solids(solidCount).z = z#
+   solids(solidCount).hx = hx# : solids(solidCount).hz = hz#
+   solids(solidCount).bottom = bottom# : solids(solidCount).top = top#
+   solids(solidCount).obj = o
+endfunction solidCount
+
+rem A box whose UVs are projected from its faces, so stone courses keep their size
+function make_block(x#, y#, z#, w#, h#, d#, image)
+   o = new_object()
+   make object box o, w#, h#, d#
+   position object o, x#, y# + h# / 2, z#
+   texture object o, image
+   rem MAKE OBJECT BOX lists six vertices per face: a face is the axis they all share
+   lock vertexdata for limb o, 0
+   for b = 0 to get vertexdata vertex count() - 1 step 6
+      axis = 3
+      sameX = 1 : sameY = 1
+      for v = b + 1 to b + 5
+         if abs(get vertexdata position x(v) - get vertexdata position x(b)) > 0.001 then sameX = 0
+         if abs(get vertexdata position y(v) - get vertexdata position y(b)) > 0.001 then sameY = 0
+      next v
+      if sameY = 1 then axis = 2
+      if sameX = 1 then axis = 1
+      for v = b to b + 5
+         vx# = get vertexdata position x(v) + x# : vy# = get vertexdata position y(v) + y# + h# / 2
+         vz# = get vertexdata position z(v) + z#
+         select axis
+            case 1 : set vertexdata uv v, vz# / 6.0, 0 - vy# / 6.0 : endcase
+            case 2 : set vertexdata uv v, vx# / 6.0, vz# / 6.0 : endcase
+            case 3 : set vertexdata uv v, vx# / 6.0, 0 - vy# / 6.0 : endcase
+         endselect
+      next v
+   next b
+   unlock vertexdata
+   if image = 4 then set bump mapping on o, 5
+   set object specular o, rgb(70, 60, 50)
+   set object specular power o, 8
+endfunction o
+
+function add_seed(x#, y#, z#, m)
+   inc seedCount
+   o = new_object()
+   clone object o, 907
+   show object o
+   scale object o, 70, 70, 70
+   set object emissive o, rgb(40, 160, 120)
+   set object specular o, rgb(255, 255, 255)
+   set object specular power o, 40
+   set sphere mapping on o, 1
+   h = new_object()
+   make object plain h, 3.2, 3.2
+   texture object h, 6
+   ghost object on h
+   set object light h, 0
+   disable object zwrite h
+   seeds(seedCount).obj = o : seeds(seedCount).halo = h
+   seeds(seedCount).x = x# : seeds(seedCount).y = y# : seeds(seedCount).z = z#
+   seeds(seedCount).mover = m
+endfunction
+
+rem Crossed alpha-tested cards of grass around an island
+function scatter_ferns(x#, y#, z#, r#)
+   count = int(r# / 3.0)
+   for f = 1 to count
+      a# = rnd(359) : d# = (r# - 1.0) * (0.35 + rnd(60) / 100.0)
+      fx# = x# + sin(a#) * d# : fz# = z# + cos(a#) * d#
+      for c = 0 to 1
+         o = new_object()
+         make object plain o, 1.6, 1.6
+         texture object o, 8
+         set object transparency o, 4
+         set object cull o, 0
+         position object o, fx#, y# + 0.78, fz#
+         yrotate object o, a# + c * 90
+         cull_add(o, fx#, fz#, 90)
+      next c
+   next f
+endfunction
+
+function activate_check(c)
+   lastCheck = c
+   checks(c).lit = 1
+   color limb checks(c).obj, 2, rgb(255, 196, 60)
+endfunction
+
+function respawn()
+   px# = checks(lastCheck).x - 3.0 : py# = checks(lastCheck).y + 0.5 : pz# = checks(lastCheck).z + 3.0
+   vx# = 0 : vy# = 0 : vz# = 0 : heading# = 0
+   onGround = 0 : jumps = 0 : wallTimer = 0 : controlLock = 0 : groundSolid = 0 : nearCount = 0
+   autoStep = checks(lastCheck).route
+   camX# = px# - sin(camYaw#) * 11 : camY# = py# + 5 : camZ# = pz# - cos(camYaw#) * 11
+endfunction
+
+function set_anim(a)
+   if a = anim then exitfunction
+   anim = a
+   select a
+      case ANIM_IDLE : loop object 1, 0, 40 : endcase
+      case ANIM_RUN : loop object 1, 41, 61 : endcase
+      case ANIM_JUMP : play object 1, 62, 71 : endcase
+      case ANIM_FALL : loop object 1, 73, 83 : endcase
+      case ANIM_WALL : loop object 1, 84, 94 : endcase
+   endselect
+endfunction
+
+function update_movers()
+   for m = 1 to moverCount
+      s = movers(m).solid
+      t# = wrapvalue((frame * 360.0) / movers(m).period + movers(m).phase)
+      nx# = movers(m).ox + sin(t#) * movers(m).ax
+      ny# = movers(m).oy + sin(t#) * movers(m).ay
+      nz# = movers(m).oz + sin(t#) * movers(m).az
+      movers(m).dx = nx# - solids(s).x : movers(m).dy = ny# - solids(s).bottom : movers(m).dz = nz# - solids(s).z
+      solids(s).x = nx# : solids(s).z = nz#
+      solids(s).top = ny# + (solids(s).top - solids(s).bottom) : solids(s).bottom = ny#
+      position object solids(s).obj, nx#, ny# + 0.5, nz#
+   next m
+endfunction
+
+rem Horizontal overlap of the explorer's circle with a solid's footprint
+function overlaps(s)
+   if solids(s).kind = 1
+      cx# = px# : cz# = pz#
+      if cx# < solids(s).x - solids(s).hx then cx# = solids(s).x - solids(s).hx
+      if cx# > solids(s).x + solids(s).hx then cx# = solids(s).x + solids(s).hx
+      if cz# < solids(s).z - solids(s).hz then cz# = solids(s).z - solids(s).hz
+      if cz# > solids(s).z + solids(s).hz then cz# = solids(s).z + solids(s).hz
+      d# = (px# - cx#) ^ 2 + (pz# - cz#) ^ 2
+      result = (d# < PLAYER_RADIUS * PLAYER_RADIUS * 0.5)
+   else
+      d# = sqrt((px# - solids(s).x) ^ 2 + (pz# - solids(s).z) ^ 2)
+      result = (d# < solids(s).hx + PLAYER_RADIUS * 0.4)
+   endif
+endfunction result
+
+function seed_on_mover(s)
+   if seeds(s).mover > 0
+      ms = movers(seeds(s).mover).solid
+      seeds(s).x = solids(ms).x : seeds(s).z = solids(ms).z
+      seeds(s).y = solids(ms).top + 1.6
+   endif
+endfunction
+
+function gather_near()
+   nearCount = 0
+   for s = 1 to solidCount
+      if abs(px# - solids(s).x) - solids(s).hx < 24 and abs(pz# - solids(s).z) - solids(s).hz < 24
+         inc nearCount
+         nearSolid(nearCount) = s
+      endif
+   next s
+endfunction
+
+function cull_add(o, x#, z#, range#)
+   inc cullCount
+   cullObj(cullCount) = o : cullX#(cullCount) = x# : cullZ#(cullCount) = z#
+   cullRange#(cullCount) = range# * range# : cullShown(cullCount) = 1
+endfunction
+
+function cull_scenery()
+   for c = 1 to cullCount
+      d# = (cullX#(c) - camX#) ^ 2 + (cullZ#(c) - camZ#) ^ 2
+      if d# < cullRange#(c)
+         if cullShown(c) = 0 then show object cullObj(c) : cullShown(c) = 1
+      else
+         if cullShown(c) = 1 then hide object cullObj(c) : cullShown(c) = 0
+      endif
+   next c
+endfunction
+
+rem Highest top whose footprint holds a point: where the autopilot will land
+function top_at(x#, z#)
+   top# = -1000.0
+   for s = 1 to solidCount
+      if solids(s).top > top#
+         if solids(s).kind = 1
+            if abs(x# - solids(s).x) <= solids(s).hx and abs(z# - solids(s).z) <= solids(s).hz then top# = solids(s).top
+         else
+            if (x# - solids(s).x) ^ 2 + (z# - solids(s).z) ^ 2 <= solids(s).hx ^ 2 then top# = solids(s).top
+         endif
+      endif
+   next s
+endfunction top#
+
+rem Highest walkable top under the feet that a step or a fall can reach
+function find_ground()
+   ground# = -1000.0 : groundSolid = 0
+   rem Standing explorers climb small steps; falling ones only land on what they cross
+   reach# = py# + 0.05
+   if onGround = 1 or vy# >= 0 then reach# = py# + 0.45
+   for n = 1 to nearCount
+      s = nearSolid(n)
+      if solids(s).top <= reach# and solids(s).top > ground#
+         if overlaps(s) = 1 then ground# = solids(s).top : groundSolid = s
+      endif
+   next n
+endfunction ground#
+
+function ceiling_check()
+   if vy# <= 0 then exitfunction
+   for n = 1 to nearCount
+      s = nearSolid(n)
+      if solids(s).kind = 1 and solids(s).bottom >= py# + PLAYER_HEIGHT - 0.2
+         if solids(s).bottom < py# + PLAYER_HEIGHT + vy#
+            if overlaps(s) = 1 then vy# = 0.0
+         endif
+      endif
+   next n
+endfunction
+
+rem Push the explorer out of every solid it walks into; tall blocks become wall-jump walls
+function push_out()
+   for n = 1 to nearCount
+      s = nearSolid(n)
+      if solids(s).top > py# + 0.45 and solids(s).bottom < py# + PLAYER_HEIGHT
+         if solids(s).kind = 1
+            cx# = px# : cz# = pz#
+            if cx# < solids(s).x - solids(s).hx then cx# = solids(s).x - solids(s).hx
+            if cx# > solids(s).x + solids(s).hx then cx# = solids(s).x + solids(s).hx
+            if cz# < solids(s).z - solids(s).hz then cz# = solids(s).z - solids(s).hz
+            if cz# > solids(s).z + solids(s).hz then cz# = solids(s).z + solids(s).hz
+            dx# = px# - cx# : dz# = pz# - cz#
+            d# = sqrt(dx# * dx# + dz# * dz#)
+            if d# < PLAYER_RADIUS
+               if d# < 0.0001
+                  rem Centre inside the box: leave by the nearest face
+                  ex# = solids(s).hx - abs(px# - solids(s).x) : ez# = solids(s).hz - abs(pz# - solids(s).z)
+                  if ex# < ez#
+                     dx# = 1.0 : dz# = 0
+                     if px# < solids(s).x then dx# = -1.0
+                     px# = solids(s).x + dx# * (solids(s).hx + PLAYER_RADIUS)
+                  else
+                     dz# = 1.0 : dx# = 0
+                     if pz# < solids(s).z then dz# = -1.0
+                     pz# = solids(s).z + dz# * (solids(s).hz + PLAYER_RADIUS)
+                  endif
+               else
+                  dx# = dx# / d# : dz# = dz# / d#
+                  px# = cx# + dx# * PLAYER_RADIUS : pz# = cz# + dz# * PLAYER_RADIUS
+               endif
+               rem Cancel the velocity into the wall
+               dot# = vx# * dx# + vz# * dz#
+               if dot# < 0 then vx# = vx# - dot# * dx# : vz# = vz# - dot# * dz#
+               if solids(s).wall = 1 and onGround = 0 then wallTimer = 8 : wallNx# = dx# : wallNz# = dz#
+            endif
+         else
+            dx# = px# - solids(s).x : dz# = pz# - solids(s).z
+            d# = sqrt(dx# * dx# + dz# * dz#)
+            limit# = solids(s).hx + PLAYER_RADIUS
+            if d# < limit# and d# > 0.0001
+               dx# = dx# / d# : dz# = dz# / d#
+               px# = solids(s).x + dx# * limit# : pz# = solids(s).z + dz# * limit#
+               dot# = vx# * dx# + vz# * dz#
+               if dot# < 0 then vx# = vx# - dot# * dx# : vz# = vz# - dot# * dz#
+            endif
+         endif
+      endif
+   next n
+endfunction
+
+function title_image(image, t$, height)
+   cls 0
+   shadow_text(640, 4, t$, 1)
+   get image image, 0, 0, 1280, height, 1
+endfunction
+
+function shadow_text(x, y, t$, centred)
+   if centred = 1 then x = x - text width(t$) / 2
+   ink rgb(60, 30, 20), 0
+   text x + 2, y + 2, t$
+   ink rgb(255, 246, 228), 0
+   text x, y, t$
+endfunction

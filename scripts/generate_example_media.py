@@ -261,6 +261,223 @@ def hum(rate: int = 11025):
             0.1 * math.sin(2 * math.pi * 330 * i / rate) for i in range(rate)]
 
 
+def motor(rate: int = 11025):
+    # One-second loop of a four-cylinder burble: firing pulses at 40 Hz with their harmonics,
+    # every partial completing whole cycles so the loop is seamless; SET SOUND SPEED raises the pitch.
+    output = []
+    for i in range(rate):
+        t = i / rate
+        pulse = sum(math.sin(2 * math.pi * 40 * k * t) / k for k in range(1, 9))
+        rasp = 0.15 * (hash01(i, 61, 113) * 2.0 - 1.0)
+        output.append(0.22 * pulse * (0.8 + 0.2 * math.sin(2 * math.pi * 20 * t)) + rasp)
+    return output
+
+
+def screech(rate: int = 22050):
+    # Half-second loop of tyre squeal: a wavering 1.1 kHz tone with whole-cycle vibrato, over hiss.
+    count = rate // 2
+    output = []
+    for i in range(count):
+        t = i / rate
+        phase = 2 * math.pi * (1100 * t - 6.0 / (2 * math.pi * 8) * math.cos(2 * math.pi * 8 * t))
+        hiss = hash01(i, 67, 127) * 2.0 - 1.0
+        output.append(0.28 * math.sin(phase) + 0.18 * math.sin(2 * phase) + 0.12 * hiss)
+    return output
+
+
+def surf(rate: int = 11025):
+    # Six seconds of waves: smoothed noise swelling twice, the swell envelope completing whole cycles.
+    count = rate * 6
+    smooth, output = 0.0, []
+    for i in range(count):
+        smooth += 0.25 * ((hash01(i, 71, 131) * 2.0 - 1.0) - smooth)
+        swell = 0.25 + 0.75 * math.sin(math.pi * 2 * i / count) ** 2
+        output.append(0.7 * swell * smooth)
+    return output
+
+
+def hop(rate: int = 22050):
+    # A soft rising whistle for jumps.
+    count = int(rate * 0.22)
+    phase, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        phase += 2 * math.pi * (380.0 + 520.0 * t * t) / rate
+        output.append(0.45 * math.sin(math.pi * t) * (math.sin(phase) + 0.25 * math.sin(2 * phase)))
+    return output
+
+
+def thud(rate: int = 22050):
+    count = int(rate * 0.25)
+    return [math.exp(-14.0 * i / count) * (0.5 * math.sin(2 * math.pi * 90 * i / rate) +
+                                           0.25 * (hash01(i, 0, 211) * 2.0 - 1.0)) for i in range(count)]
+
+
+def sparkle(rate: int = 22050):
+    # Three quick bell notes climbing a major triad.
+    output = [0.0] * int(rate * 0.9)
+    for index, frequency in enumerate((1046.5, 1318.5, 1568.0)):
+        start = int(index * rate * 0.07)
+        for i, value in enumerate(tone(frequency, 0.7, 6.0, rate, harmonics=(1.0, 0.3, 0.1))):
+            if start + i < len(output):
+                output[start + i] += 0.3 * value
+    return output
+
+
+def boing(rate: int = 22050):
+    count = int(rate * 0.6)
+    phase, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        frequency = 140.0 + 420.0 * t + 40.0 * math.sin(2 * math.pi * 18 * t)
+        phase += 2 * math.pi * frequency / rate
+        output.append(0.5 * math.exp(-3.0 * t) * math.sin(phase))
+    return output
+
+
+def bell_chord(rate: int = 22050):
+    output = [0.0] * int(rate * 1.6)
+    for index, frequency in enumerate((523.25, 659.25, 783.99, 1046.5)):
+        start = int(index * rate * 0.12)
+        for i, value in enumerate(tone(frequency, 1.4, 2.8, rate, harmonics=(1.0, 0.4, 0.2))):
+            if start + i < len(output):
+                output[start + i] += 0.22 * value
+    return output
+
+
+def whoosh(rate: int = 22050):
+    # Falling filtered noise: a one-pole low-pass whose cutoff drops.
+    count = int(rate * 1.0)
+    state, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        alpha = 0.25 * (1.0 - t) + 0.02
+        state += alpha * ((hash01(i, 1, 223) * 2.0 - 1.0) - state)
+        output.append(1.4 * math.sin(math.pi * t) * state)
+    return output
+
+
+def bloom(rate: int = 22050):
+    # A pentatonic arpeggio over a held fifth: the shrine wakes.
+    output = [0.0] * int(rate * 3.2)
+    for frequency in (261.63, 392.0):
+        for i, value in enumerate(tone(frequency, 3.2, 0.9, rate, harmonics=(1.0, 0.5, 0.25))):
+            output[i] += 0.12 * value
+    for index, frequency in enumerate((523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.5)):
+        start = int(index * rate * 0.14)
+        for i, value in enumerate(tone(frequency, 1.6, 3.0, rate, harmonics=(1.0, 0.3, 0.1))):
+            if start + i < len(output):
+                output[start + i] += 0.16 * value
+    return output
+
+
+def pulse_shot(rate: int = 22050):
+    # A bright descending zap over a short noise crack.
+    count = int(rate * 0.32)
+    phase, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        frequency = 2600.0 * math.exp(-5.0 * t) + 180.0
+        phase += 2 * math.pi * frequency / rate
+        crack = (hash01(i, 61, 211) * 2.0 - 1.0) * math.exp(-30.0 * t)
+        output.append(0.55 * math.exp(-6.0 * t) * math.sin(phase) + 0.45 * crack)
+    return output
+
+
+def plasma_zap(rate: int = 22050):
+    # A wobbling, slower bolt: the drones' weapon, easy to tell from the rifle.
+    count = int(rate * 0.55)
+    phase, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        frequency = 520.0 + 260.0 * math.sin(2 * math.pi * 18 * t) - 300.0 * t
+        phase += 2 * math.pi * frequency / rate
+        square = 1.0 if math.sin(phase) >= 0 else -1.0
+        output.append(0.35 * math.exp(-3.0 * t) * (0.5 * math.sin(phase) + 0.5 * square))
+    return output
+
+
+def drone_hum(rate: int = 11025):
+    # Two seconds; every partial completes whole cycles so the loop is seamless.
+    count = rate * 2
+    return [0.22 * math.sin(2 * math.pi * 140 * i / rate) + 0.12 * math.sin(2 * math.pi * 283 * i / rate) *
+            (0.6 + 0.4 * math.sin(2 * math.pi * 3 * i / rate)) + 0.05 * math.sin(2 * math.pi * 421 * i / rate)
+            for i in range(count)]
+
+
+def reactor_hum(rate: int = 11025):
+    count = rate * 4
+    return [0.30 * math.sin(2 * math.pi * 50 * i / rate) + 0.15 * math.sin(2 * math.pi * 100 * i / rate) +
+            0.08 * math.sin(2 * math.pi * 150.25 * i / rate) * math.sin(2 * math.pi * 0.5 * i / rate)
+            for i in range(count)]
+
+
+def alarm(rate: int = 11025):
+    # Two-tone klaxon, two seconds per cycle.
+    count = rate * 2
+    phase, output = 0.0, []
+    for i in range(count):
+        frequency = 660.0 if i < count // 2 else 495.0
+        phase += 2 * math.pi * frequency / rate
+        envelope = min(1.0, (i % (count // 2)) / 200.0)
+        square = 1.0 if math.sin(phase) >= 0 else -1.0
+        output.append(0.18 * envelope * (0.6 * square + 0.4 * math.sin(phase)))
+    return output
+
+
+def valve_turn(rate: int = 11025):
+    # A grinding, squealing loop for the valve wheel (one second, seamless).
+    count = rate
+    smooth, output = 0.0, []
+    for i in range(count):
+        smooth += 0.2 * ((hash01(i, 9, 223) * 2.0 - 1.0) - smooth)
+        squeal = 0.15 * math.sin(2 * math.pi * 880 * i / rate) * (0.5 + 0.5 * math.sin(2 * math.pi * 4 * i / rate))
+        output.append(0.5 * smooth + squeal)
+    return output
+
+
+def clank(rate: int = 22050):
+    count = int(rate * 0.6)
+    return [math.exp(-7.0 * i / count) * (0.4 * math.sin(2 * math.pi * 310 * i / rate) +
+                                          0.3 * math.sin(2 * math.pi * 467 * i / rate) +
+                                          0.3 * (hash01(i, 13, 227) * 2.0 - 1.0) * math.exp(-40.0 * i / count))
+            for i in range(count)]
+
+
+def reload(rate: int = 22050):
+    # Two clicks and a rising charge whine.
+    count = int(rate * 0.9)
+    phase, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        click = 0.0
+        for start in (0.05, 0.75):
+            if start <= t < start + 0.03:
+                click = (hash01(i, 17, 229) * 2.0 - 1.0) * 0.8
+        phase += 2 * math.pi * (300.0 + 1500.0 * t) / rate
+        whine = 0.15 * math.sin(phase) * (1.0 if 0.15 < t < 0.7 else 0.0)
+        output.append(click + whine)
+    return output
+
+
+def power_down(rate: int = 22050):
+    count = int(rate * 1.6)
+    phase, output = 0.0, []
+    for i in range(count):
+        t = i / count
+        phase += 2 * math.pi * (900.0 * (1.0 - t) ** 2 + 40.0) / rate
+        output.append(0.4 * (1.0 - t) * math.sin(phase))
+    return output
+
+
+def lament(rate: int = 22050):
+    # A falling minor phrase for defeat.
+    output = []
+    for frequency in (440.0, 415.3, 392.0, 329.6):
+        output += tone(frequency, 0.4, 2.0, rate, harmonics=(1.0, 0.4, 0.2))
+    return output
+
+
 def media() -> dict[str, bytes]:
     files = {}
     cavern = "examples/dbc/demos/cavern_dash/"
@@ -301,6 +518,42 @@ def media() -> dict[str, bytes]:
     files[hive + "swoop.wav"] = wav(sweep(500.0, 1500.0, 0.6, 2.0), 16)
     files[hive + "hum.wav"] = wav(hum(), 8, 11025)
     files[hive + "hit.wav"] = wav(noise_burst(1.2, 3.0, 47, 50.0), 16)
+    rally = "examples/dbpro/demos/dusk_rally/"
+    files[rally + "motor.wav"] = wav(motor(), 8, 11025)
+    files[rally + "screech.wav"] = wav(screech(), 16)
+    files[rally + "surf.wav"] = wav(surf(), 8, 11025)
+    files[rally + "beep.wav"] = wav(tone(660.0, 0.3, 6.0, harmonics=(1.0, 0.3, 0.1)), 16)
+    files[rally + "go.wav"] = wav(tone(1320.0, 0.7, 3.0, harmonics=(1.0, 0.3, 0.1)), 16)
+    files[rally + "lap.wav"] = wav(chime(), 16)
+    files[rally + "finish.wav"] = wav(fanfare(), 16)
+    files[rally + "bump.wav"] = wav(noise_burst(0.5, 7.0, 73, 60.0), 16)
+    gardens = "examples/dbpro/demos/sky_gardens/"
+    files[gardens + "jump.wav"] = wav(hop(), 16)
+    files[gardens + "land.wav"] = wav(thud(), 16)
+    files[gardens + "seed.wav"] = wav(sparkle(), 16)
+    files[gardens + "bounce.wav"] = wav(boing(), 16)
+    files[gardens + "checkpoint.wav"] = wav(bell_chord(), 16)
+    files[gardens + "fall.wav"] = wav(whoosh(), 16)
+    files[gardens + "bloom.wav"] = wav(bloom(), 16)
+    files[gardens + "wind.wav"] = wav(wind(), 8, 11025)
+    reactor = "examples/dbpro/demos/reactor_breach/"
+    files[reactor + "shot.wav"] = wav(pulse_shot(), 16)
+    files[reactor + "zap.wav"] = wav(plasma_zap(), 16)
+    files[reactor + "boom.wav"] = wav(noise_burst(1.3, 4.0, 53, 45.0), 16)
+    files[reactor + "hit.wav"] = wav(clank(), 16)
+    files[reactor + "ricochet.wav"] = wav(sweep(3200.0, 1400.0, 0.18, 9.0), 16)
+    files[reactor + "hurt.wav"] = wav(noise_burst(0.35, 9.0, 59, 120.0), 16)
+    files[reactor + "pickup.wav"] = wav(sweep(600.0, 1800.0, 0.3, 3.0), 16)
+    files[reactor + "valve.wav"] = wav(valve_turn(), 8, 11025)
+    files[reactor + "clank.wav"] = wav(clank(), 16)
+    files[reactor + "reload.wav"] = wav(reload(), 16)
+    files[reactor + "empty.wav"] = wav(noise_burst(0.06, 20.0, 67, 2000.0), 16)
+    files[reactor + "alarm.wav"] = wav(alarm(), 8, 11025)
+    files[reactor + "hum.wav"] = wav(drone_hum(), 8, 11025)
+    files[reactor + "reactor.wav"] = wav(reactor_hum(), 8, 11025)
+    files[reactor + "field.wav"] = wav(power_down(), 16)
+    files[reactor + "win.wav"] = wav(fanfare(), 16)
+    files[reactor + "lose.wav"] = wav(lament(), 16)
     music = "examples/dbc/tutorials/music/"
     for name, (notes, tempo) in (("harbour_waltz", harbour_waltz()), ("night_march", night_march())):
         files[music + name + ".mid"] = midi(notes, tempo)

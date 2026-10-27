@@ -1,11 +1,11 @@
 # Examples
 
-Three source families, split by language profile and provenance. Every media file outside `dbpro/` is listed in [`ASSETS.tsv`](ASSETS.tsv) with its licence and source.
+Three source families, split by language profile and provenance. Every media file outside the imported `dbpro/tutorials/` and `dbpro/Hello World/` is listed in [`ASSETS.tsv`](ASSETS.tsv) with its licence and source.
 
 | Folder | What it is | How to run |
 | --- | --- | --- |
 | [`dbc/`](dbc) | Programs for the DarkBASIC Classic profile written for OpenDBC: demos and tutorials. Their media are project-made (see `ASSETS.tsv`). | `opendbc run examples/dbc/demos/cavern_dash/cavern_dash.dba --dialect dbc` |
-| [`dbpro/`](dbpro) | DarkBASIC Professional help examples imported from the [Dark-Basic-Pro](https://github.com/Dark-Basic-Software-Limited/Dark-Basic-Pro) repository. Compiler, runtime and observable qualification are tracked separately for every tutorial project. | `opendbc check examples/dbpro/tutorials/light/light1.dba.dbpro` |
+| [`dbpro/`](dbpro) | Programs for the DarkBASIC Professional profile: demo games written for OpenDBC (`demos/`, project-made media) and the help examples imported from the [Dark-Basic-Pro](https://github.com/Dark-Basic-Software-Limited/Dark-Basic-Pro) repository (`tutorials/`, `Hello World/`). Compiler, runtime and observable qualification are tracked separately for every tutorial project. | `opendbc run examples/dbpro/demos/dusk_rally/dusk_rally.dbpro` |
 | [`open-dbc/`](open-dbc) | BASIC programs written for this engine in whichever historical profile their extension selects. | `opendbc run examples/open-dbc/interpreter_test.dba` |
 
 `android/` contains the Gradle wrapper and the Android export template used by

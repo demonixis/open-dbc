@@ -1,0 +1,1298 @@
+rem ==================================================================
+rem Reactor Breach - an OpenDBC example for the DarkBASIC Professional profile
+rem The research reactor is in lockdown and its security drones have
+rem turned on the staff. Close the three coolant valves to drop the
+rem force field, then reach the exit lift before the core melts down.
+rem WASD or arrow keys move, the mouse aims, left button fires, R reloads,
+rem hold E at a valve to close it, SPACE jumps, ESC quits.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+set display mode 1280, 720, 32
+sync on : sync rate 60
+hide mouse
+disable escapekey
+autocam off
+backdrop on
+color backdrop 0
+set camera range 1, 1200
+set camera fov 70
+
+rem LEVEL_TILING comes from assets-src/blender/reactor_breach.py: it turns the
+rem lightmap atlas UVs back into material repeats of 32 world units.
+#constant LEVEL_TILING 21.7687
+#constant EYE 16.0
+#constant RADIUS 4.5
+#constant MAX_ROOMS 12
+#constant MAX_BOXES 40
+#constant MAX_DRONES 8
+#constant MAX_BOLTS 10
+#constant MAX_PICKUPS 8
+#constant CORE_SECONDS 420
+
+rem Object numbers
+#constant OBJ_LEVEL 1
+#constant OBJ_LAMPS 2
+#constant OBJ_GLASS 3
+#constant OBJ_ENERGY 4
+#constant OBJ_FIELD 5
+#constant OBJ_PAD 6
+#constant OBJ_GUN 7
+#constant OBJ_FLASH 8
+#constant OBJ_BEACON 9
+#constant OBJ_CRATE 10
+#constant OBJ_VALVE 30
+#constant OBJ_DRONE 40
+#constant OBJ_HALO 50
+#constant OBJ_BOLT 60
+#constant OBJ_PICKUP 80
+#constant OBJ_BLOB 90
+
+type Room
+   x1 as float
+   z1 as float
+   x2 as float
+   z2 as float
+   height as float
+endtype
+
+type Drone
+   x as float
+   z as float
+   homex as float
+   homez as float
+   yaw as float
+   phase as float
+   hp as integer
+   state as integer
+   anim as integer
+   cooldown as integer
+   sight as integer
+   room as integer
+   lost as integer
+   postx as float
+   postz as float
+endtype
+
+type Bolt
+   x as float
+   y as float
+   z as float
+   vx as float
+   vy as float
+   vz as float
+   life as integer
+   light as integer
+endtype
+
+type Pickup
+   x as float
+   z as float
+   kind as integer
+   taken as integer
+endtype
+
+type Valve
+   x as float
+   z as float
+   facing as float
+   turn as float
+   closed as integer
+endtype
+
+type Crate
+   x as float
+   z as float
+   size as float
+   yaw as float
+endtype
+
+type Box
+   x1 as float
+   y1 as float
+   z1 as float
+   x2 as float
+   y2 as float
+   z2 as float
+   cx as float
+   cz as float
+   radius as float
+endtype
+
+dim rooms(MAX_ROOMS) as Room
+dim boxes(MAX_BOXES) as Box
+dim drones(MAX_DRONES) as Drone
+dim bolts(MAX_BOLTS) as Bolt
+dim pickups(MAX_PICKUPS) as Pickup
+dim valves(3) as Valve
+dim crates(20) as Crate
+dim path#(24, 2)
+
+rem GLOBAL takes one variable per statement.
+global roomcount
+global boxcount
+global tallcount
+global dronecount
+global pickupcount
+global valvecount
+global cratecount
+global pathcount
+global startx#
+global startz#
+global startyaw#
+global fieldx1#
+global fieldz#
+global fieldx2#
+global exitx#
+global exitz#
+global corex#
+global corez#
+global px#
+global py#
+global pz#
+global vy#
+global yaw#
+global pitch#
+global bob#
+global recoil#
+global grounded
+global health
+global ammo
+global reserve
+global reload
+global cooldown
+global flash
+global hurt
+global kills
+global closedcount
+global fieldon
+global mode
+global modetimer
+global starttime
+global remaining
+global message$
+global messagetime
+global nextlight
+global attract#
+global flashlight
+global sparkframes
+global boomframes
+global lookx#
+global roomhint
+global playerroom
+global clipnear#
+global clipfar#
+global lookz#
+
+make vector3 1
+make vector3 2
+
+read_layout()
+roomhint = 1
+load_media()
+build_world()
+reset_game()
+mode = 0
+
+rem ------------------------------------------------------------------
+rem Main loop. mode 0 is the title with the attract tour, 1 is play,
+rem 2 is defeat and 3 is victory.
+do
+   if mode = 0 then attract_camera() else player_update()
+   if mode < 2 then drones_update()
+   bolts_update()
+   world_update()
+   effects_update()
+   draw_hud()
+   if keystate(1) = 1 then end
+   sync
+loop
+
+rem ------------------------------------------------------------------
+function read_layout()
+   restore layout
+   read kind$
+   while kind$ <> "end"
+      select kind$
+         case "room"
+            inc roomcount
+            read rooms(roomcount).x1, rooms(roomcount).z1, rooms(roomcount).x2, rooms(roomcount).z2, rooms(roomcount).height
+         endcase
+         case "pillar"
+            read x#, z#, w#
+            add_box(x# - w# / 2, 0, z# - w# / 2, x# + w# / 2, 90, z# + w# / 2)
+         endcase
+         case "core"
+            read corex#, corez#, r#
+            add_box(corex# - r#, 0, corez# - r#, corex# + r#, 90, corez# + r#)
+         endcase
+         case "pump"
+            read x#, z#, r#
+            add_box(x# - r# - 1.5, 0, z# - r# - 1.5, x# + r# + 1.5, 56, z# + r# + 1.5)
+         endcase
+         case "console"
+            read x#, z#, a#
+            add_box(x# - 8, 0, z# - 5, x# + 8, 20, z# + 5)
+         endcase
+         case "crate"
+            read x#, z#, s#, a#
+            inc cratecount
+            crates(cratecount).x = x# : crates(cratecount).z = z# : crates(cratecount).size = s# : crates(cratecount).yaw = a#
+            rem The collision box is the crate's footprint after rotation.
+            h# = s# / 2 * (abs(cos(a#)) + abs(sin(a#)))
+            add_box(x# - h#, 0, z# - h#, x# + h#, s#, z# + h#)
+         endcase
+         case "valve"
+            inc valvecount
+            read valves(valvecount).x, valves(valvecount).z, valves(valvecount).facing
+         endcase
+         case "drone"
+            inc dronecount
+            read drones(dronecount).postx, drones(dronecount).postz
+         endcase
+         case "medkit", "cell"
+            inc pickupcount
+            read pickups(pickupcount).x, pickups(pickupcount).z
+            if kind$ = "cell" then pickups(pickupcount).kind = 1
+         endcase
+         case "start" : read startx#, startz#, startyaw# : endcase
+         case "field" : read fieldx1#, fieldz#, fieldx2# : endcase
+         case "exit" : read exitx#, exitz# : endcase
+      endselect
+      read kind$
+   endwhile
+   rem The attract tour: points the camera visits in turn.
+   restore tour
+   read pathcount
+   for i = 1 to pathcount
+      read path#(i, 1), path#(i, 2)
+   next i
+endfunction
+
+function add_box(x1#, y1#, z1#, x2#, y2#, z2#)
+   inc boxcount
+   boxes(boxcount).x1 = x1# : boxes(boxcount).y1 = y1# : boxes(boxcount).z1 = z1#
+   boxes(boxcount).x2 = x2# : boxes(boxcount).y2 = y2# : boxes(boxcount).z2 = z2#
+   rem A bounding circle lets ray tests skip most boxes after a few sums.
+   boxes(boxcount).cx = (x1# + x2#) / 2 : boxes(boxcount).cz = (z1# + z2#) / 2
+   boxes(boxcount).radius = sqrt((x2# - x1#) ^ 2 + (z2# - z1#) ^ 2) / 2
+   rem The layout lists the floor-to-ceiling props first; they alone block sight.
+   if y2# >= 50 and boxcount = tallcount + 1 then tallcount = boxcount
+endfunction
+
+rem Static collision boxes are rebuilt whenever the force field changes.
+function build_collision()
+   delete static objects
+   for i = 1 to boxcount
+      make static collision box boxes(i).x1, boxes(i).y1, boxes(i).z1, boxes(i).x2, boxes(i).y2, boxes(i).z2
+   next i
+   for i = 1 to valvecount
+      make static collision box valves(i).x - 3, 0, valves(i).z - 3, valves(i).x + 3, 20, valves(i).z + 3
+   next i
+   if fieldon = 1 then make static collision box fieldx1#, 0, fieldz# - 2, fieldx2#, 40, fieldz# + 2
+endfunction
+
+function load_media()
+   load image "lightmap.jpg", 1
+   load image "glow.jpg", 2
+   load image "flash.jpg", 3
+   load image "crate.jpg", 4
+   load image "crate_normal.jpg", 5
+   load image "plasma.jpg", 6
+   load image "field.jpg", 7
+   load image "chrome.jpg", 8
+   load image "medkit.jpg", 9
+   load image "cell.jpg", 10
+   load image "eye.jpg", 11
+   load image "blob.png", 12
+   rem A plain red image for the damage flash.
+   ink rgb(255, 20, 10), 0 : box 0, 0, 16, 16 : get image 20, 0, 0, 16, 16
+
+   load sound "shot.wav", 1
+   load sound "hit.wav", 4
+   load sound "hurt.wav", 6
+   load sound "pickup.wav", 7
+   load sound "valve.wav", 8
+   load sound "clank.wav", 9
+   load sound "reload.wav", 11
+   load sound "empty.wav", 12
+   load sound "alarm.wav", 13
+   load sound "field.wav", 14
+   load sound "win.wav", 15
+   load sound "lose.wav", 16
+   load 3dsound "reactor.wav", 10
+   load 3dsound "zap.wav", 30
+   load 3dsound "boom.wav", 31
+   load 3dsound "ricochet.wav", 32
+   for i = 1 to dronecount
+      load 3dsound "hum.wav", 20 + i
+   next i
+   set sound volume 13, 70
+endfunction
+
+function build_world()
+   rem The level shares one lightmap atlas between its five limbs. Copy the
+   rem atlas UVs to stage 1 for the lightmap, then repeat stage 0 for the materials.
+   load object "level.x", OBJ_LEVEL
+   perform checklist for object limbs OBJ_LEVEL
+   for limb = 0 to checklist quantity() - 1
+      lock vertexdata for limb OBJ_LEVEL, limb, 0
+      for v = 0 to get vertexdata vertex count() - 1
+         set vertexdata uv v, 1, get vertexdata u(v, 0), get vertexdata v(v, 0)
+      next v
+      unlock vertexdata
+   next limb
+   scale object texture OBJ_LEVEL, 0, LEVEL_TILING, LEVEL_TILING
+   rem Stage 1 modulates by two: mid grey in the lightmap leaves a surface as painted.
+   set blend mapping on OBJ_LEVEL, 1, 1, 0, 5
+
+   rem The baked light carries the room lighting: full white ambient shows it as
+   rem baked, the dim directional light only gives the props some shape.
+   set ambient light 100
+   color ambient light rgb(255, 255, 255)
+   set directional light 0, 0.3, -1, 0.4
+   color light 0, rgb(60, 62, 70)
+
+   load object "lamps.x", OBJ_LAMPS
+   set object light OBJ_LAMPS, 0
+
+   rem The reactor: a glass column reflecting the room, a swirling energy core.
+   make object cylinder OBJ_GLASS, 24
+   scale object OBJ_GLASS, 100, 210, 100
+   position object OBJ_GLASS, corex#, 35, corez#
+   texture object OBJ_GLASS, 8
+   set sphere mapping on OBJ_GLASS, 8
+   ghost object on OBJ_GLASS
+   set object light OBJ_GLASS, 0
+   make object cylinder OBJ_ENERGY, 13
+   scale object OBJ_ENERGY, 100, 380, 100
+   position object OBJ_ENERGY, corex#, 35, corez#
+   texture object OBJ_ENERGY, 6
+   set object light OBJ_ENERGY, 0
+   set object emissive OBJ_ENERGY, rgb(255, 255, 255)
+
+   make object plain OBJ_FIELD, fieldx2# - fieldx1#, 36
+   position object OBJ_FIELD, (fieldx1# + fieldx2#) / 2, 18, fieldz#
+   texture object OBJ_FIELD, 7
+   ghost object on OBJ_FIELD
+   set object cull OBJ_FIELD, 0
+   set object light OBJ_FIELD, 0
+
+   make object cylinder OBJ_PAD, 22
+   scale object OBJ_PAD, 100, 4, 100
+   position object OBJ_PAD, exitx#, 0.5, exitz#
+   texture object OBJ_PAD, 6
+   set object light OBJ_PAD, 0
+
+   rem Alarm beacons on the hall walls; the red spot lights sweep from them.
+   for i = 0 to 1
+      make object sphere OBJ_BEACON + i * 100, 4
+      texture object OBJ_BEACON + i * 100, 11
+      set object light OBJ_BEACON + i * 100, 0
+      position object OBJ_BEACON + i * 100, -87 + i * 174, 62, corez#
+   next i
+
+   for i = 1 to cratecount
+      s# = crates(i).size
+      make object box OBJ_CRATE + i, s#, s#, s#
+      position object OBJ_CRATE + i, crates(i).x, s# / 2, crates(i).z
+      yrotate object OBJ_CRATE + i, crates(i).yaw
+      texture object OBJ_CRATE + i, 4
+      set bump mapping on OBJ_CRATE + i, 5
+      set object ambience OBJ_CRATE + i, rgb(130, 130, 140)
+      set object specular OBJ_CRATE + i, rgb(255, 255, 255)
+      set object specular power OBJ_CRATE + i, 24
+   next i
+
+   load object "valve.x", OBJ_VALVE
+   for i = 1 to valvecount
+      if i > 1 then clone object OBJ_VALVE + i - 1, OBJ_VALVE
+      position object OBJ_VALVE + i - 1, valves(i).x, 0, valves(i).z
+      yrotate object OBJ_VALVE + i - 1, valves(i).facing - 90
+      set object ambience OBJ_VALVE + i - 1, rgb(140, 140, 150)
+      set object specular OBJ_VALVE + i - 1, rgb(255, 230, 220)
+      set object specular power OBJ_VALVE + i - 1, 18
+   next i
+
+   rem Drones: each is loaded on its own so it animates independently. Each
+   rem carries a glowing halo glued to its eye limb and a soft blob shadow.
+   for i = 1 to dronecount
+      d = OBJ_DRONE + i
+      load object "drone.x", d
+      set object ambience d, rgb(90, 92, 105)
+      set object specular d, rgb(255, 240, 220)
+      set object specular power d, 30
+      set object speed d, 30
+      set object interpolation d, 25
+      make object sphere OBJ_HALO + i, 5
+      texture object OBJ_HALO + i, 11
+      ghost object on OBJ_HALO + i
+      set object light OBJ_HALO + i, 0
+      disable object zwrite OBJ_HALO + i
+      glue object to limb OBJ_HALO + i, d, 1
+      make object plain OBJ_BLOB + i, 18, 18
+      xrotate object OBJ_BLOB + i, 90
+      texture object OBJ_BLOB + i, 12
+      ghost object on OBJ_BLOB + i, 1
+      set object light OBJ_BLOB + i, 0
+      disable object zwrite OBJ_BLOB + i
+   next i
+
+   for i = 1 to MAX_BOLTS
+      make object plain OBJ_BOLT + i, 9, 9
+      texture object OBJ_BOLT + i, 11
+      set object cull OBJ_BOLT + i, 0
+      ghost object on OBJ_BOLT + i
+      set object light OBJ_BOLT + i, 0
+      disable object zwrite OBJ_BOLT + i
+      hide object OBJ_BOLT + i
+   next i
+
+   for i = 1 to pickupcount
+      p = OBJ_PICKUP + i
+      if pickups(i).kind = 0
+         make object box p, 7, 4, 5
+         texture object p, 9
+      else
+         make object cylinder p, 3
+         scale object p, 100, 220, 100
+         texture object p, 10
+         set object emissive p, rgb(40, 90, 110)
+      endif
+      set object ambience p, rgb(150, 150, 160)
+   next i
+
+   rem The pulse rifle lives in camera space; the flash sits on its muzzle.
+   load object "rifle.x", OBJ_GUN
+   scale object OBJ_GUN, 70, 70, 70
+   lock object on OBJ_GUN
+   set object ambience OBJ_GUN, rgb(70, 72, 80)
+   set object specular OBJ_GUN, rgb(255, 255, 255)
+   set object specular power OBJ_GUN, 40
+   disable object zdepth OBJ_GUN
+   make object plain OBJ_FLASH, 6, 6
+   texture object OBJ_FLASH, 3
+   ghost object on OBJ_FLASH
+   set object light OBJ_FLASH, 0
+   lock object on OBJ_FLASH
+   disable object zdepth OBJ_FLASH
+   hide object OBJ_FLASH
+
+   rem Dynamic lights: 1 reactor core, 2-3 alarm spots, 4 muzzle and blasts,
+   rem 5-6 plasma bolts, 7 a failing corridor lamp.
+   make light 1 : set point light 1, corex#, 35, corez# : set light range 1, 170
+   for l = 2 to 3
+      make light l
+      set spot light l, 25, 50
+      color light l, rgb(255, 40, 20)
+      set light range l, 260
+      position light l, -84 + (l - 2) * 168, 62, corez#
+   next l
+   for l = 4 to 6
+      make light l : set point light l, 0, 0, 0 : set light range l, 90 : hide light l
+   next l
+   color light 5, rgb(255, 60, 40) : color light 6, rgb(255, 60, 40)
+   make light 7 : set point light 7, 0, 32, -70 : color light 7, rgb(200, 220, 255) : set light range 7, 70
+
+   rem Particles: impact sparks and drone explosions.
+   make particles 1, 2, 30, 4
+   color particles 1, 255, 190, 90
+   set particle speed 1, 0.04
+   set particle velocity 1, 14
+   set particle gravity 1, 6
+   set particle floor 1, 0
+   set particle emissions 1, 0
+   make particles 2, 2, 60, 6
+   color particles 2, 255, 120, 40
+   set particle speed 2, 0.03
+   set particle velocity 2, 26
+   set particle gravity 2, 4
+   set particle floor 2, 0
+   set particle emissions 2, 0
+
+   sprite 1, 0, 0, 20 : size sprite 1, screen width(), screen height() : hide sprite 1
+
+   position sound 10, corex#, 35, corez#
+   loop sound 10
+endfunction
+
+function reset_game()
+   playerroom = 1
+   px# = startx# : pz# = startz# : py# = EYE : yaw# = startyaw# : pitch# = 0 : vy# = 0
+   health = 100 : ammo = 24 : reserve = 72 : reload = 0 : cooldown = 0 : hurt = 0 : kills = 0
+   closedcount = 0 : fieldon = 1 : nextlight = 5 : message$ = "" : flashlight = 0
+   show object OBJ_FIELD
+   build_collision()
+   for i = 1 to valvecount
+      valves(i).turn = 0 : valves(i).closed = 0
+      rotate limb OBJ_VALVE + i - 1, 2, 0, 0, 0
+   next i
+   for i = 1 to dronecount
+      d = OBJ_DRONE + i
+      drones(i).homex = drones(i).postx : drones(i).homez = drones(i).postz
+      drones(i).x = drones(i).homex : drones(i).z = drones(i).homez : drones(i).lost = 0
+      drones(i).hp = 3 : drones(i).state = 0 : drones(i).cooldown = 60 + i * 20
+      drones(i).phase = i * 45 : drones(i).anim = -1 : drones(i).sight = 0
+      drones(i).room = room_at(drones(i).x, drones(i).z)
+      show object d : show object OBJ_HALO + i
+      drone_anim(i, 0)
+      position object d, drones(i).x, 0, drones(i).z
+      position object OBJ_BLOB + i, drones(i).x, 0.3, drones(i).z
+      loop sound 20 + i
+   next i
+   for i = 1 to MAX_BOLTS
+      bolts(i).life = 0 : hide object OBJ_BOLT + i
+   next i
+   hide light 5 : hide light 6
+   for i = 1 to pickupcount
+      pickups(i).taken = 0 : show object OBJ_PICKUP + i
+   next i
+   show light 1 : show light 2 : show light 3
+   loop sound 13
+   starttime = timer()
+   remaining = CORE_SECONDS
+   attract# = 0 : lookx# = 0 : lookz# = 1
+endfunction
+
+function start_mode(newmode)
+   mode = newmode
+   modetimer = 0
+   if mode = 1
+      reset_game()
+      show object OBJ_GUN
+   endif
+   if mode = 2 then play sound 16 : stop sound 8
+   if mode = 3 then play sound 15 : stop sound 8
+endfunction
+
+rem ------------------------------------------------------------------
+rem Player
+
+function player_update()
+   inc modetimer
+   if mode <> 1
+      rem After the game ends the camera settles; a key or click returns to the title.
+      if mode = 2 and py# > 4 then py# = py# - 0.15
+      position camera px#, py#, pz#
+      rotate camera pitch#, yaw#, 0
+      if modetimer > 90 and (scancode() <> 0 or mouseclick() <> 0)
+         mode = 0 : modetimer = 0 : reset_game()
+      endif
+      exitfunction
+   endif
+
+   yaw# = wrapvalue(yaw# + mousemovex() * 0.15)
+   pitch# = pitch# + mousemovey() * 0.15
+   if pitch# > 75 then pitch# = 75
+   if pitch# < -75 then pitch# = -75
+   if keystate(203) = 1 then yaw# = wrapvalue(yaw# - 2.5)
+   if keystate(205) = 1 then yaw# = wrapvalue(yaw# + 2.5)
+
+   forward# = 0.0 : strafe# = 0.0
+   if keystate(17) = 1 or keystate(200) = 1 then forward# = 1.0
+   if keystate(31) = 1 or keystate(208) = 1 then forward# = -1.0
+   if keystate(32) = 1 then strafe# = 1.0
+   if keystate(30) = 1 then strafe# = -1.0
+   speed# = 1.5
+   if forward# <> 0 and strafe# <> 0 then speed# = 1.06
+   dx# = (sin(yaw#) * forward# + cos(yaw#) * strafe#) * speed#
+   dz# = (cos(yaw#) * forward# - sin(yaw#) * strafe#) * speed#
+   if grounded = 1 and keystate(57) = 1 then vy# = 2.3 : grounded = 0
+   vy# = vy# - 0.12
+   move_player(dx#, vy#, dz#)
+   if dx# <> 0 or dz# <> 0 then bob# = bob# + 9 else bob# = curvevalue(0, bob#, 8)
+
+   position camera px#, py# + sin(bob# * 2) * 0.25, pz#
+   rotate camera pitch#, yaw#, 0
+   position listener px#, py#, pz#
+   rotate listener 0, yaw#, 0
+
+   player_weapon()
+   player_interact()
+   if health <= 0 then start_mode(2)
+   if closedcount = valvecount
+      dx# = px# - exitx# : dz# = pz# - exitz#
+      if dx# * dx# + dz# * dz# < 100 then start_mode(3)
+   endif
+   remaining = CORE_SECONDS - (timer() - starttime) / 1000
+   if remaining <= 0 and closedcount < valvecount then message$ = "CORE MELTDOWN" : health = 0 : start_mode(2)
+endfunction
+
+rem Slide against the static boxes (crates can be stood on), then keep the
+rem body inside the rooms one axis at a time so the walls slide too.
+function move_player(dx#, dy#, dz#)
+   roomhint = playerroom
+   feet# = py# - EYE
+   nx# = px# + dx# : ny# = feet# + dy# : nz# = pz# + dz#
+   grounded = 0
+   if get static collision hit(px# - RADIUS, feet#, pz# - RADIUS, px# + RADIUS, feet# + 18, pz# + RADIUS, nx# - RADIUS, ny#, nz# - RADIUS, nx# + RADIUS, ny# + 18, nz# + RADIUS) = 1
+      nx# = nx# + get static collision x()
+      ny# = ny# + get static collision y()
+      nz# = nz# + get static collision z()
+      if get static collision y() > 0 then vy# = 0 : grounded = 1
+   endif
+   if ny# <= 0 then ny# = 0 : vy# = 0 : grounded = 1
+   if body_fits(nx#, pz#, RADIUS) = 1 then px# = nx#
+   if body_fits(px#, nz#, RADIUS) = 1 then pz# = nz#
+   py# = ny# + EYE
+   playerroom = roomhint
+endfunction
+
+function body_fits(x#, z#, r#)
+   if point_in_level(x# - r#, z# - r#) = 0 then exitfunction 0
+   if point_in_level(x# + r#, z# - r#) = 0 then exitfunction 0
+   if point_in_level(x# - r#, z# + r#) = 0 then exitfunction 0
+   if point_in_level(x# + r#, z# + r#) = 0 then exitfunction 0
+endfunction 1
+
+function point_in_level(x#, z#)
+   if room_at(x#, z#) > 0 then exitfunction 1
+endfunction 0
+
+rem The room holding a point, or 0 inside the walls. The last room found is
+rem tried first: bodies rarely change room, so most calls test a single box.
+function room_at(x#, z#)
+   r = roomhint
+   if x# >= rooms(r).x1 and x# <= rooms(r).x2 and z# >= rooms(r).z1 and z# <= rooms(r).z2 then exitfunction r
+   for r = 1 to roomcount
+      if x# >= rooms(r).x1 and x# <= rooms(r).x2 and z# >= rooms(r).z1 and z# <= rooms(r).z2
+         roomhint = r
+         exitfunction r
+      endif
+   next r
+endfunction 0
+
+rem Distance along a unit ray to the first wall, floor or ceiling. The level is
+rem a set of boxes: leave the current room, and carry on only through a doorway.
+function ray_level(x#, y#, z#, dx#, dy#, dz#, far#)
+   t# = 0.0
+   for step = 1 to 8
+      r = room_at(x# + dx# * (t# + 0.05), z# + dz# * (t# + 0.05))
+      if r = 0 then exitfunction t#
+      if y# + dy# * t# > rooms(r).height then exitfunction t#
+      t# = slab_exit(x#, dx#, rooms(r).x1, rooms(r).x2)
+      tz# = slab_exit(z#, dz#, rooms(r).z1, rooms(r).z2)
+      ty# = slab_exit(y#, dy#, 0, rooms(r).height)
+      if tz# < t# then t# = tz#
+      if ty# <= t# then exitfunction ty#
+      if t# >= far# then exitfunction far#
+   next step
+endfunction t#
+
+function slab_exit(p#, d#, lo#, hi#)
+   if d# > 0.0001 then exitfunction (hi# - p#) / d#
+   if d# < -0.0001 then exitfunction (lo# - p#) / d#
+endfunction 100000.0
+
+rem Distance along a unit ray to the nearest prop box among the first count
+rem boxes, or far# if none is hit.
+function ray_boxes(x#, y#, z#, dx#, dy#, dz#, far#, count)
+   best# = far#
+   flat# = dx# * dx# + dz# * dz# : if flat# < 0.0001 then flat# = 0.0001
+   for i = 1 to count
+      ox# = boxes(i).cx - x# : oz# = boxes(i).cz - z#
+      along# = (ox# * dx# + oz# * dz#) / flat#
+      r# = boxes(i).radius
+      if along# > -r# and along# < best# + r#
+         if ox# * ox# + oz# * oz# - along# * along# * flat# < r# * r#
+            clipnear# = 0.0 : clipfar# = best#
+            if slab_clip(x#, dx#, boxes(i).x1, boxes(i).x2) = 1
+               if slab_clip(y#, dy#, boxes(i).y1, boxes(i).y2) = 1
+                  if slab_clip(z#, dz#, boxes(i).z1, boxes(i).z2) = 1 then best# = clipnear#
+               endif
+            endif
+         endif
+      endif
+   next i
+endfunction best#
+
+rem Narrows clipnear#..clipfar# to the part of the ray inside one slab.
+function slab_clip(p#, d#, lo#, hi#)
+   if abs(d#) < 0.0001
+      if p# < lo# or p# > hi# then exitfunction 0
+      exitfunction 1
+   endif
+   a# = (lo# - p#) / d# : b# = (hi# - p#) / d#
+   if a# > b# then c# = a# : a# = b# : b# = c#
+   if a# > clipnear# then clipnear# = a#
+   if b# < clipfar# then clipfar# = b#
+   if clipnear# > clipfar# then exitfunction 0
+endfunction 1
+
+function player_weapon()
+   if cooldown > 0 then dec cooldown
+   recoil# = curvevalue(0, recoil#, 5)
+   if reload > 0
+      dec reload
+      if reload = 0
+         take = 24 - ammo
+         if take > reserve then take = reserve
+         ammo = ammo + take : reserve = reserve - take
+      endif
+   endif
+   if keystate(19) = 1 and reload = 0 and ammo < 24 and reserve > 0 then reload = 70 : play sound 11
+   if mouseclick() = 1 and cooldown = 0 and reload = 0
+      if ammo > 0
+         fire_rifle()
+      else
+         cooldown = 20 : play sound 12
+         if reserve > 0 then reload = 70 : play sound 11
+      endif
+   endif
+   rem Bob with the walk, kick with the shot, dip while reloading.
+   dip# = 0
+   if reload > 0 then dip# = sin(reload * 180.0 / 70) * 5
+   position object OBJ_GUN, 2.3 + cos(bob#) * 0.2, -2.7 - abs(sin(bob#)) * 0.2 - dip#, 5.6 - recoil#
+   rotate object OBJ_GUN, 0 - recoil# * 2 + dip# * 4, -2, 0
+endfunction
+
+function fire_rifle()
+   dec ammo
+   cooldown = 7
+   recoil# = 1.2
+   flash = 3
+   play sound 1
+   rem The ray leaves the eye along the view direction.
+   cx# = camera position x() : cy# = camera position y() : cz# = camera position z()
+   dirx# = sin(yaw#) * cos(pitch#) : diry# = 0 - sin(pitch#) : dirz# = cos(yaw#) * cos(pitch#)
+   ex# = cx# + dirx# * 600 : ey# = cy# + diry# * 600 : ez# = cz# + dirz# * 600
+   best# = ray_level(cx#, cy#, cz#, dirx#, diry#, dirz#, 600)
+   best# = ray_boxes(cx#, cy#, cz#, dirx#, diry#, dirz#, best#, boxcount)
+   rem Only drones close to the ray get the exact (and costlier) mesh test.
+   target = 0
+   for i = 1 to dronecount
+      if drones(i).state < 3
+         ox# = drones(i).x - cx# : oy# = 15 - cy# : oz# = drones(i).z - cz#
+         along# = ox# * dirx# + oy# * diry# + oz# * dirz#
+         if along# > 0 and along# < best#
+            miss# = ox# * ox# + oy# * oy# + oz# * oz# - along# * along#
+            if miss# < 100
+               d# = intersect object(OBJ_DRONE + i, cx#, cy#, cz#, ex#, ey#, ez#)
+               if d# > 0 and d# < best# then best# = d# : target = i
+            endif
+         endif
+      endif
+   next i
+   hx# = cx# + dirx# * (best# - 1) : hy# = cy# + diry# * (best# - 1) : hz# = cz# + dirz# * (best# - 1)
+   sparks(hx#, hy#, hz#)
+   muzzle_light(cx# + dirx# * 8, cy# + diry# * 8 - 2, cz# + dirz# * 8, rgb(120, 220, 255))
+   if target > 0
+      damage_drone(target)
+   else
+      position sound 32, hx#, hy#, hz# : play sound 32
+   endif
+endfunction
+
+function player_interact()
+   for i = 1 to pickupcount
+      if pickups(i).taken = 0
+         dx# = px# - pickups(i).x : dz# = pz# - pickups(i).z
+         if dx# * dx# + dz# * dz# < 80
+            if pickups(i).kind = 0 and health < 100
+               health = health + 40 : if health > 100 then health = 100
+               pickups(i).taken = 1 : say("MEDKIT +40")
+            endif
+            if pickups(i).kind = 1
+               reserve = reserve + 24 : pickups(i).taken = 1 : say("PULSE CELLS +24")
+            endif
+            if pickups(i).taken = 1 then hide object OBJ_PICKUP + i : play sound 7
+         endif
+      endif
+   next i
+   turning = 0
+   for i = 1 to valvecount
+      if valves(i).closed = 0
+         dx# = px# - valves(i).x : dz# = pz# - valves(i).z
+         if dx# * dx# + dz# * dz# < 400
+            if keystate(18) = 1
+               turning = 1
+               valves(i).turn = valves(i).turn + 6
+               rotate limb OBJ_VALVE + i - 1, 2, valves(i).turn, 0, 0
+               if valves(i).turn >= 720 then close_valve(i)
+            else
+               say("HOLD E TO CLOSE THE VALVE")
+            endif
+         endif
+      endif
+   next i
+   if turning = 1
+      if sound playing(8) = 0 then loop sound 8
+   else
+      if sound playing(8) = 1 then stop sound 8
+   endif
+endfunction
+
+function close_valve(i)
+   valves(i).closed = 1
+   inc closedcount
+   stop sound 8 : play sound 9
+   if closedcount < valvecount
+      say("VALVE CLOSED  " + str$(closedcount) + " / " + str$(valvecount))
+   else
+      rem All coolant valves shut: the alarm stops and the force field drops.
+      fieldon = 0
+      hide object OBJ_FIELD
+      build_collision()
+      stop sound 13 : play sound 14
+      hide light 2 : hide light 3
+      say("FORCE FIELD DOWN - GET TO THE EXIT LIFT")
+   endif
+endfunction
+
+function say(text$)
+   message$ = text$
+   messagetime = 120
+endfunction
+
+rem ------------------------------------------------------------------
+rem Attract tour: the camera glides through the facility under the title.
+
+function attract_camera()
+   if object visible(OBJ_GUN) = 1 then hide object OBJ_GUN
+   inc modetimer
+   attract# = attract# + 0.012
+   if attract# >= pathcount then attract# = attract# - pathcount
+   i = int(attract#) + 1 : t# = attract# - int(attract#)
+   j = i + 1 : if j > pathcount then j = 1
+   rem Smoothstep between tour points keeps the glide gentle.
+   s# = t# * t# * (3 - 2 * t#)
+   px# = path#(i, 1) + (path#(j, 1) - path#(i, 1)) * s#
+   pz# = path#(i, 2) + (path#(j, 2) - path#(i, 2)) * s#
+   roomhint = playerroom
+   if room_at(px#, pz#) > 0 then playerroom = roomhint
+   py# = EYE + 2 + sin(modetimer * 0.7) * 1.5
+   lookx# = curvevalue(path#(j, 1), lookx#, 40)
+   lookz# = curvevalue(path#(j, 2), lookz#, 40)
+   yaw# = atanfull(lookx# - px#, lookz# - pz#)
+   pitch# = sin(modetimer * 0.4) * 6
+   position camera px#, py#, pz#
+   rotate camera pitch#, yaw#, 0
+   position listener px#, py#, pz#
+   rotate listener 0, yaw#, 0
+   if modetimer > 30 and (scancode() <> 0 or mouseclick() <> 0) then start_mode(1)
+endfunction
+
+rem ------------------------------------------------------------------
+rem Drones
+
+function drone_anim(i, clip)
+   if drones(i).anim = clip then exitfunction
+   drones(i).anim = clip
+   d = OBJ_DRONE + i
+   select clip
+      case 0 : loop object d, 0, 40 : endcase
+      case 1 : loop object d, 41, 71 : endcase
+      case 2 : play object d, 72, 92 : endcase
+      case 3 : play object d, 93, 103 : endcase
+      case 4 : play object d, 104, 150 : endcase
+   endselect
+endfunction
+
+function drones_update()
+   for i = 1 to dronecount
+      d = OBJ_DRONE + i
+      dx# = px# - drones(i).x : dz# = pz# - drones(i).z
+      dist# = sqrt(dx# * dx# + dz# * dz#)
+      rem Patrolling drones in other rooms sleep: no animation, no thinking.
+      awake = 0
+      if drones(i).state = 1 then awake = 1
+      if drones(i).state = 0 and (drones(i).room = playerroom or dist# < 120) then awake = 1
+      if awake = 0 and drones(i).state = 0 and drones(i).anim <> 5 then stop object d : drones(i).anim = 5
+      if awake = 1
+         rem Line of sight is tested every 20 frames, staggered between drones.
+         if (modetimer + i * 3) mod 20 = 0
+            drones(i).sight = 0
+            if dist# < 260
+               set vector3 2, px# - drones(i).x, py# - 15.4, pz# - drones(i).z
+               reach# = length vector3(2)
+               normalize vector3 2, 2
+               clear# = ray_level(drones(i).x, 15.4, drones(i).z, x vector3(2), y vector3(2), z vector3(2), reach#)
+               if clear# >= reach# - 1 then clear# = ray_boxes(drones(i).x, 15.4, drones(i).z, x vector3(2), y vector3(2), z vector3(2), reach#, tallcount)
+               if clear# >= reach# - 1 then drones(i).sight = 1
+            endif
+            if drones(i).sight = 1 then drones(i).lost = 0 else inc drones(i).lost
+            if drones(i).sight = 1 and drones(i).state = 0 then drones(i).state = 1
+            rem A hunter that loses sight for a while patrols where it stands.
+            if drones(i).state = 1 and drones(i).lost > 8
+               drones(i).state = 0 : drones(i).homex = drones(i).x : drones(i).homez = drones(i).z
+            endif
+         endif
+         wantx# = 0 : wantz# = 0
+         if drones(i).state = 0
+            rem Patrol: a slow loop around the post.
+            drones(i).phase = wrapvalue(drones(i).phase + 0.6)
+            tx# = drones(i).homex + sin(drones(i).phase) * 14
+            tz# = drones(i).homez + cos(drones(i).phase) * 14
+            wantx# = (tx# - drones(i).x) * 0.05 : wantz# = (tz# - drones(i).z) * 0.05
+            facing# = atanfull(wantx#, wantz#)
+            drone_anim(i, 0)
+         else
+            rem Hunt: hold a firing distance and drift sideways to be harder to hit.
+            facing# = atanfull(dx#, dz#)
+            set vector3 1, dx#, 0, dz#
+            normalize vector3 1, 1
+            approach# = 0
+            if dist# > 80 then approach# = 0.9
+            if dist# < 45 then approach# = -0.7
+            side# = sin(modetimer * 1.5 + i * 60) * 0.6
+            wantx# = x vector3(1) * approach# + z vector3(1) * side#
+            wantz# = z vector3(1) * approach# - x vector3(1) * side#
+            if drones(i).anim < 2 or object playing(d) = 0 then drone_anim(i, 1)
+            dec drones(i).cooldown
+            if drones(i).cooldown <= 0 and drones(i).sight = 1
+               drone_fire(i)
+               drones(i).cooldown = 130 + rnd(80)
+            endif
+         endif
+         move_drone(i, wantx#, wantz#)
+         drones(i).yaw = curveangle(facing#, drones(i).yaw, 10)
+         position object d, drones(i).x, 0, drones(i).z
+         yrotate object d, drones(i).yaw
+         position object OBJ_BLOB + i, drones(i).x, 0.3, drones(i).z
+         position sound 20 + i, drones(i).x, 15, drones(i).z
+      endif
+   next i
+endfunction
+
+function move_drone(i, dx#, dz#)
+   x# = drones(i).x : z# = drones(i).z
+   nx# = x# + dx# : nz# = z# + dz#
+   rem Drones hover over the crates; only tall obstacles stop them.
+   roomhint = drones(i).room
+   if get static collision hit(x# - 5, 14, z# - 5, x# + 5, 20, z# + 5, nx# - 5, 14, nz# - 5, nx# + 5, 20, nz# + 5) = 1
+      nx# = nx# + get static collision x()
+      nz# = nz# + get static collision z()
+   endif
+   rem Only the leading edge of the move can enter a wall.
+   ex# = nx# + 6 : if dx# < 0 then ex# = nx# - 6
+   if room_at(ex#, z# - 6) > 0 and room_at(ex#, z# + 6) > 0 then drones(i).x = nx#
+   ez# = nz# + 6 : if dz# < 0 then ez# = nz# - 6
+   if room_at(drones(i).x - 6, ez#) > 0 and room_at(drones(i).x + 6, ez#) > 0 then drones(i).z = nz#
+   drones(i).room = roomhint
+endfunction
+
+function drone_fire(i)
+   drone_anim(i, 2)
+   b = 0
+   for k = 1 to MAX_BOLTS
+      if bolts(k).life = 0 then b = k : exit
+   next k
+   if b = 0 then exitfunction
+   a# = drones(i).yaw
+   bolts(b).x = drones(i).x + sin(a#) * 7 : bolts(b).y = 15.4 : bolts(b).z = drones(i).z + cos(a#) * 7
+   set vector3 1, px# - bolts(b).x, py# - 1.5 - bolts(b).y, pz# - bolts(b).z
+   normalize vector3 1, 1
+   scale vector3 1, 1, 2.2
+   bolts(b).vx = x vector3(1) : bolts(b).vy = y vector3(1) : bolts(b).vz = z vector3(1)
+   bolts(b).life = 300
+   rem Two lights ride the newest bolts in turn.
+   bolts(b).light = nextlight
+   for k = 1 to MAX_BOLTS
+      if k <> b and bolts(k).light = nextlight then bolts(k).light = 0
+   next k
+   show light nextlight
+   nextlight = 11 - nextlight
+   show object OBJ_BOLT + b
+   position sound 30, bolts(b).x, bolts(b).y, bolts(b).z : play sound 30
+endfunction
+
+function damage_drone(i)
+   d = OBJ_DRONE + i
+   play sound 4
+   drones(i).state = 1
+   dec drones(i).hp
+   if drones(i).hp > 0
+      drone_anim(i, 3)
+      exitfunction
+   endif
+   rem Destroyed: the drone drops, its eye goes dark, a blast lights the room.
+   drones(i).state = 3
+   drone_anim(i, 4)
+   hide object OBJ_HALO + i
+   stop sound 20 + i
+   inc kills
+   x# = drones(i).x : z# = drones(i).z
+   position particles 2, x#, 12, z# : boomframes = 6
+   muzzle_light(x#, 14, z#, rgb(255, 140, 40))
+   flashlight = 14
+   position sound 31, x#, 12, z# : play sound 31
+endfunction
+
+rem ------------------------------------------------------------------
+rem Plasma bolts
+
+function bolts_update()
+   cx# = camera position x() : cy# = camera position y() : cz# = camera position z()
+   for b = 1 to MAX_BOLTS
+      if bolts(b).life > 0
+         dec bolts(b).life
+         ox# = bolts(b).x : oy# = bolts(b).y : oz# = bolts(b).z
+         bolts(b).x = ox# + bolts(b).vx : bolts(b).y = oy# + bolts(b).vy : bolts(b).z = oz# + bolts(b).vz
+         x# = bolts(b).x : y# = bolts(b).y : z# = bolts(b).z
+         position object OBJ_BOLT + b, x#, y#, z#
+         point object OBJ_BOLT + b, cx#, cy#, cz#
+         if bolts(b).light > 0 then position light bolts(b).light, x#, y#, z#
+         dead = 0
+         if point_in_level(x#, z#) = 0 or y# < 0 or y# > 90 then dead = 1
+         if get static collision hit(ox# - 1, oy# - 1, oz# - 1, ox# + 1, oy# + 1, oz# + 1, x# - 1, y# - 1, z# - 1, x# + 1, y# + 1, z# + 1) = 1 then dead = 1
+         dx# = x# - px# : dy# = y# - (py# - 4) : dz# = z# - pz#
+         if dx# * dx# + dy# * dy# * 0.3 + dz# * dz# < 40
+            rem The attract tour is a ghost: bolts just burst on it.
+            dead = 1
+            if mode = 1 then health = health - 10 : hurt = 20 : play sound 6
+         endif
+         if dead = 1 or bolts(b).life = 0
+            bolts(b).life = 0
+            hide object OBJ_BOLT + b
+            if bolts(b).light > 0 then hide light bolts(b).light : bolts(b).light = 0
+            sparks(ox#, oy#, oz#)
+         endif
+      endif
+   next b
+endfunction
+
+rem ------------------------------------------------------------------
+rem World animation and effects
+
+function world_update()
+   t# = timer() / 1000.0
+   rem The core pulses cyan while critical and settles to a calm blue once cooled.
+   if closedcount < valvecount
+      pulse# = 0.75 + 0.25 * sin(t# * 220)
+      color light 1, rgb(60 * pulse#, 210 * pulse#, 255 * pulse#)
+      set object emissive OBJ_ENERGY, rgb(255 * pulse#, 255 * pulse#, 255 * pulse#)
+      for l = 2 to 3
+         a# = wrapvalue(t# * 160 + (l - 2) * 180)
+         point light l, light position x(l) + sin(a#) * 10, 40, light position z(l) + cos(a#) * 10
+      next l
+   else
+      color light 1, rgb(40, 90, 200)
+      set object emissive OBJ_ENERGY, rgb(120, 140, 200)
+   endif
+   yrotate object OBJ_ENERGY, wrapvalue(t# * 40)
+   scroll limb texture OBJ_ENERGY, 0, 0, 0.004
+   scroll limb texture OBJ_FIELD, 0, 0.003, 0.006
+   scroll limb texture OBJ_PAD, 0, 0.002, 0.0
+   rem A corridor lamp with a failing starter.
+   if rnd(30) = 0 then hide light 7
+   if rnd(6) = 0 then show light 7
+   for i = 1 to pickupcount
+      if pickups(i).taken = 0
+         position object OBJ_PICKUP + i, pickups(i).x, 5 + sin(t# * 120 + i * 50) * 1.2, pickups(i).z
+         yrotate object OBJ_PICKUP + i, wrapvalue(t# * 90 + i * 40)
+      endif
+   next i
+endfunction
+
+function sparks(x#, y#, z#)
+   position particles 1, x#, y#, z#
+   sparkframes = 2
+endfunction
+
+function muzzle_light(x#, y#, z#, colour)
+   position light 4, x#, y#, z#
+   color light 4, colour
+   show light 4
+   flashlight = 4
+endfunction
+
+function effects_update()
+   if sparkframes > 0 then set particle emissions 1, 10 : dec sparkframes else set particle emissions 1, 0
+   if boomframes > 0 then set particle emissions 2, 20 : dec boomframes else set particle emissions 2, 0
+   if flashlight > 0
+      dec flashlight
+      if flashlight = 0 then hide light 4
+   endif
+   if flash > 0
+      show object OBJ_FLASH
+      position object OBJ_FLASH, 2.3, -2.2, 11.5 - recoil#
+      zrotate object OBJ_FLASH, rnd(359)
+      dec flash
+   else
+      hide object OBJ_FLASH
+   endif
+   if hurt > 0
+      show sprite 1
+      set sprite alpha 1, hurt * 6
+      dec hurt
+   else
+      hide sprite 1
+   endif
+   if messagetime > 0 then dec messagetime
+endfunction
+
+rem ------------------------------------------------------------------
+rem HUD
+
+function draw_hud()
+   w = screen width() : h = screen height()
+   if mode = 0
+      set text font "Arial" : set text size 64 : set text to bold
+      shadow_text(w / 2, 40, "REACTOR BREACH", rgb(255, 200, 60))
+      set text size 20 : set text to normal
+      shadow_text(w / 2, 118, "Close the three coolant valves, then reach the exit lift.", rgb(200, 230, 255))
+      shadow_text(w / 2, 144, "WASD move   MOUSE aim   LEFT BUTTON fire   R reload   E valve   SPACE jump", rgb(200, 230, 255))
+      if (modetimer / 30) mod 2 = 0 then shadow_text(w / 2, h - 60, "CLICK OR PRESS ANY KEY TO START", rgb(255, 255, 255))
+      exitfunction
+   endif
+
+   set text font "Arial" : set text size 22 : set text to bold
+   rem Crosshair
+   ink rgb(160, 240, 255), 0
+   cx = w / 2 : cy = h / 2
+   line cx - 12, cy, cx - 4, cy : line cx + 4, cy, cx + 12, cy
+   line cx, cy - 12, cx, cy - 4 : line cx, cy + 4, cx, cy + 12
+
+   rem Health and ammunition
+   ink rgb(20, 30, 40), 0 : box 30, h - 52, 262, h - 28
+   c = rgb(80, 220, 120)
+   if health < 35 then c = rgb(255, 70, 50)
+   ink c, 0 : box 32, h - 50, 32 + health * 228 / 100, h - 30
+   ink rgb(230, 240, 255), 0 : text 30, h - 82, "HEALTH " + str$(health)
+   set text size 40
+   a$ = str$(ammo) + " / " + str$(reserve)
+   text w - 40 - text width(a$), h - 76, a$
+   set text size 22
+   if reload > 0 then text w - 40 - text width("RELOADING"), h - 104, "RELOADING"
+
+   rem Objectives and the core countdown
+   text 30, 24, "VALVES " + str$(closedcount) + " / " + str$(valvecount)
+   s = remaining : if s < 0 then s = 0
+   s$ = str$(s mod 60) : if len(s$) < 2 then s$ = "0" + s$
+   if closedcount < valvecount
+      c = rgb(255, 210, 90)
+      if s < 60 and (s mod 2) = 0 then c = rgb(255, 60, 40)
+      ink c, 0
+      text 30, 52, "CORE MELTDOWN " + str$(s / 60) + ":" + s$
+   else
+      ink rgb(120, 200, 255), 0
+      text 30, 52, "CORE STABLE - REACH THE LIFT"
+   endif
+   ink rgb(230, 240, 255), 0
+   text 30, 80, "DRONES DOWN " + str$(kills) + " / " + str$(dronecount)
+
+   draw_radar(w - 110, 110, 80)
+
+   if messagetime > 0
+      ink rgb(255, 230, 140), 0
+      center text w / 2, h / 2 + 80, message$
+   endif
+   for i = 1 to valvecount
+      if valves(i).closed = 0 and valves(i).turn > 0
+         ink rgb(20, 30, 40), 0 : box w / 2 - 102, h / 2 + 112, w / 2 + 102, h / 2 + 126
+         ink rgb(255, 200, 60), 0 : box w / 2 - 100, h / 2 + 114, w / 2 - 100 + valves(i).turn * 200 / 720, h / 2 + 124
+      endif
+   next i
+
+   if mode = 2
+      set text size 56
+      ink rgb(255, 60, 40), 0
+      if remaining <= 0 then center text w / 2, h / 2 - 90, "CORE MELTDOWN" else center text w / 2, h / 2 - 90, "TERMINATED"
+   endif
+   if mode = 3
+      set text size 56
+      ink rgb(120, 255, 160), 0
+      center text w / 2, h / 2 - 110, "LOCKDOWN LIFTED"
+      set text size 26
+      ink rgb(230, 240, 255), 0
+      center text w / 2, h / 2 - 40, "You escaped with " + str$(remaining / 60) + " min " + str$(remaining mod 60) + " s to spare."
+   endif
+endfunction
+
+function shadow_text(x, y, text$, colour)
+   ink rgb(0, 0, 0), 0 : center text x + 2, y + 2, text$
+   ink colour, 0 : center text x, y, text$
+endfunction
+
+rem The radar turns with the player: straight ahead is always up.
+function draw_radar(cx, cy, r)
+   ink rgb(30, 60, 70), 0 : circle cx, cy, r : circle cx, cy, r / 2
+   ink rgb(160, 240, 255), 0 : line cx, cy - 6, cx - 4, cy + 4 : line cx, cy - 6, cx + 4, cy + 4
+   for i = 1 to dronecount
+      if drones(i).state < 3
+         radar_dot(cx, cy, r, drones(i).x, drones(i).z, rgb(255, 60, 40))
+      endif
+   next i
+   for i = 1 to valvecount
+      if valves(i).closed = 0 then radar_dot(cx, cy, r, valves(i).x, valves(i).z, rgb(255, 210, 60))
+   next i
+   if closedcount = valvecount then radar_dot(cx, cy, r, exitx#, exitz#, rgb(120, 200, 255))
+endfunction
+
+function radar_dot(cx, cy, r, x#, z#, colour)
+   dx# = (x# - px#) * 0.3 : dz# = (z# - pz#) * 0.3
+   rx# = dx# * cos(yaw#) - dz# * sin(yaw#)
+   rz# = dx# * sin(yaw#) + dz# * cos(yaw#)
+   if rx# * rx# + rz# * rz# > r * r then exitfunction
+   ink colour, 0
+   box cx + rx# - 2, cy - rz# - 2, cx + rx# + 2, cy - rz# + 2
+endfunction
+
+rem ------------------------------------------------------------------
+tour:
+data 12
+data 0, -160, 0, -110, 0, -60, -45, -25, -65, 45, -30, 110, 30, 112, 65, 50
+data 120, 40, 190, 40, 120, 40, 40, -30
+
+rem layout:begin
+layout:
+rem The facility, in world units (floor at y = 0). assets-src/blender/reactor_breach.py
+rem reads these lines to model and light the level, so edit both together.
+rem room: x1, z1, x2, z2, ceiling height
+data "room", -40, -170, 40, -90, 50
+data "room", -14, -90, 14, -50, 36
+data "room", -90, -50, 90, 130, 90
+data "room", 90, 26, 150, 54, 36
+data "room", 150, -10, 230, 90, 56
+data "room", -150, 26, -90, 54, 36
+data "room", -230, -10, -150, 90, 56
+data "room", -14, 130, 14, 190, 36
+data "room", -32, 190, 32, 236, 44
+rem pillar: x, z, width / pump: x, z, radius / console: x, z, facing
+data "pillar", -55, -15, 14
+data "pillar", 55, -15, 14
+data "pillar", -55, 95, 14
+data "pillar", 55, 95, 14
+data "core", 0, 40, 22
+data "pump", 175, 28, 9
+data "pump", 205, 28, 9
+data "console", -205, 84, 180
+data "console", -185, 84, 180
+data "console", -165, 84, 180
+rem crate: x, z, size, yaw / valve: x, z, facing
+data "crate", -28, -152, 12, 10
+data "crate", -27, -139, 10, 35
+data "crate", 30, -108, 14, 0
+data "crate", -76, -36, 14, 20
+data "crate", -62, -40, 10, 0
+data "crate", 72, 116, 14, 45
+data "crate", 78, 101, 10, 10
+data "crate", 166, 76, 14, 0
+data "crate", 181, 79, 10, 30
+data "crate", 214, 4, 12, 15
+data "crate", -168, 74, 12, 10
+data "crate", -212, 2, 14, 0
+data "valve", 228, 40, 270
+data "valve", -228, 40, 90
+data "valve", 0, 16, 180
+rem drone, medkit, cell: x, z / start: x, z, facing / field: x1, z, x2 / exit: x, z
+data "drone", 0, -120
+data "drone", -40, 15
+data "drone", 40, 70
+data "drone", 0, 110
+data "drone", 190, 60
+data "drone", 200, 8
+data "drone", -190, 40
+data "drone", -170, 8
+data "medkit", 34, -160
+data "medkit", -80, 120
+data "medkit", 222, 82
+data "cell", -32, -98
+data "cell", 80, -40
+data "cell", -222, -2
+data "cell", 160, -2
+data "start", 0, -160, 0
+data "field", -14, 132, 14
+data "exit", 0, 224
+data "end"
+rem layout:end
