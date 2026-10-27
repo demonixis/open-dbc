@@ -57,6 +57,7 @@ examples/dbc/tutorials/text/type_specimen.dba	dbc	90	0.49	31
 examples/dbc/tutorials/text/typewriter.dba	dbc	90	0.50	25
 examples/dbpro/Hello World/Hello World.dba	dbpro	3	0.02	8
 examples/dbpro/demos/dusk_rally/dusk_rally.dba	dbpro	300	0.50	300
+examples/dbpro/demos/reactor_breach/reactor_breach.dba	dbpro	90	0.50	300
 examples/dbpro/demos/sky_gardens/sky_gardens.dba	dbpro	400	0.50	800
 examples/dbpro/tutorials/basic3d/basic3d1.dba.dbpro	dbpro	90	0.48	455
 examples/dbpro/tutorials/basic3d/basic3d3.dba.dbpro	dbpro	90	0.49	28
