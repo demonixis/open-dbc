@@ -4124,9 +4124,11 @@ namespace dbc
             K.Draw().ClearPrimitives2D();
             K.Sprites().ClearPastedSprites();
             LastFrameShowedWorld_ = Frame.WorldRendered;
-            // Once a 3D scene is shown, DarkBASIC repaints the backdrop at every SYNC, so what the
-            // program drew onto the screen lasts one frame. 2D-only programs keep their screen.
-            if (Frame.WorldRendered && K.Camera().BackdropEnabled())
+            // Once a 3D scene is shown, DarkBASIC repaints the screen at every SYNC, so what the program
+            // drew onto it lasts one frame. 2D-only programs keep their screen. BACKDROP OFF does not
+            // change this: the 3D pass still clears its target, and keeping the 2D layer would stack
+            // every frame's text over the scene.
+            if (Frame.WorldRendered)
                 K.ImageStoreRef().ClearScreenBitmap();
         }
 

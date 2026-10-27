@@ -1531,6 +1531,14 @@ TEST_CASE("Screen drawing lasts one frame once a 3D scene is shown")
     CHECK(ScreenPixel(1, 1)[3] == 0);
     CHECK(ScreenPixel(Width - 2, Height - 2)[3] == 0);
 
+    // BACKDROP OFF keeps the same lifetime: per-frame text such as an FPS counter must not stack.
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().DisableBackdrop(&Error); });
+    Kernel.Draw().DrawBox(0, 0, 3, 3);
+    Kernel.Renderer().RenderScene();
+    CHECK(Kernel.Renderer().LastFrameShowedWorld());
+    CHECK(ScreenPixel(1, 1)[3] == 0);
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().EnableBackdrop(&Error); });
+
     // A loading screen has no alpha channel; the 3D frame must still clear it rather than paint it black.
     const std::filesystem::path LoadingBitmap =
         std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp/loading.bmp";
