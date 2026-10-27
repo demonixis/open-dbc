@@ -261,6 +261,41 @@ def hum(rate: int = 11025):
             0.1 * math.sin(2 * math.pi * 330 * i / rate) for i in range(rate)]
 
 
+def motor(rate: int = 11025):
+    # One-second loop of a four-cylinder burble: firing pulses at 40 Hz with their harmonics,
+    # every partial completing whole cycles so the loop is seamless; SET SOUND SPEED raises the pitch.
+    output = []
+    for i in range(rate):
+        t = i / rate
+        pulse = sum(math.sin(2 * math.pi * 40 * k * t) / k for k in range(1, 9))
+        rasp = 0.15 * (hash01(i, 61, 113) * 2.0 - 1.0)
+        output.append(0.22 * pulse * (0.8 + 0.2 * math.sin(2 * math.pi * 20 * t)) + rasp)
+    return output
+
+
+def screech(rate: int = 22050):
+    # Half-second loop of tyre squeal: a wavering 1.1 kHz tone with whole-cycle vibrato, over hiss.
+    count = rate // 2
+    output = []
+    for i in range(count):
+        t = i / rate
+        phase = 2 * math.pi * (1100 * t - 6.0 / (2 * math.pi * 8) * math.cos(2 * math.pi * 8 * t))
+        hiss = hash01(i, 67, 127) * 2.0 - 1.0
+        output.append(0.28 * math.sin(phase) + 0.18 * math.sin(2 * phase) + 0.12 * hiss)
+    return output
+
+
+def surf(rate: int = 11025):
+    # Six seconds of waves: smoothed noise swelling twice, the swell envelope completing whole cycles.
+    count = rate * 6
+    smooth, output = 0.0, []
+    for i in range(count):
+        smooth += 0.25 * ((hash01(i, 71, 131) * 2.0 - 1.0) - smooth)
+        swell = 0.25 + 0.75 * math.sin(math.pi * 2 * i / count) ** 2
+        output.append(0.7 * swell * smooth)
+    return output
+
+
 def media() -> dict[str, bytes]:
     files = {}
     cavern = "examples/dbc/demos/cavern_dash/"
@@ -301,6 +336,15 @@ def media() -> dict[str, bytes]:
     files[hive + "swoop.wav"] = wav(sweep(500.0, 1500.0, 0.6, 2.0), 16)
     files[hive + "hum.wav"] = wav(hum(), 8, 11025)
     files[hive + "hit.wav"] = wav(noise_burst(1.2, 3.0, 47, 50.0), 16)
+    rally = "examples/dbpro/demos/dusk_rally/"
+    files[rally + "motor.wav"] = wav(motor(), 8, 11025)
+    files[rally + "screech.wav"] = wav(screech(), 16)
+    files[rally + "surf.wav"] = wav(surf(), 8, 11025)
+    files[rally + "beep.wav"] = wav(tone(660.0, 0.3, 6.0, harmonics=(1.0, 0.3, 0.1)), 16)
+    files[rally + "go.wav"] = wav(tone(1320.0, 0.7, 3.0, harmonics=(1.0, 0.3, 0.1)), 16)
+    files[rally + "lap.wav"] = wav(chime(), 16)
+    files[rally + "finish.wav"] = wav(fanfare(), 16)
+    files[rally + "bump.wav"] = wav(noise_burst(0.5, 7.0, 73, 60.0), 16)
     music = "examples/dbc/tutorials/music/"
     for name, (notes, tempo) in (("harbour_waltz", harbour_waltz()), ("night_march", night_march())):
         files[music + name + ".mid"] = midi(notes, tempo)

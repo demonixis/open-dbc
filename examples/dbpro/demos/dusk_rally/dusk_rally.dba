@@ -1,0 +1,1021 @@
+rem ==================================================================
+rem Dusk Rally - an OpenDBC example for the DarkBASIC Professional profile
+rem Three laps of a coastal circuit against three rivals while the sun
+rem sets over the sea: headlights and street lamps take over as the
+rem light fades. The title screen races on its own until a key is hit.
+rem Up/W accelerates, Down/S brakes and reverses, Left/Right or A/D
+rem steer, SPACE is the handbrake, C changes the camera, ESC quits.
+rem Code and media are part of OpenDBC (MIT code, CC0 media).
+rem ==================================================================
+
+#constant CONTROLS 14
+#constant SPS 24
+#constant SAMPLES 336
+#constant ROAD_HALF 7.0
+#constant CURB_OUT 8.6
+#constant BARRIER 14.0
+#constant LAMP_STEP 12
+#constant LAMP_SIDE 16.5
+#constant LAMP_REACH 12.5
+#constant LAMP_HEIGHT 7.4
+#constant LAMPS 28
+#constant CARS 4
+#constant LAPS 3
+#constant DT 0.0166667
+#constant TOP_SPEED 62.0
+#constant SUN_AZIMUTH -35.0
+
+rem Object, image and light numbers
+#constant OBJ_SKY 1
+#constant OBJ_GROUND 3
+#constant OBJ_SEA 4
+#constant OBJ_BULBS 5
+#constant OBJ_GANTRY 6
+#constant OBJ_STAND 7
+#constant OBJ_LIGHTHOUSE 8
+#constant OBJ_STARTLAMP 10
+#constant OBJ_CIRCUIT 20
+#constant OBJ_ROAD 21
+#constant OBJ_WALL 41
+#constant OBJ_CAR 60
+#constant OBJ_CARLAMPS 70
+#constant OBJ_FLARE 80
+#constant OBJ_LAMPFLARE 100
+#constant OBJ_PALM 110
+#constant OBJ_ROCK 140
+#constant OBJ_ISLE 170
+#constant LIGHT_POOL 5
+#constant POOL_SIZE 3
+#constant FLARE_POOL 4
+
+type Car
+   obj as integer
+   x as float
+   z as float
+   yaw as float
+   vx as float
+   vz as float
+   forward as float
+   steer as float
+   spin as float
+   idx as integer
+   run as integer
+   lateral as float
+   lane as float
+   skill as float
+   ai as integer
+   lapstart as integer
+   lastlap as integer
+   best as integer
+   finished as integer
+   finishtime as integer
+   slip as float
+   offroad as integer
+   place as integer
+   name as string
+endtype
+
+global mode as integer
+global ticks as integer
+global racetick as integer
+global modetick as integer
+global tod as float
+global camstyle as integer
+global camx as float
+global camy as float
+global camz as float
+global camyaw as float
+global shotx as float
+global shotz as float
+global shotkind as integer
+global throttle as float
+global steering as float
+global handbrake as integer
+global sunx as float
+global suny as float
+global sunz as float
+global mapx as float
+global mapz as float
+global mapscale as float
+
+dim cx#(CONTROLS) : dim cz#(CONTROLS)
+dim px#(SAMPLES) : dim pz#(SAMPLES)
+dim rx#(SAMPLES) : dim rz#(SAMPLES)
+dim curv#(SAMPLES) : dim seglen#(SAMPLES) : dim safe#(SAMPLES)
+dim lampx#(LAMPS) : dim lampz#(LAMPS)
+dim cars(CARS) as Car
+dim flarelamp(FLARE_POOL)
+
+set display mode 1280, 720, 32
+sync on : sync rate 60
+hide mouse
+autocam off
+set camera range 0.5, 950
+set camera fov 68
+randomize 7
+
+gosub build_circuit
+gosub build_world
+gosub build_cars
+gosub build_minimap
+gosub load_sounds
+
+mode = 0
+gosub new_race
+
+rem ==================================================================
+do
+   inc ticks
+   inc modetick
+   gosub read_input
+   select mode
+      case 0
+         rem Attract: every car is driven by the AI behind the title
+         tod = 0.3
+         for i = 1 to CARS : DriveCar(i, 1) : next i
+         if anykey() = 1 then mode = 1 : gosub new_race
+      endcase
+      case 1
+         rem Countdown: the cars wait on the grid while the gantry lights come on
+         tod = 0.0
+         if modetick mod 30 = 0 and modetick <= 150 then play sound 4
+         if modetick = 200
+            play sound 5
+            mode = 2 : modetick = 0 : racetick = 0
+            for i = 1 to CARS : cars(i).lapstart = 0 : next i
+         endif
+      endcase
+      case 2
+         inc racetick
+         tod = racetick / (60.0 * 150.0)
+         if tod > 1.0 then tod = 1.0
+         for i = 1 to CARS : DriveCar(i, cars(i).ai) : next i
+         if cars(1).finished = 1
+            mode = 3 : modetick = 0
+            play sound 7
+         endif
+      endcase
+      case 3
+         inc racetick
+         for i = 1 to CARS : DriveCar(i, 1) : next i
+         if spacekey() = 1 and modetick > 60 then mode = 1 : gosub new_race
+      endcase
+   endselect
+   if mode <> 1 then gosub collide_cars
+   gosub rank_cars
+   for i = 1 to CARS : PlaceCar(i) : next i
+   gosub update_camera
+   gosub update_lights
+   gosub update_sounds
+   gosub draw_hud
+   sync
+loop
+
+rem ------------------------------------------------------------------
+rem The circuit: the same Catmull-Rom spline the Blender script modelled
+build_circuit:
+   restore circuit_data
+   for i = 0 to CONTROLS - 1 : read cx#(i), cz#(i) : next i
+   for v = 1 to 5 : r = make vector3(v) : next v
+   k = 0
+   for span = 0 to CONTROLS - 1
+      for v = 1 to 4
+         c = (span + v - 2 + CONTROLS) mod CONTROLS
+         set vector3 v, cx#(c), 0, cz#(c)
+      next v
+      for s = 0 to SPS - 1
+         catmullrom vector3 5, 1, 2, 3, 4, s / (SPS * 1.0)
+         px#(k) = x vector3(5) : pz#(k) = z vector3(5)
+         inc k
+      next s
+   next span
+   for v = 1 to 5 : r = delete vector3(v) : next v
+
+   rem Right-hand normals, segment lengths and signed curvature
+   for k = 0 to SAMPLES - 1
+      a = Wrap(k - 1) : b = Wrap(k + 1)
+      tx# = px#(b) - px#(a) : tz# = pz#(b) - pz#(a)
+      l# = sqrt(tx# * tx# + tz# * tz#)
+      rx#(k) = tz# / l# : rz#(k) = 0 - tx# / l#
+      seglen#(k) = sqrt((px#(b) - px#(k)) ^ 2 + (pz#(b) - pz#(k)) ^ 2)
+   next k
+   for k = 0 to SAMPLES - 1
+      a = Wrap(k - 1) : b = Wrap(k + 1)
+      turn# = wrapvalue(atanfull(rx#(a) * rz#(b) - rz#(a) * rx#(b), rx#(a) * rx#(b) + rz#(a) * rz#(b)) + 180) - 180
+      curv#(k) = turn# / 57.2958 / (seglen#(a) + seglen#(k))
+   next k
+
+   rem Safe speed: what the corner allows, then lowered so a car can brake in time for the next one
+   for k = 0 to SAMPLES - 1
+      c# = abs(curv#(k))
+      if c# < 0.0001 then c# = 0.0001
+      safe#(k) = sqrt(15.0 / c#)
+      if safe#(k) > TOP_SPEED then safe#(k) = TOP_SPEED
+   next k
+   for pass = 1 to 2
+      for k = SAMPLES - 1 to 0 step -1
+         n = Wrap(k + 1)
+         limit# = sqrt(safe#(n) * safe#(n) + 2.0 * 16.0 * seglen#(k))
+         if limit# < safe#(k) then safe#(k) = limit#
+      next k
+   next pass
+
+   for j = 0 to LAMPS - 1
+      k = j * LAMP_STEP + LAMP_STEP / 2
+      side = 1 - (j mod 2) * 2
+      lampx#(j) = px#(k) + rx#(k) * side * LAMP_REACH
+      lampz#(j) = pz#(k) + rz#(k) * side * LAMP_REACH
+   next j
+return
+
+rem ------------------------------------------------------------------
+build_world:
+   load image "detail.jpg", 3
+   load image "sea.jpg", 4
+   load image "gloss.jpg", 5
+   load image "flare.jpg", 6
+   load image "flare_red.jpg", 7
+   load image "barrier_bump.jpg", 8
+   load image "rock_bump.jpg", 9
+   for c = 1 to CARS : load image "car_" + str$(c) + ".jpg", 10 + c : next c
+
+   rem The sky dome follows the camera; nightfall darkens it through its vertex colours
+   load object "sky.x", OBJ_SKY
+   scale object OBJ_SKY, 90000, 90000, 90000
+   set object cull OBJ_SKY, 0
+   set object light OBJ_SKY, 0
+   set object fog OBJ_SKY, 0
+   disable object zwrite OBJ_SKY
+   skytod# = -1.0
+
+   rem The island, with a tiled detail map on a second UV set written from the vertex positions
+   load object "ground.x", OBJ_GROUND
+   lock vertexdata for limb OBJ_GROUND, 0
+   for v = 0 to get vertexdata vertex count() - 1
+      set vertexdata uv v, 1, get vertexdata position x(v) / 7.0, get vertexdata position z(v) / 7.0
+   next v
+   unlock vertexdata
+   set blend mapping on OBJ_GROUND, 1, 3, 11, 5
+
+   make object box OBJ_SEA, 6000, 1, 6000
+   position object OBJ_SEA, 0, -1.0, 0
+   texture object OBJ_SEA, 4
+   scale object texture OBJ_SEA, 150, 150
+   set object specular OBJ_SEA, rgb(255, 210, 160)
+   set object specular power OBJ_SEA, 60
+   set blend mapping on OBJ_SEA, 1, 5, 2, 7
+
+   rem One model holds the whole circuit: its limbs become separate objects so hidden chunks are culled
+   load object "circuit.x", OBJ_CIRCUIT
+   for c = 0 to 15
+      make object from limb OBJ_ROAD + c, OBJ_CIRCUIT, c + 1
+      make object from limb OBJ_WALL + c, OBJ_CIRCUIT, c + 17
+      set bump mapping on OBJ_WALL + c, 8
+      set object specular OBJ_ROAD + c, rgb(70, 60, 50)
+      set object specular power OBJ_ROAD + c, 20
+   next c
+   delete object OBJ_CIRCUIT
+
+   load object "bulbs.x", OBJ_BULBS
+   set object light OBJ_BULBS, 0
+
+   rem Start gantry, its five lights and the grandstand facing the line
+   load object "gantry.x", OBJ_GANTRY
+   position object OBJ_GANTRY, px#(0), 0, pz#(0)
+   yrotate object OBJ_GANTRY, atanfull(0 - rz#(0), rx#(0))
+   for l = 0 to 4
+      make object cube OBJ_STARTLAMP + l, 0.55
+      position object OBJ_STARTLAMP + l, px#(0) + rx#(0) * (l - 2) * 1.6, 6.45, pz#(0) + rz#(0) * (l - 2) * 1.6
+      set object light OBJ_STARTLAMP + l, 0
+   next l
+   load object "grandstand.x", OBJ_STAND
+   k = 6
+   position object OBJ_STAND, px#(k) - rx#(k) * 26, 0, pz#(k) - rz#(k) * 26
+   yrotate object OBJ_STAND, atanfull(rx#(k), rz#(k))
+
+   rem Lighthouse on the headland
+   a# = -150.0
+   r# = CoastRadius(a#) - 22.0
+   lhx# = 15 + cos(a#) * r# : lhz# = 30 + sin(a#) * r#
+   load object "lighthouse.x", OBJ_LIGHTHOUSE
+   position object OBJ_LIGHTHOUSE, lhx#, 0, lhz#
+
+   rem Palms away from the road, rocks along the beach, islets out at sea
+   load object "palm.x", OBJ_PALM
+   n = 0
+   for j = 0 to 47
+      k = (j * 7 + 3) mod SAMPLES
+      side = 1 - (j mod 2) * 2
+      d# = 20.0 + rnd(14)
+      x# = px#(k) + rx#(k) * side * d# : z# = pz#(k) + rz#(k) * side * d#
+      if n < 26 and TrackDistance(x#, z#) > 17.0 and CoastMargin(x#, z#) > 12.0
+         o = OBJ_PALM + n
+         if n > 0 then instance object o, OBJ_PALM
+         position object o, x#, 0, z#
+         yrotate object o, rnd(359)
+         set object cull o, 0
+         s = 85 + rnd(35) : scale object o, s, s, s
+         inc n
+      endif
+   next j
+   load object "rock.x", OBJ_ROCK
+   n = 0
+   for j = 0 to 60
+      a# = j * 6.0
+      r# = CoastRadius(a#) + 1.0
+      x# = 15 + cos(a#) * r# : z# = 30 + sin(a#) * r#
+      if n < 24 and TrackDistance(x#, z#) > 22.0 and rnd(2) > 0
+         o = OBJ_ROCK + n
+         if n > 0 then clone object o, OBJ_ROCK
+         position object o, x#, -0.6, z#
+         rotate object o, rnd(20), rnd(359), rnd(20)
+         s = 250 + rnd(350) : scale object o, s, s * 0.8, s
+         set bump mapping on o, 9
+         inc n
+      endif
+   next j
+   load object "hill.x", OBJ_ISLE
+   restore isle_data
+   for j = 0 to 4
+      read a#, r#, w#, h#
+      o = OBJ_ISLE + j
+      if j > 0 then clone object o, OBJ_ISLE
+      position object o, 15 + cos(a#) * r#, -2.0, 30 + sin(a#) * r#
+      yrotate object o, a# * 3
+      scale object o, w# * 100, h# * 100, w# * 80
+      set bump mapping on o, 9
+   next j
+
+   rem Additive glows: two pools reused every frame for car lamps and street lamps
+   for f = 0 to CARS * 4 - 1
+      make object plain OBJ_FLARE + f, 1, 1
+      if f mod 4 < 2 then texture object OBJ_FLARE + f, 6 else texture object OBJ_FLARE + f, 7
+      rem Additive glows stay out of the fog, which would otherwise add its colour to them
+      ghost object on OBJ_FLARE + f
+      set object light OBJ_FLARE + f, 0
+      set object fog OBJ_FLARE + f, 0
+      disable object zwrite OBJ_FLARE + f
+   next f
+   for f = 0 to FLARE_POOL - 1
+      make object plain OBJ_LAMPFLARE + f, 5, 5
+      texture object OBJ_LAMPFLARE + f, 6
+      ghost object on OBJ_LAMPFLARE + f
+      set object light OBJ_LAMPFLARE + f, 0
+      set object fog OBJ_LAMPFLARE + f, 0
+      disable object zwrite OBJ_LAMPFLARE + f
+   next f
+
+   rem Lights: the sun is light 0, cars own 1-4, three point lights follow the nearest street lamps
+   fog on
+   set ambient light 42
+   for i = 1 to CARS
+      make light i
+      set spot light i, 18, 42
+      set light range i, 55
+   next i
+   for l = 0 to POOL_SIZE - 1
+      make light LIGHT_POOL + l
+      set point light LIGHT_POOL + l, 0, 0, 0
+      set light range LIGHT_POOL + l, 24
+   next l
+
+   rem Tyre smoke and grass dust
+   make particles 1, 6, 4, 2.0
+   color particles 1, 120, 110, 105
+   set particle gravity 1, -1
+   set particle velocity 1, 1
+   set particle life 1, 40
+   set particle emissions 1, 0
+   ghost particles on 1, 1
+   make particles 2, 6, 4, 2.5
+   color particles 2, 150, 120, 70
+   set particle gravity 2, -1
+   set particle velocity 2, 2
+   set particle life 2, 35
+   set particle emissions 2, 0
+   ghost particles on 2, 1
+return
+
+rem ------------------------------------------------------------------
+build_cars:
+   load mesh "car_shadow.x", 1
+   restore car_data
+   for i = 1 to CARS
+      read cars(i).name, cars(i).lane, cars(i).skill
+      o = OBJ_CAR + i - 1
+      cars(i).obj = o
+      if i = 1 then load object "car.x", o else clone object o, OBJ_CAR
+      texture limb o, 0, 10 + i
+      set object specular o, rgb(255, 245, 230)
+      set object specular power o, 30
+      set blend mapping on o, 1, 5, 1, 7
+      set shadow shading on o, 1, 14, 0
+      load object "car_lamps.x", OBJ_CARLAMPS + i - 1
+      set object light OBJ_CARLAMPS + i - 1, 0
+   next i
+   cars(1).ai = 0
+return
+
+rem The minimap is drawn once into an image, then pasted every frame
+build_minimap:
+   minx# = 999999999.0 : maxx# = -999999999.0 : minz# = 999999999.0 : maxz# = -999999999.0
+   for k = 0 to SAMPLES - 1
+      if px#(k) < minx# then minx# = px#(k)
+      if px#(k) > maxx# then maxx# = px#(k)
+      if pz#(k) < minz# then minz# = pz#(k)
+      if pz#(k) > maxz# then maxz# = pz#(k)
+   next k
+   mapscale = 170.0 / Larger(maxx# - minx#, maxz# - minz#)
+   mapx = minx# : mapz = maxz#
+   create bitmap 1, 200, 200
+   set current bitmap 1
+   cls 0
+   for pass = 0 to 1
+      if pass = 0 then ink rgb(20, 20, 30), 0 else ink rgb(235, 225, 210), 0
+      for k = 0 to SAMPLES - 1
+         n = Wrap(k + 1)
+         x1 = 15 + (px#(k) - mapx) * mapscale : y1 = 15 + (mapz - pz#(k)) * mapscale
+         x2 = 15 + (px#(n) - mapx) * mapscale : y2 = 15 + (mapz - pz#(n)) * mapscale
+         for o = 0 - (2 - pass) to 2 - pass
+            line x1 + o, y1, x2 + o, y2
+            line x1, y1 + o, x2, y2 + o
+         next o
+      next k
+   next pass
+   get image 30, 0, 0, 200, 200
+   set current bitmap 0
+   delete bitmap 1
+return
+
+load_sounds:
+   load sound "motor.wav", 1
+   load sound "screech.wav", 2
+   load sound "surf.wav", 3
+   load sound "beep.wav", 4
+   load sound "go.wav", 5
+   load sound "lap.wav", 6
+   load sound "finish.wav", 7
+   load sound "bump.wav", 8
+   for i = 2 to CARS : load 3dsound "motor.wav", 10 + i : loop sound 10 + i : next i
+   loop sound 1 : loop sound 2 : loop sound 3
+   set sound volume 2, 0
+   set sound volume 3, 70
+return
+
+rem ------------------------------------------------------------------
+rem Grid: two columns behind the line; the player starts last
+new_race:
+   for i = 1 to CARS
+      g = CARS - i
+      k = Wrap(0 - 3 - g * 3)
+      side# = 3.2 - (g mod 2) * 6.4
+      cars(i).x = px#(k) + rx#(k) * side#
+      cars(i).z = pz#(k) + rz#(k) * side#
+      cars(i).yaw = atanfull(px#(Wrap(k + 1)) - px#(k), pz#(Wrap(k + 1)) - pz#(k))
+      cars(i).vx = 0 : cars(i).vz = 0 : cars(i).forward = 0 : cars(i).steer = 0
+      cars(i).idx = k : cars(i).run = k - SAMPLES
+      cars(i).finished = 0 : cars(i).best = 0 : cars(i).lastlap = 0 : cars(i).lapstart = 0
+      cars(i).ai = 1
+   next i
+   if mode = 1 then cars(1).ai = 0
+   modetick = 0 : racetick = 0
+   camyaw = cars(1).yaw : camx = cars(1).x : camz = cars(1).z : camy = 5
+   for l = 0 to 4 : color object OBJ_STARTLAMP + l, rgb(25, 20, 20) : next l
+return
+
+read_input:
+   throttle = 0 : steering = 0 : handbrake = 0
+   if upkey() = 1 or keystate(17) = 1 then throttle = 1
+   if downkey() = 1 or keystate(31) = 1 then throttle = -1
+   if leftkey() = 1 or keystate(30) = 1 then steering = -1
+   if rightkey() = 1 or keystate(32) = 1 then steering = 1
+   if spacekey() = 1 then handbrake = 1
+   if keystate(46) = 1
+      if ckey = 0 then camstyle = 1 - camstyle
+      ckey = 1
+   else
+      ckey = 0
+   endif
+return
+
+rem Cars push each other apart and swap part of their closing speed
+collide_cars:
+   for i = 1 to CARS - 1
+      for j = i + 1 to CARS
+         dx# = cars(j).x - cars(i).x : dz# = cars(j).z - cars(i).z
+         d# = sqrt(dx# * dx# + dz# * dz#)
+         if d# < 2.6 and d# > 0.01
+            nx# = dx# / d# : nz# = dz# / d#
+            push# = (2.6 - d#) * 0.5
+            cars(i).x = cars(i).x - nx# * push# : cars(i).z = cars(i).z - nz# * push#
+            cars(j).x = cars(j).x + nx# * push# : cars(j).z = cars(j).z + nz# * push#
+            closing# = (cars(i).vx - cars(j).vx) * nx# + (cars(i).vz - cars(j).vz) * nz#
+            if closing# > 0
+               cars(i).vx = cars(i).vx - nx# * closing# * 0.6 : cars(i).vz = cars(i).vz - nz# * closing# * 0.6
+               cars(j).vx = cars(j).vx + nx# * closing# * 0.6 : cars(j).vz = cars(j).vz + nz# * closing# * 0.6
+               if closing# > 4 and (i = 1 or j = 1) and mode = 2 then play sound 8
+            endif
+         endif
+      next j
+   next i
+return
+
+rem Places: finished cars by time, the others by distance run
+rank_cars:
+   for i = 1 to CARS
+      p = 1
+      for j = 1 to CARS
+         if j <> i
+            if cars(j).finished = 1 and cars(i).finished = 1
+               if cars(j).finishtime < cars(i).finishtime then inc p
+            else
+               if cars(j).finished > cars(i).finished then inc p
+               if cars(j).finished = cars(i).finished and cars(j).run > cars(i).run then inc p
+               if cars(j).finished = cars(i).finished and cars(j).run = cars(i).run and j < i then inc p
+            endif
+         endif
+      next j
+      cars(i).place = p
+   next i
+return
+
+rem ------------------------------------------------------------------
+rem Camera: chase or bonnet while racing; the title screen cuts between shots
+update_camera:
+   if mode = 0
+      focus = 1
+      for i = 1 to CARS
+         if cars(i).place = 1 then focus = i
+      next i
+      shot = (modetick / 420) mod 3
+   else
+      focus = 1
+      shot = camstyle * 3
+   endif
+   x# = cars(focus).x : z# = cars(focus).z : yaw# = cars(focus).yaw
+   select shot
+      case 0
+         camyaw = CurveAngleTo(camyaw, yaw#, 0.08)
+         tx# = x# - sin(camyaw) * 8.5 : tz# = z# - cos(camyaw) * 8.5
+         camx = camx + (tx# - camx) * 0.3 : camz = camz + (tz# - camz) * 0.3 : camy = camy + (3.1 - camy) * 0.2
+         position camera camx, camy, camz
+         point camera x# + sin(yaw#) * 4, 1.2, z# + cos(yaw#) * 4
+      endcase
+      case 1
+         rem Trackside: wait beside the road ahead, then pick a new spot once the car has passed
+         dx# = shotx - x# : dz# = shotz - z#
+         if shotkind <> 1 or dx# * dx# + dz# * dz# > 6400 or dx# * sin(yaw#) + dz# * cos(yaw#) < -25
+            k = Wrap(cars(focus).idx + 12)
+            side = 1 - ((k / 12) mod 2) * 2
+            shotx = px#(k) + rx#(k) * side * 11.5 : shotz = pz#(k) + rz#(k) * side * 11.5
+            shotkind = 1
+         endif
+         position camera shotx, 1.6, shotz
+         point camera x#, 1.0, z#
+      endcase
+      case 2
+         a# = modetick * 0.35
+         position camera x# + sin(a#) * 12, 4.5, z# + cos(a#) * 12
+         point camera x#, 0.9, z#
+         shotkind = 2
+      endcase
+      case 3
+         position camera x# + sin(yaw#) * 0.4, 1.32, z# + cos(yaw#) * 0.4
+         point camera x# + sin(yaw#) * 20, 1.0, z# + cos(yaw#) * 20
+      endcase
+   endselect
+   if shot <> 0 then camx = camera position x() : camz = camera position z() : camy = 3.1 : camyaw = yaw#
+   position object OBJ_SKY, camera position x(), -60, camera position z()
+return
+
+rem ------------------------------------------------------------------
+rem Time of day: the sun sinks, the sky domes cross-fade, lamps come up
+update_lights:
+   elevation# = 13.0 - tod * 10.0
+   sunx = cos(elevation#) * cos(SUN_AZIMUTH) : suny = sin(elevation#) : sunz = cos(elevation#) * sin(SUN_AZIMUTH)
+   set directional light 0, 0 - sunx, 0 - suny, 0 - sunz
+   color light 0, Blend(255, 170, tod), Blend(165, 70, tod), Blend(105, 60, tod)
+   color ambient light rgb(Blend(120, 50, tod), Blend(105, 56, tod), Blend(125, 100, tod))
+   fogr = Blend(205, 52, tod) : fogg = Blend(135, 48, tod) : fogb = Blend(105, 80, tod)
+   fog color rgb(fogr, fogg, fogb)
+   fog distance 120, 820 - tod * 280
+   color backdrop rgb(fogr, fogg, fogb)
+   if abs(tod - skytod#) > 0.01 then gosub tint_sky
+   set shadow position -1, camera position x() + sunx * 900, suny * 900, camera position z() + sunz * 900
+   scroll limb texture OBJ_SEA, 0, 0.0004, 0.0002
+
+   rem Headlights: a spot per car, aimed at the road ahead
+   for i = 1 to CARS
+      hx# = sin(cars(i).yaw) : hz# = cos(cars(i).yaw)
+      position light i, cars(i).x + hx# * 2.3, 0.9, cars(i).z + hz# * 2.3
+      point light i, cars(i).x + hx# * 22, 0, cars(i).z + hz# * 22
+      lv# = 1.1 + tod * 0.9
+      color light i, 255 * lv#, 235 * lv#, 200 * lv#
+   next i
+
+   rem The street lamps nearest the point the camera looks at get the point lights and the glows
+   fx# = camera position x() + sin(camera angle y()) * 30 : fz# = camera position z() + cos(camera angle y()) * 30
+   for f = 0 to FLARE_POOL - 1
+      best# = 999999999.0 : bestj = -1
+      for j = 0 to LAMPS - 1
+         d# = (lampx#(j) - fx#) ^ 2 + (lampz#(j) - fz#) ^ 2
+         if d# < best#
+            taken = 0
+            for g = 0 to f - 1
+               if flarelamp(g) = j then taken = 1
+            next g
+            if taken = 0 then best# = d# : bestj = j
+         endif
+      next j
+      flarelamp(f) = bestj
+   next f
+   lamp# = 0.55 + tod * 0.9
+   for f = 0 to FLARE_POOL - 1
+      j = flarelamp(f)
+      o = OBJ_LAMPFLARE + f
+      position object o, lampx#(j), LAMP_HEIGHT - 0.45, lampz#(j)
+      point object o, camera position x(), camera position y(), camera position z()
+      glow = 55 + tod * 65 : scale object o, glow, glow, glow
+      if f < POOL_SIZE
+         position light LIGHT_POOL + f, lampx#(j), LAMP_HEIGHT - 0.8, lampz#(j)
+         color light LIGHT_POOL + f, 255 * lamp#, 185 * lamp#, 110 * lamp#
+      endif
+   next f
+return
+
+rem The horizon keeps a red glow while the upper sky sinks to night blue
+tint_sky:
+   skytod# = tod
+   lock vertexdata for limb OBJ_SKY, 0
+   for v = 0 to get vertexdata vertex count() - 1
+      up# = get vertexdata position y(v)
+      if up# < 0 then up# = 0
+      r# = 1.0 - tod * (0.15 + up# * 0.75)
+      g# = 1.0 - tod * (0.45 + up# * 0.4)
+      b# = 1.0 - tod * (0.35 + up# * 0.3)
+      rem The top byte is the vertex alpha: subtracting 2^24 sets it to 255 in the signed colour
+      set vertexdata diffuse v, rgb(r# * 255, g# * 255, b# * 255) - 16777216
+   next v
+   unlock vertexdata
+return
+
+update_sounds:
+   f# = abs(cars(1).forward)
+   set sound speed 1, 9000 + f# * 380
+   set sound volume 1, 70 + Smaller(f#, 30.0)
+   skid# = cars(1).slip * 9.0
+   if mode = 0 or mode = 1 then skid# = 0
+   if skid# > 90 then skid# = 90
+   set sound volume 2, skid#
+   position listener camera position x(), camera position y(), camera position z()
+   rotate listener 0, camera angle y(), 0
+   for i = 2 to CARS
+      position sound 10 + i, cars(i).x, 1, cars(i).z
+      set sound speed 10 + i, 9000 + abs(cars(i).forward) * 380
+   next i
+return
+
+rem ------------------------------------------------------------------
+draw_hud:
+   w = screen width() : h = screen height()
+   set text font "arial" : set text to bold : set text transparent
+   paste image 30, w - 215, 10, 1
+   for i = CARS to 1 step -1
+      x = w - 215 + 15 + (cars(i).x - mapx) * mapscale
+      y = 10 + 15 + (mapz - cars(i).z) * mapscale
+      if i = 1 then ink rgb(255, 120, 20), 0 else ink rgb(200, 220, 255), 0
+      box x - 4, y - 4, x + 4, y + 4
+   next i
+   select mode
+      case 0
+         set text size 72
+         Shadowed(w / 2, h / 2 - 150, "DUSK RALLY", rgb(255, 190, 110), 1)
+         set text size 24
+         Shadowed(w / 2, h / 2 - 70, "Three laps of the island before nightfall", rgb(240, 230, 220), 1)
+         if (ticks / 30) mod 2 = 0 then Shadowed(w / 2, h - 140, "PRESS ANY KEY TO RACE", rgb(255, 255, 255), 1)
+         set text size 18
+         Shadowed(w / 2, h - 90, "ARROWS / WASD drive    SPACE handbrake    C camera    ESC quit", rgb(220, 210, 200), 1)
+      endcase
+      case 1
+         rem Five red lights, one every half second; they all turn green on GO
+         lit = modetick / 30
+         for l = 0 to 4
+            if l < lit then color object OBJ_STARTLAMP + l, rgb(255, 35, 20)
+         next l
+         set text size 48
+         Shadowed(w / 2, h / 2 - 120, "GET READY", rgb(255, 120, 80), 1)
+         gosub draw_race_hud
+      endcase
+      case 2
+         if racetick = 1
+            for l = 0 to 4 : color object OBJ_STARTLAMP + l, rgb(40, 255, 70) : next l
+         endif
+         if racetick < 60
+            set text size 96
+            Shadowed(w / 2, h / 2 - 140, "GO!", rgb(80, 255, 110), 1)
+         endif
+         gosub draw_race_hud
+      endcase
+      case 3
+         gosub draw_results
+      endcase
+   endselect
+return
+
+draw_race_hud:
+   set text size 40
+   Shadowed(30, 20, "POS " + str$(cars(1).place) + "/" + str$(CARS), rgb(255, 255, 255), 0)
+   lap = Smaller(cars(1).run / SAMPLES + 1, LAPS)
+   if cars(1).run < 0 then lap = 1
+   Shadowed(30, 68, "LAP " + str$(lap) + "/" + str$(LAPS), rgb(255, 200, 120), 0)
+   set text size 22
+   Shadowed(30, 122, "TIME  " + Clock$(racetick - cars(1).lapstart), rgb(240, 235, 225), 0)
+   if cars(1).best > 0 then Shadowed(30, 148, "BEST  " + Clock$(cars(1).best), rgb(240, 235, 225), 0)
+   if cars(1).offroad = 1 and mode = 2 then Shadowed(w / 2, h - 170, "OFF TRACK", rgb(255, 120, 60), 1)
+   kmh = int(abs(cars(1).forward) * 3.6)
+   set text size 64
+   Shadowed(w - 60, h - 120, str$(kmh), rgb(255, 255, 255), 2)
+   set text size 20
+   Shadowed(w - 60, h - 54, "KM/H", rgb(220, 210, 200), 2)
+   bar = int(abs(cars(1).forward) / TOP_SPEED * 260)
+   ink rgb(30, 25, 35), 0 : box w - 330, h - 40, w - 60, h - 30
+   ink rgb(255, 140, 40), 0 : box w - 330, h - 40, w - 330 + bar, h - 30
+return
+
+draw_results:
+   set text size 56
+   Shadowed(w / 2, 90, "RESULTS", rgb(255, 190, 110), 1)
+   set text size 28
+   for p = 1 to CARS
+      for i = 1 to CARS
+         if cars(i).place = p
+            if cars(i).finished = 1 then t$ = Clock$(cars(i).finishtime) else t$ = "racing"
+            if i = 1 then c = rgb(255, 160, 60) else c = rgb(235, 230, 225)
+            Shadowed(w / 2 - 220, 140 + p * 50, str$(p) + ".  " + cars(i).name, c, 0)
+            Shadowed(w / 2 + 220, 140 + p * 50, t$, c, 2)
+         endif
+      next i
+   next p
+   set text size 22
+   if cars(1).best > 0 then Shadowed(w / 2, 420, "Best lap " + Clock$(cars(1).best), rgb(240, 235, 225), 1)
+   Shadowed(w / 2, h - 100, "SPACE to race again    ESC to quit", rgb(255, 255, 255), 1)
+return
+
+rem ==================================================================
+rem Driving: the same physics for everyone; the AI only chooses the inputs
+function DriveCar(i, auto)
+   if auto = 1
+      AIInputs(i)
+      t# = throttle : s# = steering : hb = 0
+   else
+      t# = throttle : s# = steering : hb = handbrake
+   endif
+   if cars(i).finished = 1 and auto = 1 then t# = t# * 0.5
+
+   yaw# = cars(i).yaw
+   hx# = sin(yaw#) : hz# = cos(yaw#)
+   sx# = cos(yaw#) : sz# = 0 - sin(yaw#)
+   f# = cars(i).vx * hx# + cars(i).vz * hz#
+   l# = cars(i).vx * sx# + cars(i).vz * sz#
+
+   top# = TOP_SPEED
+   if cars(i).offroad = 1 then top# = 26.0
+   if t# > 0 then f# = f# + t# * 15.0 * DT * (1.0 - f# / top#)
+   if t# < 0
+      if f# > 0.5 then f# = f# + t# * 26.0 * DT else f# = f# + t# * 7.0 * DT
+   endif
+   if f# < -9.0 then f# = -9.0
+   f# = f# - f# * 0.1 * DT
+   if cars(i).offroad = 1 then f# = f# - f# * 0.9 * DT
+   grip# = 9.0
+   if hb = 1 then grip# = 1.4 : f# = f# - f# * 0.6 * DT
+   l# = l# * (1.0 - grip# * DT)
+
+   cars(i).steer = cars(i).steer + (s# - cars(i).steer) * 0.18
+   rate# = 95.0 * Smaller(abs(f#) / 9.0, 1.0) * (1.0 - 0.5 * Smaller(abs(f#) / 60.0, 1.0))
+   if hb = 1 then rate# = rate# * 1.45
+   if f# < 0 then rate# = 0 - rate#
+   rem World velocity keeps the old heading: grip pulls it round next frame, which makes the slides
+   cars(i).vx = hx# * f# + sx# * l#
+   cars(i).vz = hz# * f# + sz# * l#
+   cars(i).yaw = wrapvalue(yaw# + cars(i).steer * rate# * DT)
+   cars(i).x = cars(i).x + cars(i).vx * DT
+   cars(i).z = cars(i).z + cars(i).vz * DT
+   cars(i).forward = f#
+   cars(i).slip = abs(l#)
+   cars(i).spin = wrapvalue(cars(i).spin + f# * DT * 163.7)
+   KeepOnTrack(i)
+endfunction
+
+function AIInputs(i)
+   k = cars(i).idx
+   f# = cars(i).forward
+   ahead = Wrap(k + 2 + int(abs(f#) * 0.13))
+   rem Racing line: drift to the inside of the coming bend, plus the car's own lane
+   bend# = curv#(Wrap(ahead + 3)) * 450.0
+   if bend# > 4.5 then bend# = 4.5
+   if bend# < -4.5 then bend# = -4.5
+   lane# = cars(i).lane - bend#
+   rem Look for a slower car just ahead and pass it on the other side
+   for j = 1 to CARS
+      if j <> i
+         gap = cars(j).run - cars(i).run
+         if gap > 0 and gap < 3 and abs(cars(j).lateral - cars(i).lateral) < 3.0
+            if cars(j).lateral > 0 then lane# = cars(j).lateral - 4.0 else lane# = cars(j).lateral + 4.0
+         endif
+      endif
+   next j
+   if lane# > 5.0 then lane# = 5.0
+   if lane# < -5.0 then lane# = -5.0
+   tx# = px#(ahead) + rx#(ahead) * lane# : tz# = pz#(ahead) + rz#(ahead) * lane#
+   want# = atanfull(tx# - cars(i).x, tz# - cars(i).z)
+   diff# = wrapvalue(want# - cars(i).yaw + 180) - 180
+   steering = diff# / 18.0
+   if steering > 1 then steering = 1
+   if steering < -1 then steering = -1
+   target# = safe#(Wrap(k + 2)) * cars(i).skill
+   if cars(i).offroad = 1 then target# = 22
+   if mode = 2 and i > 1
+      rem A gentle pull towards the player keeps the race close
+      if cars(i).run < cars(1).run - 30 then target# = target# * 1.03
+      if cars(i).run > cars(1).run + 60 then target# = target# * 0.97
+   endif
+   throttle = 1
+   if f# > target# + 1.5 then throttle = -1
+   if f# > target# - 0.5 and f# <= target# + 1.5 then throttle = 0.25
+endfunction
+
+rem Find the nearest centreline sample, keep the car inside the walls and count its progress
+function KeepOnTrack(i)
+   x# = cars(i).x : z# = cars(i).z
+   k = cars(i).idx
+   best# = 999999999.0 : bestk = k
+   for d = -6 to 6
+      n = Wrap(k + d)
+      dd# = (px#(n) - x#) ^ 2 + (pz#(n) - z#) ^ 2
+      if dd# < best# then best# = dd# : bestk = n
+   next d
+   moved = bestk - k
+   if moved > SAMPLES / 2 then moved = moved - SAMPLES
+   if moved < 0 - SAMPLES / 2 then moved = moved + SAMPLES
+   cars(i).idx = bestk
+   cars(i).run = cars(i).run + moved
+   lat# = (x# - px#(bestk)) * rx#(bestk) + (z# - pz#(bestk)) * rz#(bestk)
+   limit# = BARRIER - 1.1
+   if abs(lat#) > limit#
+      side# = 1.0 : if lat# < 0 then side# = -1.0
+      over# = abs(lat#) - limit#
+      cars(i).x = x# - rx#(bestk) * side# * over#
+      cars(i).z = z# - rz#(bestk) * side# * over#
+      vn# = (cars(i).vx * rx#(bestk) + cars(i).vz * rz#(bestk)) * side#
+      if vn# > 0
+         cars(i).vx = (cars(i).vx - rx#(bestk) * side# * vn# * 1.4) * 0.92
+         cars(i).vz = (cars(i).vz - rz#(bestk) * side# * vn# * 1.4) * 0.92
+         if vn# > 5 and i = 1 and mode = 2 then play sound 8
+      endif
+      lat# = side# * limit#
+   endif
+   cars(i).lateral = lat#
+   cars(i).offroad = abs(lat#) > CURB_OUT + 0.6
+
+   rem A lap ends each time the run counter crosses a multiple of the circuit length
+   if mode >= 2 and cars(i).finished = 0 and moved > 0 and cars(i).run >= 0
+      if (cars(i).run - moved) / SAMPLES < cars(i).run / SAMPLES or cars(i).run - moved < 0
+         laptime = racetick - cars(i).lapstart
+         if cars(i).run >= SAMPLES
+            cars(i).lastlap = laptime
+            if cars(i).best = 0 or laptime < cars(i).best then cars(i).best = laptime
+            if i = 1 then play sound 6
+         endif
+         cars(i).lapstart = racetick
+         if cars(i).run >= SAMPLES * LAPS then cars(i).finished = 1 : cars(i).finishtime = racetick
+      endif
+   endif
+endfunction
+
+rem Move the models: body, wheels (spin, then steer at the front), lamps, glows and the smoke
+function PlaceCar(i)
+   o = cars(i).obj
+   position object o, cars(i).x, 0, cars(i).z
+   roll# = cars(i).steer * Smaller(abs(cars(i).forward) / 40.0, 1.0) * -3.0
+   rotate object o, 0, cars(i).yaw, roll#
+   steer# = cars(i).steer * 28.0
+   rotate limb o, 2, cars(i).spin, steer#, 0
+   rotate limb o, 3, cars(i).spin, steer#, 0
+   rotate limb o, 4, cars(i).spin, 0, 0
+   rotate limb o, 5, cars(i).spin, 0, 0
+   l = OBJ_CARLAMPS + i - 1
+   position object l, cars(i).x, 0, cars(i).z
+   rotate object l, 0, cars(i).yaw, roll#
+   hx# = sin(cars(i).yaw) : hz# = cos(cars(i).yaw)
+   sx# = cos(cars(i).yaw) : sz# = 0 - sin(cars(i).yaw)
+   tcx# = camera position x() - cars(i).x : tcz# = camera position z() - cars(i).z
+   facing# = (tcx# * hx# + tcz# * hz#) / (sqrt(tcx# * tcx# + tcz# * tcz#) + 0.01)
+   for f = 0 to 3
+      g = OBJ_FLARE + (i - 1) * 4 + f
+      side# = 0.62 : if f mod 2 = 1 then side# = -0.62
+      if f < 2
+         along# = 2.25 : y# = 0.63 : glow = 120 : shown = facing# > 0.1
+      else
+         along# = -2.25 : y# = 0.75 : glow = 80 : shown = facing# < -0.1
+      endif
+      if shown = 1
+         show object g
+         position object g, cars(i).x + hx# * along# + sx# * side#, y#, cars(i).z + hz# * along# + sz# * side#
+         point object g, camera position x(), camera position y(), camera position z()
+         glow = glow * (0.4 + abs(facing#) * 0.6)
+         scale object g, glow, glow, glow
+      else
+         hide object g
+      endif
+   next f
+   if i = 1
+      rx# = cars(i).x - hx# * 2.0 : rz# = cars(i).z - hz# * 2.0
+      position particle emissions 1, rx#, 0.4, rz#
+      position particle emissions 2, rx#, 0.3, rz#
+      smoke = 0 : dust = 0
+      if mode >= 2 and cars(i).slip > 4.0 and cars(i).offroad = 0 then smoke = 2
+      if mode >= 2 and cars(i).offroad = 1 and abs(cars(i).forward) > 6 then dust = 2
+      set particle emissions 1, smoke
+      set particle emissions 2, dust
+   endif
+endfunction
+
+rem ------------------------------------------------------------------
+function Shadowed(x, y, t$, colour, align)
+   if align = 1 then x = x - text width(t$) / 2
+   if align = 2 then x = x - text width(t$)
+   ink rgb(0, 0, 0), 0 : text x + 2, y + 2, t$
+   ink colour, 0 : text x, y, t$
+endfunction
+
+function Clock$(frames)
+   ms = frames * 1000 / 60
+   m = ms / 60000 : s = (ms / 1000) mod 60 : c = (ms / 10) mod 100
+   r$ = str$(m) + ":" + right$("0" + str$(s), 2) + "." + right$("0" + str$(c), 2)
+endfunction r$
+
+function anykey()
+   r = 0
+   if scancode() > 0 or mouseclick() > 0 then r = 1
+endfunction r
+
+function Wrap(k)
+   r = k mod SAMPLES
+   if r < 0 then r = r + SAMPLES
+endfunction r
+
+function Smaller(a#, b#)
+   if b# < a# then a# = b#
+endfunction a#
+
+function Larger(a#, b#)
+   if b# > a# then a# = b#
+endfunction a#
+
+function Blend(a, b, t#)
+   r = a + (b - a) * t#
+endfunction r
+
+function CurveAngleTo(current#, target#, rate#)
+   d# = wrapvalue(target# - current# + 180) - 180
+   r# = wrapvalue(current# + d# * rate#)
+endfunction r#
+
+rem The coastline of the island, as the Blender script shaped it
+function CoastRadius(a#)
+   s# = 0 - sin(a#)
+   if s# < 0 then s# = 0
+   g# = wrapvalue(a# + 150 + 180) - 180
+   g# = g# / 57.2958
+   r# = 445.0 - 110.0 * s# * s# * s# + 60.0 * exp(0 - g# * g# / 0.02) + 9.0 * sin(3 * a# + 28.65) + 6.0 * sin(7 * a# + 120.3)
+endfunction r#
+
+function CoastMargin(x#, z#)
+   a# = atanfull(z# - 30, x# - 15)
+   r# = CoastRadius(a#) - sqrt((x# - 15) ^ 2 + (z# - 30) ^ 2)
+endfunction r#
+
+function TrackDistance(x#, z#)
+   best# = 999999999.0
+   for k = 0 to SAMPLES - 1
+      d# = (px#(k) - x#) ^ 2 + (pz#(k) - z#) ^ 2
+      if d# < best# then best# = d#
+   next k
+   best# = sqrt(best#)
+endfunction best#
+
+rem ------------------------------------------------------------------
+circuit_data:
+data 0.0, -225.0, 187.5, -240.0, 315.0, -165.0, 337.5, -15.0, 247.5, 90.0, 285.0, 210.0, 187.5, 300.0
+data 30.0, 285.0, -90.0, 195.0, -112.5, 60.0, -240.0, 30.0, -315.0, -90.0, -247.5, -210.0, -112.5, -225.0
+
+car_data:
+data "YOU", 0.0, 1.0
+data "TEAL", 1.5, 0.965
+data "VIOLET", -1.5, 0.95
+data "PEARL", 0.5, 0.94
+
+rem Islets out at sea: angle, distance from the island centre, width and height scale
+isle_data:
+data -100, 560, 45, 20, -128, 640, 70, 30, -152, 600, 35, 16, -70, 620, 55, 24, -178, 600, 40, 18

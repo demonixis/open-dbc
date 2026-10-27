@@ -55,6 +55,7 @@ dbc/tutorials/text/secret_messages.dba|dbc|verified|-
 dbc/tutorials/text/type_specimen.dba|dbc|verified|-
 dbc/tutorials/text/typewriter.dba|dbc|verified|-
 dbpro/Hello World/Hello World.dba|dbpro|verified|-
+dbpro/demos/dusk_rally/dusk_rally.dba|dbpro|verified|-
 dbpro/tutorials/3dmaths/3dmaths1.dba|dbpro|bind|DBC2043
 dbpro/tutorials/animation/animation1.dba|dbpro|bind|DBC2043
 dbpro/tutorials/basic2d/basic2d1.dba|dbpro|parse|DBC1101,DBC1105
