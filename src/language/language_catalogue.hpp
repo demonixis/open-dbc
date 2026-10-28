@@ -38,7 +38,6 @@ namespace dbc::language
     {
         None,
         NoOp,
-        ClearChecklist,
         AcceptInertResource,
         NumericZero,
         NumericOne,

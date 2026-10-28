@@ -39,15 +39,11 @@ namespace
         switch (Id)
         {
             case SymbolId::Command_CallDll:
-            case SymbolId::Command_CreateNetGame:
-            case SymbolId::Command_CreateNetPlayer:
             case SymbolId::Command_DeleteDll:
             case SymbolId::Command_DisableSystemkeys:
             case SymbolId::Command_DisableTnl:
             case SymbolId::Command_EnableSystemkeys:
             case SymbolId::Command_EnableTnl:
-            case SymbolId::Command_FreeNetGame:
-            case SymbolId::Command_FreeNetPlayer:
             case SymbolId::Command_FtpConnect:
             case SymbolId::Command_FtpDeleteFile:
             case SymbolId::Command_FtpDisconnect:
@@ -58,8 +54,6 @@ namespace
             case SymbolId::Command_FtpPutFile:
             case SymbolId::Command_FtpSetDir:
             case SymbolId::Command_FtpTerminate:
-            case SymbolId::Command_GetNetMessage:
-            case SymbolId::Command_JoinNetGame:
             case SymbolId::Command_LoadCdmusic:
             case SymbolId::Command_LoadDll:
             case SymbolId::Command_LockBackbuffer:
@@ -68,25 +62,17 @@ namespace
             case SymbolId::Command_NetMessageMemblock:
             case SymbolId::Command_NetMessageMesh:
             case SymbolId::Command_NetMessageSound:
-            case SymbolId::Command_PerformChecklistForNetConnections:
-            case SymbolId::Command_PerformChecklistForNetPlayers:
-            case SymbolId::Command_PerformChecklistForNetSessions:
             case SymbolId::Command_SendNetMessageBitmap:
-            case SymbolId::Command_SendNetMessageFloat:
             case SymbolId::Command_SendNetMessageImage:
-            case SymbolId::Command_SendNetMessageInteger:
             case SymbolId::Command_SendNetMessageMemblock:
             case SymbolId::Command_SendNetMessageMesh:
             case SymbolId::Command_SendNetMessageSound:
-            case SymbolId::Command_SendNetMessageString:
             case SymbolId::Command_SetEax:
             case SymbolId::Command_SetEmulationOff:
             case SymbolId::Command_SetEmulationOn:
             case SymbolId::Command_SetGraphicsCard:
-            case SymbolId::Command_SetNetConnection:
             case SymbolId::Command_UnlockBackbuffer:
             case SymbolId::Function_CallDll:
-            case SymbolId::Function_CreateNetPlayer:
             case SymbolId::Function_DllCallExist:
             case SymbolId::Function_DllExist:
             case SymbolId::Function_EmulationMode:
@@ -100,18 +86,6 @@ namespace
             case SymbolId::Function_GetFtpProgress:
             case SymbolId::Function_GetFtpStatus:
             case SymbolId::Function_GetMemblockPtr:
-            case SymbolId::Function_NetGameExists:
-            case SymbolId::Function_NetGameLost:
-            case SymbolId::Function_NetGameNowHosting:
-            case SymbolId::Function_NetMessageExists:
-            case SymbolId::Function_NetMessageFloat:
-            case SymbolId::Function_NetMessageInteger:
-            case SymbolId::Function_NetMessagePlayerFrom:
-            case SymbolId::Function_NetMessagePlayerTo:
-            case SymbolId::Function_NetMessageStringString:
-            case SymbolId::Function_NetMessageType:
-            case SymbolId::Function_NetPlayerCreated:
-            case SymbolId::Function_NetPlayerDestroyed:
             case SymbolId::Function_WindirString:
                 return true;
             default:
@@ -432,10 +406,6 @@ namespace dbc::language
 
         switch (Descriptor.Id)
         {
-            case SymbolId::Command_PerformChecklistForNetConnections:
-            case SymbolId::Command_PerformChecklistForNetPlayers:
-            case SymbolId::Command_PerformChecklistForNetSessions:
-                return CompatibilityStubBehavior::ClearChecklist;
             case SymbolId::Command_LoadCdmusic:
             case SymbolId::Command_LoadDll:
                 return CompatibilityStubBehavior::AcceptInertResource;
@@ -447,7 +417,6 @@ namespace dbc::language
             case SymbolId::Function_GetFtpDirString:
             case SymbolId::Function_GetFtpErrorString:
             case SymbolId::Function_GetFtpFileNameString:
-            case SymbolId::Function_NetMessageStringString:
             case SymbolId::Function_WindirString:
                 return CompatibilityStubBehavior::EmptyString;
             default:

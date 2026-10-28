@@ -42,7 +42,7 @@ ctest --preset default
 <!-- BEGIN GENERATED COMPATIBILITY METRICS -->
 - BASIC execution goldens: **77**.
 - Full corpus expectations: **95** sources, including **85** that reach verified bytecode.
-- Observable implemented-overload contracts: **1639**.
+- Observable implemented-overload contracts: **1665**.
 <!-- END GENERATED COMPATIBILITY METRICS -->
 
 ## Documentation
@@ -56,6 +56,7 @@ ctest --preset default
 | Desktop VR | [docs/vr.md](docs/vr.md) |
 | DBPro BSP worlds | [docs/bsp.md](docs/bsp.md) |
 | Classic animations (video) | [docs/video.md](docs/video.md) |
+| Classic multiplayer | [docs/network.md](docs/network.md) |
 | Example programs | [examples/README.md](examples/README.md) |
 | Logos, social headers, wallpapers | [docs/branding.md](docs/branding.md) |
 | Contributing | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |

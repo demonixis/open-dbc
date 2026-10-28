@@ -1,7 +1,7 @@
 rem ==================================================================
 rem Compatibility Stubs - an OpenDBC tutorial for the DarkBASIC Classic profile
 rem DarkBASIC Classic relied on Windows 98 technology that has no portable
-rem equivalent today: audio CDs, FTP sessions, DirectPlay network games, DLL calls and
+rem equivalent today: audio CDs, FTP sessions, media sent in DirectPlay messages, DLL calls and
 rem raw access to the video memory. OpenDBC still accepts every one of
 rem these commands so that old programs run, but they do nothing: commands
 rem return at once, numbers read 0 and strings are empty. This program
@@ -38,41 +38,12 @@ n = n + 1 : group(n) = g : label$(n) = "GET FTP FILE NAME$()" : value$(n) = """"
 n = n + 1 : group(n) = g : label$(n) = "GET FTP DIR$()" : value$(n) = """" + get ftp dir$() + """"
 n = n + 1 : group(n) = g : label$(n) = "GET FTP ERROR$()" : value$(n) = """" + get ftp error$() + """"
 
-rem --- 3. DirectPlay network games
-title$(3) = "NETWORK GAMES" : why$(3) = "DirectPlay no longer exists; no session is ever found or joined."
-perform checklist for net connections
-connections = checklist quantity()
-set net connection 1, ""
-perform checklist for net sessions
-sessions = checklist quantity()
-create net game "Harbour Race", "host", 4, 1
-join net game 1, "guest"
-perform checklist for net players
-create net player "bot"
-send net message integer 0, 42
-send net message float 0, 1.5
-send net message string 0, "hello"
+rem --- 3. Media in network messages
+title$(3) = "NET MEDIA MESSAGES" : why$(3) = "Net games carry numbers and text; memblocks and media are not sent yet."
 send net message bitmap 0, 1, 0 : send net message image 0, 1, 0
 send net message memblock 0, 1, 0 : send net message mesh 0, 1, 0 : send net message sound 0, 1, 0
-get net message
 net message bitmap 1 : net message image 1 : net message memblock 1 : net message mesh 1 : net message sound 1
-g = 3
-n = n + 1 : group(n) = g : label$(n) = "connections, sessions found" : value$(n) = str$(connections) + ", " + str$(sessions)
-n = n + 1 : group(n) = g : label$(n) = "CREATE NET PLAYER(""bot2"")" : value$(n) = str$(create net player("bot2"))
-n = n + 1 : group(n) = g : label$(n) = "NET GAME EXISTS()" : value$(n) = str$(net game exists())
-n = n + 1 : group(n) = g : label$(n) = "NET GAME NOW HOSTING()" : value$(n) = str$(net game now hosting())
-n = n + 1 : group(n) = g : label$(n) = "NET GAME LOST()" : value$(n) = str$(net game lost())
-n = n + 1 : group(n) = g : label$(n) = "NET PLAYER CREATED()" : value$(n) = str$(net player created())
-n = n + 1 : group(n) = g : label$(n) = "NET PLAYER DESTROYED()" : value$(n) = str$(net player destroyed())
-n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE EXISTS()" : value$(n) = str$(net message exists())
-n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE TYPE()" : value$(n) = str$(net message type())
-n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE PLAYER FROM()" : value$(n) = str$(net message player from())
-n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE PLAYER TO()" : value$(n) = str$(net message player to())
-n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE INTEGER()" : value$(n) = str$(net message integer())
-n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE FLOAT()" : value$(n) = str$(net message float())
-n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE STRING$()" : value$(n) = """" + net message string$() + """"
-free net player 1
-free net game
+n = n + 1 : group(n) = 3 : label$(n) = "NET MESSAGE MEMBLOCK 1 then MEMBLOCK EXIST(1)" : value$(n) = str$(memblock exist(1))
 
 rem --- 4. DLLs
 title$(4) = "DLLS" : why$(4) = "Windows DLLs do not exist on other systems."

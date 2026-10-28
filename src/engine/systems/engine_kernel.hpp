@@ -27,6 +27,7 @@ namespace dbc
     class SpriteSystem;
     class DebugSystem;
     class VideoSystem;
+    class NetworkSystem;
     class VrSystem;
 
     class EngineKernel
@@ -87,6 +88,8 @@ namespace dbc
         const DebugSystem& Debug() const;
         VideoSystem& Video();
         const VideoSystem& Video() const;
+        NetworkSystem& Network();
+        const NetworkSystem& Network() const;
 
       private:
         bool Initialized_ = false;
@@ -110,6 +113,7 @@ namespace dbc
         std::unique_ptr<SpriteSystem> SpriteSystem_;
         std::unique_ptr<DebugSystem> DebugSystem_;
         std::unique_ptr<VideoSystem> Video_;
+        std::unique_ptr<NetworkSystem> Network_;
         std::unique_ptr<VrSystem> Vr_;
     };
 

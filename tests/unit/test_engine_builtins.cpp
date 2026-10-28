@@ -3984,16 +3984,6 @@ TEST_CASE("Typed builtin ids dispatch implemented handlers and profile-isolated 
     REQUIRE(EmptyString.ReturnValue);
     CHECK(EmptyString.ReturnValue->AsString().empty());
 
-    Context.Checklist.push_back({"stale"});
-    const dbc::vm::BuiltinResult Checklist =
-        Host.Invoke({7,
-                     dbc::language::SymbolId::Command_PerformChecklistForNetPlayers,
-                     {},
-                     {dbc::language::TypeKind::Void, {}},
-                     false});
-    CHECK(Checklist.State == dbc::vm::BuiltinState::Completed);
-    CHECK(Context.Checklist.empty());
-
     const std::vector<dbc::vm::Value> CdArguments{dbc::vm::Value::Integer(1), dbc::vm::Value::Integer(17)};
     CHECK(Host.Invoke({10,
                        dbc::language::SymbolId::Command_LoadCdmusic,
@@ -4126,13 +4116,8 @@ TEST_CASE("Every permanent Classic compatibility stub dispatches its typed neutr
             if (Descriptor.Kind == SymbolKind::Command)
             {
                 CHECK_FALSE(Result.ReturnValue.has_value());
-                if (Behavior == CompatibilityStubBehavior::ClearChecklist)
-                    CHECK(Context.Checklist.empty());
-                else
-                {
-                    REQUIRE(Context.Checklist.size() == 1);
-                    CHECK(Context.Checklist.front().Name == "sentinel");
-                }
+                REQUIRE(Context.Checklist.size() == 1);
+                CHECK(Context.Checklist.front().Name == "sentinel");
                 continue;
             }
 
@@ -4152,7 +4137,7 @@ TEST_CASE("Every permanent Classic compatibility stub dispatches its typed neutr
                 CHECK(Result.ReturnValue->AsReal() == doctest::Approx(Expected));
         }
     }
-    CHECK(Exercised.size() == 75);
+    CHECK(Exercised.size() == 49);
 }
 
 TEST_CASE("Compatibility stub logging is debug-only and once per symbol per execution host")

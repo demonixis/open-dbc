@@ -49,7 +49,7 @@ Each callable has a per-profile state:
 | State | Meaning |
 | --- | --- |
 | Implemented | Real behaviour, with a witness in `tests/unit/builtin_behavior_manifest.tsv` |
-| Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, networking, DLLs and native pointers, CD audio and obsolete hardware switches |
+| Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, net messages carrying memblocks or media, DLLs and native pointers, CD audio and obsolete hardware switches |
 | Unsupported | Rejected at bind time with `DBC2043` |
 
 Shared VR forms and the Classic `X/Y/Z VECTOR3` readers are the only additions to
@@ -59,7 +59,7 @@ the historical profiles ([vr.md](vr.md)). Anything else new waits for the future
 ## Engine
 
 `EngineKernel` owns audio, cameras, window, diagnostics, 2D, files, GPU device,
-images, input, lights, matrices, DBPro BSP worlds, memblocks, objects, physics
+images, input, lights, matrices, DBPro BSP worlds, memblocks, network, objects, physics
 (Jolt for the ODE core), renderer, sprites, text, video and VR. Engine shaders are HLSL
 that the pinned DXC compiles to SPIR-V, then SDL_shadercross to MSL, as the Studio
 does for effects; the engine loads whichever the GPU device accepts and never

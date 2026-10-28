@@ -201,11 +201,6 @@ namespace dbc::interpreter::detail
                 return Invocation.ResultType.Kind == language::TypeKind::Void
                            ? vm::BuiltinResult{}
                            : Failed("Compatibility resource stub has a non-void result type");
-            case language::CompatibilityStubBehavior::ClearChecklist:
-                Context_.Checklist.clear();
-                return Invocation.ResultType.Kind == language::TypeKind::Void
-                           ? vm::BuiltinResult{}
-                           : Failed("Compatibility checklist stub has a non-void result type");
             case language::CompatibilityStubBehavior::EmptyString:
                 return Invocation.ResultType.Kind == language::TypeKind::String
                            ? vm::BuiltinResult{vm::BuiltinState::Completed, vm::Value::String({}), {}}

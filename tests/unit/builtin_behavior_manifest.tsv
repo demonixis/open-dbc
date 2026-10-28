@@ -35,6 +35,8 @@ dbc	60	87	Command	COPY BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686dee
 dbc	61	90	Command	COPY FILE	file	test_engine_builtins.cpp::COPY FILE never overwrites and reports source and destination failures	-
 dbc	63	93	Command	COPY MEMBLOCK	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
 dbc	68	99	Command	CREATE BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
+dbc	69	101	Command	CREATE NET GAME	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	70	103	Command	CREATE NET PLAYER	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	73	106	Command	DATA	golden-output	test_data_read.dba	7c3934fc95ae6043b17df44aa42cdfadc29ddd5e2cb1d81da1c078910021355d
 dbc	74	108	Command	DELETE ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	75	110	Command	DELETE BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
@@ -93,7 +95,10 @@ dbc	153	236	Command	FORCE RIGHT	input-haptic-device	test_input_haptics.cpp::Cont
 dbc	154	238	Command	FORCE SHOOT	input-haptic-no-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
 dbc	155	240	Command	FORCE UP	input-haptic-device	test_input_haptics.cpp::Control device force feedback includes SDL rumble and haptic devices	-
 dbc	156	242	Command	FORCE WATER EFFECT	input-haptic-no-device	test_input_haptics.cpp::DBC haptic effects retain the historical parameter mapping	-
+dbc	157	244	Command	FREE NET GAME	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	158	246	Command	FREE NET PLAYER	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	172	269	Command	GET IMAGE	golden-output	test_images.dba	fef2f4622e193bebf87b317809e35d6cd4b4beaa691fdb67cf1b9e4807f58481
+dbc	173	271	Command	GET NET MESSAGE	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	175	273	Command	GHOST MATRIX OFF	golden-output	test_dbc_matrix_appearance.dba	134d2e8bfbc64c7f7d660cbe5facd2e6b02827e6a514aa44cf1dd71821c69504
 dbc	176	275	Command	GHOST MATRIX ON	golden-output	test_dbc_matrix_appearance.dba	134d2e8bfbc64c7f7d660cbe5facd2e6b02827e6a514aa44cf1dd71821c69504
 dbc	177	277	Command	GHOST OBJECT OFF	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
@@ -108,6 +113,7 @@ dbc	193	299	Command	HIDE SPRITE	golden-output	test_sprites.dba	4a289ee6371256d48
 dbc	194	301	Command	HIDE WINDOW	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbc	195	303	Command	INK	engine-state	test_engine_builtins.cpp::Classic primitive and text commands queue observable frame state	-
 dbc	196	305	Command	INPUT	golden-output	test_input.dba	6aa04504661d514164a00bcc964479bbc850d5e352e2edf73d3ca9d61d0fb9e4
+dbc	199	309	Command	JOIN NET GAME	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	200	311	Command	LINE	engine-state	test_engine_builtins.cpp::Classic primitive and text commands queue observable frame state	-
 dbc	204	316	Command	LINK LIMB	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbc	205	318	Command	LOAD 3DSOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -178,6 +184,9 @@ dbc	339	495	Command	PERFORM CHECKLIST FOR DRIVES	confined-file-dirblock-state	te
 dbc	342	499	Command	PERFORM CHECKLIST FOR FILES	golden-output	test_checklist.dba	6030eb125ad9f7f5d5f6a326cb61d84d14b1c907d28295346c16c6ca6394b0aa
 dbc	343	501	Command	PERFORM CHECKLIST FOR FONTS	golden-output	test_checklist.dba	6030eb125ad9f7f5d5f6a326cb61d84d14b1c907d28295346c16c6ca6394b0aa
 dbc	344	503	Command	PERFORM CHECKLIST FOR GRAPHICS CARDS	golden-output	test_checklist.dba	6030eb125ad9f7f5d5f6a326cb61d84d14b1c907d28295346c16c6ca6394b0aa
+dbc	345	505	Command	PERFORM CHECKLIST FOR NET CONNECTIONS	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	346	507	Command	PERFORM CHECKLIST FOR NET PLAYERS	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	347	509	Command	PERFORM CHECKLIST FOR NET SESSIONS	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	348	511	Command	PERFORM CHECKLIST FOR OBJECT LIMBS	checklist-state	test_engine_builtins.cpp::Portable limb checklist colour and texture transforms preserve stage semantics	-
 dbc	354	518	Command	PITCH CAMERA DOWN	golden-output	test_camera_extended.dba	66d9810d557cd927d2a827c57b3ba4fc8e27c5ddb65a29ffe4f9e25a8ca05cbb
 dbc	355	520	Command	PITCH CAMERA UP	golden-output	test_camera_extended.dba	66d9810d557cd927d2a827c57b3ba4fc8e27c5ddb65a29ffe4f9e25a8ca05cbb
@@ -246,6 +255,9 @@ dbc	437	665	Command	SCALE SPRITE	render-state	test_engine_builtins.cpp::DBPro sp
 dbc	441	670	Command	SCROLL BACKDROP	engine-state	test_engine_builtins.cpp::Classic backdrop and fog commands update draw state	-
 dbc	442	672	Command	SCROLL LIMB TEXTURE	render-state	test_engine_builtins.cpp::Portable limb checklist colour and texture transforms preserve stage semantics	-
 dbc	443	674	Command	SCROLL OBJECT TEXTURE	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
+dbc	445	678	Command	SEND NET MESSAGE FLOAT	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	447	682	Command	SEND NET MESSAGE INTEGER	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	451	690	Command	SEND NET MESSAGE STRING	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	454	693	Command	SET AMBIENT LIGHT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbc	456	697	Command	SET BOB	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
 dbc	469	708	Command	SET CAMERA FOV	golden-output	test_camera.dba	343a711b3152b781a7c3cca84254bed9f7641891384ffa5499070d1a81deb78c
@@ -275,6 +287,7 @@ dbc	517	778	Command	SET MATRIX TILE	matrix-state	test_engine_builtins.cpp::DBC m
 dbc	519	781	Command	SET MATRIX WIREFRAME OFF	golden-output	test_dbc_matrix_appearance.dba	134d2e8bfbc64c7f7d660cbe5facd2e6b02827e6a514aa44cf1dd71821c69504
 dbc	520	783	Command	SET MATRIX WIREFRAME ON	golden-output	test_dbc_matrix_appearance.dba	134d2e8bfbc64c7f7d660cbe5facd2e6b02827e6a514aa44cf1dd71821c69504
 dbc	521	785	Command	SET MIPMAP MODE	sampler-state	test_engine_builtins.cpp::Classic gamma and mipmap modes drive final pixels and sampler state	-
+dbc	525	788	Command	SET NET CONNECTION	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	526	790	Command	SET NORMALIZATION OFF	render-state	test_engine_builtins.cpp::Portable normal normalization and DBPro auxiliary texture stages reach the stock shader	-
 dbc	527	792	Command	SET NORMALIZATION ON	render-state	test_engine_builtins.cpp::Portable normal normalization and DBPro auxiliary texture stages reach the stock shader	-
 dbc	528	794	Command	SET OBJECT	engine-state	test_engine_builtins.cpp::Object texture scale and SET OBJECT defaults match BASIC semantics	-
@@ -436,6 +449,7 @@ dbc	771	1165	Function	CONTROL DEVICE Y	input-device	test_engine_builtins.cpp::SD
 dbc	772	1167	Function	CONTROL DEVICE Z	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
 dbc	773	1169	Function	CONTROLKEY	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbc	774	1171	Function	COS	golden-output	test_math.dba	fbc34ac7b482ab61efa6ba907ab95916bd1c2d43b6bb1b157077bc6b0e75eb82
+dbc	775	1173	Function	CREATE NET PLAYER	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	776	1175	Function	CURRENT BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
 dbc	778	1177	Function	CURRENT GRAPHICS CARD$	golden-output	test_display.dba	dd77e40597d58dcf14d0b4579976ed9504e97a9ea746233b2c04a953fc49981f
 dbc	779	1179	Function	CURVEANGLE	golden-output	test_math.dba	fbc34ac7b482ab61efa6ba907ab95916bd1c2d43b6bb1b157077bc6b0e75eb82
@@ -565,6 +579,18 @@ dbc	954	1480	Function	MUSIC EXIST	audio-state	test_engine_builtins.cpp::Portable
 dbc	955	1482	Function	MUSIC LOOPING	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	956	1484	Function	MUSIC PAUSED	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	957	1486	Function	MUSIC PLAYING	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbc	958	1488	Function	NET GAME EXISTS	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	959	1490	Function	NET GAME LOST	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	960	1492	Function	NET GAME NOW HOSTING	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	961	1494	Function	NET MESSAGE EXISTS	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	962	1496	Function	NET MESSAGE FLOAT	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	963	1498	Function	NET MESSAGE INTEGER	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	964	1500	Function	NET MESSAGE PLAYER FROM	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	965	1502	Function	NET MESSAGE PLAYER TO	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	966	1504	Function	NET MESSAGE STRING$	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	967	1506	Function	NET MESSAGE TYPE	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	968	1508	Function	NET PLAYER CREATED	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	969	1510	Function	NET PLAYER DESTROYED	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	970	1512	Function	NEWXVALUE	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	971	1514	Function	NEWYVALUE	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	972	1516	Function	NEWZVALUE	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02

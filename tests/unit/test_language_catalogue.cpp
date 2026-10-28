@@ -39,8 +39,6 @@ namespace
         {
             case CompatibilityStubBehavior::NoOp:
                 return "no-op";
-            case CompatibilityStubBehavior::ClearChecklist:
-                return "clear-checklist";
             case CompatibilityStubBehavior::AcceptInertResource:
                 return "accept-inert-resource-id";
             case CompatibilityStubBehavior::NumericZero:
@@ -388,7 +386,7 @@ TEST_CASE("Every available Classic callable is executable with an auditable stub
     CAPTURE(Temporary);
     CAPTURE(Permanent);
     CHECK(Temporary == 0);
-    CHECK(Permanent == 75);
+    CHECK(Permanent == 49);
 }
 
 TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavior and profile isolation")
@@ -453,7 +451,6 @@ TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavio
             {
                 CHECK(Overload->ReturnType == BuiltinValueType::Void);
                 CHECK((Behavior == CompatibilityStubBehavior::NoOp ||
-                       Behavior == CompatibilityStubBehavior::ClearChecklist ||
                        Behavior == CompatibilityStubBehavior::AcceptInertResource));
             }
             else if (Behavior == CompatibilityStubBehavior::EmptyString)
@@ -476,7 +473,7 @@ TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavio
             Expected.insert(Descriptor.Id);
         CHECK((Descriptor.CompatibilityStubProfiles & 2U) == 0);
     }
-    CHECK(Expected.size() == 75);
+    CHECK(Expected.size() == 49);
     CHECK(Actual == Expected);
 }
 

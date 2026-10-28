@@ -24,6 +24,7 @@ add_library(dbc_engine STATIC
   systems/sprite_system.cpp
   systems/debug_system.cpp
   systems/video_system.cpp
+  systems/network_system.cpp
 )
 
 target_link_libraries(dbc_engine
@@ -38,6 +39,7 @@ target_link_libraries(dbc_engine
     nlohmann_json::nlohmann_json
   PRIVATE
     Jolt
+    enet
 )
 
 add_dependencies(dbc_engine opendbc_shaders)

@@ -1415,6 +1415,41 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+DBC_NETWORK_TEST = "test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback"
+UNIT_WITNESSES += tuple(
+    ("dbc", kind, name, code, "loopback-net-game", DBC_NETWORK_TEST)
+    for kind, name, code in (
+        ("Command", "PERFORM CHECKLIST FOR NET CONNECTIONS", "perform checklist for net connections\n"),
+        ("Command", "SET NET CONNECTION", "set net connection 1\n"),
+        ("Command", "SET NET CONNECTION", 'set net connection 1, "127.0.0.1:24600"\n'),
+        ("Command", "PERFORM CHECKLIST FOR NET SESSIONS", "perform checklist for net sessions\n"),
+        ("Command", "CREATE NET GAME", 'create net game "arena", "Fred", 3\n'),
+        ("Command", "CREATE NET GAME", 'create net game "arena", "Fred", 3, 2\n'),
+        ("Command", "JOIN NET GAME", 'join net game 1, "Bill"\n'),
+        ("Command", "FREE NET GAME", "free net game\n"),
+        ("Command", "PERFORM CHECKLIST FOR NET PLAYERS", "perform checklist for net players\n"),
+        ("Command", "CREATE NET PLAYER", 'create net player "Ally"\n'),
+        ("Command", "FREE NET PLAYER", "free net player 3\n"),
+        ("Command", "SEND NET MESSAGE INTEGER", "send net message integer 0, 42\n"),
+        ("Command", "SEND NET MESSAGE FLOAT", "send net message float 2, 2.5\n"),
+        ("Command", "SEND NET MESSAGE STRING", 'send net message string 1, "hello"\n'),
+        ("Command", "GET NET MESSAGE", "get net message\n"),
+        ("Function", "CREATE NET PLAYER", 'value = create net player("Bot")\n'),
+        ("Function", "NET GAME EXISTS", "value = net game exists()\n"),
+        ("Function", "NET GAME LOST", "value = net game lost()\n"),
+        ("Function", "NET GAME NOW HOSTING", "value = net game now hosting()\n"),
+        ("Function", "NET MESSAGE EXISTS", "value = net message exists()\n"),
+        ("Function", "NET MESSAGE INTEGER", "value = net message integer()\n"),
+        ("Function", "NET MESSAGE FLOAT", "value# = net message float()\n"),
+        ("Function", "NET MESSAGE STRING$", "value$ = net message string$()\n"),
+        ("Function", "NET MESSAGE PLAYER FROM", "value = net message player from()\n"),
+        ("Function", "NET MESSAGE PLAYER TO", "value = net message player to()\n"),
+        ("Function", "NET MESSAGE TYPE", "value = net message type()\n"),
+        ("Function", "NET PLAYER CREATED", "value = net player created()\n"),
+        ("Function", "NET PLAYER DESTROYED", "value = net player destroyed()\n"),
+    )
+)
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Regenerate catalogue-linked BASIC behavior witnesses")
     parser.add_argument("--opendbc", type=Path, required=True)

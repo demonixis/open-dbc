@@ -98,6 +98,7 @@ set(OPENDBC_THIRD_PARTY_LICENSES
     "${imguizmo_SOURCE_DIR}/LICENSE|ImGuizmo.txt"
     "${nlohmann_json_SOURCE_DIR}/LICENSE.MIT|nlohmann_json.txt"
     "${unordered_dense_SOURCE_DIR}/LICENSE|unordered_dense.txt"
+    "${enet_SOURCE_DIR}/LICENSE|ENet.txt"
     "${joltphysics_SOURCE_DIR}/LICENSE|JoltPhysics.txt")
 if(TARGET OpenXR::headers)
     list(APPEND OPENDBC_THIRD_PARTY_LICENSES

@@ -16,6 +16,7 @@
 #include "engine/systems/log.hpp"
 #include "engine/systems/matrix_manager.hpp"
 #include "engine/systems/memblock_system.hpp"
+#include "engine/systems/network_system.hpp"
 #include "engine/systems/object_manager.hpp"
 #include "engine/systems/physics_system.hpp"
 #include "engine/systems/renderer_system.hpp"

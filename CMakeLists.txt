@@ -351,6 +351,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(unordered_dense)
 
+# Classic multiplayer runs over ENet, a small UDP library with reliable channels and fragmentation.
+FetchContent_Declare(
+  enet
+  GIT_REPOSITORY https://github.com/lsalzman/enet.git
+  GIT_TAG 2662c0de09e36f2a2030ccc2c528a3e4c9e8138a # v1.3.18
+)
+FetchContent_MakeAvailable(enet)
+target_include_directories(enet SYSTEM INTERFACE ${enet_SOURCE_DIR}/include)
+# ENet links the Windows socket libraries for MinGW only.
+if(WIN32)
+  target_link_libraries(enet INTERFACE ws2_32 winmm)
+endif()
+
 set(DOUBLE_PRECISION OFF CACHE BOOL "" FORCE)
 set(GENERATE_DEBUG_SYMBOLS OFF CACHE BOOL "" FORCE)
 set(OVERRIDE_CXX_FLAGS OFF CACHE BOOL "" FORCE)

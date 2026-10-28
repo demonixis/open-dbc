@@ -39,6 +39,19 @@ Publication:
 - [ ] Public switch, signed tag `v0.4.0`, release with `SHA256SUMS` and an SBOM.
 - [ ] FAQ: no DarkBASIC content provided; unrelated to comma.ai `opendbc`.
 
+## Classic multiplayer
+
+Integer, float and string messages work over ENet ([network.md](network.md)).
+
+- [ ] Memblock, image, bitmap, sound and mesh messages with the guarantee flag,
+  reusing the memblock encoders.
+- [ ] Host migration for peer-to-peer games, with `NET GAME NOW HOSTING()`.
+- [ ] Platform permissions: iOS local network description and multicast
+  entitlement for discovery, Android multicast lock, macOS sandbox network
+  entitlements.
+- [ ] DBPro: string parameters typed as numbers in the multiplayer signatures,
+  `DEFAULT NET GAME`, `NET BUFFER SIZE`.
+
 ## DBPro BSP worlds
 
 DBPro's own BSP format, its drawing and collision are done ([bsp.md](bsp.md)).

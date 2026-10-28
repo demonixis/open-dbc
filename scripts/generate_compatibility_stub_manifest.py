@@ -12,17 +12,11 @@ CATALOGUE = ROOT / "src/language/language_catalogue.inc"
 CATALOGUE_IMPLEMENTATION = ROOT / "src/language/language_catalogue.cpp"
 DEFAULT_OUTPUT = ROOT / "tests/unit/compatibility_stub_manifest.tsv"
 
-CLEAR_CHECKLIST = {
-    "Command_PerformChecklistForNetConnections",
-    "Command_PerformChecklistForNetPlayers",
-    "Command_PerformChecklistForNetSessions",
-}
 INERT_RESOURCES = {"Command_LoadCdmusic", "Command_LoadDll"}
 EMPTY_STRINGS = {
     "Function_GetFtpDirString",
     "Function_GetFtpErrorString",
     "Function_GetFtpFileNameString",
-    "Function_NetMessageStringString",
     "Function_WindirString",
 }
 
@@ -35,8 +29,6 @@ def permanent_symbols() -> set[str]:
 
 
 def neutral_behavior(symbol_id: str, kind: str, _name: str) -> str:
-    if symbol_id in CLEAR_CHECKLIST:
-        return "clear-checklist"
     if symbol_id in INERT_RESOURCES:
         return "accept-inert-resource-id"
     if kind == "Command":
@@ -52,8 +44,8 @@ def neutral_behavior(symbol_id: str, kind: str, _name: str) -> str:
 
 def generate() -> str:
     permanent = permanent_symbols()
-    if len(permanent) != 75:
-        raise SystemExit(f"permanent Classic compatibility allowlist must contain exactly 75 symbols, got {len(permanent)}")
+    if len(permanent) != 49:
+        raise SystemExit(f"permanent Classic compatibility allowlist must contain exactly 49 symbols, got {len(permanent)}")
     rows = ["profile\tsymbol_id\tkind\tname\tpolicy\tneutral_behavior"]
     seen = set()
     for match in ENTRY.finditer(CATALOGUE.read_text(encoding="utf-8")):

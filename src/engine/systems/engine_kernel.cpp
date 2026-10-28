@@ -13,6 +13,7 @@
 #include "log.hpp"
 #include "matrix_manager.hpp"
 #include "memblock_system.hpp"
+#include "network_system.hpp"
 #include "object_manager.hpp"
 #include "physics_system.hpp"
 #include "renderer_system.hpp"
@@ -66,6 +67,7 @@ namespace dbc
         SpriteSystem_ = std::make_unique<SpriteSystem>(*this);
         DebugSystem_ = std::make_unique<DebugSystem>(*this);
         Video_ = std::make_unique<VideoSystem>(*this);
+        Network_ = std::make_unique<NetworkSystem>();
         dbc::log::AttachRingBuffer(DebugSystem_.get());
 
         Initialized_ = true;
@@ -79,6 +81,7 @@ namespace dbc
         dbc::log::DetachRingBuffer(DebugSystem_.get());
         if (Vr_)
             Vr_->DetachDevice();
+        Network_.reset();
         Video_.reset();
         DebugSystem_.reset();
         SpriteSystem_.reset();
@@ -332,6 +335,16 @@ namespace dbc
     const VideoSystem& EngineKernel::Video() const
     {
         return *Video_;
+    }
+
+    NetworkSystem& EngineKernel::Network()
+    {
+        return *Network_;
+    }
+
+    const NetworkSystem& EngineKernel::Network() const
+    {
+        return *Network_;
     }
 
 } // namespace dbc
