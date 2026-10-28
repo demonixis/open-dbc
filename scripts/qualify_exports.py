@@ -98,33 +98,33 @@ def only_artifact(directory: Path, suffix: str) -> Path:
     return values[0]
 
 
-def verify_manifest(data: bytes, dialect: str) -> None:
+def verify_manifest(data: bytes) -> None:
     manifest = json.loads(data)
-    require(manifest.get("format") == 5, "artifact manifest has the wrong format")
-    require(manifest.get("entry") in manifest.get("orderedSources", []), "artifact manifest does not order its entry")
-    require(manifest.get("dialect") == dialect, "artifact manifest has the wrong dialect")
-    require(str(manifest.get("entry", "")).endswith(".dba"), "artifact manifest entry is not DBA")
+    require(manifest.get("format") == 6, "artifact manifest has the wrong format")
+    require(manifest.get("program") == "program.obc", "artifact manifest names no program image")
     paths = {entry.get("path") for entry in manifest.get("files", [])}
+    require("program.obc" in paths, "artifact manifest omits the program image")
     require("assets/probe.txt" in paths, "artifact manifest omits the probe asset")
-    require(any(str(path).startswith("include/") for path in paths), "artifact manifest omits the include")
+    require(not any(str(path).endswith((".dba", ".dbpro")) for path in paths),
+            "artifact manifest ships BASIC sources")
 
 
-def verify_directory_payload(root: Path, dialect: str) -> None:
+def verify_directory_payload(root: Path) -> None:
     manifest = root / "opendbc-artifact.json"
     require(manifest.is_file(), f"artifact manifest is missing: {manifest}")
-    verify_manifest(manifest.read_bytes(), dialect)
+    verify_manifest(manifest.read_bytes())
     require((root / "artifact/assets/probe.txt").read_bytes() == PROBE,
             "artifact probe asset differs")
 
 
-def verify_zip_payload(archive: Path, manifest_name: str, asset_name: str, dialect: str) -> None:
+def verify_zip_payload(archive: Path, manifest_name: str, asset_name: str) -> None:
     with zipfile.ZipFile(archive) as package:
         names = package.namelist()
         manifests = [name for name in names if name.endswith(manifest_name)]
         assets = [name for name in names if name.endswith(asset_name)]
         require(len(manifests) == 1, f"archive has no unique {manifest_name}")
         require(len(assets) == 1, f"archive has no unique {asset_name}")
-        verify_manifest(package.read(manifests[0]), dialect)
+        verify_manifest(package.read(manifests[0]))
         require(package.read(assets[0]) == PROBE, "archived probe asset differs")
 
 
@@ -140,8 +140,7 @@ def export(executable: Path, entry: Path, dialect: str, target: str, output: Pat
     execute(command)
     suffix = {
         "desktop": ".app" if sys.platform == "darwin" else "",
-        "ios": ".ipa",
-        "ios-simulator": ".app",
+        "ios": "-Xcode",
         "android-apk": ".apk",
         "android-aab": ".aab",
     }[target]
@@ -150,6 +149,17 @@ def export(executable: Path, entry: Path, dialect: str, target: str, output: Pat
     entries = list(output.iterdir())
     require(len(entries) == 1, f"expected exactly one Desktop artifact in {output}")
     return entries[0]
+
+
+def build_xcode_project(project: Path, sdk: str, build: Path) -> Path:
+    """Builds an exported Xcode project without signing and returns the app."""
+    projects = list(project.glob("*.xcodeproj"))
+    require(len(projects) == 1, f"expected exactly one Xcode project in {project}")
+    configuration = "Debug" if sdk == "iphonesimulator" else "Release"
+    execute(["xcodebuild", "-project", str(projects[0]), "-target", "Game", "-sdk", sdk,
+             "-configuration", configuration, "CODE_SIGNING_ALLOWED=NO", f"SYMROOT={build}", "build"],
+            capture=True)
+    return only_artifact(build / f"{configuration}-{sdk}", ".app")
 
 
 def boot_ios_simulator() -> str:
@@ -241,15 +251,16 @@ def main() -> None:
         keystore = create_qa_keystore(projects) if args.run_android else None
         for name, dialect, bundle_id in PROFILES:
             entry = prepare_project(projects, name, dialect, bundle_id, keystore)
-            desktop = export(executable, entry, dialect, "desktop", output / f"desktop-{name}", False)
+            desktop = export(executable, entry, dialect, "desktop", output / f"desktop-{name}", True)
+            product = f"OpenDBC {name.title()} QA"
             if sys.platform == "darwin":
                 desktop_resources = desktop / "Contents/Resources"
-                desktop_executable = desktop / "Contents/MacOS/opendbc"
+                desktop_executable = desktop / "Contents/MacOS/opendbc-runner"
                 execute(["codesign", "--verify", "--deep", "--strict", str(desktop)])
             else:
                 desktop_resources = desktop
-                desktop_executable = desktop / ("opendbc.exe" if os.name == "nt" else "opendbc")
-            verify_directory_payload(desktop_resources, dialect)
+                desktop_executable = desktop / (f"{product}.exe" if os.name == "nt" else product)
+            verify_directory_payload(desktop_resources)
             launched = execute([str(desktop_executable)], capture=True)
             require(launched.stdout == expected_output(name),
                     f"Desktop artifact did not execute the expected {name} BASIC output")
@@ -257,26 +268,27 @@ def main() -> None:
             if not args.mobile:
                 continue
             require(sys.platform == "darwin", "mobile export qualification currently requires macOS")
-            simulator = export(executable, entry, dialect, "ios-simulator", output / f"ios-simulator-{name}", False)
-            verify_directory_payload(simulator, dialect)
-            execute(["codesign", "--verify", "--deep", "--strict", str(simulator)])
+            xcode = export(executable, entry, dialect, "ios", output / f"ios-{name}", True)
+            verify_directory_payload(xcode)
+            simulator = build_xcode_project(xcode, "iphonesimulator", output / f"ios-{name}-build")
+            verify_directory_payload(simulator)
             if simulator_udid:
                 launch_ios_simulator(simulator, bundle_id, simulator_udid, name)
 
-            apk = export(executable, entry, dialect, "android-apk", output / f"android-apk-{name}", not args.run_android)
-            verify_zip_payload(apk, "assets/opendbc-artifact.json",
-                               "assets/artifact/assets/probe.txt", dialect)
+            apk = export(executable, entry, dialect, "android-apk", output / f"android-apk-{name}",
+                         not args.run_android)
+            verify_zip_payload(apk, "assets/opendbc-artifact.json", "assets/artifact/assets/probe.txt")
             if args.run_android:
                 launch_android(apk, bundle_id, args.adb)
 
         if args.mobile:
             classic_entry = projects / "classic/main.dba"
-            ipa = export(executable, classic_entry, "dbc", "ios", output / "ios-device-classic", True)
-            verify_zip_payload(ipa, "opendbc-artifact.json", "artifact/assets/probe.txt", "dbc")
+            device = build_xcode_project(output / "ios-classic/OpenDBC Classic QA-Xcode", "iphoneos",
+                                         output / "ios-device-classic-build")
+            verify_directory_payload(device)
             aab = export(executable, classic_entry, "dbc", "android-aab", output / "android-aab-classic",
                          not args.run_android)
-            verify_zip_payload(aab, "assets/opendbc-artifact.json",
-                               "assets/artifact/assets/probe.txt", "dbc")
+            verify_zip_payload(aab, "assets/opendbc-artifact.json", "assets/artifact/assets/probe.txt")
 
     print(f"BASIC artifact exports qualified: {output}")
 

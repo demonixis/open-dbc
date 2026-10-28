@@ -86,13 +86,16 @@ def verify_resources(resources: Path) -> None:
 
 def verify_export_hosts(resources: Path) -> None:
     ios = resources / "export-hosts/ios"
-    simulator = resources / "export-hosts/ios-simulator"
+    runtime = ios / "OpenDBCRuntime.xcframework"
     android = resources / "export-hosts/android/template"
     required = (
-        ios / "OpenDBC.app/opendbc-runner",
-        ios / "opendbc-host.json",
-        simulator / "OpenDBC.app/opendbc-runner",
-        simulator / "opendbc-host.json",
+        runtime / "Info.plist",
+        runtime / "ios-arm64/libOpenDBCRuntime.a",
+        runtime / "ios-arm64-simulator/libOpenDBCRuntime.a",
+        ios / "opendbc-host-ios.json",
+        ios / "opendbc-host-ios-simulator.json",
+        ios / "OpenDBCRuntime.xcconfig",
+        ios / "template/OpenDBCGame.xcodeproj/project.pbxproj",
         android / "app/src/main/jniLibs/arm64-v8a/libmain.so",
         android / "app/src/main/assets/opendbc-host.json",
         android / "gradle/wrapper/gradle-wrapper.properties",
@@ -100,10 +103,9 @@ def verify_export_hosts(resources: Path) -> None:
     )
     for installed in required:
         require(installed.is_file(), f"installed export host input is missing: {installed}")
-    for directory in (ios / "OpenDBC.app/shaders", simulator / "OpenDBC.app/shaders",
-                      android / "app/src/main/assets/shaders"):
-        verify_shaders(directory)
-    for manifest in (ios / "opendbc-host.json", simulator / "opendbc-host.json",
+    # iOS exports take the Studio's own shaders; only Android carries a copy in its template.
+    verify_shaders(android / "app/src/main/assets/shaders")
+    for manifest in (ios / "opendbc-host-ios.json", ios / "opendbc-host-ios-simulator.json",
                      android / "app/src/main/assets/opendbc-host.json"):
         json.loads(manifest.read_text(encoding="utf-8"))
     android_build = (android / "app/build.gradle").read_text(encoding="utf-8")

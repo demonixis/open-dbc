@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cstdlib>
 #include <string_view>
 #include <system_error>
 
@@ -133,17 +134,22 @@ namespace dbc::studio
                                          "signtool.exe."});
         }
 
-        void AddIosChecks(const toolchain::ArtifactExportRequest& Request, bool Simulator,
-                          std::vector<toolchain::ExportCheck>& Checks)
+        void AddIosChecks(const toolchain::ArtifactExportRequest& Request, std::vector<toolchain::ExportCheck>& Checks)
         {
             std::string Error;
-            AddHostCheck(Checks, toolchain::internal::ValidateIosExportHost(Request, Simulator, Error), Error,
-                         "Build the ios presets and configure OpenDBC with their export hosts.");
-            if (Simulator || !Request.Sign)
-                return;
+            AddHostCheck(Checks, toolchain::internal::ValidateIosExportHost(Request, Error), Error,
+                         "Build the ios-runtime and ios-simulator-runtime presets and configure OpenDBC with "
+                         "OPENDBC_IOS_RUNTIME_LIBRARY and OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY.");
+            // Signing happens in Xcode, where the team can also be chosen.
             const bool HasTeam = !Request.Settings.IosTeamId.empty();
-            Checks.push_back({"Apple development team", HasTeam, true,
-                              HasTeam ? std::string{} : "Set the development team ID in Project Settings > iOS."});
+            Checks.push_back({"Apple development team", HasTeam, false,
+                              HasTeam ? std::string{}
+                                      : "Set the team ID in Project Settings > iOS, or choose the team in Xcode."});
+            std::error_code FileError;
+            const bool Xcode = fs::is_directory("/Applications/Xcode.app", FileError) ||
+                               std::getenv("DEVELOPER_DIR") != nullptr;
+            Checks.push_back({"Xcode", Xcode, false,
+                              Xcode ? std::string{} : "Install Xcode to build, sign and upload the exported project."});
         }
     } // namespace
 
@@ -169,10 +175,7 @@ namespace dbc::studio
                     AddAndroidChecks(Request, Checks);
                     break;
                 case ArtifactTarget::Ios:
-                    AddIosChecks(Request, false, Checks);
-                    break;
-                case ArtifactTarget::IosSimulator:
-                    AddIosChecks(Request, true, Checks);
+                    AddIosChecks(Request, Checks);
                     break;
             }
             return Checks;

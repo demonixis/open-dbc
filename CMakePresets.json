@@ -69,6 +69,34 @@
       }
     },
     {
+      "name": "ios-runtime",
+      "displayName": "iOS device runtime for exported Xcode projects",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ios-runtime",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_SYSTEM_NAME": "iOS",
+        "CMAKE_OSX_SYSROOT": "iphoneos",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "16.0",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "BUILD_TESTS": "OFF"
+      }
+    },
+    {
+      "name": "ios-simulator-runtime",
+      "displayName": "iOS Simulator runtime for exported Xcode projects",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ios-simulator-runtime",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_SYSTEM_NAME": "iOS",
+        "CMAKE_OSX_SYSROOT": "iphonesimulator",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "16.0",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "BUILD_TESTS": "OFF"
+      }
+    },
+    {
       "name": "android-host",
       "displayName": "Android arm64 export host",
       "generator": "Ninja",
@@ -106,18 +134,16 @@
       "targets": ["opendbc_update_shaders"]
     },
     {
-      "name": "ios",
-      "configurePreset": "ios",
+      "name": "ios-runtime",
+      "configurePreset": "ios-runtime",
       "jobs": 2,
-      "configuration": "Release",
-      "targets": ["opendbc_export_host_manifest"]
+      "targets": ["opendbc_ios_runtime"]
     },
     {
-      "name": "ios-simulator",
-      "configurePreset": "ios-simulator",
+      "name": "ios-simulator-runtime",
+      "configurePreset": "ios-simulator-runtime",
       "jobs": 2,
-      "configuration": "Release",
-      "targets": ["opendbc_export_host_manifest"]
+      "targets": ["opendbc_ios_runtime"]
     },
     {
       "name": "android-host",

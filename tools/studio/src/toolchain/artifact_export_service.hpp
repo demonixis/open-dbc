@@ -18,8 +18,8 @@ namespace dbc::studio
         enum class ArtifactTarget
         {
             Desktop,
+            // An Xcode project linking the iOS runtime; Xcode signs, archives and uploads it.
             Ios,
-            IosSimulator,
             AndroidApk,
             AndroidBundle,
         };

@@ -132,7 +132,7 @@ namespace dbc::studio
                                                  {"Android APK", toolchain::ArtifactTarget::AndroidApk},
                                                  {"Android App Bundle", toolchain::ArtifactTarget::AndroidBundle}};
 #if defined(__APPLE__)
-            Choices.push_back({"iOS", toolchain::ArtifactTarget::Ios});
+            Choices.push_back({"iOS (Xcode project)", toolchain::ArtifactTarget::Ios});
 #endif
             for (const TargetChoice& Choice : Choices)
             {

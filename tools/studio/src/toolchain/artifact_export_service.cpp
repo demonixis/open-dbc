@@ -35,8 +35,6 @@ namespace dbc::studio
                     return internal::ExportDesktop(Context, Request, Image);
                 case ArtifactTarget::Ios:
                     return internal::ExportIos(Context, Request, Image);
-                case ArtifactTarget::IosSimulator:
-                    return internal::ExportIosSimulator(Context, Request, Image);
                 case ArtifactTarget::AndroidApk:
                     return internal::ExportAndroid(Context, Request, Image, false);
                 case ArtifactTarget::AndroidBundle:

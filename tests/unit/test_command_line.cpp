@@ -173,13 +173,16 @@ TEST_CASE("command line requires an explicit artifact target and output")
     CHECK_FALSE(dbc::interpreter::ParseCommandLine(UnsignedRun));
 }
 
-TEST_CASE("command line parses the iOS Simulator qualification export")
+TEST_CASE("command line exports iOS as an Xcode project, without a separate simulator target")
 {
-    const std::array<std::string_view, 6> Arguments = {"export",        "program.dba", "--target",
-                                                       "ios-simulator", "--output",    "dist"};
+    const std::array<std::string_view, 6> Arguments = {"export", "program.dba", "--target", "ios", "--output", "dist"};
     const auto Parsed = dbc::interpreter::ParseCommandLine(Arguments);
     REQUIRE(Parsed.Command.has_value());
-    CHECK(Parsed.Command->ExportTarget == "ios-simulator");
+    CHECK(Parsed.Command->ExportTarget == "ios");
+
+    const std::array<std::string_view, 6> Simulator = {"export",        "program.dba", "--target",
+                                                       "ios-simulator", "--output",    "dist"};
+    CHECK_FALSE(dbc::interpreter::ParseCommandLine(Simulator));
 }
 
 TEST_CASE("command line dispatch uses stable help and failure exit codes")

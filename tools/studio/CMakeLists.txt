@@ -440,8 +440,9 @@ elseif(APPLE)
     )
 endif()
 
-set(OPENDBC_IOS_EXPORT_HOST "" CACHE PATH "Qualified iOS OpenDBC.app export host")
-set(OPENDBC_IOS_SIMULATOR_EXPORT_HOST "" CACHE PATH "Qualified iOS Simulator OpenDBC.app host")
+set(OPENDBC_IOS_RUNTIME_LIBRARY "" CACHE FILEPATH "Qualified iOS libOpenDBCRuntime.a (ios-runtime preset)")
+set(OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY "" CACHE FILEPATH
+    "Qualified iOS Simulator libOpenDBCRuntime.a (ios-simulator-runtime preset)")
 set(OPENDBC_ANDROID_EXPORT_HOST_LIBRARY "" CACHE FILEPATH "Qualified Android arm64-v8a libmain.so export host")
 
 function(opendbc_require_matching_host HOST_MANIFEST HOST_BINARY DESCRIPTION)
@@ -502,62 +503,50 @@ function(opendbc_require_canonical_host_shaders HOST_ROOT DESCRIPTION)
 endfunction()
 
 if(NOT IOS AND NOT ANDROID)
-    if(APPLE AND OPENDBC_IOS_EXPORT_HOST)
-        set(OPENDBC_IOS_EXPORT_HOST_MANIFEST
-            "${OPENDBC_IOS_EXPORT_HOST}.opendbc-host.json")
-        if(NOT IS_DIRECTORY "${OPENDBC_IOS_EXPORT_HOST}")
-            message(FATAL_ERROR "OPENDBC_IOS_EXPORT_HOST must name an iOS .app directory")
+    # iOS exports are Xcode projects linking an xcframework of the two runtime archives.
+    if(APPLE AND (OPENDBC_IOS_RUNTIME_LIBRARY OR OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY))
+        if(NOT OPENDBC_IOS_RUNTIME_LIBRARY OR NOT OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY)
+            message(FATAL_ERROR
+                "iOS exports need both OPENDBC_IOS_RUNTIME_LIBRARY and OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY")
         endif()
-        if(NOT EXISTS "${OPENDBC_IOS_EXPORT_HOST}/opendbc-runner")
-            message(FATAL_ERROR "OPENDBC_IOS_EXPORT_HOST has no OpenDBC executable")
-        endif()
-        opendbc_require_matching_host("${OPENDBC_IOS_EXPORT_HOST_MANIFEST}"
-            "${OPENDBC_IOS_EXPORT_HOST}/opendbc-runner" "OPENDBC_IOS_EXPORT_HOST")
-        opendbc_require_canonical_host_shaders("${OPENDBC_IOS_EXPORT_HOST}" "OPENDBC_IOS_EXPORT_HOST")
-        execute_process(COMMAND /usr/bin/xcrun vtool -show-build
-            "${OPENDBC_IOS_EXPORT_HOST}/opendbc-runner"
-            RESULT_VARIABLE OPENDBC_IOS_HOST_STATUS OUTPUT_VARIABLE OPENDBC_IOS_HOST_BUILD)
-        if(NOT OPENDBC_IOS_HOST_STATUS EQUAL 0 OR
-           NOT OPENDBC_IOS_HOST_BUILD MATCHES "platform IOS" OR
-           OPENDBC_IOS_HOST_BUILD MATCHES "platform IOSSIMULATOR")
-            message(FATAL_ERROR "OPENDBC_IOS_EXPORT_HOST must be an iphoneos device host")
-        endif()
+        foreach(OPENDBC_IOS_VARIANT IN ITEMS DEVICE SIMULATOR)
+            if(OPENDBC_IOS_VARIANT STREQUAL "DEVICE")
+                set(OPENDBC_IOS_LIBRARY "${OPENDBC_IOS_RUNTIME_LIBRARY}")
+                set(OPENDBC_IOS_PLATFORM 2)
+            else()
+                set(OPENDBC_IOS_LIBRARY "${OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY}")
+                set(OPENDBC_IOS_PLATFORM 7)
+            endif()
+            if(NOT EXISTS "${OPENDBC_IOS_LIBRARY}" OR IS_DIRECTORY "${OPENDBC_IOS_LIBRARY}" OR
+               IS_SYMLINK "${OPENDBC_IOS_LIBRARY}")
+                message(FATAL_ERROR "${OPENDBC_IOS_LIBRARY} is not a regular libOpenDBCRuntime.a")
+            endif()
+            opendbc_require_matching_host("${OPENDBC_IOS_LIBRARY}.opendbc-host.json" "${OPENDBC_IOS_LIBRARY}"
+                "${OPENDBC_IOS_LIBRARY}")
+            # LC_BUILD_VERSION names the platform: 2 for iOS devices, 7 for the iOS Simulator.
+            execute_process(COMMAND /usr/bin/xcrun otool -l "${OPENDBC_IOS_LIBRARY}"
+                RESULT_VARIABLE OPENDBC_IOS_OTOOL_STATUS OUTPUT_VARIABLE OPENDBC_IOS_LOAD_COMMANDS)
+            if(NOT OPENDBC_IOS_OTOOL_STATUS EQUAL 0 OR
+               NOT OPENDBC_IOS_LOAD_COMMANDS MATCHES "platform ${OPENDBC_IOS_PLATFORM}\n")
+                message(FATAL_ERROR "${OPENDBC_IOS_LIBRARY} was not built for the expected iOS platform")
+            endif()
+        endforeach()
+        get_filename_component(OPENDBC_IOS_RUNTIME_DIRECTORY "${OPENDBC_IOS_RUNTIME_LIBRARY}" DIRECTORY)
+        set(OPENDBC_IOS_HOST_OUTPUT "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios")
         add_custom_command(TARGET opendbc POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios"
-            COMMAND ${CMAKE_COMMAND} -E copy_directory "${OPENDBC_IOS_EXPORT_HOST}"
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios/OpenDBC.app"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OPENDBC_IOS_EXPORT_HOST_MANIFEST}"
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios/opendbc-host.json"
-            COMMENT "Embedding the qualified iOS export host" VERBATIM)
-    endif()
-    if(APPLE AND OPENDBC_IOS_SIMULATOR_EXPORT_HOST)
-        set(OPENDBC_IOS_SIMULATOR_EXPORT_HOST_MANIFEST
-            "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}.opendbc-host.json")
-        if(NOT IS_DIRECTORY "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}" OR
-           NOT EXISTS "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc-runner")
-            message(FATAL_ERROR "OPENDBC_IOS_SIMULATOR_EXPORT_HOST must name an iOS Simulator .app")
-        endif()
-        opendbc_require_matching_host("${OPENDBC_IOS_SIMULATOR_EXPORT_HOST_MANIFEST}"
-            "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc-runner" "OPENDBC_IOS_SIMULATOR_EXPORT_HOST")
-        opendbc_require_canonical_host_shaders(
-            "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}" "OPENDBC_IOS_SIMULATOR_EXPORT_HOST")
-        execute_process(COMMAND /usr/bin/xcrun vtool -show-build
-            "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}/opendbc-runner"
-            RESULT_VARIABLE OPENDBC_IOS_SIM_HOST_STATUS OUTPUT_VARIABLE OPENDBC_IOS_SIM_HOST_BUILD)
-        if(NOT OPENDBC_IOS_SIM_HOST_STATUS EQUAL 0 OR
-           NOT OPENDBC_IOS_SIM_HOST_BUILD MATCHES "platform IOSSIMULATOR")
-            message(FATAL_ERROR "OPENDBC_IOS_SIMULATOR_EXPORT_HOST must be an iphonesimulator host")
-        endif()
-        add_custom_command(TARGET opendbc POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios-simulator"
-            COMMAND ${CMAKE_COMMAND} -E copy_directory "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST}"
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios-simulator/OpenDBC.app"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${OPENDBC_IOS_SIMULATOR_EXPORT_HOST_MANIFEST}"
-                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/export-hosts/ios-simulator/opendbc-host.json"
-            COMMENT "Embedding the qualified iOS Simulator host" VERBATIM)
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "${OPENDBC_IOS_HOST_OUTPUT}"
+            COMMAND /usr/bin/xcrun xcodebuild -create-xcframework
+                -library "${OPENDBC_IOS_RUNTIME_LIBRARY}" -library "${OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY}"
+                -output "${OPENDBC_IOS_HOST_OUTPUT}/OpenDBCRuntime.xcframework"
+            COMMAND ${CMAKE_COMMAND} -E copy "${OPENDBC_IOS_RUNTIME_LIBRARY}.opendbc-host.json"
+                "${OPENDBC_IOS_HOST_OUTPUT}/opendbc-host-ios.json"
+            COMMAND ${CMAKE_COMMAND} -E copy "${OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY}.opendbc-host.json"
+                "${OPENDBC_IOS_HOST_OUTPUT}/opendbc-host-ios-simulator.json"
+            COMMAND ${CMAKE_COMMAND} -E copy "${OPENDBC_IOS_RUNTIME_DIRECTORY}/OpenDBCRuntime.xcconfig"
+                "${OPENDBC_IOS_HOST_OUTPUT}/OpenDBCRuntime.xcconfig"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/examples/ios/export-template"
+                "${OPENDBC_IOS_HOST_OUTPUT}/template"
+            COMMENT "Embedding the qualified iOS runtime and Xcode template" VERBATIM)
     endif()
     if(OPENDBC_ANDROID_EXPORT_HOST_LIBRARY)
         if(NOT EXISTS "${OPENDBC_ANDROID_EXPORT_HOST_LIBRARY}" OR

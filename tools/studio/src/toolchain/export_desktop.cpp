@@ -226,7 +226,7 @@ namespace dbc::studio
                     (Notarize && !NotarizeMacApp(Context, App, Request.Toolchain.NotaryProfile, Result.Error)))
                     return Result;
             }
-            else if (!SignAppleBundle(Context, App, false, {}, {}, Result.Error))
+            else if (!AdHocSignAppleBundle(Context, App, Result.Error))
                 return Result;
             if (!PublishAndRemoveStage(App, Result.OutputPath, Stage, Result.Error))
             {

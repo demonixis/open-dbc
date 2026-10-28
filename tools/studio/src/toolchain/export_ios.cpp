@@ -1,7 +1,6 @@
 #include "export_internal.hpp"
 
 #include <array>
-#include <cctype>
 #include <fstream>
 #include <set>
 #include <system_error>
@@ -12,210 +11,98 @@ namespace dbc::studio
 {
     namespace toolchain::internal
     {
-#if defined(__APPLE__)
-        static bool ValidateIosHost(const ExportContext& Context, const fs::path& App, bool Simulator,
-                                    std::string& Error)
+        namespace
         {
-            const fs::path Executable = App / "opendbc-runner";
-            if (!fs::is_regular_file(Executable))
+            // Where the Studio keeps the iOS runtime and the project template (tools/studio/CMakeLists.txt).
+            fs::path IosHostRoot(const ArtifactExportRequest& Request)
             {
-                Error = "The iOS export host has no opendbc-runner executable";
-                return false;
+                return Request.HostResources / "export-hosts/ios";
             }
-            const std::optional<std::string> Build =
-                Context.Capture({"/usr/bin/xcrun", "vtool", "-show-build", Executable.string()}, Error);
-            const bool IsSimulator = Build && Build->find("platform IOSSIMULATOR") != std::string::npos;
-            const bool IsDevice = Build && Build->find("platform IOS\n") != std::string::npos && !IsSimulator;
-            if ((Simulator && !IsSimulator) || (!Simulator && !IsDevice))
-            {
-                if (Error.empty())
-                    Error = Simulator ? "The iOS Simulator export host is not an iphonesimulator binary"
-                                      : "The iOS .ipa export host is not an iphoneos device binary";
-                return false;
-            }
-            const std::optional<std::string> Architectures =
-                Context.Capture({"/usr/bin/lipo", "-archs", Executable.string()}, Error);
-            if (!Architectures || Architectures->find("arm64") == std::string::npos)
-            {
-                if (Error.empty())
-                    Error = "The iOS .ipa export host does not contain arm64";
-                return false;
-            }
-            return true;
-        }
 
-        static bool PrepareIosProvisioning(const ExportContext& Context, const fs::path& App,
-                                           const core::ProjectSettings& Settings, bool Simulator, bool Sign,
-                                           fs::path& Entitlements, std::string& Error)
+            // The xcframework slices xcodebuild -create-xcframework names, with their host manifests.
+            constexpr std::array<std::pair<std::string_view, std::string_view>, 2> IosSlices = {{
+                {"ios-arm64", "opendbc-host-ios.json"},
+                {"ios-arm64-simulator", "opendbc-host-ios-simulator.json"},
+            }};
+        } // namespace
+
+        bool ValidateIosExportHost(const ArtifactExportRequest& Request, std::string& Error)
         {
-            Entitlements.clear();
-            if (!Sign || Simulator || Settings.IosTeamId.empty())
-                return true;
-            const char* ProfileValue = std::getenv("OPENDBC_IOS_PROVISIONING_PROFILE");
-            if (ProfileValue == nullptr || *ProfileValue == '\0')
-            {
-                Error = "The configured iOS team requires OPENDBC_IOS_PROVISIONING_PROFILE";
-                return false;
-            }
+            const fs::path Root = IosHostRoot(Request);
             std::error_code FileError;
-            const fs::path Profile = fs::weakly_canonical(ProfileValue, FileError);
-            const fs::file_status Status = fs::symlink_status(ProfileValue, FileError);
-            if (FileError || !fs::is_regular_file(Status) || fs::is_symlink(Status))
+            if (!fs::is_directory(Root / "template", FileError) ||
+                !fs::is_regular_file(Root / "OpenDBCRuntime.xcconfig", FileError))
             {
-                Error = "The iOS provisioning profile must be a regular non-symlink file";
+                Error = "The installed product does not contain the qualified iOS runtime";
                 return false;
             }
-            const fs::path Decoded = App.parent_path() / ".opendbc-provisioning.plist";
-            Entitlements = App.parent_path() / ".opendbc-entitlements.plist";
-            const auto RemoveTemporary = [&]()
+            for (const auto& [Slice, Manifest] : IosSlices)
             {
-                std::error_code Ignored;
-                fs::remove(Decoded, Ignored);
-                if (!Entitlements.empty())
-                    fs::remove(Entitlements, Ignored);
-            };
-            if (!CopyArtifactFile(Profile, App / "embedded.mobileprovision", Error) ||
-                !Context.Run({"/usr/bin/security", "cms", "-D", "-i", Profile.string(), "-o", Decoded.string()}, Error))
-            {
-                RemoveTemporary();
-                return false;
+                if (!detail::ValidateArtifactHostIdentity(Root / Manifest,
+                                                          Root / "OpenDBCRuntime.xcframework" / Slice /
+                                                              "libOpenDBCRuntime.a",
+                                                          Request.HostResources / "opendbc-runtime.json", Error))
+                    return false;
             }
-            const std::optional<std::string> TeamOutput = Context.Capture(
-                {"/usr/bin/plutil", "-extract", "TeamIdentifier.0", "raw", "-o", "-", Decoded.string()}, Error);
-            const std::optional<std::string> ApplicationIdentifierOutput =
-                Context.Capture({"/usr/bin/plutil", "-extract", "Entitlements.application-identifier", "raw", "-o",
-                                   "-", Decoded.string()},
-                                  Error);
-            const auto Trimmed = [](std::optional<std::string> Value)
-            {
-                std::string Result = Value.value_or(std::string{});
-                while (!Result.empty() && std::isspace(static_cast<unsigned char>(Result.back())))
-                    Result.pop_back();
-                return Result;
-            };
-            const std::string Team = Trimmed(TeamOutput);
-            const std::string ApplicationIdentifier = Trimmed(ApplicationIdentifierOutput);
+            return true;
+        }
+
+#if defined(__APPLE__)
+        // Build settings of the exported project; Xcode reads the bundle identity, version and team from here.
+        static bool WriteGameConfiguration(const ArtifactExportRequest& Request, const std::string& ProductName,
+                                           const fs::path& Project, std::string& Error)
+        {
             const std::string BundleId =
-                Settings.BundleId.empty() ? "net.demonixis.opendbc.artifact" : Settings.BundleId;
-            const std::string RequiredPrefix = Settings.IosTeamId + ".";
-            const bool MatchesBundle =
-                ApplicationIdentifier.starts_with(RequiredPrefix) &&
-                (ApplicationIdentifier.substr(RequiredPrefix.size()) == BundleId ||
-                 (ApplicationIdentifier.ends_with(".*") &&
-                  BundleId.starts_with(ApplicationIdentifier.substr(
-                      RequiredPrefix.size(), ApplicationIdentifier.size() - RequiredPrefix.size() - 1))));
-            if (Team != Settings.IosTeamId || !MatchesBundle ||
-                !Context.Run({"/usr/bin/plutil", "-extract", "Entitlements", "xml1", "-o", Entitlements.string(),
-                             Decoded.string()},
-                            Error))
+                Request.Settings.BundleId.empty() ? "net.demonixis.opendbc.artifact" : Request.Settings.BundleId;
+            if (!IsBundleIdentifier(BundleId))
             {
-                if (Error.empty())
-                    Error = "The iOS provisioning profile does not match the configured team and bundle ID";
-                RemoveTemporary();
+                Error = "iOS bundle ID must contain at least two valid identifier segments";
                 return false;
             }
-            if (!RemoveRequired(Decoded, Error))
+            if (!IsAppleVersion(Request.Settings.VersionName) || Request.Settings.VersionCode < 1)
             {
-                RemoveTemporary();
+                Error = "iOS versions require one to three numeric components and a positive build number";
                 return false;
             }
-            return true;
-        }
-
-        static bool PrepareIosIcon(const ExportContext& Context, const ArtifactExportRequest& Request,
-                                   const fs::path& App, bool Simulator, std::string& Error)
-        {
-            const std::optional<fs::path> Source = ResolveArtifactIcon(Request, true, Error);
-            if (!Source)
-                return false;
-            const fs::path Catalog = App.parent_path() / ".opendbc-AppIcon.xcassets";
-            const fs::path IconSet = Catalog / "AppIcon.appiconset";
-            if (!WriteScaledPng(Context, *Source, IconSet / "AppIcon.png", 1024, true, Error))
-                return false;
-            nlohmann::json Contents;
-            Contents["images"] = nlohmann::json::array(
-                {{{"filename", "AppIcon.png"}, {"idiom", "universal"}, {"platform", "ios"}, {"size", "1024x1024"}}});
-            Contents["info"] = {{"author", "OpenDBC"}, {"version", 1}};
-            std::ofstream Json(IconSet / "Contents.json", std::ios::binary | std::ios::trunc);
-            Json << Contents.dump(2) << '\n';
-            Json.close();
-            if (!Json)
-            {
-                Error = "Cannot write the iOS app icon catalogue";
-                return false;
-            }
-            const fs::path PartialPlist = App.parent_path() / ".opendbc-icon-info.plist";
-            const std::string Platform = Simulator ? "iphonesimulator" : "iphoneos";
-            if (!Context.Run({"/usr/bin/xcrun",
-                             "actool",
-                             Catalog.string(),
-                             "--compile",
-                             App.string(),
-                             "--app-icon",
-                             "AppIcon",
-                             "--platform",
-                             Platform,
-                             "--minimum-deployment-target",
-                             Request.Settings.IosDeploymentTarget,
-                             "--target-device",
-                             "iphone",
-                             "--target-device",
-                             "ipad",
-                             "--output-partial-info-plist",
-                             PartialPlist.string(),
-                             "--output-format",
-                             "human-readable-text",
-                             "--compress-pngs"},
-                            Error))
-                return false;
-            if (!fs::is_regular_file(App / "Assets.car") || !fs::is_regular_file(App / "AppIcon60x60@2x.png") ||
-                !fs::is_regular_file(App / "AppIcon76x76@2x~ipad.png"))
-            {
-                Error = "The iOS asset compiler did not produce a complete app icon set";
-                return false;
-            }
-            const fs::path Plist = App / "Info.plist";
-            const fs::path PhoneJson = App.parent_path() / ".opendbc-phone-icons.json";
-            const fs::path IpadJson = App.parent_path() / ".opendbc-ipad-icons.json";
-            if (!Context.Run({"/usr/bin/plutil", "-extract", "CFBundleIcons", "json", "-o", PhoneJson.string(),
-                             PartialPlist.string()},
-                            Error) ||
-                !Context.Run({"/usr/bin/plutil", "-extract", "CFBundleIcons~ipad", "json", "-o", IpadJson.string(),
-                             PartialPlist.string()},
-                            Error))
-                return false;
-            const std::optional<std::string> PhoneMetadata = ReadFile(PhoneJson);
-            const std::optional<std::string> IpadMetadata = ReadFile(IpadJson);
-            if (!PhoneMetadata || !IpadMetadata ||
-                !Context.Run({"/usr/bin/plutil", "-replace", "CFBundleIcons", "-json", *PhoneMetadata, Plist.string()},
-                            Error) ||
-                !Context.Run(
-                    {"/usr/bin/plutil", "-replace", "CFBundleIcons~ipad", "-json", *IpadMetadata, Plist.string()},
-                    Error) ||
-                !RemoveRequired(Catalog, Error) || !RemoveRequired(PartialPlist, Error) ||
-                !RemoveRequired(PhoneJson, Error) || !RemoveRequired(IpadJson, Error))
-                return false;
-            return true;
-        }
-
-        static bool SetIosMetadata(const ExportContext& Context, const fs::path& App,
-                                   const core::ProjectSettings& Settings, const std::string& ProductName,
-                                   bool RequireTeam, std::string& Error)
-        {
-            if (!SetAppleMetadata(Context, App, Settings, ProductName, Error))
-                return false;
-            const fs::path Plist = App / "Info.plist";
-            if (!IsSupportedIosDeployment(Settings.IosDeploymentTarget))
+            if (!IsSupportedIosDeployment(Request.Settings.IosDeploymentTarget))
             {
                 Error = "The iOS deployment target must be version 16.0 or newer";
                 return false;
             }
-            if (RequireTeam && !IsAppleTeamIdentifier(Settings.IosTeamId))
+            if (!IsAppleTeamIdentifier(Request.Settings.IosTeamId))
             {
                 Error = "The iOS development team ID must contain 10 uppercase letters or digits";
                 return false;
             }
+            std::ofstream Output(Project / "Game.xcconfig", std::ios::binary | std::ios::trunc);
+            Output << "// Written by the OpenDBC export from the project settings.\n"
+                      "#include \"OpenDBCRuntime.xcconfig\"\n\n"
+                   << "PRODUCT_NAME = " << ProductName << '\n'
+                   << "PRODUCT_BUNDLE_IDENTIFIER = " << BundleId << '\n'
+                   << "MARKETING_VERSION = " << Request.Settings.VersionName << '\n'
+                   << "CURRENT_PROJECT_VERSION = " << Request.Settings.VersionCode << '\n'
+                   << "IPHONEOS_DEPLOYMENT_TARGET = " << Request.Settings.IosDeploymentTarget << '\n'
+                   << "DEVELOPMENT_TEAM = " << Request.Settings.IosTeamId << '\n'
+                   << "CODE_SIGN_STYLE = Automatic\n"
+                      "SDKROOT = iphoneos\n"
+                      "SUPPORTED_PLATFORMS = iphoneos iphonesimulator\n"
+                      "SUPPORTS_MACCATALYST = NO\n"
+                      "TARGETED_DEVICE_FAMILY = 1,2\n"
+                      "INFOPLIST_FILE = Info.plist\n"
+                      "ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon\n"
+                      "OTHER_LDFLAGS = $(inherited) $(OPENDBC_RUNTIME_LDFLAGS)\n";
+            Output.close();
+            if (!Output)
+            {
+                Error = "Cannot write the Xcode build settings";
+                return false;
+            }
+            return true;
+        }
 
+        static bool SetIosInfo(const ExportContext& Context, const core::ProjectSettings& Settings,
+                               const fs::path& Plist, std::string& Error)
+        {
             static const std::set<std::string> Orientations = {"LandscapeLeft", "LandscapeRight", "Portrait",
                                                                "PortraitUpsideDown"};
             nlohmann::json Values = nlohmann::json::array();
@@ -238,13 +125,9 @@ namespace dbc::studio
                     {"/usr/bin/plutil", "-replace", "UISupportedInterfaceOrientations", "-json", Json, Plist.string()},
                     Error) ||
                 !Context.Run({"/usr/bin/plutil", "-replace", "UISupportedInterfaceOrientations~ipad", "-json", Json,
-                             Plist.string()},
-                            Error) ||
-                !Context.Run({"/usr/bin/plutil", "-replace", "MinimumOSVersion", "-string",
-                              Settings.IosDeploymentTarget, Plist.string()},
-                            Error))
+                              Plist.string()},
+                             Error))
                 return false;
-
             const std::array<std::pair<std::string_view, const std::string*>, 4> Permissions = {{
                 {"NSCameraUsageDescription", &Settings.IosCameraDesc},
                 {"NSMicrophoneUsageDescription", &Settings.IosMicrophoneDesc},
@@ -255,50 +138,35 @@ namespace dbc::studio
             {
                 if (!Value->empty() &&
                     !Context.Run({"/usr/bin/plutil", "-insert", std::string(Key), "-string", *Value, Plist.string()},
-                                Error))
+                                 Error))
                     return false;
             }
             return true;
         }
 
-        static bool PrepareIosApplication(const ExportContext& Context, const ArtifactExportRequest& Request,
-                                          const std::vector<std::uint8_t>& Image, const fs::path& Host,
-                                          const fs::path& App, const std::string& ProductName, bool Simulator,
-                                          std::vector<dbc::interpreter::detail::ArtifactFile>& Files,
-                                          std::string& Error)
+        // The App Store takes a single opaque 1024-pixel icon; Xcode derives the other sizes.
+        static bool WriteIosIcon(const ExportContext& Context, const ArtifactExportRequest& Request,
+                                 const fs::path& Project, std::string& Error)
         {
-            if (!detail::ValidateArtifactShaders(Host / "shaders", Request.HostResources / "shaders", Error) ||
-                !CopyTree(Host, App, Error) || !ValidateIosHost(Context, App, Simulator, Error))
+            const std::optional<fs::path> Source = ResolveArtifactIcon(Request, true, Error);
+            const fs::path IconSet = Project / "Assets.xcassets/AppIcon.appiconset";
+            if (!Source || !WriteScaledPng(Context, *Source, IconSet / "AppIcon.png", 1024, true, Error))
                 return false;
-            fs::path Entitlements;
-            if (!WriteArtifact(Request, Image, App, Files, Error) ||
-                !SetIosMetadata(Context, App, Request.Settings, ProductName, Request.Sign && !Simulator, Error) ||
-                !PrepareIosIcon(Context, Request, App, Simulator, Error) ||
-                !PrepareIosProvisioning(Context, App, Request.Settings, Simulator, Request.Sign, Entitlements, Error))
-                return false;
-            const bool Signed = SignAppleBundle(Context, 
-                App, Request.Sign, Simulator ? std::string_view{} : Request.Settings.IosTeamId, Entitlements, Error);
-            if (!Entitlements.empty() && !RemoveRequired(Entitlements, Error))
-                return false;
-            return Signed;
-        }
-#endif
-
-        bool ValidateIosExportHost(const ArtifactExportRequest& Request, bool Simulator, std::string& Error)
-        {
-            const fs::path Host =
-                Request.HostResources / (Simulator ? "export-hosts/ios-simulator" : "export-hosts/ios") / "OpenDBC.app";
-            std::error_code FileError;
-            if (!fs::is_directory(Host, FileError))
+            nlohmann::json Contents;
+            Contents["images"] = nlohmann::json::array(
+                {{{"filename", "AppIcon.png"}, {"idiom", "universal"}, {"platform", "ios"}, {"size", "1024x1024"}}});
+            Contents["info"] = {{"author", "OpenDBC"}, {"version", 1}};
+            std::ofstream Json(IconSet / "Contents.json", std::ios::binary | std::ios::trunc);
+            Json << Contents.dump(2) << '\n';
+            Json.close();
+            if (!Json)
             {
-                Error = Simulator ? "The installed product does not contain the qualified iOS Simulator host"
-                                  : "The installed product does not contain the qualified iOS export host";
+                Error = "Cannot write the iOS app icon catalogue";
                 return false;
             }
-            return detail::ValidateArtifactHostIdentity(Host.parent_path() / "opendbc-host.json",
-                                                        Host / "opendbc-runner",
-                                                        Request.HostResources / "opendbc-runtime.json", Error);
+            return true;
         }
+#endif
 
         ArtifactExportResult ExportIos(const ExportContext& Context, const ArtifactExportRequest& Request,
                                        const std::vector<std::uint8_t>& Image)
@@ -308,20 +176,14 @@ namespace dbc::studio
             (void)Context;
             (void)Request;
             (void)Image;
-            Result.Error = "iOS artifacts can only be exported on macOS";
+            Result.Error = "iOS Xcode projects can only be exported on macOS";
             return Result;
 #else
-            const fs::path Host = Request.HostResources / "export-hosts/ios/OpenDBC.app";
-            std::error_code FileError;
-            if (!ValidateIosExportHost(Request, false, Result.Error))
+            if (!ValidateIosExportHost(Request, Result.Error))
                 return Result;
-            if (Request.Sign && Request.Settings.IosTeamId.empty())
-            {
-                Result.Error = "Signed iOS device exports require a development team ID";
-                return Result;
-            }
             const std::string ProductName = SafeProductName(Request.Settings, Request.EntrySource);
-            Result.OutputPath = Request.OutputDirectory / (ProductName + ".ipa");
+            Result.OutputPath = Request.OutputDirectory / (ProductName + "-Xcode");
+            std::error_code FileError;
             if (fs::exists(Result.OutputPath, FileError))
             {
                 Result.Error = "Export destination already exists: " + Result.OutputPath.string();
@@ -332,16 +194,29 @@ namespace dbc::studio
             if (!CreateStageDirectory(Request.OutputDirectory, ".opendbc-ios-stage-", Stage, Result.Error))
                 return Result;
             StageCleanup Cleanup{Stage};
-            const fs::path App = Stage / "Payload" / (ProductName + ".app");
+            const fs::path Host = IosHostRoot(Request);
+            const fs::path Project = Stage / "project";
             std::vector<dbc::interpreter::detail::ArtifactFile> Files;
-            if (!PrepareIosApplication(Context, Request, Image, Host, App, ProductName, false, Files, Result.Error))
+            if (!CopyTree(Host / "template", Project, Result.Error) ||
+                !CopyTree(Host / "OpenDBCRuntime.xcframework", Project / "OpenDBCRuntime.xcframework",
+                          Result.Error) ||
+                !CopyArtifactFile(Host / "OpenDBCRuntime.xcconfig", Project / "OpenDBCRuntime.xcconfig",
+                                  Result.Error) ||
+                !CopyTree(Request.HostResources / "shaders", Project / "shaders", Result.Error) ||
+                !CopyArtifactFile(Request.HostResources / "NOTICE.md", Project / "NOTICE.md", Result.Error) ||
+                !CopyTree(Request.HostResources / "licenses", Project / "licenses", Result.Error) ||
+                !WriteArtifact(Request, Image, Project, Files, Result.Error) ||
+                !WriteGameConfiguration(Request, ProductName, Project, Result.Error) ||
+                !SetIosInfo(Context, Request.Settings, Project / "Info.plist", Result.Error) ||
+                !WriteIosIcon(Context, Request, Project, Result.Error))
                 return Result;
-            const fs::path Archive = Stage / "artifact.ipa";
-            if (!Context.Run({"/usr/bin/ditto", "-c", "-k", "--norsrc", "--noextattr", "--keepParent",
-                             (Stage / "Payload").string(), Archive.string()},
-                            Result.Error))
+            fs::rename(Project / "OpenDBCGame.xcodeproj", Project / (ProductName + ".xcodeproj"), FileError);
+            if (FileError)
+            {
+                Result.Error = "Cannot name the Xcode project: " + FileError.message();
                 return Result;
-            if (!PublishAndRemoveStage(Archive, Result.OutputPath, Stage, Result.Error))
+            }
+            if (!PublishAndRemoveStage(Project, Result.OutputPath, Stage, Result.Error))
             {
                 Result.OutputPath.clear();
                 return Result;
@@ -349,49 +224,9 @@ namespace dbc::studio
             Cleanup.Path.clear();
             Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
             Result.Messages.push_back("Published " + Result.OutputPath.string());
-            return Result;
-#endif
-        }
-
-        ArtifactExportResult ExportIosSimulator(const ExportContext& Context, const ArtifactExportRequest& Request,
-                                                const std::vector<std::uint8_t>& Image)
-        {
-            ArtifactExportResult Result;
-#if !defined(__APPLE__)
-            (void)Context;
-            (void)Request;
-            (void)Image;
-            Result.Error = "iOS Simulator artifacts can only be exported on macOS";
-            return Result;
-#else
-            const fs::path Host = Request.HostResources / "export-hosts/ios-simulator/OpenDBC.app";
-            std::error_code FileError;
-            if (!ValidateIosExportHost(Request, true, Result.Error))
-                return Result;
-            const std::string ProductName = SafeProductName(Request.Settings, Request.EntrySource);
-            Result.OutputPath = Request.OutputDirectory / (ProductName + ".app");
-            if (fs::exists(Result.OutputPath, FileError))
-            {
-                Result.Error = "Export destination already exists: " + Result.OutputPath.string();
-                Result.OutputPath.clear();
-                return Result;
-            }
-            fs::path Stage;
-            if (!CreateStageDirectory(Request.OutputDirectory, ".opendbc-ios-simulator-stage-", Stage, Result.Error))
-                return Result;
-            StageCleanup Cleanup{Stage};
-            const fs::path App = Stage / (ProductName + ".app");
-            std::vector<dbc::interpreter::detail::ArtifactFile> Files;
-            if (!PrepareIosApplication(Context, Request, Image, Host, App, ProductName, true, Files, Result.Error))
-                return Result;
-            if (!PublishAndRemoveStage(App, Result.OutputPath, Stage, Result.Error))
-            {
-                Result.OutputPath.clear();
-                return Result;
-            }
-            Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
-            Result.Messages.push_back("Published " + Result.OutputPath.string());
+            Result.Messages.push_back("Open " + ProductName +
+                                      ".xcodeproj in Xcode, choose your team under Signing & Capabilities, then use "
+                                      "Product > Archive to upload to App Store Connect");
             return Result;
 #endif
         }

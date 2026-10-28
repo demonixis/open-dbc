@@ -683,6 +683,82 @@ TEST_CASE("macOS desktop artifact export applies the configured project icon")
     REQUIRE(Result);
     CHECK(fs::is_regular_file(Result.OutputPath / "Contents/Resources/artifact.icns"));
 }
+
+TEST_CASE("iOS export writes an Xcode project around the runtime xcframework")
+{
+    TemporaryDirectory Directory("opendbc-artifact-ios");
+    const fs::path Project = Directory.Root / "project";
+    Write(Project / "main.dba", "print \"ios\"\n");
+    Write(Project / "media/level.dat", "level");
+
+    toolchain::ArtifactExportRequest Request;
+    Request.Target = toolchain::ArtifactTarget::Ios;
+    Request.ProjectRoot = Project;
+    Request.EntrySource = Project / "main.dba";
+    Request.OutputDirectory = Directory.Root / "output";
+    Request.HostResources = FakeHostResources(Directory.Root);
+    Request.Settings.AppName = "Pocket Game";
+    Request.Settings.BundleId = "net.example.pocket";
+    Request.Settings.VersionName = "2.1";
+    Request.Settings.VersionCode = 7;
+    Request.Settings.IosTeamId = "ABCDE12345";
+    Request.Settings.IosOrientations = {"Portrait"};
+    Request.Settings.IosCameraDesc = "Scans levels";
+    fs::create_directories(Request.OutputDirectory);
+
+    // The installed runtime: both xcframework slices bound to this product's runtime manifest.
+    const fs::path Host = Request.HostResources / "export-hosts/ios";
+    fs::create_directories(Host);
+    fs::copy(fs::path(OPENDBC_TEST_SOURCE_DIR) / "examples/ios/export-template", Host / "template",
+             fs::copy_options::recursive);
+    Write(Host / "OpenDBCRuntime.xcconfig", "OPENDBC_RUNTIME_LDFLAGS = -ObjC\n");
+    fs::copy_file(fs::path(OPENDBC_TEST_SOURCE_DIR) / "resources/editor.png", Request.HostResources / "editor.png");
+    Write(Host / "OpenDBCRuntime.xcframework/Info.plist", "xcframework");
+    const std::string RuntimeHash =
+        *toolchain::detail::ArtifactSha256File(Request.HostResources / "opendbc-runtime.json");
+    for (const auto& [Slice, Manifest] : std::array<std::pair<std::string_view, std::string_view>, 2>{
+             {{"ios-arm64", "opendbc-host-ios.json"}, {"ios-arm64-simulator", "opendbc-host-ios-simulator.json"}}})
+    {
+        const fs::path Library = Host / "OpenDBCRuntime.xcframework" / Slice / "libOpenDBCRuntime.a";
+        Write(Library, std::string(Slice));
+        Write(Host / Manifest, "{\"format\":1,\"runtime_manifest_sha256\":\"" + RuntimeHash +
+                                   "\",\"binary_sha256\":\"" + *toolchain::detail::ArtifactSha256File(Library) +
+                                   "\",\"needed\":[]}\n");
+    }
+
+    const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request);
+    INFO(Result.Error);
+    REQUIRE(Result);
+    CHECK(Result.OutputPath == Request.OutputDirectory / "Pocket Game-Xcode");
+    const fs::path Exported = Result.OutputPath;
+    CHECK(fs::is_regular_file(Exported / "Pocket Game.xcodeproj/project.pbxproj"));
+    CHECK(fs::is_regular_file(Exported / "OpenDBCRuntime.xcframework/ios-arm64/libOpenDBCRuntime.a"));
+    CHECK(fs::is_regular_file(Exported / "OpenDBCRuntime.xcconfig"));
+    CHECK(fs::is_regular_file(Exported / "opendbc-artifact.json"));
+    CHECK(fs::is_regular_file(Exported / "artifact/program.obc"));
+    CHECK(fs::is_regular_file(Exported / "artifact/media/level.dat"));
+    CHECK_FALSE(fs::exists(Exported / "artifact/main.dba"));
+    CHECK(fs::is_regular_file(Exported / "shaders/dbclassic_tri.vert.msl"));
+    CHECK(fs::is_regular_file(Exported / "Assets.xcassets/AppIcon.appiconset/AppIcon.png"));
+
+    std::ifstream ConfigInput(Exported / "Game.xcconfig");
+    const std::string Config{std::istreambuf_iterator<char>(ConfigInput), std::istreambuf_iterator<char>()};
+    CHECK(Config.find("PRODUCT_NAME = Pocket Game\n") != std::string::npos);
+    CHECK(Config.find("PRODUCT_BUNDLE_IDENTIFIER = net.example.pocket\n") != std::string::npos);
+    CHECK(Config.find("MARKETING_VERSION = 2.1\n") != std::string::npos);
+    CHECK(Config.find("CURRENT_PROJECT_VERSION = 7\n") != std::string::npos);
+    CHECK(Config.find("DEVELOPMENT_TEAM = ABCDE12345\n") != std::string::npos);
+    std::ifstream PlistInput(Exported / "Info.plist");
+    const std::string Plist{std::istreambuf_iterator<char>(PlistInput), std::istreambuf_iterator<char>()};
+    CHECK(Plist.find("UIInterfaceOrientationPortrait") != std::string::npos);
+    CHECK(Plist.find("UIInterfaceOrientationLandscapeLeft") == std::string::npos);
+    CHECK(Plist.find("Scans levels") != std::string::npos);
+
+    // A runtime archive built from other sources is refused.
+    Write(Host / "OpenDBCRuntime.xcframework/ios-arm64/libOpenDBCRuntime.a", "rebuilt");
+    std::string Error;
+    CHECK_FALSE(toolchain::internal::ValidateIosExportHost(Request, Error));
+}
 #endif
 
 TEST_CASE("embedded artifact manifest rejects path traversal")

@@ -52,8 +52,6 @@ namespace dbc::studio
                 Target = toolchain::ArtifactTarget::Desktop;
             else if (Command.ExportTarget == "ios")
                 Target = toolchain::ArtifactTarget::Ios;
-            else if (Command.ExportTarget == "ios-simulator")
-                Target = toolchain::ArtifactTarget::IosSimulator;
             else if (Command.ExportTarget == "android-apk")
                 Target = toolchain::ArtifactTarget::AndroidApk;
             const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(

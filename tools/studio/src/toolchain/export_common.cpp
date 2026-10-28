@@ -1077,54 +1077,13 @@ namespace dbc::studio
             return true;
         }
 
-        bool SignAppleBundle(const ExportContext& Context, const fs::path& Bundle, bool Sign,
-                             std::string_view ExpectedTeamId, const fs::path& Entitlements, std::string& Error)
-        {
 #if defined(__APPLE__)
-            if (!Sign)
-                return Context.Run(
-                    {"/usr/bin/codesign", "--force", "--deep", "--sign", "-", "--timestamp=none", Bundle.string()},
-                    Error);
-            const char* IdentityValue = std::getenv("OPENDBC_IOS_SIGNING_IDENTITY");
-            const std::string Identity = IdentityValue != nullptr ? IdentityValue : "-";
-            if (!ExpectedTeamId.empty() && Identity == "-")
-            {
-                Error = "The configured iOS team requires OPENDBC_IOS_SIGNING_IDENTITY";
-                return false;
-            }
-            std::vector<std::string> Arguments = {"/usr/bin/codesign", "--force", "--sign", Identity,
-                                                  "--timestamp=none"};
-            if (!Entitlements.empty())
-            {
-                Arguments.insert(Arguments.end(),
-                                 {"--entitlements", Entitlements.string(), "--generate-entitlement-der"});
-            }
-            Arguments.push_back(Bundle.string());
-            if (!Context.Run(Arguments, Error))
-                return false;
-            if (ExpectedTeamId.empty())
-                return true;
-            const std::optional<std::string> Details =
-                Context.Capture({"/usr/bin/codesign", "--display", "--verbose=4", Bundle.string()}, Error);
-            if (!Details || Details->find("TeamIdentifier=" + std::string(ExpectedTeamId)) == std::string::npos)
-            {
-                if (Error.empty())
-                    Error = "The signing identity does not belong to iOS team " + std::string(ExpectedTeamId);
-                return false;
-            }
-            return true;
-#else
-            (void)Context;
-            (void)Bundle;
-            (void)Sign;
-            (void)ExpectedTeamId;
-            (void)Entitlements;
-            (void)Error;
-            return true;
-#endif
+        bool AdHocSignAppleBundle(const ExportContext& Context, const fs::path& Bundle, std::string& Error)
+        {
+            return Context.Run(
+                {"/usr/bin/codesign", "--force", "--deep", "--sign", "-", "--timestamp=none", Bundle.string()}, Error);
         }
 
-#if defined(__APPLE__)
         bool SetAppleMetadata(const ExportContext& Context, const fs::path& App, const core::ProjectSettings& Settings,
                               const std::string& ProductName, std::string& Error)
         {

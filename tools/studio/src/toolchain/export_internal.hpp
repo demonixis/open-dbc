@@ -73,9 +73,9 @@ namespace dbc::studio
         bool WriteScaledPng(const ExportContext& Context, const fs::path& Source, const fs::path& Destination,
                             int Size, bool Opaque, std::string& Error);
 
-        bool SignAppleBundle(const ExportContext& Context, const fs::path& Bundle, bool Sign,
-                             std::string_view ExpectedTeamId, const fs::path& Entitlements, std::string& Error);
 #if defined(__APPLE__)
+        // Development builds: an ad hoc signature runs on this Mac only.
+        bool AdHocSignAppleBundle(const ExportContext& Context, const fs::path& Bundle, std::string& Error);
         bool IsAppleVersion(std::string_view Value);
         bool IsSupportedIosDeployment(std::string_view Value);
         bool IsAppleTeamIdentifier(std::string_view Value);
@@ -92,7 +92,7 @@ namespace dbc::studio
         // Checks that the installed export host was built from this Studio's runtime.
         bool ValidateDesktopHost(const ArtifactExportRequest& Request, std::string& Error);
         bool ValidateAndroidHost(const ArtifactExportRequest& Request, std::string& Error);
-        bool ValidateIosExportHost(const ArtifactExportRequest& Request, bool Simulator, std::string& Error);
+        bool ValidateIosExportHost(const ArtifactExportRequest& Request, std::string& Error);
 
         // Windows and Linux exports are a folder holding the renamed runner, the OpenXR loader, the shaders, the
         // notices and the payload. These steps compile on every host, so their tests run everywhere.
@@ -116,8 +116,6 @@ namespace dbc::studio
                                            const std::vector<std::uint8_t>& Image);
         ArtifactExportResult ExportIos(const ExportContext& Context, const ArtifactExportRequest& Request,
                                        const std::vector<std::uint8_t>& Image);
-        ArtifactExportResult ExportIosSimulator(const ExportContext& Context, const ArtifactExportRequest& Request,
-                                                const std::vector<std::uint8_t>& Image);
         ArtifactExportResult ExportAndroid(const ExportContext& Context, const ArtifactExportRequest& Request,
                                            const std::vector<std::uint8_t>& Image, bool Bundle);
     } // namespace toolchain::internal

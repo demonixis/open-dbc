@@ -1,0 +1,208 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0DBC00000000000000000020 /* Entry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DBC00000000000000000010 /* Entry.cpp */; };
+		0DBC00000000000000000024 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0DBC00000000000000000014 /* Assets.xcassets */; };
+		0DBC00000000000000000025 /* OpenDBCRuntime.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DBC00000000000000000015 /* OpenDBCRuntime.xcframework */; };
+		0DBC00000000000000000026 /* opendbc-artifact.json in Resources */ = {isa = PBXBuildFile; fileRef = 0DBC00000000000000000016 /* opendbc-artifact.json */; };
+		0DBC00000000000000000027 /* artifact in Resources */ = {isa = PBXBuildFile; fileRef = 0DBC00000000000000000017 /* artifact */; };
+		0DBC00000000000000000028 /* shaders in Resources */ = {isa = PBXBuildFile; fileRef = 0DBC00000000000000000018 /* shaders */; };
+		0DBC00000000000000000029 /* licenses in Resources */ = {isa = PBXBuildFile; fileRef = 0DBC00000000000000000019 /* licenses */; };
+		0DBC0000000000000000002A /* NOTICE.md in Resources */ = {isa = PBXBuildFile; fileRef = 0DBC0000000000000000001A /* NOTICE.md */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0DBC00000000000000000005 /* Game.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Game.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0DBC00000000000000000010 /* Entry.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Entry.cpp; sourceTree = "<group>"; };
+		0DBC00000000000000000011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0DBC00000000000000000012 /* Game.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Game.xcconfig; sourceTree = "<group>"; };
+		0DBC00000000000000000013 /* OpenDBCRuntime.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = OpenDBCRuntime.xcconfig; sourceTree = "<group>"; };
+		0DBC00000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0DBC00000000000000000015 /* OpenDBCRuntime.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = OpenDBCRuntime.xcframework; sourceTree = "<group>"; };
+		0DBC00000000000000000016 /* opendbc-artifact.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "opendbc-artifact.json"; sourceTree = "<group>"; };
+		0DBC00000000000000000017 /* artifact */ = {isa = PBXFileReference; lastKnownFileType = folder; path = artifact; sourceTree = "<group>"; };
+		0DBC00000000000000000018 /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = shaders; sourceTree = "<group>"; };
+		0DBC00000000000000000019 /* licenses */ = {isa = PBXFileReference; lastKnownFileType = folder; path = licenses; sourceTree = "<group>"; };
+		0DBC0000000000000000001A /* NOTICE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = NOTICE.md; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0DBC0000000000000000000D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0DBC00000000000000000025 /* OpenDBCRuntime.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0DBC00000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				0DBC00000000000000000010 /* Entry.cpp */,
+				0DBC00000000000000000011 /* Info.plist */,
+				0DBC00000000000000000012 /* Game.xcconfig */,
+				0DBC00000000000000000013 /* OpenDBCRuntime.xcconfig */,
+				0DBC00000000000000000014 /* Assets.xcassets */,
+				0DBC00000000000000000015 /* OpenDBCRuntime.xcframework */,
+				0DBC00000000000000000016 /* opendbc-artifact.json */,
+				0DBC00000000000000000017 /* artifact */,
+				0DBC00000000000000000018 /* shaders */,
+				0DBC00000000000000000019 /* licenses */,
+				0DBC0000000000000000001A /* NOTICE.md */,
+				0DBC00000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0DBC00000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0DBC00000000000000000005 /* Game.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0DBC00000000000000000004 /* Game */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0DBC00000000000000000007 /* Build configuration list for PBXNativeTarget "Game" */;
+			buildPhases = (
+				0DBC0000000000000000000C /* Sources */,
+				0DBC0000000000000000000D /* Frameworks */,
+				0DBC0000000000000000000E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Game;
+			productName = Game;
+			productReference = 0DBC00000000000000000005 /* Game.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0DBC00000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = 0DBC00000000000000000006 /* Build configuration list for PBXProject "Game" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0DBC00000000000000000002;
+			productRefGroup = 0DBC00000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0DBC00000000000000000004 /* Game */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0DBC0000000000000000000E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0DBC00000000000000000024 /* Assets.xcassets in Resources */,
+				0DBC00000000000000000026 /* opendbc-artifact.json in Resources */,
+				0DBC00000000000000000027 /* artifact in Resources */,
+				0DBC00000000000000000028 /* shaders in Resources */,
+				0DBC00000000000000000029 /* licenses in Resources */,
+				0DBC0000000000000000002A /* NOTICE.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0DBC0000000000000000000C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0DBC00000000000000000020 /* Entry.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0DBC00000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		0DBC00000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0DBC0000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0DBC00000000000000000012 /* Game.xcconfig */;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		0DBC0000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0DBC00000000000000000012 /* Game.xcconfig */;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0DBC00000000000000000006 /* Build configuration list for PBXProject "Game" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0DBC00000000000000000008 /* Debug */,
+				0DBC00000000000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0DBC00000000000000000007 /* Build configuration list for PBXNativeTarget "Game" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0DBC0000000000000000000A /* Debug */,
+				0DBC0000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0DBC00000000000000000001 /* Project object */;
+}

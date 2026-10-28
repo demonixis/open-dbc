@@ -18,6 +18,8 @@ __cmake_systeminformation
 *.user
 .idea/
 *.xcodeproj
+# The iOS export template is a real Xcode project.
+!/examples/ios/export-template/OpenDBCGame.xcodeproj/
 *.xcworkspace
 xcuserdata/
 .cache/

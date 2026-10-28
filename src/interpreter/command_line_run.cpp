@@ -60,7 +60,7 @@ namespace dbc::interpreter
             "  opendbc inspect <source.dba|project.dbpro> [--json] [--dialect <dbc|dbpro>]\n"
             "  opendbc build <source.dba|project.dbpro> [--dialect <dbc|dbpro>] --output <program.obc>\n"
             "  opendbc export <source.dba|project.dbpro> --dialect <dbc|dbpro>\n"
-            "                 --target <desktop|ios|ios-simulator|android-apk|android-aab>\n"
+            "                 --target <desktop|ios|android-apk|android-aab>\n"
             "                 --output <directory> [--unsigned]\n"
             "\n"
             "Run options:\n"
@@ -909,10 +909,9 @@ namespace dbc::interpreter
         if (Command.Action == CommandLineAction::Export)
         {
             if (Command.ExportTarget != "desktop" && Command.ExportTarget != "ios" &&
-                Command.ExportTarget != "ios-simulator" && Command.ExportTarget != "android-apk" &&
-                Command.ExportTarget != "android-aab")
+                Command.ExportTarget != "android-apk" && Command.ExportTarget != "android-aab")
             {
-                Result.Error = "Export requires --target desktop|ios|ios-simulator|android-apk|android-aab";
+                Result.Error = "Export requires --target desktop|ios|android-apk|android-aab";
                 return Result;
             }
             if (Command.ExportOutput.empty())

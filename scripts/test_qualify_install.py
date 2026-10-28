@@ -58,21 +58,22 @@ class InstalledShaderTests(unittest.TestCase):
         qualify_install.verify_resources(self.resources)
         self.check_incomplete_shaders(shaders, qualify_install.verify_resources)
 
-    def test_mobile_hosts_require_every_canonical_shader(self) -> None:
-        for host in ("ios", "ios-simulator"):
-            self.write(f"export-hosts/{host}/OpenDBC.app/opendbc-runner")
-            self.write(f"export-hosts/{host}/opendbc-host.json", "{}")
+    def test_mobile_hosts_require_their_runtimes_and_shaders(self) -> None:
+        ios = "export-hosts/ios"
+        for path in ("OpenDBCRuntime.xcframework/Info.plist",
+                     "OpenDBCRuntime.xcframework/ios-arm64/libOpenDBCRuntime.a",
+                     "OpenDBCRuntime.xcframework/ios-arm64-simulator/libOpenDBCRuntime.a",
+                     "OpenDBCRuntime.xcconfig", "template/OpenDBCGame.xcodeproj/project.pbxproj"):
+            self.write(f"{ios}/{path}")
+        for manifest in ("opendbc-host-ios.json", "opendbc-host-ios-simulator.json"):
+            self.write(f"{ios}/{manifest}", "{}")
         android = "export-hosts/android/template"
         self.write(f"{android}/app/src/main/jniLibs/arm64-v8a/libmain.so")
         self.write(f"{android}/app/src/main/assets/opendbc-host.json", "{}")
         self.write(f"{android}/gradle/wrapper/gradle-wrapper.properties")
         self.write(f"{android}/gradlew")
         self.write(f"{android}/app/build.gradle", "android { compileSdk 36 }")
-        directories = (
-            self.resources / "export-hosts/ios/OpenDBC.app/shaders",
-            self.resources / "export-hosts/ios-simulator/OpenDBC.app/shaders",
-            self.resources / android / "app/src/main/assets/shaders",
-        )
+        directories = (self.resources / android / "app/src/main/assets/shaders",)
         for directory in directories:
             self.copy_shaders(directory)
 
