@@ -22,6 +22,7 @@ rem ==================================================================
 #constant CARS 4
 #constant LAPS 3
 #constant DT 0.0166667
+#constant MAX_STEPS 4
 #constant TOP_SPEED 62.0
 #constant SUN_AZIMUTH -35.0
 
@@ -122,9 +123,33 @@ gosub load_sounds
 
 mode = 0
 gosub new_race
+gosub update_camera
 
 rem ==================================================================
+rem The simulation steps at a fixed 60 Hz for the real time elapsed, so the cars keep
+rem their true speed whatever the frame rate; a long stall drops time instead of
+rem running a burst of catch-up steps.
+lasttime = timer()
 do
+   now = timer()
+   pending = pending + (now - lasttime) * 60
+   lasttime = now
+   steps = pending / 1000
+   if steps > MAX_STEPS then steps = MAX_STEPS : pending = MAX_STEPS * 1000
+   pending = pending - steps * 1000
+   for step = 1 to steps
+      gosub simulate
+   next step
+   for i = 1 to CARS : PlaceCar(i) : next i
+   gosub update_lights
+   gosub update_sounds
+   gosub draw_hud
+   sync
+loop
+
+rem ------------------------------------------------------------------
+rem One 60 Hz step: input, race logic, physics and the camera that follows it
+simulate:
    inc ticks
    inc modetick
    gosub read_input
@@ -163,13 +188,8 @@ do
    endselect
    if mode <> 1 then gosub collide_cars
    gosub rank_cars
-   for i = 1 to CARS : PlaceCar(i) : next i
    gosub update_camera
-   gosub update_lights
-   gosub update_sounds
-   gosub draw_hud
-   sync
-loop
+return
 
 rem ------------------------------------------------------------------
 rem The circuit: the same Catmull-Rom spline the Blender script modelled
@@ -553,13 +573,17 @@ update_camera:
       shot = camstyle * 3
    endif
    x# = cars(focus).x : z# = cars(focus).z : yaw# = cars(focus).yaw
+   rem Speed cue: the driver's cameras widen their view as the car gets faster
+   rush# = Smaller(abs(cars(focus).forward) / TOP_SPEED, 1.0)
+   if shot = 0 or shot = 3 then set camera fov 62 + rush# * 24 else set camera fov 68
    select shot
       case 0
          camyaw = CurveAngleTo(camyaw, yaw#, 0.08)
-         tx# = x# - sin(camyaw) * 8.5 : tz# = z# - cos(camyaw) * 8.5
-         camx = camx + (tx# - camx) * 0.3 : camz = camz + (tz# - camz) * 0.3 : camy = camy + (3.1 - camy) * 0.2
+         back# = 7.5 - rush# * 1.5
+         tx# = x# - sin(camyaw) * back# : tz# = z# - cos(camyaw) * back#
+         camx = camx + (tx# - camx) * 0.3 : camz = camz + (tz# - camz) * 0.3 : camy = camy + (2.5 - camy) * 0.2
          position camera camx, camy, camz
-         point camera x# + sin(yaw#) * 4, 1.2, z# + cos(yaw#) * 4
+         point camera x# + sin(yaw#) * 4, 1.1, z# + cos(yaw#) * 4
       endcase
       case 1
          rem Trackside: wait beside the road ahead, then pick a new spot once the car has passed
@@ -584,7 +608,7 @@ update_camera:
          point camera x# + sin(yaw#) * 20, 1.0, z# + cos(yaw#) * 20
       endcase
    endselect
-   if shot <> 0 then camx = camera position x() : camz = camera position z() : camy = 3.1 : camyaw = yaw#
+   if shot <> 0 then camx = camera position x() : camz = camera position z() : camy = 2.5 : camyaw = yaw#
    position object OBJ_SKY, camera position x(), -60, camera position z()
 return
 
