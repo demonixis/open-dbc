@@ -102,9 +102,9 @@ cmake --preset ios && cmake --build --preset ios
 cmake --preset ios-simulator && cmake --build --preset ios-simulator
 cmake --preset android-host && cmake --build --preset android-host
 cmake --preset default \
-  -DOPENDBC_IOS_EXPORT_HOST="$PWD/build-ios/tools/runner/Release-iphoneos/opendbc-runner.app" \
-  -DOPENDBC_IOS_SIMULATOR_EXPORT_HOST="$PWD/build-ios-simulator/tools/runner/Release-iphonesimulator/opendbc-runner.app" \
-  -DOPENDBC_ANDROID_EXPORT_HOST_LIBRARY="$PWD/build-android-host/tools/runner/libmain.so"
+  -DOPENDBC_IOS_EXPORT_HOST="$PWD/build/ios/tools/runner/Release-iphoneos/opendbc-runner.app" \
+  -DOPENDBC_IOS_SIMULATOR_EXPORT_HOST="$PWD/build/ios-simulator/tools/runner/Release-iphonesimulator/opendbc-runner.app" \
+  -DOPENDBC_ANDROID_EXPORT_HOST_LIBRARY="$PWD/build/android-host/tools/runner/libmain.so"
 cmake --build --preset default
 ```
 

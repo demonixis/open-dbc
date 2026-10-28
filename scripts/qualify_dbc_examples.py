@@ -291,8 +291,8 @@ def resolve_p0_test_executable(explicit: Path | None, opendbc: Path) -> tuple[Pa
         return candidate, "explicit"
 
     candidates = [
-        ROOT / "build/tests/unit/test_engine_builtins",
-        ROOT / "build/tests/unit/Debug/test_engine_builtins",
+        ROOT / "build/default/tests/unit/test_engine_builtins",
+        ROOT / "build/default/tests/unit/Debug/test_engine_builtins",
     ]
     for ancestor in opendbc.resolve().parents:
         candidates.extend((
