@@ -247,6 +247,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_readiness.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/process_runner.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/toolchain_locator.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/windows_resources.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/settings.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/paths.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/project_settings.cpp

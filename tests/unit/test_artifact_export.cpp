@@ -6,6 +6,7 @@
 #include "interpreter/embedded_artifact.hpp"
 #include "interpreter/program_image.hpp"
 #include "toolchain/artifact_export_service.hpp"
+#include "toolchain/export_internal.hpp"
 #include "toolchain/export_job.hpp"
 #include <nlohmann/json.hpp>
 
@@ -238,8 +239,10 @@ TEST_CASE("desktop artifact export ships the runner, the program image and asset
     CHECK_FALSE(fs::exists(Resources / "artifact/include/shared.dba"));
 #if defined(__APPLE__)
     CHECK(fs::is_regular_file(Result.OutputPath / "Contents/MacOS/opendbc-runner"));
+#elif defined(_WIN32)
+    CHECK(fs::is_regular_file(Result.OutputPath / "Sample Product.exe"));
 #else
-    CHECK(fs::is_regular_file(Result.OutputPath / "opendbc-runner"));
+    CHECK(fs::is_regular_file(Result.OutputPath / "Sample Product"));
 #endif
     CHECK(fs::is_regular_file(Resources / "artifact/media/pixel.png"));
     CHECK(fs::is_regular_file(Resources / "artifact/media/level.pak"));
@@ -288,6 +291,56 @@ TEST_CASE("desktop artifact export ships the runner, the program image and asset
     const toolchain::ArtifactExportResult Duplicate = toolchain::ArtifactExportService().Export(Request);
     CHECK_FALSE(Duplicate);
     CHECK(Duplicate.Error.find("already exists") != std::string::npos);
+}
+
+TEST_CASE("Windows and Linux exports stage a folder around the renamed runner")
+{
+    // Built on every host from a folder-shaped product, as Windows and Linux install it.
+    TemporaryDirectory Directory("opendbc-artifact-folder");
+    const fs::path Project = Directory.Root / "project";
+    Write(Project / "main.dba", "print \"folder\"\n");
+    Write(Project / "media/level.dat", "level");
+    const fs::path Product = Directory.Root / "product";
+    Write(Product / "opendbc-runner", "runner");
+    Write(Product / "libopenxr_loader.so.1", "loader");
+    Write(Product / "NOTICE.md", "notice");
+    Write(Product / "licenses/OpenDBC.txt", "license");
+    CopyCanonicalShaders(Product / "shaders");
+
+    toolchain::ArtifactExportRequest Request;
+    Request.ProjectRoot = Project;
+    Request.EntrySource = Project / "main.dba";
+    Request.HostProduct = Product / "opendbc-runner";
+    Request.HostResources = Product;
+    const fs::path Stage = Directory.Root / "stage";
+    fs::create_directories(Stage);
+    std::vector<dbc::interpreter::detail::ArtifactFile> Files;
+    std::string Error;
+    REQUIRE(toolchain::internal::StageDesktopFolder(Request, {1, 2, 3}, Stage, Stage / "My Game",
+                                                    "libopenxr_loader.so.1", Files, Error));
+    CHECK(Error.empty());
+    CHECK(fs::is_regular_file(Stage / "My Game"));
+    CHECK(fs::is_regular_file(Stage / "libopenxr_loader.so.1"));
+    CHECK(fs::is_regular_file(Stage / "shaders/dbclassic_tri.vert.spv"));
+    CHECK(fs::is_regular_file(Stage / "NOTICE.md"));
+    CHECK(fs::is_regular_file(Stage / "opendbc-artifact.json"));
+    CHECK(fs::is_regular_file(Stage / "artifact/program.obc"));
+    CHECK(fs::is_regular_file(Stage / "artifact/media/level.dat"));
+    CHECK_FALSE(fs::exists(Stage / "artifact/main.dba"));
+
+    CHECK(toolchain::internal::DesktopArchiveArguments("/out", "My Game", "/out/My Game.tar.gz") ==
+          std::vector<std::string>{"tar", "-a", "-cf", "/out/My Game.tar.gz", "-C", "/out", "My Game"});
+}
+
+TEST_CASE("Windows signing names the certificate by thumbprint and timestamps with SHA-256")
+{
+    toolchain::ExportToolchain Toolchain;
+    Toolchain.WindowsCertificate = "\xe2\x80\x8e" "0a 1b 2c 3d 4e 5f 6a 7b 8c 9d 0a 1b 2c 3d 4e 5f 6a 7b 8c 9d";
+    Toolchain.WindowsTimestampUrl = "http://timestamp.example";
+    CHECK(toolchain::internal::WindowsSignArguments("signtool.exe", Toolchain, "Game.exe") ==
+          std::vector<std::string>{"signtool.exe", "sign", "/fd", "SHA256", "/td", "SHA256", "/tr",
+                                   "http://timestamp.example", "/sha1", "0A1B2C3D4E5F6A7B8C9D0A1B2C3D4E5F6A7B8C9D",
+                                   "Game.exe"});
 }
 
 TEST_CASE("DBPro artifact images carry the project startup instead of its descriptor")
@@ -394,7 +447,7 @@ TEST_CASE("Studio and CLI export requests start from opendbc-runner with the pro
 
     const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
         Project, core::ProjectSettings{}, toolchain::ArtifactTarget::Desktop, "/exports", true,
-        toolchain::ExportToolchain{}, toolchain::ExportSecrets{"store", "key", {}});
+        toolchain::ExportToolchain{}, toolchain::ExportSecrets{"store", "key"});
 
     // The Studio product itself is not an export host: its binary is not the one the host manifest binds.
     CHECK(Request.HostProduct == core::paths::RunnerProduct());

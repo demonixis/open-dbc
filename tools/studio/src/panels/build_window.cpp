@@ -133,16 +133,6 @@ namespace dbc::studio
                     TextField("Key password", Secrets.AndroidKeyPassword, ImGuiInputTextFlags_Password))
                     Result = Action::Refresh;
             }
-#if defined(_WIN32)
-            if (Distribution_ && Target_ == toolchain::ArtifactTarget::Desktop &&
-                Studio.WindowsCertificate.ends_with(".pfx"))
-            {
-                ImGui::SeparatorText("Signing (this session only)");
-                if (TextField("Certificate password", Secrets.WindowsCertificatePassword,
-                              ImGuiInputTextFlags_Password))
-                    Result = Action::Refresh;
-            }
-#endif
 
             ImGui::SeparatorText("Checks");
             for (const toolchain::ExportCheck& Check : Checks)
@@ -175,7 +165,7 @@ namespace dbc::studio
                 Changed |= IdentityCombo(Identities_, Studio.MacSigningIdentity);
                 Changed |= TextField("Notary profile", Studio.NotaryProfile);
 #elif defined(_WIN32)
-                Changed |= TextField("Certificate SHA-1 or .pfx", Studio.WindowsCertificate);
+                Changed |= TextField("Certificate SHA-1", Studio.WindowsCertificate);
                 Changed |= TextField("Timestamp URL", Studio.WindowsTimestampUrl);
 #endif
                 if (Changed)

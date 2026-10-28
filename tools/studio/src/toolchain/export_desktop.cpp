@@ -1,6 +1,9 @@
 #include "export_internal.hpp"
+#include "toolchain_locator.hpp"
+#include "windows_resources.hpp"
 
 #include <array>
+#include <fstream>
 #include <system_error>
 
 namespace dbc::studio
@@ -62,6 +65,89 @@ namespace dbc::studio
                    detail::ValidateArtifactShaders(HostResources / "shaders", Request.HostResources / "shaders", Error);
         }
 
+        bool StageDesktopFolder(const ArtifactExportRequest& Request, const std::vector<std::uint8_t>& Image,
+                                const fs::path& Stage, const fs::path& Executable, std::string_view XrLoader,
+                                std::vector<dbc::interpreter::detail::ArtifactFile>& Files, std::string& Error)
+        {
+            return CopyArtifactFile(Request.HostProduct, Executable, Error) &&
+                   CopyArtifactFile(Request.HostResources / XrLoader, Stage / XrLoader, Error) &&
+                   CopyTree(Request.HostResources / "shaders", Stage / "shaders", Error) &&
+                   CopyArtifactFile(Request.HostResources / "NOTICE.md", Stage / "NOTICE.md", Error) &&
+                   CopyTree(Request.HostResources / "licenses", Stage / "licenses", Error) &&
+                   WriteArtifact(Request, Image, Stage, Files, Error);
+        }
+
+        std::vector<std::string> WindowsSignArguments(const fs::path& Signtool, const ExportToolchain& Toolchain,
+                                                      const fs::path& File)
+        {
+            const std::string Thumbprint =
+                NormalizeCertificateThumbprint(Toolchain.WindowsCertificate).value_or(std::string{});
+            return {Signtool.string(), "sign", "/fd",       "SHA256",   "/td",        "SHA256",
+                    "/tr",             Toolchain.WindowsTimestampUrl, "/sha1", Thumbprint, File.string()};
+        }
+
+        bool FinishWindowsFolder(const ExportContext& Context, const ArtifactExportRequest& Request,
+                                 const fs::path& Stage, const fs::path& Executable, const std::string& ProductName,
+                                 std::string& Error)
+        {
+            const std::optional<fs::path> Icon = ResolveArtifactIcon(Request, true, Error);
+            if (!Icon)
+                return false;
+            std::vector<WindowsIconImage> Icons;
+            for (const int Size : {256, 64, 48, 32, 16})
+            {
+                const fs::path Png = Stage / (".opendbc-icon-" + std::to_string(Size) + ".png");
+                const StageCleanup PngCleanup{Png};
+                if (!WriteScaledPng(Context, *Icon, Png, Size, false, Error))
+                    return false;
+                const std::optional<std::string> Bytes = ReadFile(Png);
+                if (!Bytes)
+                {
+                    Error = "Cannot read the generated Windows icon";
+                    return false;
+                }
+                Icons.push_back({Size, std::vector<std::uint8_t>(Bytes->begin(), Bytes->end())});
+            }
+            WindowsVersionInfo Version;
+            Version.ProductName = ProductName;
+            Version.CompanyName = Request.Metadata.Company;
+            Version.Description = Request.Metadata.Description;
+            Version.Copyright = Request.Metadata.Copyright;
+            Version.Version = Request.Settings.VersionName;
+            Version.Build = Request.Settings.VersionCode;
+            Version.OriginalFilename = Executable.filename().string();
+            if (!UpdateWindowsExecutableResources(Executable, Icons, Version, Error))
+                return false;
+            if (!Request.Sign)
+                return true;
+            const std::optional<fs::path> Signtool = LocateSigntool(ToolchainSearch::Host());
+            if (!Signtool)
+            {
+                Error = "Signing Windows executables needs signtool from the Windows SDK";
+                return false;
+            }
+            if (!NormalizeCertificateThumbprint(Request.Toolchain.WindowsCertificate))
+            {
+                Error = "Signing Windows executables needs the SHA-1 thumbprint of a code signing certificate";
+                return false;
+            }
+            Context.Note("Signing with certificate " + Request.Toolchain.WindowsCertificate);
+            for (const fs::path& File : {Executable, Stage / "openxr_loader.dll"})
+            {
+                if (!Context.Run(WindowsSignArguments(*Signtool, Request.Toolchain, File), Error) ||
+                    !Context.Run({Signtool->string(), "verify", "/pa", File.string()}, Error))
+                    return false;
+            }
+            return true;
+        }
+
+        std::vector<std::string> DesktopArchiveArguments(const fs::path& OutputDirectory,
+                                                         const std::string& ProductName, const fs::path& Archive)
+        {
+            // bsdtar on Windows 10+ and GNU tar both pick the format from the archive name.
+            return {"tar", "-a", "-cf", Archive.string(), "-C", OutputDirectory.string(), ProductName};
+        }
+
         ArtifactExportResult ExportDesktop(const ExportContext& Context, const ArtifactExportRequest& Request,
                                            const std::vector<std::uint8_t>& Image)
         {
@@ -70,8 +156,12 @@ namespace dbc::studio
 #if defined(__APPLE__)
             Result.OutputPath = Request.OutputDirectory / (ProductName + ".app");
             const fs::path Archive = Request.OutputDirectory / (ProductName + ".zip");
+#elif defined(_WIN32)
+            Result.OutputPath = Request.OutputDirectory / ProductName;
+            const fs::path Archive = Request.OutputDirectory / (ProductName + ".zip");
 #else
             Result.OutputPath = Request.OutputDirectory / ProductName;
+            const fs::path Archive = Request.OutputDirectory / (ProductName + ".tar.gz");
 #endif
             std::error_code FileError;
             if (fs::exists(Result.OutputPath, FileError))
@@ -80,14 +170,12 @@ namespace dbc::studio
                 Result.OutputPath.clear();
                 return Result;
             }
-#if defined(__APPLE__)
             if (Request.Sign && fs::exists(Archive, FileError))
             {
                 Result.Error = "Export destination already exists: " + Archive.string();
                 Result.OutputPath.clear();
                 return Result;
             }
-#endif
             if (!ValidateDesktopHost(Request, Result.Error))
                 return Result;
             fs::path Stage;
@@ -96,34 +184,13 @@ namespace dbc::studio
             StageCleanup Cleanup{Stage};
 #if defined(__APPLE__)
             const fs::path App = Stage / (ProductName + ".app");
-            if (!CopyTree(Request.HostProduct, App, Result.Error))
-                return Result;
             const fs::path Resources = App / "Contents/Resources";
-#else
-            if (!Request.Settings.IconSource.empty())
-            {
-                Result.Error = "Custom Desktop artifact icons are currently supported only on macOS";
-                return Result;
-            }
-            if (!CopyArtifactFile(Request.HostProduct, Stage / Request.HostProduct.filename(), Result.Error))
-                return Result;
-            const fs::path Resources = Stage;
-#if defined(_WIN32)
-            constexpr auto XrLoader = "openxr_loader.dll";
-#else
-            constexpr auto XrLoader = "libopenxr_loader.so.1";
-#endif
-            if (!CopyArtifactFile(Request.HostResources / XrLoader, Resources / XrLoader, Result.Error) ||
-                !CopyTree(Request.HostResources / "shaders", Resources / "shaders", Result.Error))
-                return Result;
-#endif
-            if (!CopyArtifactFile(Request.HostResources / "NOTICE.md", Resources / "NOTICE.md", Result.Error) ||
-                !CopyTree(Request.HostResources / "licenses", Resources / "licenses", Result.Error))
-                return Result;
             std::vector<dbc::interpreter::detail::ArtifactFile> Files;
-            if (!WriteArtifact(Request, Image, Resources, Files, Result.Error))
+            if (!CopyTree(Request.HostProduct, App, Result.Error) ||
+                !CopyArtifactFile(Request.HostResources / "NOTICE.md", Resources / "NOTICE.md", Result.Error) ||
+                !CopyTree(Request.HostResources / "licenses", Resources / "licenses", Result.Error) ||
+                !WriteArtifact(Request, Image, Resources, Files, Result.Error))
                 return Result;
-#if defined(__APPLE__)
             if (!PrepareMacIcon(Context, Request, App, Result.Error) ||
                 !SetAppleMetadata(Context, App, Request.Settings, ProductName, Result.Error))
                 return Result;
@@ -158,8 +225,20 @@ namespace dbc::studio
                                               "notarized with a notary profile");
             }
 #else
-            if (!SignAppleBundle(Context, Stage, Request.Sign, {}, {}, Result.Error))
+#if defined(_WIN32)
+            const fs::path Executable = Stage / (ProductName + ".exe");
+            constexpr std::string_view XrLoader = "openxr_loader.dll";
+#else
+            const fs::path Executable = Stage / ProductName;
+            constexpr std::string_view XrLoader = "libopenxr_loader.so.1";
+#endif
+            std::vector<dbc::interpreter::detail::ArtifactFile> Files;
+            if (!StageDesktopFolder(Request, Image, Stage, Executable, XrLoader, Files, Result.Error))
                 return Result;
+#if defined(_WIN32)
+            if (!FinishWindowsFolder(Context, Request, Stage, Executable, ProductName, Result.Error))
+                return Result;
+#endif
             if (!PublishNoReplace(Stage, Result.OutputPath, Result.Error))
             {
                 Result.OutputPath.clear();
@@ -168,6 +247,12 @@ namespace dbc::studio
             Cleanup.Path.clear();
             Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
             Result.Messages.push_back("Published " + Result.OutputPath.string());
+            if (Request.Sign)
+            {
+                if (!Context.Run(DesktopArchiveArguments(Request.OutputDirectory, ProductName, Archive), Result.Error))
+                    return Result;
+                Result.Messages.push_back("Published " + Archive.string());
+            }
 #endif
             return Result;
         }

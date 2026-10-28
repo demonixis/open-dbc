@@ -34,7 +34,7 @@ namespace dbc::studio
             std::string MacSigningIdentity;
             // A notarytool keychain profile (xcrun notarytool store-credentials).
             std::string NotaryProfile;
-            // A certificate SHA-1 in the Windows store, or a .pfx file.
+            // The SHA-1 thumbprint of a code signing certificate in the user's Windows certificate store.
             std::string WindowsCertificate;
             std::string WindowsTimestampUrl;
         };
@@ -45,7 +45,6 @@ namespace dbc::studio
         {
             std::string AndroidKeystorePassword;
             std::string AndroidKeyPassword;
-            std::string WindowsCertificatePassword;
 
             static ExportSecrets FromEnvironment();
         };
@@ -64,6 +63,8 @@ namespace dbc::studio
             std::filesystem::path HostProduct;
             std::filesystem::path HostResources;
             core::ProjectSettings Settings;
+            // Company, description and copyright from the DBPro project, for platform metadata.
+            dbc::interpreter::ProjectMetadata Metadata;
             ExportToolchain Toolchain;
             ExportSecrets Secrets;
             bool Sign = true;

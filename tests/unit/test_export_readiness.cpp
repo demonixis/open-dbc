@@ -3,10 +3,12 @@
 #include "core/settings.hpp"
 #include "toolchain/export_readiness.hpp"
 #include "toolchain/toolchain_locator.hpp"
+#include "toolchain/windows_resources.hpp"
 
 #include <SDL3/SDL.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -234,3 +236,87 @@ TEST_CASE("signed macOS builds need an installed Developer ID identity and warn 
                        [](const toolchain::ExportCheck& Check) { return Check.Label == "Developer ID identity"; }));
 }
 #endif
+
+TEST_CASE("certificate thumbprints are normalized and malformed ones rejected")
+{
+    CHECK(toolchain::NormalizeCertificateThumbprint("0a1b2c3d4e5f6a7b8c9d0a1b2c3d4e5f6a7b8c9d") ==
+          "0A1B2C3D4E5F6A7B8C9D0A1B2C3D4E5F6A7B8C9D");
+    CHECK_FALSE(toolchain::NormalizeCertificateThumbprint("certificate.pfx"));
+    CHECK_FALSE(toolchain::NormalizeCertificateThumbprint("0a1b"));
+}
+
+TEST_CASE("signtool comes from OPENDBC_SIGNTOOL or the newest Windows SDK")
+{
+    ToolTree Tree("opendbc-windows-sdk");
+    Tree.Write("bin/10.0.19041.0/x64/signtool.exe");
+    Tree.Write("bin/10.0.26100.0/x64/signtool.exe");
+    Tree.Write("bin/10.0.30000.0/x86/signtool.exe");
+    toolchain::ToolchainSearch Paths = Search({});
+    Paths.WindowsSdkBinRoots = {Tree.Root / "bin"};
+    CHECK(toolchain::LocateSigntool(Paths) == Tree.Root / "bin/10.0.26100.0/x64/signtool.exe");
+    Paths = Search({{"OPENDBC_SIGNTOOL", "C:/Tools/signtool.exe"}});
+    CHECK(toolchain::LocateSigntool(Paths) == fs::path("C:/Tools/signtool.exe"));
+}
+
+namespace
+{
+    std::uint32_t ReadDword(const std::vector<std::uint8_t>& Bytes, std::size_t Offset)
+    {
+        return std::uint32_t{Bytes[Offset]} | (std::uint32_t{Bytes[Offset + 1]} << 8) |
+               (std::uint32_t{Bytes[Offset + 2]} << 16) | (std::uint32_t{Bytes[Offset + 3]} << 24);
+    }
+
+    std::vector<std::uint8_t> Utf16Bytes(std::string_view Ascii)
+    {
+        std::vector<std::uint8_t> Bytes;
+        for (const char Character : Ascii)
+        {
+            Bytes.push_back(static_cast<std::uint8_t>(Character));
+            Bytes.push_back(0);
+        }
+        return Bytes;
+    }
+
+    bool Contains(const std::vector<std::uint8_t>& Bytes, const std::vector<std::uint8_t>& Part)
+    {
+        return std::search(Bytes.begin(), Bytes.end(), Part.begin(), Part.end()) != Bytes.end();
+    }
+} // namespace
+
+TEST_CASE("the Windows version resource is a VS_VERSIONINFO tree with the game's identity")
+{
+    toolchain::WindowsVersionInfo Info;
+    Info.ProductName = "My Game";
+    Info.CompanyName = "Studio";
+    Info.Version = "1.2.3";
+    Info.Build = 7;
+    Info.OriginalFilename = "My Game.exe";
+    const std::vector<std::uint8_t> Bytes = toolchain::BuildVersionResource(Info);
+    REQUIRE(Bytes.size() > 100);
+    CHECK((Bytes[0] | (Bytes[1] << 8)) == static_cast<int>(Bytes.size()));
+    CHECK((Bytes[2] | (Bytes[3] << 8)) == 52);
+    CHECK(Contains(Bytes, Utf16Bytes("VS_VERSION_INFO")));
+    // The fixed file info follows the key, aligned on 32 bits: 6 header bytes + 16 UTF-16 characters.
+    CHECK(ReadDword(Bytes, 40) == 0xfeef04bdu);
+    CHECK(ReadDword(Bytes, 48) == 0x00010002u);
+    CHECK(ReadDword(Bytes, 52) == 0x00030007u);
+    CHECK(Contains(Bytes, Utf16Bytes("ProductName")));
+    CHECK(Contains(Bytes, Utf16Bytes("My Game.exe")));
+    CHECK(Contains(Bytes, Utf16Bytes("1.2.3.7")));
+    CHECK(Contains(Bytes, Utf16Bytes("Translation")));
+}
+
+TEST_CASE("the Windows icon group lists each PNG image with its resource ID")
+{
+    const std::vector<toolchain::WindowsIconImage> Images = {{256, std::vector<std::uint8_t>(300)},
+                                                             {32, std::vector<std::uint8_t>(40)}};
+    const std::vector<std::uint8_t> Group = toolchain::BuildIconGroupResource(Images, 5);
+    REQUIRE(Group.size() == 6 + 2 * 14);
+    CHECK(Group[2] == 1);
+    CHECK(Group[4] == 2);
+    CHECK(Group[6] == 0);
+    CHECK(Group[6 + 14] == 32);
+    CHECK(ReadDword(Group, 6 + 8) == 300);
+    CHECK((Group[6 + 12] | (Group[6 + 13] << 8)) == 5);
+    CHECK((Group[6 + 14 + 12] | (Group[6 + 14 + 13] << 8)) == 6);
+}

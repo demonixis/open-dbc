@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <fstream>
 #include <system_error>
@@ -102,6 +103,7 @@ namespace dbc::studio
 #elif defined(_WIN32)
             Search.JdkRoots = {"C:/Program Files/Android/Android Studio/jbr", "C:/Program Files/Java",
                                "C:/Program Files/Eclipse Adoptium", "C:/Program Files/Microsoft"};
+            Search.WindowsSdkBinRoots = {"C:/Program Files (x86)/Windows Kits/10/bin"};
             if (const auto LocalAppData = Search.Variable("LOCALAPPDATA"))
                 Search.AndroidSdkRoots.push_back(fs::path(*LocalAppData) / "Android/Sdk");
 #else
@@ -257,6 +259,46 @@ namespace dbc::studio
             (void)Binary;
             return std::nullopt;
 #endif
+        }
+
+        std::optional<fs::path> LocateSigntool(const ToolchainSearch& Search)
+        {
+            if (Search.Variable)
+            {
+                if (const auto Configured = Search.Variable("OPENDBC_SIGNTOOL"))
+                    return fs::path(*Configured);
+            }
+            std::optional<fs::path> Latest;
+            for (const fs::path& Root : Search.WindowsSdkBinRoots)
+            {
+                std::error_code Error;
+                for (fs::directory_iterator It(Root, Error), End; !Error && It != End; It.increment(Error))
+                {
+                    const fs::path Candidate = It->path() / "x64" / "signtool.exe";
+                    // SDK folders are named 10.0.<build>.0, so the name order is the version order.
+                    std::error_code FileError;
+                    if (fs::is_regular_file(Candidate, FileError) &&
+                        (!Latest || It->path().filename() > Latest->parent_path().parent_path().filename()))
+                        Latest = Candidate;
+                }
+            }
+            return Latest;
+        }
+
+        std::optional<std::string> NormalizeCertificateThumbprint(std::string_view Value)
+        {
+            std::string Result;
+            for (const char Character : Value)
+            {
+                if (std::isxdigit(static_cast<unsigned char>(Character)))
+                    Result += static_cast<char>(std::toupper(static_cast<unsigned char>(Character)));
+                else if (!std::isspace(static_cast<unsigned char>(Character)) &&
+                         static_cast<unsigned char>(Character) < 0x80)
+                    return std::nullopt;
+            }
+            if (Result.size() != 40)
+                return std::nullopt;
+            return Result;
         }
 
         std::string AndroidSdkInstallCommand(int CompileSdk)

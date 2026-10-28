@@ -94,6 +94,20 @@ namespace dbc::studio
         bool ValidateAndroidHost(const ArtifactExportRequest& Request, std::string& Error);
         bool ValidateIosExportHost(const ArtifactExportRequest& Request, bool Simulator, std::string& Error);
 
+        // Windows and Linux exports are a folder holding the renamed runner, the OpenXR loader, the shaders, the
+        // notices and the payload. These steps compile on every host, so their tests run everywhere.
+        bool StageDesktopFolder(const ArtifactExportRequest& Request, const std::vector<std::uint8_t>& Image,
+                                const fs::path& Stage, const fs::path& Executable, std::string_view XrLoader,
+                                std::vector<dbc::interpreter::detail::ArtifactFile>& Files, std::string& Error);
+        // Gives the executable the game's icon and version, then signs it in distribution builds.
+        bool FinishWindowsFolder(const ExportContext& Context, const ArtifactExportRequest& Request,
+                                 const fs::path& Stage, const fs::path& Executable, const std::string& ProductName,
+                                 std::string& Error);
+        std::vector<std::string> WindowsSignArguments(const fs::path& Signtool, const ExportToolchain& Toolchain,
+                                                      const fs::path& File);
+        std::vector<std::string> DesktopArchiveArguments(const fs::path& OutputDirectory,
+                                                         const std::string& ProductName, const fs::path& Archive);
+
         ArtifactExportResult ExportDesktop(const ExportContext& Context, const ArtifactExportRequest& Request,
                                            const std::vector<std::uint8_t>& Image);
         ArtifactExportResult ExportIos(const ExportContext& Context, const ArtifactExportRequest& Request,

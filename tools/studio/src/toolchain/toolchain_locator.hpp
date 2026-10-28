@@ -19,6 +19,8 @@ namespace dbc::studio
             // package manager prefixes.
             std::vector<std::filesystem::path> JdkRoots;
             std::vector<std::filesystem::path> AndroidSdkRoots;
+            // Windows SDK bin folders, holding one folder per SDK version.
+            std::vector<std::filesystem::path> WindowsSdkBinRoots;
 
             // The current machine: real environment, platform install locations.
             static ToolchainSearch Host();
@@ -47,6 +49,12 @@ namespace dbc::studio
         std::vector<SigningIdentity> ParseSigningIdentities(std::string_view Output);
         // The valid code signing identities of the user's keychains; empty outside macOS.
         std::vector<SigningIdentity> ListSigningIdentities();
+        // signtool from OPENDBC_SIGNTOOL or the newest Windows SDK.
+        std::optional<std::filesystem::path> LocateSigntool(const ToolchainSearch& Search);
+        // A certificate SHA-1 as signtool expects it. Copies from the certificate manager may carry spaces
+        // and an invisible left-to-right mark.
+        std::optional<std::string> NormalizeCertificateThumbprint(std::string_view Value);
+
         // The lowest macOS version a Mach-O binary runs on, from its LC_BUILD_VERSION.
         std::optional<std::string> MacMinimumSystem(const std::filesystem::path& Binary);
     } // namespace toolchain

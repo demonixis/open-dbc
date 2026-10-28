@@ -157,6 +157,8 @@ set(STUDIO_SOURCES
     src/toolchain/process_runner.hpp
     src/toolchain/toolchain_locator.cpp
     src/toolchain/toolchain_locator.hpp
+    src/toolchain/windows_resources.cpp
+    src/toolchain/windows_resources.hpp
     src/toolchain/icon_generator.cpp
     src/toolchain/icon_generator.hpp
 

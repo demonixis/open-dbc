@@ -59,6 +59,7 @@ namespace dbc::studio
             Request.Startup = Project.Startup;
             Request.ProjectFile = Project.DescriptorPath;
             Request.AssetRoot = Project.AssetRoot;
+            Request.Metadata = Project.Metadata;
             Request.OutputDirectory = fs::absolute(OutputDirectory).lexically_normal();
             Request.HostProduct = core::paths::RunnerProduct();
             Request.HostResources = core::paths::ResourceDir();
@@ -85,7 +86,6 @@ namespace dbc::studio
             ExportSecrets Secrets;
             Secrets.AndroidKeystorePassword = Read("OPENDBC_ANDROID_KEYSTORE_PASSWORD");
             Secrets.AndroidKeyPassword = Read("OPENDBC_ANDROID_KEY_PASSWORD");
-            Secrets.WindowsCertificatePassword = Read("OPENDBC_WINDOWS_CERTIFICATE_PASSWORD");
             return Secrets;
         }
     } // namespace toolchain

@@ -112,6 +112,27 @@ namespace dbc::studio
         }
 #endif
 
+        // Compiled on every host to keep it building; only Windows calls it.
+        [[maybe_unused]] void AddWindowsChecks(const toolchain::ArtifactExportRequest& Request,
+                                               const toolchain::ToolchainSearch& Search,
+                                               std::vector<toolchain::ExportCheck>& Checks)
+        {
+            if (!Request.Sign)
+                return;
+            const bool Certificate = toolchain::NormalizeCertificateThumbprint(Request.Toolchain.WindowsCertificate)
+                                         .has_value();
+            Checks.push_back({"Code signing certificate", Certificate, true,
+                              Certificate ? std::string{}
+                                          : "Enter the SHA-1 thumbprint of a code signing certificate from your "
+                                            "certificate store in External tools. Import a .pfx file with: certutil "
+                                            "-user -importPFX file.pfx"});
+            const bool Signtool = toolchain::LocateSigntool(Search).has_value();
+            Checks.push_back({"signtool", Signtool, true,
+                              Signtool ? std::string{}
+                                       : "Install the Windows SDK signing tools, or set OPENDBC_SIGNTOOL to "
+                                         "signtool.exe."});
+        }
+
         void AddIosChecks(const toolchain::ArtifactExportRequest& Request, bool Simulator,
                           std::vector<toolchain::ExportCheck>& Checks)
         {
@@ -139,6 +160,8 @@ namespace dbc::studio
                                  "Rebuild OpenDBC so opendbc-runner matches this Studio.");
 #if defined(__APPLE__)
                     AddMacChecks(Request, Checks);
+#elif defined(_WIN32)
+                    AddWindowsChecks(Request, ToolchainSearch::Host(), Checks);
 #endif
                     break;
                 case ArtifactTarget::AndroidApk:
