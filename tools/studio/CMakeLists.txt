@@ -171,6 +171,13 @@ set(STUDIO_SOURCES
     src/panels/project_panel.hpp
     src/panels/project_settings_window.cpp
     src/panels/project_settings_window.hpp
+
+    src/scene/scene_codegen.cpp
+    src/scene/scene_codegen.hpp
+    src/scene/scene_document.cpp
+    src/scene/scene_document.hpp
+    src/scene/scene_integration.cpp
+    src/scene/scene_integration.hpp
 )
 
 if(NOT ANDROID AND NOT IOS)

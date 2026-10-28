@@ -44,6 +44,16 @@ if(NOT ANDROID AND NOT IOS)
     target_link_libraries(test_studio_editor PRIVATE doctest_with_main dbc_language imgui_texteditor)
     doctest_discover_tests(test_studio_editor PROPERTIES LABELS "unit-studio")
 
+    add_executable(test_studio_scene
+        test_studio_scene.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_integration.cpp
+    )
+    target_include_directories(test_studio_scene PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
+    target_link_libraries(test_studio_scene PRIVATE doctest_with_main dbc_language glm::glm)
+    doctest_discover_tests(test_studio_scene PROPERTIES LABELS "unit-studio")
+
     add_executable(test_studio_media
         test_studio_media.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
