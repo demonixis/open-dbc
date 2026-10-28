@@ -130,6 +130,11 @@ namespace dbc::studio
             SDL_GPUGraphicsPipeline* BlendPipeline_ = nullptr;
             SDL_GPUGraphicsPipeline* WirePipeline_ = nullptr;
             SDL_GPUGraphicsPipeline* LinePipeline_ = nullptr;
+            // SET SHADOW SHADING: volumes count into the stencil, then a dark overlay
+            // covers what they marked. Null without a stencil depth format.
+            SDL_GPUGraphicsPipeline* VolumePipeline_ = nullptr;
+            SDL_GPUGraphicsPipeline* ShadePipeline_ = nullptr;
+            bool Stencil_ = false;
             SDL_GPUSampler* Sampler_ = nullptr;
             core::GpuImage White_;
             SDL_GPUTextureFormat DepthFormat_ = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
@@ -149,6 +154,10 @@ namespace dbc::studio
             std::vector<LineVertex> Lines_;
             SDL_GPUBuffer* LineBuffer_ = nullptr;
             Uint32 LineCapacity_ = 0;
+            // The frame's shadow volumes, then the six overlay corners in clip space.
+            std::vector<LineVertex> Shadows_;
+            SDL_GPUBuffer* ShadowBuffer_ = nullptr;
+            Uint32 ShadowCapacity_ = 0;
             glm::mat4 ViewProj_{1.0f};
             glm::vec4 Clear_{0.0f, 0.0f, 0.0f, 1.0f};
             bool Pending_ = false;

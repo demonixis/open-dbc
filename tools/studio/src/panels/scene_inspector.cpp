@@ -512,7 +512,7 @@ namespace dbc::studio
             OptionalFloat("Specular power", Mat.SpecularPower, 10.0f, 0.25f, 0.0f, 255.0f);
             ImGui::Checkbox("Casts a shadow", &Mat.CastShadow);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("SET SHADOW SHADING ON; the viewport does not draw shadows");
+                ImGui::SetTooltip("SET SHADOW SHADING ON, cast from the shadow source in Level Settings");
         }
 
         void SceneEditor::DrawCameraSettings()

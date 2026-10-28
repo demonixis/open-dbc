@@ -142,8 +142,40 @@ namespace dbc::studio
             Info.primitive_type = SDL_GPU_PRIMITIVETYPE_LINELIST;
             LinePipeline_ = SDL_CreateGPUGraphicsPipeline(Gpu_, &Info);
 
+            if (Stencil_)
+            {
+                // The engine's shadow pipelines: volume faces count where they fail the
+                // depth test, front up and back down, without touching colour or depth.
+                Info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+                SDL_GPUColorTargetDescription Masked = {};
+                Masked.format = Color.format;
+                Masked.blend_state.enable_color_write_mask = true;
+                Masked.blend_state.color_write_mask = 0;
+                Info.target_info.color_target_descriptions = &Masked;
+                Info.depth_stencil_state.enable_depth_write = false;
+                Info.depth_stencil_state.enable_stencil_test = true;
+                Info.depth_stencil_state.compare_mask = 0xFF;
+                Info.depth_stencil_state.write_mask = 0xFF;
+                Info.depth_stencil_state.front_stencil_state = {SDL_GPU_STENCILOP_KEEP, SDL_GPU_STENCILOP_KEEP,
+                                                                SDL_GPU_STENCILOP_INCREMENT_AND_WRAP,
+                                                                SDL_GPU_COMPAREOP_ALWAYS};
+                Info.depth_stencil_state.back_stencil_state = {SDL_GPU_STENCILOP_KEEP, SDL_GPU_STENCILOP_KEEP,
+                                                               SDL_GPU_STENCILOP_DECREMENT_AND_WRAP,
+                                                               SDL_GPU_COMPAREOP_ALWAYS};
+                VolumePipeline_ = SDL_CreateGPUGraphicsPipeline(Gpu_, &Info);
+
+                Info.target_info.color_target_descriptions = &Color;
+                Info.depth_stencil_state.enable_depth_test = false;
+                Info.depth_stencil_state.write_mask = 0;
+                Info.depth_stencil_state.front_stencil_state = {SDL_GPU_STENCILOP_KEEP, SDL_GPU_STENCILOP_KEEP,
+                                                                SDL_GPU_STENCILOP_KEEP, SDL_GPU_COMPAREOP_NOT_EQUAL};
+                Info.depth_stencil_state.back_stencil_state = Info.depth_stencil_state.front_stencil_state;
+                ShadePipeline_ = SDL_CreateGPUGraphicsPipeline(Gpu_, &Info);
+            }
+
             Release();
-            if (!MeshPipeline_ || !WirePipeline_ || !BlendPipeline_ || !LinePipeline_)
+            if (!MeshPipeline_ || !WirePipeline_ || !BlendPipeline_ || !LinePipeline_ ||
+                (Stencil_ && (!VolumePipeline_ || !ShadePipeline_)))
             {
                 Error = std::string("Scene pipelines: ") + SDL_GetError();
                 return false;
@@ -154,9 +186,20 @@ namespace dbc::studio
         bool SceneRenderer::Initialize(SDL_GPUDevice* Gpu, std::string& Error)
         {
             Gpu_ = Gpu;
-            if (!SDL_GPUTextureSupportsFormat(Gpu_, DepthFormat_, SDL_GPU_TEXTURETYPE_2D,
-                                              SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET))
-                DepthFormat_ = SDL_GPU_TEXTUREFORMAT_D24_UNORM;
+            // Shadows need a stencil; without one the preview draws none.
+            Stencil_ = false;
+            DepthFormat_ = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
+            for (const SDL_GPUTextureFormat Format :
+                 {SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT, SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+                  SDL_GPU_TEXTUREFORMAT_D32_FLOAT, SDL_GPU_TEXTUREFORMAT_D24_UNORM})
+                if (SDL_GPUTextureSupportsFormat(Gpu_, Format, SDL_GPU_TEXTURETYPE_2D,
+                                                 SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET))
+                {
+                    DepthFormat_ = Format;
+                    Stencil_ = Format == SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT ||
+                               Format == SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
+                    break;
+                }
             if (!CreatePipelines(Error))
                 return false;
 
@@ -195,13 +238,16 @@ namespace dbc::studio
                 core::ReleaseGpuImage(Gpu_, Image);
             Textures_.clear();
             core::ReleaseGpuImage(Gpu_, White_);
-            if (LineBuffer_ != nullptr)
-                SDL_ReleaseGPUBuffer(Gpu_, LineBuffer_);
-            LineBuffer_ = nullptr;
-            for (SDL_GPUGraphicsPipeline* Pipeline : {MeshPipeline_, BlendPipeline_, WirePipeline_, LinePipeline_})
+            for (SDL_GPUBuffer* Buffer : {LineBuffer_, ShadowBuffer_})
+                if (Buffer != nullptr)
+                    SDL_ReleaseGPUBuffer(Gpu_, Buffer);
+            LineBuffer_ = ShadowBuffer_ = nullptr;
+            LineCapacity_ = ShadowCapacity_ = 0;
+            for (SDL_GPUGraphicsPipeline* Pipeline :
+                 {MeshPipeline_, BlendPipeline_, WirePipeline_, LinePipeline_, VolumePipeline_, ShadePipeline_})
                 if (Pipeline != nullptr)
                     SDL_ReleaseGPUGraphicsPipeline(Gpu_, Pipeline);
-            MeshPipeline_ = BlendPipeline_ = WirePipeline_ = LinePipeline_ = nullptr;
+            MeshPipeline_ = BlendPipeline_ = WirePipeline_ = LinePipeline_ = VolumePipeline_ = ShadePipeline_ = nullptr;
             if (Sampler_ != nullptr)
                 SDL_ReleaseGPUSampler(Gpu_, Sampler_);
             Sampler_ = nullptr;
@@ -616,6 +662,31 @@ namespace dbc::studio
             // Ghosts last, so what is behind them is already drawn.
             std::stable_partition(Items_.begin(), Items_.end(), [](const DrawItem& Item) { return !Item.Blend; });
 
+            // SET SHADOW SHADING ON, which only Pro levels write.
+            Shadows_.clear();
+            if (Stencil_ && Pro)
+            {
+                const glm::vec3 Light = ShadowSource(Document);
+                std::vector<glm::vec3> Volume;
+                for (const SceneNode& Node : Document.Nodes)
+                {
+                    if (!Node.Mat.CastShadow || IdSpaceOf(Node.Kind) != IdSpace::Object)
+                        continue;
+                    if (const CpuMesh* Caster = Mesh(Node))
+                        AppendShadowVolume(*Caster, NodeWorld(Node), Light, KShadowRange, Volume);
+                }
+                for (const glm::vec3& Point : Volume)
+                    Shadows_.push_back({Point, glm::vec4(0.0f)});
+                if (!Shadows_.empty())
+                {
+                    // The engine darkens shadowed pixels with black at 64/255.
+                    const glm::vec4 Shade(0.0f, 0.0f, 0.0f, 64.0f / 255.0f);
+                    for (const glm::vec2 Corner : {glm::vec2(-1, -1), glm::vec2(1, -1), glm::vec2(1, 1),
+                                                   glm::vec2(-1, -1), glm::vec2(1, 1), glm::vec2(-1, 1)})
+                        Shadows_.push_back({glm::vec3(Corner, 0.0f), Shade});
+                }
+            }
+
             for (auto Entry = Geometry_.begin(); Entry != Geometry_.end();)
             {
                 if (Entry->second.Used)
@@ -684,6 +755,9 @@ namespace dbc::studio
             const bool HasLines = !Lines_.empty() &&
                                   Upload(Copy, LineBuffer_, LineCapacity_, Lines_.data(),
                                          static_cast<Uint32>(Lines_.size() * sizeof(LineVertex)), Transfers);
+            const bool HasShadows = !Shadows_.empty() &&
+                                    Upload(Copy, ShadowBuffer_, ShadowCapacity_, Shadows_.data(),
+                                           static_cast<Uint32>(Shadows_.size() * sizeof(LineVertex)), Transfers);
             SDL_EndGPUCopyPass(Copy);
             // Released now, freed once the copy has run.
             for (SDL_GPUTransferBuffer* Transfer : Transfers)
@@ -699,7 +773,8 @@ namespace dbc::studio
             Depth.clear_depth = 1.0f;
             Depth.load_op = SDL_GPU_LOADOP_CLEAR;
             Depth.store_op = SDL_GPU_STOREOP_DONT_CARE;
-            Depth.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
+            Depth.clear_stencil = 0;
+            Depth.stencil_load_op = Stencil_ ? SDL_GPU_LOADOP_CLEAR : SDL_GPU_LOADOP_DONT_CARE;
             Depth.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
             SDL_GPURenderPass* Pass = SDL_BeginGPURenderPass(Commands, &Color, 1, &Depth);
             if (Pass == nullptr)
@@ -724,6 +799,21 @@ namespace dbc::studio
                 const SDL_GPUBufferBinding Buffer = {Item.Mesh->Buffer, 0};
                 SDL_BindGPUVertexBuffers(Pass, 0, &Buffer, 1);
                 SDL_DrawGPUPrimitives(Pass, Item.Count, 1, Item.First, 0);
+            }
+            if (HasShadows)
+            {
+                const SDL_GPUBufferBinding Buffer = {ShadowBuffer_, 0};
+                const Uint32 VolumeCount = static_cast<Uint32>(Shadows_.size()) - 6;
+                SDL_BindGPUGraphicsPipeline(Pass, VolumePipeline_);
+                SDL_PushGPUVertexUniformData(Commands, 0, &ViewProj_, sizeof(ViewProj_));
+                SDL_BindGPUVertexBuffers(Pass, 0, &Buffer, 1);
+                SDL_DrawGPUPrimitives(Pass, VolumeCount, 1, 0, 0);
+                // The overlay's corners are already in clip space.
+                const glm::mat4 Identity(1.0f);
+                SDL_BindGPUGraphicsPipeline(Pass, ShadePipeline_);
+                SDL_SetGPUStencilReference(Pass, 0);
+                SDL_PushGPUVertexUniformData(Commands, 0, &Identity, sizeof(Identity));
+                SDL_DrawGPUPrimitives(Pass, 6, 1, VolumeCount, 0);
             }
             if (HasLines)
             {

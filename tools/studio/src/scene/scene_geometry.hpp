@@ -109,6 +109,17 @@ namespace dbc::studio
         // objects and lights turn, only objects scale; the rest just move.
         void ApplyGroupChange(const GroupChange& Change, const SceneNode& Start, SceneNode& Node);
 
+        // SET SHADOW SHADING ON's default range: how far a shadow volume reaches.
+        inline constexpr float KShadowRange = 2000.0f;
+        // Where SET SHADOW POSITION puts the shadow's light: the fixed point for -1,
+        // else light N's position. Light 0, the default, and a missing light sit at
+        // the origin, as in the engine.
+        glm::vec3 ShadowSource(const SceneDocument& Document);
+        // The engine's shadow volume: each triangle facing `Light`, pushed 0.1 away
+        // from it and extruded `Range` further, with both caps and the three sides.
+        void AppendShadowVolume(const CpuMesh& Mesh, const glm::mat4& World, const glm::vec3& Light, float Range,
+                                std::vector<glm::vec3>& Out);
+
         struct Ray
         {
             glm::vec3 Origin{0.0f};

@@ -483,6 +483,53 @@ namespace dbc::studio
             Node.Scale = Object ? glm::max(Start.Scale * Change.Factor, glm::vec3(0.01f)) : Start.Scale;
         }
 
+        glm::vec3 ShadowSource(const SceneDocument& Document)
+        {
+            const int Mode = Document.Env.ShadowMode.value_or(0);
+            if (Mode == -1)
+                return Document.Env.ShadowPosition;
+            const SceneNode* Light = Mode > 0 ? Document.Find(IdSpace::Light, Mode) : nullptr;
+            return Light != nullptr ? Light->Position : glm::vec3(0.0f);
+        }
+
+        void AppendShadowVolume(const CpuMesh& Mesh, const glm::mat4& World, const glm::vec3& Light, float Range,
+                                std::vector<glm::vec3>& Out)
+        {
+            if (Range <= 0.0f)
+                return;
+            for (std::size_t Index = 0; Index + 2 < Mesh.Vertices.size(); Index += 3)
+            {
+                glm::vec3 Base[3];
+                for (int Corner = 0; Corner < 3; ++Corner)
+                    Base[Corner] = glm::vec3(World * glm::vec4(Mesh.Vertices[Index + Corner].Position, 1.0f));
+                const glm::vec3 Face = glm::cross(Base[1] - Base[0], Base[2] - Base[0]);
+                const glm::vec3 Center = (Base[0] + Base[1] + Base[2]) / 3.0f;
+                if (glm::dot(Face, Light - Center) <= 0.000001f)
+                    continue;
+                const float FaceLength = glm::length(Face);
+                const glm::vec3 Fallback = FaceLength > 0.0f ? -Face / FaceLength : glm::vec3(0.0f, -1.0f, 0.0f);
+                glm::vec3 Far[3];
+                for (int Corner = 0; Corner < 3; ++Corner)
+                {
+                    const glm::vec3 Away = Base[Corner] - Light;
+                    const float Length = glm::length(Away);
+                    const glm::vec3 Direction = Length * Length > 0.000001f ? Away / Length : Fallback;
+                    Base[Corner] += Direction * 0.1f;
+                    Far[Corner] = Base[Corner] + Direction * Range;
+                }
+                const auto Append = [&](const glm::vec3& A, const glm::vec3& B, const glm::vec3& C)
+                { Out.insert(Out.end(), {A, B, C}); };
+                Append(Base[0], Base[1], Base[2]);
+                Append(Far[2], Far[1], Far[0]);
+                for (int Edge = 0; Edge < 3; ++Edge)
+                {
+                    const int Next = (Edge + 1) % 3;
+                    Append(Base[Edge], Far[Next], Base[Next]);
+                    Append(Base[Edge], Far[Edge], Far[Next]);
+                }
+            }
+        }
+
         std::optional<float> Intersect(const Ray& Value, const CpuMesh& Mesh, const glm::mat4& World)
         {
             std::optional<float> Nearest;

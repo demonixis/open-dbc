@@ -135,5 +135,7 @@ The viewport is a preview drawn by the Studio, not by the engine. Its
 primitives, matrices, terrains and models use the engine's geometry and
 import, so sizes, origins and UVs match the program. Lighting is simple
 per-pixel shading with ambient, up to eight lights, specular and linear fog.
-Faces are drawn from both sides, and shadows are not drawn. A model the import
+Faces are drawn from both sides. Pro shadows use the engine's method: stencil
+volumes extruded 2000 units from the shadow source (light 0 at the origin
+unless `SET SHADOW POSITION` says otherwise), darkened by 25 %. A model the import
 cannot read shows as a 10-unit box.

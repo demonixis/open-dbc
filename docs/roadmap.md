@@ -121,7 +121,6 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 - [ ] Preview `.dbo` models (Assimp cannot read them; a box stands in) and
   `.dds` textures and thumbnails (SDL_image cannot read them).
-- [ ] Draw `SET SHADOW SHADING ON` shadows in the viewport.
 - [ ] Interactive UI coverage: navigation, gizmos, drag and drop and the
   Inspector are checked by hand only.
 

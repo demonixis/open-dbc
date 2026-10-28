@@ -414,6 +414,102 @@ TEST_CASE("Scene models keep their materials' textures and colours")
     std::filesystem::remove_all(Folder, Ignored);
 }
 
+TEST_CASE("Scene shadows follow SET SHADOW SHADING ON and the shadow source")
+{
+    scene::SceneDocument Document;
+    Document.Profile = LanguageProfile::DbPro;
+    CHECK(scene::ShadowSource(Document) == glm::vec3(0.0f));
+    scene::SceneNode& Lamp = Document.Add(scene::NodeKind::Light);
+    Lamp.Position = glm::vec3(5.0f, 6.0f, 7.0f);
+    Document.Env.ShadowMode = Lamp.Id;
+    CHECK(scene::ShadowSource(Document) == Lamp.Position);
+    Document.Env.ShadowMode = -1;
+    Document.Env.ShadowPosition = glm::vec3(120.0f, 200.0f, 0.0f);
+    CHECK(scene::ShadowSource(Document) == Document.Env.ShadowPosition);
+
+    // One triangle facing the light: two caps and three sides of two triangles.
+    scene::CpuMesh Triangle;
+    Triangle.Vertices = {{{0.0f, 0.0f, 0.0f}}, {{0.0f, 0.0f, 10.0f}}, {{10.0f, 0.0f, 0.0f}}};
+    std::vector<glm::vec3> Volume;
+    scene::AppendShadowVolume(Triangle, glm::mat4(1.0f), glm::vec3(0.0f, 100.0f, 0.0f), 50.0f, Volume);
+    CHECK(Volume.size() == 8 * 3);
+    CHECK(std::all_of(Volume.begin(), Volume.end(), [](const glm::vec3& Point) { return Point.y < 0.0f; }));
+    Volume.clear();
+    scene::AppendShadowVolume(Triangle, glm::mat4(1.0f), glm::vec3(0.0f, -100.0f, 0.0f), 50.0f, Volume);
+    CHECK(Volume.empty());
+
+    REQUIRE(SDL_Init(SDL_INIT_VIDEO));
+    SDL_GPUDevice* Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL, false, nullptr);
+    if (Gpu == nullptr)
+    {
+        const std::string Reason = std::string("No GPU device: ") + SDL_GetError();
+        MESSAGE(Reason);
+        SDL_Quit();
+        return;
+    }
+    scene::SceneRenderer Renderer;
+    std::string Error;
+    REQUIRE_MESSAGE(Renderer.Initialize(Gpu, Error), Error);
+    constexpr int KSize = 128;
+    SDL_GPUTexture* Target = Renderer.Target(KSize, KSize);
+    REQUIRE(Target != nullptr);
+
+    scene::SceneNode& Ground = Document.Add(scene::NodeKind::Box);
+    Ground.Extent = glm::vec3(300.0f, 2.0f, 300.0f);
+    Ground.Position = glm::vec3(0.0f, -1.0f, 0.0f);
+    Ground.Mat.Flags.Lighting = false;
+    scene::SceneNode& Crate = Document.Add(scene::NodeKind::Cube);
+    Crate.Size = 30.0f;
+    Crate.Position = glm::vec3(0.0f, 40.0f, 0.0f);
+    Crate.Mat.Flags.Lighting = false;
+    scene::ViewParameters View;
+    View.Eye = glm::vec3(0.0f, 300.0f, -1.0f);
+    View.View = glm::lookAt(View.Eye, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    View.Projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.5f, 5000.0f);
+
+    const auto Draw = [&](bool Casts)
+    {
+        Document.Nodes.back().Mat.CastShadow = Casts;
+        Renderer.Prepare(Document, View, std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic", {});
+        CHECK(Renderer.TakeErrors().empty());
+        return ReadPixels(Gpu, Target, KSize, &Renderer);
+    };
+    const std::vector<Uint8> Plain = Draw(false);
+    const std::vector<Uint8> Shadowed = Draw(true);
+    REQUIRE(Plain.size() == KSize * KSize * 4);
+    REQUIRE(Shadowed.size() == Plain.size());
+    // The light sits off to +X, so the crate's shadow falls beside it, darkened by 64/255.
+    int Darker = 0, Lighter = 0;
+    for (std::size_t Index = 0; Index < Plain.size(); Index += 4)
+    {
+        Darker += Shadowed[Index] + 20 < Plain[Index];
+        Lighter += Shadowed[Index] > Plain[Index] + 2;
+    }
+    CHECK(Darker > 100);
+    CHECK(Lighter == 0);
+    // Kept for a look by hand: build/tests/scene_shadow.png.
+    std::vector<Uint8> Copy = Shadowed;
+    if (SDL_Surface* Image = SDL_CreateSurfaceFrom(KSize, KSize, SDL_PIXELFORMAT_ABGR8888, Copy.data(), KSize * 4))
+    {
+        IMG_SavePNG(Image, (std::filesystem::path(TEST_OUTPUT_DIR) / "scene_shadow.png").string().c_str());
+        SDL_DestroySurface(Image);
+    }
+
+    // Classic levels have no SET SHADOW SHADING.
+    Document.Profile = LanguageProfile::Dbc;
+    const std::vector<Uint8> Classic = Draw(true);
+    Document.Profile = LanguageProfile::DbPro;
+    REQUIRE(Classic.size() == Plain.size());
+    int Changed = 0;
+    for (std::size_t Index = 0; Index < Plain.size(); Index += 4)
+        Changed += Classic[Index] + 20 < Plain[Index];
+    CHECK(Changed == 0);
+
+    Renderer.Shutdown();
+    SDL_DestroyGPUDevice(Gpu);
+    SDL_Quit();
+}
+
 TEST_CASE("Generated terrain heightmaps load back as the heights they were made for")
 {
     const scene::Heightmap Flat = scene::FlatHeightmap(4, 50.0f);
