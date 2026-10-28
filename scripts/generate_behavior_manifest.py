@@ -1377,6 +1377,34 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ANIMATION_TEST = "test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas"
+UNIT_WITNESSES += tuple(
+    ("dbc", kind, name, code, "animation-state", ANIMATION_TEST)
+    for kind, name, code in (
+        ("Command", "LOAD ANIMATION", 'load animation "clip.mp4", 1\n'),
+        ("Command", "DELETE ANIMATION", "delete animation 1\n"),
+        ("Command", "PLAY ANIMATION", "play animation 1\n"),
+        ("Command", "PLAY ANIMATION", "play animation 1, 10, 20\n"),
+        ("Command", "PLAY ANIMATION", "play animation 1, 10, 20, 50, 40\n"),
+        ("Command", "PLAY ANIMATION", "play animation 1, 0, 10, 20, 50, 40\n"),
+        ("Command", "LOOP ANIMATION", "loop animation 1\n"),
+        ("Command", "LOOP ANIMATION", "loop animation 1, 0, 10, 20, 50, 40\n"),
+        ("Command", "PLACE ANIMATION", "place animation 1, 10, 20, 50, 40\n"),
+        ("Command", "STOP ANIMATION", "stop animation 1\n"),
+        ("Command", "PAUSE ANIMATION", "pause animation 1\n"),
+        ("Command", "RESUME ANIMATION", "resume animation 1\n"),
+        ("Function", "ANIMATION EXIST", "value = animation exist(1)\n"),
+        ("Function", "ANIMATION PLAYING", "value = animation playing(1)\n"),
+        ("Function", "ANIMATION PAUSED", "value = animation paused(1)\n"),
+        ("Function", "ANIMATION LOOPED", "value = animation looped(1)\n"),
+        ("Function", "ANIMATION LOOPING", "value = animation looping(1)\n"),
+        ("Function", "ANIMATION POSITION X", "value = animation position x(1)\n"),
+        ("Function", "ANIMATION POSITION Y", "value = animation position y(1)\n"),
+        ("Function", "ANIMATION WIDTH", "value = animation width(1)\n"),
+        ("Function", "ANIMATION HEIGHT", "value = animation height(1)\n"),
+    )
+)
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Regenerate catalogue-linked BASIC behavior witnesses")
     parser.add_argument("--opendbc", type=Path, required=True)

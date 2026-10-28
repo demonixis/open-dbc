@@ -18,6 +18,7 @@
 #include "renderer_system.hpp"
 #include "sprite_system.hpp"
 #include "text_system.hpp"
+#include "video_system.hpp"
 #include "vr_system.hpp"
 
 #include <utility>
@@ -64,6 +65,7 @@ namespace dbc
         Renderer_ = std::make_unique<RendererSystem>(*this);
         SpriteSystem_ = std::make_unique<SpriteSystem>(*this);
         DebugSystem_ = std::make_unique<DebugSystem>(*this);
+        Video_ = std::make_unique<VideoSystem>(*this);
         dbc::log::AttachRingBuffer(DebugSystem_.get());
 
         Initialized_ = true;
@@ -77,6 +79,7 @@ namespace dbc
         dbc::log::DetachRingBuffer(DebugSystem_.get());
         if (Vr_)
             Vr_->DetachDevice();
+        Video_.reset();
         DebugSystem_.reset();
         SpriteSystem_.reset();
         Renderer_.reset();
@@ -319,6 +322,16 @@ namespace dbc
     const DebugSystem& EngineKernel::Debug() const
     {
         return *DebugSystem_;
+    }
+
+    VideoSystem& EngineKernel::Video()
+    {
+        return *Video_;
+    }
+
+    const VideoSystem& EngineKernel::Video() const
+    {
+        return *Video_;
     }
 
 } // namespace dbc

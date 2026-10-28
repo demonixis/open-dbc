@@ -2,7 +2,6 @@ profile	symbol_id	kind	name	policy	neutral_behavior
 dbc	Command_CallDll	Command	CALL DLL	Permanent	no-op
 dbc	Command_CreateNetGame	Command	CREATE NET GAME	Permanent	no-op
 dbc	Command_CreateNetPlayer	Command	CREATE NET PLAYER	Permanent	no-op
-dbc	Command_DeleteAnimation	Command	DELETE ANIMATION	Permanent	no-op
 dbc	Command_DeleteDll	Command	DELETE DLL	Permanent	no-op
 dbc	Command_DisableSystemkeys	Command	DISABLE SYSTEMKEYS	Permanent	no-op
 dbc	Command_DisableTnl	Command	DISABLE TNL	Permanent	no-op
@@ -22,23 +21,17 @@ dbc	Command_FtpSetDir	Command	FTP SET DIR	Permanent	no-op
 dbc	Command_FtpTerminate	Command	FTP TERMINATE	Permanent	no-op
 dbc	Command_GetNetMessage	Command	GET NET MESSAGE	Permanent	no-op
 dbc	Command_JoinNetGame	Command	JOIN NET GAME	Permanent	no-op
-dbc	Command_LoadAnimation	Command	LOAD ANIMATION	Permanent	accept-inert-resource-id
 dbc	Command_LoadCdmusic	Command	LOAD CDMUSIC	Permanent	accept-inert-resource-id
 dbc	Command_LoadDll	Command	LOAD DLL	Permanent	accept-inert-resource-id
 dbc	Command_LockBackbuffer	Command	LOCK BACKBUFFER	Permanent	no-op
-dbc	Command_LoopAnimation	Command	LOOP ANIMATION	Permanent	no-op
 dbc	Command_NetMessageBitmap	Command	NET MESSAGE BITMAP	Permanent	no-op
 dbc	Command_NetMessageImage	Command	NET MESSAGE IMAGE	Permanent	no-op
 dbc	Command_NetMessageMemblock	Command	NET MESSAGE MEMBLOCK	Permanent	no-op
 dbc	Command_NetMessageMesh	Command	NET MESSAGE MESH	Permanent	no-op
 dbc	Command_NetMessageSound	Command	NET MESSAGE SOUND	Permanent	no-op
-dbc	Command_PauseAnimation	Command	PAUSE ANIMATION	Permanent	no-op
 dbc	Command_PerformChecklistForNetConnections	Command	PERFORM CHECKLIST FOR NET CONNECTIONS	Permanent	clear-checklist
 dbc	Command_PerformChecklistForNetPlayers	Command	PERFORM CHECKLIST FOR NET PLAYERS	Permanent	clear-checklist
 dbc	Command_PerformChecklistForNetSessions	Command	PERFORM CHECKLIST FOR NET SESSIONS	Permanent	clear-checklist
-dbc	Command_PlaceAnimation	Command	PLACE ANIMATION	Permanent	no-op
-dbc	Command_PlayAnimation	Command	PLAY ANIMATION	Permanent	no-op
-dbc	Command_ResumeAnimation	Command	RESUME ANIMATION	Permanent	no-op
 dbc	Command_SendNetMessageBitmap	Command	SEND NET MESSAGE BITMAP	Permanent	no-op
 dbc	Command_SendNetMessageFloat	Command	SEND NET MESSAGE FLOAT	Permanent	no-op
 dbc	Command_SendNetMessageImage	Command	SEND NET MESSAGE IMAGE	Permanent	no-op
@@ -52,19 +45,9 @@ dbc	Command_SetEmulationOff	Command	SET EMULATION OFF	Permanent	no-op
 dbc	Command_SetEmulationOn	Command	SET EMULATION ON	Permanent	no-op
 dbc	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Permanent	no-op
 dbc	Command_SetNetConnection	Command	SET NET CONNECTION	Permanent	no-op
-dbc	Command_StopAnimation	Command	STOP ANIMATION	Permanent	no-op
 dbc	Command_UnlockBackbuffer	Command	UNLOCK BACKBUFFER	Permanent	no-op
 dbc	Command_WriteToRegistry	Command	WRITE TO REGISTRY	Permanent	no-op
 dbc	Function_N3dblitAvailable	Function	3DBLIT AVAILABLE	Permanent	numeric:0
-dbc	Function_AnimationExist	Function	ANIMATION EXIST	Permanent	numeric:0
-dbc	Function_AnimationHeight	Function	ANIMATION HEIGHT	Permanent	numeric:0
-dbc	Function_AnimationLooped	Function	ANIMATION LOOPED	Permanent	numeric:0
-dbc	Function_AnimationLooping	Function	ANIMATION LOOPING	Permanent	numeric:0
-dbc	Function_AnimationPaused	Function	ANIMATION PAUSED	Permanent	numeric:0
-dbc	Function_AnimationPlaying	Function	ANIMATION PLAYING	Permanent	numeric:0
-dbc	Function_AnimationPositionX	Function	ANIMATION POSITION X	Permanent	numeric:0
-dbc	Function_AnimationPositionY	Function	ANIMATION POSITION Y	Permanent	numeric:0
-dbc	Function_AnimationWidth	Function	ANIMATION WIDTH	Permanent	numeric:0
 dbc	Function_CallDll	Function	CALL DLL	Permanent	numeric:0
 dbc	Function_CreateNetPlayer	Function	CREATE NET PLAYER	Permanent	numeric:0
 dbc	Function_DllCallExist	Function	DLL CALL EXIST	Permanent	numeric:0

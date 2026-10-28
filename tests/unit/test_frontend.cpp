@@ -210,7 +210,7 @@ TEST_CASE("A multiword command beginning with EXIT is never swallowed by the EXI
     CHECK(Program.Statements.front().Name == "EXIT PROMPT");
 }
 
-TEST_CASE("Classic video stubs are executable while DBPro remains unsupported")
+TEST_CASE("Classic video commands compile while DBPro remains unsupported")
 {
     const std::string Text = "load animation \"clip.avi\", 1\nprint animation exist(1)\n";
     const dbc::language::Program Classic =

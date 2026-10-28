@@ -41,7 +41,6 @@ namespace
             case SymbolId::Command_CallDll:
             case SymbolId::Command_CreateNetGame:
             case SymbolId::Command_CreateNetPlayer:
-            case SymbolId::Command_DeleteAnimation:
             case SymbolId::Command_DeleteDll:
             case SymbolId::Command_DisableSystemkeys:
             case SymbolId::Command_DisableTnl:
@@ -61,23 +60,17 @@ namespace
             case SymbolId::Command_FtpTerminate:
             case SymbolId::Command_GetNetMessage:
             case SymbolId::Command_JoinNetGame:
-            case SymbolId::Command_LoadAnimation:
             case SymbolId::Command_LoadCdmusic:
             case SymbolId::Command_LoadDll:
             case SymbolId::Command_LockBackbuffer:
-            case SymbolId::Command_LoopAnimation:
             case SymbolId::Command_NetMessageBitmap:
             case SymbolId::Command_NetMessageImage:
             case SymbolId::Command_NetMessageMemblock:
             case SymbolId::Command_NetMessageMesh:
             case SymbolId::Command_NetMessageSound:
-            case SymbolId::Command_PauseAnimation:
             case SymbolId::Command_PerformChecklistForNetConnections:
             case SymbolId::Command_PerformChecklistForNetPlayers:
             case SymbolId::Command_PerformChecklistForNetSessions:
-            case SymbolId::Command_PlaceAnimation:
-            case SymbolId::Command_PlayAnimation:
-            case SymbolId::Command_ResumeAnimation:
             case SymbolId::Command_SendNetMessageBitmap:
             case SymbolId::Command_SendNetMessageFloat:
             case SymbolId::Command_SendNetMessageImage:
@@ -91,19 +84,9 @@ namespace
             case SymbolId::Command_SetEmulationOn:
             case SymbolId::Command_SetGraphicsCard:
             case SymbolId::Command_SetNetConnection:
-            case SymbolId::Command_StopAnimation:
             case SymbolId::Command_UnlockBackbuffer:
             case SymbolId::Command_WriteToRegistry:
             case SymbolId::Function_N3dblitAvailable:
-            case SymbolId::Function_AnimationExist:
-            case SymbolId::Function_AnimationHeight:
-            case SymbolId::Function_AnimationLooped:
-            case SymbolId::Function_AnimationLooping:
-            case SymbolId::Function_AnimationPaused:
-            case SymbolId::Function_AnimationPlaying:
-            case SymbolId::Function_AnimationPositionX:
-            case SymbolId::Function_AnimationPositionY:
-            case SymbolId::Function_AnimationWidth:
             case SymbolId::Function_CallDll:
             case SymbolId::Function_CreateNetPlayer:
             case SymbolId::Function_DllCallExist:
@@ -456,7 +439,6 @@ namespace dbc::language
             case SymbolId::Command_PerformChecklistForNetPlayers:
             case SymbolId::Command_PerformChecklistForNetSessions:
                 return CompatibilityStubBehavior::ClearChecklist;
-            case SymbolId::Command_LoadAnimation:
             case SymbolId::Command_LoadCdmusic:
             case SymbolId::Command_LoadDll:
                 return CompatibilityStubBehavior::AcceptInertResource;

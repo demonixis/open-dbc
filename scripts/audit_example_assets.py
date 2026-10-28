@@ -27,7 +27,7 @@ DBC_DIGESTS = ROOT / "scripts/data/dbc_content_sha256.txt"
 COLUMNS = ("path", "sha256", "licence", "source", "author")
 LICENCES = {"MIT", "CC0-1.0"}
 MEDIA_SUFFIXES = {".bmp", ".jpg", ".jpeg", ".png", ".tga", ".dds", ".x", ".3ds", ".obj", ".fbx", ".glb",
-                  ".gltf", ".wav", ".mp3", ".mid", ".midi", ".ogg", ".avi", ".dat"}
+                  ".gltf", ".wav", ".mp3", ".mid", ".midi", ".ogg", ".avi", ".mp4", ".m4v", ".mov", ".dat"}
 DBPRO_IMPORT_PREFIXES = ("examples/dbpro/tutorials/", "examples/dbpro/Hello World/")
 EXEMPT_PREFIXES = (*DBPRO_IMPORT_PREFIXES, "examples/android/")
 

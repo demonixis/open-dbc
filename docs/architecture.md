@@ -49,7 +49,7 @@ Each callable has a per-profile state:
 | State | Meaning |
 | --- | --- |
 | Implemented | Real behaviour, with a witness in `tests/unit/builtin_behavior_manifest.tsv` |
-| Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, video, networking, DLLs and native pointers, CD audio, the registry and obsolete hardware switches |
+| Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, networking, DLLs and native pointers, CD audio, the registry and obsolete hardware switches |
 | Unsupported | Rejected at bind time with `DBC2043` |
 
 Shared VR forms and the Classic `X/Y/Z VECTOR3` readers are the only additions to
@@ -60,12 +60,13 @@ the historical profiles ([vr.md](vr.md)). Anything else new waits for the future
 
 `EngineKernel` owns audio, cameras, window, diagnostics, 2D, files, GPU device,
 images, input, lights, matrices, DBPro BSP worlds, memblocks, objects, physics
-(Jolt for the ODE core), renderer, sprites, text and VR. Engine shaders are HLSL
+(Jolt for the ODE core), renderer, sprites, text, video and VR. Engine shaders are HLSL
 that the pinned DXC compiles to SPIR-V, then SDL_shadercross to MSL, as the Studio
 does for effects; the engine loads whichever the GPU device accepts and never
 transpiles at run time. After `cmake --preset shader-verify`, the
 `shader-verify` build preset checks the tracked files byte for byte and
-`shader-update` regenerates them. There is no video playback and no FFmpeg.
+`shader-update` regenerates them. Classic animations decode with the platform's
+media framework ([video.md](video.md)); there is no FFmpeg.
 
 Most 3D geometry is transformed on the CPU into view-space triangles, rebuilt
 only when the camera or an object changes. At each `SYNC` every DBPro camera

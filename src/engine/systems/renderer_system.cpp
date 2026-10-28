@@ -16,6 +16,7 @@
 #include "sprite_system.hpp"
 #include "terrain_mesh.hpp"
 #include "text_system.hpp"
+#include "video_system.hpp"
 #include "vr_system.hpp"
 
 #include <glm/glm.hpp>
@@ -5203,6 +5204,7 @@ namespace dbc
     {
         // As in DBPro's SYNC: BSP collisions resolve before drawing and record their next start after.
         Kernel_.BspWorld().ResolveCollisions();
+        Kernel_.Video().PaintFrames();
         bool Rendered = false;
         if (Kernel_.Vr().Enabled())
         {

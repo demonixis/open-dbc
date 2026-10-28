@@ -15,6 +15,7 @@ TEST_CASE("Studio media are classified by extension")
     CHECK(core::ClassifyMedia("bump.fx") == core::MediaKind::Effect);
     CHECK(core::ClassifyMedia("bump.frag.msl") == core::MediaKind::Effect);
     CHECK(core::ClassifyMedia("intro.avi") == core::MediaKind::Video);
+    CHECK(core::ClassifyMedia("intro.MOV") == core::MediaKind::Video);
     CHECK(core::ClassifyMedia("hud.ttf") == core::MediaKind::Font);
     CHECK_FALSE(core::ClassifyMedia("game.dba"));
     CHECK_FALSE(core::ClassifyMedia("readme"));
