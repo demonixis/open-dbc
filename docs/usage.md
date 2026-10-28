@@ -57,6 +57,11 @@ A standalone source finds its media beside itself; a DBPro project uses its
 descriptor's media root and source order. The Output panel shows the source and
 asset root of each run, and diagnostics are marked in the matching tab.
 
+**File → New Project…** (Ctrl+Shift+N) creates a folder holding `main.dba`,
+from an empty main loop or a basic 1280×720 scene. A DBPro project also gets a
+historical `.dbpro` descriptor; a DBC project gets an `.opendbc-project.json`
+that sets its dialect and entry.
+
 The toolbar holds New, Open, Save, Run and Stop. Beside the Project panel, the
 **Code** panel outlines the active tab: functions with their call counts, labels
 with their GOTO/GOSUB jumps, types and main-program variables; selecting one
