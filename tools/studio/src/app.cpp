@@ -574,6 +574,7 @@ namespace dbc::studio
             ResolvedProject_->AssetRoot.empty() ? ResolvedProject_->ProjectRoot : ResolvedProject_->AssetRoot;
         Project.EntrySource = ResolvedProject_->EntrySource;
         Project.Profile = ResolvedProject_->Profile;
+        Project.HasDescriptor = ResolvedProject_->DescriptorPath.has_value();
         Scene_.SetProject(std::move(Project));
     }
 

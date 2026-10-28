@@ -4,11 +4,14 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <SDL3/SDL_gpu.h>
 #include <imgui.h>
 
+#include "core/gpu_texture.hpp"
+#include "core/media_catalogue.hpp"
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_document.hpp"
 #include "scene/scene_renderer.hpp"
@@ -25,6 +28,8 @@ namespace dbc::studio
             std::filesystem::path AssetRoot;
             std::filesystem::path EntrySource;
             dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
+            // A .dbpro project, whose descriptor sets the display before SetupGame() runs.
+            bool HasDescriptor = false;
 
             bool operator==(const SceneProject&) const = default;
         };
@@ -133,9 +138,17 @@ namespace dbc::studio
             scene::Ray RayAt(const ImVec2& Mouse) const;
 
             void DrawHierarchy();
+            // Inspector and settings (scene_inspector.cpp)
+            void CommitIfIdle();
             void DrawInspector();
+            void DrawMaterial(scene::SceneNode& Node);
+            void DrawCameraSettings();
             void DrawSettings();
+
+            // Assets (scene_assets.cpp)
             void DrawAssets();
+            void RefreshAssets();
+            void ReleaseThumbnails();
             void DrawNewLevelPopup();
             void DrawReadErrors();
 
@@ -170,6 +183,12 @@ namespace dbc::studio
             scene::ViewParameters View_;
             ImVec2 ViewportMin_{0.0f, 0.0f};
             ImVec2 ViewportSize_{0.0f, 0.0f};
+
+            core::MediaScan AssetScan_;
+            std::filesystem::path AssetScanRoot_;
+            std::unordered_map<std::string, core::GpuImage> Thumbnails_;
+            char AssetFilter_[64] = {};
+            int AssetFilterKind_ = 0;
 
             bool NewLevelRequested_ = false;
             char NewLevelName_[64] = {};

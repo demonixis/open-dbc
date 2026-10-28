@@ -30,6 +30,7 @@ namespace dbc::studio
 
         void SceneEditor::Shutdown()
         {
+            ReleaseThumbnails();
             Renderer_.Shutdown();
             RendererReady_ = false;
             Gpu_ = nullptr;
@@ -46,6 +47,9 @@ namespace dbc::studio
                     Host_.Log("Saved level " + Document_.Name + " before switching projects", false);
             }
             Project_ = std::move(Project);
+            ReleaseThumbnails();
+            AssetScan_ = {};
+            AssetScanRoot_.clear();
             HasLevel_ = false;
             Document_ = {};
             Saved_ = {};
@@ -426,6 +430,7 @@ namespace dbc::studio
             ImGui::End();
 
             DrawNewLevelPopup();
+            CommitIfIdle();
         }
 
         void SceneEditor::DrawReadErrors()
@@ -483,22 +488,6 @@ namespace dbc::studio
                     Create(scene::NodeKind::Light);
                 ImGui::EndPopup();
             }
-        }
-
-        void SceneEditor::DrawInspector()
-        {
-            if (Selected() == nullptr)
-                ImGui::TextDisabled("Select a node in the Hierarchy or the Viewport.");
-        }
-
-        void SceneEditor::DrawSettings()
-        {
-            ImGui::TextDisabled("Level and game settings");
-        }
-
-        void SceneEditor::DrawAssets()
-        {
-            ImGui::TextDisabled("Textures and models of the project");
         }
 
         void SceneEditor::DrawNewLevelPopup()
