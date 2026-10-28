@@ -160,6 +160,22 @@ namespace dbc::studio
             }
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("The object, matrix, terrain or light number the code uses");
+            if (IsObject)
+            {
+                const bool Available = scene::StaticAvailable(Document_.Profile);
+                ImGui::BeginDisabled(!Available);
+                // A static object no longer exists to animate.
+                if (ImGui::Checkbox("Make Static Object", &Node->Static) && Node->Static)
+                {
+                    Node->Frames.reset();
+                    Node->Speed.reset();
+                }
+                ImGui::EndDisabled();
+                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                    ImGui::SetTooltip("%s", Available ? "MAKE STATIC OBJECT, then DELETE OBJECT: fixed scenery for the "
+                                                       "static collision commands; its number is free at run time"
+                                                     : "MAKE STATIC OBJECT is not implemented in the Pro profile");
+            }
 
             Heading("Transform");
             ImGui::DragFloat3("Position", &Node->Position.x, 0.5f);
@@ -265,6 +281,11 @@ namespace dbc::studio
         void SceneEditor::DrawAnimation(scene::SceneNode& Node)
         {
             Heading("Animation");
+            if (Node.Static)
+            {
+                ImGui::TextDisabled("A static object does not animate.");
+                return;
+            }
             const scene::ModelAnimation* Info = ModelAnimationOf(Node.Asset);
             const bool HasClip = Info != nullptr && Info->Count > 0;
             if (!HasClip && !Node.Frames)

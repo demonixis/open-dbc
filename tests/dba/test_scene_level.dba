@@ -12,6 +12,7 @@ print "matrix="; matrix exist(1); ","; int(matrix position x(1)); ","; int(matri
 print "light="; light exist(1); ","; light type(1); ","; int(light range(1))
 print "camera="; int(camera position y()); ","; int(camera position z()); ","; int(camera angle x())
 print "walker="; object looping(1004); ","; object playing(1004); ","; int(object speed(1004))
+print "rock="; object exist(1005); ","; static line of sight(-40, 5, 0, -40, 5, 100, 1, 1)
 print "TEST_DONE"
 sync
 end

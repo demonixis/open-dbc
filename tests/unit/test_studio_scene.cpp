@@ -127,6 +127,12 @@ namespace
             Hills.Mat.Texture = "media/grass.png";
             Hills.Position = {0.0f, -10.0f, 0.0f};
         }
+        else
+        {
+            scene::SceneNode& Rock = Document.Add(scene::NodeKind::Box);
+            Rock.Extent = {20.0f, 10.0f, 20.0f};
+            Rock.Static = true;
+        }
         return Document;
     }
 } // namespace
@@ -231,6 +237,34 @@ TEST_CASE("Scene creation menus follow the profile's catalogue support")
                                 "ENDFUNCTION\n";
     CHECK_FALSE(scene::ReadLevel(Terrain, "Test", LanguageProfile::Dbc).Ok());
     CHECK(scene::ReadLevel(Terrain, "Test", LanguageProfile::DbPro).Ok());
+}
+
+TEST_CASE("Static objects are Classic scenery made from a deleted object")
+{
+    CHECK(scene::StaticAvailable(LanguageProfile::Dbc));
+    CHECK_FALSE(scene::StaticAvailable(LanguageProfile::DbPro));
+
+    scene::SceneDocument Document;
+    Document.Name = "Test";
+    Document.Profile = LanguageProfile::DbPro;
+    Document.Add(scene::NodeKind::Cube).Static = true;
+    CHECK(scene::WriteLevel(Document).find("STATIC") == std::string::npos);
+
+    const auto Read = [](const char* Body)
+    {
+        return scene::ReadLevel(std::string("FUNCTION LoadLevel_Test()\n   MAKE OBJECT CUBE 1000, 10\n") + Body +
+                                    "ENDFUNCTION\n",
+                                "Test", LanguageProfile::Dbc);
+    };
+    CHECK(Read("   MAKE STATIC OBJECT 1000\n   DELETE OBJECT 1000\n").Ok());
+    CHECK_FALSE(Read("   MAKE STATIC OBJECT 1000\n").Ok());
+    CHECK_FALSE(Read("   DELETE OBJECT 1000\n").Ok());
+    CHECK_FALSE(Read("   MAKE STATIC OBJECT 1000, 1\n   DELETE OBJECT 1000\n").Ok());
+    const std::string Pro = "FUNCTION LoadLevel_Test()\n"
+                            "   MAKE OBJECT CUBE 1000, 10\n"
+                            "   MAKE STATIC OBJECT 1000\n"
+                            "ENDFUNCTION\n";
+    CHECK_FALSE(scene::ReadLevel(Pro, "Test", LanguageProfile::DbPro).Ok());
 }
 
 TEST_CASE("Scene numbers fill gaps from each space's base")

@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string_view>
 
@@ -278,6 +279,12 @@ namespace dbc::studio
                     if (Node.Frames)
                         Out.Command(Node.Loop ? SymbolId::Command_LoopObject : SymbolId::Command_PlayObject,
                                     {Id, Integer(Node.Frames->x), Integer(Node.Frames->y)});
+                    if (Node.Static && StaticAvailable(Profile))
+                    {
+                        // The static copy replaces the object, as Classic programs build their scenery.
+                        Out.Command(SymbolId::Command_MakeStaticObject, {Id});
+                        Out.Command(SymbolId::Command_DeleteObject, {Id});
+                    }
                     return;
                 }
                 switch (Node.Kind)
@@ -525,6 +532,10 @@ namespace dbc::studio
 
                 void Finish(const Metadata& Meta)
                 {
+                    for (const SceneNode& Node : Result_.Document.Nodes)
+                        if (Node.Static && Deleted_.count(Node.Id) == 0)
+                            Error(StaticLines_[Node.Id], "MAKE STATIC OBJECT " + Integer(Node.Id) +
+                                                             " is followed by DELETE OBJECT " + Integer(Node.Id));
                     for (const auto& [Line, Entry] : Meta.Tags)
                     {
                         const auto& [Tag, Rest] = Entry;
@@ -795,6 +806,25 @@ namespace dbc::studio
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Mat.CastShadow = true;
                             break;
+                        case SymbolId::Command_MakeStaticObject:
+                            if (A.size() != 1)
+                            {
+                                Error(Line_, "MAKE STATIC OBJECT is written with the object alone");
+                                break;
+                            }
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                Node->Static = true;
+                                StaticLines_[Node->Id] = Line_;
+                            }
+                            break;
+                        case SymbolId::Command_DeleteObject:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                if (!Node->Static || !Deleted_.insert(Node->Id).second)
+                                    Error(Line_, "DELETE OBJECT only follows MAKE STATIC OBJECT");
+                            }
+                            break;
                         case SymbolId::Command_SetObjectSpeed:
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Speed = I(A, 1);
@@ -981,6 +1011,9 @@ namespace dbc::studio
                 LevelReadResult& Result_;
                 lang::LanguageProfile Profile_;
                 std::map<int, std::string> Images_;
+                // Static objects, by number: where they were made and which were then deleted.
+                std::map<int, std::uint32_t> StaticLines_;
+                std::set<int> Deleted_;
                 std::uint32_t Line_ = 0;
                 const std::string* Name_ = nullptr;
             };

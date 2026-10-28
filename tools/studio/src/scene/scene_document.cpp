@@ -94,6 +94,12 @@ namespace dbc::studio
             return lang::SupportFor(lang::Symbol(CreatingSymbol(Kind)), Profile) == lang::SupportStatus::Implemented;
         }
 
+        bool StaticAvailable(lang::LanguageProfile Profile)
+        {
+            return lang::SupportFor(lang::Symbol(lang::SymbolId::Command_MakeStaticObject), Profile) ==
+                   lang::SupportStatus::Implemented;
+        }
+
         int OpaqueTransparency(lang::LanguageProfile Profile)
         {
             return Profile == lang::LanguageProfile::Dbc ? 1 : 0;

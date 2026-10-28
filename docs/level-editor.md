@@ -58,6 +58,9 @@ Models from the menu land in front of the editor camera.
 
 The Inspector edits the selected node:
 - name, number, position, rotation (degrees, applied X, then Y, then Z) and scale (%);
+- in Classic, **Make Static Object**: `MAKE STATIC OBJECT` then `DELETE OBJECT`,
+  so the object becomes fixed scenery for the static collision commands and its
+  number is free at run time. Pro does not implement the command;
 - shape;
 - a matrix's heights: **Fill** sets every height and the tile (`FILL MATRIX`),
   **Randomize** draws whole heights below a range (`RANDOMIZE MATRIX`). The

@@ -56,6 +56,8 @@ namespace dbc::studio
         const char* NodeKindLabel(NodeKind Kind);
         // False for kinds whose commands the profile cannot run (terrains in Classic).
         bool KindAvailable(NodeKind Kind, dbc::language::LanguageProfile Profile);
+        // MAKE STATIC OBJECT, which only the Classic profile implements.
+        bool StaticAvailable(dbc::language::LanguageProfile Profile);
 
         // Packed 0x00RRGGBB, written as RGB(r, g, b).
         using Rgb = std::uint32_t;
@@ -143,6 +145,8 @@ namespace dbc::studio
             std::optional<glm::ivec2> Frames;
             bool Loop = true;
             std::optional<int> Speed;
+            // Object: MAKE STATIC OBJECT then DELETE OBJECT, so it becomes fixed scenery.
+            bool Static = false;
 
             Material Mat;
 
