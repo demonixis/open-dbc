@@ -488,7 +488,9 @@ namespace dbc::studio
                     ImGui::SetTooltip("%s", Tip);
                 ImGui::SameLine();
             };
-            ImGui::SetCursorPos(ImVec2(ImGui::GetStyle().ItemSpacing.x, ImGui::GetStyle().ItemSpacing.y));
+            // The window has no padding, so the bar adds its own below the tab.
+            const ImVec2 Spacing = ImGui::GetStyle().ItemSpacing;
+            ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + Spacing.x, ImGui::GetCursorPosY() + Spacing.y));
             ToolButton("View", Tool::View, "Navigate only (Q)");
             ToolButton("Move", Tool::Move, "Move (W)");
             ToolButton("Rotate", Tool::Rotate, "Rotate (E)");
