@@ -82,6 +82,14 @@ Work:
   exact sRGB encoding (linear 0.5 gives 188, the committed JPEGs have 170), so
   every texture gets brighter; review the examples when regenerating.
 
+## Studio Scene view
+
+- [ ] Preview `.dbo` models (Assimp cannot read them; a box stands in) and
+  `.dds` textures and thumbnails (SDL_image cannot read them).
+- [ ] Draw `SET SHADOW SHADING ON` shadows in the viewport.
+- [ ] Interactive UI coverage: navigation, gizmos, drag and drop and the
+  Inspector are checked by hand only.
+
 ## Towards 1.0
 
 - [ ] Decide whether to keep the `DbcNew` / `DbProNew` profiles.

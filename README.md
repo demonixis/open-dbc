@@ -50,6 +50,7 @@ ctest --preset default
 | Topic | Where |
 | --- | --- |
 | CLI, Studio, exports, debugging | [docs/usage.md](docs/usage.md) |
+| Studio Scene view (level editor) | [docs/level-editor.md](docs/level-editor.md) |
 | Code layout, language pipeline, compatibility rules, tests | [docs/architecture.md](docs/architecture.md) |
 | Commands and their support state, per profile | [docs/reference/](docs/reference/) |
 | Desktop VR | [docs/vr.md](docs/vr.md) |
