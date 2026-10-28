@@ -12,6 +12,16 @@
       }
     },
     {
+      "name": "release",
+      "displayName": "Desktop Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "OFF"
+      }
+    },
+    {
       "name": "sanitize",
       "displayName": "Desktop ASan and UBSan",
       "generator": "Ninja",
@@ -115,6 +125,11 @@
     {
       "name": "default",
       "configurePreset": "default",
+      "jobs": 2
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
       "jobs": 2
     },
     {
