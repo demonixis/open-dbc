@@ -1,7 +1,9 @@
 #include "export_internal.hpp"
+#include "toolchain_locator.hpp"
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <fstream>
 #include <set>
 #include <system_error>
@@ -10,6 +12,8 @@ namespace dbc::studio
 {
     namespace toolchain::internal
     {
+        constexpr std::uint64_t AndroidPageAlignment = 16384;
+
         bool ValidateAndroidHostLibrary(const fs::path& Path, std::string& Error)
         {
             std::error_code FileError;
@@ -19,14 +23,47 @@ namespace dbc::studio
                 Error = "The installed Android export host has no regular non-symlink libmain.so";
                 return false;
             }
-            std::array<unsigned char, 20> Header{};
+            std::array<unsigned char, 64> Header{};
             std::ifstream Input(Path, std::ios::binary);
             Input.read(reinterpret_cast<char*>(Header.data()), static_cast<std::streamsize>(Header.size()));
-            if (Input.gcount() != static_cast<std::streamsize>(Header.size()) || Header[0] != 0x7f ||
-                Header[1] != 'E' || Header[2] != 'L' || Header[3] != 'F' || Header[4] != 2 || Header[5] != 1 ||
-                Header[6] != 1 || Header[18] != 0xb7 || Header[19] != 0)
+            if (Input.gcount() < 20 || Header[0] != 0x7f || Header[1] != 'E' || Header[2] != 'L' ||
+                Header[3] != 'F' || Header[4] != 2 || Header[5] != 1 || Header[6] != 1 || Header[18] != 0xb7 ||
+                Header[19] != 0)
             {
                 Error = "The installed Android export host libmain.so is not ELF64 little-endian AArch64";
+                return false;
+            }
+            const auto Little = [](const unsigned char* Bytes, int Count)
+            {
+                std::uint64_t Value = 0;
+                for (int Index = Count - 1; Index >= 0; --Index)
+                    Value = (Value << 8) | Bytes[Index];
+                return Value;
+            };
+            // Every loadable segment must be aligned on 16 KB pages.
+            const std::uint64_t ProgramHeaders = Little(Header.data() + 32, 8);
+            const std::uint64_t EntrySize = Little(Header.data() + 54, 2);
+            const std::uint64_t EntryCount = Little(Header.data() + 56, 2);
+            bool Loadable = false;
+            bool Aligned = Input.gcount() == static_cast<std::streamsize>(Header.size()) && EntrySize >= 56;
+            for (std::uint64_t Index = 0; Aligned && Index < EntryCount; ++Index)
+            {
+                std::array<unsigned char, 56> Entry{};
+                Input.clear();
+                Input.seekg(static_cast<std::streamoff>(ProgramHeaders + Index * EntrySize));
+                Input.read(reinterpret_cast<char*>(Entry.data()), static_cast<std::streamsize>(Entry.size()));
+                if (Input.gcount() != static_cast<std::streamsize>(Entry.size()))
+                    Aligned = false;
+                else if (Little(Entry.data(), 4) == 1)
+                {
+                    Loadable = true;
+                    Aligned = Little(Entry.data() + 48, 8) >= AndroidPageAlignment;
+                }
+            }
+            if (!Loadable || !Aligned)
+            {
+                Error = "The installed Android export host libmain.so is not aligned on 16 KB pages, which Google "
+                        "Play requires";
                 return false;
             }
             return true;
@@ -71,6 +108,47 @@ namespace dbc::studio
                    detail::ValidateArtifactHostIdentity(Manifest, Library,
                                                         Request.HostResources / "opendbc-runtime.json", Error) &&
                    detail::ValidateAndroidSystemDependencies(Manifest, Error);
+        }
+
+        // Confirms that Gradle signed the package with the release key before it is published.
+        static bool VerifyAndroidSignature(const ExportContext& Context, const ExportToolchain& Toolchain,
+                                           const fs::path& Package, bool Bundle, std::string& Error)
+        {
+            Context.Note("Verifying the signature");
+            if (Bundle)
+            {
+                // jarsigner exits successfully on an unsigned bundle, so its verdict is read from the output.
+#if defined(_WIN32)
+                const fs::path Jarsigner = Toolchain.JavaHome / "bin/jarsigner.exe";
+#else
+                const fs::path Jarsigner = Toolchain.JavaHome / "bin/jarsigner";
+#endif
+                const std::optional<std::string> Output = Context.RunCapturing(
+                    {{Jarsigner.string(), "-verify", Package.string()}, {}, {}}, Error);
+                if (!Output)
+                    return false;
+                if (Output->find("jar verified.") == std::string::npos)
+                {
+                    Error = "The Android App Bundle is not signed";
+                    return false;
+                }
+                return true;
+            }
+            const std::optional<fs::path> BuildTools = LatestAndroidBuildTools(Toolchain.AndroidSdk);
+            if (!BuildTools)
+            {
+                Error = "Verifying the APK needs the Android SDK build tools";
+                return false;
+            }
+#if defined(_WIN32)
+            const fs::path Apksigner = *BuildTools / "apksigner.bat";
+#else
+            const fs::path Apksigner = *BuildTools / "apksigner";
+#endif
+            return Context.Run({{Apksigner.string(), "verify", "--verbose", Package.string()},
+                                {{"JAVA_HOME", Toolchain.JavaHome.string()}},
+                                {}},
+                               Error);
         }
 
         ArtifactExportResult ExportAndroid(const ExportContext& Context, const ArtifactExportRequest& Request,
@@ -243,10 +321,11 @@ namespace dbc::studio
             const fs::path GradleScript = Project / "gradlew";
 #endif
             const std::string Task = Bundle ? ":app:bundleRelease" : ":app:assembleRelease";
-            ProcessRequest Gradle{{GradleScript.string(), "-p", Project.string(), "--no-daemon", "--max-workers=2", Task},
-                                  {{"JAVA_HOME", Request.Toolchain.JavaHome.string()},
-                                   {"ANDROID_HOME", Request.Toolchain.AndroidSdk.string()}},
-                                  Project};
+            ProcessRequest Gradle{
+                {GradleScript.string(), "-p", Project.string(), "--no-daemon", "--max-workers=2", Task},
+                {{"JAVA_HOME", Request.Toolchain.JavaHome.string()},
+                 {"ANDROID_HOME", Request.Toolchain.AndroidSdk.string()}},
+                Project};
             if (UseSigning)
             {
                 Gradle.Environment.emplace_back("OPENDBC_ANDROID_KEYSTORE_PASSWORD",
@@ -256,17 +335,18 @@ namespace dbc::studio
             Context.Note(std::string("Running Gradle ") + Task);
             if (!Context.Run(Gradle, Result.Error))
                 return Result;
-            const fs::path PublishSource =
-                Project / (Bundle ? "app/build/outputs/bundle/release/app-release.aab"
-                                  : (!UseSigning ? "app/build/outputs/apk/release/app-release-unsigned.apk"
-                                                 : "app/build/outputs/apk/release/app-release.apk"));
+            const fs::path PublishSource = Project / (Bundle ? "app/build/outputs/bundle/release/app-release.aab"
+                                                             : "app/build/outputs/apk/release/app-release.apk");
             if (!fs::is_regular_file(PublishSource, FileError))
             {
                 Result.Error = "Android packaging completed without producing the expected artifact";
                 return Result;
             }
-            if (Request.Settings.AndroidKeystorePath.empty() || !Request.Sign)
-                Result.Messages.push_back("Android artifact is unsigned; configure a keystore for release signing");
+            if (UseSigning && !VerifyAndroidSignature(Context, Request.Toolchain, PublishSource, Bundle, Result.Error))
+                return Result;
+            if (!UseSigning)
+                Result.Messages.push_back("Development build signed with the Android debug key: it installs on a "
+                                          "device, but Google Play needs a Distribution build");
             if (!PublishAndRemoveStage(PublishSource, Result.OutputPath, Stage, Result.Error))
             {
                 Result.OutputPath.clear();

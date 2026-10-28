@@ -64,6 +64,46 @@ namespace dbc::studio
 
     namespace panels
     {
+        BuildWindow::Action BuildWindow::DrawKeystoreDialog()
+        {
+            Action Result = Action::None;
+            ImGui::SetNextWindowSize(ImVec2(520.0f, 0.0f), ImGuiCond_Appearing);
+            if (!ImGui::BeginPopupModal("Create keystore", nullptr))
+                return Result;
+            ImGui::PushTextWrapPos(0.0f);
+            ImGui::TextUnformatted("Google Play ties the app to this key. Keep a copy of the file and its password: "
+                                   "without them, no update can be published.");
+            ImGui::PopTextWrapPos();
+            ImGui::SetNextItemWidth(-90.0f);
+            TextField("##keystore", Keystore_.Path);
+            ImGui::SameLine();
+            if (ImGui::Button("Choose..."))
+                Result = Action::ChooseKeystore;
+            TextField("Key alias", Keystore_.Alias);
+            TextField("Your name", Keystore_.CommonName);
+            TextField("Organization", Keystore_.Organization);
+            TextField("City", Keystore_.Locality);
+            TextField("Country code", Keystore_.Country);
+            TextField("Password", Keystore_.Password, ImGuiInputTextFlags_Password);
+            TextField("Confirm password", Keystore_.Confirm, ImGuiInputTextFlags_Password);
+            const bool PasswordReady = Keystore_.Password.size() >= 6 && Keystore_.Password == Keystore_.Confirm;
+            if (!PasswordReady)
+                ImGui::TextDisabled("The passwords must match and have at least 6 characters.");
+            ImGui::BeginDisabled(!PasswordReady || Keystore_.Path.empty() || Keystore_.Alias.empty() ||
+                                 Keystore_.CommonName.empty());
+            if (ImGui::Button("Create"))
+            {
+                Result = Action::CreateKeystore;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel"))
+                ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+            return Result;
+        }
+
         void BuildWindow::Open(std::string OutputFolder)
         {
             if (OutputFolder_.empty())
@@ -71,7 +111,8 @@ namespace dbc::studio
             Open_ = true;
         }
 
-        BuildWindow::Action BuildWindow::Draw(core::Settings& Studio, toolchain::ExportSecrets& Secrets,
+        BuildWindow::Action BuildWindow::Draw(core::Settings& Studio, const core::ProjectSettings& Project,
+                                              toolchain::ExportSecrets& Secrets,
                                               const std::vector<toolchain::ExportCheck>& Checks, bool Busy,
                                               std::string_view Status)
         {
@@ -128,10 +169,19 @@ namespace dbc::studio
                                  Target_ == toolchain::ArtifactTarget::AndroidBundle;
             if (Distribution_ && Android)
             {
-                ImGui::SeparatorText("Signing (this session only)");
+                ImGui::SeparatorText("Signing");
+                ImGui::Text("Keystore: %s", Project.AndroidKeystorePath.empty() ? "(none)"
+                                                                                : Project.AndroidKeystorePath.c_str());
+                ImGui::SameLine();
+                if (ImGui::SmallButton("Create keystore..."))
+                    ImGui::OpenPopup("Create keystore");
+                if (const Action Dialog = DrawKeystoreDialog(); Dialog != Action::None)
+                    Result = Dialog;
+                ImGui::TextDisabled("Passwords are kept until the Studio closes and are never saved.");
                 if (TextField("Keystore password", Secrets.AndroidKeystorePassword, ImGuiInputTextFlags_Password) ||
                     TextField("Key password", Secrets.AndroidKeyPassword, ImGuiInputTextFlags_Password))
                     Result = Action::Refresh;
+                ImGui::Checkbox("Increase the version code after each signed build", &IncrementVersionCode_);
             }
 
             ImGui::SeparatorText("Checks");

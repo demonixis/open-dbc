@@ -238,6 +238,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         test_artifact_export.cpp
         test_export_readiness.cpp
         test_process_runner.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/android_keystore.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/artifact_export_service.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_android.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_common.cpp

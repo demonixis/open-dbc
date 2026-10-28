@@ -3,6 +3,8 @@ if(ANDROID)
     add_library(opendbc-runner SHARED main.cpp)
     set_target_properties(opendbc-runner PROPERTIES OUTPUT_NAME main)
     target_link_options(opendbc-runner PRIVATE $<$<CONFIG:Release>:-Wl,--strip-all>)
+    # Google Play requires 16 KB page alignment for apps that target Android 15 and ship native code.
+    target_link_options(opendbc-runner PRIVATE -Wl,-z,max-page-size=16384)
 else()
     add_executable(opendbc-runner MACOSX_BUNDLE main.cpp)
 endif()

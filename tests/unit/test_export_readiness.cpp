@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 
 #include "core/settings.hpp"
+#include "toolchain/android_keystore.hpp"
 #include "toolchain/export_readiness.hpp"
 #include "toolchain/toolchain_locator.hpp"
 #include "toolchain/windows_resources.hpp"
@@ -319,4 +320,37 @@ TEST_CASE("the Windows icon group lists each PNG image with its resource ID")
     CHECK(ReadDword(Group, 6 + 8) == 300);
     CHECK((Group[6 + 12] | (Group[6 + 13] << 8)) == 5);
     CHECK((Group[6 + 14 + 12] | (Group[6 + 14 + 13] << 8)) == 6);
+}
+
+TEST_CASE("keystores are created by keytool with the password in its environment")
+{
+    toolchain::AndroidKeystoreRequest Request;
+    Request.Path = "release.keystore";
+    Request.Password = "s3cr3t-password";
+    Request.CommonName = "Doe, Jane";
+    Request.Organization = "Studio+Games";
+    Request.Country = "FR";
+    CHECK(toolchain::AndroidKeystoreDistinguishedName(Request) == "CN=Doe\\, Jane, O=Studio\\+Games, C=FR");
+    const std::vector<std::string> Arguments = toolchain::AndroidKeystoreArguments("/jdk", Request);
+    CHECK(std::find(Arguments.begin(), Arguments.end(), Request.Password) == Arguments.end());
+    CHECK(std::find(Arguments.begin(), Arguments.end(), "-storepass:env") != Arguments.end());
+    CHECK(std::find(Arguments.begin(), Arguments.end(), "PKCS12") != Arguments.end());
+
+    ToolTree Tree("opendbc-keystore");
+    Request.Path = Tree.Root / "release.keystore";
+    std::string Error;
+    Request.Password = "short";
+    CHECK_FALSE(toolchain::CreateAndroidKeystore("/jdk", Request, Error));
+    CHECK(Error.find("6 characters") != std::string::npos);
+
+    // With a JDK installed, keytool really creates the keystore.
+    const auto JavaHome = toolchain::LocateJavaHome({}, toolchain::ToolchainSearch::Host());
+    if (!JavaHome)
+        return;
+    Request.Password = "s3cr3t-password";
+    Error.clear();
+    CHECK(toolchain::CreateAndroidKeystore(*JavaHome, Request, Error));
+    INFO(Error);
+    CHECK(fs::file_size(Request.Path) > 0);
+    CHECK_FALSE(toolchain::CreateAndroidKeystore(*JavaHome, Request, Error));
 }

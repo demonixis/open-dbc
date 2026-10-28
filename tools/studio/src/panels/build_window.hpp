@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/project_settings.hpp"
 #include "core/settings.hpp"
 #include "toolchain/artifact_export_service.hpp"
 #include "toolchain/export_readiness.hpp"
@@ -23,8 +24,23 @@ namespace dbc::studio
                 // The target, the mode or a tool changed: the checks must be computed again.
                 Refresh,
                 BrowseOutput,
+                ChooseKeystore,
+                CreateKeystore,
                 Build,
                 Cancel,
+            };
+
+            // The fields of the Create keystore dialog; the password is cleared once the keystore exists.
+            struct KeystoreForm
+            {
+                std::string Path;
+                std::string Alias = "release";
+                std::string Password;
+                std::string Confirm;
+                std::string CommonName;
+                std::string Organization;
+                std::string Locality;
+                std::string Country;
             };
 
             void Open(std::string OutputFolder);
@@ -34,7 +50,7 @@ namespace dbc::studio
                 return Open_;
             }
 
-            Action Draw(core::Settings& Studio, toolchain::ExportSecrets& Secrets,
+            Action Draw(core::Settings& Studio, const core::ProjectSettings& Project, toolchain::ExportSecrets& Secrets,
                         const std::vector<toolchain::ExportCheck>& Checks, bool Busy, std::string_view Status);
 
             toolchain::ArtifactTarget Target() const
@@ -57,6 +73,17 @@ namespace dbc::studio
                 OutputFolder_ = std::move(Folder);
             }
 
+            KeystoreForm& Keystore()
+            {
+                return Keystore_;
+            }
+
+            // Google Play refuses an upload that reuses a version code.
+            bool IncrementVersionCode() const
+            {
+                return IncrementVersionCode_;
+            }
+
             void SetSigningIdentities(std::vector<toolchain::SigningIdentity> Identities)
             {
                 Identities_ = std::move(Identities);
@@ -68,6 +95,10 @@ namespace dbc::studio
             bool Distribution_ = false;
             std::string OutputFolder_;
             std::vector<toolchain::SigningIdentity> Identities_;
+            KeystoreForm Keystore_;
+            bool IncrementVersionCode_ = true;
+
+            Action DrawKeystoreDialog();
         };
     } // namespace panels
 

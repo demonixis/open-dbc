@@ -14,6 +14,7 @@
 #include "core/project_settings.hpp"
 #include "core/settings.hpp"
 #include "core/workspace.hpp"
+#include "toolchain/android_keystore.hpp"
 #include "toolchain/artifact_export_service.hpp"
 #include "toolchain/export_job.hpp"
 #include "toolchain/export_readiness.hpp"
@@ -92,6 +93,7 @@ namespace dbc::studio
         toolchain::ArtifactExportRequest MakeBuildRequest() const;
         void RefreshExportChecks();
         void StartBuild();
+        void CreateKeystore();
         void PollExport();
 
         enum class Mode
@@ -169,6 +171,8 @@ namespace dbc::studio
         // Signing passwords for this session only; never saved.
         toolchain::ExportSecrets ExportSecrets_;
         std::vector<toolchain::ExportCheck> ExportChecks_;
+        // Set while a signed Android build runs whose success should bump the version code.
+        bool IncrementVersionAfterExport_ = false;
         toolchain::RunOptions RunOptions_;
         toolchain::IconGenerator IconGenerator_;
 #if !defined(DBC_STUDIO_SANDBOXED)

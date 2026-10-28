@@ -142,6 +142,8 @@ set(STUDIO_SOURCES
     src/toolchain/execution_adapter.hpp
     src/toolchain/active_run_planner.cpp
     src/toolchain/active_run_planner.hpp
+    src/toolchain/android_keystore.cpp
+    src/toolchain/android_keystore.hpp
     src/toolchain/artifact_export_service.cpp
     src/toolchain/artifact_export_service.hpp
     src/toolchain/export_android.cpp

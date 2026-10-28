@@ -1837,7 +1837,8 @@ namespace dbc::studio
 
     void App::DrawBuildWindow()
     {
-        switch (BuildWindow_.Draw(Settings_, ExportSecrets_, ExportChecks_, ExportJob_.Running(), Status_))
+        switch (BuildWindow_.Draw(Settings_, ProjectSettings_, ExportSecrets_, ExportChecks_, ExportJob_.Running(),
+                                  Status_))
         {
             case panels::BuildWindow::Action::None:
                 break;
@@ -1853,6 +1854,22 @@ namespace dbc::studio
                                            BuildWindow_.SetOutputFolder(Folder);
                                    });
                 break;
+            case panels::BuildWindow::Action::ChooseKeystore:
+            {
+                const std::filesystem::path Suggested =
+                    ResolvedProject_ ? ResolvedProject_->ProjectRoot.parent_path() / "release.keystore"
+                                     : std::filesystem::path("release.keystore");
+                Dialog_.SaveFile(Window_, Suggested.string(), "Keystore", "keystore",
+                                 [this](const std::string& Path)
+                                 {
+                                     if (!Path.empty())
+                                         BuildWindow_.Keystore().Path = Path;
+                                 });
+                break;
+            }
+            case panels::BuildWindow::Action::CreateKeystore:
+                CreateKeystore();
+                break;
             case panels::BuildWindow::Action::Build:
                 StartBuild();
                 break;
@@ -1861,6 +1878,42 @@ namespace dbc::studio
                 Status_ = "Cancelling export...";
                 break;
         }
+    }
+
+    void App::CreateKeystore()
+    {
+        panels::BuildWindow::KeystoreForm& Form = BuildWindow_.Keystore();
+        toolchain::AndroidKeystoreRequest Request;
+        Request.Path = Form.Path;
+        Request.Alias = Form.Alias;
+        Request.Password = Form.Password;
+        Request.CommonName = Form.CommonName;
+        Request.Organization = Form.Organization;
+        Request.Locality = Form.Locality;
+        Request.Country = Form.Country;
+        const toolchain::ExportToolchain Toolchain =
+            toolchain::ResolveExportToolchain(Settings_, toolchain::ToolchainSearch::Host());
+        std::string Error;
+        if (!toolchain::CreateAndroidKeystore(Toolchain.JavaHome, Request, Error))
+        {
+            Status_ = "Keystore not created";
+            Output_.Append("Cannot create the keystore: " + Error, panels::OutputPanel::Severity::Error);
+            return;
+        }
+        ProjectSettings_.AndroidKeystorePath = Request.Path.string();
+        ProjectSettings_.AndroidKeyAlias = Request.Alias;
+        if (ResolvedProject_ && !ProjectSettings_.Save(ResolvedProject_->ProjectRoot))
+            Output_.Append("Cannot save the keystore in the project settings.", panels::OutputPanel::Severity::Error);
+        // A PKCS12 keystore protects the key with the keystore password.
+        ExportSecrets_.AndroidKeystorePassword = Request.Password;
+        ExportSecrets_.AndroidKeyPassword = Request.Password;
+        Form.Password.clear();
+        Form.Confirm.clear();
+        Status_ = "Keystore created";
+        Output_.Append("Created " + Request.Path.string() + ". Back it up with its password: every Google Play "
+                       "update must be signed with it.",
+                       panels::OutputPanel::Severity::Notice);
+        RefreshExportChecks();
     }
 
     void App::StartBuild()
@@ -1893,6 +1946,9 @@ namespace dbc::studio
             Output_.Append("An export is already running.", panels::OutputPanel::Severity::Error);
             return;
         }
+        const bool Android = BuildWindow_.Target() == toolchain::ArtifactTarget::AndroidApk ||
+                             BuildWindow_.Target() == toolchain::ArtifactTarget::AndroidBundle;
+        IncrementVersionAfterExport_ = Android && BuildWindow_.Distribution() && BuildWindow_.IncrementVersionCode();
         Status_ = "Exporting...";
         Output_.Append("Exporting " + ResolvedProject_->EntrySource.filename().string() + "...",
                        panels::OutputPanel::Severity::Notice);
@@ -1909,12 +1965,20 @@ namespace dbc::studio
             Output_.Append(Message, panels::OutputPanel::Severity::Notice);
         if (!*Result)
         {
+            IncrementVersionAfterExport_ = false;
             Status_ = "Export failed";
             Output_.Append(Result->Error, panels::OutputPanel::Severity::Error);
             return;
         }
         LastExport_ = Result->OutputPath;
         Status_ = "Exported " + Result->OutputPath.filename().string();
+        if (std::exchange(IncrementVersionAfterExport_, false) && ResolvedProject_)
+        {
+            ++ProjectSettings_.VersionCode;
+            if (ProjectSettings_.Save(ResolvedProject_->ProjectRoot))
+                Output_.Append("The next build uses version code " + std::to_string(ProjectSettings_.VersionCode),
+                               panels::OutputPanel::Severity::Notice);
+        }
     }
 
     void App::Shutdown()

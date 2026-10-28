@@ -41,9 +41,8 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            if (signingEnabled) {
-                signingConfig signingConfigs.release
-            }
+            // Development builds use the debug key so they install on a device; Google Play refuses it.
+            signingConfig signingEnabled ? signingConfigs.release : signingConfigs.debug
         }
     }
 

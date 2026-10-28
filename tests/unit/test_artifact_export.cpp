@@ -53,9 +53,16 @@ namespace
         Output << Text;
     }
 
-    void WriteAndroidLibrary(const fs::path& Resources)
+    void WriteAndroidLibrary(const fs::path& Resources, std::uint64_t Alignment = 16384)
     {
-        std::string Header(64, '\0');
+        // An ELF header followed by one PT_LOAD program header with the given alignment.
+        std::string Header(64 + 56, '\0');
+        Header[32] = 64;  // e_phoff
+        Header[54] = 56;  // e_phentsize
+        Header[56] = 1;   // e_phnum
+        Header[64] = 1;   // PT_LOAD
+        for (int Index = 0; Index < 8; ++Index)
+            Header[64 + 48 + Index] = static_cast<char>((Alignment >> (8 * Index)) & 0xff);
         Header[0] = static_cast<char>(0x7f);
         Header[1] = 'E';
         Header[2] = 'L';
@@ -849,6 +856,22 @@ TEST_CASE("Android artifact export rejects a host library for the wrong ABI")
     const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request);
     CHECK_FALSE(Result);
     CHECK(Result.Error.find("ELF64 little-endian AArch64") != std::string::npos);
+}
+
+TEST_CASE("Android export hosts must use 16 KB pages")
+{
+    TemporaryDirectory Directory("opendbc-artifact-android-pages");
+    toolchain::ArtifactExportRequest Request;
+    Request.HostResources = Directory.Root / "product";
+    WriteAndroidLibrary(Request.HostResources, 4096);
+    std::string Error;
+    CHECK_FALSE(toolchain::internal::ValidateAndroidHost(Request, Error));
+    CHECK(Error.find("16 KB") != std::string::npos);
+
+    WriteAndroidLibrary(Request.HostResources, 16384);
+    Error.clear();
+    CHECK(toolchain::internal::ValidateAndroidHost(Request, Error));
+    CHECK(Error.empty());
 }
 
 TEST_CASE("artifact export rejects a staging directory inside its host")
