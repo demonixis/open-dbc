@@ -510,13 +510,42 @@ namespace dbc::studio
         return Editor;
     }
 
-    void App::InsertSnippet(const std::string& Body)
+    void App::InsertSnippet(const core::Snippet& Value)
     {
         TextEditor* Editor = SnippetTarget();
         if (Editor == nullptr)
             return;
-        // Replaces the selection like a paste, as one undoable edit.
-        Editor->ReplaceSectionText(Editor->GetMainCursorSelection(), Body);
+        const core::SnippetInsertion Plan =
+            core::PlanSnippetInsertion(Editor->GetText(), Value, Editor_.CurrentProfile());
+        if (!Plan.Error.empty())
+        {
+            Status_ = Plan.Error;
+            Output_.Append(Plan.Error, panels::OutputPanel::Severity::Notice);
+            return;
+        }
+        // Each case is one undoable edit, like a paste.
+        switch (Plan.Where)
+        {
+            case core::SnippetInsertion::Place::Cursor:
+                Editor->ReplaceSectionText(Editor->GetMainCursorSelection(), Plan.Text);
+                break;
+            case core::SnippetInsertion::Place::Line:
+            case core::SnippetInsertion::Place::End:
+            {
+                const std::size_t Last = Editor->GetLineCount() - 1;
+                // The index is in glyphs: count the UTF-8 lead bytes of the last line.
+                const std::string LastText = Editor->GetLineText(Last);
+                const std::size_t Glyphs = static_cast<std::size_t>(std::count_if(
+                    LastText.begin(), LastText.end(), [](char Byte) { return (Byte & 0xC0) != 0x80; }));
+                const TextEditor::DocPos At = Plan.Where == core::SnippetInsertion::Place::Line
+                                                  ? TextEditor::DocPos(Plan.Line, 0)
+                                                  : TextEditor::DocPos(Last, Glyphs);
+                Editor->ReplaceSectionText(At, At, Plan.Text);
+                Editor->ScrollToLine(At.line, TextEditor::Scroll::alignTop);
+                Status_ = "Added " + Value.Name + " to the Snippets region at the end of the file";
+                break;
+            }
+        }
         Editor->SetFocus();
     }
 
@@ -802,8 +831,8 @@ namespace dbc::studio
         DrawQuitConfirm();
         DrawProjectResolution();
         DrawNewProject();
-        if (std::optional<std::string> Body = Snippets_.Draw())
-            InsertSnippet(*Body);
+        if (std::optional<core::Snippet> Picked = Snippets_.Draw())
+            InsertSnippet(*Picked);
 
         ImGui::Render();
     }

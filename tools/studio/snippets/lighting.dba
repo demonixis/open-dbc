@@ -1,7 +1,9 @@
 rem Snippet: Lighting
-rem Description: A soft ambient light and a warm directional sun.
+rem Description: A soft ambient light and a warm directional sun. Call SetupLighting() once at startup.
 
-set ambient light 30
-make light 1
-set directional light 1, -1, -1, 1
-color light 1, rgb(255, 240, 220)
+function SetupLighting()
+   set ambient light 30
+   make light 1
+   set directional light 1, -1, -1, 1
+   color light 1, rgb(255, 240, 220)
+endfunction

@@ -58,13 +58,13 @@ namespace dbc::studio
             SaveRequested_ = true;
         }
 
-        std::optional<std::string> SnippetWindow::Draw()
+        std::optional<core::Snippet> SnippetWindow::Draw()
         {
             DrawSave();
             return DrawInsert();
         }
 
-        std::optional<std::string> SnippetWindow::DrawInsert()
+        std::optional<core::Snippet> SnippetWindow::DrawInsert()
         {
             constexpr const char* Popup = "Insert Snippet";
             if (InsertRequested_)
@@ -95,7 +95,7 @@ namespace dbc::studio
                         Selected_ = static_cast<int>(Index);
             }
 
-            std::optional<std::string> Inserted;
+            std::optional<core::Snippet> Inserted;
             const float Footer = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
             ImGui::BeginChild("##list", ImVec2(16.0f * Em, -Footer), ImGuiChildFlags_Borders);
             for (std::size_t Index = 0; Index < Snippets_.size(); ++Index)
@@ -110,7 +110,7 @@ namespace dbc::studio
                 {
                     Selected_ = static_cast<int>(Index);
                     if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-                        Inserted = Snippets_[Index].Body;
+                        Inserted = Snippets_[Index];
                 }
                 ImGui::PopID();
             }
@@ -146,7 +146,7 @@ namespace dbc::studio
 
             ImGui::BeginDisabled(Selected_ < 0);
             if (ImGui::Button("Insert") && Selected_ >= 0)
-                Inserted = Snippets_[Selected_].Body;
+                Inserted = Snippets_[Selected_];
             ImGui::EndDisabled();
             ImGui::SameLine();
             if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape, false))

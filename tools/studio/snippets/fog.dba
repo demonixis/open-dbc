@@ -1,7 +1,9 @@
 rem Snippet: Fog
-rem Description: Distance fog matching the backdrop colour.
+rem Description: Distance fog matching the backdrop colour. Call SetupFog() once at startup.
 
-fog on
-fog color rgb(150, 170, 190)
-fog distance 400
-color backdrop rgb(150, 170, 190)
+function SetupFog()
+   fog on
+   fog color rgb(150, 170, 190)
+   fog distance 400
+   color backdrop rgb(150, 170, 190)
+endfunction

@@ -62,9 +62,12 @@ from an empty main loop or a basic 1280×720 scene. A DBPro project also gets a
 historical `.dbpro` descriptor; a DBC project gets an `.opendbc-project.json`
 that sets its dialect and entry.
 
-**Edit → Insert Snippet…** (Ctrl+J) inserts a snippet at the cursor: cameras
-(FPS, TPS, orbit), a basic scene, a delta-time loop, lighting, fog, sound, game
-states, saving and more. **Edit → Save Selection as Snippet…** adds your own to
+**Edit → Insert Snippet…** (Ctrl+J) adds a snippet: cameras (FPS, TPS, orbit),
+a basic scene, a delta-time loop, lighting, fog, sound, game states, saving and
+more. A snippet made only of functions joins the `rem #region Snippets` …
+`rem #endregion` block at the end of the file, created on first use, and is
+refused when the file already declares one of its functions; any other snippet
+goes at the cursor. **Edit → Save Selection as Snippet…** adds your own to
 the `snippets` folder of the Studio's preferences directory. A snippet is a
 `.dba` file whose optional leading `rem Snippet:`, `rem Profiles: dbc dbpro`
 and `rem Description:` lines name it, restrict it to profiles and describe it;

@@ -36,6 +36,30 @@ namespace dbc::studio
             }
         };
 
+        // Where a snippet goes in a document. One made only of functions joins the
+        // "rem #region Snippets" block at the end of the file, created on first use,
+        // so the main program stays on top; anything else goes at the cursor.
+        struct SnippetInsertion
+        {
+            enum class Place
+            {
+                Cursor,
+                // At the start of `Line`, 0-based.
+                Line,
+                End,
+            };
+
+            Place Where = Place::Cursor;
+            std::size_t Line = 0;
+            std::string Text;
+            // Set, with nothing to insert, when the document already declares one of
+            // the snippet's functions.
+            std::string Error;
+        };
+
+        SnippetInsertion PlanSnippetInsertion(std::string_view Document, const Snippet& Value,
+                                              dbc::language::LanguageProfile Profile);
+
         Snippet ParseSnippet(std::string_view FileName, std::string_view Text);
         std::string FormatSnippet(const Snippet& Value);
 

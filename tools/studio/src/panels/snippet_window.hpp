@@ -27,11 +27,11 @@ namespace dbc::studio
             // Offers to store `Body`, written for `Profile`, as a user snippet.
             void OpenSave(std::string Body, dbc::language::LanguageProfile Profile);
 
-            // Returns the body to insert once the user picks a snippet.
-            std::optional<std::string> Draw();
+            // Returns the snippet to insert once the user picks one.
+            std::optional<core::Snippet> Draw();
 
           private:
-            std::optional<std::string> DrawInsert();
+            std::optional<core::Snippet> DrawInsert();
             void DrawSave();
             void Reload();
 

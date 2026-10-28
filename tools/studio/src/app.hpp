@@ -69,7 +69,7 @@ namespace dbc::studio
         void ShowOpenFileDialog();
         // The current tab when snippets can be inserted into it, else nullptr.
         TextEditor* SnippetTarget();
-        void InsertSnippet(const std::string& Body);
+        void InsertSnippet(const core::Snippet& Value);
         void RequestNewProject();
         void CreateNewProject();
         bool ResolveWorkspace(const std::filesystem::path& Target,

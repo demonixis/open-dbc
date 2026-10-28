@@ -1,11 +1,13 @@
 #include "snippet_library.hpp"
 
 #include "interpreter/atomic_file.hpp"
+#include "language/frontend.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <fstream>
 #include <iterator>
+#include <memory>
 
 namespace dbc::studio
 {
@@ -56,6 +58,18 @@ namespace dbc::studio
             return Result;
         }
 
+        constexpr std::string_view KRegionStart = "rem #region snippets";
+        constexpr std::string_view KRegionEnd = "rem #endregion";
+
+        dbc::language::Program Parse(std::string_view Text, dbc::language::LanguageProfile Profile)
+        {
+            auto Source = std::make_shared<dbc::language::SourceDocument>();
+            Source->LogicalPath = "snippet.dba";
+            Source->Text = std::string(Text);
+            Source->Profile = Profile;
+            return dbc::language::LexAndParse(Source);
+        }
+
         void SortByName(std::vector<core::Snippet>& Snippets)
         {
             std::stable_sort(Snippets.begin(), Snippets.end(), [](const core::Snippet& Left, const core::Snippet& Right)
@@ -65,6 +79,75 @@ namespace dbc::studio
 
     namespace core
     {
+        SnippetInsertion PlanSnippetInsertion(std::string_view Document, const Snippet& Value,
+                                              dbc::language::LanguageProfile Profile)
+        {
+            SnippetInsertion Result;
+            std::string Body = Value.Body;
+            if (!Body.empty() && Body.back() != '\n')
+                Body += '\n';
+            const dbc::language::Program Parsed = Parse(Body, Profile);
+            if (Parsed.HasErrors() || Parsed.Functions.empty() || !Parsed.Statements.empty() ||
+                !Parsed.Includes.empty() || !Parsed.Types.empty() || !Parsed.Constants.empty())
+            {
+                Result.Text = std::move(Body);
+                return Result;
+            }
+
+            const dbc::language::Program Existing = Parse(Document, Profile);
+            for (const dbc::language::FunctionDeclaration& Function : Parsed.Functions)
+            {
+                const bool Declared =
+                    std::any_of(Existing.Functions.begin(), Existing.Functions.end(),
+                                [&](const dbc::language::FunctionDeclaration& Other)
+                                { return Lower(Other.Name) == Lower(Function.Name); });
+                if (Declared)
+                {
+                    // The parser upper-cases names; quote the snippet's own spelling.
+                    std::string Name = Function.Name;
+                    const std::size_t At = Lower(Body).find(Lower(Function.Name), Function.Span.Begin.Offset);
+                    if (At != std::string::npos)
+                        Name = Body.substr(At, Function.Name.size());
+                    Result.Error = "This file already declares " + Name + "().";
+                    return Result;
+                }
+            }
+
+            // The first #endregion after the region start closes it.
+            std::size_t Line = 0;
+            bool InRegion = false;
+            for (std::size_t Offset = 0; Offset <= Document.size(); ++Line)
+            {
+                const std::size_t End = std::min(Document.find('\n', Offset), Document.size());
+                const std::string Trimmed = Lower(Trim(Document.substr(Offset, End - Offset)));
+                if (Trimmed == KRegionStart)
+                    InRegion = true;
+                else if (InRegion && Trimmed == KRegionEnd)
+                {
+                    Result.Where = SnippetInsertion::Place::Line;
+                    Result.Line = Line;
+                    Result.Text = Body + "\n";
+                    return Result;
+                }
+                Offset = End + 1;
+            }
+
+            Result.Where = SnippetInsertion::Place::End;
+            std::string_view Before = Document;
+            while (!Before.empty() && (Before.back() == '\n' || Before.back() == '\r'))
+                Before.remove_suffix(1);
+            if (!Document.empty())
+            {
+                // Close the last line, then leave one blank line before the region.
+                const std::size_t Newlines = static_cast<std::size_t>(
+                    std::count(Document.begin() + static_cast<std::ptrdiff_t>(Before.size()), Document.end(), '\n'));
+                if (!Before.empty())
+                    Result.Text.append(Newlines >= 2 ? 0 : 2 - Newlines, '\n');
+            }
+            Result.Text += "rem #region Snippets\n\n" + Body + "\nrem #endregion\n";
+            return Result;
+        }
+
         Snippet ParseSnippet(std::string_view FileName, std::string_view Text)
         {
             Snippet Result;

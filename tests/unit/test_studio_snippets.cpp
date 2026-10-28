@@ -135,3 +135,35 @@ TEST_CASE("built-in snippets are embedded and compile under each profile they of
         CHECK(std::any_of(Builtins.begin(), Builtins.end(),
                           [&](const core::Snippet& Value) { return Value.Name == Name; }));
 }
+
+TEST_CASE("function snippets gather in a Snippets region at the end of the file")
+{
+    core::Snippet Camera = core::ParseSnippet("camera.dba", "function Camera()\n   sync\nendfunction\n");
+    core::Snippet Fog = core::ParseSnippet("fog.dba", "function Fog()\n   fog on\nendfunction");
+    core::Snippet Loop = core::ParseSnippet("loop.dba", "do\n   sync\nloop\n");
+
+    const core::SnippetInsertion AtCursor = core::PlanSnippetInsertion("print 1\n", Loop, LanguageProfile::Dbc);
+    CHECK(AtCursor.Where == core::SnippetInsertion::Place::Cursor);
+    CHECK(AtCursor.Text == "do\n   sync\nloop\n");
+
+    std::string Document = "do\n   sync\nloop";
+    const core::SnippetInsertion First = core::PlanSnippetInsertion(Document, Camera, LanguageProfile::Dbc);
+    REQUIRE(First.Where == core::SnippetInsertion::Place::End);
+    Document += First.Text;
+    CHECK(Document == "do\n   sync\nloop\n\nrem #region Snippets\n\nfunction Camera()\n   sync\nendfunction\n\n"
+                      "rem #endregion\n");
+    CHECK(CompileErrors(Document, LanguageProfile::Dbc) == "");
+
+    const core::SnippetInsertion Second = core::PlanSnippetInsertion(Document, Fog, LanguageProfile::DbPro);
+    REQUIRE(Second.Where == core::SnippetInsertion::Place::Line);
+    CHECK(Second.Line == 10);
+    CHECK(Second.Text == "function Fog()\n   fog on\nendfunction\n\n");
+
+    const core::SnippetInsertion Again = core::PlanSnippetInsertion(Document, Camera, LanguageProfile::Dbc);
+    CHECK(Again.Text.empty());
+    CHECK(Again.Error.find("Camera()") != std::string::npos);
+
+    CHECK(core::PlanSnippetInsertion("", Fog, LanguageProfile::Dbc).Text ==
+          "rem #region Snippets\n\nfunction Fog()\n   fog on\nendfunction\n\nrem #endregion\n");
+    CHECK(core::PlanSnippetInsertion("end\n\n", Fog, LanguageProfile::Dbc).Text.starts_with("rem #region"));
+}

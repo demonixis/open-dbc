@@ -1,5 +1,7 @@
 rem Snippet: FPS Counter
-rem Description: Draw the frame rate in the top-left corner. Place it in the main loop before sync.
+rem Description: Draw the frame rate in the top-left corner. Call DrawFpsCounter() in the main loop before sync.
 
-ink rgb(255, 255, 255), 0
-text 10, 10, "FPS: " + str$(screen fps())
+function DrawFpsCounter()
+   ink rgb(255, 255, 255), 0
+   text 10, 10, "FPS: " + str$(screen fps())
+endfunction
