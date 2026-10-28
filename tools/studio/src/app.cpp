@@ -1296,14 +1296,16 @@ namespace dbc::studio
 
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("New Project...", "Ctrl+Shift+N", false, !ExecutionBusy_))
-            {
-                RequestNewProject();
-            }
             if (ImGui::MenuItem("New", "Ctrl+N"))
             {
                 Editor_.NewFile();
             }
+
+            if (ImGui::MenuItem("New Project...", "Ctrl+Shift+N", false, !ExecutionBusy_))
+            {
+                RequestNewProject();
+            }
+
             // SDL_dialog has no UIKit backend, and mobile has no freeform file
             // system to browse anyway: there the Project panel is the only way in.
             if constexpr (core::platform::HasNativeFileDialog())
