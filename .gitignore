@@ -83,3 +83,4 @@ Desktop.ini
 !tools/studio/shaders/scene_mesh.vert.spv
 examples/dbc/demos/.opendbc-project.json
 examples/dbpro/tutorials/world/.opendbc-project.json
+/.venv-branding/

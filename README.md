@@ -57,6 +57,7 @@ ctest --preset default
 | DBPro BSP worlds | [docs/bsp.md](docs/bsp.md) |
 | Classic animations (video) | [docs/video.md](docs/video.md) |
 | Example programs | [examples/README.md](examples/README.md) |
+| Logos, social headers, wallpapers | [docs/branding.md](docs/branding.md) |
 | Contributing | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 | Remaining work | [docs/roadmap.md](docs/roadmap.md) |
 
