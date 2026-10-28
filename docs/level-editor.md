@@ -108,7 +108,10 @@ A checked field writes a statement; an unchecked one leaves the engine default.
 | Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y, Ctrl+D, Delete | Undo, redo, duplicate, delete |
 
 Matrices, terrains and sounds only move, lights and the camera move and turn,
-and objects also scale. Dropping an image on a node textures it. Dropping a
+and objects also scale. **Local** turns the gizmo with the node. **Grid**
+shows or hides the ground grid, whose cells are 10 units.
+
+Dropping an image on a node textures it. Dropping a
 model or a sound places it on the ground under the cursor. In Assets, a
 double-click applies the image to the selection, gives the sound to a selected
 3D sound, or adds the model or sound in front of the camera.

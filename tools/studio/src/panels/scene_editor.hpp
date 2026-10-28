@@ -191,6 +191,7 @@ namespace dbc::studio
             ViewCamera Camera_;
             Tool Tool_ = Tool::Move;
             bool LocalGizmo_ = false;
+            bool ShowGrid_ = true;
             bool LookThroughCamera_ = false;
             bool Navigating_ = false;
             bool GizmoActive_ = false;

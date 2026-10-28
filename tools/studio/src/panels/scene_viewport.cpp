@@ -218,7 +218,7 @@ namespace dbc::studio
             const glm::vec4 Major(0.45f, 0.46f, 0.50f, 1.0f);
             constexpr int KHalf = 50;
             constexpr float KStep = 10.0f;
-            for (int Index = -KHalf; Index <= KHalf; ++Index)
+            for (int Index = -KHalf; ShowGrid_ && Index <= KHalf; ++Index)
             {
                 const float At = Index * KStep;
                 const float End = KHalf * KStep;
@@ -508,6 +508,8 @@ namespace dbc::studio
             ToolButton("Rotate", Tool::Rotate, "Rotate (E)");
             ToolButton("Scale", Tool::Scale, "Scale (R)");
             ImGui::Checkbox("Local", &LocalGizmo_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Grid", &ShowGrid_);
             ImGui::SameLine();
             ImGui::BeginDisabled(!Document_.Env.UseCamera);
             ImGui::Checkbox("Level camera view", &LookThroughCamera_);
