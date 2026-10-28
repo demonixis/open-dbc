@@ -15,6 +15,7 @@
 #include "core/media_catalogue.hpp"
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_document.hpp"
+#include "scene/scene_geometry.hpp"
 #include "scene/scene_renderer.hpp"
 
 namespace dbc::studio
@@ -148,6 +149,9 @@ namespace dbc::studio
             void CommitIfIdle();
             void DrawInspector();
             void DrawMaterial(scene::SceneNode& Node);
+            void DrawAnimation(scene::SceneNode& Node);
+            // The model file's animation, read once per file; nullptr when unreadable.
+            const scene::ModelAnimation* ModelAnimationOf(const std::string& Asset);
             void DrawCameraSettings();
             void DrawSettings();
 
@@ -197,6 +201,7 @@ namespace dbc::studio
             core::MediaScan AssetScan_;
             std::filesystem::path AssetScanRoot_;
             std::unordered_map<std::string, core::GpuImage> Thumbnails_;
+            std::unordered_map<std::string, std::optional<scene::ModelAnimation>> ModelAnimations_;
             char AssetFilter_[64] = {};
             int AssetFilterKind_ = 0;
 

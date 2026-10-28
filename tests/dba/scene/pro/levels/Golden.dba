@@ -34,6 +34,11 @@ FUNCTION LoadLevel_Golden()
    REM @object 1003 "Dome"
    LOAD OBJECT "../fixtures/classic/models/dome.x", 1003
    POSITION OBJECT 1003, 0, 0, 100
+   REM @object 1004 "Walker"
+   LOAD OBJECT "../fixtures/classic/models/walk.x", 1004
+   POSITION OBJECT 1004, 20, 0, 50
+   SET OBJECT SPEED 1004, 40
+   LOOP OBJECT 1004, 0, 20
    REM @matrix 1 "Ground"
    MAKE MATRIX 1, 1000, 800, 20, 16
    PREPARE MATRIX TEXTURE 1, 1001, 2, 2

@@ -70,6 +70,10 @@ The Inspector edits the selected node:
   `heightmaps/<level>_terrain<number>.png` under the asset root and point the
   terrain at it. Grey levels 0–255 are heights 0–100; a heightmap picked by
   hand is never overwritten;
+- a model's animation: none, or a range of the frames of the file's first
+  animation (the only one `LOAD OBJECT` keeps, at 25 frames a second), played
+  once (`PLAY OBJECT`) or looped (`LOOP OBJECT`), at an optional
+  `SET OBJECT SPEED`. The viewport shows the model still;
 - texture, `COLOR OBJECT`, `GHOST OBJECT ON` and the `SET OBJECT` flags;
 - in Pro, also diffuse, ambience, emissive, specular colour and power, and `SET SHADOW SHADING ON`.
 

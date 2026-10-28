@@ -45,6 +45,15 @@ namespace dbc::studio
         bool LoadTerrainMesh(const std::filesystem::path& Heightmap, CpuMesh& Out, std::string& Error);
         void ComputeBounds(CpuMesh& Mesh);
 
+        // The animation LOAD OBJECT keeps: a model file's first, at 25 frames a second.
+        struct ModelAnimation
+        {
+            std::string Name;
+            int LastFrame = 0;      // TOTAL OBJECT FRAMES
+            unsigned int Count = 0; // animations in the file, 0 for a still model
+        };
+        bool ReadModelAnimation(const std::filesystem::path& Path, ModelAnimation& Out, std::string& Error);
+
         // Rotation in degrees, applied X, then Y, then Z, as ROTATE OBJECT does.
         glm::mat3 RotationMatrix(const glm::vec3& Degrees);
         // The X/Y/Z angles that RotationMatrix maps back to `Rotation`.

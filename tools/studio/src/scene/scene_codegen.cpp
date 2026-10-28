@@ -273,6 +273,11 @@ namespace dbc::studio
                 if (IsObject(Node.Kind))
                 {
                     WriteObject(Out, Node, Images, Profile);
+                    if (Node.Speed)
+                        Out.Command(SymbolId::Command_SetObjectSpeed, {Id, Integer(*Node.Speed)});
+                    if (Node.Frames)
+                        Out.Command(Node.Loop ? SymbolId::Command_LoopObject : SymbolId::Command_PlayObject,
+                                    {Id, Integer(Node.Frames->x), Integer(Node.Frames->y)});
                     return;
                 }
                 switch (Node.Kind)
@@ -789,6 +794,23 @@ namespace dbc::studio
                         case SymbolId::Command_SetShadowShadingOn:
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Mat.CastShadow = true;
+                            break;
+                        case SymbolId::Command_SetObjectSpeed:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Speed = I(A, 1);
+                            break;
+                        case SymbolId::Command_PlayObject:
+                        case SymbolId::Command_LoopObject:
+                            if (A.size() != 3)
+                            {
+                                Error(Line_, *Name_ + " is written with its first and last frame");
+                                break;
+                            }
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                Node->Frames = glm::ivec2(I(A, 1), I(A, 2));
+                                Node->Loop = Id == SymbolId::Command_LoopObject;
+                            }
                             break;
 
                         case SymbolId::Command_MakeMatrix:

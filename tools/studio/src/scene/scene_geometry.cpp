@@ -171,6 +171,40 @@ namespace dbc::studio
             return Mesh;
         }
 
+        bool ReadModelAnimation(const std::filesystem::path& Path, ModelAnimation& Out, std::string& Error)
+        {
+            // ObjectManager's import that keeps the skeleton and its animations.
+            constexpr unsigned int Flags =
+                aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType |
+                aiProcess_ImproveCacheLocality | aiProcess_ConvertToLeftHanded | aiProcess_GenSmoothNormals |
+                aiProcess_CalcTangentSpace | aiProcess_GenUVCoords | aiProcess_TransformUVCoords |
+                aiProcess_FindInvalidData | aiProcess_FindDegenerates;
+            const AssimpImportResult Imported = RendererSystem::ImportSceneWithFlags(Path.string(), Flags);
+            if (Imported.Scene == nullptr)
+            {
+                Error = Imported.ImporterValue && *Imported.ImporterValue->GetErrorString()
+                            ? Imported.ImporterValue->GetErrorString()
+                            : "unsupported or unreadable model";
+                return false;
+            }
+            Out = {};
+            const aiScene& Scene = *Imported.Scene;
+            if (Scene.mNumAnimations == 0 || Scene.mAnimations[0] == nullptr)
+                return true;
+            // The frame count ObjectManager gives the clip: its duration at 25 frames a second.
+            const aiAnimation& Animation = *Scene.mAnimations[0];
+            const double Ticks = std::isfinite(Animation.mDuration) ? std::max(0.0, Animation.mDuration) : 0.0;
+            const double PerSecond = std::isfinite(Animation.mTicksPerSecond) && Animation.mTicksPerSecond > 0.0
+                                         ? Animation.mTicksPerSecond
+                                         : 25.0;
+            Out.Name = Animation.mName.C_Str();
+            Out.LastFrame = static_cast<int>(
+                std::lround(std::clamp(Ticks * 25.0 / PerSecond, 0.0,
+                                       static_cast<double>(std::numeric_limits<int>::max()))));
+            Out.Count = Scene.mNumAnimations;
+            return true;
+        }
+
         bool LoadModelMesh(const std::filesystem::path& Path, CpuMesh& Out, std::string& Error)
         {
             // ObjectManager's pre-transformed import flags: one mesh list, hierarchy applied.

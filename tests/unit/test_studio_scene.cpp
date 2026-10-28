@@ -64,7 +64,14 @@ namespace
         Document.Add(scene::NodeKind::Cone).Size = 6.0f;
         Document.Add(scene::NodeKind::Plain).Extent = {50.0f, 25.0f, 0.0f};
         Document.Add(scene::NodeKind::Triangle);
-        Document.Add(scene::NodeKind::Model).Asset = "models/ship.x";
+        scene::SceneNode& Ship = Document.Add(scene::NodeKind::Model);
+        Ship.Asset = "models/ship.x";
+        Ship.Frames = glm::ivec2(2, 10);
+        Ship.Loop = false;
+        Ship.Speed = 40;
+        scene::SceneNode& Walker = Document.Add(scene::NodeKind::Model);
+        Walker.Asset = "models/walk.x";
+        Walker.Frames = glm::ivec2(0, 20);
 
         scene::SceneNode& Ground = Document.Add(scene::NodeKind::Matrix);
         Ground.Width = 1000.0f;
@@ -198,6 +205,14 @@ TEST_CASE("Scene levels refuse statements they did not write")
     CHECK(Read.Errors[0].Line == 3);
     CHECK(Read.Errors[1].Line == 4);
     CHECK(Read.Errors[2].Line == 5);
+
+    const std::string Animated = "FUNCTION LoadLevel_Test()\n"
+                                 "   LOAD OBJECT \"walk.x\", 1000\n"
+                                 "   LOOP OBJECT 1000\n"
+                                 "ENDFUNCTION\n";
+    const scene::LevelReadResult Whole = scene::ReadLevel(Animated, "Test", LanguageProfile::Dbc);
+    REQUIRE(Whole.Errors.size() == 1);
+    CHECK(Whole.Errors[0].Line == 3);
 
     CHECK_FALSE(scene::ReadLevel("PRINT 1\n", "Test", LanguageProfile::Dbc).Ok());
     CHECK_FALSE(scene::ReadLevel("FUNCTION LoadLevel_Other()\nENDFUNCTION\n", "Test", LanguageProfile::Dbc).Ok());

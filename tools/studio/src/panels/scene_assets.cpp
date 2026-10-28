@@ -37,6 +37,7 @@ namespace dbc::studio
         void SceneEditor::RefreshAssets()
         {
             ReleaseThumbnails();
+            ModelAnimations_.clear();
             AssetScan_ = {};
             AssetScanRoot_.clear();
             if (Project_)

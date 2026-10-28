@@ -138,6 +138,12 @@ namespace dbc::studio
             float SpotOuter = 40.0f;
             std::optional<Rgb> LightColor;
 
+            // Model animation: PLAY OBJECT or LOOP OBJECT from the first to the last
+            // frame, after an optional SET OBJECT SPEED. No frames leaves the model still.
+            std::optional<glm::ivec2> Frames;
+            bool Loop = true;
+            std::optional<int> Speed;
+
             Material Mat;
 
             bool operator==(const SceneNode&) const = default;

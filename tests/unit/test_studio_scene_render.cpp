@@ -96,6 +96,15 @@ TEST_CASE("Scene models and terrains load from the project's files")
     CHECK(Mesh.Vertices.size() >= 3);
     CHECK_FALSE(scene::LoadModelMesh(Fixtures / "models/missing.x", Mesh, Error));
 
+    // The frames LOAD OBJECT gives the file's first animation, for the Inspector's range.
+    scene::ModelAnimation Animation;
+    CHECK_MESSAGE(scene::ReadModelAnimation(Fixtures / "models/walk.x", Animation, Error), Error);
+    CHECK(Animation.Count == 1);
+    CHECK(Animation.LastFrame == 25);
+    CHECK_MESSAGE(scene::ReadModelAnimation(Fixtures / "models/dome.x", Animation, Error), Error);
+    CHECK(Animation.Count == 0);
+    CHECK_FALSE(scene::ReadModelAnimation(Fixtures / "models/missing.x", Animation, Error));
+
     REQUIRE(scene::LoadTerrainMesh(Fixtures / "bmp/stone.bmp", Mesh, Error));
     // The terrain runs from its position toward -Z, never above the height scale.
     CHECK(Mesh.Max.z == doctest::Approx(0.0f));

@@ -209,6 +209,7 @@ namespace dbc::studio
                     break;
                 case scene::NodeKind::Model:
                     AssetField("Model file", Node->Asset, core::MediaKind::Model);
+                    DrawAnimation(*Node);
                     break;
                 case scene::NodeKind::Terrain:
                     AssetField("Heightmap", Node->Asset, core::MediaKind::Image);
@@ -243,6 +244,61 @@ namespace dbc::studio
             if (!IsLight)
                 DrawMaterial(*Node);
             ImGui::EndDisabled();
+        }
+
+        const scene::ModelAnimation* SceneEditor::ModelAnimationOf(const std::string& Asset)
+        {
+            if (!Project_ || Asset.empty())
+                return nullptr;
+            auto Found = ModelAnimations_.find(Asset);
+            if (Found == ModelAnimations_.end())
+            {
+                std::optional<scene::ModelAnimation> Read(std::in_place);
+                std::string Error;
+                if (!scene::ReadModelAnimation(Project_->AssetRoot / Asset, *Read, Error))
+                    Read.reset();
+                Found = ModelAnimations_.emplace(Asset, std::move(Read)).first;
+            }
+            return Found->second ? &*Found->second : nullptr;
+        }
+
+        void SceneEditor::DrawAnimation(scene::SceneNode& Node)
+        {
+            Heading("Animation");
+            const scene::ModelAnimation* Info = ModelAnimationOf(Node.Asset);
+            const bool HasClip = Info != nullptr && Info->Count > 0;
+            if (!HasClip && !Node.Frames)
+            {
+                ImGui::TextDisabled("%s", Node.Asset.empty() ? "Pick a model file first."
+                                          : Info == nullptr  ? "The model file cannot be read."
+                                                             : "This model has no animation.");
+                return;
+            }
+
+            // LOAD OBJECT keeps one timeline: an animation is a range of its frames.
+            const int Last = HasClip ? Info->LastFrame : std::max(0, Node.Frames->y);
+            const std::string Clip = (HasClip && !Info->Name.empty() ? Info->Name : std::string("Animation")) +
+                                     " (frames 0 to " + std::to_string(Last) + ")";
+            const char* Items[] = {"None", Clip.c_str()};
+            int Choice = Node.Frames ? 1 : 0;
+            if (ImGui::Combo("Animation", &Choice, Items, 2))
+                Node.Frames = Choice == 0 ? std::nullopt : std::optional<glm::ivec2>(glm::ivec2(0, Last));
+            if (HasClip && Info->Count > 1)
+                ImGui::TextDisabled("The file holds %u animations; LOAD OBJECT plays the first.", Info->Count);
+            if (!Node.Frames)
+                return;
+
+            ImGui::Checkbox("Loop", &Node.Loop);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("LOOP OBJECT repeats the frames; unchecked, PLAY OBJECT plays them once");
+            glm::ivec2& Frames = *Node.Frames;
+            ImGui::DragIntRange2("Frames", &Frames.x, &Frames.y, 0.25f, 0, Last, "First %d", "Last %d");
+            Frames.x = std::clamp(Frames.x, 0, Last);
+            Frames.y = std::clamp(Frames.y, Frames.x, Last);
+            Optional("Speed", Node.Speed, 20, [](int& Speed) { ImGui::SliderInt("Speed", &Speed, 1, 200); });
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("SET OBJECT SPEED; 20 plays the file at its own rate");
+            ImGui::TextDisabled("The viewport shows the model still.");
         }
 
         void SceneEditor::DrawMatrixHeights(scene::SceneNode& Node)
