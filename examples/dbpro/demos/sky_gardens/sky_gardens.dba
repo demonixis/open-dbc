@@ -163,16 +163,16 @@ load_media:
    set ambient light 46
    color ambient light rgb(160, 150, 190)
 
-   load image "sky.jpg", 1
-   load image "clouds.jpg", 2
-   load image "wisps.jpg", 3
-   load image "ruin.jpg", 4
-   load image "ruin_normal.jpg", 5
-   load image "glow.jpg", 6
-   load image "wood.jpg", 7
-   load image "fern.png", 8
-   load image "seed_icon.png", 9
-   load image "rock_normal.jpg", 10
+   load image "textures/sky.jpg", 1
+   load image "textures/clouds.jpg", 2
+   load image "textures/wisps.jpg", 3
+   load image "textures/ruin.jpg", 4
+   load image "textures/ruin_normal.jpg", 5
+   load image "textures/glow.jpg", 6
+   load image "textures/wood.jpg", 7
+   load image "textures/fern.png", 8
+   load image "textures/seed_icon.png", 9
+   load image "textures/rock_normal.jpg", 10
 
    rem Sky dome around the camera, seen from inside
    make object sphere 3, 3200, 16, 12
@@ -204,17 +204,17 @@ load_media:
    set object light 5, 0
 
    rem Reusable pieces, hidden and cloned into the level
-   load object "island.x", 900
-   load object "arch.x", 901
-   load object "tree.x", 902
-   load object "lantern.x", 903
-   load object "banner.x", 904
-   load object "mushroom.x", 905
-   load object "shrine.x", 906
-   load object "seed.x", 907
+   load object "models/island.x", 900
+   load object "models/arch.x", 901
+   load object "models/tree.x", 902
+   load object "models/lantern.x", 903
+   load object "models/banner.x", 904
+   load object "models/mushroom.x", 905
+   load object "models/shrine.x", 906
+   load object "models/seed.x", 907
    for o = 900 to 907 : hide object o : next o
 
-   load object "explorer.x", 1
+   load object "models/explorer.x", 1
    set object interpolation 1, 30
    rem The explorer casts a real stencil shadow from a low pill-shaped proxy mesh, whose
    rem volume is rebuilt every frame on the CPU; it is kept short so it never reaches the clouds
@@ -257,14 +257,14 @@ load_media:
    color light 5, rgb(255, 200, 110) : set light range 5, 45
    color light 6, rgb(160, 255, 220) : set light range 6, 1 : hide light 6
 
-   load sound "jump.wav", 1
-   load sound "land.wav", 2
-   load sound "seed.wav", 3
-   load sound "bounce.wav", 4
-   load sound "checkpoint.wav", 5
-   load sound "fall.wav", 6
-   load sound "bloom.wav", 7
-   load sound "wind.wav", 8
+   load sound "sounds/jump.wav", 1
+   load sound "sounds/land.wav", 2
+   load sound "sounds/seed.wav", 3
+   load sound "sounds/bounce.wav", 4
+   load sound "sounds/checkpoint.wav", 5
+   load sound "sounds/fall.wav", 6
+   load sound "sounds/bloom.wav", 7
+   load sound "sounds/wind.wav", 8
    loop sound 8
    set sound volume 8, 70
 

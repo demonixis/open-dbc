@@ -421,22 +421,22 @@ def build_textures(points, rights) -> None:
         pixels = bt.bake(builder)
         if name not in FULL_SIZE:
             pixels = pixels[::2, ::2].copy()
-        bt.save_jpeg(pixels, OUT / f"{name}.jpg")
+        bt.save_jpeg(pixels, OUT / f"textures/{name}.jpg")
         if name == "flare":
             # The tail-light glow is the same flare in red.
             pixels[..., :3] *= np.array((1.0, 0.12, 0.06), dtype=np.float32)
-            bt.save_jpeg(pixels, OUT / "flare_red.jpg")
+            bt.save_jpeg(pixels, OUT / "textures/flare_red.jpg")
     for index, (base, accent) in enumerate((((0.95, 0.35, 0.05), (0.08, 0.08, 0.1)),
                                             ((0.05, 0.55, 0.60), (0.95, 0.95, 0.9)),
                                             ((0.42, 0.10, 0.62), (1.0, 0.75, 0.1)),
                                             ((0.90, 0.90, 0.88), (0.10, 0.25, 0.75)))):
         pixels = bt.bake(livery(base, accent, 321 + index))
-        bt.save_jpeg(pixels[::2, ::2].copy(), OUT / f"car_{index + 1}.jpg")
+        bt.save_jpeg(pixels[::2, ::2].copy(), OUT / f"textures/car_{index + 1}.jpg")
     clouds = bt.bake(lambda g: g.finish(g.ramp(g.noise(2.5, 8, 0.6, 331.0), [(0.0, (0, 0, 0)), (1.0, (1, 1, 1))]),
                                          g.u, 0.0))
-    bt.save_jpeg(sky(clouds), OUT / "sky.jpg")
+    bt.save_jpeg(sky(clouds), OUT / "textures/sky.jpg")
     grass_tile, sand_tile, gravel_tile = bt.bake(grass), bt.bake(sand), bt.bake(gravel)
-    bt.save_jpeg(ground_map(points, rights, grass_tile, sand_tile, gravel_tile), OUT / "ground.jpg")
+    bt.save_jpeg(ground_map(points, rights, grass_tile, sand_tile, gravel_tile), OUT / "textures/ground.jpg")
 
 
 # ---------------------------------------------------------------------------
@@ -839,7 +839,7 @@ def main() -> None:
             (build_lighthouse, "lighthouse", {"tower": "tower.jpg", "rock": "rock.jpg"}),
             (build_hill, "hill", {"rock": "rock.jpg"})):
         bpy.ops.wm.read_factory_settings(use_empty=True)
-        xexport.export(OUT / f"{name}.x", [builder()], textures)
+        xexport.export(OUT / f"models/{name}.x", [builder()], textures)
 
 
 if __name__ == "__main__":

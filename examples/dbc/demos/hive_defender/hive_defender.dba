@@ -46,17 +46,17 @@ loop
 rem ------------------------------------------------------------------
 build_scene:
    rem The nebula: a large plain behind the playfield
-   load image "nebula.jpg", 1
+   load image "textures/nebula.jpg", 1
    make object plain 1, 460, 350
    texture object 1, 1
    position object 1, 0, 0, 80
    set object 1, 1, 0, 0, 1, 0, 0, 0
    rem The player's ship points up the screen with its top towards us
-   load object "ship.x", 2
+   load object "models/ship.x", 2
    scale object 2, 150, 150, 150
    rotate object 2, -90, 0, 0
    rem The mothership: its ring (limb 3) spins
-   load object "mothership.x", 3
+   load object "models/mothership.x", 3
    scale object 3, 220, 220, 220
    rotate object 3, -65, 0, 0
    hide object 3
@@ -72,11 +72,11 @@ build_scene:
       hide object 50 + b
    next b
    rem Three drone colours, one texture each; the top row is amber
-   load image "drone_amber.jpg", 2
-   load image "drone_violet.jpg", 3
-   load image "drone_green.jpg", 4
+   load image "textures/drone_amber.jpg", 2
+   load image "textures/drone_violet.jpg", 3
+   load image "textures/drone_green.jpg", 4
    for d = 1 to drones
-      load object "drone.x", 10 + d
+      load object "models/drone.x", 10 + d
       scale object 10 + d, 140, 140, 140
       row = (d - 1) / cols
       if row = 0 then texture object 10 + d, 2
@@ -84,7 +84,7 @@ build_scene:
       if row = 3 then texture object 10 + d, 4
    next d
    rem Explosion frames: eight 128 x 128 cells from one strip
-   load bitmap "explosions.png", 1
+   load bitmap "textures/explosions.png", 1
    for f = 0 to 7
       get image 100 + f, f * 128, 0, f * 128 + 128, 128
    next f
@@ -95,11 +95,11 @@ build_scene:
       ghost object on 200 + b
       hide object 200 + b
    next b
-   load sound "laser.wav", 1
-   load sound "boom.wav", 2
-   load sound "swoop.wav", 3
-   load sound "hum.wav", 4
-   load sound "hit.wav", 5
+   load sound "sounds/laser.wav", 1
+   load sound "sounds/boom.wav", 2
+   load sound "sounds/swoop.wav", 3
+   load sound "sounds/hum.wav", 4
+   load sound "sounds/hit.wav", 5
 return
 
 new_wave:

@@ -23,7 +23,7 @@ Requires CMake 3.24+, Ninja and a C++20 compiler (Visual Studio 2022+ on Windows
 
 ```bash
 cmake --preset default
-cmake --build build
+cmake --build --preset default
 ```
 
 ```bash

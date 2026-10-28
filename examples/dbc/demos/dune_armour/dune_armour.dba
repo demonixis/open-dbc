@@ -30,11 +30,11 @@ gosub build_tank
 gosub build_raiders
 gosub build_effects
 
-load sound "rumble.wav", 1
-load sound "cannon.wav", 2
-load sound "blast.wav", 3
-load sound "ping.wav", 4
-load sound "raider_gun.wav", 5
+load sound "sounds/rumble.wav", 1
+load sound "sounds/cannon.wav", 2
+load sound "sounds/blast.wav", 3
+load sound "sounds/ping.wav", 4
+load sound "sounds/raider_gun.wav", 5
 loop sound 1
 
 do
@@ -58,7 +58,7 @@ rem ------------------------------------------------------------------
 rem The desert: a 48 x 48 matrix of dunes, textured from a 2 x 2 atlas
 rem (sand, shadowed sand, rock and a track road)
 build_desert:
-   load image "desert.jpg", 1
+   load image "textures/desert.jpg", 1
    make matrix 1, 2400, 2400, 48, 48
    prepare matrix texture 1, 1, 2, 2
    position matrix 1, -1200, 0, -1200
@@ -83,20 +83,20 @@ return
 
 rem The outpost at the centre: a radar tower, a watchtower and two houses
 build_outpost:
-   load object "radar_tower.x", 30
+   load object "models/radar_tower.x", 30
    position object 30, 30, 0, 20
-   load object "watchtower.x", 31
+   load object "models/watchtower.x", 31
    position object 31, -30, 0, -25
-   load object "house.x", 32
+   load object "models/house.x", 32
    position object 32, -35, 0, 25
-   load object "dome_house.x", 33
+   load object "models/dome_house.x", 33
    position object 33, 35, 0, -28
    for o = 30 to 33 : scale object o, 200, 200, 200 : next o
 return
 
 rem Acacias are camera-facing plains; black around the tree is transparent
 build_acacias:
-   load image "acacia.bmp", 2
+   load image "textures/acacia.bmp", 2
    trees = 60
    dim treex(trees) : dim treez(trees)
    for t = 1 to trees
@@ -110,7 +110,7 @@ build_acacias:
 return
 
 build_tank:
-   load object "hunter.x", 1
+   load object "models/hunter.x", 1
    scale object 1, 200, 200, 200
    tx# = 0 : tz# = -60 : tyaw# = 0 : tspeed# = 0 : turret_yaw# = 0
    health = 100 : score = 0 : cooldown = 0
@@ -122,7 +122,7 @@ build_raiders:
    dim rx#(raiders) : dim rz#(raiders) : dim ryaw#(raiders) : dim rstate(raiders) : dim rtimer(raiders)
    dim rshell(raiders) : dim rsx#(raiders) : dim rsz#(raiders) : dim rsdx#(raiders) : dim rsdz#(raiders)
    for r = 1 to raiders
-      load object "rattler.x", 10 + r
+      load object "models/rattler.x", 10 + r
       scale object 10 + r, 200, 200, 200
       make object sphere 60 + r, 1.5
       color object 60 + r, rgb(255, 220, 120)
@@ -141,7 +141,7 @@ return
 
 rem Shell, muzzle flash and a pool of six explosions (ghosted fire spheres)
 build_effects:
-   load image "fire.jpg", 3
+   load image "textures/fire.jpg", 3
    make object sphere 50, 1.6
    color object 50, rgb(40, 40, 40)
    hide object 50

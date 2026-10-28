@@ -5,6 +5,9 @@ armature, one animation clip per file. Blender is Z-up right-handed and
 DirectX is Y-up left-handed, so every position and matrix is mirrored by
 swapping Y and Z; that reflection also turns Blender's counter-clockwise front
 faces into DirectX's clockwise ones, so the vertex order is kept.
+
+Demo models are written to models/ and their textures to the sibling
+textures/ folder, so TextureFilename names a file in ../textures/.
 """
 
 from pathlib import Path
@@ -76,7 +79,7 @@ def mesh_block(obj, textures: dict) -> str:
                   "16.000000;", "0.200000;0.200000;0.200000;;", "0.000000;0.000000;0.000000;;"]
         texture = textures.get(material.name) if material else None
         if texture:
-            lines += ["TextureFilename {", f"\"{texture}\";", "}"]
+            lines += ["TextureFilename {", f"\"../textures/{texture}\";", "}"]
         lines.append("}")
     lines += ["}", "}"]
     return "\n".join(lines)

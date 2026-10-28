@@ -4,7 +4,7 @@
 
 ```bash
 cmake --preset default
-cmake --build build
+cmake --build --preset default
 ctest --preset default
 ```
 
@@ -12,7 +12,7 @@ The test presets run headless: no window takes focus and audio is silent. A sing
 program can be checked the same way, saving its last frame:
 
 ```bash
-build/tools/studio/opendbc.app/Contents/MacOS/opendbc run program.dba --dialect dbc --headless --max-frames 120 --capture-output frame.bmp
+build/default/tools/studio/opendbc.app/Contents/MacOS/opendbc run program.dba --dialect dbc --headless --max-frames 120 --capture-output frame.bmp
 ```
 
 ASan and UBSan (GCC or Clang):

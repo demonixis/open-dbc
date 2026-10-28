@@ -94,7 +94,7 @@ def build_textures() -> None:
     for builder, name in ((hull_plates, "hull"), (chitin_green, "drone_green"), (chitin_violet, "drone_violet"),
                           (chitin_amber, "drone_amber"), (saucer, "saucer"), (nebula, "nebula"),
                           (fireball, "fireball")):
-        bt.save_jpeg(bt.bake(builder), OUT / f"{name}.jpg")
+        bt.save_jpeg(bt.bake(builder), OUT / f"textures/{name}.jpg")
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +153,7 @@ def build_explosions() -> None:
     reset()
     black_world()
     scene = bpy.context.scene
-    image = bpy.data.images.load(str(OUT / "fireball.jpg"))
+    image = bpy.data.images.load(str(OUT / "textures/fireball.jpg"))
     strip = np.zeros((FRAME_SIZE, FRAME_SIZE * FRAMES, 4), dtype=np.float32)
     for frame in range(FRAMES):
         for obj in list(bpy.data.objects):
@@ -187,19 +187,19 @@ def build_explosions() -> None:
         scene.render.resolution_x = scene.render.resolution_y = FRAME_SIZE
         scene.cycles.samples = 32
         scene.render.image_settings.file_format = "PNG"
-        scene.render.filepath = str(OUT / "_frame.png")
+        scene.render.filepath = str(OUT / "textures/_frame.png")
         bpy.ops.render.render(write_still=True)
         rendered = bpy.data.images.load(scene.render.filepath, check_existing=False)
         pixels = np.empty(FRAME_SIZE * FRAME_SIZE * 4, dtype=np.float32)
         rendered.pixels.foreach_get(pixels)
         strip[:, frame * FRAME_SIZE:(frame + 1) * FRAME_SIZE] = pixels.reshape(FRAME_SIZE, FRAME_SIZE, 4)
         bpy.data.images.remove(rendered)
-    (OUT / "_frame.png").unlink()
+    (OUT / "textures/_frame.png").unlink()
     result = bpy.data.images.new("explosions", strip.shape[1], strip.shape[0])
     result.pixels.foreach_set(np.clip(strip, 0, 1).ravel())
     scene.render.image_settings.color_mode = "RGB"
-    result.save_render(str(OUT / "explosions.png"), scene=scene)
-    print(f"wrote {OUT / 'explosions.png'}")
+    result.save_render(str(OUT / "textures/explosions.png"), scene=scene)
+    print(f"wrote {OUT / 'textures/explosions.png'}")
 
 
 def main() -> None:
@@ -208,7 +208,7 @@ def main() -> None:
                                     (build_drone, "drone", {"chitin": "drone_green.jpg"}),
                                     (build_mothership, "mothership", {"saucer": "saucer.jpg"})):
         bpy.ops.wm.read_factory_settings(use_empty=True)
-        xexport.export(OUT / f"{name}.x", [builder()], textures)
+        xexport.export(OUT / f"models/{name}.x", [builder()], textures)
     build_explosions()
 
 

@@ -293,39 +293,39 @@ function build_collision()
 endfunction
 
 function load_media()
-   load image "lightmap.jpg", 1
-   load image "glow.jpg", 2
-   load image "flash.jpg", 3
-   load image "crate.jpg", 4
-   load image "crate_normal.jpg", 5
-   load image "plasma.jpg", 6
-   load image "field.jpg", 7
-   load image "chrome.jpg", 8
-   load image "medkit.jpg", 9
-   load image "cell.jpg", 10
-   load image "eye.jpg", 11
-   load image "blob.png", 12
+   load image "textures/lightmap.jpg", 1
+   load image "textures/glow.jpg", 2
+   load image "textures/flash.jpg", 3
+   load image "textures/crate.jpg", 4
+   load image "textures/crate_normal.jpg", 5
+   load image "textures/plasma.jpg", 6
+   load image "textures/field.jpg", 7
+   load image "textures/chrome.jpg", 8
+   load image "textures/medkit.jpg", 9
+   load image "textures/cell.jpg", 10
+   load image "textures/eye.jpg", 11
+   load image "textures/blob.png", 12
    rem A plain red image for the damage flash.
    ink rgb(255, 20, 10), 0 : box 0, 0, 16, 16 : get image 20, 0, 0, 16, 16
 
-   load sound "shot.wav", 1
-   load sound "hit.wav", 4
-   load sound "hurt.wav", 6
-   load sound "pickup.wav", 7
-   load sound "valve.wav", 8
-   load sound "clank.wav", 9
-   load sound "reload.wav", 11
-   load sound "empty.wav", 12
-   load sound "alarm.wav", 13
-   load sound "field.wav", 14
-   load sound "win.wav", 15
-   load sound "lose.wav", 16
-   load 3dsound "reactor.wav", 10
-   load 3dsound "zap.wav", 30
-   load 3dsound "boom.wav", 31
-   load 3dsound "ricochet.wav", 32
+   load sound "sounds/shot.wav", 1
+   load sound "sounds/hit.wav", 4
+   load sound "sounds/hurt.wav", 6
+   load sound "sounds/pickup.wav", 7
+   load sound "sounds/valve.wav", 8
+   load sound "sounds/clank.wav", 9
+   load sound "sounds/reload.wav", 11
+   load sound "sounds/empty.wav", 12
+   load sound "sounds/alarm.wav", 13
+   load sound "sounds/field.wav", 14
+   load sound "sounds/win.wav", 15
+   load sound "sounds/lose.wav", 16
+   load 3dsound "sounds/reactor.wav", 10
+   load 3dsound "sounds/zap.wav", 30
+   load 3dsound "sounds/boom.wav", 31
+   load 3dsound "sounds/ricochet.wav", 32
    for i = 1 to dronecount
-      load 3dsound "hum.wav", 20 + i
+      load 3dsound "sounds/hum.wav", 20 + i
    next i
    set sound volume 13, 70
 endfunction
@@ -333,7 +333,7 @@ endfunction
 function build_world()
    rem The level shares one lightmap atlas between its five limbs. Copy the
    rem atlas UVs to stage 1 for the lightmap, then repeat stage 0 for the materials.
-   load object "level.x", OBJ_LEVEL
+   load object "models/level.x", OBJ_LEVEL
    perform checklist for object limbs OBJ_LEVEL
    for limb = 0 to checklist quantity() - 1
       lock vertexdata for limb OBJ_LEVEL, limb, 0
@@ -353,7 +353,7 @@ function build_world()
    set directional light 0, 0.3, -1, 0.4
    color light 0, rgb(60, 62, 70)
 
-   load object "lamps.x", OBJ_LAMPS
+   load object "models/lamps.x", OBJ_LAMPS
    set object light OBJ_LAMPS, 0
 
    rem The reactor: a glass column reflecting the room, a swirling energy core.
@@ -404,7 +404,7 @@ function build_world()
       set object specular power OBJ_CRATE + i, 24
    next i
 
-   load object "valve.x", OBJ_VALVE
+   load object "models/valve.x", OBJ_VALVE
    for i = 1 to valvecount
       if i > 1 then clone object OBJ_VALVE + i - 1, OBJ_VALVE
       position object OBJ_VALVE + i - 1, valves(i).x, 0, valves(i).z
@@ -418,7 +418,7 @@ function build_world()
    rem carries a glowing halo glued to its eye limb and a soft blob shadow.
    for i = 1 to dronecount
       d = OBJ_DRONE + i
-      load object "drone.x", d
+      load object "models/drone.x", d
       set object ambience d, rgb(90, 92, 105)
       set object specular d, rgb(255, 240, 220)
       set object specular power d, 30
@@ -463,7 +463,7 @@ function build_world()
    next i
 
    rem The pulse rifle lives in camera space; the flash sits on its muzzle.
-   load object "rifle.x", OBJ_GUN
+   load object "models/rifle.x", OBJ_GUN
    scale object OBJ_GUN, 70, 70, 70
    lock object on OBJ_GUN
    set object ambience OBJ_GUN, rgb(70, 72, 80)

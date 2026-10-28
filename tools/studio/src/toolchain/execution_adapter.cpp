@@ -290,6 +290,9 @@ namespace dbc::studio
             switch (Tick.Suspension.Reason)
             {
                 case SuspensionReason::Deadline:
+                    if (Kernel_->Core().RefreshesWhileWaiting())
+                        Kernel_->Renderer().RenderScene(true);
+                    break;
                 case SuspensionReason::Key:
                 case SuspensionReason::Mouse:
                 case SuspensionReason::TextInput:

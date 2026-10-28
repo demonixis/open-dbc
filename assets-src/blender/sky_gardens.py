@@ -254,15 +254,15 @@ def seed_icon(size=64) -> np.ndarray:
 
 def build_textures() -> None:
     bt.setup_bake_scene()
-    save_exact(srgb(sky_gradient()), OUT / "sky.jpg")
+    save_exact(srgb(sky_gradient()), OUT / "textures/sky.jpg")
     for builder, name in ((cloud_sea, "clouds"), (cloud_wisps, "wisps"), (grass, "grass"),
                           (island_rock, "rock"), (ruin, "ruin"), (bark, "bark"), (leaves, "leaves"),
                           (mushroom, "mushroom"), (cloth, "cloth"), (glow, "glow"), (wood, "wood")):
-        save_exact(srgb(bt.bake(builder)), OUT / f"{name}.jpg")
-    save_exact(normal_map(bake_height(ruin), 9.0), OUT / "ruin_normal.jpg")
-    save_exact(normal_map(bake_height(island_rock), 5.0), OUT / "rock_normal.jpg")
-    save_exact(fern_card(), OUT / "fern.png")
-    save_exact(seed_icon(), OUT / "seed_icon.png")
+        save_exact(srgb(bt.bake(builder)), OUT / f"textures/{name}.jpg")
+    save_exact(normal_map(bake_height(ruin), 9.0), OUT / "textures/ruin_normal.jpg")
+    save_exact(normal_map(bake_height(island_rock), 5.0), OUT / "textures/rock_normal.jpg")
+    save_exact(fern_card(), OUT / "textures/fern.png")
+    save_exact(seed_icon(), OUT / "textures/seed_icon.png")
 
 
 # ---------------------------------------------------------------------------
@@ -622,7 +622,7 @@ def main() -> None:
     lighten({"head": 0.5, "torso": 0.45})
     animate(parts)
     last = max(start + length for start, length in CLIPS.values())
-    xexport.export(OUT / "explorer.x", [pelvis], {}, (0, last))
+    xexport.export(OUT / "models/explorer.x", [pelvis], {}, (0, last))
 
     pieces = (("island", build_island, {"grass": "grass.jpg", "rock": "rock.jpg"}),
               ("arch", build_arch, {"ruin": "ruin.jpg"}),
@@ -636,7 +636,7 @@ def main() -> None:
         reset()
         root = builder()
         lighten({"cap": 0.4, "canopy": 0.6, "ring": 0.5})
-        xexport.export(OUT / f"{name}.x", [root], textures)
+        xexport.export(OUT / f"models/{name}.x", [root], textures)
 
 
 if __name__ == "__main__":

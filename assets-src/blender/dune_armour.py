@@ -123,10 +123,10 @@ def build_textures() -> None:
     # PREPARE MATRIX TEXTURE numbers tiles from the top left, row by row.
     atlas[size:, :size], atlas[size:, size:] = tiles[0], tiles[1]
     atlas[:size, :size], atlas[:size, size:] = tiles[2], tiles[3]
-    bt.save_jpeg(atlas, OUT / "desert.jpg")
+    bt.save_jpeg(atlas, OUT / "textures/desert.jpg")
     for builder, name in ((camo, "camo"), (treads, "treads"), (tyre, "tyre"), (adobe, "adobe"),
                           (steel_plates, "steel"), (pistol_metal, "gunmetal"), (fire, "fire")):
-        bt.save_jpeg(bt.bake(builder), OUT / f"{name}.jpg")
+        bt.save_jpeg(bt.bake(builder), OUT / f"textures/{name}.jpg")
 
 
 # ---------------------------------------------------------------------------
@@ -238,9 +238,9 @@ def main() -> None:
             (lambda: build_house(False), "house", {"adobe": "adobe.jpg", "steel": "steel.jpg"}),
             (lambda: build_house(True), "dome_house", {"adobe": "adobe.jpg", "steel": "steel.jpg"})):
         bpy.ops.wm.read_factory_settings(use_empty=True)
-        xexport.export(OUT / f"{name}.x", [builder()], textures)
+        xexport.export(OUT / f"models/{name}.x", [builder()], textures)
     # Seen from the side, lit from the camera's side and a little above.
-    sprite((acacia,), {}, OUT / "acacia.bmp", 128, 9.0, math.radians(88.0),
+    sprite((acacia,), {}, OUT / "textures/acacia.bmp", 128, 9.0, math.radians(88.0),
            (math.radians(65.0), 0.0, math.radians(-25.0)))
 
 

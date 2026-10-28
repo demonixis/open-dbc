@@ -5933,6 +5933,28 @@ TEST_CASE("Classic screen text expires per frame while bitmap and Professional t
     SDL_DestroySurface(ProfessionalLong);
 }
 
+TEST_CASE("SYNC RATE paces whole frames and a SYNC ON wait redraws nothing")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    CHECK(Kernel.Core().RefreshesWhileWaiting());
+    Kernel.Core().DoSyncOn();
+    CHECK_FALSE(Kernel.Core().RefreshesWhileWaiting());
+
+    // A dense sphere makes the render take long enough to tell where the period starts.
+    Kernel.Objects().MakeObjectSphere(1, 10.0f, 200, 200);
+    REQUIRE(Kernel.Camera().PositionCamera(0.0f, 0.0f, -30.0f));
+    Kernel.Core().DoSyncRate(1);
+    Kernel.Core().Sync();
+    const auto Before = std::chrono::steady_clock::now();
+    Kernel.Core().Sync();
+    const auto Rendered = std::chrono::steady_clock::now() - Before;
+    const auto Deadline = Kernel.Core().NextSyncDeadline();
+    REQUIRE(Deadline);
+    // The one-second period starts when SYNC begins, so the render time is part of it.
+    CHECK(*Deadline - (Before + std::chrono::seconds(1)) < Rendered / 2);
+}
+
 TEST_CASE("Text compatibility commands and functions expose observable state in both profiles")
 {
     dbc::EngineKernel Kernel;

@@ -22,12 +22,12 @@ if fog available() = 1
 endif
 
 rem --- The cistern: one object whose limbs carry their own textures
-load object "room.x", 1
+load object "models/room.x", 1
 perform checklist for object limbs 1
 limbs = checklist quantity()
 
 rem --- Water: an alpha-blended plain whose texture slowly drifts
-load image "water.jpg", 1
+load image "textures/water.jpg", 1
 make object plain 2, 62, 62
 texture object 2, 1
 scale object texture 2, 3, 3
@@ -37,14 +37,14 @@ ghost object on 2, 1
 fade object 2, 60
 
 rem --- The crab: idle frames 0 to 20, walk cycle appended at frame 100
-load object "crab_idle.x", 3
-append object "crab_walk.x", 3, 100
+load object "models/crab_idle.x", 3
+append object "models/crab_walk.x", 3, 100
 scale object 3, 180, 180, 180
 loop object 3, 0, 20
 walking = 0
 
 rem --- Ripples: a pool of ghosted rings reused as drops land
-load image "ripple.jpg", 2
+load image "textures/ripple.jpg", 2
 rings = 8
 dim ring_life#(rings)
 for r = 1 to rings
@@ -66,9 +66,9 @@ set point light 1, 0, 26, 0
 color light 1, rgb(110, 190, 255)
 set light range 1, 120
 
-load sound "drip.wav", 1
-load sound "chime.wav", 2
-load sound "cistern.wav", 3
+load sound "sounds/drip.wav", 1
+load sound "sounds/chime.wav", 2
+load sound "sounds/cistern.wav", 3
 loop sound 3
 
 x# = 0.0 : z# = -10.0 : angle# = 0.0

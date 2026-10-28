@@ -5,7 +5,7 @@
       "name": "default",
       "displayName": "Desktop Debug",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "binaryDir": "${sourceDir}/build/default",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "BUILD_TESTS": "ON"
@@ -15,7 +15,7 @@
       "name": "sanitize",
       "displayName": "Desktop ASan and UBSan",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-sanitize",
+      "binaryDir": "${sourceDir}/build/sanitize",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "BUILD_TESTS": "ON",
@@ -26,7 +26,7 @@
       "name": "shader-verify",
       "displayName": "Canonical shader verification",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-shader-verify",
+      "binaryDir": "${sourceDir}/build/shader-verify",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "BUILD_TESTS": "OFF",
@@ -38,7 +38,7 @@
       "name": "macos-xcode",
       "displayName": "macOS full app, Xcode project",
       "generator": "Xcode",
-      "binaryDir": "${sourceDir}/build-macos",
+      "binaryDir": "${sourceDir}/build/macos-xcode",
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "arm64"
       }
@@ -47,7 +47,7 @@
       "name": "ios",
       "displayName": "iOS device app",
       "generator": "Xcode",
-      "binaryDir": "${sourceDir}/build-ios",
+      "binaryDir": "${sourceDir}/build/ios",
       "cacheVariables": {
         "CMAKE_SYSTEM_NAME": "iOS",
         "CMAKE_OSX_DEPLOYMENT_TARGET": "16.0",
@@ -59,7 +59,7 @@
       "name": "ios-simulator",
       "displayName": "iOS simulator app",
       "generator": "Xcode",
-      "binaryDir": "${sourceDir}/build-ios-simulator",
+      "binaryDir": "${sourceDir}/build/ios-simulator",
       "cacheVariables": {
         "CMAKE_SYSTEM_NAME": "iOS",
         "CMAKE_OSX_SYSROOT": "iphonesimulator",
@@ -72,7 +72,7 @@
       "name": "android-host",
       "displayName": "Android arm64 export host",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-android-host",
+      "binaryDir": "${sourceDir}/build/android-host",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",

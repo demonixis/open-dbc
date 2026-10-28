@@ -480,21 +480,21 @@ def lament(rate: int = 22050):
 
 def media() -> dict[str, bytes]:
     files = {}
-    cavern = "examples/dbc/demos/cavern_dash/"
+    cavern = "examples/dbc/demos/cavern_dash/sounds/"
     files[cavern + "engine.wav"] = wav(engine_hum(), 8, 11025)
     files[cavern + "crash.wav"] = wav(crash(), 16)
-    vault = "examples/dbc/demos/flooded_vault/"
+    vault = "examples/dbc/demos/flooded_vault/sounds/"
     files[vault + "drip.wav"] = wav(drip(), 16)
     files[vault + "chime.wav"] = wav(chime(), 16)
     files[vault + "cistern.wav"] = wav(cistern(), 8, 11025)
-    frost = "examples/dbc/demos/frost_outpost/"
+    frost = "examples/dbc/demos/frost_outpost/sounds/"
     files[frost + "pulse.wav"] = wav(sweep(1800.0, 300.0, 0.35, 6.0), 16)
     files[frost + "howl.wav"] = wav(howl(), 16)
     files[frost + "impact.wav"] = wav(noise_burst(0.4, 8.0, 5, 90.0), 16)
     files[frost + "shatter.wav"] = wav(noise_burst(1.2, 4.0, 9, 1400.0), 16)
     files[frost + "punch.wav"] = wav(noise_burst(0.25, 10.0, 11, 60.0), 16)
     files[frost + "wind.wav"] = wav(wind(), 8, 11025)
-    racer = "examples/dbc/demos/wave_racer/"
+    racer = "examples/dbc/demos/wave_racer/sounds/"
     files[racer + "jet.wav"] = wav(jet(), 8, 11025)
     files[racer + "splash.wav"] = wav(noise_burst(0.9, 5.0, 17, 70.0), 16)
     files[racer + "gate.wav"] = wav(chime(), 16)
@@ -506,19 +506,19 @@ def media() -> dict[str, bytes]:
     files[sound + "pluck.wav"] = wav(tone(330.0, 0.8, 6.0, harmonics=(1.0, 0.6, 0.3)), 16)
     files[sound + "synth_loop.wav"] = wav(synth_loop(), 16)
     files[sound + "buzz.wav"] = wav(buzz(), 8, 11025)
-    armour = "examples/dbc/demos/dune_armour/"
+    armour = "examples/dbc/demos/dune_armour/sounds/"
     files[armour + "rumble.wav"] = wav(rumble(), 8, 11025)
     files[armour + "cannon.wav"] = wav(noise_burst(0.7, 6.0, 31, 55.0), 16)
     files[armour + "blast.wav"] = wav(noise_burst(1.4, 3.5, 37, 40.0), 16)
     files[armour + "ping.wav"] = wav(ping(), 16)
     files[armour + "raider_gun.wav"] = wav(noise_burst(0.2, 14.0, 41, 300.0), 16)
-    hive = "examples/dbc/demos/hive_defender/"
+    hive = "examples/dbc/demos/hive_defender/sounds/"
     files[hive + "laser.wav"] = wav(sweep(2400.0, 900.0, 0.25, 8.0), 16)
     files[hive + "boom.wav"] = wav(noise_burst(0.9, 5.0, 43, 70.0), 16)
     files[hive + "swoop.wav"] = wav(sweep(500.0, 1500.0, 0.6, 2.0), 16)
     files[hive + "hum.wav"] = wav(hum(), 8, 11025)
     files[hive + "hit.wav"] = wav(noise_burst(1.2, 3.0, 47, 50.0), 16)
-    rally = "examples/dbpro/demos/dusk_rally/"
+    rally = "examples/dbpro/demos/dusk_rally/sounds/"
     files[rally + "motor.wav"] = wav(motor(), 8, 11025)
     files[rally + "screech.wav"] = wav(screech(), 16)
     files[rally + "surf.wav"] = wav(surf(), 8, 11025)
@@ -527,7 +527,7 @@ def media() -> dict[str, bytes]:
     files[rally + "lap.wav"] = wav(chime(), 16)
     files[rally + "finish.wav"] = wav(fanfare(), 16)
     files[rally + "bump.wav"] = wav(noise_burst(0.5, 7.0, 73, 60.0), 16)
-    gardens = "examples/dbpro/demos/sky_gardens/"
+    gardens = "examples/dbpro/demos/sky_gardens/sounds/"
     files[gardens + "jump.wav"] = wav(hop(), 16)
     files[gardens + "land.wav"] = wav(thud(), 16)
     files[gardens + "seed.wav"] = wav(sparkle(), 16)
@@ -536,7 +536,7 @@ def media() -> dict[str, bytes]:
     files[gardens + "fall.wav"] = wav(whoosh(), 16)
     files[gardens + "bloom.wav"] = wav(bloom(), 16)
     files[gardens + "wind.wav"] = wav(wind(), 8, 11025)
-    reactor = "examples/dbpro/demos/reactor_breach/"
+    reactor = "examples/dbpro/demos/reactor_breach/sounds/"
     files[reactor + "shot.wav"] = wav(pulse_shot(), 16)
     files[reactor + "zap.wav"] = wav(plasma_zap(), 16)
     files[reactor + "boom.wav"] = wav(noise_burst(1.3, 4.0, 53, 45.0), 16)

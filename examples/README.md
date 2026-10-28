@@ -11,6 +11,10 @@ Three source families, split by language profile and provenance. Every media fil
 `android/` contains the Gradle wrapper and the Android export template used by
 the static BASIC artifact exporter. It is not a public source kit.
 
+Each demo under `dbc/demos/` and `dbpro/demos/` keeps its source at the top of its
+folder and its media in `textures/`, `models/` and `sounds/`; models name their
+textures as `../textures/<file>`.
+
 The runtime resolves relative media against the script's own directory, so run the
 examples from wherever you like — `--asset-root` only matters when a script and
 its media have been separated.

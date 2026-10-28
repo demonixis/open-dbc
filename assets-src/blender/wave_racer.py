@@ -75,7 +75,7 @@ def build_textures() -> None:
     for builder, name in ((sea, "sea"), (sky, "sky"), (livery, "livery"), (suit, "suit"), (bands, "bands"),
                           (spray, "spray"), (pistol_metal, "ramp"),
                           (bt.dark_rock, "rock")):
-        bt.save_jpeg(bt.bake(builder), OUT / f"{name}.jpg")
+        bt.save_jpeg(bt.bake(builder), OUT / f"textures/{name}.jpg")
 
 
 # ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ def main() -> None:
             (build_ramp, "ramp", {"ramp": "ramp.jpg"}),
             (build_lighthouse, "lighthouse", {"rock": "rock.jpg", "bands": "bands.jpg"})):
         bpy.ops.wm.read_factory_settings(use_empty=True)
-        xexport.export(OUT / f"{name}.x", [builder()], textures)
+        xexport.export(OUT / f"models/{name}.x", [builder()], textures)
 
 
 if __name__ == "__main__":

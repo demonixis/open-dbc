@@ -22,21 +22,21 @@ endif
 
 rem --- Sea: a matrix whose heights are recomputed every frame
 segments = 30 : sea_size# = 2400.0 : half# = sea_size# / 2
-load image "sea.jpg", 1
+load image "textures/sea.jpg", 1
 make matrix 1, sea_size#, sea_size#, segments, segments
 prepare matrix texture 1, 1, 1, 1
 position matrix 1, 0 - half#, 0, 0 - half#
 
 rem --- Sky dome that follows the camera; it is seen from inside
-load image "sky.jpg", 2
+load image "textures/sky.jpg", 2
 make object sphere 3, 3000
 texture object 3, 2
 set object 3, 1, 1, 0, 1, 0, 0, 1
 
 rem --- Scooter and rider (limb 1 of the scooter is the hull, limb 5 the flag);
 rem the glued rider inherits the scooter scale
-load object "scooter.x", 10
-load object "rider.x", 11
+load object "models/scooter.x", 10
+load object "models/rider.x", 11
 scale object 10, 300, 300, 300
 glue object to limb 11, 10, 1
 hide limb 10, 5
@@ -49,7 +49,7 @@ for g = 1 to gates
    gatex#(g) = sin(a#) * ring# : gatez#(g) = cos(a#) * ring#
    for side = 0 to 1
       b = 100 + (g - 1) * 2 + side
-      load object "buoy.x", b
+      load object "models/buoy.x", b
       scale object b, 250, 250, 250
       offset# = (side * 2 - 1) * 22.0
       position object b, gatex#(g) + cos(a#) * offset#, 0, gatez#(g) - sin(a#) * offset#
@@ -57,7 +57,7 @@ for g = 1 to gates
 next g
 
 rem --- A jump ramp halfway between gates 2 and 3, facing along the course
-load object "ramp.x", 20
+load object "models/ramp.x", 20
 scale object 20, 200, 200, 200
 rampangle# = 360.0 / gates * 1.5
 rampx# = sin(rampangle#) * ring# : rampz# = cos(rampangle#) * ring#
@@ -65,11 +65,11 @@ rampyaw# = wrapvalue(rampangle# + 90)
 position object 20, rampx#, 0, rampz#
 yrotate object 20, rampyaw#
 
-load object "lighthouse.x", 21
+load object "models/lighthouse.x", 21
 position object 21, 900, 0, -700
 
 rem --- Spray: ghosted puffs recycled behind the jet nozzle
-load image "spray.jpg", 3
+load image "textures/spray.jpg", 3
 puffs = 8
 dim puffage(puffs)
 for p = 1 to puffs
@@ -80,10 +80,10 @@ for p = 1 to puffs
    hide object 40 + p
 next p
 
-load sound "jet.wav", 1
-load sound "splash.wav", 2
-load sound "gate.wav", 3
-load sound "fanfare.wav", 4
+load sound "sounds/jet.wav", 1
+load sound "sounds/splash.wav", 2
+load sound "sounds/gate.wav", 3
+load sound "sounds/fanfare.wav", 4
 loop sound 1
 
 gosub new_race

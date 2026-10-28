@@ -41,10 +41,10 @@ while (($#)); do
 done
 
 if [[ -z "$binary" ]]; then
-    if [[ -x build/tools/studio/opendbc.app/Contents/MacOS/opendbc ]]; then
-        binary=build/tools/studio/opendbc.app/Contents/MacOS/opendbc
-    elif [[ -x build/tools/studio/opendbc ]]; then
-        binary=build/tools/studio/opendbc
+    if [[ -x build/default/tools/studio/opendbc.app/Contents/MacOS/opendbc ]]; then
+        binary=build/default/tools/studio/opendbc.app/Contents/MacOS/opendbc
+    elif [[ -x build/default/tools/studio/opendbc ]]; then
+        binary=build/default/tools/studio/opendbc
     else
         echo "OpenDBC executable not found; pass --binary <path>" >&2
         exit 2

@@ -19,7 +19,7 @@ width# = tiles * tile# : depth# = rows * tile#
 ceiling# = 150.0
 
 rem --- Texture atlas: four 1024 pixel tiles in one 2048 x 2048 image
-load bitmap "tiles.jpg", 1
+load bitmap "textures/tiles.jpg", 1
 get image 1, 0, 0, 2048, 2048
 delete bitmap 1
 
@@ -38,8 +38,8 @@ if fog available() = 1
    fog distance 700
 endif
 
-load sound "engine.wav", 1
-load sound "crash.wav", 2
+load sound "sounds/engine.wav", 1
+load sound "sounds/crash.wav", 2
 loop sound 1
 
 ink rgb(255, 220, 160), 0

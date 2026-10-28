@@ -592,8 +592,11 @@ namespace dbc::interpreter
             {
                 case SuspensionReason::Deadline:
                 {
-                    Kernel.Renderer().RenderScene(true);
-                    Service.NotifyPresentedFrame();
+                    if (Kernel.Core().RefreshesWhileWaiting())
+                    {
+                        Kernel.Renderer().RenderScene(true);
+                        Service.NotifyPresentedFrame();
+                    }
                     if (!Tick.Suspension.ResumeAt)
                         break;
                     const auto Now = std::chrono::steady_clock::now();

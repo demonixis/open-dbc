@@ -22,7 +22,7 @@
 - Keep engine HLSL shaders, CPU layouts, bindings and CMake contracts consistent. Preserve include/export path confinement and secret handling.
 
 ## Build and validation
-- Use `cmake --preset default`, `cmake --build build`, then `ctest --preset default`. The local Classic qualification (`scripts/qualify_dbc_examples.py --corpus-root`, corpus not redistributed) remains macOS Debug only; no clean-first, Release, sanitizers or packaging/mobile builds for that gate.
+- Use `cmake --preset default`, `cmake --build --preset default`, then `ctest --preset default`. The local Classic qualification (`scripts/qualify_dbc_examples.py --corpus-root`, corpus not redistributed) remains macOS Debug only; no clean-first, Release, sanitizers or packaging/mobile builds for that gate.
 - Add regression tests for changed behavior. Catalogue edits require audits and regenerated references; implemented overloads need witnesses in `tests/unit/builtin_behavior_manifest.tsv`.
 - Edit sources and regenerate derived files with existing tools. Never bypass validators to make a build pass.
 - Consult `README.md` and relevant `docs/` pages as needed, not wholesale. Update affected documentation only; keep feature details and migration history out of `AGENTS.md`.
