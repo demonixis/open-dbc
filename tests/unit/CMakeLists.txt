@@ -237,6 +237,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     add_executable(test_artifact_export
         test_artifact_export.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/artifact_export_service.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/paths.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/project_settings.cpp
     )
     target_include_directories(test_artifact_export PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)

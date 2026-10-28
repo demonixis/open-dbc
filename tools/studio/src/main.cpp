@@ -10,7 +10,6 @@
 #include <SDL3/SDL_main.h>
 
 #include "app.hpp"
-#include "core/paths.hpp"
 #include "interpreter/command_line.hpp"
 #include "toolchain/artifact_export_service.hpp"
 
@@ -43,37 +42,20 @@ namespace dbc::studio
         int ExportArtifact(const dbc::interpreter::CommandLine& Command,
                            const dbc::interpreter::ResolvedProject& Project)
         {
-            toolchain::ArtifactExportRequest Request;
-            Request.ProjectRoot = Project.ProjectRoot;
-            Request.EntrySource = Project.EntrySource;
-            Request.Profile = Project.Profile;
-            Request.OrderedSources = Project.OrderedSources;
-            Request.Startup = Project.Startup;
-            Request.ProjectFile = Project.DescriptorPath;
-            Request.AssetRoot = Project.AssetRoot;
-            Request.OutputDirectory = std::filesystem::absolute(Command.ExportOutput).lexically_normal();
-            Request.HostProduct = core::paths::RunnerProduct();
-            Request.HostResources = core::paths::ResourceDir();
-            Request.Settings = core::ProjectSettings::Load(Request.ProjectRoot);
-            if (!Request.Settings.LoadError.empty())
+            core::ProjectSettings Settings = core::ProjectSettings::Load(Project.ProjectRoot);
+            if (!Settings.LoadError.empty())
                 return 1;
-            if (Request.Settings.AppName.empty())
-                Request.Settings.AppName = Project.Metadata.Name;
-            if (Request.Settings.VersionName == "1.0.0" && !Project.Metadata.VersionName.empty())
-                Request.Settings.VersionName = Project.Metadata.VersionName;
-            if (Request.Settings.IconSource.empty())
-                Request.Settings.IconSource = Project.Metadata.Icon;
-            Request.Sign = Command.ExportSign;
+            toolchain::ArtifactTarget Target = toolchain::ArtifactTarget::AndroidBundle;
             if (Command.ExportTarget == "desktop")
-                Request.Target = toolchain::ArtifactTarget::Desktop;
+                Target = toolchain::ArtifactTarget::Desktop;
             else if (Command.ExportTarget == "ios")
-                Request.Target = toolchain::ArtifactTarget::Ios;
+                Target = toolchain::ArtifactTarget::Ios;
             else if (Command.ExportTarget == "ios-simulator")
-                Request.Target = toolchain::ArtifactTarget::IosSimulator;
+                Target = toolchain::ArtifactTarget::IosSimulator;
             else if (Command.ExportTarget == "android-apk")
-                Request.Target = toolchain::ArtifactTarget::AndroidApk;
-            else
-                Request.Target = toolchain::ArtifactTarget::AndroidBundle;
+                Target = toolchain::ArtifactTarget::AndroidApk;
+            const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
+                Project, std::move(Settings), Target, Command.ExportOutput, Command.ExportSign);
 
             const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request);
             for (const std::string& Message : Result.Messages)

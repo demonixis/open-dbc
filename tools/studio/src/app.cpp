@@ -1804,19 +1804,8 @@ namespace dbc::studio
             {
                 if (Destination.empty())
                     return;
-                toolchain::ArtifactExportRequest Request;
-                Request.Target = Target;
-                Request.ProjectRoot = Project_.Root();
-                Request.EntrySource = Entry;
-                Request.Profile = ResolvedProject_->Profile;
-                Request.OrderedSources = ResolvedProject_->DescriptorPath ? ResolvedProject_->OrderedSources
-                                                                          : std::vector<std::filesystem::path>{Entry};
-                Request.ProjectFile = ResolvedProject_->DescriptorPath;
-                Request.AssetRoot = ResolvedProject_->AssetRoot;
-                Request.OutputDirectory = Destination;
-                Request.HostProduct = core::paths::ProductPath();
-                Request.HostResources = core::paths::ResourceDir();
-                Request.Settings = ProjectSettings_;
+                const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
+                    *ResolvedProject_, ProjectSettings_, Target, Destination, true);
 
                 Output_.Append("Exporting " + Entry.filename().string() + "...", panels::OutputPanel::Severity::Notice);
                 const toolchain::ArtifactExportResult Result = ArtifactExporter_.Export(Request);

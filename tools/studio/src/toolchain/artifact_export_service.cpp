@@ -1,4 +1,5 @@
 #include "artifact_export_service.hpp"
+#include "core/paths.hpp"
 #include "interpreter/basic_path.hpp"
 
 #include "interpreter/embedded_artifact.hpp"
@@ -2040,6 +2041,33 @@ namespace dbc::studio
                     return ExportAndroid(Request, Image, true);
             }
             return {{}, {}, "Unknown artifact target"};
+        }
+
+        ArtifactExportRequest MakeArtifactExportRequest(const dbc::interpreter::ResolvedProject& Project,
+                                                        core::ProjectSettings Settings, ArtifactTarget Target,
+                                                        const fs::path& OutputDirectory, bool Sign)
+        {
+            ArtifactExportRequest Request;
+            Request.Target = Target;
+            Request.ProjectRoot = Project.ProjectRoot;
+            Request.EntrySource = Project.EntrySource;
+            Request.Profile = Project.Profile;
+            Request.OrderedSources = Project.OrderedSources;
+            Request.Startup = Project.Startup;
+            Request.ProjectFile = Project.DescriptorPath;
+            Request.AssetRoot = Project.AssetRoot;
+            Request.OutputDirectory = fs::absolute(OutputDirectory).lexically_normal();
+            Request.HostProduct = core::paths::RunnerProduct();
+            Request.HostResources = core::paths::ResourceDir();
+            if (Settings.AppName.empty())
+                Settings.AppName = Project.Metadata.Name;
+            if (Settings.VersionName == "1.0.0" && !Project.Metadata.VersionName.empty())
+                Settings.VersionName = Project.Metadata.VersionName;
+            if (Settings.IconSource.empty())
+                Settings.IconSource = Project.Metadata.Icon;
+            Request.Settings = std::move(Settings);
+            Request.Sign = Sign;
+            return Request;
         }
     } // namespace toolchain
 

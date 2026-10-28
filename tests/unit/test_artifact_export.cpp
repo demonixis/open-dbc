@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include "core/paths.hpp"
 #include "interpreter/atomic_file.hpp"
 #include "interpreter/command_line.hpp"
 #include "interpreter/embedded_artifact.hpp"
@@ -327,6 +328,49 @@ TEST_CASE("DBPro artifact images carry the project startup instead of its descri
     CHECK(Image.Image->Startup.Title == "Professional Title");
     CHECK(Image.Image->Startup.Width == 1024);
     CHECK(Image.Image->Startup.Height == 768);
+}
+
+TEST_CASE("Studio and CLI export requests start from opendbc-runner with the project startup")
+{
+    dbc::interpreter::ResolvedProject Project;
+    Project.Profile = dbc::language::LanguageProfile::DbPro;
+    Project.ProjectRoot = "/projects/game";
+    Project.EntrySource = "/projects/game/main.dba";
+    Project.OrderedSources = {Project.EntrySource, "/projects/game/extra.dba"};
+    Project.DescriptorPath = fs::path("/projects/game/game.dbpro");
+    Project.AssetRoot = "/projects/game/media";
+    Project.Startup.Title = "Professional Title";
+    Project.Startup.Width = 1024;
+    Project.Metadata.Name = "Descriptor Name";
+    Project.Metadata.VersionName = "2.1.0";
+    Project.Metadata.Icon = "icon.png";
+
+    const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
+        Project, core::ProjectSettings{}, toolchain::ArtifactTarget::Desktop, "/exports", true);
+
+    // The Studio product itself is not an export host: its binary is not the one the host manifest binds.
+    CHECK(Request.HostProduct == core::paths::RunnerProduct());
+    CHECK(Request.HostProduct != core::paths::ProductPath());
+    CHECK(Request.HostResources == core::paths::ResourceDir());
+    CHECK(Request.Target == toolchain::ArtifactTarget::Desktop);
+    CHECK(Request.OrderedSources == Project.OrderedSources);
+    CHECK(Request.ProjectFile == Project.DescriptorPath);
+    CHECK(Request.AssetRoot == Project.AssetRoot);
+    CHECK(Request.Startup.Title == "Professional Title");
+    CHECK(Request.Startup.Width == 1024);
+    CHECK(Request.Settings.AppName == "Descriptor Name");
+    CHECK(Request.Settings.VersionName == "2.1.0");
+    CHECK(Request.Settings.IconSource == "icon.png");
+    CHECK(Request.Sign);
+
+    core::ProjectSettings Explicit;
+    Explicit.AppName = "Settings Name";
+    Explicit.VersionName = "3.0.0";
+    const toolchain::ArtifactExportRequest Configured = toolchain::MakeArtifactExportRequest(
+        Project, Explicit, toolchain::ArtifactTarget::AndroidApk, "/exports", false);
+    CHECK(Configured.Settings.AppName == "Settings Name");
+    CHECK(Configured.Settings.VersionName == "3.0.0");
+    CHECK_FALSE(Configured.Sign);
 }
 
 TEST_CASE("artifact export rejects files that may contain secrets")

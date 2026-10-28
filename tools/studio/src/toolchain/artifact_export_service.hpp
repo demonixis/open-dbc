@@ -57,6 +57,12 @@ namespace dbc::studio
             ArtifactExportResult Export(const ArtifactExportRequest& Request) const;
         };
 
+        // The CLI and the Studio menu both build their request here, so every export starts from the
+        // installed opendbc-runner with the project's startup and the same metadata fallbacks.
+        ArtifactExportRequest MakeArtifactExportRequest(const dbc::interpreter::ResolvedProject& Project,
+                                                        core::ProjectSettings Settings, ArtifactTarget Target,
+                                                        const std::filesystem::path& OutputDirectory, bool Sign);
+
         namespace detail
         {
             bool ClaimArtifactStageDirectory(const std::filesystem::path& Path, std::string& Error);
