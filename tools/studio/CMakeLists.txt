@@ -202,6 +202,8 @@ set(STUDIO_SOURCES
     src/panels/snippet_window.cpp
     src/panels/snippet_window.hpp
 
+    src/scene/heightmap.cpp
+    src/scene/heightmap.hpp
     src/scene/scene_codegen.cpp
     src/scene/scene_codegen.hpp
     src/scene/scene_document.cpp

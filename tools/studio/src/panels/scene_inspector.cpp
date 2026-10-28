@@ -7,6 +7,8 @@
 #include <cstring>
 
 #include "core/media_catalogue.hpp"
+#include "scene/heightmap.hpp"
+#include "scene/scene_geometry.hpp"
 #include "theme.hpp"
 
 namespace dbc::studio
@@ -212,6 +214,7 @@ namespace dbc::studio
                     AssetField("Heightmap", Node->Asset, core::MediaKind::Image);
                     if (Node->Asset.empty())
                         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "A terrain needs a square heightmap image.");
+                    DrawTerrainHeightmap(*Node);
                     break;
                 case scene::NodeKind::Matrix:
                     ImGui::DragFloat("Width", &Node->Width, 1.0f, 0.01f, 100000.0f);
@@ -282,6 +285,46 @@ namespace dbc::studio
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("RANDOMIZE MATRIX: random whole heights below the range");
             ImGui::TextDisabled("The heights are saved in the level, so every run shows this matrix.");
+        }
+
+        void SceneEditor::DrawTerrainHeightmap(scene::SceneNode& Node)
+        {
+            Heading("Generate heightmap");
+            static constexpr int KSizes[] = {64, 128, 256, 512};
+            const std::string Current = std::to_string(HeightmapSize_) + " x " + std::to_string(HeightmapSize_);
+            if (ImGui::BeginCombo("Size", Current.c_str()))
+            {
+                for (const int Size : KSizes)
+                    if (ImGui::Selectable((std::to_string(Size) + " x " + std::to_string(Size)).c_str(),
+                                          Size == HeightmapSize_))
+                        HeightmapSize_ = Size;
+                ImGui::EndCombo();
+            }
+
+            // Terrain heights are an image's grey levels, 0 to KTerrainHeightScale.
+            std::optional<scene::Heightmap> Generated;
+            ImGui::DragFloat("Fill height", &TerrainFillHeight_, 0.25f, 0.0f, scene::KTerrainHeightScale);
+            if (ImGui::Button("Fill##terrain"))
+                Generated = scene::FlatHeightmap(HeightmapSize_, TerrainFillHeight_);
+            ImGui::DragFloat("Height range", &TerrainRange_, 0.25f, 0.0f, scene::KTerrainHeightScale);
+            ImGui::DragInt("Hills across", &TerrainHills_, 0.1f, 1, 32);
+            if (ImGui::Button("Randomize##terrain"))
+                Generated = scene::RandomHeightmap(HeightmapSize_, TerrainRange_, TerrainHills_, Random_);
+
+            const std::filesystem::path Relative = scene::TerrainHeightmapPath(Document_.Name, Node.Id);
+            if (Generated && Project_)
+            {
+                // Always the level's own file: a heightmap the user picked is never overwritten.
+                if (scene::WriteHeightmap(Project_->AssetRoot / Relative, HeightmapSize_, *Generated, TerrainError_))
+                {
+                    TerrainError_.clear();
+                    Node.Asset = Relative.generic_string();
+                    RefreshAssets();
+                }
+            }
+            if (!TerrainError_.empty())
+                ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", TerrainError_.c_str());
+            ImGui::TextDisabled("Writes %s", Relative.generic_string().c_str());
         }
 
         void SceneEditor::DrawMaterial(scene::SceneNode& Node)

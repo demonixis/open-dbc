@@ -152,6 +152,7 @@ namespace dbc::studio
             void ReleaseThumbnails();
             void DrawNewLevelPopup();
             void DrawMatrixHeights(scene::SceneNode& Node);
+            void DrawTerrainHeightmap(scene::SceneNode& Node);
             void DrawReadErrors();
 
             SDL_GPUDevice* Gpu_ = nullptr;
@@ -199,6 +200,11 @@ namespace dbc::studio
             float FillHeight_ = 0.0f;
             int FillTile_ = 1;
             float HeightRange_ = 10.0f;
+            int HeightmapSize_ = 128;
+            float TerrainFillHeight_ = 0.0f;
+            float TerrainRange_ = 40.0f;
+            int TerrainHills_ = 4;
+            std::string TerrainError_;
             std::mt19937 Random_{std::random_device{}()};
         };
     } // namespace panels

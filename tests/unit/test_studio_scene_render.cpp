@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include "scene/heightmap.hpp"
 #include "scene/scene_geometry.hpp"
 #include "scene/scene_renderer.hpp"
 
@@ -7,9 +8,11 @@
 #include <SDL3_image/SDL_image.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <filesystem>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -198,4 +201,32 @@ TEST_CASE("The Scene renderer draws a lit, textured level offscreen")
     Renderer.Shutdown();
     SDL_DestroyGPUDevice(Gpu);
     SDL_Quit();
+}
+
+TEST_CASE("Generated terrain heightmaps load back as the heights they were made for")
+{
+    const scene::Heightmap Flat = scene::FlatHeightmap(4, 50.0f);
+    REQUIRE(Flat.size() == 16);
+    CHECK(std::all_of(Flat.begin(), Flat.end(), [](std::uint8_t Level) { return Level == 128; }));
+
+    std::mt19937 First(7), Second(7);
+    const scene::Heightmap Hills = scene::RandomHeightmap(64, 40.0f, 4, First);
+    CHECK(Hills == scene::RandomHeightmap(64, 40.0f, 4, Second));
+    const auto [Low, High] = std::minmax_element(Hills.begin(), Hills.end());
+    CHECK(*Low == 0);
+    CHECK(*High == 102); // 40 of 100 units
+    CHECK(scene::TerrainHeightmapPath("Level 1", 2).generic_string() == "heightmaps/Level_1_terrain2.png");
+
+    const std::filesystem::path Path =
+        std::filesystem::temp_directory_path() / "opendbc-heightmap-test" / "heightmaps" / "hills.png";
+    std::string Error;
+    REQUIRE_MESSAGE(scene::WriteHeightmap(Path, 64, Hills, Error), Error);
+    CHECK_FALSE(scene::WriteHeightmap(Path, 63, Hills, Error));
+    scene::CpuMesh Mesh;
+    REQUIRE_MESSAGE(scene::LoadTerrainMesh(Path, Mesh, Error), Error);
+    scene::ComputeBounds(Mesh);
+    CHECK(Mesh.Min.y == doctest::Approx(0.0f));
+    CHECK(Mesh.Max.y == doctest::Approx(40.0f).epsilon(0.01));
+    std::error_code Ignored;
+    std::filesystem::remove_all(Path.parent_path().parent_path(), Ignored);
 }

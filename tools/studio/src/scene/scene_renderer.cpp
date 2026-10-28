@@ -256,7 +256,15 @@ namespace dbc::studio
                 case NodeKind::Model:
                     return "model:" + (AssetRoot / Node.Asset).lexically_normal().string();
                 case NodeKind::Terrain:
-                    return "terrain:" + (AssetRoot / Node.Asset).lexically_normal().string();
+                {
+                    // The Scene view rewrites generated heightmaps in place: the write
+                    // time makes a new image a new mesh.
+                    const std::filesystem::path Path = (AssetRoot / Node.Asset).lexically_normal();
+                    std::error_code Error;
+                    const auto Written = std::filesystem::last_write_time(Path, Error);
+                    return "terrain:" + Path.string() + "@" +
+                           (Error ? std::string() : std::to_string(static_cast<long long>(Written.time_since_epoch().count())));
+                }
                 case NodeKind::Light:
                     return {};
                 case NodeKind::Matrix:

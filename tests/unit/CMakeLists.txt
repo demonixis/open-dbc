@@ -58,6 +58,7 @@ if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_scene_render
         test_studio_scene_render.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/gpu_texture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/heightmap.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_geometry.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_renderer.cpp
