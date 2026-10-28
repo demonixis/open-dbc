@@ -44,6 +44,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <limits>
 #include <mutex>
 #include <set>
@@ -4151,7 +4152,7 @@ TEST_CASE("Every permanent Classic compatibility stub dispatches its typed neutr
                 CHECK(Result.ReturnValue->AsReal() == doctest::Approx(Expected));
         }
     }
-    CHECK(Exercised.size() == 78);
+    CHECK(Exercised.size() == 75);
 }
 
 TEST_CASE("Compatibility stub logging is debug-only and once per symbol per execution host")
@@ -6349,6 +6350,81 @@ TEST_CASE("Classic host core clipboard and measurable system queries expose obse
 
     std::error_code CleanupError;
     std::filesystem::remove_all(Root, CleanupError);
+}
+
+TEST_CASE("Classic registry commands persist values in the user's registry file")
+{
+    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::filesystem::path Root =
+        std::filesystem::temp_directory_path() / ("opendbc-classic-registry-" + std::to_string(Suffix));
+    BuiltinContext Context;
+    Context.Profile = dbc::language::LanguageProfile::Dbc;
+    Context.RegistryPath = Root / "registry.json";
+    std::string Error;
+    using dbc::language::SymbolId;
+    const auto Write = [&](std::string_view Folder, std::string_view Key, double Value)
+    {
+        return InvokeCommand(Context, SymbolId::Command_WriteToRegistry,
+                             {BuiltinValue::FromString(std::string(Folder)), BuiltinValue::FromString(std::string(Key)),
+                              BuiltinValue::FromNumber(Value)},
+                             Error);
+    };
+    const auto Read = [&](std::string_view Folder, std::string_view Key)
+    {
+        BuiltinValue Result;
+        REQUIRE_MESSAGE(InvokeFunction(Context, SymbolId::Function_GetRegistry,
+                                       {BuiltinValue::FromString(std::string(Folder)),
+                                        BuiltinValue::FromString(std::string(Key))},
+                                       Result, Error),
+                        Error);
+        return Result.AsNumber();
+    };
+
+    CHECK(Read("Software\\OpenDBC", "Score") == 0.0);
+    CHECK_FALSE(std::filesystem::exists(Context.RegistryPath));
+    REQUIRE_MESSAGE(Write("Software\\OpenDBC", "Score", 10), Error);
+    REQUIRE_MESSAGE(Write("SOFTWARE\\opendbc", "score", 42), Error);
+    REQUIRE_MESSAGE(Write("Software\\OpenDBC", "Lives", 4294967295.0), Error);
+    CHECK(Read("software\\OPENDBC", "SCORE") == 42.0);
+    CHECK(Read("Software\\OpenDBC", "Lives") == -1.0);
+    CHECK(Read("Software\\OpenDBC", "Missing") == 0.0);
+    CHECK(Read("Software\\Other", "Score") == 0.0);
+    CHECK_FALSE(Write("Software\\OpenDBC", "Score", 4294967296.0));
+
+    // The first spelling of a folder and a key is kept, as in the registry.
+    {
+        std::ifstream Input(Context.RegistryPath);
+        const std::string Text{std::istreambuf_iterator<char>(Input), std::istreambuf_iterator<char>()};
+        CHECK(Text.find("\"Software\\\\OpenDBC\"") != std::string::npos);
+        CHECK(Text.find("\"Score\": 42") != std::string::npos);
+        CHECK(Text.find("SOFTWARE") == std::string::npos);
+    }
+
+    // A damaged file is reported and never overwritten.
+    {
+        std::ofstream Output(Context.RegistryPath, std::ios::trunc);
+        Output << "{\"Software\\\\OpenDBC\": {\"Score\": \"high\"}}";
+    }
+    BuiltinValue Unused;
+    CHECK_FALSE(InvokeFunction(Context, SymbolId::Function_GetRegistry,
+                               {BuiltinValue::FromString("Software\\OpenDBC"), BuiltinValue::FromString("Score")},
+                               Unused, Error));
+    CHECK(Error.find("must hold an object of folders") != std::string::npos);
+    CHECK_FALSE(Write("Software\\OpenDBC", "Score", 1));
+    {
+        std::ifstream Input(Context.RegistryPath);
+        const std::string Text{std::istreambuf_iterator<char>(Input), std::istreambuf_iterator<char>()};
+        CHECK(Text.find("\"high\"") != std::string::npos);
+    }
+
+    BuiltinValue Blit;
+    REQUIRE(InvokeFunction(Context, SymbolId::Function_N3dblitAvailable, {}, Blit, Error));
+    CHECK(Blit.AsNumber() == 1.0);
+
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    CHECK_FALSE(InvokeFunction(Context, SymbolId::Function_GetRegistry,
+                               {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(2)}, Unused, Error));
+    std::filesystem::remove_all(Root);
 }
 
 TEST_CASE("DBPro text tokens and checklists are isolated from other executions")

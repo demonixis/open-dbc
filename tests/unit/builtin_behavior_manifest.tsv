@@ -368,6 +368,7 @@ dbc	695	1037	Command	WRITE MEMBLOCK FLOAT	golden-output	test_memblocks.dba	c8316
 dbc	696	1039	Command	WRITE MEMBLOCK WORD	golden-output	test_memblocks.dba	c8316c83f1515d3aeb875382359b77cdcdaed7a0d67142207e5bde5a9acd5e9f
 dbc	697	1041	Command	WRITE STRING	golden-output	test_file_io.dba	ad8ff6ee761d1c558fbe3a217c9dec0200a69c06cd85dcd722e75050ceff022e
 dbc	698	1043	Command	WRITE TO CLIPBOARD	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
+dbc	699	1045	Command	WRITE TO REGISTRY	registry-file-state	test_engine_builtins.cpp::Classic registry commands persist values in the user's registry file	-
 dbc	700	1047	Command	WRITE WORD	golden-output	test_file_io.dba	ad8ff6ee761d1c558fbe3a217c9dec0200a69c06cd85dcd722e75050ceff022e
 dbc	701	1049	Command	XROTATE CAMERA	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbc	702	1051	Command	XROTATE OBJECT	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
@@ -375,6 +376,7 @@ dbc	703	1053	Command	YROTATE CAMERA	golden-output	test_camera_extended.dba	66d98
 dbc	704	1055	Command	YROTATE OBJECT	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
 dbc	705	1057	Command	ZROTATE CAMERA	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbc	706	1059	Command	ZROTATE OBJECT	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
+dbc	707	1061	Function	3DBLIT AVAILABLE	registry-file-state	test_engine_builtins.cpp::Classic registry commands persist values in the user's registry file	-
 dbc	708	1062	Function	ABS	golden-output	test_math.dba	fbc34ac7b482ab61efa6ba907ab95916bd1c2d43b6bb1b157077bc6b0e75eb82
 dbc	709	1064	Function	ACOS	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	710	1066	Function	ALPHABLENDING AVAILABLE	gpu-capability	test_engine_builtins.cpp::Classic backdrop and fog commands update draw state	-
@@ -661,6 +663,7 @@ dbc	1104	1727	Function	WRAPVALUE	golden-output	test_math.dba	fbc34ac7b482ab61efa
 dbc	1106	1730	Function	X VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbc	1109	1734	Function	Y VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbc	1111	1737	Function	Z VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1449	2002	Function	GET REGISTRY	registry-file-state	test_engine_builtins.cpp::Classic registry commands persist values in the user's registry file	-
 dbc	2727	3468	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbc	2728	3470	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbc	2729	3472	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-

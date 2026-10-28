@@ -49,7 +49,7 @@ Each callable has a per-profile state:
 | State | Meaning |
 | --- | --- |
 | Implemented | Real behaviour, with a witness in `tests/unit/builtin_behavior_manifest.tsv` |
-| Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, networking, DLLs and native pointers, CD audio, the registry and obsolete hardware switches |
+| Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, networking, DLLs and native pointers, CD audio and obsolete hardware switches |
 | Unsupported | Rejected at bind time with `DBC2043` |
 
 Shared VR forms and the Classic `X/Y/Z VECTOR3` readers are the only additions to

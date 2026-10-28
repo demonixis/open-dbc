@@ -43,6 +43,8 @@ Touch devices emulate the historical directional keys and space key by default; 
 - `PERFORM CHECKLIST FOR GRAPHICS CARDS` lists the GPU driver selected by SDL.
 - A requested 16-bit display remains logically RGB565 over the physical RGBA32 render target; project depth `16M` selects the 32-bit path.
 - `CL$()` returns an empty string until the BASIC host exposes program arguments.
+- Classic `WRITE TO REGISTRY` and `GET REGISTRY` keep their values in `registry.json` in the user's OpenDBC storage folder (SDL's preference path) instead of the Windows registry; folder and key names ignore ASCII case.
+- `3DBLIT AVAILABLE()` returns 1: every GPU draws 2D during 3D at full speed.
 
 ## Portable host contracts
 

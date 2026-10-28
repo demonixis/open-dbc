@@ -1,7 +1,7 @@
 rem ==================================================================
 rem Compatibility Stubs - an OpenDBC tutorial for the DarkBASIC Classic profile
 rem DarkBASIC Classic relied on Windows 98 technology that has no portable
-rem equivalent today: audio CDs, FTP sessions, DirectPlay network games, DLL calls, the registry and
+rem equivalent today: audio CDs, FTP sessions, DirectPlay network games, DLL calls and
 rem raw access to the video memory. OpenDBC still accepts every one of
 rem these commands so that old programs run, but they do nothing: commands
 rem return at once, numbers read 0 and strings are empty. This program
@@ -74,16 +74,14 @@ n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE STRING$()" : value$(n) = """
 free net player 1
 free net game
 
-rem --- 4. DLLs and the registry
-title$(4) = "DLLS AND REGISTRY" : why$(4) = "Windows DLLs and the registry do not exist on other systems."
+rem --- 4. DLLs
+title$(4) = "DLLS" : why$(4) = "Windows DLLs do not exist on other systems."
 load dll "user32.dll", 1
 call dll 1, "MessageBeep", 0
-write to registry "Software\OpenDBC", "Score", 10
 g = 4
 n = n + 1 : group(n) = g : label$(n) = "DLL EXIST(1)" : value$(n) = str$(dll exist(1))
 n = n + 1 : group(n) = g : label$(n) = "DLL CALL EXIST(1, ""MessageBeep"")" : value$(n) = str$(dll call exist(1, "MessageBeep"))
 n = n + 1 : group(n) = g : label$(n) = "CALL DLL(1, ""GetTickCount"")" : value$(n) = str$(call dll(1, "GetTickCount"))
-n = n + 1 : group(n) = g : label$(n) = "GET REGISTRY(""Software\OpenDBC"", ""Score"")" : value$(n) = str$(get registry("Software\OpenDBC", "Score"))
 n = n + 1 : group(n) = g : label$(n) = "WINDIR$()" : value$(n) = """" + windir$() + """"
 delete dll 1
 
@@ -100,7 +98,6 @@ g = 5
 n = n + 1 : group(n) = g : label$(n) = "GET BACKBUFFER PTR()" : value$(n) = str$(get backbuffer ptr())
 n = n + 1 : group(n) = g : label$(n) = "GET MEMBLOCK PTR(1)" : value$(n) = str$(get memblock ptr(1))
 n = n + 1 : group(n) = g : label$(n) = "EMULATION MODE()" : value$(n) = str$(emulation mode())
-n = n + 1 : group(n) = g : label$(n) = "3DBLIT AVAILABLE()" : value$(n) = str$(3dblit available())
 unlock backbuffer
 delete memblock 1
 

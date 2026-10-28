@@ -85,8 +85,6 @@ namespace
             case SymbolId::Command_SetGraphicsCard:
             case SymbolId::Command_SetNetConnection:
             case SymbolId::Command_UnlockBackbuffer:
-            case SymbolId::Command_WriteToRegistry:
-            case SymbolId::Function_N3dblitAvailable:
             case SymbolId::Function_CallDll:
             case SymbolId::Function_CreateNetPlayer:
             case SymbolId::Function_DllCallExist:
@@ -102,7 +100,6 @@ namespace
             case SymbolId::Function_GetFtpProgress:
             case SymbolId::Function_GetFtpStatus:
             case SymbolId::Function_GetMemblockPtr:
-            case SymbolId::Function_GetRegistry:
             case SymbolId::Function_NetGameExists:
             case SymbolId::Function_NetGameLost:
             case SymbolId::Function_NetGameNowHosting:

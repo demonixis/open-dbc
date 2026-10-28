@@ -46,8 +46,6 @@ dbc	Command_SetEmulationOn	Command	SET EMULATION ON	Permanent	no-op
 dbc	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Permanent	no-op
 dbc	Command_SetNetConnection	Command	SET NET CONNECTION	Permanent	no-op
 dbc	Command_UnlockBackbuffer	Command	UNLOCK BACKBUFFER	Permanent	no-op
-dbc	Command_WriteToRegistry	Command	WRITE TO REGISTRY	Permanent	no-op
-dbc	Function_N3dblitAvailable	Function	3DBLIT AVAILABLE	Permanent	numeric:0
 dbc	Function_CallDll	Function	CALL DLL	Permanent	numeric:0
 dbc	Function_CreateNetPlayer	Function	CREATE NET PLAYER	Permanent	numeric:0
 dbc	Function_DllCallExist	Function	DLL CALL EXIST	Permanent	numeric:0
@@ -76,4 +74,3 @@ dbc	Function_NetMessageType	Function	NET MESSAGE TYPE	Permanent	numeric:0
 dbc	Function_NetPlayerCreated	Function	NET PLAYER CREATED	Permanent	numeric:0
 dbc	Function_NetPlayerDestroyed	Function	NET PLAYER DESTROYED	Permanent	numeric:0
 dbc	Function_WindirString	Function	WINDIR$	Permanent	string:empty
-dbc	Function_GetRegistry	Function	GET REGISTRY	Permanent	numeric:0

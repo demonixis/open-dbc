@@ -70,6 +70,8 @@ namespace dbc
         {
             EngineKernel* Kernel = nullptr;
             std::filesystem::path AssetRoot{};
+            // Empty until the first registry command resolves the user's registry file.
+            std::filesystem::path RegistryPath{};
             bool Benchmark = false;
             int MaxFrames = 0;
             bool ShouldExit = false;

@@ -434,7 +434,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `WRITE MEMBLOCK WORD` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `WRITE STRING` | Command | 2 | number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `WRITE TO CLIPBOARD` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `WRITE TO REGISTRY` | Command | 3 | string, string, number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `WRITE TO REGISTRY` | Command | 3 | string, string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `WRITE WORD` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `XROTATE CAMERA` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `XROTATE OBJECT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -443,7 +443,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ZROTATE CAMERA` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `ZROTATE OBJECT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `#INCLUDE` | Directive | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic directive implemented with an observable contract. |
-| `3DBLIT AVAILABLE` | Function | 0 | none -> real | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
+| `3DBLIT AVAILABLE` | Function | 0 | none -> real | Implemented | Classic help | DarkBASIC Classic function implemented with an observable contract. |
 | `ABS` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `ACOS` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `ALPHABLENDING AVAILABLE` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
@@ -548,7 +548,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET OBJECT COLLISION X` | Function | 0-1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET OBJECT COLLISION Y` | Function | 0-1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET OBJECT COLLISION Z` | Function | 0-1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
-| `GET REGISTRY` | Function | 2 | string, string -> real | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
+| `GET REGISTRY` | Function | 2 | string, string -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET SOUND PAN` | Function | 1 | number -> integer | Implemented | Classic help | DarkBASIC Classic function implemented with an observable contract. |
 | `GET SOUND SPEED` | Function | 1 | number -> integer | Implemented | Classic help | DarkBASIC Classic function implemented with an observable contract. |
 | `GET SOUND VOLUME` | Function | 1 | number -> integer | Implemented | Classic help | DarkBASIC Classic function implemented with an observable contract. |

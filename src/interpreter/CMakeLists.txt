@@ -13,6 +13,8 @@ add_library(dbc_interpreter STATIC
   program_image.hpp
   project_resolver.cpp
   project_resolver.hpp
+  registry_file.cpp
+  registry_file.hpp
   runtime_startup.cpp
   runtime_startup.hpp
   engine_builtin_registry.cpp

@@ -1405,6 +1405,16 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+DBC_REGISTRY_TEST = "test_engine_builtins.cpp::Classic registry commands persist values in the user's registry file"
+UNIT_WITNESSES += tuple(
+    ("dbc", kind, name, code, "registry-file-state", DBC_REGISTRY_TEST)
+    for kind, name, code in (
+        ("Command", "WRITE TO REGISTRY", 'write to registry "Software\\OpenDBC", "Score", 10\n'),
+        ("Function", "GET REGISTRY", 'value = get registry("Software\\OpenDBC", "Score")\n'),
+        ("Function", "3DBLIT AVAILABLE", "value = 3dblit available()\n"),
+    )
+)
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Regenerate catalogue-linked BASIC behavior witnesses")
     parser.add_argument("--opendbc", type=Path, required=True)

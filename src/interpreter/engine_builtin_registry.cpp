@@ -22,6 +22,7 @@
 #include "engine/systems/video_system.hpp"
 #include "engine/systems/vr_system.hpp"
 #include "engine_builtin_api/all.hpp"
+#include "registry_file.hpp"
 #include "language/language_catalogue.hpp"
 #include "language/numeric_conversion.hpp"
 #include <algorithm>
@@ -1551,6 +1552,13 @@ namespace dbc::interpreter::detail
                 default:
                     return Video.PlayAnimation(Values[0], Loop, std::nullopt, std::nullopt, Error);
             }
+        }
+
+        const std::filesystem::path& RegistryPath(BuiltinContext& Context)
+        {
+            if (Context.RegistryPath.empty())
+                Context.RegistryPath = DefaultRegistryPath();
+            return Context.RegistryPath;
         }
 
         bool ExecutablePath(std::string& Output, std::string* Error = nullptr)
