@@ -172,6 +172,7 @@ namespace dbc::studio
         Editor_.Initialize(&Commands_);
 
         Launcher_.Initialize(&Commands_, &Workspace_, &Dialog_);
+        Snippets_.SetUserFolder(core::paths::PrefDir() / "snippets");
         Launcher_.SetHandlers([this](const std::filesystem::path& Path) { RunLauncherPath(Path); },
                               [this](const std::filesystem::path& Path) { OpenFile(Path); });
 
@@ -501,6 +502,24 @@ namespace dbc::studio
                          });
     }
 
+    TextEditor* App::SnippetTarget()
+    {
+        TextEditor* Editor = Editor_.CurrentEditor();
+        if (Mode_ != Mode::Code || Editor == nullptr || !Editor_.CurrentIsBasic() || Editor->IsReadOnlyEnabled())
+            return nullptr;
+        return Editor;
+    }
+
+    void App::InsertSnippet(const std::string& Body)
+    {
+        TextEditor* Editor = SnippetTarget();
+        if (Editor == nullptr)
+            return;
+        // Replaces the selection like a paste, as one undoable edit.
+        Editor->ReplaceSectionText(Editor->GetMainCursorSelection(), Body);
+        Editor->SetFocus();
+    }
+
     void App::RequestNewProject()
     {
         if (ExecutionBusy_)
@@ -783,6 +802,8 @@ namespace dbc::studio
         DrawQuitConfirm();
         DrawProjectResolution();
         DrawNewProject();
+        if (std::optional<std::string> Body = Snippets_.Draw())
+            InsertSnippet(*Body);
 
         ImGui::Render();
     }
@@ -1024,6 +1045,10 @@ namespace dbc::studio
             {
                 SaveCurrent();
             }
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_J, false) && SnippetTarget() != nullptr)
+        {
+            Snippets_.OpenInsert(Editor_.CurrentProfile());
         }
         else if (ImGui::IsKeyPressed(ImGuiKey_N, false))
         {
@@ -1303,6 +1328,17 @@ namespace dbc::studio
                 Editor_.FormatCurrent();
             }
             ImGui::Separator();
+            TextEditor* Target = SnippetTarget();
+            if (ImGui::MenuItem("Insert Snippet...", "Ctrl+J", false, Target != nullptr))
+            {
+                Snippets_.OpenInsert(Editor_.CurrentProfile());
+            }
+            if (ImGui::MenuItem("Save Selection as Snippet...", nullptr, false,
+                                Target != nullptr && Target->AnyCursorHasSelection()))
+            {
+                Snippets_.OpenSave(Target->GetSectionText(Target->GetMainCursorSelection()),
+                                   Editor_.CurrentProfile());
+            }
             ImGui::EndMenu();
         }
 

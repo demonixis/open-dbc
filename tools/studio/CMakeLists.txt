@@ -199,6 +199,8 @@ set(STUDIO_SOURCES
     src/panels/scene_editor.hpp
     src/panels/scene_inspector.cpp
     src/panels/scene_viewport.cpp
+    src/panels/snippet_window.cpp
+    src/panels/snippet_window.hpp
 
     src/scene/scene_codegen.cpp
     src/scene/scene_codegen.hpp

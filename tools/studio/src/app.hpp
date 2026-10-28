@@ -32,6 +32,7 @@
 #include "panels/project_panel.hpp"
 #include "panels/project_settings_window.hpp"
 #include "panels/scene_editor.hpp"
+#include "panels/snippet_window.hpp"
 
 // The OpenDBC Studio window and its docked panels.
 namespace dbc::studio
@@ -66,6 +67,9 @@ namespace dbc::studio
         void OpenFolder(const std::filesystem::path& Folder);
         void OpenFile(const std::filesystem::path& File);
         void ShowOpenFileDialog();
+        // The current tab when snippets can be inserted into it, else nullptr.
+        TextEditor* SnippetTarget();
+        void InsertSnippet(const std::string& Body);
         void RequestNewProject();
         void CreateNewProject();
         bool ResolveWorkspace(const std::filesystem::path& Target,
@@ -135,6 +139,7 @@ namespace dbc::studio
         panels::MediaPanel Media_;
         panels::LauncherWindow Launcher_;
         panels::SceneEditor Scene_;
+        panels::SnippetWindow Snippets_;
 
         dba::Reference Reference_;
         dba::CommandDatabase Commands_;
