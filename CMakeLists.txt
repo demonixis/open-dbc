@@ -133,6 +133,13 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU" OR CMAKE_CXX_COMPILER_ID MATCHES 
     if(APPLE)
         # The Apple linker records each object file's absolute path in the debug map.
         add_link_options("LINKER:-oso_prefix,${CMAKE_BINARY_DIR}/")
+        # CMake repeats DXC's cyclic archives for order-sensitive linkers; ld-prime
+        # resolves them in one pass and warns about the repetition. Older ld64 lacks the flag.
+        include(CheckLinkerFlag)
+        check_linker_flag(CXX "LINKER:-no_warn_duplicate_libraries" OPENDBC_HAS_NO_WARN_DUPLICATE_LIBRARIES)
+        if(OPENDBC_HAS_NO_WARN_DUPLICATE_LIBRARIES)
+            add_link_options("LINKER:-no_warn_duplicate_libraries")
+        endif()
     endif()
 endif()
 
