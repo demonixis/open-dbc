@@ -88,8 +88,8 @@ namespace dbc::studio
             Checks.push_back({"Runs on macOS " + std::to_string(RecommendedMacMinimum) + " and later", Reach, false,
                               Reach ? std::string{}
                                     : "This OpenDBC build needs macOS " + Minimum.value_or("of the build machine") +
-                                          ". Build OpenDBC with -DCMAKE_OSX_DEPLOYMENT_TARGET=" +
-                                          std::to_string(RecommendedMacMinimum) + ".0 to reach older Macs."});
+                                          ". Build OpenDBC with its default CMAKE_OSX_DEPLOYMENT_TARGET, 13.3, to "
+                                          "reach older Macs."});
             if (!Request.Sign)
                 return;
             const std::string& Wanted = Request.Toolchain.MacSigningIdentity;

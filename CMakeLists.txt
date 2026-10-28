@@ -16,6 +16,14 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"
     endif()
 endif()
 
+# Exported games inherit the runner's minimum macOS, so it is fixed instead of following the build Mac.
+# 13.3 is the first release whose libc++ formats floating-point numbers with std::to_chars.
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"
+   AND (NOT DEFINED CMAKE_SYSTEM_NAME OR CMAKE_SYSTEM_NAME STREQUAL "" OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+   AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Oldest macOS release OpenDBC and its exports run on" FORCE)
+endif()
+
 project(OpenDBC VERSION 0.3 LANGUAGES C CXX)
 
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL
@@ -796,6 +804,15 @@ if(BUILD_TESTS)
                 -P ${CMAKE_SOURCE_DIR}/tests/dba/check_runner_symbols.cmake
         )
         set_tests_properties(runner_links_no_frontend PROPERTIES LABELS "unit;runner")
+    endif()
+    if(APPLE AND TARGET opendbc-runner)
+        # Exported macOS games run wherever the runner does, not only on the build Mac's release.
+        string(REPLACE "." "\\." OPENDBC_MACOS_MINIMUM_PATTERN "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+        add_test(NAME runner_macos_minimum
+            COMMAND /usr/bin/xcrun vtool -show-build $<TARGET_FILE:opendbc-runner>)
+        set_tests_properties(runner_macos_minimum PROPERTIES
+            LABELS "unit;runner"
+            PASS_REGULAR_EXPRESSION "minos ${OPENDBC_MACOS_MINIMUM_PATTERN}\n")
     endif()
 
     # C++ unit tests (doctest)

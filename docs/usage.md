@@ -118,9 +118,8 @@ links, secret files and `#INCLUDE` files outside the project. At first launch th
 payload is copied to per-user storage, where the program writes its files and
 log. The project's identity, version, icon, permissions and keystore live in
 `.opendbc-project.json`; tools and signing identities belong to the machine, in
-the Studio preferences. Exported macOS apps need the macOS release the runner was
-built for: build OpenDBC with `-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0` to reach older
-Macs.
+the Studio preferences. Exported macOS apps run on macOS 13.3 and later, the
+`CMAKE_OSX_DEPLOYMENT_TARGET` OpenDBC is built with.
 
 OpenDBC never stores a password. The Studio keeps them for its session; the
 command line and build machines read the environment:
