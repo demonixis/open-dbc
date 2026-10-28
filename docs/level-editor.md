@@ -19,9 +19,10 @@ A level is BASIC, and nothing else is stored:
 | `opendbc_game.dba` | `FUNCTION SetupGame()`: display mode, Pro vsync, window, `SYNC ON`/`SYNC RATE`, `HIDE MOUSE`; shared by every level |
 
 Saving (**Ctrl+S** in the Scene mode, or **Scene → Save Level**) writes both
-files, then adds to the main source, after its leading comments, each missing
-`#include` and call. `SetupGame()` runs first and a new level's call goes right
-after it. An include or call already present anywhere is left where it is. When
+files, then completes the main source's header: each missing `#include` joins
+the include block under the leading comment, and each missing call follows that
+block, `SetupGame()` first, then the levels in order. An include or call
+already present anywhere is left where it is. When
 the main source is open in a tab, the edit goes to that tab, undoable, and is
 saved with it. **F5** in the Scene mode saves the level, then runs the main
 source.
@@ -47,13 +48,24 @@ the profile implements, from the catalogue:
 | --- | --- |
 | Cube, box, sphere, cylinder, cone, plain, triangle | `MAKE OBJECT …` |
 | Model | `LOAD OBJECT`, by dragging a file from Assets |
-| Matrix | `MAKE MATRIX`, `PREPARE MATRIX TEXTURE`, `POSITION MATRIX` |
+| Matrix | `MAKE MATRIX`, `PREPARE MATRIX TEXTURE`, `FILL MATRIX`, `SET MATRIX HEIGHT`, `UPDATE MATRIX`, `POSITION MATRIX` |
 | Terrain (Pro) | `MAKE TERRAIN`, `TEXTURE TERRAIN`, `POSITION TERRAIN` |
 | Point, spot or directional light | `MAKE LIGHT`, `SET … LIGHT`, `POSITION`/`ROTATE LIGHT`, `SET LIGHT RANGE`, `COLOR LIGHT` |
 
 The Inspector edits the selected node:
 - name, number, position, rotation (degrees, applied X, then Y, then Z) and scale (%);
 - shape;
+- a matrix's heights: **Fill** sets every height and the tile (`FILL MATRIX`),
+  **Randomize** draws whole heights below a range (`RANDOMIZE MATRIX`). The
+  result is baked into the level as `FILL MATRIX` with the most common height,
+  one `SET MATRIX HEIGHT` per other vertex and `UPDATE MATRIX`, so every run
+  shows the authored matrix. Changing the tile count leaves the old heights
+  aside until **Flatten**;
+- a terrain's heightmap: **Fill** and **Randomize** (rolling hills below a
+  range) write a square grey PNG, 64 to 512 pixels, to
+  `heightmaps/<level>_terrain<number>.png` under the asset root and point the
+  terrain at it. Grey levels 0–255 are heights 0–100; a heightmap picked by
+  hand is never overwritten;
 - texture, `COLOR OBJECT`, `GHOST OBJECT ON` and the `SET OBJECT` flags;
 - in Pro, also diffuse, ambience, emissive, specular colour and power, and `SET SHADOW SHADING ON`.
 
