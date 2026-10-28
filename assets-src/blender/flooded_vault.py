@@ -86,7 +86,7 @@ def build_textures() -> None:
     for builder, name in ((bt.mossy_blocks, "wall"), (bt.flagstones, "floor"), (bt.dark_rock, "vault"),
                           (water, "water"), (ripple, "ripple"), (crab_plates, "crab"), (door, "door"),
                           (grate, "grate")):
-        bt.save_jpeg(bt.bake(builder), OUT / f"{name}.jpg")
+        bt.save_jpeg(bt.bake(builder), OUT / f"textures/{name}.jpg")
 
 
 # ---------------------------------------------------------------------------
@@ -203,7 +203,7 @@ def build_room():
     mesh_object("grate", grate_builder, bars, root, 11)
     textures = {"wall": "wall.jpg", "floor": "floor.jpg", "vault": "vault.jpg", "door": "door.jpg",
                 "grate": "grate.jpg"}
-    xexport.export(OUT / "room.x", [root], textures)
+    xexport.export(OUT / "models/room.x", [root], textures)
 
 
 # ---------------------------------------------------------------------------
@@ -308,9 +308,9 @@ def main() -> None:
     body, parts = build_crab()
     textures = {"crab": "crab.jpg"}
     animate(parts, False, 20)
-    xexport.export(OUT / "crab_idle.x", [body], textures, (0, 20))
+    xexport.export(OUT / "models/crab_idle.x", [body], textures, (0, 20))
     animate(parts, True, 24)
-    xexport.export(OUT / "crab_walk.x", [body], textures, (0, 24))
+    xexport.export(OUT / "models/crab_walk.x", [body], textures, (0, 24))
 
 
 if __name__ == "__main__":

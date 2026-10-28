@@ -299,7 +299,7 @@ def main() -> None:
     # Blender pixel rows start at the bottom of the image.
     atlas[SIZE:, :SIZE], atlas[SIZE:, SIZE:] = tiles[0], tiles[1]
     atlas[:SIZE, :SIZE], atlas[:SIZE, SIZE:] = tiles[2], tiles[3]
-    save_jpeg(atlas, ROOT / "examples/dbc/demos/cavern_dash/tiles.jpg")
+    save_jpeg(atlas, ROOT / "examples/dbc/demos/cavern_dash/textures/tiles.jpg")
 
     maze = ROOT / "examples/open-dbc/maze_runner/assets"
     for builder, name in ((flagstones, "floor"), (bricks, "wall1"), (planks, "roof")):

@@ -230,17 +230,17 @@ return
 
 rem ------------------------------------------------------------------
 build_world:
-   load image "detail.jpg", 3
-   load image "sea.jpg", 4
-   load image "gloss.jpg", 5
-   load image "flare.jpg", 6
-   load image "flare_red.jpg", 7
-   load image "barrier_bump.jpg", 8
-   load image "rock_bump.jpg", 9
-   for c = 1 to CARS : load image "car_" + str$(c) + ".jpg", 10 + c : next c
+   load image "textures/detail.jpg", 3
+   load image "textures/sea.jpg", 4
+   load image "textures/gloss.jpg", 5
+   load image "textures/flare.jpg", 6
+   load image "textures/flare_red.jpg", 7
+   load image "textures/barrier_bump.jpg", 8
+   load image "textures/rock_bump.jpg", 9
+   for c = 1 to CARS : load image "textures/car_" + str$(c) + ".jpg", 10 + c : next c
 
    rem The sky dome follows the camera; nightfall darkens it through its vertex colours
-   load object "sky.x", OBJ_SKY
+   load object "models/sky.x", OBJ_SKY
    scale object OBJ_SKY, 90000, 90000, 90000
    set object cull OBJ_SKY, 0
    set object light OBJ_SKY, 0
@@ -249,7 +249,7 @@ build_world:
    skytod# = -1.0
 
    rem The island, with a tiled detail map on a second UV set written from the vertex positions
-   load object "ground.x", OBJ_GROUND
+   load object "models/ground.x", OBJ_GROUND
    lock vertexdata for limb OBJ_GROUND, 0
    for v = 0 to get vertexdata vertex count() - 1
       set vertexdata uv v, 1, get vertexdata position x(v) / 7.0, get vertexdata position z(v) / 7.0
@@ -266,7 +266,7 @@ build_world:
    set blend mapping on OBJ_SEA, 1, 5, 2, 7
 
    rem One model holds the whole circuit: its limbs become separate objects so hidden chunks are culled
-   load object "circuit.x", OBJ_CIRCUIT
+   load object "models/circuit.x", OBJ_CIRCUIT
    for c = 0 to 15
       make object from limb OBJ_ROAD + c, OBJ_CIRCUIT, c + 1
       make object from limb OBJ_WALL + c, OBJ_CIRCUIT, c + 17
@@ -276,11 +276,11 @@ build_world:
    next c
    delete object OBJ_CIRCUIT
 
-   load object "bulbs.x", OBJ_BULBS
+   load object "models/bulbs.x", OBJ_BULBS
    set object light OBJ_BULBS, 0
 
    rem Start gantry, its five lights and the grandstand facing the line
-   load object "gantry.x", OBJ_GANTRY
+   load object "models/gantry.x", OBJ_GANTRY
    position object OBJ_GANTRY, px#(0), 0, pz#(0)
    yrotate object OBJ_GANTRY, atanfull(0 - rz#(0), rx#(0))
    for l = 0 to 4
@@ -288,7 +288,7 @@ build_world:
       position object OBJ_STARTLAMP + l, px#(0) + rx#(0) * (l - 2) * 1.6, 6.45, pz#(0) + rz#(0) * (l - 2) * 1.6
       set object light OBJ_STARTLAMP + l, 0
    next l
-   load object "grandstand.x", OBJ_STAND
+   load object "models/grandstand.x", OBJ_STAND
    k = 6
    position object OBJ_STAND, px#(k) - rx#(k) * 26, 0, pz#(k) - rz#(k) * 26
    yrotate object OBJ_STAND, atanfull(rx#(k), rz#(k))
@@ -297,11 +297,11 @@ build_world:
    a# = -150.0
    r# = CoastRadius(a#) - 22.0
    lhx# = 15 + cos(a#) * r# : lhz# = 30 + sin(a#) * r#
-   load object "lighthouse.x", OBJ_LIGHTHOUSE
+   load object "models/lighthouse.x", OBJ_LIGHTHOUSE
    position object OBJ_LIGHTHOUSE, lhx#, 0, lhz#
 
    rem Palms away from the road, rocks along the beach, islets out at sea
-   load object "palm.x", OBJ_PALM
+   load object "models/palm.x", OBJ_PALM
    n = 0
    for j = 0 to 47
       k = (j * 7 + 3) mod SAMPLES
@@ -318,7 +318,7 @@ build_world:
          inc n
       endif
    next j
-   load object "rock.x", OBJ_ROCK
+   load object "models/rock.x", OBJ_ROCK
    n = 0
    for j = 0 to 60
       a# = j * 6.0
@@ -334,7 +334,7 @@ build_world:
          inc n
       endif
    next j
-   load object "hill.x", OBJ_ISLE
+   load object "models/hill.x", OBJ_ISLE
    restore isle_data
    for j = 0 to 4
       read a#, r#, w#, h#
@@ -398,19 +398,19 @@ return
 
 rem ------------------------------------------------------------------
 build_cars:
-   load mesh "car_shadow.x", 1
+   load mesh "models/car_shadow.x", 1
    restore car_data
    for i = 1 to CARS
       read cars(i).name, cars(i).lane, cars(i).skill
       o = OBJ_CAR + i - 1
       cars(i).obj = o
-      if i = 1 then load object "car.x", o else clone object o, OBJ_CAR
+      if i = 1 then load object "models/car.x", o else clone object o, OBJ_CAR
       texture limb o, 0, 10 + i
       set object specular o, rgb(255, 245, 230)
       set object specular power o, 30
       set blend mapping on o, 1, 5, 1, 7
       set shadow shading on o, 1, 14, 0
-      load object "car_lamps.x", OBJ_CARLAMPS + i - 1
+      load object "models/car_lamps.x", OBJ_CARLAMPS + i - 1
       set object light OBJ_CARLAMPS + i - 1, 0
    next i
    cars(1).ai = 0
@@ -448,15 +448,15 @@ build_minimap:
 return
 
 load_sounds:
-   load sound "motor.wav", 1
-   load sound "screech.wav", 2
-   load sound "surf.wav", 3
-   load sound "beep.wav", 4
-   load sound "go.wav", 5
-   load sound "lap.wav", 6
-   load sound "finish.wav", 7
-   load sound "bump.wav", 8
-   for i = 2 to CARS : load 3dsound "motor.wav", 10 + i : loop sound 10 + i : next i
+   load sound "sounds/motor.wav", 1
+   load sound "sounds/screech.wav", 2
+   load sound "sounds/surf.wav", 3
+   load sound "sounds/beep.wav", 4
+   load sound "sounds/go.wav", 5
+   load sound "sounds/lap.wav", 6
+   load sound "sounds/finish.wav", 7
+   load sound "sounds/bump.wav", 8
+   for i = 2 to CARS : load 3dsound "sounds/motor.wav", 10 + i : loop sound 10 + i : next i
    loop sound 1 : loop sound 2 : loop sound 3
    set sound volume 2, 0
    set sound volume 3, 70

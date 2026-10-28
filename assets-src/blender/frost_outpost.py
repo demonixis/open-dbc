@@ -125,11 +125,11 @@ def build_textures() -> None:
     atlas = np.zeros((size * 2, size * 2, 4), dtype=np.float32)
     atlas[size:, :size], atlas[size:, size:] = tiles[0], tiles[1]
     atlas[:size, :size], atlas[:size, size:] = tiles[2], tiles[3]
-    bt.save_jpeg(atlas, OUT / "terrain.jpg")
+    bt.save_jpeg(atlas, OUT / "textures/terrain.jpg")
     for builder, name in ((clouds, "clouds"), (compass, "compass"), (needle, "needle"), (glow, "pulse"),
                           (imp_skin, "imp"), (pistol_metal, "pistol"), (crystal, "crystal"),
                           (bt.dark_rock, "stone")):
-        bt.save_jpeg(bt.bake(builder), OUT / f"{name}.jpg")
+        bt.save_jpeg(bt.bake(builder), OUT / f"textures/{name}.jpg")
 
 
 # ---------------------------------------------------------------------------
@@ -300,7 +300,7 @@ def render_impostors(parts) -> None:
     sun.data.energy = 4.0
     sun.rotation_euler = (-0.64, 0.0, 0.35)  # from the camera side, slightly from above
     scene.collection.objects.link(sun)
-    image_path = OUT / "imp.jpg"
+    image_path = OUT / "textures/imp.jpg"
     for mat_name in ("imp", "imp_claw"):
         mat = bpy.data.materials[mat_name]
         mat.use_nodes = True
@@ -316,21 +316,21 @@ def render_impostors(parts) -> None:
     strip = np.zeros((IMPOSTOR_SIZE, IMPOSTOR_SIZE * IMPOSTOR_FRAMES, 4), dtype=np.float32)
     for index in range(IMPOSTOR_FRAMES):
         scene.frame_set(index * CLIPS["walk"] // IMPOSTOR_FRAMES)
-        scene.render.filepath = str(OUT / "_frame.png")
+        scene.render.filepath = str(OUT / "textures/_frame.png")
         bpy.ops.render.render(write_still=True)
         frame = bpy.data.images.load(scene.render.filepath, check_existing=False)
         pixels = np.empty(IMPOSTOR_SIZE * IMPOSTOR_SIZE * 4, dtype=np.float32)
         frame.pixels.foreach_get(pixels)
         strip[:, index * IMPOSTOR_SIZE:(index + 1) * IMPOSTOR_SIZE] = pixels.reshape(IMPOSTOR_SIZE, IMPOSTOR_SIZE, 4)
         bpy.data.images.remove(frame)
-    (OUT / "_frame.png").unlink()
+    (OUT / "textures/_frame.png").unlink()
     # The rendered frames are already display-encoded; store them without a second sRGB encode.
     image = bpy.data.images.new("impostors", strip.shape[1], strip.shape[0])
     image.pixels.foreach_set(np.clip(strip, 0, 1).ravel())
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGB"
-    image.save_render(str(OUT / "impostors.png"), scene=scene)
-    print(f"wrote {OUT / 'impostors.png'}")
+    image.save_render(str(OUT / "textures/impostors.png"), scene=scene)
+    print(f"wrote {OUT / 'textures/impostors.png'}")
 
 
 def main() -> None:
@@ -340,13 +340,13 @@ def main() -> None:
     textures = {"imp": "imp.jpg"}
     for clip, length in CLIPS.items():
         animate(parts, clip)
-        xexport.export(OUT / f"imp_{clip}.x", [pelvis], textures, (0, length))
+        xexport.export(OUT / f"models/imp_{clip}.x", [pelvis], textures, (0, length))
     render_impostors(parts)
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    xexport.export(OUT / "pistol.x", [build_pistol()], {"pistol": "pistol.jpg"})
+    xexport.export(OUT / "models/pistol.x", [build_pistol()], {"pistol": "pistol.jpg"})
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    xexport.export(OUT / "outpost.x", [build_outpost()], {"stone": "stone.jpg", "crystal": "crystal.jpg"})
+    xexport.export(OUT / "models/outpost.x", [build_outpost()], {"stone": "stone.jpg", "crystal": "crystal.jpg"})
 
 
 if __name__ == "__main__":

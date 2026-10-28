@@ -319,14 +319,14 @@ def build_textures() -> None:
     for builder, name in ((floor_plate, "floor"), (wall_panel, "wall"), (ceiling_grate, "ceiling"),
                           (hazard, "hazard"), (machine_metal, "machine"), (crate, "crate"),
                           (drone_armour, "drone")):
-        bt.save_jpeg(bt.bake(builder), OUT / f"{name}.jpg")
-    save_raw_jpeg(downsample(bake_normal(crate), 2), OUT / "crate_normal.jpg")
+        bt.save_jpeg(bt.bake(builder), OUT / f"textures/{name}.jpg")
+    save_raw_jpeg(downsample(bake_normal(crate), 2), OUT / "textures/crate_normal.jpg")
     # Small textures: effects, props and screens.
     for builder, name in ((rifle_metal, "rifle"), (paint_red, "valve"), (glow, "glow"), (eye, "eye"), (flash, "flash"),
                           (lamp, "lamp"), (screen, "screen"), (plasma, "plasma"), (forcefield, "field"),
                           (environment, "chrome"), (medkit, "medkit"), (cell, "cell")):
-        bt.save_jpeg(downsample(bt.bake(builder), 2), OUT / f"{name}.jpg")
-    save_blob(OUT / "blob.png")
+        bt.save_jpeg(downsample(bt.bake(builder), 2), OUT / f"textures/{name}.jpg")
+    save_blob(OUT / "textures/blob.png")
 
 
 # ---------------------------------------------------------------------------
@@ -718,7 +718,7 @@ def bake_lightmap(layout, objects, panels, screens) -> None:
     light = pixels[..., :3]
     pixels[..., :3] = 0.6 * light / (1.0 + 0.5 * light) + 0.03
     pixels[..., 3] = 1.0
-    bt.save_jpeg(pixels, OUT / "lightmap.jpg")
+    bt.save_jpeg(pixels, OUT / "textures/lightmap.jpg")
 
 
 def reproject(obj, size):
@@ -897,14 +897,14 @@ def main() -> None:
         objects[name]["limb_order"] = index
         if objects[name] is not root:
             objects[name].parent = root
-    xexport.export(OUT / "level.x", [root], {f"level_{name}": file for name, file in names.items()})
+    xexport.export(OUT / "models/level.x", [root], {f"level_{name}": file for name, file in names.items()})
 
     lamps, panels, screens = build_lamps(layout)
     lamp_obj = simple_mesh("lamps", lamps.limbs["lamp"], material("lamp"))
     screen_obj = simple_mesh("screens", lamps.limbs["screen"], material("screen"))
     screen_obj.parent = lamp_obj
     screen_obj["limb_order"] = 1
-    xexport.export(OUT / "lamps.x", [lamp_obj], {"lamp": "lamp.jpg", "screen": "screen.jpg"})
+    xexport.export(OUT / "models/lamps.x", [lamp_obj], {"lamp": "lamp.jpg", "screen": "screen.jpg"})
     bpy.data.objects.remove(lamp_obj)
     bpy.data.objects.remove(screen_obj)
     bake_lightmap(layout, objects, panels, screens)
@@ -912,13 +912,13 @@ def main() -> None:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     hull, parts, rest = build_drone()
     animate_drone(parts, rest)
-    xexport.export(OUT / "drone.x", [hull], {"drone": "drone.jpg", "drone_eye": "eye.jpg", "drone_jet": "plasma.jpg"},
+    xexport.export(OUT / "models/drone.x", [hull], {"drone": "drone.jpg", "drone_eye": "eye.jpg", "drone_jet": "plasma.jpg"},
                    (0, CLIPS["die"][1]))
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    xexport.export(OUT / "rifle.x", [build_rifle()], {"rifle": "rifle.jpg", "rifle_cell": "plasma.jpg"})
+    xexport.export(OUT / "models/rifle.x", [build_rifle()], {"rifle": "rifle.jpg", "rifle_cell": "plasma.jpg"})
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    xexport.export(OUT / "valve.x", [build_valve()], {"valve": "valve.jpg", "valve_pipe": "machine.jpg"})
+    xexport.export(OUT / "models/valve.x", [build_valve()], {"valve": "valve.jpg", "valve_pipe": "machine.jpg"})
 
 
 if __name__ == "__main__":

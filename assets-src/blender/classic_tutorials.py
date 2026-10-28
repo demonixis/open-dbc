@@ -20,7 +20,7 @@ import bake_textures as bt  # noqa: E402
 from frost_outpost import part  # noqa: E402
 from wave_racer import build_buoy, build_lighthouse, build_rider, build_scooter  # noqa: E402
 
-WAVE = bt.ROOT / "examples/dbc/demos/wave_racer"
+WAVE = bt.ROOT / "examples/dbc/demos/wave_racer/textures"
 TUTORIALS = bt.ROOT / "examples/dbc/tutorials"
 
 

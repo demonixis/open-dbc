@@ -36,12 +36,12 @@ gosub build_weapon
 gosub build_hud
 gosub build_imps
 
-load sound "pulse.wav", 1
-load sound "impact.wav", 2
-load sound "shatter.wav", 3
-load sound "punch.wav", 4
-load sound "wind.wav", 5
-load 3dsound "howl.wav", 6
+load sound "sounds/pulse.wav", 1
+load sound "sounds/impact.wav", 2
+load sound "sounds/shatter.wav", 3
+load sound "sounds/punch.wav", 4
+load sound "sounds/wind.wav", 5
+load 3dsound "sounds/howl.wav", 6
 loop sound 5
 
 px# = 0.0 : pz# = -90.0 : yaw# = 0.0 : pitch# = 0.0
@@ -122,7 +122,7 @@ loop
 rem ------------------------------------------------------------------
 rem Rolling hills from a few sine waves, textured from a 2 x 2 atlas
 build_terrain:
-   load bitmap "terrain.jpg", 1
+   load bitmap "textures/terrain.jpg", 1
    get image 1, 0, 0, 2048, 2048
    delete bitmap 1
    make matrix 1, 1600, 1600, 48, 48
@@ -149,13 +149,13 @@ build_terrain:
 return
 
 build_outpost:
-   load object "outpost.x", 2
+   load object "models/outpost.x", 2
    position object 2, -5, get ground height(1, 795, 800), 0
 return
 
 rem Three cloud layers: ghosted (additive) plains seen from below
 build_sky:
-   load image "clouds.jpg", 3
+   load image "textures/clouds.jpg", 3
    for c = 55 to 57
       make object plain c, 3000, 3000
       texture object c, 3
@@ -169,10 +169,10 @@ return
 
 rem The pulse pistol and its projectile
 build_weapon:
-   load object "pistol.x", 40
+   load object "models/pistol.x", 40
    lock object on 40
    scale object 40, 60, 60, 60
-   load image "pulse.jpg", 4
+   load image "textures/pulse.jpg", 4
    make object sphere 60, 1.6
    texture object 60, 4
    set object 60, 1, 1, 1, 1, 0, 0, 1
@@ -182,8 +182,8 @@ return
 
 rem A compass locked to the screen; black is invisible on ghosted plains
 build_hud:
-   load image "compass.jpg", 5
-   load image "needle.jpg", 6
+   load image "textures/compass.jpg", 5
+   load image "textures/needle.jpg", 6
    make object plain 50, 1.6, 1.6
    texture object 50, 5
    make object plain 51, 1.4, 1.4
@@ -200,18 +200,18 @@ rem Each imp owns a 3D model (20 + i) and an impostor plain (30 + i)
 build_imps:
    imps = 4
    dim impx#(imps) : dim impz#(imps) : dim impstate(imps) : dim imptimer(imps) : dim impclip(imps)
-   load bitmap "impostors.png", 2
+   load bitmap "textures/impostors.png", 2
    for f = 0 to 7
       get image 10 + f, f * 128, 0, f * 128 + 128, 128
    next f
    delete bitmap 2
    for i = 1 to imps
-      load object "imp_idle.x", 20 + i
-      append object "imp_walk.x", 20 + i, walk_start
-      append object "imp_charge.x", 20 + i, charge_start
-      append object "imp_punch.x", 20 + i, punch_start
-      append object "imp_die_a.x", 20 + i, diea_start
-      append object "imp_die_b.x", 20 + i, dieb_start
+      load object "models/imp_idle.x", 20 + i
+      append object "models/imp_walk.x", 20 + i, walk_start
+      append object "models/imp_charge.x", 20 + i, charge_start
+      append object "models/imp_punch.x", 20 + i, punch_start
+      append object "models/imp_die_a.x", 20 + i, diea_start
+      append object "models/imp_die_b.x", 20 + i, dieb_start
       scale object 20 + i, 140, 140, 140
       make object plain 30 + i, 9, 9
       texture object 30 + i, 10
