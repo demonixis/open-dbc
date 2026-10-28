@@ -126,6 +126,10 @@ namespace dbc::studio
             int ZSegments = 10;
             int TilesAcross = 1;
             int TilesDown = 1;
+            // Matrix: vertex heights, (XSegments + 1) per row from Z = 0, and the
+            // FILL MATRIX tile. Empty heights leave the matrix flat at 0.
+            std::vector<float> Heights;
+            int Tile = 1;
 
             // Light
             LightKind Light = LightKind::Point;
@@ -210,6 +214,13 @@ namespace dbc::studio
 
             bool operator==(const SceneDocument&) const = default;
         };
+
+        // Heights a matrix of this node's size holds; MatrixHeights() is empty when
+        // `Heights` does not match it, as after a segment count change.
+        std::size_t MatrixVertexCount(const SceneNode& Node);
+        const std::vector<float>& MatrixHeights(const SceneNode& Node);
+        // The FILL MATRIX tile, kept within the image's tile grid.
+        int MatrixTile(const SceneNode& Node);
 
         // "Level 1" -> "Level_1": a valid BASIC identifier suffix, never empty.
         std::string SanitizeLevelName(const std::string& Name);

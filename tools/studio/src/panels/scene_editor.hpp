@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <functional>
 #include <optional>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -150,6 +151,7 @@ namespace dbc::studio
             void RefreshAssets();
             void ReleaseThumbnails();
             void DrawNewLevelPopup();
+            void DrawMatrixHeights(scene::SceneNode& Node);
             void DrawReadErrors();
 
             SDL_GPUDevice* Gpu_ = nullptr;
@@ -192,6 +194,12 @@ namespace dbc::studio
 
             bool NewLevelRequested_ = false;
             char NewLevelName_[64] = {};
+
+            // Height tool settings, kept across selections like a brush's.
+            float FillHeight_ = 0.0f;
+            int FillTile_ = 1;
+            float HeightRange_ = 10.0f;
+            std::mt19937 Random_{std::random_device{}()};
         };
     } // namespace panels
 

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <utility>
 
 #include <glm/gtc/matrix_inverse.hpp>
@@ -258,9 +260,20 @@ namespace dbc::studio
                 case NodeKind::Light:
                     return {};
                 case NodeKind::Matrix:
+                {
+                    // FNV-1a over the heights: the key stays short for large matrices.
+                    std::uint64_t Hash = 14695981039346656037ull;
+                    for (const float Height : MatrixHeights(Node))
+                    {
+                        std::uint32_t Bits = 0;
+                        std::memcpy(&Bits, &Height, sizeof(Bits));
+                        Hash = (Hash ^ Bits) * 1099511628211ull;
+                    }
                     return "matrix:" + F(Node.Width) + "," + F(Node.Depth) + "," + std::to_string(Node.XSegments) +
                            "," + std::to_string(Node.ZSegments) + "," + std::to_string(Node.TilesAcross) + "," +
-                           std::to_string(Node.TilesDown);
+                           std::to_string(Node.TilesDown) + "," + std::to_string(MatrixTile(Node)) + "," +
+                           std::to_string(Hash);
+                }
                 case NodeKind::Triangle:
                 {
                     std::string Key = "triangle";

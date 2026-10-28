@@ -1,5 +1,6 @@
 #include "scene/scene_document.hpp"
 
+#include <algorithm>
 #include <cctype>
 
 #include "language/language_catalogue.hpp"
@@ -143,6 +144,24 @@ namespace dbc::studio
                 Node.Position = glm::vec3(0.0f, 50.0f, 0.0f);
             Nodes.push_back(std::move(Node));
             return Nodes.back();
+        }
+
+        std::size_t MatrixVertexCount(const SceneNode& Node)
+        {
+            return static_cast<std::size_t>(std::max(1, Node.XSegments) + 1) *
+                   static_cast<std::size_t>(std::max(1, Node.ZSegments) + 1);
+        }
+
+        const std::vector<float>& MatrixHeights(const SceneNode& Node)
+        {
+            static const std::vector<float> KFlat;
+            return Node.Heights.size() == MatrixVertexCount(Node) ? Node.Heights : KFlat;
+        }
+
+        int MatrixTile(const SceneNode& Node)
+        {
+            const int Tiles = Node.Mat.Texture.empty() ? 1 : std::max(1, Node.TilesAcross) * std::max(1, Node.TilesDown);
+            return std::clamp(Node.Tile, 1, Tiles);
         }
 
         std::string SanitizeLevelName(const std::string& Name)

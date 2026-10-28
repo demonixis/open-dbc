@@ -234,6 +234,36 @@ namespace dbc::studio
                     Out.Command(SymbolId::Command_SetShadowShadingOn, {Id});
             }
 
+            // FILL MATRIX with the most common height, then each height that differs.
+            void WriteMatrixHeights(Emitter& Out, const SceneNode& Node)
+            {
+                const std::vector<float>& Heights = MatrixHeights(Node);
+                const int Tile = MatrixTile(Node);
+                if (Heights.empty() && Tile == 1)
+                    return;
+                float Base = 0.0f;
+                if (!Heights.empty())
+                {
+                    std::map<float, int> Counts;
+                    int Best = 0;
+                    for (const float Height : Heights)
+                        if (const int Count = ++Counts[Height]; Count > Best)
+                        {
+                            Best = Count;
+                            Base = Height;
+                        }
+                }
+                const std::string Id = Integer(Node.Id);
+                Out.Command(SymbolId::Command_FillMatrix, {Id, Number(Base), Integer(Tile)});
+                const int Columns = std::max(1, Node.XSegments) + 1;
+                for (std::size_t Index = 0; Index < Heights.size(); ++Index)
+                    if (Heights[Index] != Base)
+                        Out.Command(SymbolId::Command_SetMatrixHeight,
+                                    {Id, Integer(static_cast<int>(Index) % Columns),
+                                     Integer(static_cast<int>(Index) / Columns), Number(Heights[Index])});
+                Out.Command(SymbolId::Command_UpdateMatrix, {Id});
+            }
+
             void WriteNode(Emitter& Out, const SceneNode& Node, const std::map<std::string, int>& Images,
                            lang::LanguageProfile Profile)
             {
@@ -254,6 +284,7 @@ namespace dbc::studio
                             Out.Command(SymbolId::Command_PrepareMatrixTexture,
                                         {Id, Integer(Images.at(Node.Mat.Texture)), Integer(Node.TilesAcross),
                                          Integer(Node.TilesDown)});
+                        WriteMatrixHeights(Out, Node);
                         if (Node.Position != glm::vec3(0.0f))
                             Out.Vector(SymbolId::Command_PositionMatrix, Node.Id, Node.Position);
                         break;
@@ -776,6 +807,30 @@ namespace dbc::studio
                                 Node->TilesAcross = I(A, 2);
                                 Node->TilesDown = I(A, 3);
                             }
+                            break;
+                        case SymbolId::Command_FillMatrix:
+                            if (SceneNode* Node = Existing(IdSpace::Matrix, I(A, 0)))
+                            {
+                                Node->Heights.assign(MatrixVertexCount(*Node), F(A, 1));
+                                Node->Tile = I(A, 2);
+                            }
+                            break;
+                        case SymbolId::Command_SetMatrixHeight:
+                            if (SceneNode* Node = Existing(IdSpace::Matrix, I(A, 0)))
+                            {
+                                const int X = I(A, 1), Z = I(A, 2);
+                                if (X < 0 || Z < 0 || X > Node->XSegments || Z > Node->ZSegments)
+                                {
+                                    Error(Line_, "SET MATRIX HEIGHT is outside matrix " + Integer(Node->Id));
+                                    break;
+                                }
+                                if (Node->Heights.size() != MatrixVertexCount(*Node))
+                                    Node->Heights.assign(MatrixVertexCount(*Node), 0.0f);
+                                Node->Heights[static_cast<std::size_t>(Z) * (Node->XSegments + 1) + X] = F(A, 3);
+                            }
+                            break;
+                        case SymbolId::Command_UpdateMatrix:
+                            Existing(IdSpace::Matrix, I(A, 0));
                             break;
                         case SymbolId::Command_PositionMatrix:
                             if (SceneNode* Node = Existing(IdSpace::Matrix, I(A, 0)))

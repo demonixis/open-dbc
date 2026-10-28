@@ -75,6 +75,10 @@ namespace
         Ground.TilesAcross = 2;
         Ground.TilesDown = 2;
         Ground.Position = {-500.0f, 0.0f, -400.0f};
+        Ground.Heights.assign(scene::MatrixVertexCount(Ground), 5.0f);
+        Ground.Heights[0] = 0.0f;
+        Ground.Heights[22] = 12.5f;
+        Ground.Tile = 3;
 
         scene::SceneNode& Lamp = Document.Add(scene::NodeKind::Light);
         Lamp.Light = scene::LightKind::Spot;
@@ -173,6 +177,11 @@ TEST_CASE("Scene levels share one image per texture and use the reserved numbers
     CHECK(Text.find("SET OBJECT 1000, 0, 1, 1, 1, 1, 1, 1") != std::string::npos);
     CHECK(Text.find("AUTOCAM OFF") < Text.find("MAKE OBJECT CUBE"));
     CHECK(Text.find("POSITION CAMERA") > Text.find("MAKE MATRIX"));
+    // Matrix heights: the most common one fills, the others follow, then the update.
+    CHECK(Text.find("FILL MATRIX 1, 5, 3\n") != std::string::npos);
+    CHECK(Text.find("SET MATRIX HEIGHT 1, 0, 0, 0\n") != std::string::npos);
+    CHECK(Text.find("SET MATRIX HEIGHT 1, 1, 1, 12.5\n") != std::string::npos);
+    CHECK(Text.find("UPDATE MATRIX 1\n") > Text.find("SET MATRIX HEIGHT 1, 1, 1"));
     CHECK(Text.find("SET OBJECT SPECULAR") == std::string::npos);
 }
 

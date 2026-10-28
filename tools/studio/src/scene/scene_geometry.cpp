@@ -87,16 +87,27 @@ namespace dbc::studio
                 CpuMesh Mesh;
                 const int Xs = std::max(1, Node.XSegments), Zs = std::max(1, Node.ZSegments);
                 const float Sx = Node.Width / static_cast<float>(Xs), Sz = Node.Depth / static_cast<float>(Zs);
-                // After PREPARE MATRIX TEXTURE every tile shows image tile 1.
-                const float U1 = 1.0f / static_cast<float>(std::max(1, Node.TilesAcross));
-                const float V1 = 1.0f / static_cast<float>(std::max(1, Node.TilesDown));
+                const std::vector<float>& Heights = MatrixHeights(Node);
+                const auto Point = [&](int X, int Z)
+                {
+                    const float Height =
+                        Heights.empty() ? 0.0f : Heights[static_cast<std::size_t>(Z) * (Xs + 1) + X];
+                    return glm::vec3(X * Sx, Height, Z * Sz);
+                };
+                // Every tile shows the FILL MATRIX tile of the PREPARE MATRIX TEXTURE grid.
+                const int Across = std::max(1, Node.TilesAcross), Down = std::max(1, Node.TilesDown);
+                const int Tile = MatrixTile(Node) - 1;
+                const float U0 = static_cast<float>(Tile % Across) / Across;
+                const float U1 = static_cast<float>(Tile % Across + 1) / Across;
+                const float VTop = static_cast<float>(Tile / Across) / Down;
+                const float VBottom = static_cast<float>(Tile / Across + 1) / Down;
                 for (int Z = 0; Z < Zs; ++Z)
                     for (int X = 0; X < Xs; ++X)
                     {
-                        const glm::vec3 P00{X * Sx, 0.0f, Z * Sz}, P10{(X + 1) * Sx, 0.0f, Z * Sz},
-                            P11{(X + 1) * Sx, 0.0f, (Z + 1) * Sz}, P01{X * Sx, 0.0f, (Z + 1) * Sz};
-                        AddTriangle(Mesh, P00, P10, P11, {0.0f, V1}, {U1, V1}, {U1, 0.0f});
-                        AddTriangle(Mesh, P00, P11, P01, {0.0f, V1}, {U1, 0.0f}, {0.0f, 0.0f});
+                        const glm::vec3 P00 = Point(X, Z), P10 = Point(X + 1, Z), P11 = Point(X + 1, Z + 1),
+                                        P01 = Point(X, Z + 1);
+                        AddTriangle(Mesh, P00, P10, P11, {U0, VBottom}, {U1, VBottom}, {U1, VTop});
+                        AddTriangle(Mesh, P00, P11, P01, {U0, VBottom}, {U1, VTop}, {U0, VTop});
                     }
                 FaceUp(Mesh);
                 return Mesh;

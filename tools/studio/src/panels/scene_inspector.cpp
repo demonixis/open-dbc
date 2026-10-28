@@ -7,6 +7,7 @@
 #include <cstring>
 
 #include "core/media_catalogue.hpp"
+#include "theme.hpp"
 
 namespace dbc::studio
 {
@@ -217,6 +218,7 @@ namespace dbc::studio
                     ImGui::DragFloat("Depth", &Node->Depth, 1.0f, 0.01f, 100000.0f);
                     ImGui::DragInt("Tiles across", &Node->XSegments, 0.2f, 1, 256);
                     ImGui::DragInt("Tiles down", &Node->ZSegments, 0.2f, 1, 256);
+                    DrawMatrixHeights(*Node);
                     break;
                 case scene::NodeKind::Light:
                 {
@@ -238,6 +240,48 @@ namespace dbc::studio
             if (!IsLight)
                 DrawMaterial(*Node);
             ImGui::EndDisabled();
+        }
+
+        void SceneEditor::DrawMatrixHeights(scene::SceneNode& Node)
+        {
+            Heading("Heights");
+            if (!Node.Heights.empty() && scene::MatrixHeights(Node).empty())
+            {
+                // The tile count changed: the old heights no longer fit.
+                ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error),
+                                   "The heights no longer fit this matrix.");
+                if (ImGui::Button("Flatten"))
+                    Node.Heights.clear();
+            }
+
+            const int TileCount =
+                Node.Mat.Texture.empty() ? 1 : std::max(1, Node.TilesAcross) * std::max(1, Node.TilesDown);
+            ImGui::DragFloat("Fill height", &FillHeight_, 0.25f);
+            ImGui::BeginDisabled(TileCount == 1);
+            ImGui::SliderInt("Fill tile", &FillTile_, 1, std::max(2, TileCount));
+            ImGui::EndDisabled();
+            FillTile_ = std::clamp(FillTile_, 1, TileCount);
+            if (ImGui::Button("Fill"))
+            {
+                Node.Heights.assign(scene::MatrixVertexCount(Node), FillHeight_);
+                Node.Tile = FillTile_;
+            }
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("FILL MATRIX: every height to Fill height, every tile to Fill tile");
+
+            ImGui::DragFloat("Height range", &HeightRange_, 0.25f, 0.0f, 100000.0f);
+            if (ImGui::Button("Randomize"))
+            {
+                // RANDOMIZE MATRIX draws whole heights from 0 to the range, excluded.
+                const int Maximum = static_cast<int>(HeightRange_);
+                std::uniform_int_distribution<int> Distribution(0, std::max(0, Maximum - 1));
+                Node.Heights.resize(scene::MatrixVertexCount(Node));
+                for (float& Height : Node.Heights)
+                    Height = static_cast<float>(Distribution(Random_));
+            }
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("RANDOMIZE MATRIX: random whole heights below the range");
+            ImGui::TextDisabled("The heights are saved in the level, so every run shows this matrix.");
         }
 
         void SceneEditor::DrawMaterial(scene::SceneNode& Node)
