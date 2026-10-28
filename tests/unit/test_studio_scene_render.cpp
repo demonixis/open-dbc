@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <random>
 #include <string>
 #include <vector>
@@ -19,6 +20,65 @@
 using dbc::language::LanguageProfile;
 
 using namespace dbc::studio;
+
+namespace
+{
+    // Records the prepared frame and reads the colour target back as RGBA8; empty on failure.
+    std::vector<Uint8> DrawPixels(SDL_GPUDevice* Gpu, scene::SceneRenderer& Renderer, SDL_GPUTexture* Target,
+                                  int Size)
+    {
+        SDL_GPUTransferBufferCreateInfo TransferInfo = {};
+        TransferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD;
+        TransferInfo.size = static_cast<Uint32>(Size * Size * 4);
+        SDL_GPUTransferBuffer* Download = SDL_CreateGPUTransferBuffer(Gpu, &TransferInfo);
+        SDL_GPUCommandBuffer* Commands = SDL_AcquireGPUCommandBuffer(Gpu);
+        if (Download == nullptr || Commands == nullptr)
+            return {};
+        Renderer.Record(Commands);
+        SDL_GPUCopyPass* Copy = SDL_BeginGPUCopyPass(Commands);
+        SDL_GPUTextureRegion From = {};
+        From.texture = Target;
+        From.w = static_cast<Uint32>(Size);
+        From.h = static_cast<Uint32>(Size);
+        From.d = 1;
+        SDL_GPUTextureTransferInfo To = {};
+        To.transfer_buffer = Download;
+        SDL_DownloadFromGPUTexture(Copy, &From, &To);
+        SDL_EndGPUCopyPass(Copy);
+        SDL_GPUFence* Fence = SDL_SubmitGPUCommandBufferAndAcquireFence(Commands);
+        const bool Done = Fence != nullptr && SDL_WaitForGPUFences(Gpu, true, &Fence, 1);
+        if (Fence != nullptr)
+            SDL_ReleaseGPUFence(Gpu, Fence);
+        std::vector<Uint8> Pixels;
+        if (Done)
+        {
+            Pixels.resize(TransferInfo.size);
+            std::memcpy(Pixels.data(), SDL_MapGPUTransferBuffer(Gpu, Download, false), Pixels.size());
+            SDL_UnmapGPUTransferBuffer(Gpu, Download);
+        }
+        SDL_ReleaseGPUTransferBuffer(Gpu, Download);
+        return Pixels;
+    }
+
+    // Two quads facing -Z: the left one textured by its material, the right one red.
+    void WriteTexturedModel(const std::filesystem::path& Folder)
+    {
+        std::filesystem::create_directories(Folder / "Textures");
+        SDL_Surface* Green = SDL_CreateSurface(4, 4, SDL_PIXELFORMAT_RGBA32);
+        REQUIRE(Green != nullptr);
+        SDL_FillSurfaceRect(Green, nullptr, SDL_MapSurfaceRGBA(Green, 0, 255, 0, 255));
+        REQUIRE(IMG_SavePNG(Green, (Folder / "Textures/grass.png").string().c_str()));
+        SDL_DestroySurface(Green);
+        std::ofstream(Folder / "pair.mtl") << "newmtl Grass\nKd 1 1 1\nmap_Kd textures\\GRASS.png\n"
+                                              "newmtl Red\nKd 1 0 0\n";
+        std::ofstream(Folder / "pair.obj") << "mtllib pair.mtl\n"
+                                              "v -40 -20 0\nv -5 -20 0\nv -5 20 0\nv -40 20 0\n"
+                                              "v 5 -20 0\nv 40 -20 0\nv 40 20 0\nv 5 20 0\n"
+                                              "vt 0 0\nvt 1 0\nvt 1 1\nvt 0 1\n"
+                                              "usemtl Grass\nf 1/1 2/2 3/3 4/4\n"
+                                              "usemtl Red\nf 5/1 6/2 7/3 8/4\n";
+    }
+} // namespace
 
 TEST_CASE("Scene rotations decompose back to the angles ROTATE OBJECT takes")
 {
@@ -180,32 +240,8 @@ TEST_CASE("The Scene renderer draws a lit, textured level offscreen")
     // Add() may move the nodes, so look the crate up again.
     REQUIRE(Renderer.Mesh(Document.Nodes.front()) != nullptr);
 
-    SDL_GPUTransferBufferCreateInfo TransferInfo = {};
-    TransferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD;
-    TransferInfo.size = KSize * KSize * 4;
-    SDL_GPUTransferBuffer* Download = SDL_CreateGPUTransferBuffer(Gpu, &TransferInfo);
-    SDL_GPUCommandBuffer* Commands = SDL_AcquireGPUCommandBuffer(Gpu);
-    REQUIRE(Commands != nullptr);
-    Renderer.Record(Commands);
-    SDL_GPUCopyPass* Copy = SDL_BeginGPUCopyPass(Commands);
-    SDL_GPUTextureRegion From = {};
-    From.texture = Target;
-    From.w = KSize;
-    From.h = KSize;
-    From.d = 1;
-    SDL_GPUTextureTransferInfo To = {};
-    To.transfer_buffer = Download;
-    SDL_DownloadFromGPUTexture(Copy, &From, &To);
-    SDL_EndGPUCopyPass(Copy);
-    SDL_GPUFence* Fence = SDL_SubmitGPUCommandBufferAndAcquireFence(Commands);
-    REQUIRE(Fence != nullptr);
-    REQUIRE(SDL_WaitForGPUFences(Gpu, true, &Fence, 1));
-    SDL_ReleaseGPUFence(Gpu, Fence);
-
-    std::vector<Uint8> Pixels(KSize * KSize * 4);
-    std::memcpy(Pixels.data(), SDL_MapGPUTransferBuffer(Gpu, Download, false), Pixels.size());
-    SDL_UnmapGPUTransferBuffer(Gpu, Download);
-    SDL_ReleaseGPUTransferBuffer(Gpu, Download);
+    std::vector<Uint8> Pixels = DrawPixels(Gpu, Renderer, Target, KSize);
+    REQUIRE(Pixels.size() == KSize * KSize * 4);
 
     const auto At = [&](int X, int Y) { return &Pixels[(static_cast<std::size_t>(Y) * KSize + X) * 4]; };
     // The backdrop shows in a corner; the crate covers the middle and is not flat.
@@ -234,6 +270,74 @@ TEST_CASE("The Scene renderer draws a lit, textured level offscreen")
     Renderer.Shutdown();
     SDL_DestroyGPUDevice(Gpu);
     SDL_Quit();
+}
+
+TEST_CASE("Scene models keep their materials' textures and colours")
+{
+    const std::filesystem::path Folder = std::filesystem::temp_directory_path() / "opendbc-scene-model-test";
+    std::error_code Ignored;
+    std::filesystem::remove_all(Folder, Ignored);
+    WriteTexturedModel(Folder / "models");
+
+    scene::CpuMesh Mesh;
+    std::string Error;
+    REQUIRE_MESSAGE(scene::LoadModelMesh(Folder / "models/pair.obj", Mesh, Error), Error);
+    REQUIRE(Mesh.Parts.size() == 2);
+    std::size_t Covered = 0;
+    for (const scene::MeshPart& Part : Mesh.Parts)
+        Covered += Part.Count;
+    CHECK(Covered == Mesh.Vertices.size());
+    const auto Textured = std::find_if(Mesh.Parts.begin(), Mesh.Parts.end(),
+                                       [](const scene::MeshPart& Part) { return !Part.Texture.empty(); });
+    REQUIRE(Textured != Mesh.Parts.end());
+    // The name as the material writes it; the renderer resolves its folder and case.
+    CHECK(Textured->Texture == "textures/GRASS.png");
+
+    REQUIRE(SDL_Init(SDL_INIT_VIDEO));
+    SDL_GPUDevice* Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL, false, nullptr);
+    if (Gpu == nullptr)
+    {
+        const std::string Reason = std::string("No GPU device: ") + SDL_GetError();
+        MESSAGE(Reason);
+        SDL_Quit();
+        std::filesystem::remove_all(Folder, Ignored);
+        return;
+    }
+    scene::SceneRenderer Renderer;
+    REQUIRE_MESSAGE(Renderer.Initialize(Gpu, Error), Error);
+    constexpr int KSize = 128;
+    SDL_GPUTexture* Target = Renderer.Target(KSize, KSize);
+    REQUIRE(Target != nullptr);
+
+    // Dropped from the assets panel: the node names the model and nothing else.
+    scene::SceneDocument Document;
+    Document.Profile = LanguageProfile::Dbc;
+    scene::SceneNode& Model = Document.Add(scene::NodeKind::Model);
+    Model.Asset = "models/pair.obj";
+    Model.Mat.Flags.Lighting = false;
+    scene::ViewParameters View;
+    View.Eye = glm::vec3(0.0f, 0.0f, -100.0f);
+    View.View = glm::lookAt(View.Eye, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    View.Projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.5f, 2000.0f);
+    Renderer.Prepare(Document, View, Folder, {});
+    CHECK(Renderer.TakeErrors().empty());
+    const std::vector<Uint8> Pixels = DrawPixels(Gpu, Renderer, Target, KSize);
+    REQUIRE(Pixels.size() == KSize * KSize * 4);
+
+    int Green = 0, Red = 0;
+    for (int Index = 0; Index < KSize * KSize; ++Index)
+    {
+        const Uint8* Pixel = &Pixels[static_cast<std::size_t>(Index) * 4];
+        Green += Pixel[1] > 200 && Pixel[0] < 50 && Pixel[2] < 50;
+        Red += Pixel[0] > 200 && Pixel[1] < 50 && Pixel[2] < 50;
+    }
+    CHECK(Green > 100);
+    CHECK(Red > 100);
+
+    Renderer.Shutdown();
+    SDL_DestroyGPUDevice(Gpu);
+    SDL_Quit();
+    std::filesystem::remove_all(Folder, Ignored);
 }
 
 TEST_CASE("Generated terrain heightmaps load back as the heights they were made for")

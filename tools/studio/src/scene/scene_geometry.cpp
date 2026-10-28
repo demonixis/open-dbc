@@ -2,10 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
+#include <unordered_map>
 
 #include <SDL3_image/SDL_image.h>
 #include <assimp/Importer.hpp>
+#include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <utility>
@@ -42,6 +45,90 @@ namespace dbc::studio
 
             // An engine mesh as a triangle list. Meshes without normals get the
             // engine's render-time face normals; `Flip` reverses the winding.
+            // A texture inside the model: compressed file bytes when mHeight is 0, raw texels otherwise.
+            bool DecodeEmbedded(const aiTexture& Texture, ModelImage& Out)
+            {
+                if (Texture.mHeight == 0)
+                {
+                    SDL_IOStream* Io = SDL_IOFromConstMem(Texture.pcData, Texture.mWidth);
+                    SDL_Surface* Loaded = Io != nullptr ? IMG_Load_IO(Io, true) : nullptr;
+                    SDL_Surface* Pixels = Loaded != nullptr ? SDL_ConvertSurface(Loaded, SDL_PIXELFORMAT_RGBA32) : nullptr;
+                    if (Loaded != nullptr)
+                        SDL_DestroySurface(Loaded);
+                    if (Pixels == nullptr)
+                        return false;
+                    Out.Width = Pixels->w;
+                    Out.Height = Pixels->h;
+                    Out.Rgba.resize(static_cast<std::size_t>(Out.Width) * Out.Height * 4);
+                    for (int Y = 0; Y < Out.Height; ++Y)
+                        std::memcpy(&Out.Rgba[static_cast<std::size_t>(Y) * Out.Width * 4],
+                                    static_cast<const std::uint8_t*>(Pixels->pixels) +
+                                        static_cast<std::size_t>(Y) * Pixels->pitch,
+                                    static_cast<std::size_t>(Out.Width) * 4);
+                    SDL_DestroySurface(Pixels);
+                    return Out.Width > 0 && Out.Height > 0;
+                }
+                Out.Width = static_cast<int>(Texture.mWidth);
+                Out.Height = static_cast<int>(Texture.mHeight);
+                const std::size_t Count = static_cast<std::size_t>(Texture.mWidth) * Texture.mHeight;
+                Out.Rgba.resize(Count * 4);
+                for (std::size_t Index = 0; Index < Count; ++Index)
+                {
+                    const aiTexel& Texel = Texture.pcData[Index];
+                    std::uint8_t* Pixel = &Out.Rgba[Index * 4];
+                    Pixel[0] = Texel.r;
+                    Pixel[1] = Texel.g;
+                    Pixel[2] = Texel.b;
+                    Pixel[3] = Texel.a;
+                }
+                return Count != 0;
+            }
+
+            // ObjectManager::LoadObject's material read: the diffuse colour and the
+            // first texture found in its search order.
+            void ReadMaterial(const aiScene& Scene, const aiMaterial& Material, MeshPart& Part,
+                              std::vector<ModelImage>& Images, std::unordered_map<std::string, int>& Embedded)
+            {
+                aiColor4D Diffuse(1.0f, 1.0f, 1.0f, 1.0f);
+                if (Material.Get(AI_MATKEY_COLOR_DIFFUSE, Diffuse) == aiReturn_SUCCESS)
+                    Part.Color = glm::vec4(Diffuse.r, Diffuse.g, Diffuse.b, Diffuse.a);
+                static constexpr aiTextureType KSearchOrder[] = {
+                    aiTextureType_DIFFUSE, aiTextureType_BASE_COLOR, aiTextureType_EMISSIVE,
+                    aiTextureType_NORMALS, aiTextureType_HEIGHT,     aiTextureType_SPECULAR,
+                    aiTextureType_AMBIENT, aiTextureType_UNKNOWN,
+                };
+                for (aiTextureType Type : KSearchOrder)
+                {
+                    aiString Name;
+                    if (Material.GetTextureCount(Type) == 0 || Material.GetTexture(Type, 0, &Name) != aiReturn_SUCCESS)
+                        continue;
+                    std::string Texture = Name.C_Str();
+                    std::replace(Texture.begin(), Texture.end(), '\\', '/');
+                    if (Texture.empty())
+                        continue;
+                    if (Texture.front() != '*')
+                    {
+                        // Resolved by the renderer, which knows the project's folder.
+                        Part.Texture = std::move(Texture);
+                        return;
+                    }
+                    if (const auto Found = Embedded.find(Texture); Found != Embedded.end())
+                    {
+                        Part.Image = Found->second;
+                        return;
+                    }
+                    const aiTexture* Source = Scene.GetEmbeddedTexture(Texture.c_str());
+                    ModelImage Image;
+                    if (Source != nullptr && DecodeEmbedded(*Source, Image))
+                    {
+                        Part.Image = static_cast<int>(Images.size());
+                        Images.push_back(std::move(Image));
+                        Embedded.emplace(std::move(Texture), Part.Image);
+                        return;
+                    }
+                }
+            }
+
             CpuMesh FromEngine(const dbc::Mesh& Source, bool Flip = false)
             {
                 CpuMesh Mesh;
@@ -223,9 +310,15 @@ namespace dbc::studio
                 return false;
             }
             Out = {};
-            for (unsigned int MeshIndex = 0; MeshIndex < Imported.Scene->mNumMeshes; ++MeshIndex)
+            const aiScene& Scene = *Imported.Scene;
+            std::unordered_map<std::string, int> Embedded;
+            for (unsigned int MeshIndex = 0; MeshIndex < Scene.mNumMeshes; ++MeshIndex)
             {
-                const aiMesh& Mesh = *Imported.Scene->mMeshes[MeshIndex];
+                const aiMesh& Mesh = *Scene.mMeshes[MeshIndex];
+                MeshPart Part;
+                Part.First = Out.Vertices.size();
+                if (Mesh.mMaterialIndex < Scene.mNumMaterials && Scene.mMaterials[Mesh.mMaterialIndex] != nullptr)
+                    ReadMaterial(Scene, *Scene.mMaterials[Mesh.mMaterialIndex], Part, Out.Images, Embedded);
                 for (unsigned int FaceIndex = 0; FaceIndex < Mesh.mNumFaces; ++FaceIndex)
                 {
                     const aiFace& Face = Mesh.mFaces[FaceIndex];
@@ -243,6 +336,9 @@ namespace dbc::studio
                         Out.Vertices.push_back(Vertex);
                     }
                 }
+                Part.Count = Out.Vertices.size() - Part.First;
+                if (Part.Count != 0)
+                    Out.Parts.push_back(std::move(Part));
             }
             ComputeBounds(Out);
             if (Out.Vertices.empty())

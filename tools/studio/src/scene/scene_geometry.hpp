@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -25,10 +27,32 @@ namespace dbc::studio
             glm::vec2 Uv{0.0f};
         };
 
+        // A texture stored inside a model file, decoded to RGBA8.
+        struct ModelImage
+        {
+            int Width = 0;
+            int Height = 0;
+            std::vector<std::uint8_t> Rgba;
+        };
+
+        // A run of a model's vertices sharing one imported material, as LOAD OBJECT
+        // keeps it per mesh.
+        struct MeshPart
+        {
+            std::size_t First = 0;
+            std::size_t Count = 0;
+            glm::vec4 Color{1.0f}; // the diffuse colour, shown where no texture applies
+            std::string Texture;   // a file named by the material, as written there
+            int Image = -1;        // or an index into CpuMesh::Images
+        };
+
         // A triangle list in the node's local space.
         struct CpuMesh
         {
             std::vector<MeshVertex> Vertices;
+            // Models only; a mesh without parts draws as one untextured run.
+            std::vector<MeshPart> Parts;
+            std::vector<ModelImage> Images;
             glm::vec3 Min{0.0f};
             glm::vec3 Max{0.0f};
         };
@@ -39,7 +63,8 @@ namespace dbc::studio
 
         // Primitives and matrices; empty for models and terrains, which need files.
         CpuMesh BuildMesh(const SceneNode& Node, dbc::language::LanguageProfile Profile);
-        // LOAD OBJECT through Assimp, with the engine's left-handed conversion.
+        // LOAD OBJECT through Assimp, with the engine's left-handed conversion and
+        // each mesh's first material texture in its search order.
         bool LoadModelMesh(const std::filesystem::path& Path, CpuMesh& Out, std::string& Error);
         // MAKE TERRAIN: one vertex per pixel, growing toward -Z from the position.
         bool LoadTerrainMesh(const std::filesystem::path& Heightmap, CpuMesh& Out, std::string& Error);

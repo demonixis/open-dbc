@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/trigonometric.hpp>
 
+#include "engine/engine_math.hpp"
 #include "scene_shaders.inc"
 
 namespace dbc::studio
@@ -186,8 +187,7 @@ namespace dbc::studio
             if (Gpu_ == nullptr)
                 return;
             for (auto& [Key, Entry] : Geometry_)
-                if (Entry.Buffer != nullptr)
-                    SDL_ReleaseGPUBuffer(Gpu_, Entry.Buffer);
+                Release(Entry);
             Geometry_.clear();
             for (auto& [Key, Image] : Textures_)
                 core::ReleaseGpuImage(Gpu_, Image);
@@ -317,6 +317,7 @@ namespace dbc::studio
             if (Node.Kind == NodeKind::Model || Node.Kind == NodeKind::Terrain)
             {
                 const std::filesystem::path Path = AssetRoot / Node.Asset;
+                Entry.Folder = Path.parent_path();
                 std::string Error;
                 const bool Loaded = !Node.Asset.empty() && (Node.Kind == NodeKind::Model
                                                                 ? LoadModelMesh(Path, Entry.Mesh, Error)
@@ -355,6 +356,57 @@ namespace dbc::studio
                 return nullptr;
             }
             return Textures_.emplace(Key, Image).first->second.Texture;
+        }
+
+        SDL_GPUTexture* SceneRenderer::PartTexture(Geometry& Entry, const MeshPart& Part,
+                                                   const std::filesystem::path& AssetRoot)
+        {
+            if (Part.Image >= 0)
+            {
+                if (Entry.Images.empty())
+                {
+                    Entry.Images.resize(Entry.Mesh.Images.size());
+                    for (std::size_t Index = 0; Index < Entry.Images.size(); ++Index)
+                    {
+                        ModelImage& Source = Entry.Mesh.Images[Index];
+                        SDL_Surface* Surface = SDL_CreateSurfaceFrom(Source.Width, Source.Height,
+                                                                     SDL_PIXELFORMAT_RGBA32, Source.Rgba.data(),
+                                                                     Source.Width * 4);
+                        std::string Error;
+                        if (Surface == nullptr || !core::UploadGpuImage(Gpu_, Surface, Entry.Images[Index], Error))
+                            Errors_.push_back("Scene preview: cannot upload a model's embedded texture: " +
+                                              (Surface == nullptr ? std::string(SDL_GetError()) : Error));
+                        if (Surface != nullptr)
+                            SDL_DestroySurface(Surface);
+                        // The GPU copy is all the preview needs from now on.
+                        Source.Rgba = {};
+                    }
+                }
+                const std::size_t Index = static_cast<std::size_t>(Part.Image);
+                return Index < Entry.Images.size() ? Entry.Images[Index].Texture : nullptr;
+            }
+            if (Part.Texture.empty())
+                return nullptr;
+            // LOAD OBJECT looks next to the model, then in the media folder; names in
+            // old model files often disagree with the files' case.
+            const std::filesystem::path Name(Part.Texture);
+            for (const std::filesystem::path& Base : {Entry.Folder, AssetRoot})
+            {
+                std::filesystem::path Resolved;
+                if (dbc::ResolveCaseInsensitivePath(Resolved, Base, Name) && !Resolved.empty())
+                    return FindTexture(Resolved);
+            }
+            return nullptr;
+        }
+
+        void SceneRenderer::Release(Geometry& Entry)
+        {
+            if (Entry.Buffer != nullptr)
+                SDL_ReleaseGPUBuffer(Gpu_, Entry.Buffer);
+            Entry.Buffer = nullptr;
+            for (core::GpuImage& Image : Entry.Images)
+                core::ReleaseGpuImage(Gpu_, Image);
+            Entry.Images.clear();
         }
 
         const CpuMesh* SceneRenderer::Mesh(const SceneNode& Node) const
@@ -428,8 +480,9 @@ namespace dbc::studio
                 if (IsMarker(Node.Kind))
                     continue;
                 DrawItem Item;
-                Item.Mesh = &FindGeometry(Node, Document, AssetRoot);
-                if (Item.Mesh->Mesh.Vertices.empty())
+                Geometry& Entry = FindGeometry(Node, Document, AssetRoot);
+                Item.Mesh = &Entry;
+                if (Entry.Mesh.Vertices.empty())
                     continue;
                 Item.Vertex.ViewProj = ViewProj_;
                 Item.Vertex.World = NodeWorld(Node);
@@ -454,7 +507,26 @@ namespace dbc::studio
                 Item.Fragment.Flags.x = Item.Texture != nullptr ? 1.0f : 0.0f;
                 Item.Blend = Mat.Ghost;
                 Item.Wireframe = Mat.Flags.Wireframe;
-                Items_.push_back(Item);
+                Item.Count = static_cast<Uint32>(Entry.Mesh.Vertices.size());
+                if (Entry.Mesh.Parts.empty())
+                {
+                    Items_.push_back(Item);
+                    continue;
+                }
+                // A model draws mesh by mesh with its own textures, unless TEXTURE OBJECT
+                // replaces them all; an untextured mesh keeps its diffuse colour.
+                for (const MeshPart& Part : Entry.Mesh.Parts)
+                {
+                    DrawItem Piece = Item;
+                    Piece.First = static_cast<Uint32>(Part.First);
+                    Piece.Count = static_cast<Uint32>(Part.Count);
+                    if (Piece.Texture == nullptr)
+                        Piece.Texture = PartTexture(Entry, Part, AssetRoot);
+                    Piece.Fragment.Flags.x = Piece.Texture != nullptr ? 1.0f : 0.0f;
+                    if (Piece.Texture == nullptr)
+                        Piece.Fragment.BaseColor *= glm::vec4(glm::vec3(Part.Color), 1.0f);
+                    Items_.push_back(Piece);
+                }
             }
             // Ghosts last, so what is behind them is already drawn.
             std::stable_partition(Items_.begin(), Items_.end(), [](const DrawItem& Item) { return !Item.Blend; });
@@ -466,8 +538,7 @@ namespace dbc::studio
                     ++Entry;
                     continue;
                 }
-                if (Entry->second.Buffer != nullptr)
-                    SDL_ReleaseGPUBuffer(Gpu_, Entry->second.Buffer);
+                Release(Entry->second);
                 Entry = Geometry_.erase(Entry);
             }
             Pending_ = true;
@@ -567,7 +638,7 @@ namespace dbc::studio
                 SDL_BindGPUFragmentSamplers(Pass, 0, &Binding, 1);
                 const SDL_GPUBufferBinding Buffer = {Item.Mesh->Buffer, 0};
                 SDL_BindGPUVertexBuffers(Pass, 0, &Buffer, 1);
-                SDL_DrawGPUPrimitives(Pass, static_cast<Uint32>(Item.Mesh->Mesh.Vertices.size()), 1, 0, 0);
+                SDL_DrawGPUPrimitives(Pass, Item.Count, 1, Item.First, 0);
             }
             if (HasLines)
             {
