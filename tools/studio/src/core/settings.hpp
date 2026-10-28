@@ -19,6 +19,16 @@ namespace dbc::studio
             bool DebugOverlay = false;
             std::map<std::string, std::string> ProjectPathRemappings;
 
+            // External tools for exports. Empty JDK and SDK paths mean automatic detection.
+            std::string JavaHome;
+            std::string AndroidSdk;
+            std::string MacSigningIdentity;
+            std::string NotaryProfile;
+            std::string WindowsCertificate;
+            std::string WindowsTimestampUrl = "http://timestamp.digicert.com";
+            // Last export folder per project root; absolute local paths belong to this machine, not the project.
+            std::map<std::string, std::string> ExportFolders;
+
             std::optional<std::filesystem::path> ProjectPathRemapping(const std::filesystem::path& Descriptor,
                                                                       std::string_view RawPath) const;
             void SetProjectPathRemapping(const std::filesystem::path& Descriptor, std::string_view RawPath,

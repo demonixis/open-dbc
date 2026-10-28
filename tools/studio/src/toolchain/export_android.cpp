@@ -217,22 +217,44 @@ namespace dbc::studio
             }
             Manifest.close();
 
-            if (UseSigning && (std::getenv("OPENDBC_ANDROID_KEYSTORE_PASSWORD") == nullptr ||
-                               std::getenv("OPENDBC_ANDROID_KEY_PASSWORD") == nullptr))
+            if (UseSigning &&
+                (Request.Secrets.AndroidKeystorePassword.empty() || Request.Secrets.AndroidKeyPassword.empty()))
             {
-                Result.Error = "Android signing requires OPENDBC_ANDROID_KEYSTORE_PASSWORD and "
-                               "OPENDBC_ANDROID_KEY_PASSWORD";
+                Result.Error = "Android signing requires the keystore and key passwords";
+                return Result;
+            }
+            if (Request.Toolchain.JavaHome.empty() || Request.Toolchain.AndroidSdk.empty())
+            {
+                Result.Error = "Android packaging requires a JDK 17+ and the Android SDK";
+                return Result;
+            }
+            std::ofstream LocalProperties(Project / "local.properties", std::ios::binary | std::ios::trunc);
+            LocalProperties << "sdk.dir=" << PropertyValue(Request.Toolchain.AndroidSdk.generic_string()) << '\n';
+            LocalProperties.close();
+            if (!LocalProperties)
+            {
+                Result.Error = "Cannot write the Android SDK location";
                 return Result;
             }
 
 #if defined(_WIN32)
-            const fs::path Gradle = Project / "gradlew.bat";
+            const fs::path GradleScript = Project / "gradlew.bat";
 #else
-            const fs::path Gradle = Project / "gradlew";
+            const fs::path GradleScript = Project / "gradlew";
 #endif
             const std::string Task = Bundle ? ":app:bundleRelease" : ":app:assembleRelease";
-            if (!Context.Run({Gradle.string(), "-p", Project.string(), "--no-daemon", "--max-workers=2", Task},
-                            Result.Error))
+            ProcessRequest Gradle{{GradleScript.string(), "-p", Project.string(), "--no-daemon", "--max-workers=2", Task},
+                                  {{"JAVA_HOME", Request.Toolchain.JavaHome.string()},
+                                   {"ANDROID_HOME", Request.Toolchain.AndroidSdk.string()}},
+                                  Project};
+            if (UseSigning)
+            {
+                Gradle.Environment.emplace_back("OPENDBC_ANDROID_KEYSTORE_PASSWORD",
+                                                Request.Secrets.AndroidKeystorePassword);
+                Gradle.Environment.emplace_back("OPENDBC_ANDROID_KEY_PASSWORD", Request.Secrets.AndroidKeyPassword);
+            }
+            Context.Note(std::string("Running Gradle ") + Task);
+            if (!Context.Run(Gradle, Result.Error))
                 return Result;
             const fs::path PublishSource =
                 Project / (Bundle ? "app/build/outputs/bundle/release/app-release.aab"

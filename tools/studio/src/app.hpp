@@ -16,6 +16,7 @@
 #include "core/workspace.hpp"
 #include "toolchain/artifact_export_service.hpp"
 #include "toolchain/export_job.hpp"
+#include "toolchain/export_readiness.hpp"
 #include "toolchain/execution_adapter.hpp"
 #include "toolchain/icon_generator.hpp"
 #if !defined(DBC_STUDIO_SANDBOXED)
@@ -25,6 +26,7 @@
 #include "dba/reference.hpp"
 #include "interpreter/project_resolver.hpp"
 #include "panels/asset_preview.hpp"
+#include "panels/build_window.hpp"
 #include "panels/code_panel.hpp"
 #include "panels/editor_panel.hpp"
 #include "panels/launcher_window.hpp"
@@ -85,7 +87,11 @@ namespace dbc::studio
         void RunActiveDocument();
         void RunLauncherPath(const std::filesystem::path& Path);
         void StopRun();
-        void ExportArtifact(toolchain::ArtifactTarget Target);
+        void OpenBuildWindow();
+        void DrawBuildWindow();
+        toolchain::ArtifactExportRequest MakeBuildRequest() const;
+        void RefreshExportChecks();
+        void StartBuild();
         void PollExport();
 
         enum class Mode
@@ -159,6 +165,10 @@ namespace dbc::studio
         toolchain::ExecutionAdapter Execution_;
         toolchain::ExportJob ExportJob_;
         std::filesystem::path LastExport_;
+        panels::BuildWindow BuildWindow_;
+        // Signing passwords for this session only; never saved.
+        toolchain::ExportSecrets ExportSecrets_;
+        std::vector<toolchain::ExportCheck> ExportChecks_;
         toolchain::RunOptions RunOptions_;
         toolchain::IconGenerator IconGenerator_;
 #if !defined(DBC_STUDIO_SANDBOXED)

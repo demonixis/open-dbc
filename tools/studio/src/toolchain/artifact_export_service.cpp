@@ -2,6 +2,8 @@
 #include "core/paths.hpp"
 #include "export_internal.hpp"
 
+#include <SDL3/SDL.h>
+
 #include <system_error>
 #include <utility>
 
@@ -45,7 +47,8 @@ namespace dbc::studio
 
         ArtifactExportRequest MakeArtifactExportRequest(const dbc::interpreter::ResolvedProject& Project,
                                                         core::ProjectSettings Settings, ArtifactTarget Target,
-                                                        const fs::path& OutputDirectory, bool Sign)
+                                                        const fs::path& OutputDirectory, bool Sign,
+                                                        ExportToolchain Toolchain, ExportSecrets Secrets)
         {
             ArtifactExportRequest Request;
             Request.Target = Target;
@@ -66,8 +69,24 @@ namespace dbc::studio
             if (Settings.IconSource.empty())
                 Settings.IconSource = Project.Metadata.Icon;
             Request.Settings = std::move(Settings);
+            Request.Toolchain = std::move(Toolchain);
+            Request.Secrets = std::move(Secrets);
             Request.Sign = Sign;
             return Request;
+        }
+
+        ExportSecrets ExportSecrets::FromEnvironment()
+        {
+            const auto Read = [](const char* Name)
+            {
+                const char* Value = SDL_getenv(Name);
+                return std::string(Value != nullptr ? Value : "");
+            };
+            ExportSecrets Secrets;
+            Secrets.AndroidKeystorePassword = Read("OPENDBC_ANDROID_KEYSTORE_PASSWORD");
+            Secrets.AndroidKeyPassword = Read("OPENDBC_ANDROID_KEY_PASSWORD");
+            Secrets.WindowsCertificatePassword = Read("OPENDBC_WINDOWS_CERTIFICATE_PASSWORD");
+            return Secrets;
         }
     } // namespace toolchain
 

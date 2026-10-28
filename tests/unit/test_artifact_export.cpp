@@ -393,7 +393,8 @@ TEST_CASE("Studio and CLI export requests start from opendbc-runner with the pro
     Project.Metadata.Icon = "icon.png";
 
     const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
-        Project, core::ProjectSettings{}, toolchain::ArtifactTarget::Desktop, "/exports", true);
+        Project, core::ProjectSettings{}, toolchain::ArtifactTarget::Desktop, "/exports", true,
+        toolchain::ExportToolchain{}, toolchain::ExportSecrets{"store", "key", {}});
 
     // The Studio product itself is not an export host: its binary is not the one the host manifest binds.
     CHECK(Request.HostProduct == core::paths::RunnerProduct());
@@ -409,12 +410,14 @@ TEST_CASE("Studio and CLI export requests start from opendbc-runner with the pro
     CHECK(Request.Settings.VersionName == "2.1.0");
     CHECK(Request.Settings.IconSource == "icon.png");
     CHECK(Request.Sign);
+    CHECK(Request.Secrets.AndroidKeystorePassword == "store");
 
     core::ProjectSettings Explicit;
     Explicit.AppName = "Settings Name";
     Explicit.VersionName = "3.0.0";
     const toolchain::ArtifactExportRequest Configured = toolchain::MakeArtifactExportRequest(
-        Project, Explicit, toolchain::ArtifactTarget::AndroidApk, "/exports", false);
+        Project, Explicit, toolchain::ArtifactTarget::AndroidApk, "/exports", false, toolchain::ExportToolchain{},
+        toolchain::ExportSecrets{});
     CHECK(Configured.Settings.AppName == "Settings Name");
     CHECK(Configured.Settings.VersionName == "3.0.0");
     CHECK_FALSE(Configured.Sign);

@@ -150,9 +150,13 @@ set(STUDIO_SOURCES
     src/toolchain/export_internal.hpp
     src/toolchain/export_job.cpp
     src/toolchain/export_job.hpp
+    src/toolchain/export_readiness.cpp
+    src/toolchain/export_readiness.hpp
     src/toolchain/export_ios.cpp
     src/toolchain/process_runner.cpp
     src/toolchain/process_runner.hpp
+    src/toolchain/toolchain_locator.cpp
+    src/toolchain/toolchain_locator.hpp
     src/toolchain/icon_generator.cpp
     src/toolchain/icon_generator.hpp
 
@@ -189,6 +193,8 @@ set(STUDIO_SOURCES
     src/dba/reference.hpp
 
     src/panels/asset_preview.cpp
+    src/panels/build_window.cpp
+    src/panels/build_window.hpp
     src/panels/asset_preview.hpp
     src/panels/code_panel.cpp
     src/panels/code_panel.hpp

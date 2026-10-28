@@ -236,6 +236,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
 
     add_executable(test_artifact_export
         test_artifact_export.cpp
+        test_export_readiness.cpp
         test_process_runner.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/artifact_export_service.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_android.cpp
@@ -243,7 +244,10 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_desktop.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_ios.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_job.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_readiness.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/process_runner.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/toolchain_locator.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/settings.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/paths.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/project_settings.cpp
     )

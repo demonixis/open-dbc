@@ -94,6 +94,28 @@ namespace dbc::studio
             if (const auto Values = J.find("projectPathRemappings");
                 Values != J.end() && !Values->is_object() && Error.empty())
                 Error = "Ignoring invalid Studio project path remappings";
+            S.JavaHome = Get<std::string>(J, "javaHome", S.JavaHome, Error);
+            S.AndroidSdk = Get<std::string>(J, "androidSdk", S.AndroidSdk, Error);
+            S.MacSigningIdentity = Get<std::string>(J, "macSigningIdentity", S.MacSigningIdentity, Error);
+            S.NotaryProfile = Get<std::string>(J, "notaryProfile", S.NotaryProfile, Error);
+            S.WindowsCertificate = Get<std::string>(J, "windowsCertificate", S.WindowsCertificate, Error);
+            S.WindowsTimestampUrl = Get<std::string>(J, "windowsTimestampUrl", S.WindowsTimestampUrl, Error);
+            if (const auto Values = J.find("exportFolders"); Values != J.end())
+            {
+                if (!Values->is_object())
+                {
+                    if (Error.empty())
+                        Error = "Ignoring invalid Studio export folders";
+                }
+                else
+                {
+                    for (const auto& [Key, Value] : Values->items())
+                    {
+                        if (Value.is_string())
+                            S.ExportFolders.emplace(Key, Value.get<std::string>());
+                    }
+                }
+            }
             return S;
         }
 
@@ -125,6 +147,13 @@ namespace dbc::studio
             J["logLevel"] = LogLevel;
             J["debugOverlay"] = DebugOverlay;
             J["projectPathRemappings"] = ProjectPathRemappings;
+            J["javaHome"] = JavaHome;
+            J["androidSdk"] = AndroidSdk;
+            J["macSigningIdentity"] = MacSigningIdentity;
+            J["notaryProfile"] = NotaryProfile;
+            J["windowsCertificate"] = WindowsCertificate;
+            J["windowsTimestampUrl"] = WindowsTimestampUrl;
+            J["exportFolders"] = ExportFolders;
 
             std::string Error;
             try

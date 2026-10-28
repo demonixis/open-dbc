@@ -1190,9 +1190,11 @@ namespace dbc::studio
         }
 
         Launcher_.Draw(Window_);
+        DrawBuildWindow();
 
         if (SettingsWindow_.Draw(ProjectSettings_))
         {
+            RefreshExportChecks();
             Status_ = "Project settings saved";
             const std::filesystem::path Target = ResolvedProject_ && ResolvedProject_->DescriptorPath
                                                      ? *ResolvedProject_->DescriptorPath
@@ -1465,20 +1467,8 @@ namespace dbc::studio
             const bool CanExport = core::platform::CanExportArtifacts() && !ExecutionBusy_ &&
                                    !ExportJob_.Running() && ResolvedProject_.has_value() &&
                                    ResolvedProject_->ExportBlockers.empty() && !ResolvedProject_->EntrySource.empty();
-            if (ImGui::BeginMenu("Export", CanExport))
-            {
-                if (ImGui::MenuItem("Desktop..."))
-                    ExportArtifact(toolchain::ArtifactTarget::Desktop);
-#if defined(__APPLE__)
-                if (ImGui::MenuItem("iOS IPA..."))
-                    ExportArtifact(toolchain::ArtifactTarget::Ios);
-#endif
-                if (ImGui::MenuItem("Android APK..."))
-                    ExportArtifact(toolchain::ArtifactTarget::AndroidApk);
-                if (ImGui::MenuItem("Android App Bundle..."))
-                    ExportArtifact(toolchain::ArtifactTarget::AndroidBundle);
-                ImGui::EndMenu();
-            }
+            if (ImGui::MenuItem("Build...", nullptr, false, CanExport))
+                OpenBuildWindow();
             if (ExportJob_.Running() && ImGui::MenuItem("Cancel Export"))
                 ExportJob_.Cancel();
             if (!LastExport_.empty() && ImGui::MenuItem("Reveal Last Export"))
@@ -1817,10 +1807,64 @@ namespace dbc::studio
         Output_.Append("Stopping...", panels::OutputPanel::Severity::Notice);
     }
 
-    void App::ExportArtifact(toolchain::ArtifactTarget Target)
+    void App::OpenBuildWindow()
     {
-        const std::filesystem::path Entry = ResolvedProject_ ? ResolvedProject_->EntrySource : std::filesystem::path{};
-        if (Entry.empty() || Project_.Root().empty() || !ResolvedProject_)
+        if (!ResolvedProject_)
+            return;
+        const std::string Root = ResolvedProject_->ProjectRoot.string();
+        // The default sits inside the project, where exports skip their own output folder.
+        const auto Saved = Settings_.ExportFolders.find(Root);
+        const std::filesystem::path Default = ResolvedProject_->ProjectRoot / "exports";
+        BuildWindow_.Open(Saved != Settings_.ExportFolders.end() ? Saved->second : Default.string());
+        RefreshExportChecks();
+    }
+
+    toolchain::ArtifactExportRequest App::MakeBuildRequest() const
+    {
+        return toolchain::MakeArtifactExportRequest(
+            *ResolvedProject_, ProjectSettings_, BuildWindow_.Target(), BuildWindow_.OutputFolder(),
+            BuildWindow_.Distribution(),
+            toolchain::ResolveExportToolchain(Settings_, toolchain::ToolchainSearch::Host()), ExportSecrets_);
+    }
+
+    void App::RefreshExportChecks()
+    {
+        ExportChecks_.clear();
+        if (ResolvedProject_)
+            ExportChecks_ = toolchain::CheckExportReadiness(MakeBuildRequest());
+    }
+
+    void App::DrawBuildWindow()
+    {
+        switch (BuildWindow_.Draw(Settings_, ExportSecrets_, ExportChecks_, ExportJob_.Running(), Status_))
+        {
+            case panels::BuildWindow::Action::None:
+                break;
+            case panels::BuildWindow::Action::Refresh:
+                Settings_.Save();
+                RefreshExportChecks();
+                break;
+            case panels::BuildWindow::Action::BrowseOutput:
+                Dialog_.OpenFolder(Window_, BuildWindow_.OutputFolder(),
+                                   [this](const std::string& Folder)
+                                   {
+                                       if (!Folder.empty())
+                                           BuildWindow_.SetOutputFolder(Folder);
+                                   });
+                break;
+            case panels::BuildWindow::Action::Build:
+                StartBuild();
+                break;
+            case panels::BuildWindow::Action::Cancel:
+                ExportJob_.Cancel();
+                Status_ = "Cancelling export...";
+                break;
+        }
+    }
+
+    void App::StartBuild()
+    {
+        if (!ResolvedProject_ || ExecutionBusy_ || !ResolvedProject_->ExportBlockers.empty())
             return;
         if (!Editor_.SaveAll())
         {
@@ -1828,23 +1872,29 @@ namespace dbc::studio
             Output_.Append("Save every modified BASIC source before exporting.", panels::OutputPanel::Severity::Error);
             return;
         }
-        Dialog_.OpenFolder(
-            Window_, Project_.Root().string(),
-            [this, Target, Entry](const std::string& Destination)
-            {
-                if (Destination.empty())
-                    return;
-                const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
-                    *ResolvedProject_, ProjectSettings_, Target, Destination, true);
-
-                if (!ExportJob_.Start(Request))
-                {
-                    Output_.Append("An export is already running.", panels::OutputPanel::Severity::Error);
-                    return;
-                }
-                Status_ = "Exporting...";
-                Output_.Append("Exporting " + Entry.filename().string() + "...", panels::OutputPanel::Severity::Notice);
-            });
+        RefreshExportChecks();
+        if (!toolchain::ReadyToExport(ExportChecks_))
+            return;
+        const std::filesystem::path Folder = BuildWindow_.OutputFolder();
+        std::error_code FileError;
+        std::filesystem::create_directories(Folder, FileError);
+        if (FileError)
+        {
+            Status_ = "Export failed";
+            Output_.Append("Cannot create the export folder: " + FileError.message(),
+                           panels::OutputPanel::Severity::Error);
+            return;
+        }
+        Settings_.ExportFolders[ResolvedProject_->ProjectRoot.string()] = Folder.string();
+        Settings_.Save();
+        if (!ExportJob_.Start(MakeBuildRequest()))
+        {
+            Output_.Append("An export is already running.", panels::OutputPanel::Severity::Error);
+            return;
+        }
+        Status_ = "Exporting...";
+        Output_.Append("Exporting " + ResolvedProject_->EntrySource.filename().string() + "...",
+                       panels::OutputPanel::Severity::Notice);
     }
 
     void App::PollExport()

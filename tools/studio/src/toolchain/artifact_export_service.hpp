@@ -24,6 +24,32 @@ namespace dbc::studio
             AndroidBundle,
         };
 
+        // Tools and signing identities of this machine, never stored in the project. Empty paths mean the
+        // tool was not found.
+        struct ExportToolchain
+        {
+            std::filesystem::path JavaHome;
+            std::filesystem::path AndroidSdk;
+            // A "Developer ID Application" identity name or its SHA-1.
+            std::string MacSigningIdentity;
+            // A notarytool keychain profile (xcrun notarytool store-credentials).
+            std::string NotaryProfile;
+            // A certificate SHA-1 in the Windows store, or a .pfx file.
+            std::string WindowsCertificate;
+            std::string WindowsTimestampUrl;
+        };
+
+        // Kept in memory for the Studio session, or read from the environment by the CLI, and handed to
+        // tools through their environment only.
+        struct ExportSecrets
+        {
+            std::string AndroidKeystorePassword;
+            std::string AndroidKeyPassword;
+            std::string WindowsCertificatePassword;
+
+            static ExportSecrets FromEnvironment();
+        };
+
         struct ArtifactExportRequest
         {
             ArtifactTarget Target = ArtifactTarget::Desktop;
@@ -38,6 +64,8 @@ namespace dbc::studio
             std::filesystem::path HostProduct;
             std::filesystem::path HostResources;
             core::ProjectSettings Settings;
+            ExportToolchain Toolchain;
+            ExportSecrets Secrets;
             bool Sign = true;
         };
 
@@ -71,7 +99,8 @@ namespace dbc::studio
         // installed opendbc-runner with the project's startup and the same metadata fallbacks.
         ArtifactExportRequest MakeArtifactExportRequest(const dbc::interpreter::ResolvedProject& Project,
                                                         core::ProjectSettings Settings, ArtifactTarget Target,
-                                                        const std::filesystem::path& OutputDirectory, bool Sign);
+                                                        const std::filesystem::path& OutputDirectory, bool Sign,
+                                                        ExportToolchain Toolchain, ExportSecrets Secrets);
 
         namespace detail
         {

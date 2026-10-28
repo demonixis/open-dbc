@@ -10,8 +10,10 @@
 #include <SDL3/SDL_main.h>
 
 #include "app.hpp"
+#include "core/settings.hpp"
 #include "interpreter/command_line.hpp"
 #include "toolchain/artifact_export_service.hpp"
+#include "toolchain/export_readiness.hpp"
 
 namespace dbc::studio
 {
@@ -55,7 +57,19 @@ namespace dbc::studio
             else if (Command.ExportTarget == "android-apk")
                 Target = toolchain::ArtifactTarget::AndroidApk;
             const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
-                Project, std::move(Settings), Target, Command.ExportOutput, Command.ExportSign);
+                Project, std::move(Settings), Target, Command.ExportOutput, Command.ExportSign,
+                toolchain::ResolveExportToolchain(core::Settings::Load(), toolchain::ToolchainSearch::Host()),
+                toolchain::ExportSecrets::FromEnvironment());
+
+            const std::vector<toolchain::ExportCheck> Checks = toolchain::CheckExportReadiness(Request);
+            for (const toolchain::ExportCheck& Check : Checks)
+            {
+                if (!Check.Passed)
+                    Write(stderr, std::string(Check.Required ? "Missing: " : "Warning: ") + Check.Label + ". " +
+                                      Check.Detail + "\n");
+            }
+            if (!toolchain::ReadyToExport(Checks))
+                return static_cast<int>(dbc::interpreter::CommandLineExitCode::Target);
 
             toolchain::ArtifactExportProgress Progress;
             Progress.Log = [](std::string_view Line) { Write(stdout, std::string(Line) + "\n"); };
