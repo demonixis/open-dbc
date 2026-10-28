@@ -46,12 +46,18 @@ namespace dbc::studio
             }
         }
 
+        const core::MediaScan& SceneEditor::Assets()
+        {
+            if (Project_ && AssetScanRoot_ != Project_->AssetRoot)
+                RefreshAssets();
+            return AssetScan_;
+        }
+
         void SceneEditor::DrawAssets()
         {
             if (!Project_)
                 return;
-            if (AssetScanRoot_ != Project_->AssetRoot)
-                RefreshAssets();
+            Assets();
 
             if (ImGui::Button("Refresh"))
                 RefreshAssets();
@@ -161,12 +167,7 @@ namespace dbc::studio
                     }
                     else if (Model)
                     {
-                        scene::SceneNode& Created = Document_.Add(scene::NodeKind::Model);
-                        Created.Asset = File.RelativeName;
-                        Created.Name = File.Path.stem().string();
-                        const glm::vec3 Ahead = scene::LightDirection(glm::vec3(Camera_.Pitch, Camera_.Yaw, 0.0f));
-                        Created.Position = Camera_.Position + Ahead * Camera_.Distance;
-                        Select(&Created);
+                        CreateFromAsset(scene::NodeKind::Model, File.RelativeName, std::nullopt);
                     }
                 }
 

@@ -101,7 +101,11 @@ namespace dbc::studio
             void Commit();
             void Undo();
             void Redo();
-            void Create(scene::NodeKind Kind);
+            void Create(scene::NodeKind Kind, scene::LightKind Light = scene::LightKind::Point);
+            // A model or sound node for an asset file, at `At` or ahead of the editor camera.
+            void CreateFromAsset(scene::NodeKind Kind, const std::string& Relative, std::optional<glm::vec3> At);
+            // The Create menu's items, shared by the menu bar and the Hierarchy's context menu.
+            void DrawCreateItems();
             void DuplicateSelected();
             void DeleteSelected();
             bool Editable() const;
@@ -138,6 +142,7 @@ namespace dbc::studio
             bool ProjectToScreen(const glm::vec3& Point, ImVec2& Screen) const;
             scene::Ray RayAt(const ImVec2& Mouse) const;
 
+            void DrawSceneMenu();
             void DrawHierarchy();
             // Inspector and settings (scene_inspector.cpp)
             void CommitIfIdle();
@@ -149,6 +154,8 @@ namespace dbc::studio
             // Assets (scene_assets.cpp)
             void DrawAssets();
             void RefreshAssets();
+            // Rescans when the project's asset root changed since the last scan.
+            const core::MediaScan& Assets();
             void ReleaseThumbnails();
             void DrawNewLevelPopup();
             void DrawMatrixHeights(scene::SceneNode& Node);

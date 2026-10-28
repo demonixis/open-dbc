@@ -41,16 +41,20 @@ file.
 
 ## Content
 
-Creation menus (**Scene → Create**, or right-click in the Hierarchy) list what
-the profile implements, from the catalogue:
+The **Create** menu, shown in the Scene mode's menu bar and on a right-click in
+the Hierarchy, groups what a level can hold by type; items the profile does
+not implement are disabled:
 
-| Kind | Commands |
-| --- | --- |
-| Cube, box, sphere, cylinder, cone, plain, triangle | `MAKE OBJECT …` |
-| Model | `LOAD OBJECT`, by dragging a file from Assets |
-| Matrix | `MAKE MATRIX`, `PREPARE MATRIX TEXTURE`, `FILL MATRIX`, `SET MATRIX HEIGHT`, `UPDATE MATRIX`, `POSITION MATRIX` |
-| Terrain (Pro) | `MAKE TERRAIN`, `TEXTURE TERRAIN`, `POSITION TERRAIN` |
-| Point, spot or directional light | `MAKE LIGHT`, `SET … LIGHT`, `POSITION`/`ROTATE LIGHT`, `SET LIGHT RANGE`, `COLOR LIGHT` |
+| Menu | Kind | Commands |
+| --- | --- | --- |
+| 3D Object | Cube, box, sphere, cylinder, cone, plain, triangle | `MAKE OBJECT …` |
+| 3D Object → Model | A model file from the asset folder | `LOAD OBJECT` |
+| Landscape | Matrix | `MAKE MATRIX`, `PREPARE MATRIX TEXTURE`, `FILL MATRIX`, `SET MATRIX HEIGHT`, `UPDATE MATRIX`, `POSITION MATRIX` |
+| Landscape | Terrain (Pro) | `MAKE TERRAIN`, `TEXTURE TERRAIN`, `POSITION TERRAIN` |
+| Light | Point, spot or directional light | `MAKE LIGHT`, `SET … LIGHT`, `POSITION`/`ROTATE LIGHT`, `SET LIGHT RANGE`, `COLOR LIGHT` |
+| Camera | The level camera, on or off | see Level Settings |
+
+Models from the menu land in front of the editor camera.
 
 The Inspector edits the selected node:
 - name, number, position, rotation (degrees, applied X, then Y, then Z) and scale (%);

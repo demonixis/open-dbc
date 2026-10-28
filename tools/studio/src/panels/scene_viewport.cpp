@@ -465,12 +465,7 @@ namespace dbc::studio
                     glm::vec3 At = Ray.Origin + Ray.Direction * Camera_.Distance;
                     if (Ray.Direction.y < -0.001f)
                         At = Ray.Origin + Ray.Direction * (-Ray.Origin.y / Ray.Direction.y);
-                    scene::SceneNode& Node = Document_.Add(scene::NodeKind::Model);
-                    Node.Asset = Relative;
-                    Node.Name = std::filesystem::path(Relative).stem().string();
-                    Node.Position = At;
-                    Select(&Node);
-                    Commit();
+                    CreateFromAsset(scene::NodeKind::Model, Relative, At);
                 }
             }
             ImGui::EndDragDropTarget();

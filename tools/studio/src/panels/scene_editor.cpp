@@ -4,6 +4,7 @@
 #include <array>
 #include <imgui_internal.h>
 
+#include "scene/scene_geometry.hpp"
 #include "scene/scene_integration.hpp"
 
 namespace dbc::studio
@@ -16,9 +17,26 @@ namespace dbc::studio
                 scene::NodeKind::Cube,     scene::NodeKind::Box,   scene::NodeKind::Sphere,  scene::NodeKind::Cylinder,
                 scene::NodeKind::Cone,     scene::NodeKind::Plain, scene::NodeKind::Triangle};
 
+            // Menus list at most this many asset files; the Assets panel shows the rest.
+            constexpr std::size_t KMenuAssetLimit = 40;
+
             bool NeedsAsset(scene::NodeKind Kind)
             {
                 return Kind == scene::NodeKind::Model || Kind == scene::NodeKind::Terrain;
+            }
+
+            const char* LightKindLabel(scene::LightKind Kind)
+            {
+                switch (Kind)
+                {
+                    case scene::LightKind::Point:
+                        return "Point Light";
+                    case scene::LightKind::Spot:
+                        return "Spot Light";
+                    case scene::LightKind::Directional:
+                        return "Directional Light";
+                }
+                return "Light";
             }
         } // namespace
 
@@ -276,7 +294,7 @@ namespace dbc::studio
                 Selection_.reset();
         }
 
-        void SceneEditor::Create(scene::NodeKind Kind)
+        void SceneEditor::Create(scene::NodeKind Kind, scene::LightKind Light)
         {
             if (!Editable() || !scene::KindAvailable(Kind, Document_.Profile))
                 return;
@@ -284,6 +302,37 @@ namespace dbc::studio
             // A matrix grows from its corner: centre it on the origin.
             if (Kind == scene::NodeKind::Matrix)
                 Node.Position = glm::vec3(-Node.Width * 0.5f, 0.0f, -Node.Depth * 0.5f);
+            if (Kind == scene::NodeKind::Light)
+            {
+                Node.Light = Light;
+                Node.Name = std::string(LightKindLabel(Light)) + " " + std::to_string(Node.Id);
+                // A spot points down, a directional light slants like light 0.
+                if (Light == scene::LightKind::Spot)
+                    Node.Rotation = glm::vec3(90.0f, 0.0f, 0.0f);
+                else if (Light == scene::LightKind::Directional)
+                    Node.Rotation = glm::vec3(45.0f, 0.0f, 0.0f);
+            }
+            Select(&Node);
+            Commit();
+        }
+
+        void SceneEditor::CreateFromAsset(scene::NodeKind Kind, const std::string& Relative,
+                                          std::optional<glm::vec3> At)
+        {
+            if (!Editable() || !scene::KindAvailable(Kind, Document_.Profile))
+                return;
+            scene::SceneNode& Node = Document_.Add(Kind);
+            Node.Asset = Relative;
+            Node.Name = std::filesystem::path(Relative).stem().string();
+            if (At)
+            {
+                Node.Position = *At;
+            }
+            else
+            {
+                const glm::vec3 Ahead = scene::LightDirection(glm::vec3(Camera_.Pitch, Camera_.Yaw, 0.0f));
+                Node.Position = Camera_.Position + Ahead * Camera_.Distance;
+            }
             Select(&Node);
             Commit();
         }
@@ -313,8 +362,18 @@ namespace dbc::studio
 
         void SceneEditor::DrawMenus()
         {
-            if (!ImGui::BeginMenu("Scene"))
-                return;
+            if (ImGui::BeginMenu("Scene"))
+                DrawSceneMenu();
+            // Like Unity's GameObject menu: everything a level can hold, by type.
+            if (ImGui::BeginMenu("Create", Editable()))
+            {
+                DrawCreateItems();
+                ImGui::EndMenu();
+            }
+        }
+
+        void SceneEditor::DrawSceneMenu()
+        {
             if (ImGui::MenuItem("New Level...", nullptr, false, Project_.has_value()))
                 NewLevelRequested_ = true;
             const std::vector<std::string> Names = LevelNames();
@@ -337,28 +396,77 @@ namespace dbc::studio
             if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, Editable() && History_.CanRedo()))
                 Redo();
             ImGui::Separator();
-            if (ImGui::BeginMenu("Create", Editable()))
-            {
-                for (const scene::NodeKind Kind : KPrimitives)
-                    if (ImGui::MenuItem(scene::NodeKindLabel(Kind)))
-                        Create(Kind);
-                ImGui::Separator();
-                if (ImGui::MenuItem("Matrix"))
-                    Create(scene::NodeKind::Matrix);
-                if (scene::KindAvailable(scene::NodeKind::Terrain, Document_.Profile) && ImGui::MenuItem("Terrain"))
-                    Create(scene::NodeKind::Terrain);
-                ImGui::Separator();
-                if (ImGui::MenuItem("Light"))
-                    Create(scene::NodeKind::Light);
-                ImGui::Separator();
-                ImGui::MenuItem("Model: drag a file from Assets", nullptr, false, false);
-                ImGui::EndMenu();
-            }
             if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, Editable() && Selection_.has_value()))
                 DuplicateSelected();
             if (ImGui::MenuItem("Delete", "Delete", false, Editable() && Selection_.has_value()))
                 DeleteSelected();
             ImGui::EndMenu();
+        }
+
+        void SceneEditor::DrawCreateItems()
+        {
+            const auto AssetItems = [&](scene::NodeKind Kind, core::MediaKind Media, const char* Empty)
+            {
+                std::size_t Listed = 0;
+                for (const core::MediaFile& File : Assets().Files)
+                {
+                    if (File.Kind != Media)
+                        continue;
+                    if (Listed++ == KMenuAssetLimit)
+                    {
+                        ImGui::MenuItem("More in the Assets panel", nullptr, false, false);
+                        break;
+                    }
+                    if (ImGui::MenuItem(File.RelativeName.c_str()))
+                        CreateFromAsset(Kind, File.RelativeName, std::nullopt);
+                }
+                if (Listed == 0)
+                    ImGui::MenuItem(Empty, nullptr, false, false);
+            };
+
+            if (ImGui::BeginMenu("3D Object"))
+            {
+                for (const scene::NodeKind Kind : KPrimitives)
+                    if (ImGui::MenuItem(scene::NodeKindLabel(Kind)))
+                        Create(Kind);
+                ImGui::Separator();
+                if (ImGui::BeginMenu("Model"))
+                {
+                    AssetItems(scene::NodeKind::Model, core::MediaKind::Model, "No model under the asset folder");
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Landscape"))
+            {
+                if (ImGui::MenuItem("Matrix"))
+                    Create(scene::NodeKind::Matrix);
+                const bool Terrain = scene::KindAvailable(scene::NodeKind::Terrain, Document_.Profile);
+                if (ImGui::MenuItem("Terrain", nullptr, false, Terrain))
+                    Create(scene::NodeKind::Terrain);
+                if (!Terrain && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                    ImGui::SetTooltip("MAKE TERRAIN needs the Pro profile");
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Light"))
+            {
+                for (const scene::LightKind Kind :
+                     {scene::LightKind::Point, scene::LightKind::Spot, scene::LightKind::Directional})
+                    if (ImGui::MenuItem(LightKindLabel(Kind)))
+                        Create(scene::NodeKind::Light, Kind);
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Camera"))
+            {
+                if (ImGui::MenuItem("Level Camera", nullptr, Document_.Env.UseCamera))
+                {
+                    Document_.Env.UseCamera = !Document_.Env.UseCamera;
+                    Selection_.reset();
+                    CameraSelected_ = Document_.Env.UseCamera;
+                    Commit();
+                }
+                ImGui::EndMenu();
+            }
         }
 
         void SceneEditor::HandleShortcuts()
@@ -479,13 +587,7 @@ namespace dbc::studio
                                                              ImGuiPopupFlags_MouseButtonRight |
                                                                  ImGuiPopupFlags_NoOpenOverItems))
             {
-                for (const scene::NodeKind Kind : KPrimitives)
-                    if (ImGui::MenuItem(scene::NodeKindLabel(Kind)))
-                        Create(Kind);
-                if (ImGui::MenuItem("Matrix"))
-                    Create(scene::NodeKind::Matrix);
-                if (ImGui::MenuItem("Light"))
-                    Create(scene::NodeKind::Light);
+                DrawCreateItems();
                 ImGui::EndPopup();
             }
         }
