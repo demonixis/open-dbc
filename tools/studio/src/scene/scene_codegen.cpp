@@ -106,7 +106,8 @@ namespace dbc::studio
                 }
 
               private:
-                lang::LanguageProfile Profile_;
+                // Only read by the overload assert, so unused in Release builds.
+                [[maybe_unused]] lang::LanguageProfile Profile_;
                 std::ostringstream Out_;
                 int Indent_ = 0;
             };
