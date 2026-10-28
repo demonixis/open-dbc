@@ -1502,9 +1502,10 @@ namespace dbc::studio
             }
             ImGui::Separator();
             const std::string Blocker = SceneBlocker();
-            if (ImGui::MenuItem("Code", "Ctrl+1", Mode_ == Mode::Code))
+            // The mode items share labels with panel toggles below, so they need distinct IDs.
+            if (ImGui::MenuItem("Code##Mode", "Ctrl+1", Mode_ == Mode::Code))
                 SetMode(Mode::Code);
-            if (ImGui::MenuItem("Scene", "Ctrl+2", Mode_ == Mode::Scene, Blocker.empty()))
+            if (ImGui::MenuItem("Scene##Mode", "Ctrl+2", Mode_ == Mode::Scene, Blocker.empty()))
                 SetMode(Mode::Scene);
             if (!Blocker.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", Blocker.c_str());
