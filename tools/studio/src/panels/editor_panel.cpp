@@ -230,6 +230,42 @@ namespace dbc::studio
             return true;
         }
 
+        EditorPanel::Document* EditorPanel::Find(const std::filesystem::path& Path) const
+        {
+            std::error_code Ec;
+            const std::filesystem::path Canonical = std::filesystem::weakly_canonical(Path, Ec);
+            const std::filesystem::path& Target = Ec ? Path : Canonical;
+            for (const std::unique_ptr<Document>& Doc : Documents_)
+                if (!Doc->Path.empty() && Doc->Path == Target)
+                    return Doc.get();
+            return nullptr;
+        }
+
+        std::optional<std::string> EditorPanel::OpenText(const std::filesystem::path& Path) const
+        {
+            if (const Document* Doc = Find(Path))
+                return Doc->Editor->GetText();
+            return std::nullopt;
+        }
+
+        bool EditorPanel::ReplaceText(const std::filesystem::path& Path, const std::string& Text, bool Saved)
+        {
+            Document* Doc = Find(Path);
+            if (Doc == nullptr)
+                return false;
+            if (Doc->Editor->GetText() != Text)
+            {
+                // SetText would reset the undo history and with it the dirty test.
+                const TextEditor::DocPos Cursor = Doc->Editor->GetMainCursorPosition();
+                Doc->Editor->SelectAll();
+                Doc->Editor->ReplaceTextInCurrentCursor(Text);
+                Doc->Editor->SetCursor(Cursor);
+            }
+            if (Saved)
+                Doc->SavedUndoIndex = Doc->Editor->GetUndoIndex();
+            return true;
+        }
+
         void EditorPanel::NewFile()
         {
             AddDocument(std::filesystem::path(), ProjectProfile_, true, std::string());

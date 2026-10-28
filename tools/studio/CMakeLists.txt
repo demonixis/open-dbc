@@ -171,6 +171,8 @@ set(STUDIO_SOURCES
     src/panels/project_panel.hpp
     src/panels/project_settings_window.cpp
     src/panels/project_settings_window.hpp
+    src/panels/scene_editor.cpp
+    src/panels/scene_editor.hpp
 
     src/scene/scene_codegen.cpp
     src/scene/scene_codegen.hpp

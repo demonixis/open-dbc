@@ -3,11 +3,14 @@
 
 #include <algorithm>
 #include <array>
+#include <fstream>
+#include <iterator>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlgpu3.h>
 #include <imgui_internal.h>
 
 #include "core/paths.hpp"
+#include "interpreter/atomic_file.hpp"
 #include "theme.hpp"
 #include "toolchain/active_run_planner.hpp"
 
@@ -17,6 +20,7 @@ namespace dbc::studio
     {
         constexpr const char* KWindowTitle = "OpenDBC";
         constexpr const char* KDockSpaceName = "StudioDockSpace";
+        constexpr const char* KSceneDockSpaceName = "SceneDockSpace";
 
         // Panel window titles, shared between the menu, the dock builder and the
         // panel bodies so the default layout keeps matching.
@@ -26,6 +30,9 @@ namespace dbc::studio
         constexpr const char* KPanelPreview = "Preview";
         constexpr const char* KPanelCode = "Code";
         constexpr const char* KPanelMedia = "Media";
+        // The Scene mode docks its own Output window: a title shared with the Code
+        // mode would belong to one dock space only.
+        constexpr const char* KPanelSceneOutput = "Output##Scene";
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
 
         enum class ToolIcon
@@ -110,6 +117,19 @@ namespace dbc::studio
             ImGui::SameLine();
         }
 
+        // One side of the toolbar's Code | Scene switch.
+        bool ModeButton(const char* Label, bool Active, bool Enabled, const char* Tooltip)
+        {
+            ImGui::BeginDisabled(!Enabled);
+            ImGui::PushStyleColor(ImGuiCol_Button, Active ? Theme::Selection : 0);
+            const bool Pressed = ImGui::Button(Label);
+            ImGui::PopStyleColor();
+            ImGui::EndDisabled();
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                ImGui::SetTooltip("%s", Tooltip);
+            return Pressed && Enabled && !Active;
+        }
+
         constexpr const char* KDbaFilter = "dba;dbpro";
         constexpr const char* KHlslFilter = "fx;hlsl";
         constexpr const char* KOpenFilter = "dba;dbpro;fx;hlsl";
@@ -137,6 +157,16 @@ namespace dbc::studio
         }
 
         Preview_.Initialize(Gpu_);
+        panels::SceneHost SceneHost;
+        SceneHost.ReadSource = [this](const std::filesystem::path& Path) { return ReadSource(Path); };
+        SceneHost.WriteSource = [this](const std::filesystem::path& Path, const std::string& Text, bool Generated)
+        { return WriteSource(Path, Text, Generated); };
+        SceneHost.Log = [this](const std::string& Message, bool Error)
+        {
+            Output_.Append(Message,
+                           Error ? panels::OutputPanel::Severity::Error : panels::OutputPanel::Severity::Notice);
+        };
+        Scene_.Initialize(Gpu_, std::move(SceneHost));
         Reference_.Load(core::paths::FindReferenceDoc());
         Commands_.Build(Reference_);
         Editor_.Initialize(&Commands_);
@@ -377,7 +407,7 @@ namespace dbc::studio
         {
             return;
         }
-        if (Editor_.AnyDirty())
+        if (Editor_.AnyDirty() || Scene_.Dirty())
         {
             QuitRequested_ = true;
             return;
@@ -486,6 +516,7 @@ namespace dbc::studio
         {
             ResolutionPopupRequested_ = true;
             ResolvedProject_.reset();
+            UpdateSceneProject();
             const std::string Marker = "remapping";
             const std::size_t At = PendingResolution_.Error.find(Marker);
             const std::size_t Colon = PendingResolution_.Error.find(": ", At == std::string::npos ? 0 : At);
@@ -513,6 +544,82 @@ namespace dbc::studio
                   std::string(dbc::language::ProfileName(ResolvedProject_->Profile));
         for (const std::string& Warning : ResolvedProject_->Warnings)
             Output_.Append(Warning, panels::OutputPanel::Severity::Notice);
+        UpdateSceneProject();
+    }
+
+    std::string App::SceneBlocker() const
+    {
+        if (Project_.Root().empty())
+            return "Open a project folder to edit its levels.";
+        if (!ResolvedProject_)
+            return "The project's language and main source are not resolved yet.";
+        if (ResolvedProject_->EntrySource.empty() || !dbc::language::IsLanguageSource(ResolvedProject_->EntrySource))
+            return "The project needs a main .dba source that includes the level.";
+        if (!Workspace_.IsWritable(ResolvedProject_->ProjectRoot))
+            return "The project folder is read-only.";
+        return {};
+    }
+
+    void App::UpdateSceneProject()
+    {
+        if (!SceneBlocker().empty())
+        {
+            Scene_.SetProject(std::nullopt);
+            Mode_ = Mode::Code;
+            return;
+        }
+        panels::SceneProject Project;
+        Project.Root = ResolvedProject_->ProjectRoot;
+        Project.AssetRoot =
+            ResolvedProject_->AssetRoot.empty() ? ResolvedProject_->ProjectRoot : ResolvedProject_->AssetRoot;
+        Project.EntrySource = ResolvedProject_->EntrySource;
+        Project.Profile = ResolvedProject_->Profile;
+        Scene_.SetProject(std::move(Project));
+    }
+
+    void App::SetMode(Mode Value)
+    {
+        if (Value == Mode::Scene && !SceneBlocker().empty())
+            return;
+        Mode_ = Value;
+        if (Mode_ == Mode::Scene)
+            Scene_.Activate();
+    }
+
+    std::optional<std::string> App::ReadSource(const std::filesystem::path& Path) const
+    {
+        if (std::optional<std::string> Buffer = Editor_.OpenText(Path))
+            return Buffer;
+        std::ifstream Stream(Path, std::ios::binary);
+        if (!Stream)
+            return std::nullopt;
+        return std::string(std::istreambuf_iterator<char>(Stream), {});
+    }
+
+    bool App::WriteSource(const std::filesystem::path& Path, const std::string& Text, bool Generated)
+    {
+        if (!Generated && Editor_.ReplaceText(Path, Text, false))
+            return true;
+        std::string Error;
+        if (!dbc::interpreter::AtomicWriteText(Path, Text, &Error))
+        {
+            Output_.Append("[ERROR] " + Error, panels::OutputPanel::Severity::Error);
+            return false;
+        }
+        if (Generated)
+            Editor_.ReplaceText(Path, Text, true);
+        Project_.Refresh();
+        return true;
+    }
+
+    void App::RunScene()
+    {
+        if (ExecutionBusy_ || !ResolvedProject_)
+            return;
+        if (Scene_.Dirty() && !Scene_.Save())
+            return;
+        OpenFile(ResolvedProject_->EntrySource);
+        RunActiveDocument();
     }
 
     void App::SetProjectDialect(dbc::language::LanguageProfile Profile)
@@ -588,6 +695,13 @@ namespace dbc::studio
 
     void App::ContinueQuitSave()
     {
+        // The level first: linking it may change the main source, saved just after.
+        if (Scene_.Dirty() && !Scene_.Save())
+        {
+            QuitSaveInProgress_ = false;
+            Status_ = "Could not save the level";
+            return;
+        }
         Editor_.SaveAll();
         if (Editor_.AnyDirtyWithPath())
         {
@@ -601,7 +715,7 @@ namespace dbc::studio
             SaveCurrentAs();
             return;
         }
-        if (!Editor_.AnyDirty())
+        if (!Editor_.AnyDirty() && !Scene_.Dirty())
         {
             Running_ = false;
         }
@@ -754,13 +868,25 @@ namespace dbc::studio
         if (ImGui::IsKeyPressed(ImGuiKey_F5, false))
         {
             if (Io.KeyShift)
-            {
                 StopRun();
-            }
+            else if (Mode_ == Mode::Scene)
+                RunScene();
             else
-            {
                 RunActiveDocument();
-            }
+            return;
+        }
+
+        const bool Command = Io.KeyCtrl || Io.KeySuper;
+        if (Command && ImGui::IsKeyPressed(ImGuiKey_1, false))
+            SetMode(Mode::Code);
+        else if (Command && ImGui::IsKeyPressed(ImGuiKey_2, false))
+            SetMode(Mode::Scene);
+
+        if (Mode_ == Mode::Scene)
+        {
+            Scene_.HandleShortcuts();
+            if (Command && ImGui::IsKeyPressed(ImGuiKey_S, false) && Scene_.Save())
+                Status_ = "Level saved";
             return;
         }
 
@@ -811,6 +937,7 @@ namespace dbc::studio
         // is restored from the ini file, so it must be tested before DockSpace()
         // creates an empty one.
         const ImGuiID DockspaceId = ImGui::GetID(KDockSpaceName);
+        const ImGuiID SceneDockspaceId = ImGui::GetID(KSceneDockSpaceName);
         if (!LayoutBuilt_)
         {
             LayoutBuilt_ = true;
@@ -819,11 +946,27 @@ namespace dbc::studio
                 BuildDefaultLayout(DockspaceId);
             }
         }
+        const bool SceneMode = Mode_ == Mode::Scene;
+        if (SceneMode && !SceneLayoutBuilt_)
+        {
+            SceneLayoutBuilt_ = true;
+            if (ImGui::DockBuilderGetNode(SceneDockspaceId) == nullptr)
+                Scene_.BuildDefaultLayout(SceneDockspaceId, KPanelSceneOutput);
+        }
+
+        // Each mode has its own dock space. The hidden one stays alive so its
+        // windows keep their places; its windows are simply not submitted.
+        // Keeping a dock space alive creates its node, so a Scene layout that was
+        // never built is left alone until the mode first opens.
+        const ImGuiID HiddenDockspaceId = SceneMode ? DockspaceId : SceneDockspaceId;
+        if (ImGui::DockBuilderGetNode(HiddenDockspaceId) != nullptr)
+            ImGui::DockSpace(HiddenDockspaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_KeepAliveOnly);
 
         // Reserve a row at the bottom of the host window for the status bar, plus
         // the item spacing ImGui inserts between the dock space and it.
         const float StatusHeight = BarHeight() + ImGui::GetStyle().ItemSpacing.y;
-        ImGui::DockSpace(DockspaceId, ImVec2(0.0f, -StatusHeight), ImGuiDockNodeFlags_None);
+        ImGui::DockSpace(SceneMode ? SceneDockspaceId : DockspaceId, ImVec2(0.0f, -StatusHeight),
+                         ImGuiDockNodeFlags_None);
 
         DrawStatusBar();
 
@@ -831,6 +974,33 @@ namespace dbc::studio
     }
 
     void App::DrawPanels()
+    {
+        if (Mode_ == Mode::Scene)
+        {
+            Scene_.DrawPanels();
+            if (ImGui::Begin(KPanelSceneOutput))
+                Output_.Draw();
+            ImGui::End();
+        }
+        else
+        {
+            DrawCodePanels();
+        }
+
+        Launcher_.Draw(Window_);
+
+        if (SettingsWindow_.Draw(ProjectSettings_))
+        {
+            Status_ = "Project settings saved";
+            const std::filesystem::path Target = ResolvedProject_ && ResolvedProject_->DescriptorPath
+                                                     ? *ResolvedProject_->DescriptorPath
+                                                     : Project_.Root();
+            ResolveWorkspace(Target,
+                             DialectLocked_ ? std::optional(dbc::language::LanguageProfile::DbPro) : std::nullopt);
+        }
+    }
+
+    void App::DrawCodePanels()
     {
         if (ShowProject_)
         {
@@ -890,18 +1060,6 @@ namespace dbc::studio
             {
                 Preview_.Close();
             }
-        }
-
-        Launcher_.Draw(Window_);
-
-        if (SettingsWindow_.Draw(ProjectSettings_))
-        {
-            Status_ = "Project settings saved";
-            const std::filesystem::path Target = ResolvedProject_ && ResolvedProject_->DescriptorPath
-                                                     ? *ResolvedProject_->DescriptorPath
-                                                     : Project_.Root();
-            ResolveWorkspace(Target,
-                             DialectLocked_ ? std::optional(dbc::language::LanguageProfile::DbPro) : std::nullopt);
         }
     }
 
@@ -1022,11 +1180,17 @@ namespace dbc::studio
             ImGui::EndMenu();
         }
 
+        if (Mode_ == Mode::Scene)
+            Scene_.DrawMenus();
+
         if (ImGui::BeginMenu("Build"))
         {
             if (ImGui::MenuItem("Run", "F5", false, !ExecutionBusy_))
             {
-                RunActiveDocument();
+                if (Mode_ == Mode::Scene)
+                    RunScene();
+                else
+                    RunActiveDocument();
             }
             if (ImGui::MenuItem("Stop", "Shift+F5", false, ExecutionBusy_))
             {
@@ -1126,6 +1290,14 @@ namespace dbc::studio
                 Launcher_.Open();
             }
             ImGui::Separator();
+            const std::string Blocker = SceneBlocker();
+            if (ImGui::MenuItem("Code", "Ctrl+1", Mode_ == Mode::Code))
+                SetMode(Mode::Code);
+            if (ImGui::MenuItem("Scene", "Ctrl+2", Mode_ == Mode::Scene, Blocker.empty()))
+                SetMode(Mode::Scene);
+            if (!Blocker.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                ImGui::SetTooltip("%s", Blocker.c_str());
+            ImGui::Separator();
             ImGui::MenuItem(KPanelProject, nullptr, &ShowProject_);
             ImGui::MenuItem(KPanelCode, nullptr, &ShowCode_);
             ImGui::MenuItem(KPanelMedia, nullptr, &ShowMedia_);
@@ -1133,7 +1305,10 @@ namespace dbc::studio
             ImGui::Separator();
             if (ImGui::MenuItem("Reset Layout"))
             {
-                BuildDefaultLayout(ImGui::GetID(KDockSpaceName));
+                if (Mode_ == Mode::Scene)
+                    Scene_.BuildDefaultLayout(ImGui::GetID(KSceneDockSpaceName), KPanelSceneOutput);
+                else
+                    BuildDefaultLayout(ImGui::GetID(KDockSpaceName));
             }
             ImGui::Separator();
             ImGui::MenuItem("ImGui Demo", nullptr, &ShowDemo_);
@@ -1223,6 +1398,18 @@ namespace dbc::studio
         if (ToolbarButton("##stop", ToolIcon::Stop, ExecutionBusy_, "Stop (Shift+F5)"))
             StopRun();
 
+        // The mode switch sits in the middle of the toolbar.
+        const std::string Blocker = SceneBlocker();
+        const float SwitchWidth = ImGui::CalcTextSize("Code").x + ImGui::CalcTextSize("Scene").x +
+                                  Style.FramePadding.x * 4.0f + Style.ItemSpacing.x;
+        ImGui::SameLine(std::max(ImGui::GetCursorPosX(), (ImGui::GetWindowWidth() - SwitchWidth) * 0.5f));
+        if (ModeButton("Code", Mode_ == Mode::Code, true, "Code (Ctrl+1)"))
+            SetMode(Mode::Code);
+        ImGui::SameLine();
+        if (ModeButton("Scene", Mode_ == Mode::Scene, Blocker.empty(),
+                       Blocker.empty() ? "Scene (Ctrl+2)" : Blocker.c_str()))
+            SetMode(Mode::Scene);
+
         ImGui::EndChild();
         ImGui::PopStyleColor();
     }
@@ -1302,6 +1489,8 @@ namespace dbc::studio
             SDL_CancelGPUCommandBuffer(Commands);
             return;
         }
+        if (Mode_ == Mode::Scene)
+            Scene_.RecordGpu(Commands);
         ImGui_ImplSDLGPU3_PrepareDrawData(DrawData, Commands);
         const ImVec4 Clear = ImGui::ColorConvertU32ToFloat4(Theme::Background);
         SDL_GPUColorTargetInfo Target{};
@@ -1461,6 +1650,9 @@ namespace dbc::studio
             SettingsLoaded_ = false;
         }
         Preview_.Shutdown();
+        if (Gpu_ != nullptr)
+            SDL_WaitForGPUIdle(Gpu_);
+        Scene_.Shutdown();
 
         DestroyPresentation();
 

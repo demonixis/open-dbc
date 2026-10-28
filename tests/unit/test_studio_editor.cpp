@@ -46,3 +46,37 @@ TEST_CASE("Studio editor opens HLSL effects as plain text tabs")
 
     std::filesystem::remove_all(Root, Error);
 }
+
+TEST_CASE("Studio editor tabs take generated text as an undoable edit")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-replace";
+    std::error_code Error;
+    std::filesystem::remove_all(Root, Error);
+    std::filesystem::create_directories(Root, Error);
+    REQUIRE_FALSE(Error);
+    std::ofstream(Root / "main.dba") << "print 1\n";
+
+    dba::Reference Reference;
+    dba::CommandDatabase Commands;
+    Commands.Build(Reference);
+    panels::EditorPanel Editor;
+    Editor.Initialize(&Commands);
+
+    CHECK_FALSE(Editor.OpenText(Root / "main.dba").has_value());
+    CHECK_FALSE(Editor.ReplaceText(Root / "main.dba", "print 2\n", false));
+    REQUIRE(Editor.Open(Root / "main.dba"));
+    CHECK(Editor.OpenText(Root / "main.dba") == "print 1\n");
+
+    REQUIRE(Editor.ReplaceText(Root / "main.dba", "LoadLevel_A()\nprint 1\n", false));
+    CHECK(Editor.OpenText(Root / "main.dba") == "LoadLevel_A()\nprint 1\n");
+    CHECK(Editor.AnyDirty());
+    REQUIRE(Editor.CurrentEditor()->CanUndo());
+    Editor.CurrentEditor()->Undo();
+    CHECK(Editor.OpenText(Root / "main.dba") == "print 1\n");
+    CHECK_FALSE(Editor.AnyDirty());
+
+    REQUIRE(Editor.ReplaceText(Root / "main.dba", "print 3\n", true));
+    CHECK_FALSE(Editor.AnyDirty());
+
+    std::filesystem::remove_all(Root, Error);
+}

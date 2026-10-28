@@ -29,6 +29,7 @@
 #include "panels/output_panel.hpp"
 #include "panels/project_panel.hpp"
 #include "panels/project_settings_window.hpp"
+#include "panels/scene_editor.hpp"
 
 // The OpenDBC Studio window and its docked panels.
 namespace dbc::studio
@@ -55,6 +56,7 @@ namespace dbc::studio
         void DrawQuitConfirm();
         void DrawProjectResolution();
         void DrawPanels();
+        void DrawCodePanels();
         void BuildDefaultLayout(ImGuiID DockspaceId);
         void HandleShortcuts();
 
@@ -75,6 +77,20 @@ namespace dbc::studio
         void StopRun();
         void ExportArtifact(toolchain::ArtifactTarget Target);
 
+        enum class Mode
+        {
+            Code,
+            Scene,
+        };
+
+        // Why the Scene mode cannot open for this project, or empty when it can.
+        std::string SceneBlocker() const;
+        void UpdateSceneProject();
+        void SetMode(Mode Value);
+        void RunScene();
+        std::optional<std::string> ReadSource(const std::filesystem::path& Path) const;
+        bool WriteSource(const std::filesystem::path& Path, const std::string& Text, bool Generated);
+
         bool CreatePresentation();
         void DestroyPresentation();
 
@@ -87,6 +103,8 @@ namespace dbc::studio
         float Scale_ = 1.0f;
         bool Running_ = false;
         bool LayoutBuilt_ = false;
+        bool SceneLayoutBuilt_ = false;
+        Mode Mode_ = Mode::Code;
 
         // Dock node the editor sits in, so the preview opens beside it even when
         // an older saved layout has no entry for it.
@@ -111,6 +129,7 @@ namespace dbc::studio
         panels::CodePanel Code_;
         panels::MediaPanel Media_;
         panels::LauncherWindow Launcher_;
+        panels::SceneEditor Scene_;
 
         dba::Reference Reference_;
         dba::CommandDatabase Commands_;

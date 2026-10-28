@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -59,6 +60,13 @@ namespace dbc::studio
             bool CurrentIsBasic() const;
             dbc::language::LanguageProfile CurrentProfile() const;
 
+            // The buffer of the tab holding `Path`, which may differ from the file on disk.
+            std::optional<std::string> OpenText(const std::filesystem::path& Path) const;
+            // Replaces that tab's text as one undoable edit. `Saved` records it as the
+            // file's content (the caller wrote it to disk); otherwise the tab is dirty.
+            // False when no tab holds `Path`.
+            bool ReplaceText(const std::filesystem::path& Path, const std::string& Text, bool Saved);
+
             // Moves the current tab's cursor to a 1-based line and focuses it.
             void GoToLine(std::uint32_t Line);
 
@@ -92,6 +100,7 @@ namespace dbc::studio
             void ConfigureEditor(TextEditor& Editor, dbc::language::LanguageProfile Profile) const;
             void ConfigureEffectEditor(TextEditor& Editor) const;
             bool WriteDocument(Document& Doc, const std::filesystem::path& Path);
+            Document* Find(const std::filesystem::path& Path) const;
             static bool IsDirty(const Document& Doc);
             void DrawCloseConfirm();
 
