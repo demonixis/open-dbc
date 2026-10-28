@@ -1,8 +1,7 @@
 rem ==================================================================
 rem Compatibility Stubs - an OpenDBC tutorial for the DarkBASIC Classic profile
 rem DarkBASIC Classic relied on Windows 98 technology that has no portable
-rem equivalent today: AVI playback through Video for Windows, audio CDs,
-rem FTP sessions, DirectPlay network games, DLL calls, the registry and
+rem equivalent today: audio CDs, FTP sessions, DirectPlay network games, DLL calls, the registry and
 rem raw access to the video memory. OpenDBC still accepts every one of
 rem these commands so that old programs run, but they do nothing: commands
 rem return at once, numbers read 0 and strings are empty. This program
@@ -11,34 +10,17 @@ rem Code is part of OpenDBC (MIT).
 rem ==================================================================
 
 sync on : sync rate 30
-dim title$(7) : dim why$(7)
+dim title$(6) : dim why$(6)
 dim label$(70) : dim value$(70) : dim group(70)
 n = 0
 
-rem --- 1. AVI animations (Video for Windows)
-title$(1) = "AVI ANIMATIONS" : why$(1) = "Video for Windows is gone; animations never open their file."
-load animation "intro.avi", 1
-place animation 1, 10, 10, 330, 250
-play animation 1 : loop animation 1 : pause animation 1 : resume animation 1 : stop animation 1
-g = 1
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION EXIST(1)" : value$(n) = str$(animation exist(1))
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION PLAYING(1)" : value$(n) = str$(animation playing(1))
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION PAUSED(1)" : value$(n) = str$(animation paused(1))
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION LOOPED(1)" : value$(n) = str$(animation looped(1))
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION LOOPING(1)" : value$(n) = str$(animation looping(1))
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION POSITION X(1)" : value$(n) = str$(animation position x(1))
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION POSITION Y(1)" : value$(n) = str$(animation position y(1))
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION WIDTH(1)" : value$(n) = str$(animation width(1))
-n = n + 1 : group(n) = g : label$(n) = "ANIMATION HEIGHT(1)" : value$(n) = str$(animation height(1))
-delete animation 1
-
-rem --- 2. Audio CDs
-title$(2) = "AUDIO CD" : why$(2) = "There is no CD drive to read audio tracks from."
+rem --- 1. Audio CDs
+title$(1) = "AUDIO CD" : why$(1) = "There is no CD drive to read audio tracks from."
 load cdmusic 1, 1
-n = n + 1 : group(n) = 2 : label$(n) = "LOAD CDMUSIC 1, 1 then MUSIC EXIST(1)" : value$(n) = str$(music exist(1))
+n = n + 1 : group(n) = 1 : label$(n) = "LOAD CDMUSIC 1, 1 then MUSIC EXIST(1)" : value$(n) = str$(music exist(1))
 
-rem --- 3. FTP
-title$(3) = "FTP" : why$(3) = "Plain FTP is obsolete and insecure; every session fails at once."
+rem --- 2. FTP
+title$(2) = "FTP" : why$(2) = "Plain FTP is obsolete and insecure; every session fails at once."
 ftp connect "ftp.example.org", "anonymous", "guest"
 ftp set dir "/"
 ftp find first : ftp find next
@@ -46,7 +28,7 @@ ftp get file "remote.txt", "local.txt", 1
 ftp put file "local.txt"
 ftp delete file "old.txt"
 ftp proceed : ftp terminate : ftp disconnect 0
-g = 3
+g = 2
 n = n + 1 : group(n) = g : label$(n) = "GET FTP STATUS()" : value$(n) = str$(get ftp status())
 n = n + 1 : group(n) = g : label$(n) = "GET FTP FAILURE()" : value$(n) = str$(get ftp failure())
 n = n + 1 : group(n) = g : label$(n) = "GET FTP PROGRESS()" : value$(n) = str$(get ftp progress())
@@ -56,8 +38,8 @@ n = n + 1 : group(n) = g : label$(n) = "GET FTP FILE NAME$()" : value$(n) = """"
 n = n + 1 : group(n) = g : label$(n) = "GET FTP DIR$()" : value$(n) = """" + get ftp dir$() + """"
 n = n + 1 : group(n) = g : label$(n) = "GET FTP ERROR$()" : value$(n) = """" + get ftp error$() + """"
 
-rem --- 4. DirectPlay network games
-title$(4) = "NETWORK GAMES" : why$(4) = "DirectPlay no longer exists; no session is ever found or joined."
+rem --- 3. DirectPlay network games
+title$(3) = "NETWORK GAMES" : why$(3) = "DirectPlay no longer exists; no session is ever found or joined."
 perform checklist for net connections
 connections = checklist quantity()
 set net connection 1, ""
@@ -74,7 +56,7 @@ send net message bitmap 0, 1, 0 : send net message image 0, 1, 0
 send net message memblock 0, 1, 0 : send net message mesh 0, 1, 0 : send net message sound 0, 1, 0
 get net message
 net message bitmap 1 : net message image 1 : net message memblock 1 : net message mesh 1 : net message sound 1
-g = 4
+g = 3
 n = n + 1 : group(n) = g : label$(n) = "connections, sessions found" : value$(n) = str$(connections) + ", " + str$(sessions)
 n = n + 1 : group(n) = g : label$(n) = "CREATE NET PLAYER(""bot2"")" : value$(n) = str$(create net player("bot2"))
 n = n + 1 : group(n) = g : label$(n) = "NET GAME EXISTS()" : value$(n) = str$(net game exists())
@@ -92,12 +74,12 @@ n = n + 1 : group(n) = g : label$(n) = "NET MESSAGE STRING$()" : value$(n) = """
 free net player 1
 free net game
 
-rem --- 5. DLLs and the registry
-title$(5) = "DLLS AND REGISTRY" : why$(5) = "Windows DLLs and the registry do not exist on other systems."
+rem --- 4. DLLs and the registry
+title$(4) = "DLLS AND REGISTRY" : why$(4) = "Windows DLLs and the registry do not exist on other systems."
 load dll "user32.dll", 1
 call dll 1, "MessageBeep", 0
 write to registry "Software\OpenDBC", "Score", 10
-g = 5
+g = 4
 n = n + 1 : group(n) = g : label$(n) = "DLL EXIST(1)" : value$(n) = str$(dll exist(1))
 n = n + 1 : group(n) = g : label$(n) = "DLL CALL EXIST(1, ""MessageBeep"")" : value$(n) = str$(dll call exist(1, "MessageBeep"))
 n = n + 1 : group(n) = g : label$(n) = "CALL DLL(1, ""GetTickCount"")" : value$(n) = str$(call dll(1, "GetTickCount"))
@@ -105,8 +87,8 @@ n = n + 1 : group(n) = g : label$(n) = "GET REGISTRY(""Software\OpenDBC"", ""Sco
 n = n + 1 : group(n) = g : label$(n) = "WINDIR$()" : value$(n) = """" + windir$() + """"
 delete dll 1
 
-rem --- 6. Video memory and old hardware switches
-title$(6) = "HARDWARE" : why$(6) = "Modern graphics hide video memory and need no software emulation."
+rem --- 5. Video memory and old hardware switches
+title$(5) = "HARDWARE" : why$(5) = "Modern graphics hide video memory and need no software emulation."
 lock backbuffer
 make memblock 1, 16
 set graphics card "Primary Display Driver"
@@ -114,7 +96,7 @@ disable tnl : enable tnl
 set emulation on : set emulation off
 disable systemkeys : enable systemkeys
 set eax 1
-g = 6
+g = 5
 n = n + 1 : group(n) = g : label$(n) = "GET BACKBUFFER PTR()" : value$(n) = str$(get backbuffer ptr())
 n = n + 1 : group(n) = g : label$(n) = "GET MEMBLOCK PTR(1)" : value$(n) = str$(get memblock ptr(1))
 n = n + 1 : group(n) = g : label$(n) = "EMULATION MODE()" : value$(n) = str$(emulation mode())
@@ -122,7 +104,7 @@ n = n + 1 : group(n) = g : label$(n) = "3DBLIT AVAILABLE()" : value$(n) = str$(3
 unlock backbuffer
 delete memblock 1
 
-pages = 6 : page = 1 : changed = timer()
+pages = 5 : page = 1 : changed = timer()
 do
    if timer() - changed > 4000 or (rightkey() = 1 and held = 0) then page = (page mod pages) + 1 : changed = timer()
    held = rightkey()

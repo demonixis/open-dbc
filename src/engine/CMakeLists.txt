@@ -23,6 +23,7 @@ add_library(dbc_engine STATIC
   systems/renderer_system.cpp
   systems/sprite_system.cpp
   systems/debug_system.cpp
+  systems/video_system.cpp
 )
 
 target_link_libraries(dbc_engine
@@ -43,8 +44,14 @@ add_dependencies(dbc_engine opendbc_shaders)
 dbc_enable_warnings(dbc_engine)
 
 
+# Animations decode with the platform's media framework; other platforms load them inert.
 if(APPLE)
-    target_link_libraries(dbc_engine PUBLIC "-framework Foundation" "-framework AVFoundation")
+    target_sources(dbc_engine PRIVATE systems/video_decoder_avfoundation.mm)
+    set_source_files_properties(systems/video_decoder_avfoundation.mm PROPERTIES COMPILE_OPTIONS -fobjc-arc)
+    target_link_libraries(dbc_engine PUBLIC "-framework Foundation" "-framework AVFoundation"
+                          "-framework CoreMedia" "-framework CoreVideo")
+else()
+    target_sources(dbc_engine PRIVATE systems/video_decoder_unavailable.cpp)
 endif()
 
 if(TARGET OpenXR::headers)

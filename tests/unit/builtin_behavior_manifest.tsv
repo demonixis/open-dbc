@@ -36,6 +36,7 @@ dbc	61	90	Command	COPY FILE	file	test_engine_builtins.cpp::COPY FILE never overw
 dbc	63	93	Command	COPY MEMBLOCK	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
 dbc	68	99	Command	CREATE BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
 dbc	73	106	Command	DATA	golden-output	test_data_read.dba	7c3934fc95ae6043b17df44aa42cdfadc29ddd5e2cb1d81da1c078910021355d
+dbc	74	108	Command	DELETE ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	75	110	Command	DELETE BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
 dbc	76	112	Command	DELETE BOB	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
 dbc	79	115	Command	DELETE DIRECTORY	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
@@ -110,6 +111,7 @@ dbc	196	305	Command	INPUT	golden-output	test_input.dba	6aa04504661d514164a00bcc9
 dbc	200	311	Command	LINE	engine-state	test_engine_builtins.cpp::Classic primitive and text commands queue observable frame state	-
 dbc	204	316	Command	LINK LIMB	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbc	205	318	Command	LOAD 3DSOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbc	206	320	Command	LOAD ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	207	322	Command	LOAD ARRAY	golden-output	test_array_namespace.dba	c395d2dcbc528d5821e9637cc8acd35c9bfab7e10975243b99eaa1dc6dd89d47
 dbc	208	324	Command	LOAD BITMAP	runtime-error	test_engine_builtins.cpp::Asset load failures become runtime errors and leave no resource slot	-
 dbc	214	333	Command	LOAD IMAGE	runtime-error	test_engine_builtins.cpp::Asset load failures become runtime errors and leave no resource slot	-
@@ -120,6 +122,8 @@ dbc	218	341	Command	LOAD SOUND	audio-state	test_engine_builtins.cpp::Portable so
 dbc	220	343	Command	LOAD STATIC OBJECTS	static-file	test_engine_builtins.cpp::Classic portable static world, line of sight, and global collision have observable state	-
 dbc	223	348	Command	LOCK OBJECT OFF	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbc	224	350	Command	LOCK OBJECT ON	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
+dbc	227	354	Command	LOOP ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	227	355	Command	LOOP ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	228	358	Command	LOOP MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	229	360	Command	LOOP OBJECT	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbc	230	362	Command	LOOP SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -165,6 +169,7 @@ dbc	328	478	Command	OPEN TO WRITE	golden-output	test_file_io.dba	ad8ff6ee761d1c5
 dbc	329	480	Command	PASTE BOB	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
 dbc	330	481	Command	PASTE IMAGE	golden-output	test_images.dba	fef2f4622e193bebf87b317809e35d6cd4b4beaa691fdb67cf1b9e4807f58481
 dbc	331	483	Command	PASTE SPRITE	render-state	test_engine_builtins.cpp::Sprite priority determines the renderer traversal order	-
+dbc	332	485	Command	PAUSE ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	333	487	Command	PAUSE MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	334	489	Command	PAUSE SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	337	491	Command	PERFORM CHECKLIST FOR CONTROL DEVICES	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
@@ -178,6 +183,11 @@ dbc	354	518	Command	PITCH CAMERA DOWN	golden-output	test_camera_extended.dba	66d
 dbc	355	520	Command	PITCH CAMERA UP	golden-output	test_camera_extended.dba	66d9810d557cd927d2a827c57b3ba4fc8e27c5ddb65a29ffe4f9e25a8ca05cbb
 dbc	356	522	Command	PITCH OBJECT DOWN	object-geometry-texture-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
 dbc	357	524	Command	PITCH OBJECT UP	object-geometry-texture-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
+dbc	358	526	Command	PLACE ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	359	528	Command	PLAY ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	359	529	Command	PLAY ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	359	530	Command	PLAY ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	359	531	Command	PLAY ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	361	537	Command	PLAY MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	362	539	Command	PLAY OBJECT	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbc	363	541	Command	PLAY SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -209,6 +219,7 @@ dbc	398	600	Command	RECORD SOUND	audio-capture-validation	test_engine_builtins.c
 dbc	400	603	Command	RENAME FILE	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
 dbc	401	605	Command	RESTORE	golden-output	test_data_read.dba	7c3934fc95ae6043b17df44aa42cdfadc29ddd5e2cb1d81da1c078910021355d
 dbc	402	607	Command	RESTORE WINDOW	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
+dbc	403	609	Command	RESUME ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	404	611	Command	RESUME MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	405	613	Command	RESUME SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	406	615	Command	ROLL CAMERA LEFT	golden-output	test_camera_extended.dba	66d9810d557cd927d2a827c57b3ba4fc8e27c5ddb65a29ffe4f9e25a8ca05cbb
@@ -318,6 +329,7 @@ dbc	639	945	Command	SHOW WINDOW	window-state	test_engine_builtins.cpp::Portable 
 dbc	640	947	Command	SIZE SPRITE	render-state	test_engine_builtins.cpp::Sprite priority determines the renderer traversal order	-
 dbc	641	949	Command	SLEEP	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
 dbc	642	951	Command	SPRITE	golden-output	test_sprites.dba	4a289ee6371256d4896b9c0c331aa92b3551d2cb277a06dd7e3b9f6a76992adf
+dbc	643	953	Command	STOP ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	644	955	Command	STOP MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	645	957	Command	STOP OBJECT	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbc	647	959	Command	STOP RECORDING SOUND	audio-capture-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -366,6 +378,15 @@ dbc	706	1059	Command	ZROTATE OBJECT	engine-state	test_engine_builtins.cpp::Class
 dbc	708	1062	Function	ABS	golden-output	test_math.dba	fbc34ac7b482ab61efa6ba907ab95916bd1c2d43b6bb1b157077bc6b0e75eb82
 dbc	709	1064	Function	ACOS	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02
 dbc	710	1066	Function	ALPHABLENDING AVAILABLE	gpu-capability	test_engine_builtins.cpp::Classic backdrop and fog commands update draw state	-
+dbc	711	1068	Function	ANIMATION EXIST	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	712	1070	Function	ANIMATION HEIGHT	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	713	1072	Function	ANIMATION LOOPED	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	714	1073	Function	ANIMATION LOOPING	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	715	1075	Function	ANIMATION PAUSED	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	716	1077	Function	ANIMATION PLAYING	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	717	1079	Function	ANIMATION POSITION X	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	718	1081	Function	ANIMATION POSITION Y	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
+dbc	719	1083	Function	ANIMATION WIDTH	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	720	1085	Function	APPNAME$	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
 dbc	721	1087	Function	ASC	golden-output	test_strings.dba	8b0d4b36993049906cab297218b9fea5c961d9cd99d88755769c34b78ca7093d
 dbc	722	1089	Function	ASIN	golden-output	test_math_extended.dba	4b2c52d54310f506bd5ee8f4454d99ab96007d74047d0387bf5a2ea6f67e2c02

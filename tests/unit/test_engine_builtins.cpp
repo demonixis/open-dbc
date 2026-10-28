@@ -21,6 +21,7 @@
 #include "engine/systems/terrain_mesh.hpp"
 #include "engine/systems/text_state.hpp"
 #include "engine/systems/text_system.hpp"
+#include "engine/systems/video_system.hpp"
 #include "interpreter/engine_builtin_api/file_io.hpp"
 #include "interpreter/engine_builtin_host.hpp"
 #include "interpreter/engine_builtin_registry.hpp"
@@ -47,6 +48,10 @@
 #include <mutex>
 #include <set>
 #include <thread>
+
+#if defined(__APPLE__)
+#include <CoreFoundation/CoreFoundation.h>
+#endif
 
 using namespace dbc::interpreter::detail;
 
@@ -564,18 +569,20 @@ TEST_CASE("Classic RLE tutorial bitmaps copy through render-compatible surfaces"
     CHECK(RegionPixel == ExpectedPixel);
 }
 
-TEST_CASE("Classic neutral animation dimensions create a selectable inert bitmap")
+TEST_CASE("Classic inert animation dimensions create a selectable bitmap")
 {
     dbc::EngineKernel Kernel;
-    REQUIRE(Kernel.Initialize("classic-neutral-animation-bitmap", 8, 8));
+    REQUIRE(Kernel.Initialize("classic-inert-animation-bitmap", 8, 8));
     Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Classic());
 
     BuiltinContext Context;
     Context.Kernel = &Kernel;
     Context.Profile = dbc::language::LanguageProfile::Dbc;
+    Context.AssetRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/video";
     EngineBuiltinHost Host(Context);
 
-    const std::vector<dbc::vm::Value> AnimationArguments{dbc::vm::Value::String("avi/demo1.avi"),
+    // No platform decodes Cinepak, like most period AVI files: the animation loads without a size.
+    const std::vector<dbc::vm::Value> AnimationArguments{dbc::vm::Value::String("cinepak.avi"),
                                                          dbc::vm::Value::Integer(1)};
     REQUIRE(Host.Invoke({1,
                          dbc::language::SymbolId::Command_LoadAnimation,
@@ -627,6 +634,177 @@ TEST_CASE("Classic neutral animation dimensions create a selectable inert bitmap
     CHECK(Professional.Error.find("requires positive dimensions") != std::string::npos);
     CHECK(Kernel.ImageStoreRef().BitmapExist(1) == 0);
 }
+
+TEST_CASE("Classic animations validate numbers, files, bitmaps and areas")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("classic-animation-state", 64, 64));
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::Dbc;
+    Context.AssetRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/video";
+    std::string Error;
+    const auto Command = [&](dbc::language::SymbolId Symbol, std::vector<BuiltinValue> Arguments)
+    {
+        Error.clear();
+        return InvokeCommand(Context, Symbol, Arguments, Error);
+    };
+    const auto Number = [&](dbc::language::SymbolId Symbol, int AnimationId)
+    {
+        BuiltinValue Result;
+        std::string QueryError;
+        REQUIRE_MESSAGE(InvokeFunction(Context, Symbol, {BuiltinValue::FromNumber(AnimationId)}, Result, QueryError),
+                        QueryError);
+        return ReadBuiltinInteger(Result);
+    };
+    using dbc::language::SymbolId;
+
+    BuiltinValue Unused;
+    CHECK_FALSE(InvokeFunction(Context, SymbolId::Function_AnimationExist, {BuiltinValue::FromNumber(33)}, Unused,
+                               Error));
+    CHECK(Error == "Animation number must be between 1 and 32");
+    CHECK_FALSE(
+        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("missing.mp4"), BuiltinValue::FromNumber(2)}));
+    CHECK(Error.find("LOAD ANIMATION cannot find") != std::string::npos);
+    CHECK(Number(SymbolId::Function_AnimationExist, 2) == 0);
+
+    REQUIRE(
+        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("cinepak.avi"), BuiltinValue::FromNumber(2)}));
+    CHECK(Number(SymbolId::Function_AnimationExist, 2) == 1);
+    CHECK_FALSE(
+        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("cinepak.avi"), BuiltinValue::FromNumber(2)}));
+    CHECK(Error == "LOAD ANIMATION cannot replace existing animation 2");
+
+    // An inert animation accepts every command but never plays.
+    REQUIRE(Command(SymbolId::Command_LoopAnimation, {BuiltinValue::FromNumber(2)}));
+    CHECK(Number(SymbolId::Function_AnimationPlaying, 2) == 0);
+    CHECK(Number(SymbolId::Function_AnimationLooped, 2) == 1);
+    CHECK(Number(SymbolId::Function_AnimationLooping, 2) == 1);
+    REQUIRE(Command(SymbolId::Command_PauseAnimation, {BuiltinValue::FromNumber(2)}));
+    CHECK(Number(SymbolId::Function_AnimationPaused, 2) == 0);
+    REQUIRE(Command(SymbolId::Command_StopAnimation, {BuiltinValue::FromNumber(2)}));
+    CHECK(Number(SymbolId::Function_AnimationLooped, 2) == 0);
+
+    REQUIRE(Command(SymbolId::Command_PlaceAnimation,
+                    {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(10), BuiltinValue::FromNumber(20),
+                     BuiltinValue::FromNumber(50), BuiltinValue::FromNumber(40)}));
+    CHECK(Number(SymbolId::Function_AnimationPositionX, 2) == 10);
+    CHECK(Number(SymbolId::Function_AnimationPositionY, 2) == 20);
+    CHECK(Number(SymbolId::Function_AnimationWidth, 2) == 40);
+    CHECK(Number(SymbolId::Function_AnimationHeight, 2) == 20);
+    REQUIRE(Command(SymbolId::Command_PlayAnimation,
+                    {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(5), BuiltinValue::FromNumber(6)}));
+    CHECK(Number(SymbolId::Function_AnimationPositionX, 2) == 5);
+    CHECK(Number(SymbolId::Function_AnimationPositionY, 2) == 6);
+    CHECK(Number(SymbolId::Function_AnimationWidth, 2) == 40);
+    REQUIRE(Command(SymbolId::Command_PlayAnimation,
+                    {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(2),
+                     BuiltinValue::FromNumber(31), BuiltinValue::FromNumber(22)}));
+    CHECK(Number(SymbolId::Function_AnimationWidth, 2) == 30);
+    CHECK(Number(SymbolId::Function_AnimationHeight, 2) == 20);
+    REQUIRE(Command(SymbolId::Command_LoopAnimation,
+                    {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(5),
+                     BuiltinValue::FromNumber(6), BuiltinValue::FromNumber(45), BuiltinValue::FromNumber(26)}));
+    CHECK(Number(SymbolId::Function_AnimationPositionX, 2) == 5);
+    CHECK(Number(SymbolId::Function_AnimationWidth, 2) == 40);
+    REQUIRE(Command(SymbolId::Command_PlayAnimation, {BuiltinValue::FromNumber(2)}));
+    CHECK(Number(SymbolId::Function_AnimationLooped, 2) == 0);
+    REQUIRE(Command(SymbolId::Command_ResumeAnimation, {BuiltinValue::FromNumber(2)}));
+    CHECK(Number(SymbolId::Function_AnimationPlaying, 2) == 0);
+    CHECK_FALSE(Command(SymbolId::Command_PlaceAnimation,
+                        {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(10), BuiltinValue::FromNumber(20),
+                         BuiltinValue::FromNumber(10), BuiltinValue::FromNumber(40)}));
+    CHECK(Error == "PLACE ANIMATION requires an area with a positive width and height");
+    CHECK_FALSE(Command(SymbolId::Command_PlayAnimation,
+                        {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(7), BuiltinValue::FromNumber(0),
+                         BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(8), BuiltinValue::FromNumber(8)}));
+    CHECK(Error == "PLAY ANIMATION requires existing bitmap 7");
+    CHECK(Number(SymbolId::Function_AnimationPositionX, 2) == 5);
+
+    CHECK_FALSE(Command(SymbolId::Command_StopAnimation, {BuiltinValue::FromNumber(3)}));
+    CHECK(Error == "STOP ANIMATION requires existing animation 3");
+    REQUIRE(Command(SymbolId::Command_DeleteAnimation, {BuiltinValue::FromNumber(2)}));
+    CHECK(Number(SymbolId::Function_AnimationExist, 2) == 0);
+}
+
+#if defined(__APPLE__)
+TEST_CASE("Classic animations play decoded video into their bitmap")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("classic-animation-playback", 64, 64));
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::Dbc;
+    Context.AssetRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/video";
+    std::string Error;
+    using dbc::language::SymbolId;
+    const auto Command = [&](SymbolId Symbol, std::vector<BuiltinValue> Arguments)
+    {
+        REQUIRE_MESSAGE(InvokeCommand(Context, Symbol, Arguments, Error), Error);
+    };
+    const auto Number = [&](SymbolId Symbol)
+    {
+        BuiltinValue Result;
+        REQUIRE_MESSAGE(InvokeFunction(Context, Symbol, {BuiltinValue::FromNumber(1)}, Result, Error), Error);
+        return ReadBuiltinInteger(Result);
+    };
+    const auto Pixel = [&](int X, int Y)
+    {
+        std::array<Uint8, 4> Value{};
+        REQUIRE(SDL_ReadSurfacePixel(Kernel.ImageStoreRef().GetBitmapSurface(1), X, Y, &Value[0], &Value[1],
+                                     &Value[2], &Value[3]));
+        return Value;
+    };
+    // AVPlayer advances on the main run loop, which SDL pumps in the runtime.
+    const auto PlayUntil = [&](auto&& Reached)
+    {
+        const auto Deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (!Reached() && std::chrono::steady_clock::now() < Deadline)
+        {
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.02, false);
+            Kernel.Video().PaintFrames();
+        }
+        return Reached();
+    };
+    const auto Red = [&] { return Pixel(8, 8)[0] > 200 && Pixel(8, 8)[2] < 60; };
+    const auto Blue = [&] { return Pixel(8, 8)[2] > 200 && Pixel(8, 8)[0] < 60; };
+
+    // The fixture shows red for one second, then blue for one second.
+    REQUIRE(Kernel.ImageStoreRef().CreateBitmap(1, 64, 48, &Error));
+    const auto Outside = Pixel(40, 30);
+    Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("red_blue.mp4"), BuiltinValue::FromNumber(1)});
+    CHECK(Number(SymbolId::Function_AnimationWidth) == 64);
+    CHECK(Number(SymbolId::Function_AnimationHeight) == 48);
+    Command(SymbolId::Command_PlayAnimation,
+            {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0),
+             BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(32), BuiltinValue::FromNumber(24)});
+    CHECK(Number(SymbolId::Function_AnimationPlaying) == 1);
+    CHECK(PlayUntil(Red));
+    CHECK(Pixel(40, 30) == Outside);
+
+    Command(SymbolId::Command_PauseAnimation, {BuiltinValue::FromNumber(1)});
+    CHECK(Number(SymbolId::Function_AnimationPaused) == 1);
+    CHECK(Number(SymbolId::Function_AnimationPlaying) == 0);
+    Command(SymbolId::Command_ResumeAnimation, {BuiltinValue::FromNumber(1)});
+    CHECK(Number(SymbolId::Function_AnimationPlaying) == 1);
+    CHECK(PlayUntil(Blue));
+    CHECK(PlayUntil([&] { return Number(SymbolId::Function_AnimationPlaying) == 0; }));
+    CHECK(Blue());
+
+    // Looping starts over from the first frame and keeps playing past the end.
+    Command(SymbolId::Command_LoopAnimation, {BuiltinValue::FromNumber(1)});
+    CHECK(PlayUntil(Red));
+    CHECK(PlayUntil(Blue));
+    CHECK(PlayUntil(Red));
+    CHECK(Number(SymbolId::Function_AnimationPlaying) == 1);
+    CHECK(Number(SymbolId::Function_AnimationLooped) == 1);
+
+    // Deleting the animation leaves its last picture in the bitmap.
+    Command(SymbolId::Command_DeleteAnimation, {BuiltinValue::FromNumber(1)});
+    Kernel.Video().PaintFrames();
+    CHECK(Red());
+}
+#endif
 
 TEST_CASE("Swarm Classic plains face negative Z while DBPro orientations remain unchanged")
 {
@@ -3815,15 +3993,6 @@ TEST_CASE("Typed builtin ids dispatch implemented handlers and profile-isolated 
     CHECK(Checklist.State == dbc::vm::BuiltinState::Completed);
     CHECK(Context.Checklist.empty());
 
-    const dbc::vm::BuiltinResult LoadAnimation = Host.Invoke(
-        {8, dbc::language::SymbolId::Command_LoadAnimation, {}, {dbc::language::TypeKind::Void, {}}, false});
-    CHECK(LoadAnimation.State == dbc::vm::BuiltinState::Completed);
-    const dbc::vm::BuiltinResult AnimationExists = Host.Invoke(
-        {9, dbc::language::SymbolId::Function_AnimationExist, {}, {dbc::language::TypeKind::Real, {}}, false});
-    REQUIRE(AnimationExists.State == dbc::vm::BuiltinState::Completed);
-    REQUIRE(AnimationExists.ReturnValue);
-    CHECK(AnimationExists.ReturnValue->AsReal() == doctest::Approx(0.0));
-
     const std::vector<dbc::vm::Value> CdArguments{dbc::vm::Value::Integer(1), dbc::vm::Value::Integer(17)};
     CHECK(Host.Invoke({10,
                        dbc::language::SymbolId::Command_LoadCdmusic,
@@ -3982,7 +4151,7 @@ TEST_CASE("Every permanent Classic compatibility stub dispatches its typed neutr
                 CHECK(Result.ReturnValue->AsReal() == doctest::Approx(Expected));
         }
     }
-    CHECK(Exercised.size() == 95);
+    CHECK(Exercised.size() == 78);
 }
 
 TEST_CASE("Compatibility stub logging is debug-only and once per symbol per execution host")

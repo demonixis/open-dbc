@@ -197,7 +197,7 @@ TEST_CASE("Every permanent Classic compatibility stub binds, lowers and verifies
             Source << '\n';
         }
     }
-    CHECK(SymbolCount == 95);
+    CHECK(SymbolCount == 78);
     CHECK(OverloadCount >= SymbolCount);
     const auto Module = Compile(Source.str(), LanguageProfile::Dbc);
     REQUIRE(Module != nullptr);

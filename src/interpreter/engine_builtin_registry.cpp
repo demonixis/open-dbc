@@ -19,6 +19,7 @@
 #include "engine/systems/object_manager.hpp"
 #include "engine/systems/physics_system.hpp"
 #include "engine/systems/renderer_system.hpp"
+#include "engine/systems/video_system.hpp"
 #include "engine/systems/vr_system.hpp"
 #include "engine_builtin_api/all.hpp"
 #include "language/language_catalogue.hpp"
@@ -1525,6 +1526,31 @@ namespace dbc::interpreter::detail
                                                   &LoadError))
                 DBC_LOG_WARN("LOAD EFFECT: {}", LoadError);
             return true;
+        }
+
+        // PLAY ANIMATION takes the animation alone, a position, an area or a bitmap and an area; LOOP ANIMATION
+        // takes the first and last forms.
+        bool PlayAnimationCommand(BuiltinContext& Context, const std::vector<BuiltinValue>& Arguments, bool Loop,
+                                  std::string* Error = nullptr)
+        {
+            std::array<int, 6> Values{};
+            for (std::size_t Index = 0; Index < Arguments.size() && Index < Values.size(); ++Index)
+                if (!Arguments[Index].AsInt(Values[Index], Error))
+                    return false;
+            VideoSystem& Video = Context.Kernel->Video();
+            switch (Arguments.size())
+            {
+                case 3:
+                    return Video.PlayAnimationAt(Values[0], Values[1], Values[2], Error);
+                case 5:
+                    return Video.PlayAnimation(Values[0], Loop, std::nullopt,
+                                               AnimationArea{Values[1], Values[2], Values[3], Values[4]}, Error);
+                case 6:
+                    return Video.PlayAnimation(Values[0], Loop, Values[1],
+                                               AnimationArea{Values[2], Values[3], Values[4], Values[5]}, Error);
+                default:
+                    return Video.PlayAnimation(Values[0], Loop, std::nullopt, std::nullopt, Error);
+            }
         }
 
         bool ExecutablePath(std::string& Output, std::string* Error = nullptr)

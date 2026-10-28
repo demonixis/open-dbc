@@ -68,6 +68,9 @@ Work:
 
 ## Rendering and media
 
+- [ ] Video decoders for Windows (Media Foundation), Linux and Android, each
+  checked on its platform, and an iOS run of the AVFoundation one; the others
+  load every animation inert today ([video.md](video.md)).
 - [ ] `SET SHADOW SHADING ON` indoors: a cube in a closed box room, lit by a
   point light inside it (`SET SHADOW POSITION 1, ...` or the same fixed
   position), casts no visible shadow, and a lighter patch appears where the
