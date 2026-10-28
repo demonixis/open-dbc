@@ -24,8 +24,9 @@ namespace dbc::studio
             bool Changed = false;
         };
 
-        // Adds the missing includes and calls after the file's leading comments, in
-        // the order of `Links`. Keeps the file's line endings.
+        // Adds the missing includes to the include block under the file's leading
+        // comments, then the missing calls after that block, in the order of
+        // `Links`. Keeps the file's line endings.
         LinkResult LinkIntoMain(const std::string& MainText, dbc::language::LanguageProfile Profile,
                                 const std::vector<MainLink>& Links);
     } // namespace scene

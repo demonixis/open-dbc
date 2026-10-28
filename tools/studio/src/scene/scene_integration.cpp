@@ -69,17 +69,79 @@ namespace dbc::studio
                 return End == std::string::npos ? Text.size() : End + 1;
             }
 
-            bool IsLeadingComment(std::string_view Line)
+            std::string_view TrimLine(std::string_view Line)
             {
                 while (!Line.empty() && (Line.front() == ' ' || Line.front() == '\t'))
                     Line.remove_prefix(1);
-                while (!Line.empty() && (Line.back() == '\r' || Line.back() == '\n'))
+                while (!Line.empty() && (Line.back() == '\r' || Line.back() == '\n' || Line.back() == ' ' ||
+                                         Line.back() == '\t'))
                     Line.remove_suffix(1);
-                if (Line.empty() || Line.front() == '\'' || Line.front() == '`')
+                return Line;
+            }
+
+            bool IsComment(std::string_view Line)
+            {
+                Line = TrimLine(Line);
+                if (!Line.empty() && (Line.front() == '\'' || Line.front() == '`'))
                     return true;
-                // A REMSTART block ends the leading comments: the lines go before it.
+                // A REMSTART block is code as far as the header goes: the lines go before it.
                 return Line.size() >= 3 && Upper(Line.substr(0, 3)) == "REM" &&
                        (Line.size() == 3 || Line[3] == ' ' || Line[3] == '\t');
+            }
+
+            bool IsInclude(std::string_view Line)
+            {
+                Line = TrimLine(Line);
+                return Line.size() >= 8 && Upper(Line.substr(0, 8)) == "#INCLUDE";
+            }
+
+            // The file's layout around its top: the leading comment block, then the
+            // #include lines, then the first line of code.
+            struct Header
+            {
+                std::size_t Top = 0;        // after the leading comments and the blank line ending them
+                std::size_t Includes = 0;   // after the last #include of the include block
+                bool HasIncludes = false;
+                std::size_t Code = 0;       // the first line after the include block and its blank lines
+                bool CodeIsBlank = false;   // true when nothing but blank lines follows
+            };
+
+            Header ReadHeader(const std::string& Text)
+            {
+                Header Result;
+                std::size_t Offset = 0;
+                bool SawComment = false;
+                while (Offset < Text.size())
+                {
+                    const std::size_t Next = AfterLine(Text, Offset);
+                    const std::string_view Line = std::string_view(Text).substr(Offset, Next - Offset);
+                    if (IsComment(Line))
+                        SawComment = true;
+                    else if (!TrimLine(Line).empty())
+                        break;
+                    Offset = Next;
+                    // The first blank line after the comments closes the header comment;
+                    // comments further down describe the code they precede.
+                    if (SawComment && TrimLine(Line).empty())
+                        break;
+                }
+                Result.Top = Result.Includes = Result.Code = Offset;
+                while (Offset < Text.size())
+                {
+                    const std::size_t Next = AfterLine(Text, Offset);
+                    const std::string_view Line = std::string_view(Text).substr(Offset, Next - Offset);
+                    if (IsInclude(Line))
+                    {
+                        Result.HasIncludes = true;
+                        Result.Includes = Next;
+                    }
+                    else if (!TrimLine(Line).empty())
+                        break;
+                    Offset = Next;
+                }
+                Result.Code = Result.HasIncludes ? Offset : Result.Top;
+                Result.CodeIsBlank = Result.Code >= Text.size();
+                return Result;
             }
         } // namespace
 
@@ -92,18 +154,13 @@ namespace dbc::studio
             Source->Profile = Profile;
             const lang::Program Program = lang::LexAndParse(Source);
 
-            std::size_t Top = 0;
-            while (Top < MainText.size())
-            {
-                const std::size_t Next = AfterLine(MainText, Top);
-                if (!IsLeadingComment(std::string_view(MainText).substr(Top, Next - Top)))
-                    break;
-                Top = Next;
-            }
+            const Header Layout = ReadHeader(MainText);
 
-            // Lines to insert at each offset, in link order. A missing call goes right
-            // after the previous link's call, so SetupGame() keeps running first.
-            std::map<std::size_t, std::vector<std::string>> Inserts;
+            // Includes join the include block at the top; calls follow it, in link
+            // order. A missing call goes right after the previous link's call, so
+            // SetupGame() keeps running before the levels.
+            std::vector<std::string> Includes;
+            std::map<std::size_t, std::vector<std::string>> Calls;
             std::optional<std::size_t> Anchor;
             for (const MainLink& Link : Links)
             {
@@ -113,7 +170,7 @@ namespace dbc::studio
                                 [&](const lang::IncludeDeclaration& Include)
                                 { return NormalizedInclude(Include.Path.generic_string()) == Wanted; });
                 if (!Included)
-                    Inserts[Top].push_back("#include \"" + Link.IncludePath + "\"");
+                    Includes.push_back("#include \"" + Link.IncludePath + "\"");
 
                 const std::string Function = Upper(Link.Function);
                 const lang::Statement* Call = FindCall(Program.Statements, Function);
@@ -124,12 +181,25 @@ namespace dbc::studio
                     Anchor = AfterLine(MainText, Call->Span.Begin.Offset);
                     continue;
                 }
-                Inserts[Anchor.value_or(Top)].push_back(Link.Function + "()");
+                Calls[Anchor.value_or(Layout.Code)].push_back(Link.Function + "()");
             }
 
             LinkResult Result{MainText, false};
-            if (Inserts.empty())
+            if (Includes.empty() && Calls.empty())
                 return Result;
+
+            // Blank lines keep the include block, the calls and the code apart.
+            std::map<std::size_t, std::vector<std::string>> Inserts = Calls;
+            if (Calls.count(Layout.Code) != 0 && !Layout.CodeIsBlank)
+                Inserts[Layout.Code].push_back({});
+            if (!Includes.empty())
+            {
+                std::vector<std::string>& Block = Inserts[Layout.HasIncludes ? Layout.Includes : Layout.Top];
+                const bool Separate = !Block.empty() || (!Layout.HasIncludes && !Layout.CodeIsBlank);
+                Block.insert(Block.begin(), Includes.begin(), Includes.end());
+                if (Separate)
+                    Block.insert(Block.begin() + static_cast<std::ptrdiff_t>(Includes.size()), std::string{});
+            }
 
             const std::string Newline = MainText.find("\r\n") != std::string::npos ? "\r\n" : "\n";
             for (auto Entry = Inserts.rbegin(); Entry != Inserts.rend(); ++Entry)

@@ -270,22 +270,35 @@ TEST_CASE("Game settings round-trip and keep Pro-only forms out of Classic")
     CHECK_FALSE(ClassicRead.Settings.Vsync.has_value());
 }
 
-TEST_CASE("Main sources get each include and call once, after their comments")
+TEST_CASE("Main sources get their includes on top, then the setup and level calls")
 {
     const std::vector<scene::MainLink> Links = {{"opendbc_game.dba", "SetupGame"},
                                                 {"levels/First.dba", "LoadLevel_First"}};
-    const std::string Main = "REM My game\r\n\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n";
+    const std::string Main = "REM My game\r\n\r\nREM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n";
     const scene::LinkResult Linked = scene::LinkIntoMain(Main, LanguageProfile::Dbc, Links);
     CHECK(Linked.Changed);
-    CHECK(Linked.Text == "REM My game\r\n\r\n#include \"opendbc_game.dba\"\r\nSetupGame()\r\n"
-                         "#include \"levels/First.dba\"\r\nLoadLevel_First()\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n");
+    CHECK(Linked.Text == "REM My game\r\n\r\n#include \"opendbc_game.dba\"\r\n#include \"levels/First.dba\"\r\n\r\n"
+                         "SetupGame()\r\nLoadLevel_First()\r\n\r\nREM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n");
     CHECK_FALSE(scene::LinkIntoMain(Linked.Text, LanguageProfile::Dbc, Links).Changed);
+
+    // A second level joins the include block, and its call follows the first level's.
+    const std::vector<scene::MainLink> Third = {{"opendbc_game.dba", "SetupGame"},
+                                                {"levels/First.dba", "LoadLevel_First"},
+                                                {"levels/Cave.dba", "LoadLevel_Cave"}};
+    CHECK(scene::LinkIntoMain(Linked.Text, LanguageProfile::Dbc, Third).Text ==
+          "REM My game\r\n\r\n#include \"opendbc_game.dba\"\r\n#include \"levels/First.dba\"\r\n"
+          "#include \"levels/Cave.dba\"\r\n\r\nSetupGame()\r\nLoadLevel_First()\r\nLoadLevel_Cave()\r\n\r\n"
+          "REM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n");
 
     // A call the user moved is found where it is; a new level's call follows SetupGame().
     const std::string Moved = "#include \"opendbc_game.dba\"\nprint 1\nSetupGame()\nwait key\n";
     const std::vector<scene::MainLink> Second = {{"opendbc_game.dba", "SetupGame"},
                                                  {"levels\\Cave.dba", "LoadLevel_Cave"}};
     const scene::LinkResult Added = scene::LinkIntoMain(Moved, LanguageProfile::DbPro, Second);
-    CHECK(Added.Text == "#include \"levels\\Cave.dba\"\n#include \"opendbc_game.dba\"\nprint 1\nSetupGame()\n"
+    CHECK(Added.Text == "#include \"opendbc_game.dba\"\n#include \"levels\\Cave.dba\"\nprint 1\nSetupGame()\n"
                         "LoadLevel_Cave()\nwait key\n");
+
+    // An empty file gets the includes and the calls only.
+    CHECK(scene::LinkIntoMain("", LanguageProfile::Dbc, Links).Text ==
+          "#include \"opendbc_game.dba\"\n#include \"levels/First.dba\"\n\nSetupGame()\nLoadLevel_First()\n");
 }
