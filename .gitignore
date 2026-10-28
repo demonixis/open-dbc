@@ -77,5 +77,9 @@ Desktop.ini
 !shaders/dbclassic_tri.vert.spv
 !shaders/vr_transfer.vert.spv
 !shaders/vr_transfer.frag.spv
+!tools/studio/shaders/scene_line.frag.spv
+!tools/studio/shaders/scene_line.vert.spv
+!tools/studio/shaders/scene_mesh.frag.spv
+!tools/studio/shaders/scene_mesh.vert.spv
 examples/dbc/demos/.opendbc-project.json
 examples/dbpro/tutorials/world/.opendbc-project.json

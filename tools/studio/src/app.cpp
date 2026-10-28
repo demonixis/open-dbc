@@ -260,8 +260,8 @@ namespace dbc::studio
         }
         SDL_SetWindowPosition(Window_, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
-        Gpu_ = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL |
-                                       SDL_GPU_SHADERFORMAT_METALLIB,
+        // No DXIL: the Scene view ships SPIR-V and MSL only, so Windows uses Vulkan.
+        Gpu_ = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_METALLIB,
                                    false, nullptr);
         if (Gpu_ == nullptr)
         {

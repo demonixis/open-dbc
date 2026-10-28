@@ -261,8 +261,8 @@ namespace dbc::studio
                         Out.Command(SymbolId::Command_MakeTerrain, {Id, Quoted(Node.Asset)});
                         if (!Node.Mat.Texture.empty())
                             Out.Command(SymbolId::Command_TextureTerrain, {Id, Integer(Images.at(Node.Mat.Texture))});
-                        if (Node.Position != glm::vec3(0.0f))
-                            Out.Vector(SymbolId::Command_PositionTerrain, Node.Id, Node.Position);
+                        // MAKE TERRAIN starts at Z = its depth, so the position is always written.
+                        Out.Vector(SymbolId::Command_PositionTerrain, Node.Id, Node.Position);
                         break;
                     case NodeKind::Light:
                         Out.Command(SymbolId::Command_MakeLight, {Id});

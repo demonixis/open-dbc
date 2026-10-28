@@ -55,6 +55,22 @@ if(NOT ANDROID AND NOT IOS)
     target_link_libraries(test_studio_scene PRIVATE doctest_with_main dbc_language glm::glm)
     doctest_discover_tests(test_studio_scene PROPERTIES LABELS "unit-studio")
 
+    add_executable(test_studio_scene_render
+        test_studio_scene_render.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/gpu_texture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_geometry.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_renderer.cpp
+    )
+    add_dependencies(test_studio_scene_render opendbc_scene_shaders)
+    target_include_directories(test_studio_scene_render PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
+                               ${CMAKE_BINARY_DIR}/tools/studio/generated)
+    target_compile_definitions(test_studio_scene_render PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+                               TEST_OUTPUT_DIR="${CMAKE_BINARY_DIR}/tests")
+    target_link_libraries(test_studio_scene_render PRIVATE doctest_with_main dbc_engine dbc_language)
+    doctest_discover_tests(test_studio_scene_render PROPERTIES LABELS "unit-studio"
+                           RESOURCE_LOCK "opendbc_runtime")
+
     add_executable(test_studio_media
         test_studio_media.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp

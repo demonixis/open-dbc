@@ -2,9 +2,8 @@
 
 #include <algorithm>
 #include <cctype>
-#include <limits>
 
-#include <SDL3_image/SDL_image.h>
+#include "core/gpu_texture.hpp"
 
 namespace dbc::studio
 {
@@ -127,132 +126,12 @@ namespace dbc::studio
 
         bool AssetPreview::OpenImage(const std::filesystem::path& Path)
         {
-            if (Gpu_ == nullptr)
-            {
-                Error_ = "No GPU device";
+            core::GpuImage Image;
+            if (!core::LoadGpuImage(Gpu_, Path, Image, Error_))
                 return false;
-            }
-
-            SDL_Surface* Loaded = IMG_Load(Path.string().c_str());
-            if (Loaded == nullptr)
-            {
-                Error_ = std::string("Cannot load image: ") + SDL_GetError();
-                return false;
-            }
-
-            SDL_Surface* Rgba = SDL_ConvertSurface(Loaded, SDL_PIXELFORMAT_ABGR8888);
-            SDL_DestroySurface(Loaded);
-            if (Rgba == nullptr)
-            {
-                Error_ = std::string("Cannot convert image: ") + SDL_GetError();
-                return false;
-            }
-
-            Width_ = Rgba->w;
-            Height_ = Rgba->h;
-
-            SDL_GPUTextureCreateInfo Info = {};
-            Info.type = SDL_GPU_TEXTURETYPE_2D;
-            Info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-            Info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
-            Info.width = static_cast<Uint32>(Width_);
-            Info.height = static_cast<Uint32>(Height_);
-            Info.layer_count_or_depth = 1;
-            Info.num_levels = 1;
-
-            Texture_ = SDL_CreateGPUTexture(Gpu_, &Info);
-            if (Texture_ == nullptr)
-            {
-                SDL_DestroySurface(Rgba);
-                Error_ = std::string("Cannot create texture: ") + SDL_GetError();
-                return false;
-            }
-
-            // Upload through a staging buffer, then wait: previews are opened rarely
-            // and this keeps the frame loop free of pending transfers.
-            const std::uint64_t RequiredBytes = static_cast<std::uint64_t>(Width_) * Height_ * 4u;
-            if (Width_ <= 0 || Height_ <= 0 || RequiredBytes > std::numeric_limits<Uint32>::max())
-            {
-                SDL_DestroySurface(Rgba);
-                ReleaseImage();
-                Error_ = "Image is too large for a GPU transfer";
-                return false;
-            }
-            const Uint32 ByteCount = static_cast<Uint32>(RequiredBytes);
-
-            SDL_GPUTransferBufferCreateInfo TransferInfo = {};
-            TransferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-            TransferInfo.size = ByteCount;
-
-            SDL_GPUTransferBuffer* Transfer = SDL_CreateGPUTransferBuffer(Gpu_, &TransferInfo);
-            if (Transfer == nullptr)
-            {
-                SDL_DestroySurface(Rgba);
-                ReleaseImage();
-                Error_ = std::string("Cannot create transfer buffer: ") + SDL_GetError();
-                return false;
-            }
-
-            const auto FailUpload = [&](const char* Operation)
-            {
-                Error_ = std::string(Operation) + ": " + SDL_GetError();
-                SDL_ReleaseGPUTransferBuffer(Gpu_, Transfer);
-                SDL_DestroySurface(Rgba);
-                ReleaseImage();
-                return false;
-            };
-            void* Mapped = SDL_MapGPUTransferBuffer(Gpu_, Transfer, false);
-            if (!Mapped)
-                return FailUpload("Cannot map image upload");
-            if (Mapped)
-            {
-                // SDL surfaces can be padded, so copy row by row.
-                auto* Dst = static_cast<Uint8*>(Mapped);
-                const auto* Src = static_cast<const Uint8*>(Rgba->pixels);
-                for (int Y = 0; Y < Height_; ++Y)
-                {
-                    SDL_memcpy(Dst + static_cast<size_t>(Y) * Width_ * 4, Src + static_cast<size_t>(Y) * Rgba->pitch,
-                               static_cast<size_t>(Width_) * 4);
-                }
-                SDL_UnmapGPUTransferBuffer(Gpu_, Transfer);
-            }
-
-            SDL_GPUCommandBuffer* Commands = SDL_AcquireGPUCommandBuffer(Gpu_);
-            if (!Commands)
-                return FailUpload("Cannot acquire image upload command");
-            SDL_GPUCopyPass* CopyPass = SDL_BeginGPUCopyPass(Commands);
-            if (!CopyPass)
-            {
-                SDL_CancelGPUCommandBuffer(Commands);
-                return FailUpload("Cannot begin image upload pass");
-            }
-
-            SDL_GPUTextureTransferInfo Source = {};
-            Source.transfer_buffer = Transfer;
-            Source.offset = 0;
-
-            SDL_GPUTextureRegion Region = {};
-            Region.texture = Texture_;
-            Region.w = static_cast<Uint32>(Width_);
-            Region.h = static_cast<Uint32>(Height_);
-            Region.d = 1;
-
-            SDL_UploadToGPUTexture(CopyPass, &Source, &Region, false);
-            SDL_EndGPUCopyPass(CopyPass);
-
-            SDL_GPUFence* Fence = SDL_SubmitGPUCommandBufferAndAcquireFence(Commands);
-            if (!Fence)
-                return FailUpload("Cannot submit image upload");
-            const bool Completed = SDL_WaitForGPUFences(Gpu_, true, &Fence, 1);
-            SDL_ReleaseGPUFence(Gpu_, Fence);
-            if (!Completed)
-            {
-                SDL_WaitForGPUIdle(Gpu_);
-                return FailUpload("Cannot wait for image upload");
-            }
-
-            SDL_ReleaseGPUTransferBuffer(Gpu_, Transfer);
-            SDL_DestroySurface(Rgba);
+            Texture_ = Image.Texture;
+            Width_ = Image.Width;
+            Height_ = Image.Height;
             return true;
         }
 

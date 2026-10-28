@@ -11,6 +11,7 @@
 
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_document.hpp"
+#include "scene/scene_renderer.hpp"
 
 namespace dbc::studio
 {
@@ -47,6 +48,8 @@ namespace dbc::studio
             static constexpr const char* KPanelInspector = "Inspector";
             static constexpr const char* KPanelSettings = "Level Settings";
             static constexpr const char* KPanelAssets = "Assets";
+            // Drag and drop payload: an asset path relative to the asset root, NUL-terminated.
+            static constexpr const char* KAssetPayload = "OPENDBC_ASSET";
 
             void Initialize(SDL_GPUDevice* Gpu, SceneHost Host);
             void Shutdown();
@@ -97,8 +100,39 @@ namespace dbc::studio
             void DeleteSelected();
             bool Editable() const;
 
-            void DrawHierarchy();
+            // Viewport (scene_viewport.cpp)
+            enum class Tool
+            {
+                View,
+                Move,
+                Rotate,
+                Scale,
+            };
+
+            // A Unity-style editor camera: it looks along Yaw/Pitch from Position and
+            // orbits a pivot Distance ahead.
+            struct ViewCamera
+            {
+                glm::vec3 Position{0.0f, 80.0f, -180.0f};
+                float Yaw = 0.0f;
+                float Pitch = 20.0f;
+                float Distance = 190.0f;
+            };
+
             void DrawViewport();
+            void DrawViewportBar();
+            void UpdateCamera(bool Hovered);
+            scene::ViewParameters ComputeView(float Aspect) const;
+            std::vector<scene::LineVertex> BuildLines() const;
+            void PickAt(const ImVec2& Mouse);
+            void DrawGizmo();
+            void DrawIcons(ImDrawList* Draw);
+            void FrameSelection();
+            void AcceptAssetDrop();
+            bool ProjectToScreen(const glm::vec3& Point, ImVec2& Screen) const;
+            scene::Ray RayAt(const ImVec2& Mouse) const;
+
+            void DrawHierarchy();
             void DrawInspector();
             void DrawSettings();
             void DrawAssets();
@@ -122,6 +156,21 @@ namespace dbc::studio
             bool GameFileExists_ = false;
 
             std::optional<Selection> Selection_;
+            // The level camera is a setting, not a node, but it is picked and moved like one.
+            bool CameraSelected_ = false;
+
+            scene::SceneRenderer Renderer_;
+            bool RendererReady_ = false;
+            ViewCamera Camera_;
+            Tool Tool_ = Tool::Move;
+            bool LocalGizmo_ = false;
+            bool LookThroughCamera_ = false;
+            bool Navigating_ = false;
+            bool GizmoActive_ = false;
+            scene::ViewParameters View_;
+            ImVec2 ViewportMin_{0.0f, 0.0f};
+            ImVec2 ViewportSize_{0.0f, 0.0f};
+
             bool NewLevelRequested_ = false;
             char NewLevelName_[64] = {};
         };

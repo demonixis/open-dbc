@@ -54,6 +54,21 @@ target_include_directories(imgui_texteditor SYSTEM PUBLIC
 
 target_link_libraries(imgui_texteditor PUBLIC imgui)
 
+# --- ImGuizmo --------------------------------------------------------------
+# Translate, rotate and scale gizmos for the Scene view. Its own CMakeLists builds
+# a copy of Dear ImGui, so only the sources are fetched (SOURCE_SUBDIR has none).
+FetchContent_Declare(
+    imguizmo
+    GIT_REPOSITORY https://github.com/CedricGuillemet/ImGuizmo.git
+    GIT_TAG 105e4fde45e4e74aae8973d98750820ef7aca7e2
+    SOURCE_SUBDIR opendbc-sources-only
+)
+FetchContent_MakeAvailable(imguizmo)
+
+add_library(imguizmo STATIC ${imguizmo_SOURCE_DIR}/src/ImGuizmo.cpp)
+target_include_directories(imguizmo SYSTEM PUBLIC ${imguizmo_SOURCE_DIR}/src)
+target_link_libraries(imguizmo PUBLIC imgui)
+
 # --- nlohmann/json ---------------------------------------------------------
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(JSON_Install OFF CACHE INTERNAL "")
@@ -80,6 +95,7 @@ set(OPENDBC_THIRD_PARTY_LICENSES
     "${spdlog_SOURCE_DIR}/LICENSE|spdlog.txt"
     "${imgui_SOURCE_DIR}/LICENSE.txt|Dear_ImGui.txt"
     "${imgui_texteditor_SOURCE_DIR}/LICENSE|ImGuiColorTextEdit.txt"
+    "${imguizmo_SOURCE_DIR}/LICENSE|ImGuizmo.txt"
     "${nlohmann_json_SOURCE_DIR}/LICENSE.MIT|nlohmann_json.txt"
     "${unordered_dense_SOURCE_DIR}/LICENSE|unordered_dense.txt"
     "${joltphysics_SOURCE_DIR}/LICENSE|JoltPhysics.txt")
@@ -132,6 +148,8 @@ set(STUDIO_SOURCES
 
     src/core/file_dialog.cpp
     src/core/file_dialog.hpp
+    src/core/gpu_texture.cpp
+    src/core/gpu_texture.hpp
     src/core/media_catalogue.cpp
     src/core/media_catalogue.hpp
     src/core/paths.cpp
@@ -173,13 +191,18 @@ set(STUDIO_SOURCES
     src/panels/project_settings_window.hpp
     src/panels/scene_editor.cpp
     src/panels/scene_editor.hpp
+    src/panels/scene_viewport.cpp
 
     src/scene/scene_codegen.cpp
     src/scene/scene_codegen.hpp
     src/scene/scene_document.cpp
     src/scene/scene_document.hpp
+    src/scene/scene_geometry.cpp
+    src/scene/scene_geometry.hpp
     src/scene/scene_integration.cpp
     src/scene/scene_integration.hpp
+    src/scene/scene_renderer.cpp
+    src/scene/scene_renderer.hpp
 )
 
 if(NOT ANDROID AND NOT IOS)
@@ -221,9 +244,32 @@ endif()
 
 target_include_directories(opendbc PRIVATE src)
 
+# The Scene view's shaders are compiled like the engine's (tools/shaderc) and embedded.
+set(STUDIO_SHADER_DIR "${CMAKE_CURRENT_LIST_DIR}/shaders")
+set(STUDIO_SHADER_STEMS scene_mesh scene_line)
+set(STUDIO_SHADER_INPUTS)
+foreach(STUDIO_SHADER_STEM IN LISTS STUDIO_SHADER_STEMS)
+    foreach(STUDIO_SHADER_FILE IN ITEMS vert.spv frag.spv vert.msl frag.msl)
+        list(APPEND STUDIO_SHADER_INPUTS "${STUDIO_SHADER_DIR}/${STUDIO_SHADER_STEM}.${STUDIO_SHADER_FILE}")
+    endforeach()
+endforeach()
+set(STUDIO_SHADER_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated/scene_shaders.inc")
+add_custom_command(
+    OUTPUT "${STUDIO_SHADER_INCLUDE}"
+    COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_SHADER_INCLUDE} -DSOURCE_DIR=${STUDIO_SHADER_DIR}
+            "-DSTEMS=${STUDIO_SHADER_STEMS}" -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_shaders.cmake"
+    DEPENDS ${STUDIO_SHADER_INPUTS} "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_shaders.cmake"
+    COMMENT "Embed the Studio Scene view shaders"
+    VERBATIM)
+# A target of its own, so the Scene renderer test can depend on the include too.
+add_custom_target(opendbc_scene_shaders DEPENDS "${STUDIO_SHADER_INCLUDE}")
+add_dependencies(opendbc opendbc_scene_shaders)
+target_include_directories(opendbc PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
 target_link_libraries(opendbc PRIVATE
     dbc_interpreter
     imgui_texteditor
+    imguizmo
     nlohmann_json::nlohmann_json
 )
 if(NOT ANDROID AND NOT IOS)

@@ -30,6 +30,8 @@ namespace dbc::studio
 
         void SceneEditor::Shutdown()
         {
+            Renderer_.Shutdown();
+            RendererReady_ = false;
             Gpu_ = nullptr;
         }
 
@@ -240,6 +242,7 @@ namespace dbc::studio
 
         void SceneEditor::Select(const scene::SceneNode* Node)
         {
+            CameraSelected_ = false;
             if (Node == nullptr)
                 Selection_.reset();
             else
@@ -456,8 +459,17 @@ namespace dbc::studio
                 ImGui::PopID();
                 ImGui::PopID();
             }
+            if (Document_.Env.UseCamera)
+            {
+                ImGui::Separator();
+                if (ImGui::Selectable("Level Camera", CameraSelected_))
+                {
+                    Selection_.reset();
+                    CameraSelected_ = true;
+                }
+            }
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsAnyItemHovered())
-                Selection_.reset();
+                Select(nullptr);
             if (Editable() && ImGui::BeginPopupContextWindow("##hierarchy-context",
                                                              ImGuiPopupFlags_MouseButtonRight |
                                                                  ImGuiPopupFlags_NoOpenOverItems))
@@ -471,11 +483,6 @@ namespace dbc::studio
                     Create(scene::NodeKind::Light);
                 ImGui::EndPopup();
             }
-        }
-
-        void SceneEditor::DrawViewport()
-        {
-            ImGui::TextDisabled("3D viewport");
         }
 
         void SceneEditor::DrawInspector()
@@ -526,7 +533,8 @@ namespace dbc::studio
 
         void SceneEditor::RecordGpu(SDL_GPUCommandBuffer* Commands)
         {
-            (void)Commands;
+            if (RendererReady_)
+                Renderer_.Record(Commands);
         }
     } // namespace panels
 

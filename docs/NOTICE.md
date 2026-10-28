@@ -20,7 +20,7 @@ sponsored by The Game Creators Ltd or Dark Basic Software Limited.
 | `src/engine/noto_sans_regular_ttf.hpp` | Noto Sans Regular, embedded as a byte array | SIL Open Font License; see [NotoSans-LICENSE.md](../licenses/NotoSans-LICENSE.md) |
 
 Build dependencies (SDL3, SDL3_image, SDL3_mixer, SDL3_ttf, Assimp, GLM, spdlog,
-Dear ImGui, ImGuiColorTextEdit, nlohmann/json, OpenXR-SDK) are fetched at build
+Dear ImGui, ImGuiColorTextEdit, ImGuizmo, nlohmann/json, OpenXR-SDK) are fetched at build
 time and carry their own licences; none of their source is vendored here. Desktop
 builds ship the OpenXR loader with its OpenXR-SDK and jsoncpp notices. MoltenVK and
 the headset runtime are installed separately.
