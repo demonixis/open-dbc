@@ -3,7 +3,8 @@
 ## Decisions
 
 - Publication from the GitHub repository `demonixis/open-dbc`, starting from a single initial commit.
-- Code signing (Apple notarisation, Windows) is done later, in one batch with openblood2 and oxrsys.
+- Signing OpenDBC's own releases (Apple notarisation, Windows) is done later, in one batch with
+  openblood2 and oxrsys. Exported games are signed by the export ([usage.md](usage.md#export)).
 - Yannick Comte owns the code. No DarkBASIC Classic content is published or
   linked; reused DBPro code comes from the MIT repository and keeps its notice.
 - Project assets are CC0. Version 0.4 ships with the current examples: six demos
@@ -87,6 +88,17 @@ Work:
 
 - [ ] Studio packaging with the runner: nested macOS bundle signed inside out,
   shared folder on Windows and Linux.
+
+## Exports
+
+Exports build signed packages from the Build window ([usage.md](usage.md#export)).
+
+- [ ] Run the Windows export on Windows: icon and version resources, signtool
+  signing and verification. Only its portable parts are tested on macOS.
+- [ ] Run the Linux export on Linux, then against the Steam Runtime.
+- [ ] Notarise a macOS export with a real notary profile, and archive and upload
+  an iOS export from Xcode.
+- [ ] Mac App Store target: sandboxed runner, Apple Distribution signing, `.pkg`.
 
 ## Rendering and media
 

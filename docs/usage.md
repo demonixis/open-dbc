@@ -94,35 +94,67 @@ constants `b0, space1` (with an automatic `ViewProj`), fragment texture
 
 ## Export
 
+**Build > Build...** chooses the target and a Development or Distribution
+build, lists what the target still needs on this machine, then exports in the
+background: the Output panel shows each tool's output and **Cancel** stops it.
+The command line runs the same checks; `--unsigned` makes a Development build.
+
 ```bash
 opendbc export game.dba --dialect dbc --target desktop --output dist
-opendbc export game.dbpro --dialect dbpro --target android-apk --output dist
+opendbc export game.dbpro --dialect dbpro --target android-aab --output dist
 ```
 
-Targets: `desktop` (host OS), `ios`, `ios-simulator`, `android-apk`,
-`android-aab`. An export holds `opendbc-runner`, the compiled program image and
-the project's assets, never its `.dba` or `.dbpro` files; it refuses path
-traversal, symbolic links, secret files and `#INCLUDE` files outside the project.
-At first launch the payload is copied to per-user storage, where the program
-writes its files and log. Per-project settings (identity,
-icons, signing, permissions) live in `.opendbc-project.json`. Android passwords
-come from `OPENDBC_ANDROID_KEYSTORE_PASSWORD` and `OPENDBC_ANDROID_KEY_PASSWORD`
-and are never stored. `--unsigned` macOS exports get an ad hoc signature: they
-launch locally but cannot be notarised.
+| Target | Development build | Distribution build |
+| --- | --- | --- |
+| `desktop`, macOS | `Name.app`, ad hoc signed | Developer ID signature with the hardened runtime, notarised and stapled with a notary profile, and `Name.zip` |
+| `desktop`, Windows | `Name/`, whose `Name.exe` has the project icon and version | signed with signtool, and `Name.zip` |
+| `desktop`, Linux | `Name/` with the executable, its icon and a `.desktop` entry | and `Name.tar.gz` |
+| `android-apk`, `android-aab` | `Name.apk` or `Name.aab` signed with the debug key | signed with the project keystore and verified |
+| `ios`, on macOS | `Name-Xcode/`, an Xcode project | signed in Xcode: choose the team, then Product > Archive |
 
-Mobile targets need their `opendbc-runner` hosts built first (macOS, Android NDK
-`26.3.11579264`):
+An export holds the runner, the compiled program image and the project's
+assets, never its `.dba` or `.dbpro` files; it refuses path traversal, symbolic
+links, secret files and `#INCLUDE` files outside the project. At first launch the
+payload is copied to per-user storage, where the program writes its files and
+log. The project's identity, version, icon, permissions and keystore live in
+`.opendbc-project.json`; tools and signing identities belong to the machine, in
+the Studio preferences. Exported macOS apps need the macOS release the runner was
+built for: build OpenDBC with `-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0` to reach older
+Macs.
+
+OpenDBC never stores a password. The Studio keeps them for its session; the
+command line and build machines read the environment:
+
+| Variable | Value |
+| --- | --- |
+| `OPENDBC_MAC_SIGNING_IDENTITY` | Developer ID Application identity |
+| `OPENDBC_NOTARY_PROFILE` | profile saved by `xcrun notarytool store-credentials` |
+| `OPENDBC_WINDOWS_CERTIFICATE` | SHA-1 thumbprint of a code signing certificate in the user's store (`certutil -user -importPFX` imports a `.pfx`) |
+| `OPENDBC_WINDOWS_TIMESTAMP_URL` | RFC 3161 timestamp server, DigiCert's by default |
+| `OPENDBC_SIGNTOOL` | `signtool.exe`, when no Windows SDK holds it |
+| `OPENDBC_ANDROID_KEYSTORE_PASSWORD`, `OPENDBC_ANDROID_KEY_PASSWORD` | Android keystore and key passwords |
+
+Android builds need a JDK 17 or newer and the Android SDK, found through
+`JAVA_HOME`, `ANDROID_HOME`, Android Studio or the Studio preferences; the first
+build downloads Gradle. The Build window creates the upload keystore Google Play
+ties to the app: keep a copy of the file and its password.
+
+Mobile targets embed runtimes built from the same sources as the Studio (macOS,
+Android NDK `26.3.11579264`); configure them again together after a change:
 
 ```bash
-cmake --preset ios && cmake --build --preset ios
-cmake --preset ios-simulator && cmake --build --preset ios-simulator
+cmake --preset ios-runtime && cmake --build --preset ios-runtime
+cmake --preset ios-simulator-runtime && cmake --build --preset ios-simulator-runtime
 cmake --preset android-host && cmake --build --preset android-host
 cmake --preset default \
-  -DOPENDBC_IOS_EXPORT_HOST="$PWD/build/ios/tools/runner/Release-iphoneos/opendbc-runner.app" \
-  -DOPENDBC_IOS_SIMULATOR_EXPORT_HOST="$PWD/build/ios-simulator/tools/runner/Release-iphonesimulator/opendbc-runner.app" \
+  -DOPENDBC_IOS_RUNTIME_LIBRARY="$PWD/build/ios-runtime/tools/runner/libOpenDBCRuntime.a" \
+  -DOPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY="$PWD/build/ios-simulator-runtime/tools/runner/libOpenDBCRuntime.a" \
   -DOPENDBC_ANDROID_EXPORT_HOST_LIBRARY="$PWD/build/android-host/tools/runner/libmain.so"
 cmake --build --preset default
 ```
+
+`scripts/qualify_exports.py --mobile --run-ios-simulator` exports, builds and
+runs every target this Mac can.
 
 On touch screens the top, bottom, left, right and centre zones act as the arrow
 keys and space; the back action is escape.
