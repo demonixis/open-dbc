@@ -148,7 +148,7 @@ dbc	257	410	Command	MAKE OBJECT SPHERE	golden-output	test_collision_spheres.dba	
 dbc	259	414	Command	MAKE OBJECT TRIANGLE	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
 dbc	262	418	Command	MAKE SOUND FROM MEMBLOCK	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	263	420	Command	MAKE STATIC COLLISION BOX	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
-dbc	264	422	Command	MAKE STATIC OBJECT	golden-output	test_static_collision.dba	67aa6050d4bf2c55eadaa3ed325cb635c5ea8d986cd5f581d3e8b50e2e94eabc
+dbc	264	422	Command	MAKE STATIC OBJECT	golden-output	test_scene_level.dba	b4d924b7400373ff3b1e21a3eff587881e86000d06ae4c3520c204ac6ae28e9e
 dbc	272	431	Command	MAXIMIZE WINDOW	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbc	276	436	Command	MINIMIZE WINDOW	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbc	277	438	Command	MIRROR BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
