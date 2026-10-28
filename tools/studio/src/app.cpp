@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <fstream>
 #include <iterator>
 #include <imgui_impl_sdl3.h>
@@ -133,6 +134,30 @@ namespace dbc::studio
         constexpr const char* KDbaFilter = "dba;dbpro";
         constexpr const char* KHlslFilter = "fx;hlsl";
         constexpr const char* KOpenFilter = "dba;dbpro;fx;hlsl";
+
+        // Opens the folder holding Path in Finder, Explorer or the desktop's file manager.
+        void RevealInFileManager(const std::filesystem::path& Path)
+        {
+            const std::string Folder = std::filesystem::absolute(Path).parent_path().generic_string();
+            std::string Url = Folder.starts_with('/') ? "file://" : "file:///";
+            static constexpr char Hex[] = "0123456789ABCDEF";
+            for (const unsigned char Character : Folder)
+            {
+                if (std::isalnum(Character) || Character == '/' || Character == '-' || Character == '_' ||
+                    Character == '.' || Character == '~' || Character == ':')
+                {
+                    Url += static_cast<char>(Character);
+                }
+                else
+                {
+                    Url += '%';
+                    Url += Hex[Character >> 4];
+                    Url += Hex[Character & 0x0f];
+                }
+            }
+            if (!SDL_OpenURL(Url.c_str()))
+                DBC_LOG_WARN("Cannot reveal '{}': {}", Folder, SDL_GetError());
+        }
     } // namespace
 
     bool App::Initialize(const std::string& OpenPath, std::optional<dbc::language::LanguageProfile> ForcedProfile)
@@ -368,6 +393,7 @@ namespace dbc::studio
             PollEvents();
             Dialog_.Poll();
             Execution_.Poll();
+            PollExport();
 
             if (SDL_GetWindowFlags(Window_) & SDL_WINDOW_MINIMIZED)
             {
@@ -1437,8 +1463,8 @@ namespace dbc::studio
 #endif
             ImGui::Separator();
             const bool CanExport = core::platform::CanExportArtifacts() && !ExecutionBusy_ &&
-                                   ResolvedProject_.has_value() && ResolvedProject_->ExportBlockers.empty() &&
-                                   !ResolvedProject_->EntrySource.empty();
+                                   !ExportJob_.Running() && ResolvedProject_.has_value() &&
+                                   ResolvedProject_->ExportBlockers.empty() && !ResolvedProject_->EntrySource.empty();
             if (ImGui::BeginMenu("Export", CanExport))
             {
                 if (ImGui::MenuItem("Desktop..."))
@@ -1453,6 +1479,10 @@ namespace dbc::studio
                     ExportArtifact(toolchain::ArtifactTarget::AndroidBundle);
                 ImGui::EndMenu();
             }
+            if (ExportJob_.Running() && ImGui::MenuItem("Cancel Export"))
+                ExportJob_.Cancel();
+            if (!LastExport_.empty() && ImGui::MenuItem("Reveal Last Export"))
+                RevealInFileManager(LastExport_);
             ImGui::Separator();
             if (ImGui::MenuItem("Project Settings...", "Ctrl+,", false, !Project_.Root().empty()))
             {
@@ -1807,22 +1837,38 @@ namespace dbc::studio
                 const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
                     *ResolvedProject_, ProjectSettings_, Target, Destination, true);
 
-                Output_.Append("Exporting " + Entry.filename().string() + "...", panels::OutputPanel::Severity::Notice);
-                const toolchain::ArtifactExportResult Result = ArtifactExporter_.Export(Request);
-                for (const std::string& Message : Result.Messages)
-                    Output_.Append(Message, panels::OutputPanel::Severity::Notice);
-                if (!Result)
+                if (!ExportJob_.Start(Request))
                 {
-                    Status_ = "Export failed";
-                    Output_.Append(Result.Error, panels::OutputPanel::Severity::Error);
+                    Output_.Append("An export is already running.", panels::OutputPanel::Severity::Error);
                     return;
                 }
-                Status_ = "Exported " + Result.OutputPath.filename().string();
+                Status_ = "Exporting...";
+                Output_.Append("Exporting " + Entry.filename().string() + "...", panels::OutputPanel::Severity::Notice);
             });
+    }
+
+    void App::PollExport()
+    {
+        for (const std::string& Line : ExportJob_.TakeLines())
+            Output_.Append(Line);
+        std::optional<toolchain::ArtifactExportResult> Result = ExportJob_.TakeResult();
+        if (!Result)
+            return;
+        for (const std::string& Message : Result->Messages)
+            Output_.Append(Message, panels::OutputPanel::Severity::Notice);
+        if (!*Result)
+        {
+            Status_ = "Export failed";
+            Output_.Append(Result->Error, panels::OutputPanel::Severity::Error);
+            return;
+        }
+        LastExport_ = Result->OutputPath;
+        Status_ = "Exported " + Result->OutputPath.filename().string();
     }
 
     void App::Shutdown()
     {
+        ExportJob_.Shutdown();
         Execution_.Shutdown();
         if (SettingsLoaded_)
         {

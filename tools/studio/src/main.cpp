@@ -57,7 +57,9 @@ namespace dbc::studio
             const toolchain::ArtifactExportRequest Request = toolchain::MakeArtifactExportRequest(
                 Project, std::move(Settings), Target, Command.ExportOutput, Command.ExportSign);
 
-            const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request);
+            toolchain::ArtifactExportProgress Progress;
+            Progress.Log = [](std::string_view Line) { Write(stdout, std::string(Line) + "\n"); };
+            const toolchain::ArtifactExportResult Result = toolchain::ArtifactExportService().Export(Request, Progress);
             for (const std::string& Message : Result.Messages)
                 Write(stdout, Message + "\n");
             if (!Result)

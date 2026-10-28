@@ -3,7 +3,9 @@
 #include "core/project_settings.hpp"
 #include "interpreter/project_resolver.hpp"
 #include "language/language_profile.hpp"
+#include "process_runner.hpp"
 
+#include <atomic>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -51,10 +53,18 @@ namespace dbc::studio
             }
         };
 
+        struct ArtifactExportProgress
+        {
+            // Progress notes and tool output, called on the exporting thread.
+            ProcessLineSink Log;
+            const std::atomic<bool>* Cancel = nullptr;
+        };
+
         class ArtifactExportService
         {
           public:
-            ArtifactExportResult Export(const ArtifactExportRequest& Request) const;
+            ArtifactExportResult Export(const ArtifactExportRequest& Request,
+                                        const ArtifactExportProgress& Progress = {}) const;
         };
 
         // The CLI and the Studio menu both build their request here, so every export starts from the

@@ -15,6 +15,7 @@
 #include "core/settings.hpp"
 #include "core/workspace.hpp"
 #include "toolchain/artifact_export_service.hpp"
+#include "toolchain/export_job.hpp"
 #include "toolchain/execution_adapter.hpp"
 #include "toolchain/icon_generator.hpp"
 #if !defined(DBC_STUDIO_SANDBOXED)
@@ -85,6 +86,7 @@ namespace dbc::studio
         void RunLauncherPath(const std::filesystem::path& Path);
         void StopRun();
         void ExportArtifact(toolchain::ArtifactTarget Target);
+        void PollExport();
 
         enum class Mode
         {
@@ -155,7 +157,8 @@ namespace dbc::studio
         core::Workspace Workspace_;
 
         toolchain::ExecutionAdapter Execution_;
-        toolchain::ArtifactExportService ArtifactExporter_;
+        toolchain::ExportJob ExportJob_;
+        std::filesystem::path LastExport_;
         toolchain::RunOptions RunOptions_;
         toolchain::IconGenerator IconGenerator_;
 #if !defined(DBC_STUDIO_SANDBOXED)

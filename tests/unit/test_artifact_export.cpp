@@ -6,14 +6,17 @@
 #include "interpreter/embedded_artifact.hpp"
 #include "interpreter/program_image.hpp"
 #include "toolchain/artifact_export_service.hpp"
+#include "toolchain/export_job.hpp"
 #include <nlohmann/json.hpp>
 
 #include <SDL3/SDL.h>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -328,6 +331,50 @@ TEST_CASE("DBPro artifact images carry the project startup instead of its descri
     CHECK(Image.Image->Startup.Title == "Professional Title");
     CHECK(Image.Image->Startup.Width == 1024);
     CHECK(Image.Image->Startup.Height == 768);
+}
+
+TEST_CASE("artifact export logs its progress and stops when cancelled")
+{
+    TemporaryDirectory Directory("opendbc-artifact-progress");
+    const fs::path Project = Directory.Root / "project";
+    Write(Project / "main.dba", "print \"progress\"\n");
+
+    toolchain::ArtifactExportRequest Request;
+    Request.ProjectRoot = Project;
+    Request.EntrySource = Project / "main.dba";
+    Request.OutputDirectory = Directory.Root / "output";
+    UseFakeHost(Request, Directory.Root);
+    Request.Sign = false;
+    fs::create_directories(Request.OutputDirectory);
+
+    std::vector<std::string> Lines;
+    std::atomic<bool> Cancel{true};
+    toolchain::ArtifactExportProgress Progress;
+    Progress.Log = [&Lines](std::string_view Line) { Lines.emplace_back(Line); };
+    Progress.Cancel = &Cancel;
+    const toolchain::ArtifactExportResult Cancelled = toolchain::ArtifactExportService().Export(Request, Progress);
+    CHECK_FALSE(Cancelled);
+    CHECK(Cancelled.Error == "Export cancelled");
+    CHECK(fs::is_empty(Request.OutputDirectory));
+    REQUIRE_FALSE(Lines.empty());
+    CHECK(Lines.front() == "Compiling main.dba");
+
+    toolchain::ExportJob Job;
+    REQUIRE(Job.Start(Request));
+    CHECK_FALSE(Job.Start(Request));
+    std::optional<toolchain::ArtifactExportResult> Result;
+    for (int Attempt = 0; Attempt < 3000 && !Result; ++Attempt)
+    {
+        SDL_Delay(10);
+        Result = Job.TakeResult();
+    }
+    REQUIRE(Result);
+    INFO(Result->Error);
+    CHECK(*Result);
+    CHECK_FALSE(Job.Running());
+    const std::vector<std::string> JobLines = Job.TakeLines();
+    REQUIRE_FALSE(JobLines.empty());
+    CHECK(JobLines.front() == "Compiling main.dba");
 }
 
 TEST_CASE("Studio and CLI export requests start from opendbc-runner with the project startup")

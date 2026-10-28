@@ -144,6 +144,15 @@ set(STUDIO_SOURCES
     src/toolchain/active_run_planner.hpp
     src/toolchain/artifact_export_service.cpp
     src/toolchain/artifact_export_service.hpp
+    src/toolchain/export_android.cpp
+    src/toolchain/export_common.cpp
+    src/toolchain/export_desktop.cpp
+    src/toolchain/export_internal.hpp
+    src/toolchain/export_job.cpp
+    src/toolchain/export_job.hpp
+    src/toolchain/export_ios.cpp
+    src/toolchain/process_runner.cpp
+    src/toolchain/process_runner.hpp
     src/toolchain/icon_generator.cpp
     src/toolchain/icon_generator.hpp
 
