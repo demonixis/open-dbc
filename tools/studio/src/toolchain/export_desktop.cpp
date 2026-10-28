@@ -141,6 +141,30 @@ namespace dbc::studio
             return true;
         }
 
+        std::string LinuxDesktopEntry(const std::string& ProductName)
+        {
+            // Exec and Icon name the files in this folder; installers rewrite them to the installed paths.
+            return "[Desktop Entry]\nType=Application\nName=" + ProductName + "\nExec=\"" + ProductName +
+                   "\"\nIcon=" + ProductName + "\nTerminal=false\nCategories=Game;\n";
+        }
+
+        bool FinishLinuxFolder(const ExportContext& Context, const ArtifactExportRequest& Request,
+                               const fs::path& Stage, const std::string& ProductName, std::string& Error)
+        {
+            const std::optional<fs::path> Icon = ResolveArtifactIcon(Request, true, Error);
+            if (!Icon || !WriteScaledPng(Context, *Icon, Stage / (ProductName + ".png"), 256, false, Error))
+                return false;
+            std::ofstream Entry(Stage / (ProductName + ".desktop"), std::ios::binary | std::ios::trunc);
+            Entry << LinuxDesktopEntry(ProductName);
+            Entry.close();
+            if (!Entry)
+            {
+                Error = "Cannot write the Linux desktop entry";
+                return false;
+            }
+            return true;
+        }
+
         std::vector<std::string> DesktopArchiveArguments(const fs::path& OutputDirectory,
                                                          const std::string& ProductName, const fs::path& Archive)
         {
@@ -237,6 +261,9 @@ namespace dbc::studio
                 return Result;
 #if defined(_WIN32)
             if (!FinishWindowsFolder(Context, Request, Stage, Executable, ProductName, Result.Error))
+                return Result;
+#else
+            if (!FinishLinuxFolder(Context, Request, Stage, ProductName, Result.Error))
                 return Result;
 #endif
             if (!PublishNoReplace(Stage, Result.OutputPath, Result.Error))

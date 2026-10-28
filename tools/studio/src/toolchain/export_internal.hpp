@@ -103,6 +103,10 @@ namespace dbc::studio
         bool FinishWindowsFolder(const ExportContext& Context, const ArtifactExportRequest& Request,
                                  const fs::path& Stage, const fs::path& Executable, const std::string& ProductName,
                                  std::string& Error);
+        // Adds the game's icon and a desktop entry beside the executable.
+        bool FinishLinuxFolder(const ExportContext& Context, const ArtifactExportRequest& Request,
+                               const fs::path& Stage, const std::string& ProductName, std::string& Error);
+        std::string LinuxDesktopEntry(const std::string& ProductName);
         std::vector<std::string> WindowsSignArguments(const fs::path& Signtool, const ExportToolchain& Toolchain,
                                                       const fs::path& File);
         std::vector<std::string> DesktopArchiveArguments(const fs::path& OutputDirectory,

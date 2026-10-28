@@ -328,6 +328,14 @@ TEST_CASE("Windows and Linux exports stage a folder around the renamed runner")
     CHECK(fs::is_regular_file(Stage / "artifact/media/level.dat"));
     CHECK_FALSE(fs::exists(Stage / "artifact/main.dba"));
 
+    // Without a project icon the game uses the OpenDBC one shipped with the product.
+    fs::copy_file(fs::path(OPENDBC_TEST_SOURCE_DIR) / "resources/editor.png", Product / "editor.png");
+    REQUIRE(toolchain::internal::FinishLinuxFolder({}, Request, Stage, "My Game", Error));
+    CHECK(fs::is_regular_file(Stage / "My Game.png"));
+    CHECK(toolchain::internal::LinuxDesktopEntry("My Game") ==
+          "[Desktop Entry]\nType=Application\nName=My Game\nExec=\"My Game\"\nIcon=My Game\nTerminal=false\n"
+          "Categories=Game;\n");
+
     CHECK(toolchain::internal::DesktopArchiveArguments("/out", "My Game", "/out/My Game.tar.gz") ==
           std::vector<std::string>{"tar", "-a", "-cf", "/out/My Game.tar.gz", "-C", "/out", "My Game"});
 }
