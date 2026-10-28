@@ -501,6 +501,43 @@ namespace dbc::studio
                          });
     }
 
+    void App::RequestNewProject()
+    {
+        if (ExecutionBusy_)
+            return;
+        NewProjectName_.fill('\0');
+        NewProjectError_.clear();
+        // Beside the open project, else where downloaded projects go. Sandboxed
+        // builds can only write there anyway.
+        const bool Beside = core::platform::HasFreeformFileSystem() && !Project_.Root().empty();
+        NewProjectLocation_ = (Beside ? Project_.Root().parent_path() : Workspace_.ImportRoot()).string();
+        NewProjectProfile_ = ResolvedProject_ ? ResolvedProject_->Profile : dbc::language::LanguageProfile::Dbc;
+        NewProjectRequested_ = true;
+    }
+
+    void App::CreateNewProject()
+    {
+        const std::filesystem::path Location = NewProjectLocation_;
+        if (!Workspace_.IsWritable(Location))
+        {
+            NewProjectError_ = "The location is read-only.";
+            return;
+        }
+        const core::NewProjectResult Created =
+            core::CreateProject({Location, NewProjectName_.data(), NewProjectProfile_, NewProjectTemplate_});
+        if (!Created)
+        {
+            NewProjectError_ = Created.Error;
+            return;
+        }
+        NewProjectError_.clear();
+        ImGui::CloseCurrentPopup();
+        Output_.Append("Created project " + Created.Root.string());
+        OpenFolder(Created.Root);
+        if (ResolvedProject_)
+            OpenFile(Created.MainSource);
+    }
+
     bool App::ResolveWorkspace(const std::filesystem::path& Target,
                                std::optional<dbc::language::LanguageProfile> Forced)
     {
@@ -745,6 +782,7 @@ namespace dbc::studio
 
         DrawQuitConfirm();
         DrawProjectResolution();
+        DrawNewProject();
 
         ImGui::Render();
     }
@@ -812,6 +850,86 @@ namespace dbc::studio
                 ImGui::CloseCurrentPopup();
             }
         }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    void App::DrawNewProject()
+    {
+        constexpr const char* Popup = "New Project";
+        if (NewProjectRequested_)
+        {
+            ImGui::OpenPopup(Popup);
+            NewProjectRequested_ = false;
+        }
+        if (!ImGui::BeginPopupModal(Popup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+            return;
+
+        if (ImGui::IsWindowAppearing())
+            ImGui::SetKeyboardFocusHere();
+        const bool Entered = ImGui::InputText("Name", NewProjectName_.data(), NewProjectName_.size(),
+                                              ImGuiInputTextFlags_EnterReturnsTrue);
+        if constexpr (core::platform::HasFreeformFileSystem())
+        {
+            std::array<char, 2048> Location{};
+            SDL_strlcpy(Location.data(), NewProjectLocation_.c_str(), Location.size());
+            if (ImGui::InputText("Location", Location.data(), Location.size()))
+                NewProjectLocation_ = Location.data();
+            ImGui::SameLine();
+            if (ImGui::Button("Browse..."))
+            {
+                Dialog_.OpenFolder(Window_, NewProjectLocation_,
+                                   [this](const std::string& Path)
+                                   {
+                                       if (!Path.empty())
+                                           NewProjectLocation_ = Path;
+                                   });
+            }
+        }
+        else
+        {
+            ImGui::TextDisabled("Location: %s", NewProjectLocation_.c_str());
+        }
+
+        ImGui::Spacing();
+        ImGui::TextUnformatted("Language");
+        if (ImGui::RadioButton("DarkBASIC Classic", NewProjectProfile_ == dbc::language::LanguageProfile::Dbc))
+            NewProjectProfile_ = dbc::language::LanguageProfile::Dbc;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("DarkBASIC Professional", NewProjectProfile_ == dbc::language::LanguageProfile::DbPro))
+            NewProjectProfile_ = dbc::language::LanguageProfile::DbPro;
+        ImGui::TextUnformatted("Template");
+        if (ImGui::RadioButton("Basic Scene", NewProjectTemplate_ == core::ProjectTemplate::BasicScene))
+            NewProjectTemplate_ = core::ProjectTemplate::BasicScene;
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("A 1280x720 window, sync at 60 FPS and a spinning cube");
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Empty", NewProjectTemplate_ == core::ProjectTemplate::Empty))
+            NewProjectTemplate_ = core::ProjectTemplate::Empty;
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("A main loop and nothing else");
+
+        ImGui::Spacing();
+        const std::string NameError = core::ValidateProjectName(NewProjectName_.data());
+        const bool Ready = NameError.empty() && !NewProjectLocation_.empty();
+        if (NewProjectName_[0] != '\0' && !NameError.empty())
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", NameError.c_str());
+        else if (!NewProjectError_.empty())
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", NewProjectError_.c_str());
+        else if (Ready)
+        {
+            const std::filesystem::path Root = std::filesystem::path(NewProjectLocation_) / NewProjectName_.data();
+            const char* Descriptor =
+                NewProjectProfile_ == dbc::language::LanguageProfile::DbPro ? ".dbpro" : ".opendbc-project.json";
+            ImGui::TextDisabled("Creates %s with main.dba and %s", Root.string().c_str(), Descriptor);
+        }
+
+        ImGui::BeginDisabled(!Ready || Dialog_.IsOpen());
+        if (ImGui::Button("Create") || (Entered && Ready && !Dialog_.IsOpen()))
+            CreateNewProject();
+        ImGui::EndDisabled();
         ImGui::SameLine();
         if (ImGui::Button("Cancel"))
             ImGui::CloseCurrentPopup();
@@ -909,7 +1027,10 @@ namespace dbc::studio
         }
         else if (ImGui::IsKeyPressed(ImGuiKey_N, false))
         {
-            Editor_.NewFile();
+            if (Io.KeyShift)
+                RequestNewProject();
+            else
+                Editor_.NewFile();
         }
     }
 
@@ -1093,6 +1214,10 @@ namespace dbc::studio
 
         if (ImGui::BeginMenu("File"))
         {
+            if (ImGui::MenuItem("New Project...", "Ctrl+Shift+N", false, !ExecutionBusy_))
+            {
+                RequestNewProject();
+            }
             if (ImGui::MenuItem("New", "Ctrl+N"))
             {
                 Editor_.NewFile();

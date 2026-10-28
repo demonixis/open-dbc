@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -8,6 +9,7 @@
 #include <imgui.h>
 
 #include "core/file_dialog.hpp"
+#include "core/new_project.hpp"
 #include "core/platform.hpp"
 #include "core/project_settings.hpp"
 #include "core/settings.hpp"
@@ -55,6 +57,7 @@ namespace dbc::studio
         void DrawAbout();
         void DrawQuitConfirm();
         void DrawProjectResolution();
+        void DrawNewProject();
         void DrawPanels();
         void DrawCodePanels();
         void BuildDefaultLayout(ImGuiID DockspaceId);
@@ -63,6 +66,8 @@ namespace dbc::studio
         void OpenFolder(const std::filesystem::path& Folder);
         void OpenFile(const std::filesystem::path& File);
         void ShowOpenFileDialog();
+        void RequestNewProject();
+        void CreateNewProject();
         bool ResolveWorkspace(const std::filesystem::path& Target,
                               std::optional<dbc::language::LanguageProfile> Forced = std::nullopt);
         void ApplyResolvedProject(dbc::interpreter::ResolvedProject Project);
@@ -164,6 +169,13 @@ namespace dbc::studio
         std::optional<dbc::language::LanguageProfile> PendingResolveProfile_;
         std::string PendingRawPath_;
         std::string PendingLocalPath_;
+
+        bool NewProjectRequested_ = false;
+        std::array<char, 65> NewProjectName_{};
+        std::string NewProjectLocation_;
+        dbc::language::LanguageProfile NewProjectProfile_ = dbc::language::LanguageProfile::Dbc;
+        core::ProjectTemplate NewProjectTemplate_ = core::ProjectTemplate::BasicScene;
+        std::string NewProjectError_;
 
         std::string Status_ = "Ready";
     };
