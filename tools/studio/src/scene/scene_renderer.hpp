@@ -59,6 +59,12 @@ namespace dbc::studio
             // Messages for files that could not be loaded, once per file.
             std::vector<std::string> TakeErrors();
 
+            // Draws the model alone, framed from the front, three-quarters and above,
+            // into a new Size x Size sampler texture. Waits for the GPU like
+            // core::LoadGpuImage; uses this renderer's targets, so not the Scene view's.
+            bool RenderThumbnail(const std::filesystem::path& AssetRoot, const std::string& Model, int Size,
+                                 Rgb Backdrop, core::GpuImage& Out, std::string& Error);
+
           private:
             struct Geometry
             {

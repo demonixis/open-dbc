@@ -161,6 +161,7 @@ namespace dbc::studio
             // Rescans when the project's asset root changed since the last scan.
             const core::MediaScan& Assets();
             void ReleaseThumbnails();
+            bool RenderModelThumbnail(const core::MediaFile& File, core::GpuImage& Out);
             void DrawNewLevelPopup();
             void DrawMatrixHeights(scene::SceneNode& Node);
             void DrawTerrainHeightmap(scene::SceneNode& Node);
@@ -213,6 +214,9 @@ namespace dbc::studio
             core::MediaScan AssetScan_;
             std::filesystem::path AssetScanRoot_;
             std::unordered_map<std::string, core::GpuImage> Thumbnails_;
+            // Draws model thumbnails, apart from the viewport's renderer and its targets.
+            scene::SceneRenderer ThumbnailRenderer_;
+            std::optional<bool> ThumbnailRendererReady_;
             std::unordered_map<std::string, std::optional<scene::ModelAnimation>> ModelAnimations_;
             char AssetFilter_[64] = {};
             int AssetFilterKind_ = 0;

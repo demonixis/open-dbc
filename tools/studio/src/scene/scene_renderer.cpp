@@ -7,7 +7,9 @@
 #include <cstring>
 #include <utility>
 
+#include <glm/geometric.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
 
 #include "engine/engine_math.hpp"
@@ -407,6 +409,89 @@ namespace dbc::studio
             for (core::GpuImage& Image : Entry.Images)
                 core::ReleaseGpuImage(Gpu_, Image);
             Entry.Images.clear();
+        }
+
+        bool SceneRenderer::RenderThumbnail(const std::filesystem::path& AssetRoot, const std::string& Model,
+                                            int Size, Rgb Backdrop, core::GpuImage& Out, std::string& Error)
+        {
+            Out = {};
+            if (Target(Size, Size) == nullptr)
+            {
+                Error = std::string("Cannot create the thumbnail target: ") + SDL_GetError();
+                return false;
+            }
+            SceneDocument Document;
+            Document.Env.Backdrop = Backdrop;
+            SceneNode& Node = Document.Add(NodeKind::Model);
+            Node.Asset = Model;
+            // The first pass only loads the mesh, whose bounds frame the second.
+            Prepare(Document, ViewParameters{}, AssetRoot, {});
+            const CpuMesh* Loaded = Mesh(Node);
+            std::vector<std::string> Errors = TakeErrors();
+            if (Loaded == nullptr || Loaded->Parts.empty())
+            {
+                // A model that failed to load is drawn as a stand-in cube, without parts.
+                Error = Errors.empty() ? "The model cannot be drawn" : Errors.front();
+                return false;
+            }
+            const glm::vec3 Center = (Loaded->Min + Loaded->Max) * 0.5f;
+            const float Radius = std::max(glm::length(Loaded->Max - Loaded->Min) * 0.5f, 0.001f);
+            constexpr float KFov = 35.0f;
+            const float Distance = Radius / std::sin(glm::radians(KFov * 0.5f));
+            ViewParameters View;
+            View.Eye = Center + glm::normalize(glm::vec3(0.6f, 0.5f, -1.0f)) * Distance;
+            View.View = glm::lookAt(View.Eye, Center, glm::vec3(0.0f, 1.0f, 0.0f));
+            View.Projection = glm::perspective(glm::radians(KFov), 1.0f, Distance * 0.05f, Distance + Radius * 2.0f);
+            Prepare(Document, View, AssetRoot, {});
+            Errors = TakeErrors();
+            if (!Errors.empty())
+            {
+                Error = Errors.front();
+                return false;
+            }
+
+            SDL_GPUTextureCreateInfo Info = {};
+            Info.type = SDL_GPU_TEXTURETYPE_2D;
+            Info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+            Info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+            Info.width = static_cast<Uint32>(Size);
+            Info.height = static_cast<Uint32>(Size);
+            Info.layer_count_or_depth = 1;
+            Info.num_levels = 1;
+            SDL_GPUTexture* Texture = SDL_CreateGPUTexture(Gpu_, &Info);
+            SDL_GPUCommandBuffer* Commands = Texture != nullptr ? SDL_AcquireGPUCommandBuffer(Gpu_) : nullptr;
+            if (Commands == nullptr)
+            {
+                Error = std::string("Cannot start the thumbnail: ") + SDL_GetError();
+                if (Texture != nullptr)
+                    SDL_ReleaseGPUTexture(Gpu_, Texture);
+                return false;
+            }
+            Record(Commands);
+            // The target is redrawn by the next thumbnail, so the picture is copied out.
+            if (SDL_GPUCopyPass* Copy = SDL_BeginGPUCopyPass(Commands))
+            {
+                SDL_GPUTextureLocation From = {};
+                From.texture = Color_;
+                SDL_GPUTextureLocation To = {};
+                To.texture = Texture;
+                SDL_CopyGPUTextureToTexture(Copy, &From, &To, Info.width, Info.height, 1, false);
+                SDL_EndGPUCopyPass(Copy);
+            }
+            SDL_GPUFence* Fence = SDL_SubmitGPUCommandBufferAndAcquireFence(Commands);
+            const bool Done = Fence != nullptr && SDL_WaitForGPUFences(Gpu_, true, &Fence, 1);
+            if (Fence != nullptr)
+                SDL_ReleaseGPUFence(Gpu_, Fence);
+            if (!Done)
+            {
+                Error = std::string("Cannot draw the thumbnail: ") + SDL_GetError();
+                SDL_ReleaseGPUTexture(Gpu_, Texture);
+                return false;
+            }
+            Out.Texture = Texture;
+            Out.Width = Size;
+            Out.Height = Size;
+            return true;
         }
 
         const CpuMesh* SceneRenderer::Mesh(const SceneNode& Node) const

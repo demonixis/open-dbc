@@ -23,9 +23,9 @@ using namespace dbc::studio;
 
 namespace
 {
-    // Records the prepared frame and reads the colour target back as RGBA8; empty on failure.
-    std::vector<Uint8> DrawPixels(SDL_GPUDevice* Gpu, scene::SceneRenderer& Renderer, SDL_GPUTexture* Target,
-                                  int Size)
+    // Records the renderer's prepared frame, if any, and reads `Target` back as RGBA8; empty on failure.
+    std::vector<Uint8> ReadPixels(SDL_GPUDevice* Gpu, SDL_GPUTexture* Target, int Size,
+                                  scene::SceneRenderer* Renderer = nullptr)
     {
         SDL_GPUTransferBufferCreateInfo TransferInfo = {};
         TransferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD;
@@ -34,7 +34,8 @@ namespace
         SDL_GPUCommandBuffer* Commands = SDL_AcquireGPUCommandBuffer(Gpu);
         if (Download == nullptr || Commands == nullptr)
             return {};
-        Renderer.Record(Commands);
+        if (Renderer != nullptr)
+            Renderer->Record(Commands);
         SDL_GPUCopyPass* Copy = SDL_BeginGPUCopyPass(Commands);
         SDL_GPUTextureRegion From = {};
         From.texture = Target;
@@ -240,7 +241,7 @@ TEST_CASE("The Scene renderer draws a lit, textured level offscreen")
     // Add() may move the nodes, so look the crate up again.
     REQUIRE(Renderer.Mesh(Document.Nodes.front()) != nullptr);
 
-    std::vector<Uint8> Pixels = DrawPixels(Gpu, Renderer, Target, KSize);
+    std::vector<Uint8> Pixels = ReadPixels(Gpu, Target, KSize, &Renderer);
     REQUIRE(Pixels.size() == KSize * KSize * 4);
 
     const auto At = [&](int X, int Y) { return &Pixels[(static_cast<std::size_t>(Y) * KSize + X) * 4]; };
@@ -321,7 +322,7 @@ TEST_CASE("Scene models keep their materials' textures and colours")
     View.Projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.5f, 2000.0f);
     Renderer.Prepare(Document, View, Folder, {});
     CHECK(Renderer.TakeErrors().empty());
-    const std::vector<Uint8> Pixels = DrawPixels(Gpu, Renderer, Target, KSize);
+    const std::vector<Uint8> Pixels = ReadPixels(Gpu, Target, KSize, &Renderer);
     REQUIRE(Pixels.size() == KSize * KSize * 4);
 
     int Green = 0, Red = 0;
@@ -333,6 +334,34 @@ TEST_CASE("Scene models keep their materials' textures and colours")
     }
     CHECK(Green > 100);
     CHECK(Red > 100);
+
+    // The Assets panel's tile: the model framed alone, both of its materials in view.
+    core::GpuImage Thumbnail;
+    REQUIRE_MESSAGE(Renderer.RenderThumbnail(Folder, "models/pair.obj", KSize, 0x000040, Thumbnail, Error), Error);
+    const std::vector<Uint8> Tile = ReadPixels(Gpu, Thumbnail.Texture, KSize);
+    REQUIRE(Tile.size() == KSize * KSize * 4);
+    Green = Red = 0;
+    int Backdrop = 0;
+    for (int Index = 0; Index < KSize * KSize; ++Index)
+    {
+        const Uint8* Pixel = &Tile[static_cast<std::size_t>(Index) * 4];
+        Green += Pixel[1] > 100 && Pixel[1] > 2 * Pixel[0] && Pixel[1] > 2 * Pixel[2];
+        Red += Pixel[0] > 100 && Pixel[0] > 2 * Pixel[1] && Pixel[0] > 2 * Pixel[2];
+        Backdrop += Pixel[0] == 0 && Pixel[1] == 0 && Pixel[2] == 0x40;
+    }
+    CHECK(Green > KSize * KSize / 20);
+    CHECK(Red > KSize * KSize / 20);
+    CHECK(Backdrop > 0);
+    // Kept for a look by hand: build/tests/model_thumbnail.png.
+    std::vector<Uint8> Copy = Tile;
+    if (SDL_Surface* Image = SDL_CreateSurfaceFrom(KSize, KSize, SDL_PIXELFORMAT_ABGR8888, Copy.data(), KSize * 4))
+    {
+        IMG_SavePNG(Image, (std::filesystem::path(TEST_OUTPUT_DIR) / "model_thumbnail.png").string().c_str());
+        SDL_DestroySurface(Image);
+    }
+    core::ReleaseGpuImage(Gpu, Thumbnail);
+    CHECK_FALSE(Renderer.RenderThumbnail(Folder, "models/missing.obj", KSize, 0, Thumbnail, Error));
+    CHECK(Thumbnail.Texture == nullptr);
 
     Renderer.Shutdown();
     SDL_DestroyGPUDevice(Gpu);

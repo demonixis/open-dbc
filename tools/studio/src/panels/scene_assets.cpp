@@ -15,8 +15,10 @@ namespace dbc::studio
         namespace
         {
             constexpr std::size_t KAssetLimit = 5000;
-            // Thumbnails load synchronously, so only a few per frame.
+            // Thumbnails load synchronously, so only a few per frame; a model's import
+            // can take tens of milliseconds, so one of those.
             constexpr int KThumbnailsPerFrame = 4;
+            constexpr int KModelThumbnailsPerFrame = 1;
             constexpr int KThumbnailSize = 96;
 
             std::string Lower(std::string Text)
@@ -32,6 +34,23 @@ namespace dbc::studio
             for (auto& [Path, Image] : Thumbnails_)
                 core::ReleaseGpuImage(Gpu_, Image);
             Thumbnails_.clear();
+            // Also frees the textures the models used.
+            ThumbnailRenderer_.Shutdown();
+            ThumbnailRendererReady_.reset();
+        }
+
+        bool SceneEditor::RenderModelThumbnail(const core::MediaFile& File, core::GpuImage& Out)
+        {
+            std::string Error;
+            if (!ThumbnailRendererReady_)
+                ThumbnailRendererReady_ = ThumbnailRenderer_.Initialize(Gpu_, Error);
+            if (!*ThumbnailRendererReady_)
+                return false;
+            // The tile's own colour around the model, as a 0xRRGGBB value.
+            const scene::Rgb Backdrop = ((Theme::Panel & 0xFF) << 16) | (Theme::Panel & 0xFF00) |
+                                        ((Theme::Panel >> 16) & 0xFF);
+            return ThumbnailRenderer_.RenderThumbnail(Project_->AssetRoot, File.RelativeName, KThumbnailSize,
+                                                      Backdrop, Out, Error);
         }
 
         void SceneEditor::RefreshAssets()
@@ -78,6 +97,7 @@ namespace dbc::studio
             const int Columns =
                 std::max(1, static_cast<int>((ImGui::GetContentRegionAvail().x + Style.ItemSpacing.x) / Cell));
             int Loaded = 0;
+            int ModelsLoaded = 0;
             int Column = 0;
 
             ImGui::BeginChild("##asset-grid");
@@ -104,17 +124,22 @@ namespace dbc::studio
                 Draw->AddRectFilled(Min, Max, Hovered ? Theme::Hover : Theme::Panel, 4.0f);
 
                 SDL_GPUTexture* Thumbnail = nullptr;
-                if (Image && ImGui::IsItemVisible())
+                if ((Image || Model) && ImGui::IsItemVisible())
                 {
                     auto Found = Thumbnails_.find(File.RelativeName);
-                    if (Found == Thumbnails_.end() && Loaded < KThumbnailsPerFrame && Gpu_ != nullptr)
+                    int& Count = Model ? ModelsLoaded : Loaded;
+                    if (Found == Thumbnails_.end() &&
+                        Count < (Model ? KModelThumbnailsPerFrame : KThumbnailsPerFrame) && Gpu_ != nullptr)
                     {
                         // A failed load keeps an empty entry, so it is tried once.
                         core::GpuImage Fresh;
                         std::string Error;
-                        core::LoadGpuImage(Gpu_, File.Path, Fresh, Error, KThumbnailSize);
+                        if (Model)
+                            RenderModelThumbnail(File, Fresh);
+                        else
+                            core::LoadGpuImage(Gpu_, File.Path, Fresh, Error, KThumbnailSize);
                         Found = Thumbnails_.emplace(File.RelativeName, Fresh).first;
-                        ++Loaded;
+                        ++Count;
                     }
                     if (Found != Thumbnails_.end())
                         Thumbnail = Found->second.Texture;
