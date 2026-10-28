@@ -1816,6 +1816,7 @@ namespace dbc::studio
         const auto Saved = Settings_.ExportFolders.find(Root);
         const std::filesystem::path Default = ResolvedProject_->ProjectRoot / "exports";
         BuildWindow_.Open(Saved != Settings_.ExportFolders.end() ? Saved->second : Default.string());
+        BuildWindow_.SetSigningIdentities(toolchain::ListSigningIdentities());
         RefreshExportChecks();
     }
 

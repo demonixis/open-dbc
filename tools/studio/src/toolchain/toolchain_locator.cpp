@@ -1,4 +1,5 @@
 #include "toolchain_locator.hpp"
+#include "process_runner.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -198,6 +199,64 @@ namespace dbc::studio
                 }
             }
             return Latest;
+        }
+
+        std::vector<SigningIdentity> ParseSigningIdentities(std::string_view Output)
+        {
+            // Lines look like:   1) <40 hex digits> "Developer ID Application: Name (TEAMID1234)"
+            std::vector<SigningIdentity> Identities;
+            std::size_t Begin = 0;
+            while (Begin < Output.size())
+            {
+                std::size_t End = Output.find('\n', Begin);
+                if (End == std::string_view::npos)
+                    End = Output.size();
+                const std::string_view Line = Output.substr(Begin, End - Begin);
+                Begin = End + 1;
+                const std::size_t Paren = Line.find(") ");
+                const std::size_t Quote = Line.find('"');
+                const std::size_t Close = Line.rfind('"');
+                if (Paren == std::string_view::npos || Quote == std::string_view::npos || Close <= Quote)
+                    continue;
+                const std::string_view Sha1 = Line.substr(Paren + 2, Quote > Paren + 3 ? Quote - Paren - 3 : 0);
+                if (Sha1.size() != 40)
+                    continue;
+                SigningIdentity Identity{std::string(Sha1), std::string(Line.substr(Quote + 1, Close - Quote - 1))};
+                const bool Duplicate = std::any_of(Identities.begin(), Identities.end(),
+                                                   [&Identity](const SigningIdentity& Known)
+                                                   { return Known.Sha1 == Identity.Sha1; });
+                if (!Duplicate)
+                    Identities.push_back(std::move(Identity));
+            }
+            return Identities;
+        }
+
+        std::vector<SigningIdentity> ListSigningIdentities()
+        {
+#if defined(__APPLE__)
+            const ProcessResult Result =
+                RunProcess({{"/usr/bin/security", "find-identity", "-v", "-p", "codesigning"}, {}, {}}, {}, nullptr, true);
+            return Result ? ParseSigningIdentities(Result.Output) : std::vector<SigningIdentity>{};
+#else
+            return {};
+#endif
+        }
+
+        std::optional<std::string> MacMinimumSystem(const fs::path& Binary)
+        {
+#if defined(__APPLE__)
+            const ProcessResult Result =
+                RunProcess({{"/usr/bin/xcrun", "vtool", "-show-build", Binary.string()}, {}, {}}, {}, nullptr, true);
+            const std::size_t At = Result ? Result.Output.find("minos ") : std::string::npos;
+            if (At == std::string::npos)
+                return std::nullopt;
+            const std::size_t Begin = At + 6;
+            const std::size_t End = Result.Output.find_first_of(" \n", Begin);
+            return Result.Output.substr(Begin, End == std::string::npos ? std::string::npos : End - Begin);
+#else
+            (void)Binary;
+            return std::nullopt;
+#endif
         }
 
         std::string AndroidSdkInstallCommand(int CompileSdk)

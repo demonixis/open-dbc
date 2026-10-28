@@ -88,6 +88,21 @@ namespace dbc::studio
             return std::move(Result.Output);
         }
 
+        std::optional<std::string> ExportContext::RunCapturing(const ProcessRequest& Request, std::string& Error) const
+        {
+            if (Cancelled(Error))
+                return std::nullopt;
+            static const ProcessLineSink Silent;
+            ProcessResult Result = RunProcess(Request, Progress != nullptr ? Progress->Log : Silent,
+                                              Progress != nullptr ? Progress->Cancel : nullptr, true);
+            if (!Result)
+            {
+                Error = std::move(Result.Error);
+                return std::nullopt;
+            }
+            return std::move(Result.Output);
+        }
+
         StageCleanup::~StageCleanup()
         {
             std::error_code Ignored;
@@ -1144,6 +1159,111 @@ namespace dbc::studio
                 !ReplaceString("CFBundleVersion", std::to_string(Settings.VersionCode)))
                 return false;
             return true;
+        }
+#endif
+
+#if defined(__APPLE__)
+        static bool IsMachO(const fs::path& Path)
+        {
+            std::array<unsigned char, 4> Magic{};
+            std::ifstream Input(Path, std::ios::binary);
+            Input.read(reinterpret_cast<char*>(Magic.data()), static_cast<std::streamsize>(Magic.size()));
+            if (Input.gcount() != static_cast<std::streamsize>(Magic.size()))
+                return false;
+            const std::uint32_t Value = (std::uint32_t{Magic[0]} << 24) | (std::uint32_t{Magic[1]} << 16) |
+                                        (std::uint32_t{Magic[2]} << 8) | std::uint32_t{Magic[3]};
+            return Value == 0xfeedfacfu || Value == 0xcffaedfeu || Value == 0xfeedfaceu || Value == 0xcefaedfeu ||
+                   Value == 0xcafebabeu || Value == 0xbebafecau;
+        }
+
+        bool SignMacDistribution(const ExportContext& Context, const fs::path& App, const std::string& Identity,
+                                 std::string& Error)
+        {
+            if (Identity.empty())
+            {
+                Error = "macOS distribution builds need a Developer ID Application identity";
+                return false;
+            }
+            // Plugins loaded by LOAD DLL, OpenXR runtimes and MoltenVK come from other teams or are unsigned.
+            const fs::path Entitlements = App.parent_path() / ".opendbc-entitlements.plist";
+            {
+                std::ofstream Output(Entitlements, std::ios::binary | std::ios::trunc);
+                Output << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                          "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
+                          "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+                          "<plist version=\"1.0\"><dict>\n"
+                          "  <key>com.apple.security.cs.disable-library-validation</key><true/>\n"
+                          "</dict></plist>\n";
+                if (!Output)
+                {
+                    Error = "Cannot write the macOS entitlements";
+                    return false;
+                }
+            }
+            const StageCleanup EntitlementsCleanup{Entitlements};
+            // Nested code is signed first: signing the bundle seals what it contains.
+            const fs::path MainExecutables = App / "Contents/MacOS";
+            std::vector<fs::path> Nested;
+            std::error_code FileError;
+            for (fs::recursive_directory_iterator It(App / "Contents", FileError), End; !FileError && It != End;
+                 It.increment(FileError))
+            {
+                if (It->is_regular_file(FileError) && It->path().parent_path() != MainExecutables &&
+                    IsMachO(It->path()))
+                    Nested.push_back(It->path());
+            }
+            if (FileError)
+            {
+                Error = "Cannot inspect the macOS bundle: " + FileError.message();
+                return false;
+            }
+            const std::vector<std::string> Signing = {"/usr/bin/codesign", "--force", "--timestamp", "--options",
+                                                      "runtime",           "--sign",  Identity};
+            for (const fs::path& Code : Nested)
+            {
+                std::vector<std::string> Arguments = Signing;
+                Arguments.push_back(Code.string());
+                if (!Context.Run(Arguments, Error))
+                    return false;
+            }
+            std::vector<std::string> Arguments = Signing;
+            Arguments.insert(Arguments.end(), {"--entitlements", Entitlements.string(), App.string()});
+            return Context.Run(Arguments, Error) &&
+                   Context.Run({"/usr/bin/codesign", "--verify", "--strict", "--deep", "--verbose=2", App.string()},
+                               Error);
+        }
+
+        bool NotarizeMacApp(const ExportContext& Context, const fs::path& App, const std::string& Profile,
+                            std::string& Error)
+        {
+            const fs::path Archive = App.parent_path() / ".opendbc-notarization.zip";
+            const StageCleanup ArchiveCleanup{Archive};
+            if (!Context.Run({"/usr/bin/ditto", "-c", "-k", "--keepParent", App.string(), Archive.string()}, Error))
+                return false;
+            Context.Note("Submitting to Apple notarization; this usually takes a few minutes");
+            const std::optional<std::string> Output =
+                Context.RunCapturing({{"/usr/bin/xcrun", "notarytool", "submit", Archive.string(), "--keychain-profile",
+                                       Profile, "--wait", "--output-format", "json"},
+                                      {},
+                                      {}},
+                                     Error);
+            if (!Output)
+                return false;
+            // notarytool reports a rejected submission in its verdict, not always in its exit code.
+            const nlohmann::json Verdict = nlohmann::json::parse(*Output, nullptr, false);
+            const std::string Status = Verdict.is_object() ? Verdict.value("status", std::string{}) : std::string{};
+            if (Status != "Accepted")
+            {
+                const std::string Id = Verdict.is_object() ? Verdict.value("id", std::string{}) : std::string{};
+                Error = "Apple notarization did not accept the app (" + (Status.empty() ? "no verdict" : Status) +
+                        ")" +
+                        (Id.empty() ? std::string{}
+                                    : ". Details: xcrun notarytool log " + Id + " --keychain-profile " + Profile);
+                return false;
+            }
+            return Context.Run({"/usr/bin/xcrun", "stapler", "staple", App.string()}, Error) &&
+                   Context.Run({"/usr/sbin/spctl", "--assess", "--type", "execute", "--verbose=2", App.string()},
+                               Error);
         }
 #endif
     } // namespace toolchain::internal

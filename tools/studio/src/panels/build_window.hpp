@@ -57,11 +57,17 @@ namespace dbc::studio
                 OutputFolder_ = std::move(Folder);
             }
 
+            void SetSigningIdentities(std::vector<toolchain::SigningIdentity> Identities)
+            {
+                Identities_ = std::move(Identities);
+            }
+
           private:
             bool Open_ = false;
             toolchain::ArtifactTarget Target_ = toolchain::ArtifactTarget::Desktop;
             bool Distribution_ = false;
             std::string OutputFolder_;
+            std::vector<toolchain::SigningIdentity> Identities_;
         };
     } // namespace panels
 

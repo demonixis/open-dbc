@@ -69,6 +69,7 @@ namespace dbc::studio
             const std::string ProductName = SafeProductName(Request.Settings, Request.EntrySource);
 #if defined(__APPLE__)
             Result.OutputPath = Request.OutputDirectory / (ProductName + ".app");
+            const fs::path Archive = Request.OutputDirectory / (ProductName + ".zip");
 #else
             Result.OutputPath = Request.OutputDirectory / ProductName;
 #endif
@@ -79,6 +80,14 @@ namespace dbc::studio
                 Result.OutputPath.clear();
                 return Result;
             }
+#if defined(__APPLE__)
+            if (Request.Sign && fs::exists(Archive, FileError))
+            {
+                Result.Error = "Export destination already exists: " + Archive.string();
+                Result.OutputPath.clear();
+                return Result;
+            }
+#endif
             if (!ValidateDesktopHost(Request, Result.Error))
                 return Result;
             fs::path Stage;
@@ -86,9 +95,10 @@ namespace dbc::studio
                 return Result;
             StageCleanup Cleanup{Stage};
 #if defined(__APPLE__)
-            if (!CopyTree(Request.HostProduct, Stage, Result.Error))
+            const fs::path App = Stage / (ProductName + ".app");
+            if (!CopyTree(Request.HostProduct, App, Result.Error))
                 return Result;
-            const fs::path Resources = Stage / "Contents/Resources";
+            const fs::path Resources = App / "Contents/Resources";
 #else
             if (!Request.Settings.IconSource.empty())
             {
@@ -114,11 +124,40 @@ namespace dbc::studio
             if (!WriteArtifact(Request, Image, Resources, Files, Result.Error))
                 return Result;
 #if defined(__APPLE__)
-            if (!PrepareMacIcon(Context, Request, Stage, Result.Error))
+            if (!PrepareMacIcon(Context, Request, App, Result.Error) ||
+                !SetAppleMetadata(Context, App, Request.Settings, ProductName, Result.Error))
                 return Result;
-            if (!SetAppleMetadata(Context, Stage, Request.Settings, ProductName, Result.Error))
+            const bool Notarize = Request.Sign && !Request.Toolchain.NotaryProfile.empty();
+            if (Request.Sign)
+            {
+                Context.Note("Signing with " + Request.Toolchain.MacSigningIdentity);
+                if (!SignMacDistribution(Context, App, Request.Toolchain.MacSigningIdentity, Result.Error) ||
+                    (Notarize && !NotarizeMacApp(Context, App, Request.Toolchain.NotaryProfile, Result.Error)))
+                    return Result;
+            }
+            else if (!SignAppleBundle(Context, App, false, {}, {}, Result.Error))
                 return Result;
-#endif
+            if (!PublishAndRemoveStage(App, Result.OutputPath, Stage, Result.Error))
+            {
+                Result.OutputPath.clear();
+                return Result;
+            }
+            Cleanup.Path.clear();
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
+            Result.Messages.push_back("Published " + Result.OutputPath.string());
+            if (Request.Sign)
+            {
+                // A zip keeps the signature and the stapled ticket for direct downloads.
+                if (!Context.Run({"/usr/bin/ditto", "-c", "-k", "--keepParent", Result.OutputPath.string(),
+                                  Archive.string()},
+                                 Result.Error))
+                    return Result;
+                Result.Messages.push_back("Published " + Archive.string());
+                if (!Notarize)
+                    Result.Messages.push_back("Signed but not notarized: other Macs will block it until it is "
+                                              "notarized with a notary profile");
+            }
+#else
             if (!SignAppleBundle(Context, Stage, Request.Sign, {}, {}, Result.Error))
                 return Result;
             if (!PublishNoReplace(Stage, Result.OutputPath, Result.Error))
@@ -129,6 +168,7 @@ namespace dbc::studio
             Cleanup.Path.clear();
             Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
             Result.Messages.push_back("Published " + Result.OutputPath.string());
+#endif
             return Result;
         }
     } // namespace toolchain::internal

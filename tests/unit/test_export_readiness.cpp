@@ -178,6 +178,10 @@ TEST_CASE("the export toolchain keeps configured tools and detects the others")
     CHECK(fs::equivalent(Toolchain.AndroidSdk, Tree.Root / "sdk"));
     CHECK(Toolchain.NotaryProfile == "opendbc-notary");
     CHECK(Toolchain.WindowsTimestampUrl == "http://timestamp.digicert.com");
+
+    // Build machines override the preferences through the environment.
+    Paths = Search({{"OPENDBC_NOTARY_PROFILE", "ci-notary"}});
+    CHECK(toolchain::ResolveExportToolchain(Settings, Paths).NotaryProfile == "ci-notary");
 }
 
 TEST_CASE("Studio settings keep export tools and per-project export folders")
@@ -196,3 +200,37 @@ TEST_CASE("Studio settings keep export tools and per-project export folders")
     core::Settings::Parse(R"({"exportFolders":[]})", Error);
     CHECK_FALSE(Error.empty());
 }
+
+TEST_CASE("code signing identities are read from security find-identity")
+{
+    const std::vector<toolchain::SigningIdentity> Identities = toolchain::ParseSigningIdentities(
+        "  1) 1111111111111111111111111111111111111111 \"Apple Development: Jane Doe (AAAAAAAAAA)\"\n"
+        "  2) 2222222222222222222222222222222222222222 \"Developer ID Application: Jane Doe (BBBBBBBBBB)\"\n"
+        "  3) 2222222222222222222222222222222222222222 \"Developer ID Application: Jane Doe (BBBBBBBBBB)\"\n"
+        "     2 valid identities found\n");
+    REQUIRE(Identities.size() == 2);
+    CHECK(Identities[0].Sha1 == "1111111111111111111111111111111111111111");
+    CHECK(Identities[1].Name == "Developer ID Application: Jane Doe (BBBBBBBBBB)");
+}
+
+#if defined(__APPLE__)
+TEST_CASE("signed macOS builds need an installed Developer ID identity and warn without notarization")
+{
+    toolchain::ArtifactExportRequest Request;
+    Request.Target = toolchain::ArtifactTarget::Desktop;
+    Request.Sign = true;
+    Request.Toolchain.MacSigningIdentity = "Developer ID Application: Nobody (0000000000)";
+    std::vector<toolchain::ExportCheck> Checks = toolchain::CheckExportReadiness(Request);
+    CHECK(HasFailed(Checks, "Developer ID identity"));
+    const auto Notary = std::find_if(Checks.begin(), Checks.end(), [](const toolchain::ExportCheck& Check)
+                                     { return Check.Label == "Notarization profile"; });
+    REQUIRE(Notary != Checks.end());
+    CHECK_FALSE(Notary->Passed);
+    CHECK_FALSE(Notary->Required);
+
+    Request.Sign = false;
+    Checks = toolchain::CheckExportReadiness(Request);
+    CHECK(std::none_of(Checks.begin(), Checks.end(),
+                       [](const toolchain::ExportCheck& Check) { return Check.Label == "Developer ID identity"; }));
+}
+#endif

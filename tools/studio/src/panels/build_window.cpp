@@ -32,6 +32,29 @@ namespace dbc::studio
 #endif
         }
 
+#if defined(__APPLE__)
+        // Developer ID Application is the identity for apps distributed outside the Mac App Store.
+        bool IdentityCombo(const std::vector<toolchain::SigningIdentity>& Identities, std::string& Value)
+        {
+            bool Changed = false;
+            if (ImGui::BeginCombo("Developer ID identity", Value.empty() ? "(none)" : Value.c_str()))
+            {
+                for (const toolchain::SigningIdentity& Identity : Identities)
+                {
+                    if (!Identity.Name.starts_with("Developer ID Application:"))
+                        continue;
+                    if (ImGui::Selectable(Identity.Name.c_str(), Identity.Name == Value))
+                    {
+                        Value = Identity.Name;
+                        Changed = true;
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            return Changed;
+        }
+#endif
+
         struct TargetChoice
         {
             const char* Label;
@@ -149,7 +172,7 @@ namespace dbc::studio
                 Changed |= TextField("JDK folder", Studio.JavaHome);
                 Changed |= TextField("Android SDK folder", Studio.AndroidSdk);
 #if defined(__APPLE__)
-                Changed |= TextField("Developer ID identity", Studio.MacSigningIdentity);
+                Changed |= IdentityCombo(Identities_, Studio.MacSigningIdentity);
                 Changed |= TextField("Notary profile", Studio.NotaryProfile);
 #elif defined(_WIN32)
                 Changed |= TextField("Certificate SHA-1 or .pfx", Studio.WindowsCertificate);

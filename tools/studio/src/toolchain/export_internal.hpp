@@ -32,6 +32,8 @@ namespace dbc::studio
             bool Run(const std::vector<std::string>& Arguments, std::string& Error) const;
             // Returns the tool's output instead of logging it.
             std::optional<std::string> Capture(const std::vector<std::string>& Arguments, std::string& Error) const;
+            // Logs the tool's output and returns it.
+            std::optional<std::string> RunCapturing(const ProcessRequest& Request, std::string& Error) const;
         };
 
         // Removes a staging directory unless the export publishes it.
@@ -79,6 +81,12 @@ namespace dbc::studio
         bool IsAppleTeamIdentifier(std::string_view Value);
         bool SetAppleMetadata(const ExportContext& Context, const fs::path& App, const core::ProjectSettings& Settings,
                               const std::string& ProductName, std::string& Error);
+        // Signs every nested Mach-O, then the bundle, with the hardened runtime and a secure timestamp.
+        bool SignMacDistribution(const ExportContext& Context, const fs::path& App, const std::string& Identity,
+                                 std::string& Error);
+        // Submits the signed bundle to Apple, waits for the verdict and staples the ticket.
+        bool NotarizeMacApp(const ExportContext& Context, const fs::path& App, const std::string& Profile,
+                            std::string& Error);
 #endif
 
         // Checks that the installed export host was built from this Studio's runtime.

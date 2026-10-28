@@ -2,6 +2,7 @@
 #include "export_internal.hpp"
 
 #include <algorithm>
+#include <charconv>
 #include <string_view>
 #include <system_error>
 
@@ -71,6 +72,46 @@ namespace dbc::studio
                                              "and OPENDBC_ANDROID_KEY_PASSWORD."});
         }
 
+#if defined(__APPLE__)
+        // The oldest macOS release still supported by Apple when this was written.
+        constexpr int RecommendedMacMinimum = 13;
+
+        void AddMacChecks(const toolchain::ArtifactExportRequest& Request, std::vector<toolchain::ExportCheck>& Checks)
+        {
+            const std::optional<std::string> Minimum =
+                toolchain::MacMinimumSystem(Request.HostProduct / "Contents/MacOS/opendbc-runner");
+            int Major = 0;
+            if (Minimum)
+                std::from_chars(Minimum->data(), Minimum->data() + Minimum->size(), Major);
+            const bool Reach = Major > 0 && Major <= RecommendedMacMinimum;
+            Checks.push_back({"Runs on macOS " + std::to_string(RecommendedMacMinimum) + " and later", Reach, false,
+                              Reach ? std::string{}
+                                    : "This OpenDBC build needs macOS " + Minimum.value_or("of the build machine") +
+                                          ". Build OpenDBC with -DCMAKE_OSX_DEPLOYMENT_TARGET=" +
+                                          std::to_string(RecommendedMacMinimum) + ".0 to reach older Macs."});
+            if (!Request.Sign)
+                return;
+            const std::string& Wanted = Request.Toolchain.MacSigningIdentity;
+            const std::vector<toolchain::SigningIdentity> Identities = toolchain::ListSigningIdentities();
+            const bool Installed =
+                !Wanted.empty() && std::any_of(Identities.begin(), Identities.end(),
+                                               [&Wanted](const toolchain::SigningIdentity& Identity)
+                                               { return Identity.Name == Wanted || Identity.Sha1 == Wanted; });
+            Checks.push_back(
+                {"Developer ID identity", Installed, true,
+                 Installed ? std::string{}
+                 : Wanted.empty()
+                     ? "Choose a \"Developer ID Application\" identity in External tools. Xcode > Settings > "
+                       "Accounts creates one for a paid Apple Developer account."
+                     : "\"" + Wanted + "\" is not in your keychains."});
+            const bool Profile = !Request.Toolchain.NotaryProfile.empty();
+            Checks.push_back({"Notarization profile", Profile, false,
+                              Profile ? std::string{}
+                                      : "Without notarization, Gatekeeper blocks the app on other Macs. Run: xcrun "
+                                        "notarytool store-credentials <name>, then enter the name in External tools."});
+        }
+#endif
+
         void AddIosChecks(const toolchain::ArtifactExportRequest& Request, bool Simulator,
                           std::vector<toolchain::ExportCheck>& Checks)
         {
@@ -96,6 +137,9 @@ namespace dbc::studio
                 case ArtifactTarget::Desktop:
                     AddHostCheck(Checks, internal::ValidateDesktopHost(Request, Error), Error,
                                  "Rebuild OpenDBC so opendbc-runner matches this Studio.");
+#if defined(__APPLE__)
+                    AddMacChecks(Request, Checks);
+#endif
                     break;
                 case ArtifactTarget::AndroidApk:
                 case ArtifactTarget::AndroidBundle:
@@ -122,10 +166,16 @@ namespace dbc::studio
             ExportToolchain Toolchain;
             Toolchain.JavaHome = LocateJavaHome(Settings.JavaHome, Search).value_or(fs::path{});
             Toolchain.AndroidSdk = LocateAndroidSdk(Settings.AndroidSdk, Search).value_or(fs::path{});
-            Toolchain.MacSigningIdentity = Settings.MacSigningIdentity;
-            Toolchain.NotaryProfile = Settings.NotaryProfile;
-            Toolchain.WindowsCertificate = Settings.WindowsCertificate;
-            Toolchain.WindowsTimestampUrl = Settings.WindowsTimestampUrl;
+            // Build machines configure signing through the environment instead of the Studio preferences.
+            const auto Choose = [&Search](const char* Variable, const std::string& Configured)
+            {
+                const std::optional<std::string> Value = Search.Variable ? Search.Variable(Variable) : std::nullopt;
+                return Value ? *Value : Configured;
+            };
+            Toolchain.MacSigningIdentity = Choose("OPENDBC_MAC_SIGNING_IDENTITY", Settings.MacSigningIdentity);
+            Toolchain.NotaryProfile = Choose("OPENDBC_NOTARY_PROFILE", Settings.NotaryProfile);
+            Toolchain.WindowsCertificate = Choose("OPENDBC_WINDOWS_CERTIFICATE", Settings.WindowsCertificate);
+            Toolchain.WindowsTimestampUrl = Choose("OPENDBC_WINDOWS_TIMESTAMP_URL", Settings.WindowsTimestampUrl);
             return Toolchain;
         }
     } // namespace toolchain

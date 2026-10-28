@@ -37,6 +37,18 @@ namespace dbc::studio
         std::optional<std::filesystem::path> LatestAndroidBuildTools(const std::filesystem::path& Sdk);
         // The command that installs what an Android build needs from the SDK.
         std::string AndroidSdkInstallCommand(int CompileSdk);
+
+        struct SigningIdentity
+        {
+            std::string Sha1;
+            std::string Name;
+        };
+        // Parses `security find-identity -v -p codesigning`.
+        std::vector<SigningIdentity> ParseSigningIdentities(std::string_view Output);
+        // The valid code signing identities of the user's keychains; empty outside macOS.
+        std::vector<SigningIdentity> ListSigningIdentities();
+        // The lowest macOS version a Mach-O binary runs on, from its LC_BUILD_VERSION.
+        std::optional<std::string> MacMinimumSystem(const std::filesystem::path& Binary);
     } // namespace toolchain
 
 } // namespace dbc::studio
