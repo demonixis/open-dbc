@@ -41,6 +41,19 @@ TEST_CASE("Scene rotations decompose back to the angles ROTATE OBJECT takes")
     CHECK(Turned.z == doctest::Approx(0.0f).epsilon(1e-5));
 }
 
+TEST_CASE("Uniform scale keeps the proportions of the starting scale")
+{
+    const glm::vec3 Scaled =
+        scene::ProportionalScale(glm::vec3(100.0f, 50.0f, 200.0f), glm::vec3(100.0f, 75.0f, 200.0f));
+    CHECK(Scaled.x == doctest::Approx(150.0f));
+    CHECK(Scaled.y == doctest::Approx(75.0f));
+    CHECK(Scaled.z == doctest::Approx(300.0f));
+    // A zero axis has no ratio to follow.
+    const glm::vec3 Flat = scene::ProportionalScale(glm::vec3(0.0f, 100.0f, 100.0f), glm::vec3(40.0f, 100.0f, 100.0f));
+    CHECK(Flat.x == doctest::Approx(40.0f));
+    CHECK(Flat.y == doctest::Approx(100.0f));
+}
+
 TEST_CASE("Scene primitives keep the engine's sizes and tessellation")
 {
     scene::SceneNode Node;

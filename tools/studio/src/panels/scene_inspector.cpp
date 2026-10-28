@@ -184,7 +184,14 @@ namespace dbc::studio
             if (Turns)
                 ImGui::DragFloat3("Rotation", &Node->Rotation.x, 0.5f);
             if (IsObject)
-                ImGui::DragFloat3("Scale %", &Node->Scale.x, 0.5f, 0.0f, 100000.0f);
+            {
+                const glm::vec3 Before = Node->Scale;
+                if (ImGui::DragFloat3("Scale %", &Node->Scale.x, 0.5f, 0.0f, 100000.0f) && UniformScale_)
+                    Node->Scale = scene::ProportionalScale(Before, Node->Scale);
+                ImGui::Checkbox("Uniform scale", &UniformScale_);
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("Scaling one axis scales the others in proportion, here and with the gizmo");
+            }
             if (Node->Kind == scene::NodeKind::Terrain)
                 ImGui::TextDisabled("A terrain runs from its position toward -Z.");
             if (Node->Kind == scene::NodeKind::Matrix)

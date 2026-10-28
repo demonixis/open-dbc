@@ -192,9 +192,13 @@ namespace dbc::studio
             Tool Tool_ = Tool::Move;
             bool LocalGizmo_ = false;
             bool ShowGrid_ = true;
+            // Scale edits keep the selection's proportions, in the Inspector and the gizmo.
+            bool UniformScale_ = false;
             bool LookThroughCamera_ = false;
             bool Navigating_ = false;
             bool GizmoActive_ = false;
+            // Scale % when the gizmo drag began: uniform scale starts from it.
+            glm::vec3 GizmoStartScale_{100.0f};
             scene::ViewParameters View_;
             ImVec2 ViewportMin_{0.0f, 0.0f};
             ImVec2 ViewportSize_{0.0f, 0.0f};

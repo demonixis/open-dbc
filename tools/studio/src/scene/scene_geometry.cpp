@@ -350,6 +350,17 @@ namespace dbc::studio
             return glm::scale(World, Node.Scale / 100.0f);
         }
 
+        glm::vec3 ProportionalScale(const glm::vec3& Start, const glm::vec3& Edited)
+        {
+            int Axis = 0;
+            for (int Index = 1; Index < 3; ++Index)
+                if (std::abs(Edited[Index] - Start[Index]) > std::abs(Edited[Axis] - Start[Axis]))
+                    Axis = Index;
+            if (std::abs(Start[Axis]) < 1e-6f)
+                return Edited;
+            return Start * (Edited[Axis] / Start[Axis]);
+        }
+
         std::optional<float> Intersect(const Ray& Value, const CpuMesh& Mesh, const glm::mat4& World)
         {
             std::optional<float> Nearest;

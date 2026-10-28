@@ -63,6 +63,10 @@ namespace dbc::studio
         // Local to world. Matrices, terrains and lights only move.
         glm::mat4 NodeWorld(const SceneNode& Node);
 
+        // Scales all of `Start` by the ratio of the axis `Edited` changed most, keeping
+        // its proportions. An axis that starts at 0 has no ratio: `Edited` is kept.
+        glm::vec3 ProportionalScale(const glm::vec3& Start, const glm::vec3& Edited);
+
         struct Ray
         {
             glm::vec3 Origin{0.0f};

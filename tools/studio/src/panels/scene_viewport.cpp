@@ -426,6 +426,8 @@ namespace dbc::studio
             if (ImGuizmo::Manipulate(glm::value_ptr(View_.View), glm::value_ptr(View_.Projection), Operation, Mode,
                                      glm::value_ptr(Model)))
             {
+                if (!GizmoActive_)
+                    GizmoStartScale_ = Node != nullptr ? Node->Scale : glm::vec3(100.0f);
                 GizmoActive_ = true;
                 const glm::vec3 Position(Model[3]);
                 glm::vec3 Scale(glm::length(glm::vec3(Model[0])), glm::length(glm::vec3(Model[1])),
@@ -446,7 +448,8 @@ namespace dbc::studio
                     if (Operation == ImGuizmo::ROTATE)
                         Node->Rotation = scene::EulerDegrees(Rotation);
                     if (Operation == ImGuizmo::SCALE)
-                        Node->Scale = Scale * 100.0f;
+                        Node->Scale = UniformScale_ ? scene::ProportionalScale(GizmoStartScale_, Scale * 100.0f)
+                                                    : Scale * 100.0f;
                 }
             }
             if (GizmoActive_ && !ImGuizmo::IsUsing())
