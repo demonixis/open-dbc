@@ -51,7 +51,8 @@ namespace dbc::studio
                 {".fx", MediaKind::Effect},  {".hlsl", MediaKind::Effect}, {".spv", MediaKind::Effect},
                 {".msl", MediaKind::Effect}, {".avi", MediaKind::Video},   {".mpg", MediaKind::Video},
                 {".mpeg", MediaKind::Video}, {".wmv", MediaKind::Video},   {".mp4", MediaKind::Video},
-                {".ttf", MediaKind::Font},   {".otf", MediaKind::Font},
+                {".m4v", MediaKind::Video},  {".mov", MediaKind::Video},   {".ttf", MediaKind::Font},
+                {".otf", MediaKind::Font},
             };
 
             std::string Name = Path.extension().string();
