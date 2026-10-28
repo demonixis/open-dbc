@@ -70,6 +70,7 @@ namespace dbc
         void DoSyncOff();
         void DoSyncRate(int Rate);
         std::optional<std::chrono::steady_clock::time_point> NextSyncDeadline() const;
+        bool RefreshesWhileWaiting() const;
         void Sync();
         void FastSync();
         int Timer();

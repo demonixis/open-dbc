@@ -732,6 +732,13 @@ namespace dbc
         SyncTargetNs_ = 1'000'000'000ULL / static_cast<Uint64>(Rate);
     }
 
+    bool CoreSystem::RefreshesWhileWaiting() const
+    {
+        // With SYNC ON only SYNC changes the flat screen, so a WAIT or a pending SYNC RATE deadline
+        // needs no redraw; XR keeps presenting so the headset never stalls.
+        return !SyncOn_ || Kernel_.Vr().Enabled();
+    }
+
     std::optional<std::chrono::steady_clock::time_point> CoreSystem::NextSyncDeadline() const
     {
         if (Kernel_.Vr().Pacing() || SyncTargetNs_ == 0 || LastSyncNs_ == 0)
@@ -751,9 +758,10 @@ namespace dbc
             return;
 
         // SYNC presents in both modes; SYNC OFF only adds the host's automatic refresh between calls.
+        // The frame starts before the render so SYNC RATE paces whole frames, render included.
+        const Uint64 Now = SDL_GetTicksNS();
         Kernel_.Renderer().RenderScene();
 
-        const Uint64 Now = SDL_GetTicksNS();
         if (LastSyncNs_ > 0)
             DeltaTime_ = static_cast<float>(static_cast<double>(Now - LastSyncNs_) / 1'000'000'000.0);
         else
@@ -769,9 +777,9 @@ namespace dbc
         if (Suspended_ && !Kernel_.Vr().Enabled())
             return;
 
+        const Uint64 Now = SDL_GetTicksNS();
         Kernel_.Renderer().RenderScene();
 
-        const Uint64 Now = SDL_GetTicksNS();
         if (LastSyncNs_ > 0)
             DeltaTime_ = static_cast<float>(static_cast<double>(Now - LastSyncNs_) / 1'000'000'000.0);
         else
