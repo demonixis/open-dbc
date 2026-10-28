@@ -1,0 +1,9 @@
+rem Snippet: TPS Camera
+rem Description: A third-person camera behind an object. Call TpsCamera(object number) once per frame before sync.
+
+rem Obj is the number of the object to follow, usually the player.
+function TpsCamera(Obj)
+   rem 15 units behind, 6 above; smoothing 10 (1 is rigid, higher is smoother)
+   set camera to follow object position x(Obj), object position y(Obj), object position z(Obj), object angle y(Obj), 15, 6, 10, 0
+   point camera object position x(Obj), object position y(Obj) + 2, object position z(Obj)
+endfunction

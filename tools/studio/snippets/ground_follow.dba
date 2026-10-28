@@ -1,0 +1,9 @@
+rem Snippet: Ground Follow
+rem Description: Keep an object on a matrix's surface. Call FollowGround(object, matrix, height) after moving the object.
+
+rem Height is how far above the ground the object's origin sits.
+function FollowGround(Obj, Matrix, Height#)
+   X# = object position x(Obj)
+   Z# = object position z(Obj)
+   position object Obj, X#, get ground height(Matrix, X#, Z#) + Height#, Z#
+endfunction

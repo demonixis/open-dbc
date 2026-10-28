@@ -1,0 +1,21 @@
+rem Snippet: Game States
+rem Description: A main loop switching between a title screen and the game with subroutines.
+
+sync on
+sync rate 60
+State = 0
+do
+   cls
+   if State = 0 then gosub TitleScreen
+   if State = 1 then gosub PlayGame
+   sync
+loop
+
+TitleScreen:
+   center text screen width() / 2, screen height() / 2, "Press space to start"
+   if spacekey() = 1 then State = 1
+return
+
+PlayGame:
+   text 10, 10, "Playing - press escape to quit"
+return

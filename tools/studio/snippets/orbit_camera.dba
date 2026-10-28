@@ -1,0 +1,30 @@
+rem Snippet: Orbit Camera
+rem Description: Orbit a point with the left mouse button and zoom with the wheel. Call OrbitCamera(x, y, z) once per frame before sync.
+
+rem The camera itself holds the orbit state, so no globals are needed.
+function OrbitCamera(X#, Y#, Z#)
+   Dx# = camera position x() - X#
+   Dy# = camera position y() - Y#
+   Dz# = camera position z() - Z#
+   Distance# = sqrt(Dx# * Dx# + Dy# * Dy# + Dz# * Dz#)
+   Yaw# = camera angle y()
+   Pitch# = camera angle x()
+   if Pitch# > 180 then Pitch# = Pitch# - 360
+
+   rem Read the mouse every frame so the deltas do not pile up
+   MoveX# = mousemovex()
+   MoveY# = mousemovey()
+   if mouseclick() = 1
+      Yaw# = wrapvalue(Yaw# + MoveX# * 0.3)
+      Pitch# = Pitch# + MoveY# * 0.3
+      if Pitch# > 80 then Pitch# = 80
+      if Pitch# < -80 then Pitch# = -80
+   endif
+   Distance# = Distance# - mousemovez() * 0.05
+   if Distance# < 2 then Distance# = 2
+
+   rem Stand on the target, face the orbit direction and step back
+   position camera X#, Y#, Z#
+   rotate camera Pitch#, Yaw#, 0
+   move camera 0 - Distance#
+endfunction

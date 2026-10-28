@@ -1,0 +1,15 @@
+rem Snippet: Delta Time Loop
+rem Description: A main loop measuring each frame's duration, so speeds do not depend on the frame rate.
+
+sync on
+sync rate 60
+LastTime = timer()
+do
+   Now = timer()
+   Delta# = (Now - LastTime) / 1000.0
+   LastTime = Now
+
+   rem Multiply speeds by Delta#: "move object 1, 10 * Delta#" moves 10 units per second
+
+   sync
+loop

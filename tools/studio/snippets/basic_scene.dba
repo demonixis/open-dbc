@@ -1,0 +1,20 @@
+rem Snippet: Basic Scene
+rem Description: A 1280x720 window at 60 frames per second with a spinning cube.
+
+set display mode 1280, 720, 32
+set window on
+set window title "My Game"
+sync on
+sync rate 60
+autocam off
+backdrop on
+color backdrop rgb(32, 32, 48)
+
+make object cube 1, 10
+position camera 0, 10, -30
+point camera 0, 0, 0
+
+do
+   yrotate object 1, wrapvalue(object angle y(1) + 1)
+   sync
+loop

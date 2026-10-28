@@ -201,6 +201,18 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     )
     doctest_discover_tests(test_studio_new_project PROPERTIES LABELS "unit-studio")
 
+    add_executable(test_studio_snippets
+        test_studio_snippets.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/builtin_snippets.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/snippet_library.cpp
+    )
+    add_dependencies(test_studio_snippets opendbc_studio_snippets)
+    target_include_directories(test_studio_snippets PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
+                               ${CMAKE_BINARY_DIR}/tools/studio/generated)
+    target_compile_definitions(test_studio_snippets PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+    target_link_libraries(test_studio_snippets PRIVATE doctest_with_main dbc_interpreter)
+    doctest_discover_tests(test_studio_snippets PROPERTIES LABELS "unit-studio")
+
     add_executable(test_artifact_export
         test_artifact_export.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/artifact_export_service.cpp
@@ -222,7 +234,8 @@ foreach(test_target IN ITEMS test_language_profile test_language_catalogue test_
         test_studio_run_plan
         test_engine_math test_collision_math test_bsp_world test_terrain_mesh test_engine_builtins test_input_haptics test_command_line
         test_project_resolver test_debug_system
-        test_shader_compiler test_project_settings test_studio_new_project test_artifact_export)
+        test_shader_compiler test_project_settings test_studio_new_project test_studio_snippets
+        test_artifact_export)
     if(TARGET ${test_target})
         dbc_enable_warnings(${test_target})
     endif()

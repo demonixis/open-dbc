@@ -1,0 +1,9 @@
+rem Snippet: Keyboard Movement
+rem Description: Drive an object with the arrow keys. Call MoveWithKeys(object number, speed, turn speed) once per frame.
+
+function MoveWithKeys(Obj, Speed#, TurnSpeed#)
+   if upkey() = 1 then move object Obj, Speed#
+   if downkey() = 1 then move object Obj, 0 - Speed#
+   if leftkey() = 1 then yrotate object Obj, wrapvalue(object angle y(Obj) - TurnSpeed#)
+   if rightkey() = 1 then yrotate object Obj, wrapvalue(object angle y(Obj) + TurnSpeed#)
+endfunction

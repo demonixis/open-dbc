@@ -1,0 +1,19 @@
+rem Snippet: Save and Load
+rem Description: Save a number to a file and read it back, such as a high score.
+
+function SaveNumber(File$, Value)
+   rem "open to write" fails on an existing file, so replace it
+   if file exist(File$) = 1 then delete file File$
+   open to write 1, File$
+   write long 1, Value
+   close file 1
+endfunction
+
+function LoadNumber(File$)
+   Value = 0
+   if file exist(File$) = 1
+      open to read 1, File$
+      read long 1, Value
+      close file 1
+   endif
+endfunction Value

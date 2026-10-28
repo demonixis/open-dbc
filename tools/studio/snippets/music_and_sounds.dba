@@ -1,0 +1,9 @@
+rem Snippet: Music and Sounds
+rem Description: Loop a music track and play a sound on a key press. Replace the file names with your own media.
+
+load music "music.mid", 1
+loop music 1
+load sound "jump.wav", 1
+
+rem In the main loop: play the sound when space is pressed
+if spacekey() = 1 then play sound 1

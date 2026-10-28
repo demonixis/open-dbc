@@ -146,21 +146,24 @@ set(STUDIO_SOURCES
     src/toolchain/icon_generator.cpp
     src/toolchain/icon_generator.hpp
 
+    src/core/builtin_snippets.cpp
     src/core/file_dialog.cpp
     src/core/file_dialog.hpp
     src/core/gpu_texture.cpp
     src/core/gpu_texture.hpp
     src/core/media_catalogue.cpp
     src/core/media_catalogue.hpp
-    src/core/paths.cpp
     src/core/new_project.cpp
     src/core/new_project.hpp
+    src/core/paths.cpp
     src/core/paths.hpp
     src/core/project_settings.cpp
     src/core/project_settings.hpp
     src/core/platform.hpp
     src/core/settings.cpp
     src/core/settings.hpp
+    src/core/snippet_library.cpp
+    src/core/snippet_library.hpp
     src/core/workspace.cpp
     src/core/workspace.hpp
 
@@ -269,6 +272,25 @@ add_custom_command(
 add_custom_target(opendbc_scene_shaders DEPENDS "${STUDIO_SHADER_INCLUDE}")
 add_dependencies(opendbc opendbc_scene_shaders)
 target_include_directories(opendbc PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+# Built-in snippets are .dba files embedded the same way.
+set(STUDIO_SNIPPET_DIR "${CMAKE_CURRENT_LIST_DIR}/snippets")
+file(GLOB STUDIO_SNIPPET_INPUTS CONFIGURE_DEPENDS "${STUDIO_SNIPPET_DIR}/*.dba")
+set(STUDIO_SNIPPET_FILES)
+foreach(STUDIO_SNIPPET_INPUT IN LISTS STUDIO_SNIPPET_INPUTS)
+    get_filename_component(STUDIO_SNIPPET_NAME "${STUDIO_SNIPPET_INPUT}" NAME)
+    list(APPEND STUDIO_SNIPPET_FILES "${STUDIO_SNIPPET_NAME}")
+endforeach()
+set(STUDIO_SNIPPET_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated/studio_snippets.inc")
+add_custom_command(
+    OUTPUT "${STUDIO_SNIPPET_INCLUDE}"
+    COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_SNIPPET_INCLUDE} -DSOURCE_DIR=${STUDIO_SNIPPET_DIR}
+            "-DFILES=${STUDIO_SNIPPET_FILES}" -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_snippets.cmake"
+    DEPENDS ${STUDIO_SNIPPET_INPUTS} "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_snippets.cmake"
+    COMMENT "Embed the Studio snippets"
+    VERBATIM)
+add_custom_target(opendbc_studio_snippets DEPENDS "${STUDIO_SNIPPET_INCLUDE}")
+add_dependencies(opendbc opendbc_studio_snippets)
 
 target_link_libraries(opendbc PRIVATE
     dbc_interpreter

@@ -1,0 +1,27 @@
+rem Snippet: FPS Camera
+rem Description: Mouse look with WASD or arrow keys. Call FpsCamera(speed) once per frame before sync.
+
+rem Call "hide mouse" once at startup to hide the cursor.
+function FpsCamera(Speed#)
+   rem Mouse look, with the pitch kept between -80 and 80 degrees
+   Yaw# = wrapvalue(camera angle y() + mousemovex() * 0.2)
+   Pitch# = camera angle x()
+   if Pitch# > 180 then Pitch# = Pitch# - 360
+   Pitch# = Pitch# + mousemovey() * 0.2
+   if Pitch# > 80 then Pitch# = 80
+   if Pitch# < -80 then Pitch# = -80
+   rotate camera Pitch#, Yaw#, 0
+
+   rem Walk on the horizontal plane: W/S or up/down, A/D or left/right to strafe
+   Forward# = 0
+   Strafe# = 0
+   if keystate(17) = 1 or upkey() = 1 then Forward# = Speed#
+   if keystate(31) = 1 or downkey() = 1 then Forward# = 0 - Speed#
+   if keystate(32) = 1 or rightkey() = 1 then Strafe# = Speed#
+   if keystate(30) = 1 or leftkey() = 1 then Strafe# = 0 - Speed#
+   X# = newxvalue(camera position x(), Yaw#, Forward#)
+   Z# = newzvalue(camera position z(), Yaw#, Forward#)
+   X# = newxvalue(X#, Yaw# + 90, Strafe#)
+   Z# = newzvalue(Z#, Yaw# + 90, Strafe#)
+   position camera X#, camera position y(), Z#
+endfunction
