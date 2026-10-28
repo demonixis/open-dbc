@@ -126,6 +126,7 @@ doctest_discover_tests(test_engine_builtins PROPERTIES LABELS "unit" RESOURCE_LO
 
 add_executable(test_network test_network.cpp)
 target_link_libraries(test_network PRIVATE doctest_with_main dbc_interpreter)
+target_compile_definitions(test_network PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 doctest_discover_tests(test_network PROPERTIES LABELS "unit")
 
 add_executable(test_input_haptics test_input_haptics.cpp)

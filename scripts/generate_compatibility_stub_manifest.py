@@ -44,8 +44,8 @@ def neutral_behavior(symbol_id: str, kind: str, _name: str) -> str:
 
 def generate() -> str:
     permanent = permanent_symbols()
-    if len(permanent) != 49:
-        raise SystemExit(f"permanent Classic compatibility allowlist must contain exactly 49 symbols, got {len(permanent)}")
+    if len(permanent) != 39:
+        raise SystemExit(f"permanent Classic compatibility allowlist must contain exactly 39 symbols, got {len(permanent)}")
     rows = ["profile\tsymbol_id\tkind\tname\tpolicy\tneutral_behavior"]
     seen = set()
     for match in ENTRY.finditer(CATALOGUE.read_text(encoding="utf-8")):

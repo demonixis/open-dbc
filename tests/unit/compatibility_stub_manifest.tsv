@@ -18,16 +18,6 @@ dbc	Command_FtpTerminate	Command	FTP TERMINATE	Permanent	no-op
 dbc	Command_LoadCdmusic	Command	LOAD CDMUSIC	Permanent	accept-inert-resource-id
 dbc	Command_LoadDll	Command	LOAD DLL	Permanent	accept-inert-resource-id
 dbc	Command_LockBackbuffer	Command	LOCK BACKBUFFER	Permanent	no-op
-dbc	Command_NetMessageBitmap	Command	NET MESSAGE BITMAP	Permanent	no-op
-dbc	Command_NetMessageImage	Command	NET MESSAGE IMAGE	Permanent	no-op
-dbc	Command_NetMessageMemblock	Command	NET MESSAGE MEMBLOCK	Permanent	no-op
-dbc	Command_NetMessageMesh	Command	NET MESSAGE MESH	Permanent	no-op
-dbc	Command_NetMessageSound	Command	NET MESSAGE SOUND	Permanent	no-op
-dbc	Command_SendNetMessageBitmap	Command	SEND NET MESSAGE BITMAP	Permanent	no-op
-dbc	Command_SendNetMessageImage	Command	SEND NET MESSAGE IMAGE	Permanent	no-op
-dbc	Command_SendNetMessageMemblock	Command	SEND NET MESSAGE MEMBLOCK	Permanent	no-op
-dbc	Command_SendNetMessageMesh	Command	SEND NET MESSAGE MESH	Permanent	no-op
-dbc	Command_SendNetMessageSound	Command	SEND NET MESSAGE SOUND	Permanent	no-op
 dbc	Command_SetEax	Command	SET EAX	Permanent	no-op
 dbc	Command_SetEmulationOff	Command	SET EMULATION OFF	Permanent	no-op
 dbc	Command_SetEmulationOn	Command	SET EMULATION ON	Permanent	no-op

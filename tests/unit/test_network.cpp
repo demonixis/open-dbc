@@ -1,11 +1,17 @@
+#include "engine/runtime_compatibility.hpp"
+#include "engine/systems/audio_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
+#include "engine/systems/image_store.hpp"
+#include "engine/systems/memblock_system.hpp"
 #include "engine/systems/network_system.hpp"
+#include "engine/systems/object_manager.hpp"
 #include "interpreter/engine_builtin_context.hpp"
 #include "interpreter/engine_builtin_registry.hpp"
 
 #include <doctest/doctest.h>
 
 #include <chrono>
+#include <filesystem>
 #include <random>
 #include <string>
 #include <thread>
@@ -41,6 +47,7 @@ namespace
         explicit Application(const char* Title)
         {
             REQUIRE(Kernel_.Initialize(Title, 64, 64));
+            Kernel_.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Classic());
             Context_.Kernel = &Kernel_;
             Context_.Profile = dbc::language::LanguageProfile::Dbc;
         }
@@ -106,6 +113,8 @@ namespace
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         }
+
+        dbc::EngineKernel& Kernel() { return Kernel_; }
 
         std::string Error;
 
@@ -247,4 +256,111 @@ TEST_CASE("Classic JOIN NET GAME without a running session leaves no game")
     Joiner.Require(SymbolId::Command_GetNetMessage);
     CHECK(Joiner.Value(SymbolId::Function_NetMessageExists) == 0.0);
     CHECK(Joiner.Value(SymbolId::Function_CreateNetPlayer, {Text("Bot")}) == 0.0);
+}
+
+TEST_CASE("Classic net games carry memblocks, images, bitmaps, sounds and meshes")
+{
+    Application Host("classic-net-media-host");
+    Application Joiner("classic-net-media-joiner");
+    Host.Require(SymbolId::Command_SetNetConnection, {Number(1), Text(LoopbackAddress())});
+    Joiner.Require(SymbolId::Command_SetNetConnection, {Number(1), Text(LoopbackAddress())});
+    Host.Require(SymbolId::Command_CreateNetGame, {Text("media"), Text("Fred"), Number(2)});
+    Joiner.Require(SymbolId::Command_JoinNetGame, {Number(1), Text("Bill")});
+    REQUIRE(Joiner.Value(SymbolId::Function_NetGameExists) == 1.0);
+
+    dbc::EngineKernel& Source = Host.Kernel();
+    std::string Error;
+    REQUIRE(Source.Memblocks().MakeMemblock(1, 16, &Error));
+    REQUIRE(Source.Memblocks().WriteMemblockByte(1, 15, 42, &Error));
+    REQUIRE(Source.Memblocks().MakeMemblock(2, 20, &Error));
+    REQUIRE(Source.Memblocks().WriteMemblockDword(2, 0, 2, &Error));
+    REQUIRE(Source.Memblocks().WriteMemblockDword(2, 4, 1, &Error));
+    REQUIRE(Source.Memblocks().WriteMemblockDword(2, 8, 32, &Error));
+    REQUIRE(Source.Memblocks().WriteMemblockDword(2, 12, 0x00FF0000, &Error));
+    REQUIRE(Source.Memblocks().MakeImageFromMemblock(1, 2, &Error));
+    REQUIRE(Source.ImageStoreRef().CreateBitmap(1, 4, 3, &Error));
+    const std::filesystem::path SoundPath =
+        std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/memblocks/behold.wav";
+    REQUIRE(Source.Audio().LoadSound(SoundPath.string(), 1, false, false, &Error));
+    dbc::Mesh Triangle;
+    Triangle.Vertices = {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}};
+    Triangle.Normals = {{0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}};
+    Triangle.Uvs = {{0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}};
+    Triangle.Indices = {0, 1, 2};
+    Source.Objects().StoreMesh(1, std::move(Triangle));
+
+    CHECK_FALSE(Host.Command(SymbolId::Command_SendNetMessageMemblock, {Number(2), Number(9)}));
+    CHECK(Host.Error == "Memblock 9 does not exist");
+    Host.Require(SymbolId::Command_SendNetMessageMemblock, {Number(2), Number(1), Number(1)});
+    Host.Require(SymbolId::Command_SendNetMessageImage, {Number(2), Number(1), Number(1)});
+    Host.Require(SymbolId::Command_SendNetMessageBitmap, {Number(0), Number(1), Number(1)});
+    Host.Require(SymbolId::Command_SendNetMessageSound, {Number(2), Number(1), Number(1)});
+    Host.Require(SymbolId::Command_SendNetMessageMesh, {Number(2), Number(1), Number(1)});
+    // Unguaranteed messages travel apart and may arrive in another order, or not at all on a real network.
+    Host.Require(SymbolId::Command_SendNetMessageMemblock, {Number(2), Number(1)});
+
+    CHECK_FALSE(Joiner.Command(SymbolId::Command_NetMessageMemblock, {Number(5)}));
+    CHECK(Joiner.Error == "NET MESSAGE MEMBLOCK requires a memblock message; there is no current net message");
+    dbc::EngineKernel& Target = Joiner.Kernel();
+    int Memblocks = 0;
+    for (int Received = 0; Received < 6; ++Received)
+    {
+        REQUIRE(Joiner.NextMessage());
+        CHECK(Joiner.Value(SymbolId::Function_NetMessagePlayerFrom) == 1.0);
+        CHECK(Joiner.Value(SymbolId::Function_NetMessagePlayerTo) == 2.0);
+        switch (static_cast<int>(Joiner.Value(SymbolId::Function_NetMessageType)))
+        {
+            case 4:
+            {
+                CHECK_FALSE(Joiner.Command(SymbolId::Command_NetMessageImage, {Number(3)}));
+                CHECK(Joiner.Error ==
+                      "NET MESSAGE IMAGE requires an image message; the current net message is a memblock");
+                Joiner.Require(SymbolId::Command_NetMessageMemblock, {Number(5 + Memblocks)});
+                int Value = 0;
+                REQUIRE(Target.Memblocks().ReadMemblockByte(Value, 5 + Memblocks, 15, &Error));
+                CHECK(Value == 42);
+                ++Memblocks;
+                break;
+            }
+            case 5:
+            {
+                Joiner.Require(SymbolId::Command_NetMessageImage, {Number(3)});
+                const dbc::Image* Received3 = Target.ImageStoreRef().GetImage(3);
+                REQUIRE(Received3 != nullptr);
+                REQUIRE(Received3->Surface != nullptr);
+                CHECK(Received3->Surface->w == 2);
+                CHECK(Received3->Surface->h == 1);
+                break;
+            }
+            case 6:
+                Joiner.Require(SymbolId::Command_NetMessageBitmap, {Number(2)});
+                CHECK(Target.ImageStoreRef().BitmapWidth(2) == 4);
+                CHECK(Target.ImageStoreRef().BitmapHeight(2) == 3);
+                break;
+            case 7:
+            {
+                Joiner.Require(SymbolId::Command_NetMessageSound, {Number(4)});
+                int Exists = 0;
+                REQUIRE(Target.Audio().SoundExist(Exists, 4, &Error));
+                CHECK(Exists == 1);
+                break;
+            }
+            case 8:
+            {
+                CHECK_FALSE(Joiner.Command(SymbolId::Command_NetMessageMesh, {Number(0)}));
+                CHECK(Joiner.Error == "NET MESSAGE MESH mesh number must be between 1 and 65535");
+                Joiner.Require(SymbolId::Command_NetMessageMesh, {Number(6)});
+                const std::vector<dbc::Mesh>* Meshes = Target.Objects().GetMeshes(6);
+                REQUIRE(Meshes != nullptr);
+                REQUIRE_FALSE(Meshes->empty());
+                CHECK(Meshes->front().Vertices.size() >= 3);
+                break;
+            }
+            default:
+                FAIL("unexpected net message type");
+        }
+    }
+    CHECK(Memblocks == 2);
+    Joiner.Require(SymbolId::Command_GetNetMessage);
+    CHECK(Joiner.Value(SymbolId::Function_NetMessageExists) == 0.0);
 }

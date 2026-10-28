@@ -203,11 +203,11 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `MOVE CAMERA` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `MOVE FILE` | Command | 2 | string, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `MOVE OBJECT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `NET MESSAGE BITMAP` | Command | 1 | number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `NET MESSAGE IMAGE` | Command | 1 | number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `NET MESSAGE MEMBLOCK` | Command | 1 | number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `NET MESSAGE MESH` | Command | 1 | number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `NET MESSAGE SOUND` | Command | 1 | number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `NET MESSAGE BITMAP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
+| `NET MESSAGE IMAGE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
+| `NET MESSAGE MEMBLOCK` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
+| `NET MESSAGE MESH` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
+| `NET MESSAGE SOUND` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `OFFSET BOB` | Command | 3 | number, number, number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
 | `OFFSET LIMB` | Command | 5 | number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `OFFSET SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -294,13 +294,13 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SCROLL BACKDROP` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SCROLL LIMB TEXTURE` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SCROLL OBJECT TEXTURE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `SEND NET MESSAGE BITMAP` | Command | 3 | number, number, number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `SEND NET MESSAGE BITMAP` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SEND NET MESSAGE FLOAT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `SEND NET MESSAGE IMAGE` | Command | 3 | number, number, number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `SEND NET MESSAGE IMAGE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SEND NET MESSAGE INTEGER` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `SEND NET MESSAGE MEMBLOCK` | Command | 2-3 | number, number, number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `SEND NET MESSAGE MESH` | Command | 3 | number, number, number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `SEND NET MESSAGE SOUND` | Command | 3 | number, number, number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `SEND NET MESSAGE MEMBLOCK` | Command | 2-3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
+| `SEND NET MESSAGE MESH` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
+| `SEND NET MESSAGE SOUND` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SEND NET MESSAGE STRING` | Command | 2 | number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET AMBIENT LIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET BOB` | Command | 3 | number, number, number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |

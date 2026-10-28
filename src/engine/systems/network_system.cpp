@@ -29,6 +29,10 @@ namespace dbc
         constexpr std::array<char, 8> KReplyMagic{'O', 'D', 'B', 'C', 'N', 'E', 'T', 'R'};
         constexpr std::size_t KMaxNameBytes = 4096;
         constexpr std::size_t KMaxTextBytes = 1024 * 1024;
+        // Below ENet's 32 MB packet limit with room for the header.
+        constexpr std::size_t KMaxBinaryBytes = 16 * 1024 * 1024;
+        constexpr enet_uint8 KReliableChannel = 0;
+        constexpr enet_uint8 KUnreliableChannel = 1;
         constexpr std::size_t KMaxQueuedMessages = 65536;
         constexpr std::size_t KChannelCount = 2;
         constexpr int KServiceMilliseconds = 5;
@@ -176,6 +180,14 @@ namespace dbc
                 case NetworkSystem::MessageType::String:
                     Writer.String(Value.Text);
                     break;
+                case NetworkSystem::MessageType::Memblock:
+                case NetworkSystem::MessageType::Image:
+                case NetworkSystem::MessageType::Bitmap:
+                case NetworkSystem::MessageType::Sound:
+                case NetworkSystem::MessageType::Mesh:
+                    Writer.U32(static_cast<std::uint32_t>(Value.Bytes.size()));
+                    Writer.Raw(Value.Bytes.data(), Value.Bytes.size());
+                    break;
                 case NetworkSystem::MessageType::None:
                     break;
             }
@@ -203,17 +215,32 @@ namespace dbc
                 case NetworkSystem::MessageType::String:
                     Value.Type = NetworkSystem::MessageType::String;
                     return Reader.String(Value.Text, KMaxTextBytes) && Reader.AtEnd();
+                case NetworkSystem::MessageType::Memblock:
+                case NetworkSystem::MessageType::Image:
+                case NetworkSystem::MessageType::Bitmap:
+                case NetworkSystem::MessageType::Sound:
+                case NetworkSystem::MessageType::Mesh:
+                {
+                    std::uint32_t Size = 0;
+                    if (!Reader.U32(Size) || Size == 0 || Size > KMaxBinaryBytes)
+                        return false;
+                    Value.Type = static_cast<NetworkSystem::MessageType>(Type);
+                    Value.Bytes.resize(Size);
+                    return Reader.Read(Value.Bytes.data(), Size) && Reader.AtEnd();
+                }
                 case NetworkSystem::MessageType::None:
                     break;
             }
             return false;
         }
 
-        void SendPacket(ENetPeer* Peer, const PacketWriter& Writer)
+        // An unreliable message is dropped whole when one of its fragments is lost.
+        void SendPacket(ENetPeer* Peer, const PacketWriter& Writer, bool Reliable = true)
         {
             ENetPacket* Value =
-                enet_packet_create(Writer.Bytes().data(), Writer.Bytes().size(), ENET_PACKET_FLAG_RELIABLE);
-            if (Value && enet_peer_send(Peer, 0, Value) < 0)
+                enet_packet_create(Writer.Bytes().data(), Writer.Bytes().size(),
+                                   Reliable ? ENET_PACKET_FLAG_RELIABLE : ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT);
+            if (Value && enet_peer_send(Peer, Reliable ? KReliableChannel : KUnreliableChannel, Value) < 0)
                 enet_packet_destroy(Value);
         }
 
@@ -227,6 +254,16 @@ namespace dbc
                     return "a float";
                 case NetworkSystem::MessageType::String:
                     return "a string";
+                case NetworkSystem::MessageType::Memblock:
+                    return "a memblock";
+                case NetworkSystem::MessageType::Image:
+                    return "an image";
+                case NetworkSystem::MessageType::Bitmap:
+                    return "a bitmap";
+                case NetworkSystem::MessageType::Sound:
+                    return "a sound";
+                case NetworkSystem::MessageType::Mesh:
+                    return "a mesh";
                 case NetworkSystem::MessageType::None:
                     break;
             }
@@ -478,7 +515,7 @@ namespace dbc
                 case Shared::Request::Kind::Send:
                     if (Hosting_)
                     {
-                        Route(LocalPlayer_, Value.Player, Value.Value);
+                        Route(LocalPlayer_, Value.Player, Value.Value, Value.Value.Guaranteed);
                     }
                     else if (Server_ && LocalPlayer_ != 0)
                     {
@@ -486,7 +523,7 @@ namespace dbc
                         Writer.I32(LocalPlayer_);
                         Writer.I32(Value.Player);
                         WriteMessage(Writer, Value.Value);
-                        SendPacket(Server_, Writer);
+                        SendPacket(Server_, Writer, Value.Value.Guaranteed);
                     }
                     break;
                 case Shared::Request::Kind::CreatePlayer:
@@ -537,7 +574,8 @@ namespace dbc
                 case ENET_EVENT_TYPE_RECEIVE:
                 {
                     PacketReader Reader(Event.packet->data, Event.packet->dataLength);
-                    const bool Valid = Hosting_ ? Receive(Event.peer, Reader) : ReceiveFromHost(Reader);
+                    const bool Reliable = Event.channelID == KReliableChannel;
+                    const bool Valid = Hosting_ ? Receive(Event.peer, Reader, Reliable) : ReceiveFromHost(Reader);
                     enet_packet_destroy(Event.packet);
                     if (!Valid)
                     {
@@ -639,7 +677,7 @@ namespace dbc
             return Found != Members_.end() && Found->second.Peer == Peer;
         }
 
-        void Route(int From, int To, const Message& Value)
+        void Route(int From, int To, const Message& Value, bool Reliable)
         {
             for (const auto& [Id, Target] : Members_)
             {
@@ -657,11 +695,11 @@ namespace dbc
                 Writer.I32(From);
                 Writer.I32(Id);
                 WriteMessage(Writer, Value);
-                SendPacket(Target.Peer, Writer);
+                SendPacket(Target.Peer, Writer, Reliable);
             }
         }
 
-        bool Receive(ENetPeer* Peer, PacketReader& Reader)
+        bool Receive(ENetPeer* Peer, PacketReader& Reader, bool Reliable)
         {
             std::uint8_t Kind = 0;
             if (!Reader.U8(Kind))
@@ -724,7 +762,7 @@ namespace dbc
                     if (!Welcomed || !Reader.I32(From) || !Reader.I32(To) || To < 0 || !ReadMessage(Reader, Value) ||
                         !OwnedBy(From, Peer))
                         return false;
-                    Route(From, To, Value);
+                    Route(From, To, Value, Reliable);
                     return true;
                 }
                 default:
@@ -1168,6 +1206,8 @@ namespace dbc
             return Fail(Error, "Net message player number must be 0 or a player of the net game");
         if (Value.Text.size() > KMaxTextBytes)
             return Fail(Error, "SEND NET MESSAGE STRING accepts at most 1 MB");
+        if (Value.Bytes.size() > KMaxBinaryBytes)
+            return Fail(Error, "Net messages carry at most 16 MB of memblock or media data");
         if (!GameExists())
             return true;
         const std::lock_guard Lock(Shared_->Mutex);
@@ -1230,6 +1270,18 @@ namespace dbc
     {
         Output = Current_.Text;
         return RequireType(Current_, MessageType::String, "NET MESSAGE STRING$", Error);
+    }
+
+    const std::vector<std::uint8_t>* NetworkSystem::CurrentBytes(MessageType Type, const char* Command,
+                                                                 std::string* Error) const
+    {
+        if (Current_.Type == Type)
+            return &Current_.Bytes;
+        const std::string Found = Current_.Type == MessageType::None
+                                      ? "there is no current net message"
+                                      : std::string("the current net message is ") + MessageTypeName(Current_.Type);
+        Fail(Error, std::string(Command) + " requires " + MessageTypeName(Type) + " message; " + Found);
+        return nullptr;
     }
 
     bool NetworkSystem::GameExists() const

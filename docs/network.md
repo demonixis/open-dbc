@@ -63,6 +63,26 @@ another type than `NET MESSAGE TYPE()` fails.
 When the host leaves, the others get `NET GAME LOST() = 1` and `NET GAME EXISTS() = 0`.
 There is no host migration yet, so `NET GAME NOW HOSTING()` is always 0.
 
+## Memblocks and media
+
+| Type | Sent with | Received with |
+| --- | --- | --- |
+| 4 | `SEND NET MESSAGE MEMBLOCK player, memblock[, guarantee]` | `NET MESSAGE MEMBLOCK memblock` |
+| 5 | `SEND NET MESSAGE IMAGE player, image, guarantee` | `NET MESSAGE IMAGE image` |
+| 6 | `SEND NET MESSAGE BITMAP player, bitmap, guarantee` | `NET MESSAGE BITMAP bitmap` |
+| 7 | `SEND NET MESSAGE SOUND player, sound, guarantee` | `NET MESSAGE SOUND sound` |
+| 8 | `SEND NET MESSAGE MESH player, mesh, guarantee` | `NET MESSAGE MESH mesh` |
+
+Each one travels in the layout of the matching `MAKE MEMBLOCK FROM` command, at
+most 16 MB. The receiving command replaces any memblock, image, bitmap, sound or
+mesh with that number, as `MAKE ... FROM MEMBLOCK` does. These commands need a
+current message of their own type.
+
+A guarantee of 0 (the default of the two-argument memblock form) sends the
+message on a separate unreliable channel. It may arrive out of order with other
+messages, or be dropped whole when one of its fragments is lost. Any other value
+makes it reliable and ordered like the other messages.
+
 ## Implementation
 
 `NetworkSystem` (`src/engine/systems/network_system.cpp`) runs ENet on its own

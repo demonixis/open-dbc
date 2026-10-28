@@ -57,16 +57,6 @@ namespace
             case SymbolId::Command_LoadCdmusic:
             case SymbolId::Command_LoadDll:
             case SymbolId::Command_LockBackbuffer:
-            case SymbolId::Command_NetMessageBitmap:
-            case SymbolId::Command_NetMessageImage:
-            case SymbolId::Command_NetMessageMemblock:
-            case SymbolId::Command_NetMessageMesh:
-            case SymbolId::Command_NetMessageSound:
-            case SymbolId::Command_SendNetMessageBitmap:
-            case SymbolId::Command_SendNetMessageImage:
-            case SymbolId::Command_SendNetMessageMemblock:
-            case SymbolId::Command_SendNetMessageMesh:
-            case SymbolId::Command_SendNetMessageSound:
             case SymbolId::Command_SetEax:
             case SymbolId::Command_SetEmulationOff:
             case SymbolId::Command_SetEmulationOn:

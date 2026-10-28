@@ -41,10 +41,8 @@ Publication:
 
 ## Classic multiplayer
 
-Integer, float and string messages work over ENet ([network.md](network.md)).
+Net games run over ENet ([network.md](network.md)).
 
-- [ ] Memblock, image, bitmap, sound and mesh messages with the guarantee flag,
-  reusing the memblock encoders.
 - [ ] Host migration for peer-to-peer games, with `NET GAME NOW HOSTING()`.
 - [ ] Platform permissions: iOS local network description and multicast
   entitlement for discovery, Android multicast lock, macOS sandbox network

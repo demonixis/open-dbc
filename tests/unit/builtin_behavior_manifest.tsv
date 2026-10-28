@@ -167,6 +167,11 @@ dbc	279	441	Command	MIRROR SPRITE	render-state	test_engine_builtins.cpp::DBPro s
 dbc	281	443	Command	MOVE CAMERA	golden-output	test_camera_extended.dba	66d9810d557cd927d2a827c57b3ba4fc8e27c5ddb65a29ffe4f9e25a8ca05cbb
 dbc	284	445	Command	MOVE FILE	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
 dbc	285	447	Command	MOVE OBJECT	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
+dbc	296	458	Command	NET MESSAGE BITMAP	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
+dbc	297	460	Command	NET MESSAGE IMAGE	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
+dbc	298	462	Command	NET MESSAGE MEMBLOCK	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
+dbc	299	464	Command	NET MESSAGE MESH	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
+dbc	300	466	Command	NET MESSAGE SOUND	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
 dbc	323	471	Command	OFFSET BOB	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
 dbc	324	472	Command	OFFSET LIMB	golden-output	test_limbs.dba	60c2a059be3c42b70a34c01f304662d728b686d23477f1e3f61d96c3dc0319e3
 dbc	325	474	Command	OFFSET SPRITE	render-state	test_engine_builtins.cpp::Sprite priority determines the renderer traversal order	-
@@ -255,8 +260,13 @@ dbc	437	665	Command	SCALE SPRITE	render-state	test_engine_builtins.cpp::DBPro sp
 dbc	441	670	Command	SCROLL BACKDROP	engine-state	test_engine_builtins.cpp::Classic backdrop and fog commands update draw state	-
 dbc	442	672	Command	SCROLL LIMB TEXTURE	render-state	test_engine_builtins.cpp::Portable limb checklist colour and texture transforms preserve stage semantics	-
 dbc	443	674	Command	SCROLL OBJECT TEXTURE	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
+dbc	444	676	Command	SEND NET MESSAGE BITMAP	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
 dbc	445	678	Command	SEND NET MESSAGE FLOAT	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	446	680	Command	SEND NET MESSAGE IMAGE	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
 dbc	447	682	Command	SEND NET MESSAGE INTEGER	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
+dbc	448	684	Command	SEND NET MESSAGE MEMBLOCK	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
+dbc	449	686	Command	SEND NET MESSAGE MESH	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
+dbc	450	688	Command	SEND NET MESSAGE SOUND	loopback-net-media	test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes	-
 dbc	451	690	Command	SEND NET MESSAGE STRING	loopback-net-game	test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback	-
 dbc	454	693	Command	SET AMBIENT LIGHT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbc	456	697	Command	SET BOB	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-

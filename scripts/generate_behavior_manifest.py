@@ -1450,6 +1450,24 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+DBC_NETWORK_MEDIA_TEST = "test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes"
+UNIT_WITNESSES += tuple(
+    ("dbc", kind, name, code, "loopback-net-media", DBC_NETWORK_MEDIA_TEST)
+    for kind, name, code in (
+        ("Command", "SEND NET MESSAGE MEMBLOCK", "send net message memblock 2, 1\n"),
+        ("Command", "SEND NET MESSAGE MEMBLOCK", "send net message memblock 2, 1, 1\n"),
+        ("Command", "SEND NET MESSAGE IMAGE", "send net message image 2, 1, 1\n"),
+        ("Command", "SEND NET MESSAGE BITMAP", "send net message bitmap 0, 1, 1\n"),
+        ("Command", "SEND NET MESSAGE SOUND", "send net message sound 2, 1, 1\n"),
+        ("Command", "SEND NET MESSAGE MESH", "send net message mesh 2, 1, 1\n"),
+        ("Command", "NET MESSAGE MEMBLOCK", "net message memblock 5\n"),
+        ("Command", "NET MESSAGE IMAGE", "net message image 3\n"),
+        ("Command", "NET MESSAGE BITMAP", "net message bitmap 2\n"),
+        ("Command", "NET MESSAGE SOUND", "net message sound 4\n"),
+        ("Command", "NET MESSAGE MESH", "net message mesh 6\n"),
+    )
+)
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Regenerate catalogue-linked BASIC behavior witnesses")
     parser.add_argument("--opendbc", type=Path, required=True)

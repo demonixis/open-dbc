@@ -26,6 +26,11 @@ namespace dbc
             Integer = 1,
             Float = 2,
             String = 3,
+            Memblock = 4,
+            Image = 5,
+            Bitmap = 6,
+            Sound = 7,
+            Mesh = 8,
         };
 
         struct Message
@@ -36,6 +41,10 @@ namespace dbc
             std::int32_t Integer = 0;
             float Float = 0.0f;
             std::string Text{};
+            // Memblock bytes, or an image, bitmap, sound or mesh in its memblock layout.
+            std::vector<std::uint8_t> Bytes{};
+            // Sending only: an unguaranteed message may be dropped, and travels on its own channel.
+            bool Guaranteed = true;
         };
 
         struct Player
@@ -82,6 +91,9 @@ namespace dbc
         bool CurrentInteger(std::int32_t& Output, std::string* Error = nullptr) const;
         bool CurrentFloat(float& Output, std::string* Error = nullptr) const;
         bool CurrentString(std::string& Output, std::string* Error = nullptr) const;
+        // Binary messages have nothing to read without a current message of their type.
+        const std::vector<std::uint8_t>* CurrentBytes(MessageType Type, const char* Command,
+                                                      std::string* Error = nullptr) const;
 
         bool GameExists() const;
         bool GameLost() const;
