@@ -57,6 +57,21 @@ namespace dbc
         bool MakeMemblockFromSound(int MemblockNum, int SoundId, std::string* Error = nullptr);
         bool MakeSoundFromMemblock(int SoundId, int MemblockNum, std::string* Error = nullptr);
 
+        // Byte forms of the conversions above, also carried by net messages. Command names the BASIC
+        // command in their errors.
+        bool EncodeMesh(std::vector<uint8_t>& Output, int MeshId, const char* Command, std::string* Error = nullptr);
+        bool DecodeMesh(int MeshId, const std::vector<uint8_t>& Data, const char* Command,
+                        std::string* Error = nullptr);
+        bool EncodeBitmap(std::vector<uint8_t>& Output, int BitmapId, const char* Command,
+                          std::string* Error = nullptr);
+        bool DecodeBitmap(int BitmapId, const std::vector<uint8_t>& Data, const char* Command,
+                          std::string* Error = nullptr);
+        bool EncodeImage(std::vector<uint8_t>& Output, int ImageId, const char* Command, std::string* Error = nullptr);
+        bool DecodeImage(int ImageId, const std::vector<uint8_t>& Data, const char* Command,
+                         std::string* Error = nullptr);
+        bool EncodeSound(std::vector<uint8_t>& Output, int SoundId, std::string* Error = nullptr);
+        bool DecodeSound(int SoundId, const std::vector<uint8_t>& Data, std::string* Error = nullptr);
+
       private:
         static bool ValidateMemblockNumber(int Num, std::string* Error = nullptr);
         static bool ValidateRange(const std::vector<uint8_t>& Memblock, int Offset, std::size_t Size,

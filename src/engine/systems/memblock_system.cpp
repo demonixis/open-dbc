@@ -1019,6 +1019,13 @@ namespace dbc
                 *Error = "MAKE MESH FROM MEMBLOCK requires existing memblock " + std::to_string(MemblockNum);
             return false;
         }
+        return DecodeMesh(MeshId, *Data, "MAKE MESH FROM MEMBLOCK", Error);
+    }
+
+    bool MemblockSystem::DecodeMesh(int MeshId, const std::vector<uint8_t>& Bytes, const char* Command,
+                                    std::string* Error)
+    {
+        const std::vector<uint8_t>* Data = &Bytes;
         if (Kernel_.RuntimeCompatibility().MeshMemblocks() == MeshMemblockLayout::Classic32ByteHeader)
         {
             Mesh Decoded;
@@ -1030,7 +1037,7 @@ namespace dbc
         if (Data->size() < 12)
         {
             if (Error)
-                *Error = "MAKE MESH FROM MEMBLOCK requires a 12-byte FVF header";
+                *Error = std::string(Command) + " requires a 12-byte FVF header";
             return false;
         }
 
@@ -1043,14 +1050,14 @@ namespace dbc
         if ((Fvf & 0x400Eu) != 0x0002u)
         {
             if (Error)
-                *Error = "MAKE MESH FROM MEMBLOCK supports FVF XYZ vertex positions";
+                *Error = std::string(Command) + " supports FVF XYZ vertex positions";
             return false;
         }
         if (Stride < 12 || VertexCount > (Data->size() - 12) / Stride ||
             12u + static_cast<std::size_t>(VertexCount) * Stride != Data->size())
         {
             if (Error)
-                *Error = "MAKE MESH FROM MEMBLOCK has an invalid FVF stride or vertex count";
+                *Error = std::string(Command) + " has an invalid FVF stride or vertex count";
             return false;
         }
 
@@ -1081,7 +1088,7 @@ namespace dbc
         if (MinimumStride > Stride)
         {
             if (Error)
-                *Error = "MAKE MESH FROM MEMBLOCK FVF fields exceed the declared stride";
+                *Error = std::string(Command) + " FVF fields exceed the declared stride";
             return false;
         }
 
@@ -1132,22 +1139,25 @@ namespace dbc
     {
         if (!ValidateMemblockNumber(MemblockNum, Error))
             return false;
+        std::vector<uint8_t> Encoded;
+        return EncodeMesh(Encoded, MeshId, "MAKE MEMBLOCK FROM MESH", Error) &&
+               ReplaceMemblock(MemblockNum, std::move(Encoded), Error);
+    }
+
+    bool MemblockSystem::EncodeMesh(std::vector<uint8_t>& Output, int MeshId, const char* Command,
+                                    std::string* Error)
+    {
         const std::vector<Mesh>* Meshes = Kernel_.Objects().GetMeshes(MeshId);
         if (!Meshes || Meshes->empty())
         {
             if (Error)
-                *Error = "MAKE MEMBLOCK FROM MESH requires existing mesh " + std::to_string(MeshId);
+                *Error = std::string(Command) + " requires existing mesh " + std::to_string(MeshId);
             return false;
         }
         const Mesh& Source = Meshes->front();
         if (Kernel_.RuntimeCompatibility().MeshMemblocks() == MeshMemblockLayout::Classic32ByteHeader)
         {
-            std::vector<uint8_t> Encoded;
-            if (!EncodeClassicMesh(Encoded, Source, Error))
-                return false;
-            if (!ReplaceMemblock(MemblockNum, std::move(Encoded), Error))
-                return false;
-            return true;
+            return EncodeClassicMesh(Output, Source, Error);
         }
         const bool Indexed = !Source.Indices.empty();
         const std::size_t VertexCount = Indexed ? Source.Indices.size() : Source.Vertices.size();
@@ -1157,7 +1167,7 @@ namespace dbc
             VertexCount > std::numeric_limits<uint32_t>::max())
         {
             if (Error)
-                *Error = "MAKE MEMBLOCK FROM MESH vertex data is too large";
+                *Error = std::string(Command) + " vertex data is too large";
             return false;
         }
         std::vector<uint8_t> Result(12u + VertexCount * Stride, 0u);
@@ -1171,7 +1181,7 @@ namespace dbc
             if (SourceIndex >= Source.Vertices.size())
             {
                 if (Error)
-                    *Error = "MAKE MEMBLOCK FROM MESH found an invalid mesh index";
+                    *Error = std::string(Command) + " found an invalid mesh index";
                 return false;
             }
             uint8_t* Vertex = Result.data() + 12u + Index * Stride;
@@ -1184,7 +1194,7 @@ namespace dbc
             const SDL_FPoint Uv = SourceIndex < Source.Uvs.size() ? Source.Uvs[SourceIndex] : SDL_FPoint{};
             std::memcpy(Vertex + 28, &Uv, sizeof(SDL_FPoint));
         }
-        Memblocks_[MemblockNum] = std::move(Result);
+        Output = std::move(Result);
         return true;
     }
 
@@ -1226,17 +1236,19 @@ namespace dbc
     {
         if (!ValidateMemblockNumber(MemblockNum, Error))
             return false;
-        SDL_Surface* Surface =
-            Kernel_.ImageStoreRef().RequireBitmapSurface(BitmapId, "MAKE MEMBLOCK FROM BITMAP", Error);
+        std::vector<uint8_t> Encoded;
+        return EncodeBitmap(Encoded, BitmapId, "MAKE MEMBLOCK FROM BITMAP", Error) &&
+               ReplaceMemblock(MemblockNum, std::move(Encoded), Error);
+    }
+
+    bool MemblockSystem::EncodeBitmap(std::vector<uint8_t>& Output, int BitmapId, const char* Command,
+                                      std::string* Error)
+    {
+        SDL_Surface* Surface = Kernel_.ImageStoreRef().RequireBitmapSurface(BitmapId, Command, Error);
         if (!Surface)
             return false;
         const uint32_t Depth = BitmapId == 0 && Kernel_.Core().ScreenDepth() == 16 ? 16u : 32u;
-        std::vector<uint8_t> Encoded;
-        if (!EncodeSurface(Encoded, Surface, Depth, "MAKE MEMBLOCK FROM BITMAP", Error))
-            return false;
-        if (!ReplaceMemblock(MemblockNum, std::move(Encoded), Error))
-            return false;
-        return true;
+        return EncodeSurface(Output, Surface, Depth, Command, Error);
     }
 
     // ---------------------------------------------------------------------------
@@ -1246,17 +1258,19 @@ namespace dbc
     bool MemblockSystem::MakeBitmapFromMemblock(int BitmapId, int MemblockNum, std::string* Error)
     {
         const auto* Data = MemblockData(MemblockNum, Error);
-        if (!Data)
-            return false;
+        return Data && DecodeBitmap(BitmapId, *Data, "MAKE BITMAP FROM MEMBLOCK", Error);
+    }
+
+    bool MemblockSystem::DecodeBitmap(int BitmapId, const std::vector<uint8_t>& Data, const char* Command,
+                                      std::string* Error)
+    {
         // Bitmaps are opaque pictures: an RGB() dword without alpha still shows.
-        SDL_Surface* Surface = DecodeSurface(*Data, "MAKE BITMAP FROM MEMBLOCK", false, Error);
+        SDL_Surface* Surface = DecodeSurface(Data, Command, false, Error);
         if (!Surface)
             return false;
         const bool Stored = Kernel_.ImageStoreRef().StoreBitmapFromSurface(BitmapId, Surface, Error);
         SDL_DestroySurface(Surface);
-        if (!Stored)
-            return false;
-        return true;
+        return Stored;
     }
 
     // ---------------------------------------------------------------------------
@@ -1267,20 +1281,22 @@ namespace dbc
     {
         if (!ValidateMemblockNumber(MemblockNum, Error))
             return false;
+        std::vector<uint8_t> Encoded;
+        return EncodeImage(Encoded, ImageId, "MAKE MEMBLOCK FROM IMAGE", Error) &&
+               ReplaceMemblock(MemblockNum, std::move(Encoded), Error);
+    }
+
+    bool MemblockSystem::EncodeImage(std::vector<uint8_t>& Output, int ImageId, const char* Command,
+                                     std::string* Error)
+    {
         const Image* Img = Kernel_.ImageStoreRef().GetImage(ImageId);
         if (!Img || !Img->Surface)
         {
             if (Error)
-                *Error = "MAKE MEMBLOCK FROM IMAGE requires an existing CPU-readable image";
+                *Error = std::string(Command) + " requires an existing CPU-readable image";
             return false;
         }
-
-        std::vector<uint8_t> Encoded;
-        if (!EncodeSurface(Encoded, Img->Surface, 32u, "MAKE MEMBLOCK FROM IMAGE", Error))
-            return false;
-        if (!ReplaceMemblock(MemblockNum, std::move(Encoded), Error))
-            return false;
-        return true;
+        return EncodeSurface(Output, Img->Surface, 32u, Command, Error);
     }
 
     // ---------------------------------------------------------------------------
@@ -1290,44 +1306,47 @@ namespace dbc
     bool MemblockSystem::MakeImageFromMemblock(int ImageId, int MemblockNum, std::string* Error)
     {
         const auto* Data = MemblockData(MemblockNum, Error);
-        if (!Data)
-            return false;
-        SDL_Surface* Surf = DecodeSurface(*Data, "MAKE IMAGE FROM MEMBLOCK",
-                                          Kernel_.RuntimeCompatibility().ImageMemblockAlpha(), Error);
+        return Data && DecodeImage(ImageId, *Data, "MAKE IMAGE FROM MEMBLOCK", Error);
+    }
+
+    bool MemblockSystem::DecodeImage(int ImageId, const std::vector<uint8_t>& Data, const char* Command,
+                                     std::string* Error)
+    {
+        SDL_Surface* Surf = DecodeSurface(Data, Command, Kernel_.RuntimeCompatibility().ImageMemblockAlpha(), Error);
         if (!Surf)
             return false;
 
         // Store directly via ImageStore — creates textures + retains surface copy
         const bool Stored = Kernel_.ImageStoreRef().StoreImageFromSurface(ImageId, Surf, Error);
         SDL_DestroySurface(Surf);
-        if (!Stored)
-            return false;
-        return true;
+        return Stored;
     }
 
     bool MemblockSystem::MakeMemblockFromSound(int MemblockNum, int SoundId, std::string* Error)
+    {
+        std::vector<uint8_t> Encoded;
+        return EncodeSound(Encoded, SoundId, Error) && ReplaceMemblock(MemblockNum, std::move(Encoded), Error);
+    }
+
+    bool MemblockSystem::EncodeSound(std::vector<uint8_t>& Output, int SoundId, std::string* Error)
     {
         std::vector<uint8_t> Data;
         if (!Kernel_.Audio().SoundMemblockData(Data, SoundId, Error))
             return false;
         if (Kernel_.RuntimeCompatibility().SoundMemblocks() == SoundMemblockLayout::Classic12ByteHeader)
-        {
-            std::vector<uint8_t> Encoded;
-            if (!EncodeClassicSound(Encoded, Data, Error))
-                return false;
-            Data = std::move(Encoded);
-        }
-        if (!ReplaceMemblock(MemblockNum, std::move(Data), Error))
-            return false;
+            return EncodeClassicSound(Output, Data, Error);
+        Output = std::move(Data);
         return true;
     }
 
     bool MemblockSystem::MakeSoundFromMemblock(int SoundId, int MemblockNum, std::string* Error)
     {
-        const auto* DataPointer = MemblockData(MemblockNum, Error);
-        if (!DataPointer)
-            return false;
-        const auto& Data = *DataPointer;
+        const auto* Data = MemblockData(MemblockNum, Error);
+        return Data && DecodeSound(SoundId, *Data, Error);
+    }
+
+    bool MemblockSystem::DecodeSound(int SoundId, const std::vector<uint8_t>& Data, std::string* Error)
+    {
         if (Kernel_.RuntimeCompatibility().SoundMemblocks() == SoundMemblockLayout::Classic12ByteHeader)
         {
             std::vector<uint8_t> Decoded;
