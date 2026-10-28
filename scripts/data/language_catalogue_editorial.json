@@ -4,10 +4,10 @@
     {
       "match": {
         "surface": "Core",
+        "profiles": "DBPro",
         "symbols": [
           "ANIMATION EXIST",
           "ANIMATION HEIGHT",
-          "ANIMATION LOOPED",
           "ANIMATION LOOPING",
           "ANIMATION PAUSED",
           "ANIMATION PLAYING",
@@ -33,9 +33,9 @@
         ]
       },
       "set": {
-        "notes": "Historical multimedia animation remains unavailable: Classic uses permanent neutral compatibility stubs while Professional remains deferred."
+        "notes": "Professional multimedia animation remains deferred; the Classic forms play through the platform media framework (docs/video.md)."
       },
-      "expected_rows": 41
+      "expected_rows": 24
     },
     {
       "match": {
