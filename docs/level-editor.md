@@ -95,6 +95,13 @@ Level Settings holds:
 
 A checked field writes a statement; an unchecked one leaves the engine default.
 
+With several nodes selected, the Inspector shows the active node (the last one
+selected) and copies each field you change to every selected node that has it:
+position for all, rotation for objects and lights, scale and object flags for
+objects, texture for all but lights and sounds, and shape fields when the nodes
+share a kind other than matrix or terrain. Vectors copy by axis, so typing X
+sets only X. Names and numbers stay per node.
+
 ## Viewport
 
 | Input | Action |
@@ -104,6 +111,8 @@ A checked field writes a statement; an unchecked one leaves the engine default.
 | Alt + left drag | Orbit around the pivot |
 | Wheel | Move toward or away from the pivot |
 | Left click | Select (lights, sounds and the level camera by their icon) |
+| Ctrl/Cmd or Shift + left click | Add to or remove from the selection; in the Hierarchy, Shift selects the rows from the active node |
+| Ctrl/Cmd+A | Select every node |
 | Q W E R | View, move, rotate, scale tools |
 | F | Frame the selection |
 | Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y, Ctrl+D, Delete | Undo, redo, duplicate, delete |
@@ -111,7 +120,9 @@ A checked field writes a statement; an unchecked one leaves the engine default.
 Matrices, terrains and sounds only move, lights and the camera move and turn,
 and objects also scale. **Local** turns the gizmo with the node. **Snap**
 moves world positions and scales to whole multiples of their steps, and moves
-along local axes or turns by steps from where the drag began; the arrow next
+along local axes or turns by steps from where the drag began. With several
+nodes, the gizmo sits at their centre (turned like the active node in
+**Local**) and moves, turns and scales them about it; the arrow next
 to it sets the steps (10 units, 15 degrees and 10 % by default). **Grid** shows
 or hides the ground grid, whose cells are 10 units.
 

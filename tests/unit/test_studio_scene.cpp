@@ -374,3 +374,54 @@ TEST_CASE("Main sources get their includes on top, then the setup and level call
     CHECK(scene::LinkIntoMain("", LanguageProfile::Dbc, Links).Text ==
           "#include \"opendbc_game.dba\"\n#include \"levels/First.dba\"\n\nSetupGame()\nLoadLevel_First()\n");
 }
+
+TEST_CASE("Multi-selection edits copy only the changed fields each node has")
+{
+    scene::SceneDocument Document;
+    scene::SceneNode& Active = Document.Add(scene::NodeKind::Cube);
+    Active.Position = glm::vec3(1.0f, 2.0f, 3.0f);
+    scene::SceneNode Cube = Document.Add(scene::NodeKind::Cube);
+    Cube.Position = glm::vec3(10.0f, 20.0f, 30.0f);
+    Cube.Size = 4.0f;
+    Cube.Name = "Other";
+    scene::SceneNode Light = Document.Add(scene::NodeKind::Light);
+    Light.Position = glm::vec3(-5.0f, 50.0f, 0.0f);
+    scene::SceneNode Matrix = Document.Add(scene::NodeKind::Matrix);
+
+    const scene::SceneNode Before = Document.Nodes.front();
+    scene::SceneNode After = Before;
+    After.Position.y = 7.0f;
+    After.Rotation.x = 45.0f;
+    After.Scale = glm::vec3(200.0f);
+    After.Size = 25.0f;
+    After.Mat.Texture = "bmp/stone.bmp";
+    After.Mat.Flags.Wireframe = true;
+    After.Name = "Renamed";
+
+    scene::ApplySharedEdit(Before, After, Cube);
+    // Typing Y sets only Y; unchanged fields keep each node's own value.
+    CHECK(Cube.Position == glm::vec3(10.0f, 7.0f, 30.0f));
+    CHECK(Cube.Rotation == glm::vec3(45.0f, 0.0f, 0.0f));
+    CHECK(Cube.Scale == glm::vec3(200.0f));
+    CHECK(Cube.Size == 25.0f);
+    CHECK(Cube.Mat.Texture == "bmp/stone.bmp");
+    CHECK(Cube.Mat.Flags.Wireframe);
+    CHECK(Cube.Name == "Other");
+
+    const scene::SceneNode LightBefore = Light;
+    scene::ApplySharedEdit(Before, After, Light);
+    CHECK(Light.Position == glm::vec3(-5.0f, 7.0f, 0.0f));
+    CHECK(Light.Rotation == glm::vec3(45.0f, 0.0f, 0.0f));
+    // A light has no scale, size, texture or object flags.
+    CHECK(Light.Scale == LightBefore.Scale);
+    CHECK(Light.Size == LightBefore.Size);
+    CHECK(Light.Mat == LightBefore.Mat);
+
+    const scene::SceneNode MatrixBefore = Matrix;
+    scene::ApplySharedEdit(Before, After, Matrix);
+    // Matrices only move, take a texture, and keep their object flags untouched.
+    CHECK(Matrix.Rotation == MatrixBefore.Rotation);
+    CHECK(Matrix.Scale == MatrixBefore.Scale);
+    CHECK(Matrix.Mat.Texture == "bmp/stone.bmp");
+    CHECK(Matrix.Mat.Flags == MatrixBefore.Mat.Flags);
+}

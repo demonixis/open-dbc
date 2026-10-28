@@ -10,6 +10,8 @@
 
 #include <SDL3/SDL_gpu.h>
 #include <imgui.h>
+// After imgui.h, which it needs.
+#include <ImGuizmo.h>
 
 #include "core/gpu_texture.hpp"
 #include "core/media_catalogue.hpp"
@@ -97,8 +99,16 @@ namespace dbc::studio
             void LoadGameSettings();
             bool LinkMain();
 
+            // The active node: the last one selected, whose values the Inspector shows.
             scene::SceneNode* Selected();
+            std::vector<scene::SceneNode*> SelectedNodes();
+            bool IsSelected(const scene::SceneNode& Node) const;
+            // Replaces the selection; nullptr clears it.
             void Select(const scene::SceneNode* Node);
+            // Ctrl/Cmd-click: adds the node, or removes it when it is already selected.
+            void ToggleSelect(const scene::SceneNode& Node);
+            // Drops nodes that no longer exist, after undo or redo.
+            void PruneSelection();
             void Commit();
             void Undo();
             void Redo();
@@ -135,8 +145,10 @@ namespace dbc::studio
             void UpdateCamera(bool Hovered);
             scene::ViewParameters ComputeView(float Aspect) const;
             std::vector<scene::LineVertex> BuildLines() const;
-            void PickAt(const ImVec2& Mouse);
+            // `Toggle` adds or removes the node under the mouse instead of selecting it alone.
+            void PickAt(const ImVec2& Mouse, bool Toggle = false);
             void DrawGizmo();
+            void DrawGroupGizmo(ImGuizmo::OPERATION Operation, ImGuizmo::MODE Mode);
             void DrawIcons(ImDrawList* Draw);
             void FrameSelection();
             void AcceptAssetDrop();
@@ -148,6 +160,7 @@ namespace dbc::studio
             // Inspector and settings (scene_inspector.cpp)
             void CommitIfIdle();
             void DrawInspector();
+            void DrawShape(scene::SceneNode& Node);
             void DrawMaterial(scene::SceneNode& Node);
             void DrawAnimation(scene::SceneNode& Node);
             // The model file's animation, read once per file; nullptr when unreadable.
@@ -183,7 +196,8 @@ namespace dbc::studio
             std::vector<scene::ReadError> GameErrors_;
             bool GameFileExists_ = false;
 
-            std::optional<Selection> Selection_;
+            // In selection order; the back is the active node.
+            std::vector<Selection> Selection_;
             // The level camera is a setting, not a node, but it is picked and moved like one.
             bool CameraSelected_ = false;
 
@@ -207,6 +221,10 @@ namespace dbc::studio
             // Position and scale % when the gizmo drag began: snapping and uniform scale start from them.
             glm::vec3 GizmoStartPosition_{0.0f};
             glm::vec3 GizmoStartScale_{100.0f};
+            // A multi-selection's gizmo, kept while it is dragged, and the nodes as the drag found them.
+            glm::mat4 GroupGizmo_{1.0f};
+            glm::mat4 GroupGizmoStart_{1.0f};
+            std::vector<scene::SceneNode> GroupStart_;
             scene::ViewParameters View_;
             ImVec2 ViewportMin_{0.0f, 0.0f};
             ImVec2 ViewportSize_{0.0f, 0.0f};

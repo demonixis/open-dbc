@@ -242,6 +242,88 @@ namespace dbc::studio
                 ++Current_;
             return States_[Current_];
         }
+
+        void ApplySharedEdit(const SceneNode& Before, const SceneNode& After, SceneNode& Target)
+        {
+            const auto Take = [](const auto& From, const auto& To, auto& Into)
+            {
+                if (From != To)
+                    Into = To;
+            };
+            const auto TakeAxes = [](const glm::vec3& From, const glm::vec3& To, glm::vec3& Into)
+            {
+                for (int Axis = 0; Axis < 3; ++Axis)
+                    if (From[Axis] != To[Axis])
+                        Into[Axis] = To[Axis];
+            };
+            const bool Object = IdSpaceOf(Target.Kind) == IdSpace::Object;
+            TakeAxes(Before.Position, After.Position, Target.Position);
+            if (Object || Target.Kind == NodeKind::Light)
+                TakeAxes(Before.Rotation, After.Rotation, Target.Rotation);
+            if (Object)
+            {
+                TakeAxes(Before.Scale, After.Scale, Target.Scale);
+                Take(Before.Static, After.Static, Target.Static);
+            }
+
+            if (Target.Kind == After.Kind)
+            {
+                Take(Before.Size, After.Size, Target.Size);
+                TakeAxes(Before.Extent, After.Extent, Target.Extent);
+                Take(Before.Detail, After.Detail, Target.Detail);
+                Take(Before.PlainOrientation, After.PlainOrientation, Target.PlainOrientation);
+                for (std::size_t Corner = 0; Corner < Target.Corners.size(); ++Corner)
+                    TakeAxes(Before.Corners[Corner], After.Corners[Corner], Target.Corners[Corner]);
+                Take(Before.Asset, After.Asset, Target.Asset);
+                Take(Before.Width, After.Width, Target.Width);
+                Take(Before.Depth, After.Depth, Target.Depth);
+                Take(Before.XSegments, After.XSegments, Target.XSegments);
+                Take(Before.ZSegments, After.ZSegments, Target.ZSegments);
+                Take(Before.TilesAcross, After.TilesAcross, Target.TilesAcross);
+                Take(Before.TilesDown, After.TilesDown, Target.TilesDown);
+                Take(Before.Tile, After.Tile, Target.Tile);
+                Take(Before.Light, After.Light, Target.Light);
+                Take(Before.Range, After.Range, Target.Range);
+                Take(Before.SpotInner, After.SpotInner, Target.SpotInner);
+                Take(Before.SpotOuter, After.SpotOuter, Target.SpotOuter);
+                Take(Before.LightColor, After.LightColor, Target.LightColor);
+                Take(Before.PlayOnLoad, After.PlayOnLoad, Target.PlayOnLoad);
+                Take(Before.Volume, After.Volume, Target.Volume);
+                Take(Before.Frames, After.Frames, Target.Frames);
+                Take(Before.Loop, After.Loop, Target.Loop);
+                Take(Before.Speed, After.Speed, Target.Speed);
+            }
+            // A static object no longer exists to animate.
+            if (Target.Static)
+            {
+                Target.Frames.reset();
+                Target.Speed.reset();
+            }
+
+            const Material& From = Before.Mat;
+            const Material& To = After.Mat;
+            Material& Into = Target.Mat;
+            if (!IsMarker(Target.Kind))
+                Take(From.Texture, To.Texture, Into.Texture);
+            if (!Object)
+                return;
+            Take(From.Color, To.Color, Into.Color);
+            Take(From.Ghost, To.Ghost, Into.Ghost);
+            Take(From.GhostMode, To.GhostMode, Into.GhostMode);
+            Take(From.Flags.Wireframe, To.Flags.Wireframe, Into.Flags.Wireframe);
+            Take(From.Flags.Transparency, To.Flags.Transparency, Into.Flags.Transparency);
+            Take(From.Flags.Cull, To.Flags.Cull, Into.Flags.Cull);
+            Take(From.Flags.Filter, To.Flags.Filter, Into.Flags.Filter);
+            Take(From.Flags.Lighting, To.Flags.Lighting, Into.Flags.Lighting);
+            Take(From.Flags.Fog, To.Flags.Fog, Into.Flags.Fog);
+            Take(From.Flags.Ambient, To.Flags.Ambient, Into.Flags.Ambient);
+            Take(From.Diffuse, To.Diffuse, Into.Diffuse);
+            Take(From.Ambience, To.Ambience, Into.Ambience);
+            Take(From.Emissive, To.Emissive, Into.Emissive);
+            Take(From.Specular, To.Specular, Into.Specular);
+            Take(From.SpecularPower, To.SpecularPower, Into.SpecularPower);
+            Take(From.CastShadow, To.CastShadow, Into.CastShadow);
+        }
     } // namespace scene
 
 } // namespace dbc::studio

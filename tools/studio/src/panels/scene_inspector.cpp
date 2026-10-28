@@ -146,21 +146,39 @@ namespace dbc::studio
             const bool IsObject = scene::IdSpaceOf(Node->Kind) == scene::IdSpace::Object;
             const bool IsLight = Node->Kind == scene::NodeKind::Light;
             const bool IsMarker = scene::IsMarker(Node->Kind);
-            ImGui::TextDisabled("%s", scene::NodeKindLabel(Node->Kind));
-            char Name[128];
-            std::strncpy(Name, Node->Name.c_str(), sizeof(Name) - 1);
-            Name[sizeof(Name) - 1] = '\0';
-            if (ImGui::InputText("Name", Name, sizeof(Name)))
-                Node->Name = Name;
-            int Id = Node->Id;
-            if (ImGui::InputInt("Number", &Id, 0) && Id > 0 &&
-                Document_.Find(scene::IdSpaceOf(Node->Kind), Id) == nullptr)
+            // Several nodes: the widgets show the active node, and what they change is
+            // copied to the others below, where it applies.
+            const std::vector<scene::SceneNode*> Nodes = SelectedNodes();
+            const bool Multi = Nodes.size() > 1;
+            const scene::SceneNode Before = *Node;
+            // Shape fields are shared by nodes of one kind; matrix and terrain height tools stay per node.
+            const bool SharedShape =
+                !Multi || (Node->Kind != scene::NodeKind::Matrix && Node->Kind != scene::NodeKind::Terrain &&
+                           std::all_of(Nodes.begin(), Nodes.end(),
+                                       [&](const scene::SceneNode* Other) { return Other->Kind == Node->Kind; }));
+            if (Multi)
             {
-                Node->Id = Id;
-                Select(Node);
+                ImGui::Text("%zu nodes selected", Nodes.size());
+                ImGui::TextDisabled("Showing %s; edits apply to each node that has the field.", Node->Name.c_str());
             }
-            if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("The object, matrix, terrain, light or sound number the code uses");
+            else
+            {
+                ImGui::TextDisabled("%s", scene::NodeKindLabel(Node->Kind));
+                char Name[128];
+                std::strncpy(Name, Node->Name.c_str(), sizeof(Name) - 1);
+                Name[sizeof(Name) - 1] = '\0';
+                if (ImGui::InputText("Name", Name, sizeof(Name)))
+                    Node->Name = Name;
+                int Id = Node->Id;
+                if (ImGui::InputInt("Number", &Id, 0) && Id > 0 &&
+                    Document_.Find(scene::IdSpaceOf(Node->Kind), Id) == nullptr)
+                {
+                    Node->Id = Id;
+                    Select(Node);
+                }
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("The object, matrix, terrain, light or sound number the code uses");
+            }
             if (IsObject)
             {
                 const bool Available = scene::StaticAvailable(Document_.Profile);
@@ -197,19 +215,33 @@ namespace dbc::studio
             if (Node->Kind == scene::NodeKind::Matrix)
                 ImGui::TextDisabled("A matrix runs from its position toward +X and +Z.");
 
-            Heading(Node->Kind == scene::NodeKind::Sound ? "Sound" : "Shape");
-            switch (Node->Kind)
+            if (SharedShape)
+                DrawShape(*Node);
+
+            if (!IsMarker)
+                DrawMaterial(*Node);
+            if (Multi && *Node != Before)
+                for (scene::SceneNode* Other : Nodes)
+                    if (Other != Node)
+                        scene::ApplySharedEdit(Before, *Node, *Other);
+            ImGui::EndDisabled();
+        }
+
+        void SceneEditor::DrawShape(scene::SceneNode& Node)
+        {
+            Heading(Node.Kind == scene::NodeKind::Sound ? "Sound" : "Shape");
+            switch (Node.Kind)
             {
                 case scene::NodeKind::Cube:
-                    ImGui::DragFloat("Size", &Node->Size, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat("Size", &Node.Size, 0.25f, 0.01f, 100000.0f);
                     break;
                 case scene::NodeKind::Box:
-                    ImGui::DragFloat3("Width, height, depth", &Node->Extent.x, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat3("Width, height, depth", &Node.Extent.x, 0.25f, 0.01f, 100000.0f);
                     break;
                 case scene::NodeKind::Sphere:
-                    ImGui::DragFloat("Diameter", &Node->Size, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat("Diameter", &Node.Size, 0.25f, 0.01f, 100000.0f);
                     if (Pro(Document_))
-                        Optional("Rings, segments", Node->Detail, glm::ivec2(12, 16),
+                        Optional("Rings, segments", Node.Detail, glm::ivec2(12, 16),
                                  [](glm::ivec2& Detail)
                                  {
                                      ImGui::DragInt2("Rings, segments", &Detail.x, 0.25f, 3, 100);
@@ -218,74 +250,70 @@ namespace dbc::studio
                     break;
                 case scene::NodeKind::Cylinder:
                 case scene::NodeKind::Cone:
-                    ImGui::DragFloat("Size", &Node->Size, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat("Size", &Node.Size, 0.25f, 0.01f, 100000.0f);
                     break;
                 case scene::NodeKind::Plain:
-                    ImGui::DragFloat2("Width, height", &Node->Extent.x, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat2("Width, height", &Node.Extent.x, 0.25f, 0.01f, 100000.0f);
                     if (Pro(Document_))
-                        Optional("Orientation", Node->PlainOrientation, 0,
+                        Optional("Orientation", Node.PlainOrientation, 0,
                                  [](int& Orientation) { ImGui::InputInt("Orientation", &Orientation); });
                     break;
                 case scene::NodeKind::Triangle:
-                    ImGui::DragFloat3("Corner 1", &Node->Corners[0].x, 0.25f);
-                    ImGui::DragFloat3("Corner 2", &Node->Corners[1].x, 0.25f);
-                    ImGui::DragFloat3("Corner 3", &Node->Corners[2].x, 0.25f);
+                    ImGui::DragFloat3("Corner 1", &Node.Corners[0].x, 0.25f);
+                    ImGui::DragFloat3("Corner 2", &Node.Corners[1].x, 0.25f);
+                    ImGui::DragFloat3("Corner 3", &Node.Corners[2].x, 0.25f);
                     break;
                 case scene::NodeKind::Model:
-                    AssetField("Model file", Node->Asset, core::MediaKind::Model);
-                    DrawAnimation(*Node);
+                    AssetField("Model file", Node.Asset, core::MediaKind::Model);
+                    DrawAnimation(Node);
                     break;
                 case scene::NodeKind::Terrain:
-                    AssetField("Heightmap", Node->Asset, core::MediaKind::Image);
-                    if (Node->Asset.empty())
+                    AssetField("Heightmap", Node.Asset, core::MediaKind::Image);
+                    if (Node.Asset.empty())
                         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "A terrain needs a square heightmap image.");
-                    DrawTerrainHeightmap(*Node);
+                    DrawTerrainHeightmap(Node);
                     break;
                 case scene::NodeKind::Matrix:
-                    ImGui::DragFloat("Width", &Node->Width, 1.0f, 0.01f, 100000.0f);
-                    ImGui::DragFloat("Depth", &Node->Depth, 1.0f, 0.01f, 100000.0f);
-                    ImGui::DragInt("Tiles across", &Node->XSegments, 0.2f, 1, 256);
-                    ImGui::DragInt("Tiles down", &Node->ZSegments, 0.2f, 1, 256);
-                    DrawMatrixHeights(*Node);
+                    ImGui::DragFloat("Width", &Node.Width, 1.0f, 0.01f, 100000.0f);
+                    ImGui::DragFloat("Depth", &Node.Depth, 1.0f, 0.01f, 100000.0f);
+                    ImGui::DragInt("Tiles across", &Node.XSegments, 0.2f, 1, 256);
+                    ImGui::DragInt("Tiles down", &Node.ZSegments, 0.2f, 1, 256);
+                    DrawMatrixHeights(Node);
                     break;
                 case scene::NodeKind::Light:
                 {
-                    int Kind = static_cast<int>(Node->Light);
+                    int Kind = static_cast<int>(Node.Light);
                     if (ImGui::Combo("Type", &Kind, "Point\0Spot\0Directional\0"))
-                        Node->Light = static_cast<scene::LightKind>(Kind);
-                    if (Node->Light != scene::LightKind::Directional)
-                        OptionalFloat("Range", Node->Range, 1000.0f, 1.0f, 0.0f, 100000.0f);
-                    if (Node->Light == scene::LightKind::Spot)
+                        Node.Light = static_cast<scene::LightKind>(Kind);
+                    if (Node.Light != scene::LightKind::Directional)
+                        OptionalFloat("Range", Node.Range, 1000.0f, 1.0f, 0.0f, 100000.0f);
+                    if (Node.Light == scene::LightKind::Spot)
                     {
-                        ImGui::DragFloat("Inner cone", &Node->SpotInner, 0.25f, 0.0f, 180.0f);
-                        ImGui::DragFloat("Outer cone", &Node->SpotOuter, 0.25f, 0.0f, 180.0f);
+                        ImGui::DragFloat("Inner cone", &Node.SpotInner, 0.25f, 0.0f, 180.0f);
+                        ImGui::DragFloat("Outer cone", &Node.SpotOuter, 0.25f, 0.0f, 180.0f);
                     }
-                    OptionalColor("Colour", Node->LightColor, 0xFFFFFF);
+                    OptionalColor("Colour", Node.LightColor, 0xFFFFFF);
                     break;
                 }
                 case scene::NodeKind::Sound:
-                    AssetField("Sound file", Node->Asset, core::MediaKind::Audio);
-                    if (Node->Asset.empty())
+                    AssetField("Sound file", Node.Asset, core::MediaKind::Audio);
+                    if (Node.Asset.empty())
                         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "A 3D sound needs a sound file.");
-                    ImGui::Checkbox("Play on load", &Node->PlayOnLoad);
+                    ImGui::Checkbox("Play on load", &Node.PlayOnLoad);
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("Unchecked, the sound waits for the program's PLAY SOUND or LOOP SOUND");
-                    if (Node->PlayOnLoad)
+                    if (Node.PlayOnLoad)
                     {
                         ImGui::SameLine();
-                        ImGui::Checkbox("Loop", &Node->Loop);
+                        ImGui::Checkbox("Loop", &Node.Loop);
                         if (ImGui::IsItemHovered())
                             ImGui::SetTooltip("LOOP SOUND repeats it; unchecked, PLAY SOUND plays it once");
                     }
-                    Optional("Volume %", Node->Volume, 100,
+                    Optional("Volume %", Node.Volume, 100,
                              [](int& Volume) { ImGui::SliderInt("Volume %", &Volume, 0, 100); });
                     ImGui::TextDisabled("The program hears it from POSITION LISTENER, at 0, 0, 0 until moved.");
                     break;
             }
-
-            if (!IsMarker)
-                DrawMaterial(*Node);
-            ImGui::EndDisabled();
         }
 
         const scene::ModelAnimation* SceneEditor::ModelAnimationOf(const std::string& Asset)

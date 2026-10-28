@@ -126,6 +126,51 @@ TEST_CASE("Uniform scale keeps the proportions of the starting scale")
     CHECK(Flat.y == doctest::Approx(100.0f));
 }
 
+TEST_CASE("Group gizmo edits move, turn and scale nodes about the pivot")
+{
+    scene::SceneNode Cube;
+    Cube.Position = glm::vec3(10.0f, 0.0f, 0.0f);
+    Cube.Rotation = glm::vec3(0.0f, 30.0f, 0.0f);
+    Cube.Scale = glm::vec3(100.0f, 50.0f, 100.0f);
+    scene::SceneNode Matrix;
+    Matrix.Kind = scene::NodeKind::Matrix;
+    Matrix.Position = glm::vec3(-10.0f, 0.0f, 0.0f);
+
+    scene::GroupChange Move;
+    Move.Move = glm::vec3(0.0f, 5.0f, 0.0f);
+    scene::SceneNode Node = Cube;
+    scene::ApplyGroupChange(Move, Cube, Node);
+    CHECK(Node.Position == glm::vec3(10.0f, 5.0f, 0.0f));
+    CHECK(Node.Rotation == Cube.Rotation);
+    CHECK(Node.Scale == Cube.Scale);
+
+    // A quarter turn about Y carries +X to where RotationMatrix sends it, and adds to the angle.
+    scene::GroupChange Turn;
+    Turn.Turn = scene::RotationMatrix(glm::vec3(0.0f, 90.0f, 0.0f));
+    scene::ApplyGroupChange(Turn, Cube, Node);
+    const glm::vec3 Expected = Turn.Turn * Cube.Position;
+    CHECK(glm::length(Node.Position - Expected) < 1e-4f);
+    // Compared as orientations: EulerDegrees may pick another set of angles for the same turn.
+    const glm::mat3 Turned = scene::RotationMatrix(Node.Rotation);
+    const glm::mat3 Wanted = scene::RotationMatrix(glm::vec3(0.0f, 120.0f, 0.0f));
+    for (int Column = 0; Column < 3; ++Column)
+        CHECK(glm::length(Turned[Column] - Wanted[Column]) < 1e-4f);
+    scene::SceneNode Flat = Matrix;
+    scene::ApplyGroupChange(Turn, Matrix, Flat);
+    CHECK(glm::length(Flat.Position - Turn.Turn * Matrix.Position) < 1e-4f);
+    CHECK(Flat.Rotation == Matrix.Rotation);
+
+    // Doubling along X spreads the nodes from the pivot and scales only objects.
+    scene::GroupChange Grow;
+    Grow.Factor = glm::vec3(2.0f, 1.0f, 1.0f);
+    scene::ApplyGroupChange(Grow, Cube, Node);
+    CHECK(Node.Position == glm::vec3(20.0f, 0.0f, 0.0f));
+    CHECK(Node.Scale == glm::vec3(200.0f, 50.0f, 100.0f));
+    scene::ApplyGroupChange(Grow, Matrix, Flat);
+    CHECK(Flat.Position == glm::vec3(-20.0f, 0.0f, 0.0f));
+    CHECK(Flat.Scale == Matrix.Scale);
+}
+
 TEST_CASE("Scene primitives keep the engine's sizes and tessellation")
 {
     scene::SceneNode Node;

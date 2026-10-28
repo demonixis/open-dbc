@@ -77,7 +77,7 @@ namespace dbc::studio
             SavedGame_ = {};
             GameErrors_.clear();
             GameFileExists_ = false;
-            Selection_.reset();
+            Selection_.clear();
         }
 
         void SceneEditor::Activate()
@@ -142,7 +142,7 @@ namespace dbc::studio
             Saved_ = Document_;
             History_.Reset(Document_);
             HasLevel_ = true;
-            Selection_.reset();
+            Selection_.clear();
         }
 
         void SceneEditor::NewLevel(const std::string& Name)
@@ -161,7 +161,7 @@ namespace dbc::studio
             ReadErrors_.clear();
             History_.Reset(Document_);
             HasLevel_ = true;
-            Selection_.reset();
+            Selection_.clear();
         }
 
         void SceneEditor::LoadGameSettings()
@@ -260,16 +260,47 @@ namespace dbc::studio
 
         scene::SceneNode* SceneEditor::Selected()
         {
-            return Selection_ ? Document_.Find(Selection_->Space, Selection_->Id) : nullptr;
+            return Selection_.empty() ? nullptr : Document_.Find(Selection_.back().Space, Selection_.back().Id);
+        }
+
+        std::vector<scene::SceneNode*> SceneEditor::SelectedNodes()
+        {
+            std::vector<scene::SceneNode*> Nodes;
+            for (const Selection& Entry : Selection_)
+                if (scene::SceneNode* Node = Document_.Find(Entry.Space, Entry.Id))
+                    Nodes.push_back(Node);
+            return Nodes;
+        }
+
+        bool SceneEditor::IsSelected(const scene::SceneNode& Node) const
+        {
+            return std::find(Selection_.begin(), Selection_.end(),
+                             Selection{scene::IdSpaceOf(Node.Kind), Node.Id}) != Selection_.end();
         }
 
         void SceneEditor::Select(const scene::SceneNode* Node)
         {
             CameraSelected_ = false;
-            if (Node == nullptr)
-                Selection_.reset();
+            Selection_.clear();
+            if (Node != nullptr)
+                Selection_.push_back(Selection{scene::IdSpaceOf(Node->Kind), Node->Id});
+        }
+
+        void SceneEditor::ToggleSelect(const scene::SceneNode& Node)
+        {
+            CameraSelected_ = false;
+            const Selection Entry{scene::IdSpaceOf(Node.Kind), Node.Id};
+            const auto Found = std::find(Selection_.begin(), Selection_.end(), Entry);
+            if (Found != Selection_.end())
+                Selection_.erase(Found);
             else
-                Selection_ = Selection{scene::IdSpaceOf(Node->Kind), Node->Id};
+                Selection_.push_back(Entry);
+        }
+
+        void SceneEditor::PruneSelection()
+        {
+            std::erase_if(Selection_, [&](const Selection& Entry)
+                          { return Document_.Find(Entry.Space, Entry.Id) == nullptr; });
         }
 
         void SceneEditor::Commit()
@@ -282,8 +313,7 @@ namespace dbc::studio
             if (!Editable() || !History_.CanUndo())
                 return;
             Document_ = History_.Undo();
-            if (Selected() == nullptr)
-                Selection_.reset();
+            PruneSelection();
         }
 
         void SceneEditor::Redo()
@@ -291,8 +321,7 @@ namespace dbc::studio
             if (!Editable() || !History_.CanRedo())
                 return;
             Document_ = History_.Redo();
-            if (Selected() == nullptr)
-                Selection_.reset();
+            PruneSelection();
         }
 
         void SceneEditor::Create(scene::NodeKind Kind, scene::LightKind Light)
@@ -340,24 +369,29 @@ namespace dbc::studio
 
         void SceneEditor::DuplicateSelected()
         {
-            const scene::SceneNode* Source = Editable() ? Selected() : nullptr;
-            if (Source == nullptr)
+            if (!Editable() || Selection_.empty())
                 return;
-            scene::SceneNode Copy = *Source;
-            Copy.Id = Document_.NextId(scene::IdSpaceOf(Copy.Kind));
-            Copy.Name += " copy";
-            Document_.Nodes.push_back(std::move(Copy));
-            Select(&Document_.Nodes.back());
+            // Copied first: adding nodes moves them. The copies become the selection.
+            std::vector<scene::SceneNode> Copies;
+            for (const scene::SceneNode* Source : SelectedNodes())
+                Copies.push_back(*Source);
+            Selection_.clear();
+            for (scene::SceneNode& Copy : Copies)
+            {
+                Copy.Id = Document_.NextId(scene::IdSpaceOf(Copy.Kind));
+                Copy.Name += " copy";
+                Selection_.push_back(Selection{scene::IdSpaceOf(Copy.Kind), Copy.Id});
+                Document_.Nodes.push_back(std::move(Copy));
+            }
             Commit();
         }
 
         void SceneEditor::DeleteSelected()
         {
-            const scene::SceneNode* Node = Editable() ? Selected() : nullptr;
-            if (Node == nullptr)
+            if (!Editable() || Selection_.empty())
                 return;
-            Document_.Nodes.erase(Document_.Nodes.begin() + (Node - Document_.Nodes.data()));
-            Selection_.reset();
+            std::erase_if(Document_.Nodes, [&](const scene::SceneNode& Node) { return IsSelected(Node); });
+            Selection_.clear();
             Commit();
         }
 
@@ -397,9 +431,9 @@ namespace dbc::studio
             if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, Editable() && History_.CanRedo()))
                 Redo();
             ImGui::Separator();
-            if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, Editable() && Selection_.has_value()))
+            if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, Editable() && !Selection_.empty()))
                 DuplicateSelected();
-            if (ImGui::MenuItem("Delete", "Delete", false, Editable() && Selection_.has_value()))
+            if (ImGui::MenuItem("Delete", "Delete", false, Editable() && !Selection_.empty()))
                 DeleteSelected();
             ImGui::EndMenu();
         }
@@ -471,7 +505,7 @@ namespace dbc::studio
                 if (ImGui::MenuItem("Level Camera", nullptr, Document_.Env.UseCamera))
                 {
                     Document_.Env.UseCamera = !Document_.Env.UseCamera;
-                    Selection_.reset();
+                    Selection_.clear();
                     CameraSelected_ = Document_.Env.UseCamera;
                     Commit();
                 }
@@ -496,6 +530,13 @@ namespace dbc::studio
                 Redo();
             else if (Command && ImGui::IsKeyPressed(ImGuiKey_D, false))
                 DuplicateSelected();
+            else if (Command && ImGui::IsKeyPressed(ImGuiKey_A, false) && HasLevel_)
+            {
+                CameraSelected_ = false;
+                Selection_.clear();
+                for (const scene::SceneNode& Node : Document_.Nodes)
+                    Selection_.push_back(Selection{scene::IdSpaceOf(Node.Kind), Node.Id});
+            }
             else if (!Command && (ImGui::IsKeyPressed(ImGuiKey_Delete, false) ||
                                   ImGui::IsKeyPressed(ImGuiKey_Backspace, false)))
                 DeleteSelected();
@@ -574,9 +615,32 @@ namespace dbc::studio
             {
                 ImGui::PushID(static_cast<int>(scene::IdSpaceOf(Node.Kind)));
                 ImGui::PushID(Node.Id);
-                const bool IsSelected = Selection_ && *Selection_ == Selection{scene::IdSpaceOf(Node.Kind), Node.Id};
-                if (ImGui::Selectable(Node.Name.c_str(), IsSelected))
-                    Select(&Node);
+                if (ImGui::Selectable(Node.Name.c_str(), IsSelected(Node)))
+                {
+                    const ImGuiIO& Io = ImGui::GetIO();
+                    const scene::SceneNode* Anchor = Selected();
+                    if (Io.KeyCtrl || Io.KeySuper)
+                    {
+                        ToggleSelect(Node);
+                    }
+                    else if (Io.KeyShift && Anchor != nullptr)
+                    {
+                        // The rows from the active node to this one, which becomes active.
+                        const std::size_t From = static_cast<std::size_t>(Anchor - Document_.Nodes.data());
+                        const std::size_t To = static_cast<std::size_t>(&Node - Document_.Nodes.data());
+                        Select(Anchor);
+                        for (std::size_t Index = From; Index != To;)
+                        {
+                            Index = To > From ? Index + 1 : Index - 1;
+                            const scene::SceneNode& Row = Document_.Nodes[Index];
+                            Selection_.push_back(Selection{scene::IdSpaceOf(Row.Kind), Row.Id});
+                        }
+                    }
+                    else
+                    {
+                        Select(&Node);
+                    }
+                }
                 if (ImGui::IsItemHovered())
                     ImGui::SetTooltip("%s %d", scene::NodeKindLabel(Node.Kind), Node.Id);
                 ImGui::PopID();
@@ -587,7 +651,7 @@ namespace dbc::studio
                 ImGui::Separator();
                 if (ImGui::Selectable("Level Camera", CameraSelected_))
                 {
-                    Selection_.reset();
+                    Selection_.clear();
                     CameraSelected_ = true;
                 }
             }

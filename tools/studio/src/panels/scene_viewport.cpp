@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include <ImGuizmo.h>
 #include <glm/geometric.hpp>
@@ -191,17 +192,36 @@ namespace dbc::studio
             {
                 Center = Document_.Env.CameraPosition;
             }
-            else if (const scene::SceneNode* Node = Selected())
+            else if (const std::vector<scene::SceneNode*> Nodes = SelectedNodes(); !Nodes.empty())
             {
-                Center = Node->Position;
-                if (const scene::CpuMesh* Mesh = Renderer_.Mesh(*Node))
+                // The box around every selected node's bounds, or its position for markers.
+                glm::vec3 Min(std::numeric_limits<float>::max());
+                glm::vec3 Max(std::numeric_limits<float>::lowest());
+                bool Bounded = Nodes.size() > 1;
+                for (const scene::SceneNode* Node : Nodes)
                 {
+                    const scene::CpuMesh* Mesh = Renderer_.Mesh(*Node);
+                    if (Mesh == nullptr)
+                    {
+                        Min = glm::min(Min, Node->Position);
+                        Max = glm::max(Max, Node->Position);
+                        continue;
+                    }
+                    Bounded = true;
                     const glm::mat4 World = scene::NodeWorld(*Node);
-                    const glm::vec3 Min = glm::vec3(World * glm::vec4(Mesh->Min, 1.0f));
-                    const glm::vec3 Max = glm::vec3(World * glm::vec4(Mesh->Max, 1.0f));
-                    Center = (Min + Max) * 0.5f;
-                    Radius = std::max(glm::length(Max - Min) * 0.5f, 1.0f);
+                    for (int Index = 0; Index < 8; ++Index)
+                    {
+                        const glm::vec3 Corner = glm::vec3(World * glm::vec4((Index & 1) ? Mesh->Max.x : Mesh->Min.x,
+                                                                             (Index & 2) ? Mesh->Max.y : Mesh->Min.y,
+                                                                             (Index & 4) ? Mesh->Max.z : Mesh->Min.z,
+                                                                             1.0f));
+                        Min = glm::min(Min, Corner);
+                        Max = glm::max(Max, Corner);
+                    }
                 }
+                Center = (Min + Max) * 0.5f;
+                if (Bounded)
+                    Radius = std::max(glm::length(Max - Min) * 0.5f, 1.0f);
             }
             else
             {
@@ -231,8 +251,7 @@ namespace dbc::studio
             const glm::vec4 LightColor(1.0f, 0.9f, 0.35f, 1.0f);
             for (const scene::SceneNode& Node : Document_.Nodes)
             {
-                const bool IsSelected = Selection_ && Selection_->Space == scene::IdSpaceOf(Node.Kind) &&
-                                        Selection_->Id == Node.Id;
+                const bool Selected = IsSelected(Node);
                 if (Node.Kind == scene::NodeKind::Light)
                 {
                     const glm::vec3 Direction = scene::LightDirection(Node.Rotation);
@@ -241,7 +260,7 @@ namespace dbc::studio
                         AddLine(Lines, Node.Position, Node.Position + Direction * 40.0f, LightColor);
                         continue;
                     }
-                    if (!IsSelected)
+                    if (!Selected)
                         continue;
                     const float Range = Node.Range.value_or(1000.0f);
                     glm::vec3 U, V;
@@ -261,7 +280,7 @@ namespace dbc::studio
                         AddLine(Lines, Node.Position, End + Side * Spread, LightColor);
                     continue;
                 }
-                if (!IsSelected)
+                if (!Selected)
                     continue;
                 const scene::CpuMesh* Mesh = Renderer_.Mesh(Node);
                 if (Mesh == nullptr)
@@ -308,15 +327,14 @@ namespace dbc::studio
                 ImVec2 At;
                 if (!scene::IsMarker(Node.Kind) || !ProjectToScreen(Node.Position, At))
                     continue;
-                const bool IsSelected = Selection_ && Selection_->Space == scene::IdSpaceOf(Node.Kind) &&
-                                        Selection_->Id == Node.Id;
+                const bool Selected = IsSelected(Node);
                 const float Dx = Mouse.x - At.x, Dy = Mouse.y - At.y;
                 if (Dx * Dx + Dy * Dy < KIconRadius * KIconRadius * 4.0f && ImGui::IsWindowHovered())
                     ImGui::SetTooltip("%s", Node.Name.c_str());
                 if (Node.Kind == scene::NodeKind::Sound)
                 {
                     // A speaker with two waves.
-                    const ImU32 Fill = IsSelected ? IM_COL32(255, 160, 40, 255) : IM_COL32(110, 210, 255, 235);
+                    const ImU32 Fill = Selected ? IM_COL32(255, 160, 40, 255) : IM_COL32(110, 210, 255, 235);
                     const float R = KIconRadius;
                     Draw->AddRectFilled(ImVec2(At.x - R, At.y - R * 0.4f), ImVec2(At.x - R * 0.35f, At.y + R * 0.4f),
                                         Fill);
@@ -330,7 +348,7 @@ namespace dbc::studio
                     continue;
                 }
                 Draw->AddCircleFilled(At, KIconRadius,
-                                      IsSelected ? IM_COL32(255, 160, 40, 255) : IM_COL32(255, 220, 80, 230));
+                                      Selected ? IM_COL32(255, 160, 40, 255) : IM_COL32(255, 220, 80, 230));
                 Draw->AddCircle(At, KIconRadius, IM_COL32(40, 30, 0, 255), 0, 1.5f);
                 for (int Ray = 0; Ray < 8; ++Ray)
                 {
@@ -352,8 +370,15 @@ namespace dbc::studio
             }
         }
 
-        void SceneEditor::PickAt(const ImVec2& Mouse)
+        void SceneEditor::PickAt(const ImVec2& Mouse, bool Toggle)
         {
+            const auto Pick = [&](const scene::SceneNode* Node)
+            {
+                if (!Toggle)
+                    Select(Node);
+                else if (Node != nullptr)
+                    ToggleSelect(*Node);
+            };
             const auto Near = [&](const glm::vec3& Point)
             {
                 ImVec2 At;
@@ -366,12 +391,13 @@ namespace dbc::studio
             for (const scene::SceneNode& Node : Document_.Nodes)
                 if (scene::IsMarker(Node.Kind) && Near(Node.Position))
                 {
-                    Select(&Node);
+                    Pick(&Node);
                     return;
                 }
-            if (Document_.Env.UseCamera && !LookThroughCamera_ && Near(Document_.Env.CameraPosition))
+            // The level camera is not part of a multi-selection.
+            if (!Toggle && Document_.Env.UseCamera && !LookThroughCamera_ && Near(Document_.Env.CameraPosition))
             {
-                Selection_.reset();
+                Selection_.clear();
                 CameraSelected_ = true;
                 return;
             }
@@ -391,13 +417,22 @@ namespace dbc::studio
                     Nearest = *Distance;
                 }
             }
-            Select(Hit);
+            Pick(Hit);
         }
 
         void SceneEditor::DrawGizmo()
         {
             if (!Editable() || Tool_ == Tool::View)
                 return;
+            if (!CameraSelected_ && Selection_.size() > 1)
+            {
+                const ImGuizmo::OPERATION Operation = Tool_ == Tool::Rotate  ? ImGuizmo::ROTATE
+                                                      : Tool_ == Tool::Scale ? ImGuizmo::SCALE
+                                                                             : ImGuizmo::TRANSLATE;
+                DrawGroupGizmo(Operation, LocalGizmo_ || Operation == ImGuizmo::SCALE ? ImGuizmo::LOCAL
+                                                                                       : ImGuizmo::WORLD);
+                return;
+            }
             scene::SceneNode* Node = CameraSelected_ ? nullptr : Selected();
             if (Node == nullptr && !(CameraSelected_ && Document_.Env.UseCamera && !LookThroughCamera_))
                 return;
@@ -474,6 +509,83 @@ namespace dbc::studio
                 GizmoActive_ = false;
                 Commit();
             }
+        }
+
+        void SceneEditor::DrawGroupGizmo(ImGuizmo::OPERATION Operation, ImGuizmo::MODE Mode)
+        {
+            std::vector<scene::SceneNode*> Nodes = SelectedNodes();
+            if (Nodes.empty())
+                return;
+            if (!GizmoActive_)
+            {
+                // At the nodes' centre, turned like the active node in local mode.
+                glm::vec3 Pivot(0.0f);
+                for (const scene::SceneNode* Node : Nodes)
+                    Pivot += Node->Position / static_cast<float>(Nodes.size());
+                const scene::SceneNode& Active = *Nodes.back();
+                const bool Turns = scene::IdSpaceOf(Active.Kind) == scene::IdSpace::Object ||
+                                   Active.Kind == scene::NodeKind::Light;
+                GroupGizmo_ = glm::translate(glm::mat4(1.0f), Pivot);
+                if (Mode == ImGuizmo::LOCAL && Turns)
+                    GroupGizmo_ *= glm::mat4(scene::RotationMatrix(Active.Rotation));
+            }
+            ImGuizmo::SetOrthographic(false);
+            ImGuizmo::SetDrawlist();
+            ImGuizmo::SetRect(ViewportMin_.x, ViewportMin_.y, ViewportSize_.x, ViewportSize_.y);
+            const glm::mat4 Before = GroupGizmo_;
+            const bool LocalMove = Operation == ImGuizmo::TRANSLATE && Mode == ImGuizmo::LOCAL;
+            const glm::vec3 Steps = Operation == ImGuizmo::ROTATE ? glm::vec3(RotateSnap_) : glm::vec3(MoveSnap_);
+            const bool GizmoSnaps = Snap_ && (Operation == ImGuizmo::ROTATE || LocalMove);
+            if (!ImGuizmo::Manipulate(glm::value_ptr(View_.View), glm::value_ptr(View_.Projection), Operation, Mode,
+                                      glm::value_ptr(GroupGizmo_), nullptr,
+                                      GizmoSnaps ? glm::value_ptr(Steps) : nullptr))
+                return;
+            if (!GizmoActive_)
+            {
+                GroupGizmoStart_ = Before;
+                GroupStart_.clear();
+                for (const scene::SceneNode* Node : Nodes)
+                    GroupStart_.push_back(*Node);
+            }
+            GizmoActive_ = true;
+
+            const auto Axes = [](const glm::mat4& Matrix, glm::vec3& Scale)
+            {
+                Scale = glm::max(glm::vec3(glm::length(glm::vec3(Matrix[0])), glm::length(glm::vec3(Matrix[1])),
+                                           glm::length(glm::vec3(Matrix[2]))),
+                                 glm::vec3(1e-4f));
+                return glm::mat3(glm::vec3(Matrix[0]) / Scale.x, glm::vec3(Matrix[1]) / Scale.y,
+                                 glm::vec3(Matrix[2]) / Scale.z);
+            };
+            glm::vec3 StartScale, Scale;
+            const glm::mat3 StartAxes = Axes(GroupGizmoStart_, StartScale);
+            const glm::mat3 NowAxes = Axes(GroupGizmo_, Scale);
+            scene::GroupChange Change;
+            Change.Pivot = glm::vec3(GroupGizmoStart_[3]);
+            Change.Axes = StartAxes;
+            if (Operation == ImGuizmo::TRANSLATE)
+            {
+                glm::vec3 Pivot(GroupGizmo_[3]);
+                if (Snap_ && !LocalMove)
+                    Pivot = scene::SnapChangedAxes(Pivot, Change.Pivot, MoveSnap_);
+                Change.Move = Pivot - Change.Pivot;
+            }
+            else if (Operation == ImGuizmo::ROTATE)
+            {
+                Change.Turn = NowAxes * glm::transpose(StartAxes);
+            }
+            else
+            {
+                glm::vec3 Percent = Scale / StartScale * 100.0f;
+                if (Snap_)
+                    Percent = scene::SnapChangedAxes(Percent, glm::vec3(100.0f), ScaleSnap_);
+                if (UniformScale_)
+                    Percent = scene::ProportionalScale(glm::vec3(100.0f), Percent);
+                Change.Factor = glm::max(Percent / 100.0f, glm::vec3(1e-4f));
+            }
+            for (const scene::SceneNode& Start : GroupStart_)
+                if (scene::SceneNode* Node = Document_.Find(scene::IdSpaceOf(Start.Kind), Start.Id))
+                    scene::ApplyGroupChange(Change, Start, *Node);
         }
 
         void SceneEditor::AcceptAssetDrop()
@@ -609,7 +721,7 @@ namespace dbc::studio
 
             if (Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt && !ImGuizmo::IsOver() &&
                 !ImGuizmo::IsUsing())
-                PickAt(ImGui::GetMousePos());
+                PickAt(ImGui::GetMousePos(), Io.KeyCtrl || Io.KeySuper || Io.KeyShift);
 
             // Tool keys apply while the viewport has focus and no button is navigating.
             if (ImGui::IsWindowFocused() && !Navigating_ && !Io.WantTextInput && !Io.KeyCtrl && !Io.KeySuper)

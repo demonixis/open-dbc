@@ -240,6 +240,12 @@ namespace dbc::studio
         // The FILL MATRIX tile, kept within the image's tile grid.
         int MatrixTile(const SceneNode& Node);
 
+        // A multi-selection edit: the Inspector edits one node, `Before` becoming
+        // `After`, and every field that changed is copied to `Target` where its kind
+        // has that field. Vectors copy by component, so typing X sets only X; kinds,
+        // names, numbers and matrix heights are never copied.
+        void ApplySharedEdit(const SceneNode& Before, const SceneNode& After, SceneNode& Target);
+
         // "Level 1" -> "Level_1": a valid BASIC identifier suffix, never empty.
         std::string SanitizeLevelName(const std::string& Name);
         std::string LevelFunctionName(const SceneDocument& Document);

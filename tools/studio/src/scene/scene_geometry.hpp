@@ -95,6 +95,20 @@ namespace dbc::studio
         // its proportions. An axis that starts at 0 has no ratio: `Edited` is kept.
         glm::vec3 ProportionalScale(const glm::vec3& Start, const glm::vec3& Edited);
 
+        // A gizmo edit of several nodes, measured from where the drag began:
+        // positions turn and scale about `Pivot` along `Axes`, then move.
+        struct GroupChange
+        {
+            glm::vec3 Pivot{0.0f};
+            glm::vec3 Move{0.0f};
+            glm::mat3 Turn{1.0f};
+            glm::mat3 Axes{1.0f};
+            glm::vec3 Factor{1.0f};
+        };
+        // Sets `Node` from its state `Start` at the beginning of the drag. Only
+        // objects and lights turn, only objects scale; the rest just move.
+        void ApplyGroupChange(const GroupChange& Change, const SceneNode& Start, SceneNode& Node);
+
         struct Ray
         {
             glm::vec3 Origin{0.0f};

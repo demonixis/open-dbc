@@ -469,6 +469,20 @@ namespace dbc::studio
             return Start * (Edited[Axis] / Start[Axis]);
         }
 
+        void ApplyGroupChange(const GroupChange& Change, const SceneNode& Start, SceneNode& Node)
+        {
+            const glm::vec3 Local = glm::transpose(Change.Axes) * (Start.Position - Change.Pivot);
+            Node.Position = Change.Pivot + Change.Move + Change.Turn * (Change.Axes * (Local * Change.Factor));
+            const bool Object = IdSpaceOf(Node.Kind) == IdSpace::Object;
+            // Angles are only rewritten by a turn, so moving keeps them exact.
+            if ((Object || Node.Kind == NodeKind::Light) && Change.Turn != glm::mat3(1.0f))
+                Node.Rotation = EulerDegrees(Change.Turn * RotationMatrix(Start.Rotation));
+            else
+                Node.Rotation = Start.Rotation;
+            // Snapping down to 0 would collapse the object for good.
+            Node.Scale = Object ? glm::max(Start.Scale * Change.Factor, glm::vec3(0.01f)) : Start.Scale;
+        }
+
         std::optional<float> Intersect(const Ray& Value, const CpuMesh& Mesh, const glm::mat4& World)
         {
             std::optional<float> Nearest;
