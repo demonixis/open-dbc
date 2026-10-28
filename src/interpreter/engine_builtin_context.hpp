@@ -39,6 +39,8 @@ namespace dbc
         struct BuiltinValue
         {
             bool IsString = false;
+            // Set for BASIC integer arguments; CALL DLL passes them to plugins as integers rather than reals.
+            bool IsInteger = false;
             double Number = 0.0;
             std::string Text{};
 

@@ -1450,6 +1450,20 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+DBC_DLL_TEST = "test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values"
+UNIT_WITNESSES += tuple(
+    ("dbc", kind, name, code, "native-plugin-call", DBC_DLL_TEST)
+    for kind, name, code in (
+        ("Command", "LOAD DLL", 'load dll "test_dll_plugin.dll", 1\n'),
+        ("Command", "DELETE DLL", "delete dll 1\n"),
+        ("Command", "CALL DLL", 'call dll 1, "greet", "Bill"\n'),
+        ("Function", "CALL DLL", 'value = call dll(1, "add_integers", 40, 2)\n'),
+        ("Function", "DLL EXIST", "value = dll exist(1)\n"),
+        ("Function", "DLL CALL EXIST", 'value = dll call exist(1, "add_integers")\n'),
+        ("Function", "GET MEMBLOCK PTR", "value = get memblock ptr(1)\n"),
+    )
+)
+
 DBC_NETWORK_MEDIA_TEST = "test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes"
 UNIT_WITNESSES += tuple(
     ("dbc", kind, name, code, "loopback-net-media", DBC_NETWORK_MEDIA_TEST)

@@ -7,6 +7,7 @@
 #include "engine/systems/camera_system.hpp"
 #include "engine/systems/core_system.hpp"
 #include "engine/systems/debug_system.hpp"
+#include "engine/systems/dll_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
 #include "engine/systems/file_io_system.hpp"
 #include "engine/systems/graphics_device_system.hpp"
@@ -1553,6 +1554,43 @@ namespace dbc::interpreter::detail
                 default:
                     return Video.PlayAnimation(Values[0], Loop, std::nullopt, std::nullopt, Error);
             }
+        }
+
+        // Strings, BASIC integers and reals reach the plugin with their own types; integers keep their 32 bits,
+        // so GET MEMBLOCK PTR addresses above 2^31 pass unchanged.
+        bool CallDll(BuiltinContext& Context, const std::vector<BuiltinValue>& Arguments, DllSystem::Value& Result,
+                     std::string* Error)
+        {
+            int Number = 0;
+            if (!Arguments[0].AsInt(Number, Error))
+                return false;
+            std::vector<DllSystem::Value> Values;
+            Values.reserve(Arguments.size() - 2);
+            for (std::size_t Index = 2; Index < Arguments.size(); ++Index)
+            {
+                const BuiltinValue& Source = Arguments[Index];
+                DllSystem::Value Value;
+                if (Source.IsString)
+                {
+                    Value.Type = DllSystem::ValueType::String;
+                    Value.Text = Source.Text;
+                }
+                else if (Source.IsInteger)
+                {
+                    std::uint32_t Bits = 0;
+                    if (!Source.AsDword(Bits, Error))
+                        return false;
+                    Value.Type = DllSystem::ValueType::Integer;
+                    Value.Integer = static_cast<std::int32_t>(Bits);
+                }
+                else
+                {
+                    Value.Type = DllSystem::ValueType::Real;
+                    Value.Real = Source.Number;
+                }
+                Values.push_back(std::move(Value));
+            }
+            return Context.Kernel->Dlls().CallDll(Result, Number, Arguments[1].AsString(), Values, Error);
         }
 
         const std::filesystem::path& RegistryPath(BuiltinContext& Context)

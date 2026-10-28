@@ -25,6 +25,7 @@ add_library(dbc_engine STATIC
   systems/debug_system.cpp
   systems/video_system.cpp
   systems/network_system.cpp
+  systems/dll_system.cpp
 )
 
 target_link_libraries(dbc_engine
@@ -41,6 +42,8 @@ target_link_libraries(dbc_engine
     Jolt
     enet
 )
+
+target_include_directories(dbc_engine PRIVATE ${PROJECT_SOURCE_DIR}/sdk)
 
 add_dependencies(dbc_engine opendbc_shaders)
 dbc_enable_warnings(dbc_engine)

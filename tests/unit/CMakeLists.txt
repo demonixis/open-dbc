@@ -129,6 +129,21 @@ target_link_libraries(test_network PRIVATE doctest_with_main dbc_interpreter)
 target_compile_definitions(test_network PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 doctest_discover_tests(test_network PROPERTIES LABELS "unit")
 
+# Plugins for the CALL DLL tests, named like a library of any platform so LOAD DLL "name.dll" finds them.
+add_library(test_dll_plugin MODULE plugins/test_dll_plugin.c)
+target_include_directories(test_dll_plugin PRIVATE ${PROJECT_SOURCE_DIR}/sdk)
+add_library(test_not_plugin MODULE plugins/test_not_plugin.c)
+set_target_properties(test_dll_plugin test_not_plugin PROPERTIES PREFIX "" DEBUG_POSTFIX "" C_VISIBILITY_PRESET hidden)
+if(APPLE)
+    set_target_properties(test_dll_plugin test_not_plugin PROPERTIES SUFFIX ".dylib")
+endif()
+
+add_executable(test_dll test_dll.cpp)
+target_link_libraries(test_dll PRIVATE doctest_with_main dbc_interpreter)
+target_compile_definitions(test_dll PRIVATE TEST_PLUGIN_DIR="$<TARGET_FILE_DIR:test_dll_plugin>")
+add_dependencies(test_dll test_dll_plugin test_not_plugin)
+doctest_discover_tests(test_dll PROPERTIES LABELS "unit")
+
 add_executable(test_input_haptics test_input_haptics.cpp)
 target_include_directories(test_input_haptics PRIVATE ${ENGINE_SRC_DIR})
 target_link_libraries(test_input_haptics PRIVATE doctest_with_main dbc_engine)
@@ -238,7 +253,7 @@ endif()
 # The tests are OpenDBC code too.
 foreach(test_target IN ITEMS test_language_profile test_language_catalogue test_frontend test_vm test_studio_language
         test_studio_run_plan
-        test_engine_math test_collision_math test_bsp_world test_terrain_mesh test_engine_builtins test_network test_input_haptics test_command_line
+        test_engine_math test_collision_math test_bsp_world test_terrain_mesh test_engine_builtins test_network test_dll test_input_haptics test_command_line
         test_project_resolver test_debug_system
         test_shader_compiler test_project_settings test_studio_new_project test_studio_snippets
         test_artifact_export)

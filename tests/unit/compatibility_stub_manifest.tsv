@@ -1,6 +1,4 @@
 profile	symbol_id	kind	name	policy	neutral_behavior
-dbc	Command_CallDll	Command	CALL DLL	Permanent	no-op
-dbc	Command_DeleteDll	Command	DELETE DLL	Permanent	no-op
 dbc	Command_DisableSystemkeys	Command	DISABLE SYSTEMKEYS	Permanent	no-op
 dbc	Command_DisableTnl	Command	DISABLE TNL	Permanent	no-op
 dbc	Command_EnableSystemkeys	Command	ENABLE SYSTEMKEYS	Permanent	no-op
@@ -16,16 +14,12 @@ dbc	Command_FtpPutFile	Command	FTP PUT FILE	Permanent	no-op
 dbc	Command_FtpSetDir	Command	FTP SET DIR	Permanent	no-op
 dbc	Command_FtpTerminate	Command	FTP TERMINATE	Permanent	no-op
 dbc	Command_LoadCdmusic	Command	LOAD CDMUSIC	Permanent	accept-inert-resource-id
-dbc	Command_LoadDll	Command	LOAD DLL	Permanent	accept-inert-resource-id
 dbc	Command_LockBackbuffer	Command	LOCK BACKBUFFER	Permanent	no-op
 dbc	Command_SetEax	Command	SET EAX	Permanent	no-op
 dbc	Command_SetEmulationOff	Command	SET EMULATION OFF	Permanent	no-op
 dbc	Command_SetEmulationOn	Command	SET EMULATION ON	Permanent	no-op
 dbc	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Permanent	no-op
 dbc	Command_UnlockBackbuffer	Command	UNLOCK BACKBUFFER	Permanent	no-op
-dbc	Function_CallDll	Function	CALL DLL	Permanent	numeric:0
-dbc	Function_DllCallExist	Function	DLL CALL EXIST	Permanent	numeric:0
-dbc	Function_DllExist	Function	DLL EXIST	Permanent	numeric:0
 dbc	Function_EmulationMode	Function	EMULATION MODE	Permanent	numeric:0
 dbc	Function_GetBackbufferPtr	Function	GET BACKBUFFER PTR	Permanent	numeric:0
 dbc	Function_GetFtpDirString	Function	GET FTP DIR$	Permanent	string:empty
@@ -36,5 +30,4 @@ dbc	Function_GetFtpFileSize	Function	GET FTP FILE SIZE	Permanent	numeric:0
 dbc	Function_GetFtpFileType	Function	GET FTP FILE TYPE	Permanent	numeric:-1
 dbc	Function_GetFtpProgress	Function	GET FTP PROGRESS	Permanent	numeric:-1
 dbc	Function_GetFtpStatus	Function	GET FTP STATUS	Permanent	numeric:0
-dbc	Function_GetMemblockPtr	Function	GET MEMBLOCK PTR	Permanent	numeric:0
 dbc	Function_WindirString	Function	WINDIR$	Permanent	string:empty

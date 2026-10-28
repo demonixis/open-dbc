@@ -1,7 +1,7 @@
 rem ==================================================================
 rem Compatibility Stubs - an OpenDBC tutorial for the DarkBASIC Classic profile
 rem DarkBASIC Classic relied on Windows 98 technology that has no portable
-rem equivalent today: audio CDs, FTP sessions, DLL calls and
+rem equivalent today: audio CDs, FTP sessions, the Windows folder and
 rem raw access to the video memory. OpenDBC still accepts every one of
 rem these commands so that old programs run, but they do nothing: commands
 rem return at once, numbers read 0 and strings are empty. This program
@@ -10,7 +10,7 @@ rem Code is part of OpenDBC (MIT).
 rem ==================================================================
 
 sync on : sync rate 30
-dim title$(5) : dim why$(5)
+dim title$(4) : dim why$(4)
 dim label$(70) : dim value$(70) : dim group(70)
 n = 0
 
@@ -38,34 +38,21 @@ n = n + 1 : group(n) = g : label$(n) = "GET FTP FILE NAME$()" : value$(n) = """"
 n = n + 1 : group(n) = g : label$(n) = "GET FTP DIR$()" : value$(n) = """" + get ftp dir$() + """"
 n = n + 1 : group(n) = g : label$(n) = "GET FTP ERROR$()" : value$(n) = """" + get ftp error$() + """"
 
-rem --- 3. DLLs
-title$(3) = "DLLS" : why$(3) = "Windows DLLs do not exist on other systems."
-load dll "user32.dll", 1
-call dll 1, "MessageBeep", 0
-g = 3
-n = n + 1 : group(n) = g : label$(n) = "DLL EXIST(1)" : value$(n) = str$(dll exist(1))
-n = n + 1 : group(n) = g : label$(n) = "DLL CALL EXIST(1, ""MessageBeep"")" : value$(n) = str$(dll call exist(1, "MessageBeep"))
-n = n + 1 : group(n) = g : label$(n) = "CALL DLL(1, ""GetTickCount"")" : value$(n) = str$(call dll(1, "GetTickCount"))
-n = n + 1 : group(n) = g : label$(n) = "WINDIR$()" : value$(n) = """" + windir$() + """"
-delete dll 1
-
-rem --- 4. Video memory and old hardware switches
-title$(4) = "HARDWARE" : why$(4) = "Modern graphics hide video memory and need no software emulation."
+rem --- 3. Video memory, the Windows folder and old hardware switches
+title$(3) = "HARDWARE" : why$(3) = "Modern graphics hide video memory and need no software emulation."
 lock backbuffer
-make memblock 1, 16
 set graphics card "Primary Display Driver"
 disable tnl : enable tnl
 set emulation on : set emulation off
 disable systemkeys : enable systemkeys
 set eax 1
-g = 4
+g = 3
 n = n + 1 : group(n) = g : label$(n) = "GET BACKBUFFER PTR()" : value$(n) = str$(get backbuffer ptr())
-n = n + 1 : group(n) = g : label$(n) = "GET MEMBLOCK PTR(1)" : value$(n) = str$(get memblock ptr(1))
+n = n + 1 : group(n) = g : label$(n) = "WINDIR$()" : value$(n) = """" + windir$() + """"
 n = n + 1 : group(n) = g : label$(n) = "EMULATION MODE()" : value$(n) = str$(emulation mode())
 unlock backbuffer
-delete memblock 1
 
-pages = 4 : page = 1 : changed = timer()
+pages = 3 : page = 1 : changed = timer()
 do
    if timer() - changed > 4000 or (rightkey() = 1 and held = 0) then page = (page mod pages) + 1 : changed = timer()
    held = rightkey()

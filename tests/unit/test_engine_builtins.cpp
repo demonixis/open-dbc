@@ -4137,7 +4137,7 @@ TEST_CASE("Every permanent Classic compatibility stub dispatches its typed neutr
                 CHECK(Result.ReturnValue->AsReal() == doctest::Approx(Expected));
         }
     }
-    CHECK(Exercised.size() == 39);
+    CHECK(Exercised.size() == 32);
 }
 
 TEST_CASE("Compatibility stub logging is debug-only and once per symbol per execution host")

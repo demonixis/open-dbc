@@ -987,6 +987,23 @@ namespace dbc
         }
     }
 
+    bool MemblockSystem::MemblockAddress(std::uint32_t& Output, int Num, std::string* Error) const
+    {
+        if (!MemblockData(Num, Error))
+            return false;
+        Output = static_cast<std::uint32_t>(Num) << 24;
+        return true;
+    }
+
+    std::uint8_t* MemblockSystem::ResolveAddress(std::uint32_t Address, std::uint32_t Size)
+    {
+        std::vector<uint8_t>* Data = GetMemblock(static_cast<int>(Address >> 24));
+        const std::size_t Offset = Address & 0x00FFFFFFu;
+        if (!Data || Offset > Data->size() || Size > Data->size() - Offset)
+            return nullptr;
+        return Data->data() + Offset;
+    }
+
     bool MemblockSystem::MemblockSize(int& Output, int Num, std::string* Error)
     {
         const auto* Data = MemblockData(Num, Error);

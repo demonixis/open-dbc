@@ -28,6 +28,7 @@ namespace dbc
     class DebugSystem;
     class VideoSystem;
     class NetworkSystem;
+    class DllSystem;
     class VrSystem;
 
     class EngineKernel
@@ -90,6 +91,8 @@ namespace dbc
         const VideoSystem& Video() const;
         NetworkSystem& Network();
         const NetworkSystem& Network() const;
+        DllSystem& Dlls();
+        const DllSystem& Dlls() const;
 
       private:
         bool Initialized_ = false;
@@ -114,6 +117,7 @@ namespace dbc
         std::unique_ptr<DebugSystem> DebugSystem_;
         std::unique_ptr<VideoSystem> Video_;
         std::unique_ptr<NetworkSystem> Network_;
+        std::unique_ptr<DllSystem> Dlls_;
         std::unique_ptr<VrSystem> Vr_;
     };
 

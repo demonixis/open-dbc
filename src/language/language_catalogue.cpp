@@ -38,8 +38,6 @@ namespace
         using dbc::language::SymbolId;
         switch (Id)
         {
-            case SymbolId::Command_CallDll:
-            case SymbolId::Command_DeleteDll:
             case SymbolId::Command_DisableSystemkeys:
             case SymbolId::Command_DisableTnl:
             case SymbolId::Command_EnableSystemkeys:
@@ -55,16 +53,12 @@ namespace
             case SymbolId::Command_FtpSetDir:
             case SymbolId::Command_FtpTerminate:
             case SymbolId::Command_LoadCdmusic:
-            case SymbolId::Command_LoadDll:
             case SymbolId::Command_LockBackbuffer:
             case SymbolId::Command_SetEax:
             case SymbolId::Command_SetEmulationOff:
             case SymbolId::Command_SetEmulationOn:
             case SymbolId::Command_SetGraphicsCard:
             case SymbolId::Command_UnlockBackbuffer:
-            case SymbolId::Function_CallDll:
-            case SymbolId::Function_DllCallExist:
-            case SymbolId::Function_DllExist:
             case SymbolId::Function_EmulationMode:
             case SymbolId::Function_GetBackbufferPtr:
             case SymbolId::Function_GetFtpDirString:
@@ -75,7 +69,6 @@ namespace
             case SymbolId::Function_GetFtpFileType:
             case SymbolId::Function_GetFtpProgress:
             case SymbolId::Function_GetFtpStatus:
-            case SymbolId::Function_GetMemblockPtr:
             case SymbolId::Function_WindirString:
                 return true;
             default:
@@ -397,7 +390,6 @@ namespace dbc::language
         switch (Descriptor.Id)
         {
             case SymbolId::Command_LoadCdmusic:
-            case SymbolId::Command_LoadDll:
                 return CompatibilityStubBehavior::AcceptInertResource;
             case SymbolId::Function_GetFtpFailure:
                 return CompatibilityStubBehavior::NumericOne;

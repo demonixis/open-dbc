@@ -50,6 +50,17 @@ Net games run over ENet ([network.md](network.md)).
 - [ ] DBPro: string parameters typed as numbers in the multiplayer signatures,
   `DEFAULT NET GAME`, `NET BUFFER SIZE`.
 
+## Native plugins
+
+`LOAD DLL` and `CALL DLL` run OpenDBC plugins ([plugins.md](plugins.md)).
+
+- [ ] `LOCK BACKBUFFER` and `GET BACKBUFFER PTR`: read the screen back into an
+  addressable buffer and draw it as the frame on `UNLOCK BACKBUFFER`.
+- [ ] Exports: bundle each platform's plugin and sign it with the runner; iOS and
+  Android need them inside the app package.
+- [ ] Ship `sdk/opendbc_plugin.h` with the Studio.
+- [ ] `CALL DLL()` string results need a string-typed form in the catalogue.
+
 ## DBPro BSP worlds
 
 DBPro's own BSP format, its drawing and collision are done ([bsp.md](bsp.md)).

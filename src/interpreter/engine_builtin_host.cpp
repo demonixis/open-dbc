@@ -70,12 +70,11 @@ namespace dbc::interpreter::detail
                     Error = "Integer argument cannot be represented exactly by the engine bridge";
                     return std::nullopt;
                 }
-                Number = static_cast<double>(*Integer);
+                BuiltinValue Result = BuiltinValue::FromNumber(static_cast<double>(*Integer));
+                Result.IsInteger = true;
+                return Result;
             }
-            else
-            {
-                Number = Source.AsReal();
-            }
+            Number = Source.AsReal();
             if (!std::isfinite(Number))
             {
                 Error = "Numeric builtin argument is not finite";

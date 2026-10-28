@@ -12,7 +12,7 @@ CATALOGUE = ROOT / "src/language/language_catalogue.inc"
 CATALOGUE_IMPLEMENTATION = ROOT / "src/language/language_catalogue.cpp"
 DEFAULT_OUTPUT = ROOT / "tests/unit/compatibility_stub_manifest.tsv"
 
-INERT_RESOURCES = {"Command_LoadCdmusic", "Command_LoadDll"}
+INERT_RESOURCES = {"Command_LoadCdmusic"}
 EMPTY_STRINGS = {
     "Function_GetFtpDirString",
     "Function_GetFtpErrorString",
@@ -44,8 +44,8 @@ def neutral_behavior(symbol_id: str, kind: str, _name: str) -> str:
 
 def generate() -> str:
     permanent = permanent_symbols()
-    if len(permanent) != 39:
-        raise SystemExit(f"permanent Classic compatibility allowlist must contain exactly 39 symbols, got {len(permanent)}")
+    if len(permanent) != 32:
+        raise SystemExit(f"permanent Classic compatibility allowlist must contain exactly 32 symbols, got {len(permanent)}")
     rows = ["profile\tsymbol_id\tkind\tname\tpolicy\tneutral_behavior"]
     seen = set()
     for match in ENTRY.finditer(CATALOGUE.read_text(encoding="utf-8")):

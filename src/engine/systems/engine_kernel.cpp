@@ -4,6 +4,7 @@
 #include "camera_system.hpp"
 #include "core_system.hpp"
 #include "debug_system.hpp"
+#include "dll_system.hpp"
 #include "draw_system.hpp"
 #include "file_io_system.hpp"
 #include "graphics_device_system.hpp"
@@ -68,6 +69,7 @@ namespace dbc
         DebugSystem_ = std::make_unique<DebugSystem>(*this);
         Video_ = std::make_unique<VideoSystem>(*this);
         Network_ = std::make_unique<NetworkSystem>();
+        Dlls_ = std::make_unique<DllSystem>(*this);
         dbc::log::AttachRingBuffer(DebugSystem_.get());
 
         Initialized_ = true;
@@ -81,6 +83,7 @@ namespace dbc
         dbc::log::DetachRingBuffer(DebugSystem_.get());
         if (Vr_)
             Vr_->DetachDevice();
+        Dlls_.reset();
         Network_.reset();
         Video_.reset();
         DebugSystem_.reset();
@@ -345,6 +348,16 @@ namespace dbc
     const NetworkSystem& EngineKernel::Network() const
     {
         return *Network_;
+    }
+
+    DllSystem& EngineKernel::Dlls()
+    {
+        return *Dlls_;
+    }
+
+    const DllSystem& EngineKernel::Dlls() const
+    {
+        return *Dlls_;
     }
 
 } // namespace dbc

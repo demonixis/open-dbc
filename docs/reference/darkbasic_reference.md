@@ -28,7 +28,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `BLUR BITMAP` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `BOB` | Command | 4 | number, number, number, number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
 | `BOX` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `CALL DLL` | Command | 2-11 | number, string, any, any, any, any, any, any, any, any, any -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `CALL DLL` | Command | 2-11 | number, string, any, any, any, any, any, any, any, any, any -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CD` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CENTER TEXT` | Command | 3 | number, number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CHANGE MESH` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -57,7 +57,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DELETE BITMAP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DELETE BOB` | Command | 1 | number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
 | `DELETE DIRECTORY` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `DELETE DLL` | Command | 1 | number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `DELETE DLL` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DELETE FILE` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DELETE IMAGE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DELETE LIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -155,7 +155,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `LOAD ARRAY` | Command | 2 | string, any array -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOAD BITMAP` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOAD CDMUSIC` | Command | 2 | number, number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `LOAD DLL` | Command | 2 | string, number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `LOAD DLL` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOAD IMAGE` | Command | 2-3 | string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOAD MESH` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOAD MUSIC` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -482,7 +482,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `BOB WIDTH` | Function | 1 | number -> real | Implemented | Classic help | DarkBASIC Classic function implemented with an observable contract. |
 | `BOB X` | Function | 1 | number -> real | Implemented | Classic help | DarkBASIC Classic function implemented with an observable contract. |
 | `BOB Y` | Function | 1 | number -> real | Implemented | Classic help | DarkBASIC Classic function implemented with an observable contract. |
-| `CALL DLL` | Function | 2-11 | number, string, any, any, any, any, any, any, any, any, any -> real | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
+| `CALL DLL` | Function | 2-11 | number, string, any, any, any, any, any, any, any, any, any -> real | Implemented | Classic help | DarkBASIC Classic function implemented with an observable contract. |
 | `CAMERA ANGLE X` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `CAMERA ANGLE Y` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `CAMERA ANGLE Z` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
@@ -509,8 +509,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CURRENT GRAPHICS CARD$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `CURVEANGLE` | Function | 3 | number, number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `CURVEVALUE` | Function | 3 | number, number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
-| `DLL CALL EXIST` | Function | 2 | number, string -> real | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
-| `DLL EXIST` | Function | 1 | number -> real | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
+| `DLL CALL EXIST` | Function | 2 | number, string -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
+| `DLL EXIST` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `DOWNKEY` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `EMULATION MODE` | Function | 0 | none -> real | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
 | `ENTRY$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
@@ -543,7 +543,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET FTP STATUS` | Function | 0 | none -> real | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
 | `GET GROUND HEIGHT` | Function | 3 | number, number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET MATRIX HEIGHT` | Function | 3 | number, number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
-| `GET MEMBLOCK PTR` | Function | 1 | number -> real | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
+| `GET MEMBLOCK PTR` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET MEMBLOCK SIZE` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET OBJECT COLLISION X` | Function | 0-1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET OBJECT COLLISION Y` | Function | 0-1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |

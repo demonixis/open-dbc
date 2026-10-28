@@ -41,6 +41,11 @@ namespace dbc
 
         // Queries
         bool MemblockExist(int& Output, int Num, std::string* Error = nullptr);
+        // GET MEMBLOCK PTR addresses carry the memblock number in their top byte and an offset below it, so
+        // plugins reach the first 16 MB of each memblock and no native pointer reaches BASIC.
+        bool MemblockAddress(std::uint32_t& Output, int Num, std::string* Error = nullptr) const;
+        // Null unless Size bytes from the address lie in one memblock.
+        std::uint8_t* ResolveAddress(std::uint32_t Address, std::uint32_t Size);
         bool MemblockSize(int& Output, int Num, std::string* Error = nullptr);
 
         // 3D mesh creation from DBC binary memblock format

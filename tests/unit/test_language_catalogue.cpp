@@ -263,7 +263,9 @@ TEST_CASE("Implemented overloads use concrete scalar types outside historical po
                                  Convention == dbc::language::BuiltinConvention::Undim ||
                                  Convention == dbc::language::BuiltinConvention::ArrayCollection ||
                                  Overload.Symbol == dbc::language::SymbolId::Function_StrString ||
-                                 Overload.Symbol == dbc::language::SymbolId::Command_Printc;
+                                 Overload.Symbol == dbc::language::SymbolId::Command_Printc ||
+                                 Overload.Symbol == dbc::language::SymbolId::Command_CallDll ||
+                                 Overload.Symbol == dbc::language::SymbolId::Function_CallDll;
         CAPTURE(Descriptor.CanonicalName);
         for (const dbc::language::BuiltinParameter& Parameter : Overload.Parameters)
         {
@@ -283,7 +285,7 @@ TEST_CASE("Incomplete and host-only behavior is not advertised as implemented")
     CHECK(dbc::language::SupportFor(*Unsupported, LanguageProfile::DbPro) == SupportStatus::Unsupported);
 
     // Catalogued from the Classic help and accepted through the explicit non-portable compatibility boundary.
-    const auto* Recorded = dbc::language::FindSymbol(LanguageProfile::Dbc, SymbolKind::Command, "LOAD DLL");
+    const auto* Recorded = dbc::language::FindSymbol(LanguageProfile::Dbc, SymbolKind::Command, "FTP CONNECT");
     REQUIRE(Recorded != nullptr);
     CHECK(dbc::language::SupportFor(*Recorded, LanguageProfile::Dbc) == SupportStatus::CompatibilityStub);
     CHECK(dbc::language::StubPolicyFor(*Recorded, LanguageProfile::Dbc) ==
@@ -386,7 +388,7 @@ TEST_CASE("Every available Classic callable is executable with an auditable stub
     CAPTURE(Temporary);
     CAPTURE(Permanent);
     CHECK(Temporary == 0);
-    CHECK(Permanent == 39);
+    CHECK(Permanent == 32);
 }
 
 TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavior and profile isolation")
@@ -473,7 +475,7 @@ TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavio
             Expected.insert(Descriptor.Id);
         CHECK((Descriptor.CompatibilityStubProfiles & 2U) == 0);
     }
-    CHECK(Expected.size() == 39);
+    CHECK(Expected.size() == 32);
     CHECK(Actual == Expected);
 }
 

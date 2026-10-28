@@ -12,6 +12,7 @@ dbc	17	22	Command	BACKDROP ON	engine-state	test_engine_builtins.cpp::Classic bac
 dbc	21	27	Command	BLUR BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
 dbc	22	29	Command	BOB	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
 dbc	23	30	Command	BOX	golden-output	test_box_fill.dba	a111cad372a8fcba26d29c37ad355dace29891a6cc86bd5c37611bfd7de0a7e9
+dbc	33	42	Command	CALL DLL	native-plugin-call	test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values	-
 dbc	37	47	Command	CD	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
 dbc	38	49	Command	CENTER TEXT	engine-state	test_engine_builtins.cpp::Classic primitive and text commands queue observable frame state	-
 dbc	39	51	Command	CHANGE MESH	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
@@ -42,6 +43,7 @@ dbc	74	108	Command	DELETE ANIMATION	animation-state	test_engine_builtins.cpp::Cl
 dbc	75	110	Command	DELETE BITMAP	golden-output	test_bitmap_ops.dba	359229e9ab686deeeeed13827338ddfc325215a27145e0a8cbdf6b3f72ce318c
 dbc	76	112	Command	DELETE BOB	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
 dbc	79	115	Command	DELETE DIRECTORY	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
+dbc	80	117	Command	DELETE DLL	native-plugin-call	test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values	-
 dbc	82	120	Command	DELETE FILE	golden-output	test_array_namespace.dba	c395d2dcbc528d5821e9637cc8acd35c9bfab7e10975243b99eaa1dc6dd89d47
 dbc	83	122	Command	DELETE IMAGE	golden-output	test_images.dba	fef2f4622e193bebf87b317809e35d6cd4b4beaa691fdb67cf1b9e4807f58481
 dbc	84	124	Command	DELETE LIGHT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
@@ -120,6 +122,7 @@ dbc	205	318	Command	LOAD 3DSOUND	audio-state	test_engine_builtins.cpp::Portable 
 dbc	206	320	Command	LOAD ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
 dbc	207	322	Command	LOAD ARRAY	golden-output	test_array_namespace.dba	c395d2dcbc528d5821e9637cc8acd35c9bfab7e10975243b99eaa1dc6dd89d47
 dbc	208	324	Command	LOAD BITMAP	runtime-error	test_engine_builtins.cpp::Asset load failures become runtime errors and leave no resource slot	-
+dbc	211	329	Command	LOAD DLL	native-plugin-call	test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values	-
 dbc	214	333	Command	LOAD IMAGE	runtime-error	test_engine_builtins.cpp::Asset load failures become runtime errors and leave no resource slot	-
 dbc	215	335	Command	LOAD MESH	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbc	216	337	Command	LOAD MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -438,6 +441,7 @@ dbc	743	1119	Function	BOB SCALE Y	bob-render-collision-state	test_engine_builtin
 dbc	744	1120	Function	BOB WIDTH	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
 dbc	745	1121	Function	BOB X	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
 dbc	746	1122	Function	BOB Y	bob-render-collision-state	test_engine_builtins.cpp::Classic BOBs retain independent render collision and transform state	-
+dbc	751	1127	Function	CALL DLL	native-plugin-call	test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values	-
 dbc	752	1128	Function	CAMERA ANGLE X	golden-output	test_camera.dba	343a711b3152b781a7c3cca84254bed9f7641891384ffa5499070d1a81deb78c
 dbc	753	1130	Function	CAMERA ANGLE Y	golden-output	test_camera.dba	343a711b3152b781a7c3cca84254bed9f7641891384ffa5499070d1a81deb78c
 dbc	754	1132	Function	CAMERA ANGLE Z	golden-output	test_camera.dba	343a711b3152b781a7c3cca84254bed9f7641891384ffa5499070d1a81deb78c
@@ -464,6 +468,8 @@ dbc	776	1175	Function	CURRENT BITMAP	golden-output	test_bitmap_ops.dba	359229e9a
 dbc	778	1177	Function	CURRENT GRAPHICS CARD$	golden-output	test_display.dba	dd77e40597d58dcf14d0b4579976ed9504e97a9ea746233b2c04a953fc49981f
 dbc	779	1179	Function	CURVEANGLE	golden-output	test_math.dba	fbc34ac7b482ab61efa6ba907ab95916bd1c2d43b6bb1b157077bc6b0e75eb82
 dbc	780	1181	Function	CURVEVALUE	golden-output	test_math.dba	fbc34ac7b482ab61efa6ba907ab95916bd1c2d43b6bb1b157077bc6b0e75eb82
+dbc	781	1183	Function	DLL CALL EXIST	native-plugin-call	test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values	-
+dbc	782	1185	Function	DLL EXIST	native-plugin-call	test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values	-
 dbc	785	1189	Function	DOWNKEY	input-state	test_engine_builtins.cpp::Classic input functions preserve held keys absolute mouse state and button masks	-
 dbc	788	1193	Function	ENTRY$	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbc	789	1195	Function	ESCAPEKEY	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
@@ -486,6 +492,7 @@ dbc	807	1229	Function	GET FILE NAME$	confined-file-dirblock-state	test_engine_bu
 dbc	808	1231	Function	GET FILE TYPE	confined-file-dirblock-state	test_engine_builtins.cpp::Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root	-
 dbc	817	1249	Function	GET GROUND HEIGHT	golden-output	test_matrix.dba	2b2752dd221dd50f377a0b2a5b28fece6b8056bce53f8cb6e30c41e8c180c82c
 dbc	819	1252	Function	GET MATRIX HEIGHT	golden-output	test_matrix.dba	2b2752dd221dd50f377a0b2a5b28fece6b8056bce53f8cb6e30c41e8c180c82c
+dbc	823	1257	Function	GET MEMBLOCK PTR	native-plugin-call	test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values	-
 dbc	824	1259	Function	GET MEMBLOCK SIZE	golden-output	test_memblocks.dba	c8316c83f1515d3aeb875382359b77cdcdaed7a0d67142207e5bde5a9acd5e9f
 dbc	825	1261	Function	GET OBJECT COLLISION X	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbc	826	1263	Function	GET OBJECT COLLISION Y	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
