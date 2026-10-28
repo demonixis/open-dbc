@@ -1,0 +1,17 @@
+rem Runs the Studio Scene view's generated files as a Pro program includes them
+#include "scene/pro/opendbc_game.dba"
+SetupGame()
+#include "scene/pro/levels/Golden.dba"
+LoadLevel_Golden()
+
+print "objects="; object exist(1000); object exist(1001); object exist(1002); object exist(1003)
+print "crate="; int(object position x(1000)); ","; int(object position z(1000)); ","; int(object angle y(1000))
+print "wall="; int(object angle y(1002))
+print "dome="; int(object position z(1003))
+print "matrix="; matrix exist(1); ","; int(matrix position x(1)); ","; int(matrix position z(1))
+print "terrain="; terrain exist(1); ","; int(terrain position y(1))
+print "light="; light exist(1); ","; light type(1); ","; int(light range(1))
+print "camera="; int(camera position y()); ","; int(camera position z()); ","; int(camera angle x())
+print "TEST_DONE"
+sync
+end

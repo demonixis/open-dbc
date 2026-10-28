@@ -1,0 +1,9 @@
+objects=1111
+crate=1,30,45
+wall=90
+dome=100
+matrix=1,-500,-400
+terrain=1,-10
+light=1,2,500
+camera=80,-200,15
+TEST_DONE

@@ -65,6 +65,8 @@ test_object_position.dba	dbc
 test_operator_calls.dba	dbc
 test_print_segments.dba	dbc
 test_remstart.dba	dbc
+test_scene_level.dba	dbc
+test_scene_level_dbpro.dba	dbpro
 test_select_case.dba	dbc
 test_sprites.dba	dbc
 test_statement_colon.dba	dbc

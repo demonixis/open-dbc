@@ -51,6 +51,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_integration.cpp
     )
     target_include_directories(test_studio_scene PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
+    target_compile_definitions(test_studio_scene PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     target_link_libraries(test_studio_scene PRIVATE doctest_with_main dbc_language glm::glm)
     doctest_discover_tests(test_studio_scene PROPERTIES LABELS "unit-studio")
 

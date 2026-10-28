@@ -5,6 +5,9 @@
 #include "scene/scene_document.hpp"
 #include "scene/scene_integration.hpp"
 
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <memory>
 #include <string>
 
@@ -14,6 +17,13 @@ using namespace dbc::studio;
 
 namespace
 {
+    std::string ReadText(const std::filesystem::path& Path)
+    {
+        std::ifstream Stream(Path, std::ios::binary);
+        REQUIRE(Stream);
+        return std::string(std::istreambuf_iterator<char>(Stream), {});
+    }
+
     std::string BindErrors(const std::string& Text, LanguageProfile Profile)
     {
         auto Source = std::make_shared<dbc::language::SourceDocument>();
@@ -124,6 +134,27 @@ TEST_CASE("Scene levels round-trip through the generated BASIC in both profiles"
             FAIL_CHECK(Error.Line << ": " << Error.Message);
         CHECK(Read.Document == Document);
         CHECK(scene::WriteLevel(Read.Document) == Text);
+    }
+}
+
+TEST_CASE("The BASIC goldens run the generator's exact output")
+{
+    const std::filesystem::path Root = std::filesystem::path(TEST_SOURCE_DIR) / "tests/dba/scene";
+    const std::pair<const char*, LanguageProfile> Cases[] = {{"classic", LanguageProfile::Dbc},
+                                                             {"pro", LanguageProfile::DbPro}};
+    for (const auto& [Folder, Profile] : Cases)
+    {
+        CAPTURE(Folder);
+        const std::string Level = ReadText(Root / Folder / "levels/Golden.dba");
+        const scene::LevelReadResult Read = scene::ReadLevel(Level, "Golden", Profile);
+        for (const scene::ReadError& Error : Read.Errors)
+            FAIL_CHECK(Error.Line << ": " << Error.Message);
+        CHECK(scene::WriteLevel(Read.Document) == Level);
+
+        const std::string Game = ReadText(Root / Folder / scene::KGameFileName);
+        const scene::GameReadResult GameRead = scene::ReadGame(Game, Profile);
+        CHECK(GameRead.Ok());
+        CHECK(scene::WriteGame(GameRead.Settings, Profile) == Game);
     }
 }
 
