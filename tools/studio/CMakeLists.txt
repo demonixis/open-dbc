@@ -153,6 +153,8 @@ set(STUDIO_SOURCES
     src/core/media_catalogue.cpp
     src/core/media_catalogue.hpp
     src/core/paths.cpp
+    src/core/new_project.cpp
+    src/core/new_project.hpp
     src/core/paths.hpp
     src/core/project_settings.cpp
     src/core/project_settings.hpp
