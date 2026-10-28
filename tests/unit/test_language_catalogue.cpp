@@ -388,7 +388,7 @@ TEST_CASE("Every available Classic callable is executable with an auditable stub
     CAPTURE(Temporary);
     CAPTURE(Permanent);
     CHECK(Temporary == 0);
-    CHECK(Permanent == 32);
+    CHECK(Permanent == 29);
 }
 
 TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavior and profile isolation")
@@ -475,7 +475,7 @@ TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavio
             Expected.insert(Descriptor.Id);
         CHECK((Descriptor.CompatibilityStubProfiles & 2U) == 0);
     }
-    CHECK(Expected.size() == 32);
+    CHECK(Expected.size() == 29);
     CHECK(Actual == Expected);
 }
 

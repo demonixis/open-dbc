@@ -14,14 +14,11 @@ dbc	Command_FtpPutFile	Command	FTP PUT FILE	Permanent	no-op
 dbc	Command_FtpSetDir	Command	FTP SET DIR	Permanent	no-op
 dbc	Command_FtpTerminate	Command	FTP TERMINATE	Permanent	no-op
 dbc	Command_LoadCdmusic	Command	LOAD CDMUSIC	Permanent	accept-inert-resource-id
-dbc	Command_LockBackbuffer	Command	LOCK BACKBUFFER	Permanent	no-op
 dbc	Command_SetEax	Command	SET EAX	Permanent	no-op
 dbc	Command_SetEmulationOff	Command	SET EMULATION OFF	Permanent	no-op
 dbc	Command_SetEmulationOn	Command	SET EMULATION ON	Permanent	no-op
 dbc	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Permanent	no-op
-dbc	Command_UnlockBackbuffer	Command	UNLOCK BACKBUFFER	Permanent	no-op
 dbc	Function_EmulationMode	Function	EMULATION MODE	Permanent	numeric:0
-dbc	Function_GetBackbufferPtr	Function	GET BACKBUFFER PTR	Permanent	numeric:0
 dbc	Function_GetFtpDirString	Function	GET FTP DIR$	Permanent	string:empty
 dbc	Function_GetFtpErrorString	Function	GET FTP ERROR$	Permanent	string:empty
 dbc	Function_GetFtpFailure	Function	GET FTP FAILURE	Permanent	numeric:1

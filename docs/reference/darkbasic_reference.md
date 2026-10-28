@@ -162,7 +162,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `LOAD OBJECT` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOAD SOUND` | Command | 2-3 | string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOAD STATIC OBJECTS` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `LOCK BACKBUFFER` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `LOCK BACKBUFFER` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOCK OBJECT OFF` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOCK OBJECT ON` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `LOOP ANIMATION` | Command | 1, 6 | number -> void; number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -417,7 +417,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `TURN OBJECT RIGHT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `UNDIM` | Command | 1 | any array -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `UNGLUE OBJECT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `UNLOCK BACKBUFFER` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `UNLOCK BACKBUFFER` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `UPDATE MATRIX` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `WAIT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `WAIT KEY` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -525,7 +525,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET BACKBUFFER DEPTH` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET BACKBUFFER HEIGHT` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET BACKBUFFER PITCH` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
-| `GET BACKBUFFER PTR` | Function | 0 | none -> real | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
+| `GET BACKBUFFER PTR` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET BACKBUFFER WIDTH` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET CLIPBOARD$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `GET DATE$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |

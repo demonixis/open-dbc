@@ -1593,6 +1593,28 @@ namespace dbc::interpreter::detail
             return Context.Kernel->Dlls().CallDll(Result, Number, Arguments[1].AsString(), Values, Error);
         }
 
+        struct BackbufferLayout
+        {
+            int Width = 0;
+            int Height = 0;
+            int Depth = 0;
+            int Pitch = 0;
+        };
+
+        // The locked buffer while LOCK BACKBUFFER holds it, otherwise the screen it would copy.
+        BackbufferLayout Backbuffer(BuiltinContext& Context)
+        {
+            BackbufferLayout Layout;
+            if (Context.Kernel->Memblocks().LockedBackbuffer(Layout.Width, Layout.Height, Layout.Depth, Layout.Pitch))
+                return Layout;
+            CoreSystem& Core = Context.Kernel->Core();
+            Layout.Width = Core.WindowWidth();
+            Layout.Height = Core.WindowHeight();
+            Layout.Depth = Core.ScreenDepth();
+            Layout.Pitch = Layout.Width * (Layout.Depth / 8);
+            return Layout;
+        }
+
         const std::filesystem::path& RegistryPath(BuiltinContext& Context)
         {
             if (Context.RegistryPath.empty())

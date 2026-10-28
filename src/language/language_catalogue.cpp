@@ -53,14 +53,11 @@ namespace
             case SymbolId::Command_FtpSetDir:
             case SymbolId::Command_FtpTerminate:
             case SymbolId::Command_LoadCdmusic:
-            case SymbolId::Command_LockBackbuffer:
             case SymbolId::Command_SetEax:
             case SymbolId::Command_SetEmulationOff:
             case SymbolId::Command_SetEmulationOn:
             case SymbolId::Command_SetGraphicsCard:
-            case SymbolId::Command_UnlockBackbuffer:
             case SymbolId::Function_EmulationMode:
-            case SymbolId::Function_GetBackbufferPtr:
             case SymbolId::Function_GetFtpDirString:
             case SymbolId::Function_GetFtpErrorString:
             case SymbolId::Function_GetFtpFailure:

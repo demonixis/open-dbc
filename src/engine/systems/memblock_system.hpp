@@ -48,6 +48,14 @@ namespace dbc
         std::uint8_t* ResolveAddress(std::uint32_t Address, std::uint32_t Size);
         bool MemblockSize(int& Output, int Num, std::string* Error = nullptr);
 
+        // LOCK BACKBUFFER copies the screen, as MAKE MEMBLOCK FROM BITMAP 0 encodes it, into a buffer whose
+        // address lies below every memblock address; UNLOCK BACKBUFFER draws it back as bitmap 0.
+        bool LockBackbuffer(std::string* Error = nullptr);
+        bool UnlockBackbuffer(std::string* Error = nullptr);
+        bool BackbufferAddress(std::uint32_t& Output, std::string* Error = nullptr) const;
+        // The locked buffer's layout; false while the backbuffer is unlocked.
+        bool LockedBackbuffer(int& Width, int& Height, int& Depth, int& Pitch) const;
+
         // 3D mesh creation from DBC binary memblock format
         bool MakeMeshFromMemblock(int MeshId, int MemblockNum, std::string* Error = nullptr);
         bool ChangeMeshFromMemblock(int MeshId, int MemblockNum, std::string* Error = nullptr);
@@ -86,6 +94,8 @@ namespace dbc
 
         EngineKernel& Kernel_;
         std::unordered_map<int, std::vector<uint8_t>> Memblocks_;
+        // Encoded with its 12-byte bitmap header; empty while unlocked.
+        std::vector<uint8_t> Backbuffer_;
     };
 
 } // namespace dbc

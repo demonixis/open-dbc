@@ -1,11 +1,14 @@
 #include "engine/runtime_compatibility.hpp"
 #include "engine/systems/engine_kernel.hpp"
+#include "engine/systems/image_store.hpp"
 #include "engine/systems/memblock_system.hpp"
 #include "interpreter/engine_builtin_context.hpp"
 #include "interpreter/engine_builtin_registry.hpp"
 
 #include <doctest/doctest.h>
 
+#include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -155,4 +158,57 @@ TEST_CASE("Classic DLL commands load OpenDBC plugins and call them with typed va
 
     Basic.Context().Profile = dbc::language::LanguageProfile::DbPro;
     CHECK_FALSE(Basic.Command(SymbolId::Command_LoadDll, {Integer(1), Integer(1)}));
+}
+
+TEST_CASE("LOCK BACKBUFFER lends the screen to plugins and UNLOCK BACKBUFFER draws it back")
+{
+    Program Basic;
+    double Unused = 0.0;
+    CHECK_FALSE(Basic.Function(SymbolId::Function_GetBackbufferPtr, {}, Unused));
+    CHECK(Basic.Error == "GET BACKBUFFER PTR requires LOCK BACKBUFFER");
+    CHECK_FALSE(Basic.Command(SymbolId::Command_UnlockBackbuffer, {}));
+    CHECK(Basic.Error == "UNLOCK BACKBUFFER requires a locked backbuffer");
+
+    // A 4x2 screen of grey pixels, drawn while bitmap 1 is current.
+    dbc::MemblockSystem& Memblocks = Basic.Kernel().Memblocks();
+    std::string Error;
+    std::vector<std::uint8_t> Screen(12u + 4u * 2u * 4u, 0x40u);
+    const std::uint32_t Header[3] = {4u, 2u, 32u};
+    std::memcpy(Screen.data(), Header, sizeof(Header));
+    REQUIRE(Memblocks.DecodeBitmap(0, Screen, "test", &Error));
+    REQUIRE(Memblocks.DecodeBitmap(1, Screen, "test", &Error));
+    REQUIRE(Basic.Kernel().ImageStoreRef().CurrentBitmap() == 1);
+
+    Basic.Require(SymbolId::Command_LoadDll, {Text("test_dll_plugin.dll"), Integer(1)});
+    Basic.Require(SymbolId::Command_LockBackbuffer, {});
+    CHECK_FALSE(Basic.Command(SymbolId::Command_LockBackbuffer, {}));
+    CHECK(Basic.Error == "LOCK BACKBUFFER requires an unlocked backbuffer");
+    const double Pointer = Basic.Value(SymbolId::Function_GetBackbufferPtr, {});
+    CHECK(Pointer == 4096.0);
+    CHECK(Basic.Value(SymbolId::Function_GetBackbufferWidth, {}) == 4.0);
+    CHECK(Basic.Value(SymbolId::Function_GetBackbufferHeight, {}) == 2.0);
+    CHECK(Basic.Value(SymbolId::Function_GetBackbufferDepth, {}) == 32.0);
+    const double Pitch = Basic.Value(SymbolId::Function_GetBackbufferPitch, {});
+    CHECK(Pitch == 16.0);
+
+    // The plugin whitens pixel (1, 1); writes outside the 32 locked bytes are refused.
+    Basic.Require(SymbolId::Command_CallDll,
+                  {Integer(1), Text("fill_memblock"), Integer(Pointer + Pitch + 4.0), Integer(4), Integer(255)});
+    CHECK_FALSE(Basic.Command(SymbolId::Command_CallDll,
+                              {Integer(1), Text("fill_memblock"), Integer(Pointer + 30.0), Integer(4), Integer(0)}));
+    CHECK_FALSE(Basic.Command(SymbolId::Command_CallDll,
+                              {Integer(1), Text("fill_memblock"), Integer(Pointer - 1.0), Integer(1), Integer(0)}));
+
+    Basic.Require(SymbolId::Command_UnlockBackbuffer, {});
+    CHECK(Basic.Kernel().ImageStoreRef().CurrentBitmap() == 1);
+    CHECK(Memblocks.ResolveAddress(static_cast<std::uint32_t>(Pointer), 1) == nullptr);
+    CHECK_FALSE(Basic.Function(SymbolId::Function_GetBackbufferPtr, {}, Unused));
+    std::vector<std::uint8_t> Drawn;
+    REQUIRE(Memblocks.EncodeBitmap(Drawn, 0, "test", &Error));
+    REQUIRE(Drawn.size() == Screen.size());
+    const auto Pixel = [&](int X, int Y) { return Drawn.data() + 12 + Y * 16 + X * 4; };
+    CHECK(Pixel(1, 1)[0] == 255);
+    CHECK(Pixel(1, 1)[2] == 255);
+    CHECK(Pixel(0, 1)[0] == 0x40);
+    CHECK(Pixel(1, 0)[1] == 0x40);
 }

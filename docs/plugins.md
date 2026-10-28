@@ -57,5 +57,14 @@ memory with `host->resolve(host->context, address, size)`. The call returns NULL
 unless all `size` bytes lie inside one memblock, and the memory stays valid until
 the function returns. Only the first 16 MB of a memblock can be addressed.
 
-The backbuffer commands (`LOCK BACKBUFFER`, `GET BACKBUFFER PTR`) are still
-compatibility stubs.
+## Backbuffer
+
+`LOCK BACKBUFFER` copies the screen, as `MAKE MEMBLOCK FROM BITMAP 0` reads it,
+into a buffer that `GET BACKBUFFER PTR()` addresses at 4096, below every
+memblock. While it is locked, `GET BACKBUFFER WIDTH/HEIGHT/DEPTH/PITCH()`
+describe that buffer: rows of `PITCH` bytes, 32-bit pixels as little-endian
+`ARGB` dwords or 16-bit `RGB565` words. A plugin resolves addresses into it as
+into a memblock. `UNLOCK BACKBUFFER` draws the buffer back as bitmap 0, over
+anything drawn while it was locked, and keeps the current bitmap. Locking twice,
+unlocking an unlocked buffer and `GET BACKBUFFER PTR()` while unlocked are
+errors, as is a screen whose pixels exceed 16 MB.

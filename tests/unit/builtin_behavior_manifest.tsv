@@ -129,6 +129,7 @@ dbc	216	337	Command	LOAD MUSIC	audio-state	test_engine_builtins.cpp::Portable so
 dbc	217	339	Command	LOAD OBJECT	engine-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
 dbc	218	341	Command	LOAD SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbc	220	343	Command	LOAD STATIC OBJECTS	static-file	test_engine_builtins.cpp::Classic portable static world, line of sight, and global collision have observable state	-
+dbc	222	346	Command	LOCK BACKBUFFER	native-plugin-backbuffer	test_dll.cpp::LOCK BACKBUFFER lends the screen to plugins and UNLOCK BACKBUFFER draws it back	-
 dbc	223	348	Command	LOCK OBJECT OFF	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbc	224	350	Command	LOCK OBJECT ON	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbc	227	354	Command	LOOP ANIMATION	animation-state	test_engine_builtins.cpp::Classic animations validate numbers, files, bitmaps and areas	-
@@ -378,6 +379,7 @@ dbc	675	1000	Command	TURN OBJECT LEFT	object-geometry-texture-state	test_engine_
 dbc	676	1002	Command	TURN OBJECT RIGHT	object-geometry-texture-state	test_engine_builtins.cpp::Classic restored object commands preserve typed state and historical paths	-
 dbc	677	1004	Command	UNDIM	golden-output	test_array_namespace.dba	c395d2dcbc528d5821e9637cc8acd35c9bfab7e10975243b99eaa1dc6dd89d47
 dbc	678	1006	Command	UNGLUE OBJECT	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
+dbc	679	1008	Command	UNLOCK BACKBUFFER	native-plugin-backbuffer	test_dll.cpp::LOCK BACKBUFFER lends the screen to plugins and UNLOCK BACKBUFFER draws it back	-
 dbc	681	1011	Command	UPDATE MATRIX	golden-output	test_matrix.dba	2b2752dd221dd50f377a0b2a5b28fece6b8056bce53f8cb6e30c41e8c180c82c
 dbc	683	1014	Command	WAIT	golden-output	test_wait.dba	a21c92c425c43d7916842499efec75b0846c9ec3f378ed193cc9ecc98d54ff02
 dbc	684	1016	Command	WAIT KEY	golden-output	test_wait_key.dba	0405390aa072f7242b125ee2f72c73ba14f77844a8a12640993093025a6d4c8b
@@ -483,6 +485,7 @@ dbc	797	1209	Function	FOG AVAILABLE	capability	test_engine_builtins.cpp::Portabl
 dbc	798	1211	Function	GET BACKBUFFER DEPTH	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
 dbc	799	1213	Function	GET BACKBUFFER HEIGHT	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
 dbc	800	1215	Function	GET BACKBUFFER PITCH	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
+dbc	801	1217	Function	GET BACKBUFFER PTR	native-plugin-backbuffer	test_dll.cpp::LOCK BACKBUFFER lends the screen to plugins and UNLOCK BACKBUFFER draws it back	-
 dbc	802	1219	Function	GET BACKBUFFER WIDTH	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
 dbc	803	1221	Function	GET CLIPBOARD$	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-
 dbc	804	1223	Function	GET DATE$	host-core-system-state	test_engine_builtins.cpp::Classic host core clipboard and measurable system queries expose observable state	-

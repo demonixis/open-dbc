@@ -23,6 +23,10 @@ namespace dbc
         constexpr std::size_t ClassicTextureCoordinateSize = 8u;
         constexpr std::size_t ClassicSoundHeaderSize = 12u;
         constexpr std::size_t ProfessionalSoundHeaderSize = 28u;
+        constexpr std::size_t BitmapHeaderSize = 12u;
+        // Memblock numbers fill the top address byte from 1, so the backbuffer takes the space below them. It
+        // starts past 0 because programs of the period took a null pointer for a failed lock.
+        constexpr std::uint32_t BackbufferBase = 0x00001000u;
         static_assert(sizeof(Vec3) == ClassicVectorSize);
         static_assert(sizeof(SDL_FPoint) == ClassicTextureCoordinateSize);
 
@@ -997,11 +1001,91 @@ namespace dbc
 
     std::uint8_t* MemblockSystem::ResolveAddress(std::uint32_t Address, std::uint32_t Size)
     {
+        if ((Address >> 24) == 0)
+        {
+            // Below the memblocks: the locked backbuffer's pixels, after its header.
+            if (Backbuffer_.empty() || Address < BackbufferBase)
+                return nullptr;
+            const std::size_t Pixels = Backbuffer_.size() - BitmapHeaderSize;
+            const std::size_t Offset = Address - BackbufferBase;
+            if (Offset > Pixels || Size > Pixels - Offset)
+                return nullptr;
+            return Backbuffer_.data() + BitmapHeaderSize + Offset;
+        }
         std::vector<uint8_t>* Data = GetMemblock(static_cast<int>(Address >> 24));
         const std::size_t Offset = Address & 0x00FFFFFFu;
         if (!Data || Offset > Data->size() || Size > Data->size() - Offset)
             return nullptr;
         return Data->data() + Offset;
+    }
+
+    bool MemblockSystem::LockBackbuffer(std::string* Error)
+    {
+        if (!Backbuffer_.empty())
+        {
+            if (Error)
+                *Error = "LOCK BACKBUFFER requires an unlocked backbuffer";
+            return false;
+        }
+        std::vector<uint8_t> Encoded;
+        if (!EncodeBitmap(Encoded, 0, "LOCK BACKBUFFER", Error))
+            return false;
+        if (Encoded.size() - BitmapHeaderSize > 0x01000000u - BackbufferBase)
+        {
+            if (Error)
+            {
+                std::uint32_t Width = 0;
+                std::uint32_t Height = 0;
+                std::memcpy(&Width, Encoded.data(), 4);
+                std::memcpy(&Height, Encoded.data() + 4, 4);
+                *Error = "LOCK BACKBUFFER cannot address a " + std::to_string(Width) + "x" + std::to_string(Height) +
+                         " screen; its pixels must fit in 16 MB";
+            }
+            return false;
+        }
+        Backbuffer_ = std::move(Encoded);
+        return true;
+    }
+
+    bool MemblockSystem::UnlockBackbuffer(std::string* Error)
+    {
+        if (Backbuffer_.empty())
+        {
+            if (Error)
+                *Error = "UNLOCK BACKBUFFER requires a locked backbuffer";
+            return false;
+        }
+        const std::vector<uint8_t> Locked = std::move(Backbuffer_);
+        Backbuffer_.clear();
+        // Storing bitmap 0 also makes it current; unlocking must not redirect drawing.
+        ImageStore& Images = Kernel_.ImageStoreRef();
+        const int Current = Images.CurrentBitmap();
+        return DecodeBitmap(0, Locked, "UNLOCK BACKBUFFER", Error) && Images.SetCurrentBitmap(Current, Error);
+    }
+
+    bool MemblockSystem::BackbufferAddress(std::uint32_t& Output, std::string* Error) const
+    {
+        if (Backbuffer_.empty())
+        {
+            if (Error)
+                *Error = "GET BACKBUFFER PTR requires LOCK BACKBUFFER";
+            return false;
+        }
+        Output = BackbufferBase;
+        return true;
+    }
+
+    bool MemblockSystem::LockedBackbuffer(int& Width, int& Height, int& Depth, int& Pitch) const
+    {
+        if (Backbuffer_.empty())
+            return false;
+        std::uint32_t Header[3]{};
+        std::memcpy(Header, Backbuffer_.data(), sizeof(Header));
+        Width = static_cast<int>(Header[0]);
+        Height = static_cast<int>(Header[1]);
+        Depth = static_cast<int>(Header[2]);
+        Pitch = Width * (Depth / 8);
+        return true;
     }
 
     bool MemblockSystem::MemblockSize(int& Output, int Num, std::string* Error)

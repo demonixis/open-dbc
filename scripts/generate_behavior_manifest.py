@@ -1464,6 +1464,16 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+DBC_BACKBUFFER_TEST = "test_dll.cpp::LOCK BACKBUFFER lends the screen to plugins and UNLOCK BACKBUFFER draws it back"
+UNIT_WITNESSES += tuple(
+    ("dbc", kind, name, code, "native-plugin-backbuffer", DBC_BACKBUFFER_TEST)
+    for kind, name, code in (
+        ("Command", "LOCK BACKBUFFER", "lock backbuffer\n"),
+        ("Command", "UNLOCK BACKBUFFER", "unlock backbuffer\n"),
+        ("Function", "GET BACKBUFFER PTR", "value = get backbuffer ptr()\n"),
+    )
+)
+
 DBC_NETWORK_MEDIA_TEST = "test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes"
 UNIT_WITNESSES += tuple(
     ("dbc", kind, name, code, "loopback-net-media", DBC_NETWORK_MEDIA_TEST)

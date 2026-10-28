@@ -2,7 +2,7 @@ rem ==================================================================
 rem Compatibility Stubs - an OpenDBC tutorial for the DarkBASIC Classic profile
 rem DarkBASIC Classic relied on Windows 98 technology that has no portable
 rem equivalent today: audio CDs, FTP sessions, the Windows folder and
-rem raw access to the video memory. OpenDBC still accepts every one of
+rem old hardware switches. OpenDBC still accepts every one of
 rem these commands so that old programs run, but they do nothing: commands
 rem return at once, numbers read 0 and strings are empty. This program
 rem calls each of them and shows what it answers, one page per area.
@@ -38,19 +38,16 @@ n = n + 1 : group(n) = g : label$(n) = "GET FTP FILE NAME$()" : value$(n) = """"
 n = n + 1 : group(n) = g : label$(n) = "GET FTP DIR$()" : value$(n) = """" + get ftp dir$() + """"
 n = n + 1 : group(n) = g : label$(n) = "GET FTP ERROR$()" : value$(n) = """" + get ftp error$() + """"
 
-rem --- 3. Video memory, the Windows folder and old hardware switches
-title$(3) = "HARDWARE" : why$(3) = "Modern graphics hide video memory and need no software emulation."
-lock backbuffer
+rem --- 3. The Windows folder and old hardware switches
+title$(3) = "HARDWARE" : why$(3) = "Modern systems hide the Windows folder and need no software emulation."
 set graphics card "Primary Display Driver"
 disable tnl : enable tnl
 set emulation on : set emulation off
 disable systemkeys : enable systemkeys
 set eax 1
 g = 3
-n = n + 1 : group(n) = g : label$(n) = "GET BACKBUFFER PTR()" : value$(n) = str$(get backbuffer ptr())
 n = n + 1 : group(n) = g : label$(n) = "WINDIR$()" : value$(n) = """" + windir$() + """"
 n = n + 1 : group(n) = g : label$(n) = "EMULATION MODE()" : value$(n) = str$(emulation mode())
-unlock backbuffer
 
 pages = 3 : page = 1 : changed = timer()
 do
