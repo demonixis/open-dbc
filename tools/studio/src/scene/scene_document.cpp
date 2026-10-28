@@ -21,9 +21,16 @@ namespace dbc::studio
                     return IdSpace::Terrain;
                 case NodeKind::Light:
                     return IdSpace::Light;
+                case NodeKind::Sound:
+                    return IdSpace::Sound;
                 default:
                     return IdSpace::Object;
             }
+        }
+
+        bool IsMarker(NodeKind Kind)
+        {
+            return Kind == NodeKind::Light || Kind == NodeKind::Sound;
         }
 
         const char* NodeKindLabel(NodeKind Kind)
@@ -52,6 +59,8 @@ namespace dbc::studio
                     return "Terrain";
                 case NodeKind::Light:
                     return "Light";
+                case NodeKind::Sound:
+                    return "3D Sound";
             }
             return "Node";
         }
@@ -84,6 +93,8 @@ namespace dbc::studio
                         return lang::SymbolId::Command_MakeTerrain;
                     case NodeKind::Light:
                         return lang::SymbolId::Command_MakeLight;
+                    case NodeKind::Sound:
+                        return lang::SymbolId::Command_Load3dsound;
                 }
                 return lang::SymbolId::Command_MakeObjectCube;
             }

@@ -22,7 +22,8 @@ namespace dbc::studio
 
             bool NeedsAsset(scene::NodeKind Kind)
             {
-                return Kind == scene::NodeKind::Model || Kind == scene::NodeKind::Terrain;
+                return Kind == scene::NodeKind::Model || Kind == scene::NodeKind::Terrain ||
+                       Kind == scene::NodeKind::Sound;
             }
 
             const char* LightKindLabel(scene::LightKind Kind)
@@ -454,6 +455,15 @@ namespace dbc::studio
                      {scene::LightKind::Point, scene::LightKind::Spot, scene::LightKind::Directional})
                     if (ImGui::MenuItem(LightKindLabel(Kind)))
                         Create(scene::NodeKind::Light, Kind);
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Audio"))
+            {
+                if (ImGui::BeginMenu(scene::NodeKindLabel(scene::NodeKind::Sound)))
+                {
+                    AssetItems(scene::NodeKind::Sound, core::MediaKind::Audio, "No sound under the asset folder");
+                    ImGui::EndMenu();
+                }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Camera"))

@@ -98,6 +98,17 @@ namespace
         Sun.Light = scene::LightKind::Directional;
         Sun.Rotation = {30.0f, -60.0f, 0.0f};
 
+        scene::SceneNode& Hum = Document.Add(scene::NodeKind::Sound);
+        Hum.Asset = "sound/hum.wav";
+        Hum.Position = {10.0f, 20.0f, 30.0f};
+        Hum.Volume = 80;
+        scene::SceneNode& Bell = Document.Add(scene::NodeKind::Sound);
+        Bell.Asset = "sound/bell.wav";
+        Bell.Loop = false;
+        scene::SceneNode& Quiet = Document.Add(scene::NodeKind::Sound);
+        Quiet.Asset = "sound/quiet.wav";
+        Quiet.PlayOnLoad = false;
+
         scene::Environment& Env = Document.Env;
         Env.AmbientPercent = 40;
         Env.AmbientColor = 0x202040;
@@ -229,6 +240,8 @@ TEST_CASE("Scene creation menus follow the profile's catalogue support")
     CHECK(scene::KindAvailable(scene::NodeKind::Cube, LanguageProfile::Dbc));
     CHECK(scene::KindAvailable(scene::NodeKind::Matrix, LanguageProfile::Dbc));
     CHECK(scene::KindAvailable(scene::NodeKind::Light, LanguageProfile::Dbc));
+    CHECK(scene::KindAvailable(scene::NodeKind::Sound, LanguageProfile::Dbc));
+    CHECK(scene::KindAvailable(scene::NodeKind::Sound, LanguageProfile::DbPro));
     CHECK_FALSE(scene::KindAvailable(scene::NodeKind::Terrain, LanguageProfile::Dbc));
     CHECK(scene::KindAvailable(scene::NodeKind::Terrain, LanguageProfile::DbPro));
 
@@ -275,6 +288,7 @@ TEST_CASE("Scene numbers fill gaps from each space's base")
     CHECK(Document.Add(scene::NodeKind::Sphere).Id == 1001);
     CHECK(Document.Add(scene::NodeKind::Matrix).Id == 1);
     CHECK(Document.Add(scene::NodeKind::Light).Id == 1);
+    CHECK(Document.Add(scene::NodeKind::Sound).Id == 1);
     Document.Nodes.erase(Document.Nodes.begin());
     CHECK(Document.Add(scene::NodeKind::Box).Id == 1000);
     CHECK(scene::SanitizeLevelName("2 caves: deep!") == "Level2_caves_deep");

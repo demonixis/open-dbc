@@ -266,6 +266,7 @@ namespace dbc::studio
                            (Error ? std::string() : std::to_string(static_cast<long long>(Written.time_since_epoch().count())));
                 }
                 case NodeKind::Light:
+                case NodeKind::Sound:
                     return {};
                 case NodeKind::Matrix:
                 {
@@ -424,7 +425,7 @@ namespace dbc::studio
 
             for (const SceneNode& Node : Document.Nodes)
             {
-                if (Node.Kind == NodeKind::Light)
+                if (IsMarker(Node.Kind))
                     continue;
                 DrawItem Item;
                 Item.Mesh = &FindGeometry(Node, Document, AssetRoot);

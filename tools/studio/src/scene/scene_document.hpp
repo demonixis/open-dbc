@@ -31,6 +31,7 @@ namespace dbc::studio
             Matrix,
             Terrain,
             Light,
+            Sound,
         };
 
         enum class LightKind : std::uint8_t
@@ -48,11 +49,14 @@ namespace dbc::studio
             Matrix,
             Terrain,
             Light,
+            Sound,
         };
 
-        inline constexpr std::size_t KIdSpaceCount = 5;
+        inline constexpr std::size_t KIdSpaceCount = 6;
 
         IdSpace IdSpaceOf(NodeKind Kind);
+        // Lights and sounds: no geometry, drawn and picked as viewport icons.
+        bool IsMarker(NodeKind Kind);
         const char* NodeKindLabel(NodeKind Kind);
         // False for kinds whose commands the profile cannot run (terrains in Classic).
         bool KindAvailable(NodeKind Kind, dbc::language::LanguageProfile Profile);
@@ -119,7 +123,7 @@ namespace dbc::studio
             std::array<glm::vec3, 3> Corners{glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(10.0f, -10.0f, 0.0f),
                                              glm::vec3(-10.0f, -10.0f, 0.0f)};
 
-            std::string Asset; // model file or terrain heightmap, asset-relative
+            std::string Asset; // model file, terrain heightmap or sound file, asset-relative
 
             // Matrix: size and tiles, plus the PREPARE MATRIX TEXTURE grid.
             float Width = 100.0f;
@@ -140,10 +144,14 @@ namespace dbc::studio
             float SpotOuter = 40.0f;
             std::optional<Rgb> LightColor;
 
+            // 3D sound: LOAD 3DSOUND, POSITION SOUND, SET SOUND VOLUME, then PLAY or LOOP SOUND.
+            bool PlayOnLoad = true;
+            std::optional<int> Volume;
+
             // Model animation: PLAY OBJECT or LOOP OBJECT from the first to the last
             // frame, after an optional SET OBJECT SPEED. No frames leaves the model still.
             std::optional<glm::ivec2> Frames;
-            bool Loop = true;
+            bool Loop = true; // also a sound's LOOP SOUND rather than PLAY SOUND
             std::optional<int> Speed;
             // Object: MAKE STATIC OBJECT then DELETE OBJECT, so it becomes fixed scenery.
             bool Static = false;
@@ -202,7 +210,7 @@ namespace dbc::studio
         {
             std::string Name; // level name, also the function suffix
             dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
-            std::array<int, KIdSpaceCount> IdBase{1000, 1000, 1, 1, 1};
+            std::array<int, KIdSpaceCount> IdBase{1000, 1000, 1, 1, 1, 1};
             Environment Env;
             std::vector<SceneNode> Nodes;
 

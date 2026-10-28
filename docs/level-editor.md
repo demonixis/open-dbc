@@ -15,7 +15,7 @@ A level is BASIC, and nothing else is stored:
 
 | File | Holds |
 | --- | --- |
-| `levels/<name>.dba` | `FUNCTION LoadLevel_<name>()`: images, objects, matrices, Pro terrains, lights, the environment and the level camera |
+| `levels/<name>.dba` | `FUNCTION LoadLevel_<name>()`: images, objects, matrices, Pro terrains, lights, 3D sounds, the environment and the level camera |
 | `opendbc_game.dba` | `FUNCTION SetupGame()`: display mode, Pro vsync, window, `SYNC ON`/`SYNC RATE`, `HIDE MOUSE`; shared by every level |
 
 Saving (**Ctrl+S** in the Scene mode, or **Scene → Save Level**) writes both
@@ -35,7 +35,7 @@ level is written with the project's profile, and a Pro-only command makes it
 read-only in a Classic project.
 
 Each level starts its numbers at a configurable base per kind: objects and
-images at 1000, matrices, terrains and lights at 1. New nodes take the lowest
+images at 1000, matrices, terrains, lights and sounds at 1. New nodes take the lowest
 free number from there, and images are numbered in order of first use, one per
 file.
 
@@ -52,9 +52,10 @@ not implement are disabled:
 | Landscape | Matrix | `MAKE MATRIX`, `PREPARE MATRIX TEXTURE`, `FILL MATRIX`, `SET MATRIX HEIGHT`, `UPDATE MATRIX`, `POSITION MATRIX` |
 | Landscape | Terrain (Pro) | `MAKE TERRAIN`, `TEXTURE TERRAIN`, `POSITION TERRAIN` |
 | Light | Point, spot or directional light | `MAKE LIGHT`, `SET … LIGHT`, `POSITION`/`ROTATE LIGHT`, `SET LIGHT RANGE`, `COLOR LIGHT` |
+| Audio → 3D Sound | A sound file from the asset folder | `LOAD 3DSOUND`, `POSITION SOUND`, `SET SOUND VOLUME`, `PLAY SOUND` or `LOOP SOUND` |
 | Camera | The level camera, on or off | see Level Settings |
 
-Models from the menu land in front of the editor camera.
+Models and sounds from the menu land in front of the editor camera.
 
 The Inspector edits the selected node:
 - name, number, position, rotation (degrees, applied X, then Y, then Z) and scale (%);
@@ -77,6 +78,9 @@ The Inspector edits the selected node:
   animation (the only one `LOAD OBJECT` keeps, at 25 frames a second), played
   once (`PLAY OBJECT`) or looped (`LOOP OBJECT`), at an optional
   `SET OBJECT SPEED`. The viewport shows the model still;
+- a 3D sound's file, whether it plays once or loops when the level loads, and
+  its volume. The program hears it from `POSITION LISTENER`, which stays at
+  0, 0, 0 until the program moves it;
 - texture, `COLOR OBJECT`, `GHOST OBJECT ON` and the `SET OBJECT` flags;
 - in Pro, also diffuse, ambience, emissive, specular colour and power, and `SET SHADOW SHADING ON`.
 
@@ -98,15 +102,16 @@ A checked field writes a statement; an unchecked one leaves the engine default.
 | Middle drag | Pan |
 | Alt + left drag | Orbit around the pivot |
 | Wheel | Move toward or away from the pivot |
-| Left click | Select (lights and the level camera by their icon) |
+| Left click | Select (lights, sounds and the level camera by their icon) |
 | Q W E R | View, move, rotate, scale tools |
 | F | Frame the selection |
 | Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y, Ctrl+D, Delete | Undo, redo, duplicate, delete |
 
-Matrices and terrains only move, lights and the camera move and turn, and
-objects also scale. Dropping an image on a node textures it. Dropping a model
-places it on the ground under the cursor. In Assets, a double-click applies
-the image to the selection, or adds the model in front of the camera.
+Matrices, terrains and sounds only move, lights and the camera move and turn,
+and objects also scale. Dropping an image on a node textures it. Dropping a
+model or a sound places it on the ground under the cursor. In Assets, a
+double-click applies the image to the selection, gives the sound to a selected
+3D sound, or adds the model or sound in front of the camera.
 
 The viewport is a preview drawn by the Studio, not by the engine. Its
 primitives, matrices, terrains and models use the engine's geometry and

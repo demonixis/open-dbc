@@ -1,5 +1,5 @@
 REM OpenDBC level. Edited by the Studio Scene view.
-REM @level objects=1000 images=1000 matrices=1 terrains=1 lights=1
+REM @level objects=1000 images=1000 matrices=1 terrains=1 lights=1 sounds=1
 FUNCTION LoadLevel_Golden()
    AUTOCAM OFF
    SET AMBIENT LIGHT 40
@@ -58,6 +58,11 @@ FUNCTION LoadLevel_Golden()
    MAKE TERRAIN 1, "../fixtures/classic/bmp/stone.bmp"
    TEXTURE TERRAIN 1, 1001
    POSITION TERRAIN 1, 0, -10, 0
+   REM @sound 1 "Hum"
+   LOAD 3DSOUND "../fixtures/classic/sound/thump.wav", 1
+   POSITION SOUND 1, 10, 20, 30
+   SET SOUND VOLUME 1, 80
+   LOOP SOUND 1
    POSITION CAMERA 0, 80, -200
    ROTATE CAMERA 15, 0, 0
    SET CAMERA FOV 60

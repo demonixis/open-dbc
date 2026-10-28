@@ -306,10 +306,29 @@ namespace dbc::studio
             for (const scene::SceneNode& Node : Document_.Nodes)
             {
                 ImVec2 At;
-                if (Node.Kind != scene::NodeKind::Light || !ProjectToScreen(Node.Position, At))
+                if (!scene::IsMarker(Node.Kind) || !ProjectToScreen(Node.Position, At))
                     continue;
-                const bool IsSelected =
-                    Selection_ && Selection_->Space == scene::IdSpace::Light && Selection_->Id == Node.Id;
+                const bool IsSelected = Selection_ && Selection_->Space == scene::IdSpaceOf(Node.Kind) &&
+                                        Selection_->Id == Node.Id;
+                const float Dx = Mouse.x - At.x, Dy = Mouse.y - At.y;
+                if (Dx * Dx + Dy * Dy < KIconRadius * KIconRadius * 4.0f && ImGui::IsWindowHovered())
+                    ImGui::SetTooltip("%s", Node.Name.c_str());
+                if (Node.Kind == scene::NodeKind::Sound)
+                {
+                    // A speaker with two waves.
+                    const ImU32 Fill = IsSelected ? IM_COL32(255, 160, 40, 255) : IM_COL32(110, 210, 255, 235);
+                    const float R = KIconRadius;
+                    Draw->AddRectFilled(ImVec2(At.x - R, At.y - R * 0.4f), ImVec2(At.x - R * 0.35f, At.y + R * 0.4f),
+                                        Fill);
+                    Draw->AddTriangleFilled(ImVec2(At.x - R * 0.35f, At.y - R * 0.4f), ImVec2(At.x + R * 0.3f, At.y - R),
+                                            ImVec2(At.x + R * 0.3f, At.y + R), Fill);
+                    for (const float Wave : {0.6f, 1.1f})
+                    {
+                        Draw->PathArcTo(ImVec2(At.x + R * 0.3f, At.y), R * Wave, -0.9f, 0.9f);
+                        Draw->PathStroke(Fill, 0, 1.5f);
+                    }
+                    continue;
+                }
                 Draw->AddCircleFilled(At, KIconRadius,
                                       IsSelected ? IM_COL32(255, 160, 40, 255) : IM_COL32(255, 220, 80, 230));
                 Draw->AddCircle(At, KIconRadius, IM_COL32(40, 30, 0, 255), 0, 1.5f);
@@ -322,9 +341,6 @@ namespace dbc::studio
                     Draw->AddLine(Spoke(KIconRadius + 2.0f), Spoke(KIconRadius + 5.0f), IM_COL32(255, 220, 80, 200),
                                   1.5f);
                 }
-                const float Dx = Mouse.x - At.x, Dy = Mouse.y - At.y;
-                if (Dx * Dx + Dy * Dy < KIconRadius * KIconRadius * 4.0f && ImGui::IsWindowHovered())
-                    ImGui::SetTooltip("%s", Node.Name.c_str());
             }
             ImVec2 At;
             if (Document_.Env.UseCamera && !LookThroughCamera_ && ProjectToScreen(Document_.Env.CameraPosition, At))
@@ -348,7 +364,7 @@ namespace dbc::studio
             };
             CameraSelected_ = false;
             for (const scene::SceneNode& Node : Document_.Nodes)
-                if (Node.Kind == scene::NodeKind::Light && Near(Node.Position))
+                if (scene::IsMarker(Node.Kind) && Near(Node.Position))
                 {
                     Select(&Node);
                     return;
@@ -365,7 +381,7 @@ namespace dbc::studio
             float Nearest = 0.0f;
             for (const scene::SceneNode& Node : Document_.Nodes)
             {
-                const scene::CpuMesh* Mesh = Node.Kind == scene::NodeKind::Light ? nullptr : Renderer_.Mesh(Node);
+                const scene::CpuMesh* Mesh = scene::IsMarker(Node.Kind) ? nullptr : Renderer_.Mesh(Node);
                 if (Mesh == nullptr)
                     continue;
                 const std::optional<float> Distance = scene::Intersect(Ray, *Mesh, scene::NodeWorld(Node));
@@ -452,20 +468,21 @@ namespace dbc::studio
                 if (Kind == core::MediaKind::Image)
                 {
                     PickAt(Mouse);
-                    if (scene::SceneNode* Node = Selected(); Node != nullptr && Node->Kind != scene::NodeKind::Light)
+                    if (scene::SceneNode* Node = Selected(); Node != nullptr && !scene::IsMarker(Node->Kind))
                     {
                         Node->Mat.Texture = Relative;
                         Commit();
                     }
                 }
-                else if (Kind == core::MediaKind::Model)
+                else if (Kind == core::MediaKind::Model || Kind == core::MediaKind::Audio)
                 {
                     // Dropped on the ground plane, or in front of the camera when looking up.
                     const scene::Ray Ray = RayAt(Mouse);
                     glm::vec3 At = Ray.Origin + Ray.Direction * Camera_.Distance;
                     if (Ray.Direction.y < -0.001f)
                         At = Ray.Origin + Ray.Direction * (-Ray.Origin.y / Ray.Direction.y);
-                    CreateFromAsset(scene::NodeKind::Model, Relative, At);
+                    CreateFromAsset(Kind == core::MediaKind::Model ? scene::NodeKind::Model : scene::NodeKind::Sound,
+                                    Relative, At);
                 }
             }
             ImGui::EndDragDropTarget();

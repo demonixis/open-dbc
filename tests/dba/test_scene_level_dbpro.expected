@@ -7,4 +7,5 @@ terrain=1,-10
 light=1,2,500
 camera=80,-200,15
 walker=1,1,40
+sound=1,1,10,1
 TEST_DONE

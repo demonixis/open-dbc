@@ -103,7 +103,7 @@ namespace dbc::studio
             void Undo();
             void Redo();
             void Create(scene::NodeKind Kind, scene::LightKind Light = scene::LightKind::Point);
-            // A model or sound node for an asset file, at `At` or ahead of the editor camera.
+            // A model or 3D sound for an asset file, at `At` or ahead of the editor camera.
             void CreateFromAsset(scene::NodeKind Kind, const std::string& Relative, std::optional<glm::vec3> At);
             // The Create menu's items, shared by the menu bar and the Hierarchy's context menu.
             void DrawCreateItems();

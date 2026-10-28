@@ -145,6 +145,7 @@ namespace dbc::studio
 
             const bool IsObject = scene::IdSpaceOf(Node->Kind) == scene::IdSpace::Object;
             const bool IsLight = Node->Kind == scene::NodeKind::Light;
+            const bool IsMarker = scene::IsMarker(Node->Kind);
             ImGui::TextDisabled("%s", scene::NodeKindLabel(Node->Kind));
             char Name[128];
             std::strncpy(Name, Node->Name.c_str(), sizeof(Name) - 1);
@@ -159,7 +160,7 @@ namespace dbc::studio
                 Select(Node);
             }
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("The object, matrix, terrain or light number the code uses");
+                ImGui::SetTooltip("The object, matrix, terrain, light or sound number the code uses");
             if (IsObject)
             {
                 const bool Available = scene::StaticAvailable(Document_.Profile);
@@ -189,7 +190,7 @@ namespace dbc::studio
             if (Node->Kind == scene::NodeKind::Matrix)
                 ImGui::TextDisabled("A matrix runs from its position toward +X and +Z.");
 
-            Heading("Shape");
+            Heading(Node->Kind == scene::NodeKind::Sound ? "Sound" : "Shape");
             switch (Node->Kind)
             {
                 case scene::NodeKind::Cube:
@@ -255,9 +256,27 @@ namespace dbc::studio
                     OptionalColor("Colour", Node->LightColor, 0xFFFFFF);
                     break;
                 }
+                case scene::NodeKind::Sound:
+                    AssetField("Sound file", Node->Asset, core::MediaKind::Audio);
+                    if (Node->Asset.empty())
+                        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "A 3D sound needs a sound file.");
+                    ImGui::Checkbox("Play on load", &Node->PlayOnLoad);
+                    if (ImGui::IsItemHovered())
+                        ImGui::SetTooltip("Unchecked, the sound waits for the program's PLAY SOUND or LOOP SOUND");
+                    if (Node->PlayOnLoad)
+                    {
+                        ImGui::SameLine();
+                        ImGui::Checkbox("Loop", &Node->Loop);
+                        if (ImGui::IsItemHovered())
+                            ImGui::SetTooltip("LOOP SOUND repeats it; unchecked, PLAY SOUND plays it once");
+                    }
+                    Optional("Volume %", Node->Volume, 100,
+                             [](int& Volume) { ImGui::SliderInt("Volume %", &Volume, 0, 100); });
+                    ImGui::TextDisabled("The program hears it from POSITION LISTENER, at 0, 0, 0 until moved.");
+                    break;
             }
 
-            if (!IsLight)
+            if (!IsMarker)
                 DrawMaterial(*Node);
             ImGui::EndDisabled();
         }
@@ -538,7 +557,7 @@ namespace dbc::studio
 
                 Heading("Numbers");
                 static const char* const Labels[] = {"First object", "First image", "First matrix", "First terrain",
-                                                     "First light"};
+                                                     "First light",  "First sound"};
                 for (std::size_t Space = 0; Space < scene::KIdSpaceCount; ++Space)
                 {
                     int Base = Document_.IdBase[Space];

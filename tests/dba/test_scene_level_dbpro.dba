@@ -13,6 +13,7 @@ print "terrain="; terrain exist(1); ","; int(terrain position y(1))
 print "light="; light exist(1); ","; light type(1); ","; int(light range(1))
 print "camera="; int(camera position y()); ","; int(camera position z()); ","; int(camera angle x())
 print "walker="; object looping(1004); ","; object playing(1004); ","; int(object speed(1004))
+print "sound="; sound exist(1); ","; sound type(1); ","; int(sound position x(1)); ","; sound looping(1)
 print "TEST_DONE"
 sync
 end

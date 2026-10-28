@@ -126,6 +126,8 @@ namespace dbc::studio
                         return "terrain";
                     case IdSpace::Light:
                         return "light";
+                    case IdSpace::Sound:
+                        return "sound";
                     default:
                         return "object";
                 }
@@ -133,7 +135,7 @@ namespace dbc::studio
 
             std::string NodeTexture(const SceneNode& Node)
             {
-                return Node.Kind == NodeKind::Light ? std::string() : Node.Mat.Texture;
+                return IsMarker(Node.Kind) ? std::string() : Node.Mat.Texture;
             }
 
             void WriteObject(Emitter& Out, const SceneNode& Node, const std::map<std::string, int>& Images,
@@ -333,6 +335,15 @@ namespace dbc::studio
                         if (Node.LightColor)
                             Out.Command(SymbolId::Command_ColorLight, {Id, Color(*Node.LightColor)});
                         break;
+                    case NodeKind::Sound:
+                        Out.Command(SymbolId::Command_Load3dsound, {Quoted(Node.Asset), Id});
+                        if (Node.Position != glm::vec3(0.0f))
+                            Out.Vector(SymbolId::Command_PositionSound, Node.Id, Node.Position);
+                        if (Node.Volume)
+                            Out.Command(SymbolId::Command_SetSoundVolume, {Id, Integer(*Node.Volume)});
+                        if (Node.PlayOnLoad)
+                            Out.Command(Node.Loop ? SymbolId::Command_LoopSound : SymbolId::Command_PlaySound, {Id});
+                        break;
                     default:
                         assert(false);
                         break;
@@ -482,6 +493,8 @@ namespace dbc::studio
                     return IdSpace::Terrain;
                 if (Tag == "light")
                     return IdSpace::Light;
+                if (Tag == "sound")
+                    return IdSpace::Sound;
                 return std::nullopt;
             }
 
@@ -568,7 +581,8 @@ namespace dbc::studio
                                                                            {"images", IdSpace::Image},
                                                                            {"matrices", IdSpace::Matrix},
                                                                            {"terrains", IdSpace::Terrain},
-                                                                           {"lights", IdSpace::Light}};
+                                                                           {"lights", IdSpace::Light},
+                                                                           {"sounds", IdSpace::Sound}};
                     std::istringstream Stream(Rest);
                     std::string Pair;
                     while (Stream >> Pair)
@@ -639,6 +653,8 @@ namespace dbc::studio
                     Node.Id = Id;
                     Node.Name = std::string(NodeKindLabel(Kind)) + " " + Integer(Id);
                     Node.Mat.Flags = DefaultObjectFlags(Profile_);
+                    // A sound plays only when PLAY SOUND or LOOP SOUND follows.
+                    Node.PlayOnLoad = Kind != NodeKind::Sound;
                     Result_.Document.Nodes.push_back(std::move(Node));
                     return &Result_.Document.Nodes.back();
                 }
@@ -688,6 +704,19 @@ namespace dbc::studio
                             if (A.size() != 2 || !S(A, 0, Path) || !Numbers(A, 1))
                                 return;
                             if (SceneNode* Node = Create(NodeKind::Model, I(A, 1)))
+                                Node->Asset = Path;
+                            return;
+                        }
+                        case SymbolId::Command_Load3dsound:
+                        {
+                            std::string Path;
+                            if (A.size() != 2 || !S(A, 0, Path) || !Numbers(A, 1))
+                            {
+                                if (A.size() != 2)
+                                    Error(Line_, "LOAD 3DSOUND is written with the file and the sound alone");
+                                return;
+                            }
+                            if (SceneNode* Node = Create(NodeKind::Sound, I(A, 1)))
                                 Node->Asset = Path;
                             return;
                         }
@@ -962,6 +991,28 @@ namespace dbc::studio
                                 Error(Line_, "Only light 0 is hidden by the level");
                             break;
 
+                        case SymbolId::Command_PositionSound:
+                            if (SceneNode* Node = Existing(IdSpace::Sound, I(A, 0)))
+                                Node->Position = V(A, 1);
+                            break;
+                        case SymbolId::Command_SetSoundVolume:
+                            if (SceneNode* Node = Existing(IdSpace::Sound, I(A, 0)))
+                                Node->Volume = I(A, 1);
+                            break;
+                        case SymbolId::Command_PlaySound:
+                        case SymbolId::Command_LoopSound:
+                            if (A.size() != 1)
+                            {
+                                Error(Line_, *Name_ + " is written with the sound alone");
+                                break;
+                            }
+                            if (SceneNode* Node = Existing(IdSpace::Sound, I(A, 0)))
+                            {
+                                Node->PlayOnLoad = true;
+                                Node->Loop = Id == SymbolId::Command_LoopSound;
+                            }
+                            break;
+
                         case SymbolId::Command_SetAmbientLight:
                             Env.AmbientPercent = I(A, 0);
                             break;
@@ -1069,7 +1120,8 @@ namespace dbc::studio
                      " images=" + Integer(Document.Base(IdSpace::Image)) +
                      " matrices=" + Integer(Document.Base(IdSpace::Matrix)) +
                      " terrains=" + Integer(Document.Base(IdSpace::Terrain)) +
-                     " lights=" + Integer(Document.Base(IdSpace::Light)));
+                     " lights=" + Integer(Document.Base(IdSpace::Light)) +
+                     " sounds=" + Integer(Document.Base(IdSpace::Sound)));
             Out.Line("FUNCTION " + LevelFunctionName(Document) + "()");
             Out.Push();
 

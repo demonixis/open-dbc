@@ -1,5 +1,5 @@
-// The Scene view's Assets panel: the project's images and models, as tiles that
-// drag onto the viewport, the inspector's file fields and the hierarchy.
+// The Scene view's Assets panel: the project's images, models and sounds, as tiles
+// that drag onto the viewport and the inspector's file fields.
 
 #include "panels/scene_editor.hpp"
 
@@ -64,7 +64,7 @@ namespace dbc::studio
                 RefreshAssets();
             ImGui::SameLine();
             ImGui::SetNextItemWidth(120.0f);
-            ImGui::Combo("##kind", &AssetFilterKind_, "Images and models\0Images\0Models\0");
+            ImGui::Combo("##kind", &AssetFilterKind_, "All\0Images\0Models\0Sounds\0");
             ImGui::SameLine();
             ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x));
             ImGui::InputTextWithHint("##filter", "Filter", AssetFilter_, sizeof(AssetFilter_));
@@ -85,7 +85,9 @@ namespace dbc::studio
             {
                 const bool Image = File.Kind == core::MediaKind::Image;
                 const bool Model = File.Kind == core::MediaKind::Model;
-                if ((!Image && !Model) || (AssetFilterKind_ == 1 && !Image) || (AssetFilterKind_ == 2 && !Model))
+                const bool Sound = File.Kind == core::MediaKind::Audio;
+                if ((!Image && !Model && !Sound) || (AssetFilterKind_ == 1 && !Image) ||
+                    (AssetFilterKind_ == 2 && !Model) || (AssetFilterKind_ == 3 && !Sound))
                     continue;
                 if (!Filter.empty() && Lower(File.RelativeName).find(Filter) == std::string::npos)
                     continue;
@@ -128,10 +130,20 @@ namespace dbc::studio
                 }
                 if (Thumbnail == nullptr)
                 {
-                    // A wireframe cube for models, a frame for images without a preview.
+                    // A wireframe cube for models, a speaker for sounds, a frame for images without a preview.
                     const ImVec2 Center(Min.x + Tile * 0.5f, Min.y + Tile * 0.5f);
                     const float R = Tile * 0.22f;
-                    if (Model)
+                    if (Sound)
+                    {
+                        Draw->AddRectFilled(ImVec2(Center.x - R, Center.y - R * 0.35f),
+                                            ImVec2(Center.x - R * 0.45f, Center.y + R * 0.35f), Theme::Number);
+                        Draw->AddTriangleFilled(ImVec2(Center.x - R * 0.45f, Center.y - R * 0.35f),
+                                                ImVec2(Center.x + R * 0.2f, Center.y - R),
+                                                ImVec2(Center.x + R * 0.2f, Center.y + R), Theme::Number);
+                        Draw->PathArcTo(ImVec2(Center.x + R * 0.2f, Center.y), R * 0.7f, -0.8f, 0.8f);
+                        Draw->PathStroke(Theme::Number, 0, 1.5f);
+                    }
+                    else if (Model)
                     {
                         const float S = R * 0.6f;
                         Draw->AddRect(ImVec2(Center.x - R, Center.y - S), ImVec2(Center.x + S, Center.y + R),
@@ -158,7 +170,7 @@ namespace dbc::studio
                 if (Hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && Editable())
                 {
                     scene::SceneNode* Node = Selected();
-                    if (Image && Node != nullptr && Node->Kind != scene::NodeKind::Light)
+                    if (Image && Node != nullptr && !scene::IsMarker(Node->Kind))
                     {
                         // A selected terrain without a heightmap takes the image as one.
                         if (Node->Kind == scene::NodeKind::Terrain && Node->Asset.empty())
@@ -169,6 +181,14 @@ namespace dbc::studio
                     else if (Model)
                     {
                         CreateFromAsset(scene::NodeKind::Model, File.RelativeName, std::nullopt);
+                    }
+                    else if (Sound && Node != nullptr && Node->Kind == scene::NodeKind::Sound)
+                    {
+                        Node->Asset = File.RelativeName;
+                    }
+                    else if (Sound)
+                    {
+                        CreateFromAsset(scene::NodeKind::Sound, File.RelativeName, std::nullopt);
                     }
                 }
 
