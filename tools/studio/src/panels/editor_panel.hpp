@@ -106,6 +106,9 @@ namespace dbc::studio
 
             std::vector<std::unique_ptr<Document>> Documents_;
             int Current_ = -1;
+            // A tab to bring to the front on the next Draw: ImGui only selects a tab
+            // the user did not click when asked to.
+            const Document* SelectRequest_ = nullptr;
             int UntitledCount_ = 0;
             int PendingClose_ = -1;
 

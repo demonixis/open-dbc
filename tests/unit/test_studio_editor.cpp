@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include <imgui.h>
+
 using namespace dbc::studio;
 
 TEST_CASE("Studio editor opens HLSL effects as plain text tabs")
@@ -78,5 +80,51 @@ TEST_CASE("Studio editor tabs take generated text as an undoable edit")
     REQUIRE(Editor.ReplaceText(Root / "main.dba", "print 3\n", true));
     CHECK_FALSE(Editor.AnyDirty());
 
+    std::filesystem::remove_all(Root, Error);
+}
+
+TEST_CASE("Studio editor brings an already open tab to the front when it is opened again")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-focus";
+    std::error_code Error;
+    std::filesystem::remove_all(Root, Error);
+    std::filesystem::create_directories(Root, Error);
+    REQUIRE_FALSE(Error);
+    std::ofstream(Root / "a.dba") << "print 1\n";
+    std::ofstream(Root / "b.dba") << "print 2\n";
+
+    ImGui::CreateContext();
+    ImGuiIO& Io = ImGui::GetIO();
+    Io.DisplaySize = ImVec2(800.0f, 600.0f);
+    Io.IniFilename = nullptr;
+    Io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+    const auto Frame = [](panels::EditorPanel& Editor)
+    {
+        ImGui::NewFrame();
+        ImGui::Begin("Editor");
+        Editor.Draw();
+        ImGui::End();
+        ImGui::Render();
+    };
+
+    {
+        dba::Reference Reference;
+        dba::CommandDatabase Commands;
+        Commands.Build(Reference);
+        panels::EditorPanel Editor;
+        Editor.Initialize(&Commands);
+        REQUIRE(Editor.Open(Root / "a.dba"));
+        Frame(Editor);
+        REQUIRE(Editor.Open(Root / "b.dba"));
+        for (int Index = 0; Index < 3; ++Index)
+            Frame(Editor);
+        CHECK(Editor.CurrentPath().filename() == "b.dba");
+
+        REQUIRE(Editor.Open(Root / "a.dba"));
+        for (int Index = 0; Index < 3; ++Index)
+            Frame(Editor);
+        CHECK(Editor.CurrentPath().filename() == "a.dba");
+    }
+    ImGui::DestroyContext();
     std::filesystem::remove_all(Root, Error);
 }

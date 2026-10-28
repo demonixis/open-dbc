@@ -211,6 +211,7 @@ namespace dbc::studio
                 if (Documents_[I]->Path == Target)
                 {
                     Current_ = static_cast<int>(I);
+                    SelectRequest_ = Documents_[I].get();
                     return true;
                 }
             }
@@ -301,6 +302,7 @@ namespace dbc::studio
                 if (Documents_[I]->Path.empty() && IsDirty(*Documents_[I]))
                 {
                     Current_ = static_cast<int>(I);
+                    SelectRequest_ = Documents_[I].get();
                     return true;
                 }
             }
@@ -516,6 +518,8 @@ namespace dbc::studio
 
             const auto Erase = [this]
             {
+                if (SelectRequest_ == Documents_[PendingClose_].get())
+                    SelectRequest_ = nullptr;
                 Documents_.erase(Documents_.begin() + PendingClose_);
                 PendingClose_ = -1;
                 Current_ = Documents_.empty() ? -1 : std::min(Current_, static_cast<int>(Documents_.size()) - 1);
@@ -574,7 +578,16 @@ namespace dbc::studio
                     Label += "###doc" + std::to_string(reinterpret_cast<uintptr_t>(&Doc));
 
                     Doc.Open = true;
-                    if (ImGui::BeginTabItem(Label.c_str(), &Doc.Open))
+                    ImGuiTabItemFlags Flags = ImGuiTabItemFlags_None;
+                    if (SelectRequest_ == &Doc)
+                    {
+                        Flags = ImGuiTabItemFlags_SetSelected;
+                        SelectRequest_ = nullptr;
+                        // The editor may sit behind another tab of its dock node.
+                        ImGui::SetWindowFocus();
+                        Doc.Editor->SetFocus();
+                    }
+                    if (ImGui::BeginTabItem(Label.c_str(), &Doc.Open, Flags))
                     {
                         Current_ = static_cast<int>(I);
 
@@ -595,6 +608,8 @@ namespace dbc::studio
                         }
                         else
                         {
+                            if (SelectRequest_ == &Doc)
+                                SelectRequest_ = nullptr;
                             Documents_.erase(Documents_.begin() + static_cast<long>(I));
                             Current_ =
                                 Documents_.empty() ? -1 : std::min(Current_, static_cast<int>(Documents_.size()) - 1);
