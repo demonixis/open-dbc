@@ -63,6 +63,9 @@ namespace dbc::studio
         // Local to world. Matrices, terrains and lights only move.
         glm::mat4 NodeWorld(const SceneNode& Node);
 
+        // Puts each axis `Value` moved away from `Start` on the nearest multiple of
+        // `Step`; the other axes keep their value. A step of 0 or less snaps nothing.
+        glm::vec3 SnapChangedAxes(const glm::vec3& Value, const glm::vec3& Start, float Step);
         // Scales all of `Start` by the ratio of the axis `Edited` changed most, keeping
         // its proportions. An axis that starts at 0 has no ratio: `Edited` is kept.
         glm::vec3 ProportionalScale(const glm::vec3& Start, const glm::vec3& Edited);

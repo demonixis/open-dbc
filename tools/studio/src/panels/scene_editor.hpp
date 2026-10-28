@@ -192,12 +192,19 @@ namespace dbc::studio
             Tool Tool_ = Tool::Move;
             bool LocalGizmo_ = false;
             bool ShowGrid_ = true;
+            // Gizmo snapping: world units, degrees and scale percent. The move step
+            // matches a grid cell.
+            bool Snap_ = false;
+            float MoveSnap_ = 10.0f;
+            float RotateSnap_ = 15.0f;
+            float ScaleSnap_ = 10.0f;
             // Scale edits keep the selection's proportions, in the Inspector and the gizmo.
             bool UniformScale_ = false;
             bool LookThroughCamera_ = false;
             bool Navigating_ = false;
             bool GizmoActive_ = false;
-            // Scale % when the gizmo drag began: uniform scale starts from it.
+            // Position and scale % when the gizmo drag began: snapping and uniform scale start from them.
+            glm::vec3 GizmoStartPosition_{0.0f};
             glm::vec3 GizmoStartScale_{100.0f};
             scene::ViewParameters View_;
             ImVec2 ViewportMin_{0.0f, 0.0f};

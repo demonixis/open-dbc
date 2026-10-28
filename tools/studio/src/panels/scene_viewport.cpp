@@ -423,13 +423,23 @@ namespace dbc::studio
             ImGuizmo::SetRect(ViewportMin_.x, ViewportMin_.y, ViewportSize_.x, ViewportSize_.y);
             const ImGuizmo::MODE Mode =
                 LocalGizmo_ || Operation == ImGuizmo::SCALE ? ImGuizmo::LOCAL : ImGuizmo::WORLD;
+            // ImGuizmo snaps turns and local moves by steps from where the drag began;
+            // world moves and scales are snapped below to whole multiples instead.
+            const bool LocalMove = Operation == ImGuizmo::TRANSLATE && Mode == ImGuizmo::LOCAL;
+            const glm::vec3 Steps = Operation == ImGuizmo::ROTATE ? glm::vec3(RotateSnap_) : glm::vec3(MoveSnap_);
+            const bool GizmoSnaps = Snap_ && (Operation == ImGuizmo::ROTATE || LocalMove);
             if (ImGuizmo::Manipulate(glm::value_ptr(View_.View), glm::value_ptr(View_.Projection), Operation, Mode,
-                                     glm::value_ptr(Model)))
+                                     glm::value_ptr(Model), nullptr, GizmoSnaps ? glm::value_ptr(Steps) : nullptr))
             {
                 if (!GizmoActive_)
+                {
+                    GizmoStartPosition_ = Node != nullptr ? Node->Position : Env.CameraPosition;
                     GizmoStartScale_ = Node != nullptr ? Node->Scale : glm::vec3(100.0f);
+                }
                 GizmoActive_ = true;
-                const glm::vec3 Position(Model[3]);
+                glm::vec3 Position(Model[3]);
+                if (Snap_ && Operation == ImGuizmo::TRANSLATE && !LocalMove)
+                    Position = scene::SnapChangedAxes(Position, GizmoStartPosition_, MoveSnap_);
                 glm::vec3 Scale(glm::length(glm::vec3(Model[0])), glm::length(glm::vec3(Model[1])),
                                 glm::length(glm::vec3(Model[2])));
                 Scale = glm::max(Scale, glm::vec3(1e-4f));
@@ -448,8 +458,15 @@ namespace dbc::studio
                     if (Operation == ImGuizmo::ROTATE)
                         Node->Rotation = scene::EulerDegrees(Rotation);
                     if (Operation == ImGuizmo::SCALE)
-                        Node->Scale = UniformScale_ ? scene::ProportionalScale(GizmoStartScale_, Scale * 100.0f)
-                                                    : Scale * 100.0f;
+                    {
+                        glm::vec3 Percent = Scale * 100.0f;
+                        if (Snap_)
+                            Percent = scene::SnapChangedAxes(Percent, GizmoStartScale_, ScaleSnap_);
+                        if (UniformScale_)
+                            Percent = scene::ProportionalScale(GizmoStartScale_, Percent);
+                        // Snapping down to 0 would collapse the object for good.
+                        Node->Scale = glm::max(Percent, glm::vec3(0.01f));
+                    }
                 }
             }
             if (GizmoActive_ && !ImGuizmo::IsUsing())
@@ -511,6 +528,25 @@ namespace dbc::studio
             ToolButton("Rotate", Tool::Rotate, "Rotate (E)");
             ToolButton("Scale", Tool::Scale, "Scale (R)");
             ImGui::Checkbox("Local", &LocalGizmo_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Snap", &Snap_);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Move, rotate and scale by steps");
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+            if (ImGui::ArrowButton("##snap-steps", ImGuiDir_Down))
+                ImGui::OpenPopup("Snap steps");
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Snap steps");
+            if (ImGui::BeginPopup("Snap steps"))
+            {
+                ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
+                ImGui::DragFloat("Move", &MoveSnap_, 0.1f, 0.01f, 10000.0f, "%.2f");
+                ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
+                ImGui::DragFloat("Rotate (degrees)", &RotateSnap_, 0.5f, 0.1f, 180.0f, "%.1f");
+                ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
+                ImGui::DragFloat("Scale (%)", &ScaleSnap_, 0.5f, 0.1f, 1000.0f, "%.1f");
+                ImGui::EndPopup();
+            }
             ImGui::SameLine();
             ImGui::Checkbox("Grid", &ShowGrid_);
             ImGui::SameLine();

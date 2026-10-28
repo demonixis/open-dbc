@@ -350,6 +350,18 @@ namespace dbc::studio
             return glm::scale(World, Node.Scale / 100.0f);
         }
 
+        glm::vec3 SnapChangedAxes(const glm::vec3& Value, const glm::vec3& Start, float Step)
+        {
+            if (Step <= 0.0f)
+                return Value;
+            glm::vec3 Snapped = Value;
+            for (int Axis = 0; Axis < 3; ++Axis)
+                // Float noise on an axis the gizmo did not drag must not snap it.
+                if (std::abs(Value[Axis] - Start[Axis]) > 1e-4f * std::max(1.0f, std::abs(Start[Axis])))
+                    Snapped[Axis] = std::round(Value[Axis] / Step) * Step;
+            return Snapped;
+        }
+
         glm::vec3 ProportionalScale(const glm::vec3& Start, const glm::vec3& Edited)
         {
             int Axis = 0;

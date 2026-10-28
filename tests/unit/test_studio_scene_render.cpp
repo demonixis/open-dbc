@@ -41,6 +41,17 @@ TEST_CASE("Scene rotations decompose back to the angles ROTATE OBJECT takes")
     CHECK(Turned.z == doctest::Approx(0.0f).epsilon(1e-5));
 }
 
+TEST_CASE("Scene snapping moves only the dragged axes onto whole steps")
+{
+    const glm::vec3 Start(3.2f, -7.5f, 12.0f);
+    const glm::vec3 Snapped = scene::SnapChangedAxes(glm::vec3(16.4f, -7.5f, -4.9f), Start, 10.0f);
+    CHECK(Snapped.x == doctest::Approx(20.0f));
+    CHECK(Snapped.y == doctest::Approx(-7.5f));
+    CHECK(Snapped.z == doctest::Approx(0.0f));
+    const glm::vec3 Unsnapped = scene::SnapChangedAxes(glm::vec3(16.4f, -7.5f, -4.9f), Start, 0.0f);
+    CHECK(Unsnapped.x == doctest::Approx(16.4f));
+}
+
 TEST_CASE("Uniform scale keeps the proportions of the starting scale")
 {
     const glm::vec3 Scaled =
