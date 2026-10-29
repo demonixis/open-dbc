@@ -499,12 +499,21 @@ endfunction()
 # reaches us through SYSTEM include paths so only our own sources are held to it.
 option(OPENDBC_SANITIZE "Build OpenDBC targets with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 
+# Packagers building with a newer compiler than the maintainers can turn it off.
+option(OPENDBC_WERROR "Treat warnings in OpenDBC's own sources as errors" ON)
+
 function(dbc_enable_warnings target)
     if(MSVC)
         # C4702 (unreachable code) fires spuriously after inlining.
-        target_compile_options(${target} PRIVATE /W4 /WX /wd4702)
+        target_compile_options(${target} PRIVATE /W4 /wd4702)
+        if(OPENDBC_WERROR)
+            target_compile_options(${target} PRIVATE /WX)
+        endif()
     else()
-        target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+        if(OPENDBC_WERROR)
+            target_compile_options(${target} PRIVATE -Werror)
+        endif()
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             # GCC's flow analysis reports false positives inside libstdc++ (<regex>, std::function),
             # more so under the sanitizers.

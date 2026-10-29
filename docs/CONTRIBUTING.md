@@ -25,7 +25,8 @@ ctest --preset sanitize
 
 Dependencies are pinned commits, fetched as shallow clones into
 `build/_deps-cache`, which every build directory shares; `-DOPENDBC_DEPENDENCY_CACHE=<dir>`
-moves it.
+moves it. Warnings in OpenDBC's own sources are errors; `-DOPENDBC_WERROR=OFF`
+relaxes this for a compiler newer than the maintainers'.
 
 ## Rules
 

@@ -15,7 +15,6 @@
 Build and release:
 
 - [ ] Release presets: universal2 macOS, Linux on an old glibc, Windows.
-- [ ] FetchContent: shallow clones and a cache; `OPENDBC_WERROR` option.
 - [ ] Platform metadata: `Info.plist` and entitlements, `.desktop` and AppStream, Windows `VERSIONINFO`.
 
 Robustness:
