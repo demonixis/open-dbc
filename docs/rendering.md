@@ -69,8 +69,9 @@ locked, glued, shadowed nor reflecting, and when the mesh has no bones, built-in
 effect, effect, auxiliary or cube stage, texture-coordinate mode or zero-length
 vertex normal. Its vertices and indices are uploaded once per `MeshGeometry`
 revision and released when that geometry changes or goes 300 frames undrawn.
-Clones, instances and the `MAKE OBJECT` primitives made with the same parameters
-share one geometry until one of them is edited. Each object brings a 176-byte instance record:
+Clones, instances, the `MAKE OBJECT` primitives made with the same parameters and
+the meshes without bones of objects loaded from the same file share one geometry
+until one of them is edited. Each object brings a 176-byte instance record:
 its world and normal matrices, colour, material, texture scale and scroll, fade and
 lighting, which `VSMesh`, the engine shader's second vertex entry, reads at
 instance rate; the GPU culls back faces. Draws of one geometry with one texture and

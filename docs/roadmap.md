@@ -55,7 +55,7 @@ headless runs:
 | Program | Triangles | Draw calls | CPU ms per frame |
 | --- | ---: | ---: | ---: |
 | `skinned` (stress) | 14,418 | 1 | 4.8 |
-| `hive_defender` | 86,782 | 214 | 1.0 |
+| `hive_defender` | 89,543 | 30 | 1.0 |
 | `distinct_meshes` (stress) | 127,712 | 401 | 0.8 |
 | `shared_mesh` (stress) | 27,384 | 1 | 0.6 |
 | `two_views` (stress) | 335,354 | 5 | 0.5 |
@@ -82,8 +82,6 @@ Decisions:
 
 Work, in order:
 
-- [ ] Automatic instancing of objects loaded from the same file: share their
-  geometry, as clones and identical primitives do.
 - [ ] Automatic static batching: `MAKE STATIC OBJECT` snapshots first, then objects
   left unchanged, merged per material into spatial chunks that are culled.
 - [ ] Frustum culling and the other visibility tests: per limb and per chunk, bounds
