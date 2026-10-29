@@ -27,3 +27,7 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortBlocksOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 IndentCaseLabels: true
+
+# --- Blank lines ---
+# One empty line between function, class and enum definitions.
+SeparateDefinitionBlocks: Always

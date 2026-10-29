@@ -3,6 +3,7 @@
 ## Style and scope
 - Write code, identifiers, comments, documentation and diagnostics in English.
 - Follow existing C++20 conventions: namespace `dbc`, PascalCase identifiers, snake_case filenames.
+- Format C++ with `.clang-format`; leave one blank line between function definitions, never glue them together.
 - Read relevant code and reuse existing utilities. Prefer simple, explicit, lightweight code; avoid speculative abstractions and unnecessary dependencies.
 - Keep changes focused and preserve unrelated user changes. Use RAII and clear ownership; avoid unnecessary work and allocations in hot paths.
 - Comment non-obvious decisions, not self-explanatory code.
