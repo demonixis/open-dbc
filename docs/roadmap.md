@@ -81,12 +81,16 @@ Work, in order:
 
 - [ ] Benchmark: report vertices, batches and object counts without the debug
   overlay, count culled objects, time each renderer step, and add stress scenes:
-  many objects sharing a mesh, many distinct ones, transparency, animation, two views.
+  many objects sharing a mesh, many distinct ones, transparency, skinned characters
+  (no demo model has bones; a few tutorial models do), two views.
 - [ ] Sort keys instead of `Triangle` records, opaque batches grouped by state, and
   no per-frame copy of the cached triangle lists.
 - [ ] Per-mesh work out of the triangle loop: textures, `SurfaceStyle`, stage
   lookups and the object matrix, whose sines and cosines are recomputed per vertex;
   each vertex transformed once rather than once per triangle that uses it.
+- [ ] CPU skinning: one bone palette per object and frame, not one per mesh and view
+  and per `ObjectMeshVertex` query, and no copy of the mesh's vertices before
+  skinning them.
 - [ ] Bitmap 0: keep its GPU texture, upload only what changed, skip the quad when
   the layer is empty.
 - [ ] Shared mesh resources: `INSTANCE OBJECT` shares instead of copying, vertex
@@ -94,6 +98,10 @@ Work, in order:
 - [ ] GPU-resident meshes: object-space buffers; the object matrix and material per
   draw; stage coordinates, built-in effects and fading in the vertex shader; vertex
   formats sized to the stages a mesh uses.
+- [ ] GPU skinning: bone indices and weights in the mesh's vertex buffer, the
+  object's bone palette in a vertex storage buffer, positions and normals skinned
+  in the vertex shader. Queries, collision and shadow volumes keep skinning on the
+  CPU from the same palette.
 - [ ] GPU instancing.
 - [ ] Automatic instancing of objects that share a mesh and material.
 - [ ] Automatic static batching: `MAKE STATIC OBJECT` snapshots first, then objects
@@ -101,7 +109,6 @@ Work, in order:
 - [ ] Frustum culling and the other visibility tests: per limb and per chunk, bounds
   centred on the mesh, a spatial grid for large scenes, shadow casters, then
   occlusion if measurements call for it.
-- [ ] GPU skinning, with the bone palette in a storage buffer.
 
 ## Classic multiplayer
 
