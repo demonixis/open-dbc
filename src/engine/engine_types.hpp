@@ -254,6 +254,12 @@ namespace dbc
             return Geometry_ == Other.Geometry_;
         }
 
+        // Keeps the geometry alive for a draw that outlives this record's next edit.
+        [[nodiscard]] std::shared_ptr<const MeshGeometry> SharedGeometry() const
+        {
+            return Geometry_;
+        }
+
       private:
         std::shared_ptr<MeshGeometry> Geometry_ = EmptyGeometry();
 
@@ -639,6 +645,17 @@ namespace dbc
         float CubeDirection[3]{};
     };
 
+    // A vertex of a GPU-resident mesh, in object space; the shader's other inputs come once per draw.
+    struct GpuMeshVertex
+    {
+        float Position[3]{};
+        float Normal[3]{};
+        float Uv[2]{};
+        float Color[4]{};
+    };
+
+    struct GpuMeshDraw;
+
     struct GpuBatch
     {
         SDL_GPUTexture* Texture = nullptr;
@@ -655,8 +672,13 @@ namespace dbc
         SurfaceStyle Style{};
         std::array<SDL_GPUTexture*, 7> AuxiliaryTextures{};
         SDL_GPUTexture* CubeTexture = nullptr;
-        // Static world-space terrain: drawn from its own vertex buffer with the view's terrain indices.
+        // An object mesh drawn from its GPU buffers, its per-draw inputs at vertex MeshRecord of the frame's buffer.
+        const GpuMeshDraw* MeshDraw = nullptr;
+        Uint32 MeshRecord = 0;
+        // Static world-space terrain: drawn from its own vertex buffer with the view's terrain indices. A mesh
+        // draws IndexCount indices from StaticIndices.
         SDL_GPUBuffer* StaticVertices = nullptr;
+        SDL_GPUBuffer* StaticIndices = nullptr;
         Uint32 FirstIndex = 0;
         Uint32 IndexCount = 0;
     };

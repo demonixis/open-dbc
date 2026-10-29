@@ -123,6 +123,12 @@ namespace dbc
             return GpuTerrainPipelines_[2];
         }
 
+        // Opaque pipelines for GPU-resident object meshes, back-face culled unless the object draws both sides.
+        [[nodiscard]] SDL_GPUGraphicsPipeline* MeshPipeline(bool Cull, bool Wireframe) const
+        {
+            return GpuMeshPipelines_[(Cull ? 0 : 2) + (Wireframe ? 1 : 0)];
+        }
+
         [[nodiscard]] SDL_GPUGraphicsPipeline* ReflectionMaskPipeline() const
         {
             return GpuReflectionMaskPipeline_;
@@ -291,6 +297,7 @@ namespace dbc
         SDL_GPUGraphicsPipeline* GpuShadowOverlayPipeline_ = nullptr;
         std::array<SDL_GPUGraphicsPipeline*, 2> GpuSurfaceOpaqueNoDepthPipelines_{};
         std::array<SDL_GPUGraphicsPipeline*, 3> GpuTerrainPipelines_{};
+        std::array<SDL_GPUGraphicsPipeline*, 4> GpuMeshPipelines_{};
         std::array<SDL_GPUGraphicsPipeline*, 48> GpuSurfaceDepthPipelines_{};
         std::array<SDL_GPUGraphicsPipeline*, 80> GpuSurfaceGhostPipelines_{};
         SDL_GPUSampler* GpuSampler_ = nullptr;

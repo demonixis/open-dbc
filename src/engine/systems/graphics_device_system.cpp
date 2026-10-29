@@ -63,6 +63,7 @@ namespace dbc
         GpuPipelineAdditiveWireframe_ = nullptr;
         GpuSurfaceOpaqueNoDepthPipelines_.fill(nullptr);
         GpuTerrainPipelines_.fill(nullptr);
+        GpuMeshPipelines_.fill(nullptr);
         GpuSurfaceGhostPipelines_.fill(nullptr);
         GpuSampler_ = nullptr;
         GpuSamplerNearest_ = nullptr;
@@ -1395,6 +1396,36 @@ namespace dbc
         TerrainInfo.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_LINE;
         GpuTerrainPipelines_[1] = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &TerrainInfo);
 
+        // GPU-resident object meshes: object-space position, normal, texture coordinates and colour per vertex, and
+        // the shader's other inputs once per draw from a GpuVertex record, as for terrain.
+        SDL_GPUVertexBufferDescription MeshBuffers[2]{TerrainBuffers[0], TerrainBuffers[1]};
+        MeshBuffers[0].pitch = sizeof(GpuMeshVertex);
+        SDL_GPUVertexAttribute MeshAttributes[15]{};
+        std::copy(std::begin(Attributes), std::end(Attributes), std::begin(MeshAttributes));
+        for (SDL_GPUVertexAttribute& Attribute : MeshAttributes)
+            Attribute.buffer_slot = 1;
+        MeshAttributes[0].buffer_slot = 0;
+        MeshAttributes[0].offset = offsetof(GpuMeshVertex, Position);
+        MeshAttributes[1].buffer_slot = 0;
+        MeshAttributes[1].offset = offsetof(GpuMeshVertex, Normal);
+        MeshAttributes[2].buffer_slot = 0;
+        MeshAttributes[2].offset = offsetof(GpuMeshVertex, Color);
+        MeshAttributes[3].buffer_slot = 0;
+        MeshAttributes[3].offset = offsetof(GpuMeshVertex, Uv);
+        SDL_GPUGraphicsPipelineCreateInfo MeshInfo = PipelineInfo;
+        MeshInfo.vertex_input_state.vertex_buffer_descriptions = MeshBuffers;
+        MeshInfo.vertex_input_state.num_vertex_buffers = 2;
+        MeshInfo.vertex_input_state.vertex_attributes = MeshAttributes;
+        // The CPU path culls the triangles facing away from the camera; the GPU does it here. Object triangles
+        // wind the other way round from terrain ones.
+        MeshInfo.rasterizer_state.front_face = SDL_GPU_FRONTFACE_CLOCKWISE;
+        for (std::size_t Index = 0; Index < GpuMeshPipelines_.size(); ++Index)
+        {
+            MeshInfo.rasterizer_state.cull_mode = Index < 2 ? SDL_GPU_CULLMODE_BACK : SDL_GPU_CULLMODE_NONE;
+            MeshInfo.rasterizer_state.fill_mode = Index % 2 == 0 ? SDL_GPU_FILLMODE_FILL : SDL_GPU_FILLMODE_LINE;
+            GpuMeshPipelines_[Index] = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &MeshInfo);
+        }
+
         // Wireframe surfaces rasterise the same triangles as lines.
         SDL_GPUGraphicsPipelineCreateInfo WireInfo = PipelineInfo;
         WireInfo.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_LINE;
@@ -1518,6 +1549,8 @@ namespace dbc
             std::any_of(GpuSurfaceOpaqueNoDepthPipelines_.begin(), GpuSurfaceOpaqueNoDepthPipelines_.end(),
                         [](SDL_GPUGraphicsPipeline* Pipeline) { return Pipeline == nullptr; }) ||
             std::any_of(GpuTerrainPipelines_.begin(), GpuTerrainPipelines_.end(),
+                        [](SDL_GPUGraphicsPipeline* Pipeline) { return Pipeline == nullptr; }) ||
+            std::any_of(GpuMeshPipelines_.begin(), GpuMeshPipelines_.end(),
                         [](SDL_GPUGraphicsPipeline* Pipeline) { return Pipeline == nullptr; }) ||
             std::any_of(GpuSurfaceDepthPipelines_.begin(),
                         GpuSurfaceDepthPipelines_.begin() + (StencilVariants == 2 ? 48 : 24),
@@ -2246,6 +2279,14 @@ namespace dbc
             }
         }
         for (SDL_GPUGraphicsPipeline*& Pipeline : GpuTerrainPipelines_)
+        {
+            if (Pipeline)
+            {
+                SDL_ReleaseGPUGraphicsPipeline(GpuDevice_, Pipeline);
+                Pipeline = nullptr;
+            }
+        }
+        for (SDL_GPUGraphicsPipeline*& Pipeline : GpuMeshPipelines_)
         {
             if (Pipeline)
             {

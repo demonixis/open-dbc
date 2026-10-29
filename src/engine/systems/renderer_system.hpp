@@ -26,12 +26,47 @@ namespace dbc
 {
     class EngineKernel;
 
+    // An opaque object mesh drawn from GPU buffers instead of CPU triangles: what its vertex shader needs, in
+    // world space so that every view can draw it.
+    struct GpuMeshDraw
+    {
+        std::shared_ptr<const MeshGeometry> Geometry;
+        glm::mat4 World{1.0f};
+        glm::mat3 Normal{1.0f};
+        std::array<float, 4> ColorScale{1.0f, 1.0f, 1.0f, 1.0f};
+        std::array<float, 4> UvTransform{1.0f, 1.0f, 0.0f, 0.0f};
+        float Fade = 1.0f;
+        bool Lit = true;
+        bool NormalizeNormals = true;
+        bool Cull = true;
+        SDL_GPUTexture* Texture = nullptr;
+        SurfaceStyle Style{};
+        // The shader's per-draw vertex inputs: the material in the box colours.
+        GpuVertex Record{};
+    };
+
+    // The scene of one view, shared by the views that draw it and the renderer's cache.
+    struct SceneTriangles
+    {
+        OrderedTriangles World;
+        OrderedTriangles Reflected;
+        OrderedTriangles Overlay;
+        std::vector<GpuMeshDraw> MeshDraws;
+        // Objects the world pass went through, those of them shown, and those of these outside the view.
+        int Objects = 0;
+        int VisibleObjects = 0;
+        int CulledObjects = 0;
+    };
+
     struct PreparedViewGeometry
     {
         std::vector<GpuVertex> Vertices;
         std::vector<GpuBatch> Batches;
         // Shared with the renderer's cache, so a reused scene is never copied.
         std::shared_ptr<const SceneTriangles> Scene;
+        // The GPU mesh draws' per-draw records among Vertices, and the indices they draw.
+        Uint32 MeshRecords = 0;
+        Uint32 MeshIndices = 0;
         std::vector<Triangle> ShadowSources, Shadows;
         SDL_FColor ClearColor{};
         Uint32 VertexOffset = 0;
@@ -230,6 +265,11 @@ namespace dbc
             return CachedScene_->Overlay.Triangles;
         }
 
+        const std::vector<GpuMeshDraw>& CachedMeshDraws() const
+        {
+            return CachedScene_->MeshDraws;
+        }
+
         void CacheScene(std::shared_ptr<SceneTriangles> Scene)
         {
             assert(Scene);
@@ -239,6 +279,20 @@ namespace dbc
 
         // Terrains drawn from static GPU buffers rather than per-frame CPU triangles.
         [[nodiscard]] bool DrawsTerrainOnGpu(const Matrix& Terrain) const;
+
+        // Readies the GPU buffers of a geometry for drawing, once per revision; false when it cannot be drawn
+        // from them (no normals for every vertex, an index outside the vertices).
+        [[nodiscard]] bool PrepareGpuMesh(const std::shared_ptr<const MeshGeometry>& Geometry)
+        {
+            return GpuMeshEntry(Geometry) != nullptr;
+        }
+
+        // Whether eligible object meshes are drawn from GPU buffers; off, every mesh takes the CPU path.
+        void SetGpuMeshesEnabled(bool Enabled)
+        {
+            GpuMeshesEnabled_ = Enabled;
+            InvalidateTriCache();
+        }
 
         // Triangles of static terrain in the last built view.
         [[nodiscard]] std::size_t LastStaticTerrainTriangles() const
@@ -294,6 +348,28 @@ namespace dbc
             bool PendingUpload = false;
         };
 
+        // A geometry's GPU buffers, keyed by revision. Vertices and indices wait in Pending* until uploaded.
+        struct GpuMeshBuffers
+        {
+            // Released once this geometry is gone or has another revision.
+            std::weak_ptr<const MeshGeometry> Source;
+            SDL_GPUBuffer* Vertices = nullptr;
+            SDL_GPUBuffer* Indices = nullptr;
+            Uint32 IndexCount = 0;
+            bool Usable = false;
+            std::size_t LastUsedFrame = 0;
+            std::vector<GpuMeshVertex> PendingVertices;
+            std::vector<uint32_t> PendingIndices;
+        };
+
+        // The usable buffers of a geometry, created on first use; null when it cannot be drawn from them.
+        GpuMeshBuffers* GpuMeshEntry(const std::shared_ptr<const MeshGeometry>& Geometry);
+        void AppendGpuMeshes(const SceneTriangles& Scene, PreparedViewGeometry& Geometry);
+        bool UploadGpuMeshes(SDL_GPUCommandBuffer* Commands);
+        // Frees the buffers of geometries that changed or that no view drew for a few seconds.
+        void ReleaseUnusedGpuMeshes();
+        void ReleaseGpuMeshes();
+
         // An empty scene to rebuild into: the cached one, cleared, when no view still holds it.
         std::shared_ptr<SceneTriangles> SceneForRebuild();
         void AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry);
@@ -320,6 +396,7 @@ namespace dbc
         RendererFrameStats StepTotals_{};
         std::size_t StatFrames_ = 0;
         bool NormalizeNormals_ = true;
+        bool GpuMeshesEnabled_ = true;
         std::array<int, 3> GammaLevels_{255, 255, 255};
         bool MipmapModeOverride_ = false;
         int MipmapMode_ = 2;
@@ -331,6 +408,9 @@ namespace dbc
         SDL_GPUTransferBuffer* TerrainTransfer_ = nullptr;
         Uint32 TerrainTransferCapacity_ = 0;
         std::size_t LastStaticTerrainTriangles_ = 0;
+        std::unordered_map<uint64_t, GpuMeshBuffers> GpuMeshes_;
+        SDL_GPUTransferBuffer* GpuMeshTransfer_ = nullptr;
+        Uint32 GpuMeshTransferCapacity_ = 0;
     };
 
 } // namespace dbc

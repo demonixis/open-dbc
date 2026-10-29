@@ -2377,10 +2377,10 @@ TEST_CASE("CHANGE MESH redraws a still scene with the new limb mesh")
         SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
         REQUIRE(Capture != nullptr);
         SDL_DestroySurface(Capture);
-        return Kernel.Renderer().CachedWorldTris().size();
+        return Kernel.Renderer().LastFrameStats().Triangles;
     };
 
-    const std::size_t Cube = DrawnTriangles();
+    const int Cube = DrawnTriangles();
     REQUIRE(Kernel.Memblocks().ChangeMesh(1, 0, 1));
     CHECK(DrawnTriangles() > Cube);
 }
@@ -2431,13 +2431,136 @@ TEST_CASE("TEXTURE OBJECT refreshes a still scene")
         SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
         REQUIRE(Capture != nullptr);
         SDL_DestroySurface(Capture);
-        REQUIRE_FALSE(Kernel.Renderer().CachedWorldTris().empty());
-        return Kernel.Renderer().CachedWorldTris().front().GpuTexture;
+        REQUIRE(Kernel.Renderer().CachedMeshDraws().size() == 1);
+        return Kernel.Renderer().CachedMeshDraws().front().Texture;
     };
 
     const SDL_GPUTexture* First = DrawnTexture();
     Kernel.Objects().TextureObject(1, 2);
     CHECK(DrawnTexture() != First);
+}
+
+TEST_CASE("Meshes drawn from GPU buffers look as the CPU path draws them")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 1.0f, 6.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(6.0f, 4.0f, 0.0f, &Error); });
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    const std::filesystem::path Images = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp";
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "beam.bmp").string(), 1));
+    // A pivoted, ZYX-rotated, scaled and textured cube with a chain of scaled, rotated and offset sphere limbs.
+    Objects.MakeObjectSphere(5, 1.5f, 10, 10);
+    REQUIRE(Objects.MakeMeshFromObject(1, 5));
+    Objects.DeleteObject(5);
+    Objects.MakeObjectCube(1, 2.0f);
+    Objects.RotateObject(1, 17.0f, 33.0f, -21.0f);
+    REQUIRE(Objects.FixObjectPivot(1));
+    Objects.RotateObject(1, 9.0f, -14.0f, 27.0f);
+    REQUIRE(Objects.SetObjectRotationZyx(1));
+    Objects.ScaleObject(1, 120.0f, 80.0f, 95.0f);
+    Objects.PositionObject(1, -2.5f, 0.5f, 14.0f);
+    Objects.TextureObject(1, 1);
+    REQUIRE(Objects.ScaleObjectTexture(1, 2.0f, 3.0f));
+    REQUIRE(Objects.ScrollObjectTexture(1, 0.25f, 0.5f));
+    REQUIRE(Objects.AddLimb(1, 1, 1));
+    REQUIRE(Objects.AddLimb(1, 2, 1));
+    REQUIRE(Objects.OffsetLimb(1, 1, 1.5f, 0.0f, 0.0f));
+    REQUIRE(Objects.RotateLimb(1, 1, 30.0f, 10.0f, 5.0f));
+    REQUIRE(Objects.ScaleLimb(1, 2, 50.0f, 150.0f, 50.0f));
+    REQUIRE(Objects.OffsetLimb(1, 2, 0.0f, 1.2f, 0.0f));
+    REQUIRE(Objects.LinkLimb(1, 1, 2));
+    // A coloured sphere with a diffuse material, mirrored on one axis.
+    Objects.MakeObjectSphere(2, 3.0f, 16, 12);
+    Objects.ColorObject(2, 0xC08040);
+    REQUIRE(Objects.SetObjectDiffuse(2, 0xFF80FF80u));
+    Objects.ScaleObject(2, -100.0f, 100.0f, 100.0f);
+    Objects.PositionObject(2, 2.5f, 1.0f, 12.0f);
+    // An unlit plain seen from behind, which only an unculled object shows.
+    REQUIRE(Objects.MakeObjectPlain(3, 4.0f, 3.0f));
+    REQUIRE(Objects.SetObjectLight(3, 0));
+    REQUIRE(Objects.SetObjectCull(3, 0));
+    Objects.ColorObject(3, 0x4060E0);
+    Objects.RotateObject(3, 0.0f, 200.0f, 0.0f);
+    Objects.PositionObject(3, 0.0f, -2.0f, 18.0f);
+    // An imported model, placed by its node transforms.
+    REQUIRE(Objects.LoadObject(
+        (std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/dome.x").string(), 4));
+    const float DomeSize = std::max(Objects.ObjectSize(4), 0.001f);
+    Objects.ScaleObject(4, 300.0f / DomeSize, 300.0f / DomeSize, 300.0f / DomeSize);
+    Objects.PositionObject(4, 0.0f, 3.5f, 16.0f);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+
+    const auto Capture = [&](bool GpuMeshes)
+    {
+        Kernel.Renderer().SetGpuMeshesEnabled(GpuMeshes);
+        SDL_Surface* Frame = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Frame != nullptr);
+        return Frame;
+    };
+    SDL_Surface* Gpu = Capture(true);
+    CHECK(Kernel.Renderer().CachedMeshDraws().size() == 6);
+    SDL_Surface* Cpu = Capture(false);
+    CHECK(Kernel.Renderer().CachedMeshDraws().empty());
+    REQUIRE(Gpu->w == Cpu->w);
+    REQUIRE(Gpu->h == Cpu->h);
+
+    // The two paths transform and clip in different orders, so only rounding and edge pixels may differ.
+    int Covered = 0;
+    int Different = 0;
+    for (int Y = 0; Y < Gpu->h; ++Y)
+    {
+        for (int X = 0; X < Gpu->w; ++X)
+        {
+            Uint8 GpuPixel[4]{};
+            Uint8 CpuPixel[4]{};
+            REQUIRE(SDL_ReadSurfacePixel(Gpu, X, Y, &GpuPixel[0], &GpuPixel[1], &GpuPixel[2], &GpuPixel[3]));
+            REQUIRE(SDL_ReadSurfacePixel(Cpu, X, Y, &CpuPixel[0], &CpuPixel[1], &CpuPixel[2], &CpuPixel[3]));
+            Covered += (CpuPixel[0] | CpuPixel[1] | CpuPixel[2]) != 0 ? 1 : 0;
+            int Difference = 0;
+            for (int Channel = 0; Channel < 3; ++Channel)
+                Difference += std::abs(static_cast<int>(GpuPixel[Channel]) - static_cast<int>(CpuPixel[Channel]));
+            Different += Difference > 12 ? 1 : 0;
+        }
+    }
+    CHECK(Covered > Gpu->w * Gpu->h / 10);
+    CHECK(Different * 200 < Covered);
+    SDL_DestroySurface(Cpu);
+    SDL_DestroySurface(Gpu);
+}
+
+TEST_CASE("Meshes stay on the CPU path where blending or the depth order decides the result")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    for (int Id = 1; Id <= 3; ++Id)
+    {
+        Kernel.Objects().MakeObjectCube(Id, 2.0f);
+        Kernel.Objects().PositionObject(Id, static_cast<float>(Id) * 3.0f - 6.0f, 0.0f, 10.0f);
+    }
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const auto GpuDraws = [&]
+    {
+        // Not every state command marks a still scene for rebuilding yet.
+        Kernel.Renderer().InvalidateTriCache();
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        return Kernel.Renderer().CachedMeshDraws().size();
+    };
+
+    CHECK(GpuDraws() == 3);
+    // A ghost blends: only its own mesh leaves the GPU path.
+    Kernel.Objects().GhostObjectOn(2);
+    CHECK(GpuDraws() == 2);
+    CHECK_FALSE(Kernel.Renderer().CachedWorldTris().empty());
+    // An opaque object that writes no depth must stay in depth order with the others: no mesh is drawn apart.
+    REQUIRE(Kernel.Objects().DisableObjectZwrite(3));
+    CHECK(GpuDraws() == 0);
+    REQUIRE(Kernel.Objects().EnableObjectZwrite(3));
+    CHECK(GpuDraws() == 2);
 }
 
 TEST_CASE("Rendered object vertices match the query transforms exactly")
@@ -2513,6 +2636,8 @@ TEST_CASE("Opaque objects interleaved in depth batch by texture")
         Kernel.Objects().PositionObject(Id, static_cast<float>(Id % 2) * 3.0f - 1.5f, 0.0f, 6.0f + 4.0f * Id);
         Kernel.Objects().TextureObject(Id, Id % 2 + 1);
     }
+    // Batching applies to CPU triangles; meshes drawn from GPU buffers take one draw each.
+    Kernel.Renderer().SetGpuMeshesEnabled(false);
     REQUIRE(Kernel.Core().EnsureInitialized());
     const auto DrawCalls = [&]
     {
@@ -4760,8 +4885,9 @@ TEST_CASE("DBPro object materials drive the stock shader")
     };
 
     const auto RedEmissive = CaptureCenter();
-    REQUIRE_FALSE(Kernel.Renderer().CachedWorldTris().empty());
-    CHECK(Kernel.Renderer().CachedWorldTris().front().Style.EmissiveColor == 0xFF0000u);
+    // Drawn from GPU buffers, with the material in its per-draw record.
+    REQUIRE(Kernel.Renderer().CachedMeshDraws().size() == 1);
+    CHECK(Kernel.Renderer().CachedMeshDraws().front().Style.EmissiveColor == 0xFF0000u);
     CHECK(RedEmissive[0] >= 240);
     CHECK(RedEmissive[1] <= 16);
     CHECK(RedEmissive[2] <= 16);
@@ -5323,6 +5449,8 @@ TEST_CASE("DBPro object and limb normal commands rewrite rendered geometry")
     CHECK(Mesh.Geometry().Normals[3].X == doctest::Approx(1.0f));
 
     REQUIRE(Kernel.Core().EnsureInitialized());
+    // The CPU path shows the normals each triangle takes.
+    Kernel.Renderer().SetGpuMeshesEnabled(false);
     SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
     REQUIRE(Capture != nullptr);
     SDL_DestroySurface(Capture);

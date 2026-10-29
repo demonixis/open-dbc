@@ -20,18 +20,6 @@ namespace dbc
         }
     };
 
-    // The view-space triangles of one view, shared by the views that draw them and the renderer's cache.
-    struct SceneTriangles
-    {
-        OrderedTriangles World;
-        OrderedTriangles Reflected;
-        OrderedTriangles Overlay;
-        // Objects the world pass went through, those of them shown, and those of these outside the view.
-        int Objects = 0;
-        int VisibleObjects = 0;
-        int CulledObjects = 0;
-    };
-
     // Hash of everything in a surface style that splits batches; a mesh computes it once for all its triangles.
     [[nodiscard]] uint32_t SurfaceStyleHash(const SurfaceStyle& Style);
 
