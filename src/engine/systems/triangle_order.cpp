@@ -1,8 +1,9 @@
 #include "triangle_order.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
-#include <functional>
+#include <cstddef>
 #include <limits>
 #include <span>
 #include <unordered_map>
@@ -11,22 +12,28 @@ namespace dbc
 {
     namespace
     {
+        // Phase, render priority and depth packed so that comparing two keys compares them in that order.
         struct OrderKey
         {
-            int Phase = 0;
-            int Priority = 0;
-            float Depth = 0.0f;
+            uint64_t Key = 0;
             uint32_t Index = 0;
+            // The triangle's StateHash, never zero, or zero when its result depends on its place in the order.
+            uint32_t State = 0;
         };
 
         struct GroupScratch
         {
-            std::vector<uint32_t> StateOf;
-            std::vector<uint32_t> Representatives;
-            std::unordered_multimap<std::size_t, uint32_t> StatesByHash;
+            std::vector<uint32_t> GroupOf;
+            std::unordered_map<uint32_t, uint32_t> Groups;
             std::vector<uint32_t> Offsets;
             std::vector<OrderKey> Grouped;
         };
+
+        constexpr uint32_t Mix(uint32_t Hash, uint64_t Value)
+        {
+            Hash ^= static_cast<uint32_t>(Value ^ (Value >> 32)) + 0x9e3779b9u + (Hash << 6) + (Hash >> 2);
+            return Hash;
+        }
 
         int DrawPhase(const Triangle& TriangleValue)
         {
@@ -35,83 +42,60 @@ namespace dbc
             return (TriangleValue.Transparent || TriangleValue.Additive) ? 2 : 1;
         }
 
-        // A NaN depth would break the sort's ordering, so it sorts last.
-        float SortDepth(float Depth)
+        // Maps a depth onto an unsigned integer with the same order. A NaN would break the sort's ordering, so it
+        // sorts last; negative zero sorts as zero, as the float comparison it replaces did.
+        uint32_t SortableDepth(float Depth)
         {
-            return std::isnan(Depth) ? std::numeric_limits<float>::infinity() : Depth;
+            if (std::isnan(Depth))
+                Depth = std::numeric_limits<float>::infinity();
+            if (Depth == 0.0f)
+                Depth = 0.0f;
+            const auto Bits = std::bit_cast<uint32_t>(Depth);
+            return (Bits & 0x80000000u) ? ~Bits : (Bits | 0x80000000u);
+        }
+
+        uint64_t PackKey(int Phase, int Priority, float Depth)
+        {
+            constexpr int64_t PriorityBias = int64_t{1} << 29;
+            const auto Biased =
+                static_cast<uint64_t>(std::clamp<int64_t>(Priority + PriorityBias, 0, 2 * PriorityBias - 1));
+            return (static_cast<uint64_t>(Phase) << 62) | (Biased << 32) | SortableDepth(Depth);
         }
 
         // The index breaks ties, so the order matches a stable sort of the triangles.
         void SortKeys(std::vector<OrderKey>& Keys)
         {
-            std::sort(Keys.begin(), Keys.end(),
-                      [](const OrderKey& A, const OrderKey& B)
-                      {
-                          if (A.Phase != B.Phase)
-                              return A.Phase < B.Phase;
-                          if (A.Priority != B.Priority)
-                              return A.Priority < B.Priority;
-                          if (A.Depth != B.Depth)
-                              return A.Depth < B.Depth;
-                          return A.Index < B.Index;
-                      });
+            std::sort(Keys.begin(), Keys.end(), [](const OrderKey& A, const OrderKey& B)
+                      { return A.Key != B.Key ? A.Key < B.Key : A.Index < B.Index; });
         }
 
-        // Covers the textures and the most varied state; SameDrawState settles collisions.
-        std::size_t DrawStateHash(const Triangle& TriangleValue)
+        // Groups a run of order-independent triangles by state, states in order of first appearance; a counting
+        // sort keeps the depth order within each state.
+        void GroupRun(std::span<OrderKey> Run, GroupScratch& Scratch)
         {
-            std::size_t Hash = std::hash<const void*>{}(TriangleValue.GpuTexture);
-            const auto Mix = [&Hash](std::size_t Value)
-            { Hash ^= Value + static_cast<std::size_t>(0x9e3779b9u) + (Hash << 6) + (Hash >> 2); };
-            for (const SDL_GPUTexture* Texture : TriangleValue.AuxiliaryGpuTextures)
-                Mix(std::hash<const void*>{}(Texture));
-            Mix(std::hash<const void*>{}(TriangleValue.CubeGpuTexture));
-            Mix(std::hash<int>{}(TriangleValue.Style.EffectId));
-            Mix(TriangleValue.Style.Wireframe ? 1u : 0u);
-            return Hash;
-        }
-
-        // Groups a run of order-independent triangles by draw state, states in order of first appearance; a
-        // counting sort keeps the depth order within each state.
-        void GroupRun(const std::vector<Triangle>& Triangles, std::span<OrderKey> Run, GroupScratch& Scratch)
-        {
-            Scratch.StateOf.resize(Run.size());
-            Scratch.Representatives.clear();
-            Scratch.StatesByHash.clear();
+            Scratch.GroupOf.resize(Run.size());
+            Scratch.Groups.clear();
             for (std::size_t Position = 0; Position < Run.size(); ++Position)
             {
-                const Triangle& Current = Triangles[Run[Position].Index];
-                if (Position > 0 && SameDrawState(Current, Triangles[Run[Position - 1].Index]))
+                if (Position > 0 && Run[Position].State == Run[Position - 1].State)
                 {
-                    Scratch.StateOf[Position] = Scratch.StateOf[Position - 1];
+                    Scratch.GroupOf[Position] = Scratch.GroupOf[Position - 1];
                     continue;
                 }
-                const std::size_t Hash = DrawStateHash(Current);
-                const auto [First, Last] = Scratch.StatesByHash.equal_range(Hash);
-                const auto Match =
-                    std::find_if(First, Last, [&](const auto& Entry)
-                                 { return SameDrawState(Current, Triangles[Scratch.Representatives[Entry.second]]); });
-                if (Match != Last)
-                {
-                    Scratch.StateOf[Position] = Match->second;
-                    continue;
-                }
-                const auto State = static_cast<uint32_t>(Scratch.Representatives.size());
-                Scratch.Representatives.push_back(Run[Position].Index);
-                Scratch.StatesByHash.emplace(Hash, State);
-                Scratch.StateOf[Position] = State;
+                const auto Group = static_cast<uint32_t>(Scratch.Groups.size());
+                Scratch.GroupOf[Position] = Scratch.Groups.try_emplace(Run[Position].State, Group).first->second;
             }
-            if (Scratch.Representatives.size() < 2)
+            if (Scratch.Groups.size() < 2)
                 return;
 
-            Scratch.Offsets.assign(Scratch.Representatives.size() + 1, 0);
+            Scratch.Offsets.assign(Scratch.Groups.size() + 1, 0);
             for (std::size_t Position = 0; Position < Run.size(); ++Position)
-                ++Scratch.Offsets[Scratch.StateOf[Position] + 1];
-            for (std::size_t State = 1; State < Scratch.Offsets.size(); ++State)
-                Scratch.Offsets[State] += Scratch.Offsets[State - 1];
+                ++Scratch.Offsets[Scratch.GroupOf[Position] + 1];
+            for (std::size_t Group = 1; Group < Scratch.Offsets.size(); ++Group)
+                Scratch.Offsets[Group] += Scratch.Offsets[Group - 1];
             Scratch.Grouped.resize(Run.size());
             for (std::size_t Position = 0; Position < Run.size(); ++Position)
-                Scratch.Grouped[Scratch.Offsets[Scratch.StateOf[Position]]++] = Run[Position];
+                Scratch.Grouped[Scratch.Offsets[Scratch.GroupOf[Position]]++] = Run[Position];
             std::copy(Scratch.Grouped.begin(), Scratch.Grouped.end(), Run.begin());
         }
 
@@ -123,13 +107,36 @@ namespace dbc
         }
     } // namespace
 
-    bool SameDrawState(const Triangle& A, const Triangle& B)
+    uint32_t SurfaceStyleHash(const SurfaceStyle& Style)
     {
-        return A.GpuTexture == B.GpuTexture && A.AuxiliaryGpuTextures == B.AuxiliaryGpuTextures &&
-               A.CubeGpuTexture == B.CubeGpuTexture && A.Transparent == B.Transparent &&
-               A.AlphaDepthWrite == B.AlphaDepthWrite && A.Additive == B.Additive && A.Is2d == B.Is2d &&
-               A.MatrixGhostMode == B.MatrixGhostMode && A.DepthTest == B.DepthTest && A.DepthWrite == B.DepthWrite &&
-               A.Style == B.Style;
+        uint32_t Hash =
+            Mix(0, (Style.Wireframe ? 1u : 0u) | (Style.Fog ? 2u : 0u) | (Style.BlackFog ? 4u : 0u) |
+                       (Style.Ambient ? 8u : 0u) | (Style.Filter ? 16u : 0u) | (Style.ReflectionSurface ? 32u : 0u) |
+                       (Style.ReflectionPass ? 64u : 0u) | (Style.ReflectionOverlay ? 128u : 0u) |
+                       (Style.Backdrop ? 256u : 0u) | (Style.ShadowCaster ? 512u : 0u) |
+                       (Style.ShadowVolume ? 1024u : 0u) | (Style.ShadowOverlay ? 2048u : 0u));
+        for (std::size_t Stage = 0; Stage < Style.TextureBlendModes.size(); ++Stage)
+        {
+            Hash = Mix(Hash, static_cast<uint32_t>(Style.TextureBlendModes[Stage]) |
+                                 static_cast<uint64_t>(static_cast<uint32_t>(Style.TextureAddressModes[Stage])) << 32);
+            Hash = Mix(Hash, static_cast<uint32_t>(Style.TextureMipModes[Stage]) |
+                                 (Style.TextureCubeModes[Stage] ? uint64_t{1} << 32 : 0u));
+        }
+        Hash = Mix(Hash, static_cast<uint32_t>(Style.BuiltInEffect) |
+                             static_cast<uint64_t>(static_cast<uint32_t>(Style.EffectId)) << 32);
+        return Mix(Hash, std::bit_cast<uint32_t>(Style.ShadowRange));
+    }
+
+    uint32_t DrawStateHash(const Triangle& TriangleValue, uint32_t StyleHash)
+    {
+        uint32_t Hash = Mix(StyleHash, reinterpret_cast<uintptr_t>(TriangleValue.GpuTexture));
+        for (const SDL_GPUTexture* Texture : TriangleValue.AuxiliaryGpuTextures)
+            Hash = Mix(Hash, reinterpret_cast<uintptr_t>(Texture));
+        Hash = Mix(Hash, reinterpret_cast<uintptr_t>(TriangleValue.CubeGpuTexture));
+        return Mix(Hash, (TriangleValue.Transparent ? 1u : 0u) | (TriangleValue.AlphaDepthWrite ? 2u : 0u) |
+                             (TriangleValue.Additive ? 4u : 0u) | (TriangleValue.Is2d ? 8u : 0u) |
+                             (TriangleValue.DepthTest ? 16u : 0u) | (TriangleValue.DepthWrite ? 32u : 0u) |
+                             static_cast<uint64_t>(static_cast<uint32_t>(TriangleValue.MatrixGhostMode)) << 32);
     }
 
     bool OrderIndependent(const Triangle& TriangleValue)
@@ -148,27 +155,27 @@ namespace dbc
         {
             const Triangle& TriangleValue = Triangles[Index];
             const int Phase = DrawPhase(TriangleValue);
-            Keys[Index] = {Phase, TriangleValue.RenderPriority,
-                           SortDepth(Phase == 2 ? -TriangleValue.Depth : TriangleValue.Depth),
-                           static_cast<uint32_t>(Index)};
+            Keys[Index] = {
+                PackKey(Phase, TriangleValue.RenderPriority, Phase == 2 ? -TriangleValue.Depth : TriangleValue.Depth),
+                static_cast<uint32_t>(Index),
+                OrderIndependent(TriangleValue) ? std::max(TriangleValue.StateHash, 1u) : 0u};
         }
         SortKeys(Keys);
 
+        // A run shares its phase and priority, the upper half of the key.
         GroupScratch Scratch;
         for (std::size_t Begin = 0; Begin < Keys.size();)
         {
-            if (!OrderIndependent(Triangles[Keys[Begin].Index]))
+            if (Keys[Begin].State == 0)
             {
                 ++Begin;
                 continue;
             }
-            const int Phase = Keys[Begin].Phase;
-            const int Priority = Keys[Begin].Priority;
+            const uint64_t Bucket = Keys[Begin].Key >> 32;
             std::size_t End = Begin + 1;
-            while (End < Keys.size() && Keys[End].Phase == Phase && Keys[End].Priority == Priority &&
-                   OrderIndependent(Triangles[Keys[End].Index]))
+            while (End < Keys.size() && Keys[End].State != 0 && Keys[End].Key >> 32 == Bucket)
                 ++End;
-            GroupRun(Triangles, std::span<OrderKey>(Keys).subspan(Begin, End - Begin), Scratch);
+            GroupRun(std::span<OrderKey>(Keys).subspan(Begin, End - Begin), Scratch);
             Begin = End;
         }
         WriteOrder(Keys, List.Order);
@@ -178,7 +185,7 @@ namespace dbc
     {
         std::vector<OrderKey> Keys(List.Triangles.size());
         for (std::size_t Index = 0; Index < List.Triangles.size(); ++Index)
-            Keys[Index] = {0, 0, SortDepth(-List.Triangles[Index].Depth), static_cast<uint32_t>(Index)};
+            Keys[Index] = {PackKey(0, 0, -List.Triangles[Index].Depth), static_cast<uint32_t>(Index), 0};
         SortKeys(Keys);
         WriteOrder(Keys, List.Order);
     }

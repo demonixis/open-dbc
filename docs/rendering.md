@@ -15,16 +15,18 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
 
 1. `PrepareFrame` advances animations and particles and refreshes the text atlas.
 2. `BuildPreparedView`, once per view, gathers world triangles from matrices,
-   terrains left on the CPU, the BSP world, objects and particles. For each object
-   triangle it skins the vertices, transforms them to world then view space, culls
-   back faces, resolves textures and the coordinates of the eight texture stages
-   (sphere and reflection mapping and the built-in effects included), and clips
-   the result to the frustum into 624-byte `Triangle` records.
-   `OrderWorldTriangles` sorts their indices, never the records: very early
+   terrains left on the CPU, the BSP world, objects and particles. An object mesh
+   skins and transforms each vertex once, to world then view space, and resolves
+   its textures and style on its first visible triangle. Each triangle is culled
+   if it faces away; its corners take their normal, colour and the coordinates of
+   the eight texture stages (sphere and reflection mapping and the built-in
+   effects included), once per vertex when the mesh has normals. It is clipped to
+   the frustum into 624-byte `Triangle` records, each with a hash of its draw
+   state. `OrderWorldTriangles` sorts packed keys, never the records: very early
    first, then opaque, then transparent and additive back to front, render
    priority first within each phase. Opaque triangles go front to back, except
    that each run of triangles that are depth tested and written and not blended
-   is grouped by draw state; the others keep their place between the runs.
+   is grouped by draw-state hash; the others keep their place between the runs.
    Reflection shading gathers the scene again with the mirrored view; stencil
    shadow volumes are extruded on the CPU from the casters' triangles.
 3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
@@ -50,11 +52,11 @@ transparent and unculled terrains stay on the CPU path.
 
 ## Where frame time goes
 
-CPU time grows with visible triangles, not objects: per-triangle transforms and
-texture-stage lookups, then the conversion and upload of `GpuVertex` records.
-The VM is a small share of a 3D frame. The clear
-after each 3D frame destroys bitmap 0's GPU texture; the next frame creates and
-uploads a full-window texture again, even when nothing was drawn on it.
+CPU time grows with visible triangles, not objects: clipping and filling
+`Triangle` records, ordering them, then converting and uploading `GpuVertex`
+records. The VM is a small share of a 3D frame. The clear after each 3D frame
+destroys bitmap 0's GPU texture; the next frame creates and uploads a
+full-window texture again, even when nothing was drawn on it.
 
 ## Compatibility constraints
 

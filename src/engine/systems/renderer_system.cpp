@@ -84,11 +84,13 @@ namespace dbc
     bool ProjectPointLocked(EngineKernel& K, float Wx, float Wy, float Wz, SDL_FPoint& OutPos, float& OutDepth);
     void AppendClippedViewTriangle(EngineKernel& K, const ViewVertex& V0, const ViewVertex& V1, const ViewVertex& V2,
                                    SDL_Texture* Texture, SDL_GPUTexture* GpuTexture, bool Transparent,
-                                   std::vector<Triangle>& Tris, bool Additive = false, SurfaceStyle Style = {},
+                                   std::vector<Triangle>& Tris, bool Additive = false, const SurfaceStyle& Style = {},
                                    int AlphaPhase = -1, bool VeryEarly = false, float DepthBias = 0.0f,
                                    int MatrixGhostMode = -1, int RenderPriority = 0, bool DepthWrite = true,
-                                   bool DepthTest = true, std::array<SDL_GPUTexture*, 7> AuxiliaryGpuTextures = {},
-                                   SDL_GPUTexture* CubeGpuTexture = nullptr);
+                                   bool DepthTest = true,
+                                   const std::array<SDL_GPUTexture*, 7>& AuxiliaryGpuTextures = {},
+                                   SDL_GPUTexture* CubeGpuTexture = nullptr,
+                                   std::optional<uint32_t> StyleHash = std::nullopt);
     GpuFragmentUniforms BuildFragmentUniforms(EngineKernel& K);
 
     [[nodiscard]] Vec3 ActiveCameraPosition(EngineKernel& K)
@@ -2068,6 +2070,7 @@ namespace dbc
         SDL_FColor Color{};
         bool UsesVertexAlpha = false;
         SurfaceStyle Style{};
+        uint32_t StyleHash = 0;
         std::array<int, 8> CoordinateModes{};
         std::array<const std::vector<SDL_FPoint>*, 8> StageUvs{};
     };
@@ -2139,6 +2142,7 @@ namespace dbc
         Surface.UsesVertexAlpha =
             Object.Ghosted || Object.Alpha < 0.999f || Object.AlphaMapping || Object.TransparentBlack;
         Surface.Style = BuildSurfaceStyle(Object, MeshValue);
+        Surface.StyleHash = SurfaceStyleHash(Surface.Style);
         for (int Stage = 0; Stage < 8; ++Stage)
         {
             const auto Index = static_cast<std::size_t>(Stage);
@@ -2645,7 +2649,7 @@ namespace dbc
                             ViewCorner(V2, C2, ShaderDirection2), Surface->Texture, Surface->GpuTexture,
                             Surface->BlendTransparent, WorldTris, Surface->BlendAdditive, Surface->Style, AlphaPhase,
                             VeryEarly, DepthBias, -1, 0, Object.DepthWrite, Object.DepthTest,
-                            Surface->AuxiliaryGpuTextures, Surface->CubeGpuTexture);
+                            Surface->AuxiliaryGpuTextures, Surface->CubeGpuTexture, Surface->StyleHash);
                     }
                 }
                 dbc::RenderObjectBounds(K, Object, WorldTris);
@@ -4756,10 +4760,11 @@ namespace dbc
 
     void AppendClippedViewTriangle(EngineKernel& K, const ViewVertex& V0, const ViewVertex& V1, const ViewVertex& V2,
                                    SDL_Texture* Texture, SDL_GPUTexture* GpuTexture, bool Transparent,
-                                   std::vector<Triangle>& Tris, bool Additive, SurfaceStyle Style, int AlphaPhase,
-                                   bool VeryEarly, float DepthBias, int MatrixGhostMode, int RenderPriority,
-                                   bool DepthWrite, bool DepthTest, std::array<SDL_GPUTexture*, 7> AuxiliaryGpuTextures,
-                                   SDL_GPUTexture* CubeGpuTexture)
+                                   std::vector<Triangle>& Tris, bool Additive, const SurfaceStyle& Style,
+                                   int AlphaPhase, bool VeryEarly, float DepthBias, int MatrixGhostMode,
+                                   int RenderPriority, bool DepthWrite, bool DepthTest,
+                                   const std::array<SDL_GPUTexture*, 7>& AuxiliaryGpuTextures,
+                                   SDL_GPUTexture* CubeGpuTexture, std::optional<uint32_t> StyleHash)
     {
         std::optional<RenderView> CameraView;
         const RenderView* View = K.Renderer().ActiveView();
@@ -4850,6 +4855,9 @@ namespace dbc
             Tri.CubeDirection[2][0] = C.CubeX;
             Tri.CubeDirection[2][1] = C.CubeY;
             Tri.CubeDirection[2][2] = C.CubeZ;
+            if (!StyleHash)
+                StyleHash = SurfaceStyleHash(Style);
+            Tri.StateHash = DrawStateHash(Tri, *StyleHash);
             Tris.push_back(Tri);
         }
     }

@@ -542,6 +542,8 @@ namespace dbc
         SDL_Texture* Texture = nullptr;
         SDL_GPUTexture* GpuTexture = nullptr;
         float Depth = 0.0f;
+        // DrawStateHash, recorded when the triangle is built so ordering never reads its state back.
+        uint32_t StateHash = 0;
         bool Transparent = false;
         bool AlphaDepthWrite = false;
         bool Additive = false;

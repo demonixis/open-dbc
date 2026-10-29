@@ -52,14 +52,14 @@ geometry is transformed, sorted and uploaded on the CPU every frame
 
 | Demo | Triangles | Batches | CPU ms per frame |
 | --- | ---: | ---: | ---: |
-| `hive_defender` | 42,996 | 8 | 17.7 |
-| `wave_racer` | 9,820 | 68 | 4.2 |
-| `dusk_rally` | 2,623 | 201 | 2.6 |
-| `reactor_breach` | 1,460 | 19 | 2.4 |
+| `hive_defender` | 40,089 | 8 | 11.7 |
+| `wave_racer` | 9,825 | 62 | 3.3 |
+| `dusk_rally` | 2,607 | 195 | 2.3 |
+| `reactor_breach` | 1,458 | 19 | 1.9 |
 
-In `hive_defender`, building object triangles takes 62% of the frame, ordering them
-21% (mostly reading their keys from the 624-byte `Triangle` records and comparing
-`SurfaceStyle`s), converting them to `GpuVertex` 11% and the VM under 1%.
+In `hive_defender`, building object triangles takes 49% of the frame (clipping
+and filling the 624-byte `Triangle` records first), converting them to
+`GpuVertex` 25%, ordering them 20% and the VM about 2%.
 
 Decisions:
 
@@ -82,10 +82,6 @@ Work, in order:
   overlay, count culled objects, time each renderer step, and add stress scenes:
   many objects sharing a mesh, many distinct ones, transparency, skinned characters
   (no demo model has bones; a few tutorial models do), two views.
-- [ ] Per-mesh work out of the triangle loop: textures, `SurfaceStyle`, stage
-  lookups and the object matrix, whose sines and cosines are recomputed per vertex;
-  each vertex transformed once rather than once per triangle that uses it; draw
-  state and order keys recorded per mesh rather than read back per triangle.
 - [ ] CPU skinning: one bone palette per object and frame, not one per mesh and view
   and per `ObjectMeshVertex` query, and no copy of the mesh's vertices before
   skinning them.
