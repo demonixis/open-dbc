@@ -2056,11 +2056,125 @@ namespace dbc
             K.Renderer().InvalidateTriCache();
     }
 
+    // What drawing an object's mesh takes from the object and the mesh, the same for all its triangles.
+    struct ObjectMeshSurface
+    {
+        SDL_Texture* Texture = nullptr;
+        SDL_GPUTexture* GpuTexture = nullptr;
+        std::array<SDL_GPUTexture*, 7> AuxiliaryGpuTextures{};
+        SDL_GPUTexture* CubeGpuTexture = nullptr;
+        bool BlendTransparent = false;
+        bool BlendAdditive = false;
+        SDL_FColor Color{};
+        bool UsesVertexAlpha = false;
+        SurfaceStyle Style{};
+        std::array<int, 8> CoordinateModes{};
+        std::array<const std::vector<SDL_FPoint>*, 8> StageUvs{};
+    };
+
+    [[nodiscard]] ObjectMeshSurface ResolveObjectMeshSurface(EngineKernel& K, const Object3D& Object,
+                                                             const Mesh& MeshValue)
+    {
+        ObjectMeshSurface Surface;
+        Surface.CubeGpuTexture = Object.CubeGpuTexture.get();
+        int TextureImageId = Object.TextureImageId;
+        if (TextureImageId == 0)
+        {
+            TextureImageId = MeshValue.TextureImageId;
+        }
+        if (const auto StageZero = MeshValue.TextureStageImageIds.find(0);
+            StageZero != MeshValue.TextureStageImageIds.end())
+            TextureImageId = StageZero->second;
+        if (TextureImageId != 0)
+        {
+            Image* TexImg = K.ImageStoreRef().GetImage(TextureImageId);
+            if (TexImg)
+            {
+                Surface.Texture =
+                    Object.TransparentBlack ? K.ImageStoreRef().EnsureBlackKeyTexture(*TexImg) : TexImg->Texture;
+                Surface.GpuTexture = dbc::ImageGpuTexture(K, *TexImg, Object.TransparentBlack);
+                // transparent_black textures have alpha=0 for black pixels.
+                // The fragment shader discards fragments with alpha <= 0.001,
+                // so these objects stay in the OPAQUE pass (depth write ON):
+                //  • black pixels → alpha=0 → discard → no depth/color write
+                //  • non-black pixels → alpha=1 → normal depth write
+                // This correctly blocks additive objects (ghost water, etc.)
+                // behind opaque regions while allowing see-through on keyed areas.
+                if (!Object.TransparentBlack)
+                {
+                    Surface.BlendTransparent = TexImg->HasPartialAlpha;
+                }
+            }
+        }
+        for (int Stage = 1; Stage < 8; ++Stage)
+        {
+            if (const auto StageImage = MeshValue.TextureStageImageIds.find(Stage);
+                StageImage != MeshValue.TextureStageImageIds.end())
+            {
+                if (Image* AuxiliaryImage = K.ImageStoreRef().GetImage(StageImage->second))
+                    Surface.AuxiliaryGpuTextures[static_cast<std::size_t>(Stage - 1)] =
+                        dbc::ImageGpuTexture(K, *AuxiliaryImage, false);
+            }
+        }
+        // Ghost mode 0 = additive blending, mode 1 = alpha blending.
+        Surface.BlendAdditive = Object.Ghosted && Object.GhostMode == 0;
+        if (Object.Ghosted || Object.Alpha < 0.999f || Object.AlphaMapping)
+        {
+            Surface.BlendTransparent = true;
+        }
+
+        // LOAD OBJECT modes 2-5 preserve the imported diffuse material when texturing.
+        const bool HasTexture = (Surface.GpuTexture != nullptr || Surface.Texture != nullptr);
+        const bool UseMaterial = !HasTexture || MeshValue.TextureUsesMaterialColor;
+        Surface.Color = SDL_FColor{
+            std::clamp(Object.TintR * MeshValue.LimbTint.r * (UseMaterial ? MeshValue.MaterialColor.r : 1.0f), 0.0f,
+                       1.0f),
+            std::clamp(Object.TintG * MeshValue.LimbTint.g * (UseMaterial ? MeshValue.MaterialColor.g : 1.0f), 0.0f,
+                       1.0f),
+            std::clamp(Object.TintB * MeshValue.LimbTint.b * (UseMaterial ? MeshValue.MaterialColor.b : 1.0f), 0.0f,
+                       1.0f),
+            std::clamp(Object.Alpha, 0.0f, 1.0f)};
+        // As in DBPro's fixed pipeline, vertex alpha only matters to objects that blend or
+        // alpha-test. An opaque object stays opaque when RGB() leaves the alpha byte at zero.
+        Surface.UsesVertexAlpha =
+            Object.Ghosted || Object.Alpha < 0.999f || Object.AlphaMapping || Object.TransparentBlack;
+        Surface.Style = BuildSurfaceStyle(Object, MeshValue);
+        for (int Stage = 0; Stage < 8; ++Stage)
+        {
+            const auto Index = static_cast<std::size_t>(Stage);
+            if (const auto Mode = MeshValue.TextureStageCoordinateModes.find(Stage);
+                Mode != MeshValue.TextureStageCoordinateModes.end())
+                Surface.CoordinateModes[Index] = Mode->second;
+            if (const auto Uvs = MeshValue.UvStages.find(Stage); Uvs != MeshValue.UvStages.end())
+                Surface.StageUvs[Index] = &Uvs->second;
+        }
+        return Surface;
+    }
+
+    // What one triangle corner of an object takes from its vertex and normal.
+    struct ObjectCorner
+    {
+        Vec3 ViewNormal{};
+        SDL_FColor Color{};
+        SDL_FPoint Uv{};
+        std::array<SDL_FPoint, 7> AuxiliaryUvs{};
+        // Reflection direction for cube mapping.
+        Vec3 Direction{};
+    };
+
     void RenderObjects(EngineKernel& K, std::vector<Triangle>& WorldTris, std::vector<Triangle>& OverlayTris)
     {
         const RenderView View = K.Renderer().ActiveView()
                                     ? *K.Renderer().ActiveView()
                                     : K.Renderer().CameraView(K.Core().WindowWidth(), K.Core().WindowHeight());
+
+        const Vec3 Camera = ActiveCameraPosition(K);
+        const bool Reflecting = K.Renderer().ReflectionViewEnabled();
+        // Per-vertex scratch, reused from mesh to mesh.
+        std::vector<Vec3> WorldPositions;
+        std::vector<Vec3> ViewPositions;
+        std::vector<ObjectCorner> Corners;
+        std::vector<uint8_t> CornerReady;
 
         bool HasWaterline = false;
         float WaterlineY = std::numeric_limits<float>::max();
@@ -2206,69 +2320,69 @@ namespace dbc
                                     : 0;
                         }
                     }
-                    for (size_t I = 0; I + 2 < MeshValue.Indices.size(); I += 3)
+                    // Each vertex is transformed once, not once per triangle that uses it.
+                    const std::size_t VertexCount = MeshValue.Vertices.size();
+                    WorldPositions.resize(VertexCount);
+                    ViewPositions.resize(VertexCount);
+                    for (std::size_t Vertex = 0; Vertex < VertexCount; ++Vertex)
                     {
-                        const uint32_t I0 = MeshValue.Indices[I];
-                        const uint32_t I1 = MeshValue.Indices[I + 1];
-                        const uint32_t I2 = MeshValue.Indices[I + 2];
-                        if (I0 >= MeshValue.Vertices.size() || I1 >= MeshValue.Vertices.size() ||
-                            I2 >= MeshValue.Vertices.size())
+                        const bool Skinned = !SkinnedVertices.empty() && SkinnedVertices[Vertex] != 0;
+                        const Vec3 World =
+                            ToWorld.Point(Skinned ? SkinnedPositions[Vertex] : MeshValue.Vertices[Vertex], Skinned);
+                        WorldPositions[Vertex] = World;
+                        ViewPositions[Vertex] =
+                            Object.LockToScreen ? World : dbc::WorldToViewPoint(K, World.X, World.Y, World.Z);
+                    }
+
+                    // Resolved by the first visible triangle, so a mesh that shows none loads no texture.
+                    std::optional<ObjectMeshSurface> Surface;
+                    const bool VertexNormals = MeshValue.Normals.size() == VertexCount;
+                    const bool Lit = Object.UseLighting || MeshValue.BuiltInEffect != 0;
+                    const auto ReflectionDirection = [&](const Vec3& WorldPoint, const Vec3& WorldNormal)
+                    {
+                        const Vec3 Incident = Vec3Normalize(
+                            Vec3{WorldPoint.X - Camera.X, WorldPoint.Y - Camera.Y, WorldPoint.Z - Camera.Z});
+                        const Vec3 Normal = Vec3Normalize(WorldNormal);
+                        const float Projection = 2.0f * Vec3Dot(Incident, Normal);
+                        return Vec3Normalize(Vec3{Incident.X - Projection * Normal.X,
+                                                  Incident.Y - Projection * Normal.Y,
+                                                  Incident.Z - Projection * Normal.Z});
+                    };
+                    const auto ResolveStageUv = [&](uint32_t VertexIndex, int Stage, SDL_FPoint BaseUv,
+                                                    const Vec3& WorldNormal, const Vec3& Reflection)
+                    {
+                        const int CoordinateMode = Surface->CoordinateModes[static_cast<std::size_t>(Stage)];
+                        if (CoordinateMode == 1)
                         {
-                            continue;
+                            const Vec3 ViewNormal = Vec3Normalize(
+                                dbc::WorldToViewDirection(K, WorldNormal.X, WorldNormal.Y, WorldNormal.Z));
+                            return SDL_FPoint{ViewNormal.X * 0.5f + 0.5f, ViewNormal.Y * -0.5f + 0.5f};
                         }
-
-                        const bool Skinned0 = !SkinnedVertices.empty() && SkinnedVertices[I0] != 0;
-                        const bool Skinned1 = !SkinnedVertices.empty() && SkinnedVertices[I1] != 0;
-                        const bool Skinned2 = !SkinnedVertices.empty() && SkinnedVertices[I2] != 0;
-                        const Vec3& P0 = Skinned0 ? SkinnedPositions[I0] : MeshValue.Vertices[I0];
-                        const Vec3& P1 = Skinned1 ? SkinnedPositions[I1] : MeshValue.Vertices[I1];
-                        const Vec3& P2 = Skinned2 ? SkinnedPositions[I2] : MeshValue.Vertices[I2];
-                        const Vec3 W0 = ToWorld.Point(P0, Skinned0);
-                        const Vec3 W1 = ToWorld.Point(P1, Skinned1);
-                        const Vec3 W2 = ToWorld.Point(P2, Skinned2);
-
-                        const Vec3 V0 =
-                            Object.LockToScreen ? Vec3{W0.X, W0.Y, W0.Z} : dbc::WorldToViewPoint(K, W0.X, W0.Y, W0.Z);
-                        const Vec3 V1 =
-                            Object.LockToScreen ? Vec3{W1.X, W1.Y, W1.Z} : dbc::WorldToViewPoint(K, W1.X, W1.Y, W1.Z);
-                        const Vec3 V2 =
-                            Object.LockToScreen ? Vec3{W2.X, W2.Y, W2.Z} : dbc::WorldToViewPoint(K, W2.X, W2.Y, W2.Z);
-
-                        const Vec3 E1 = Vec3Sub(W1, W0);
-                        const Vec3 E2 = Vec3Sub(W2, W0);
-                        const Vec3 FaceNormal = Vec3Normalize(Vec3Cross(E1, E2));
-                        if (Object.Cull && !K.Renderer().ReflectionViewEnabled())
-                        {
-                            const float Cx = (W0.X + W1.X + W2.X) / 3.0f;
-                            const float Cy = (W0.Y + W1.Y + W2.Y) / 3.0f;
-                            const float Cz = (W0.Z + W1.Z + W2.Z) / 3.0f;
-                            const Vec3 Camera = ActiveCameraPosition(K);
-                            const Vec3 ToCam{Camera.X - Cx, Camera.Y - Cy, Camera.Z - Cz};
-                            const float Facing = Vec3Dot(FaceNormal, ToCam);
-                            if (Facing <= 0.0f)
-                            {
-                                continue;
-                            }
-                        }
-                        // Per-vertex normals in world space (or face normal fallback).
-                        Vec3 Wn0 = FaceNormal;
-                        Vec3 Wn1 = FaceNormal;
-                        Vec3 Wn2 = FaceNormal;
-                        if (MeshValue.Normals.size() == MeshValue.Vertices.size())
-                        {
-                            Wn0 = ToWorld.Normal(Skinned0 ? SkinnedNormals[I0] : MeshValue.Normals[I0], Skinned0);
-                            Wn1 = ToWorld.Normal(Skinned1 ? SkinnedNormals[I1] : MeshValue.Normals[I1], Skinned1);
-                            Wn2 = ToWorld.Normal(Skinned2 ? SkinnedNormals[I2] : MeshValue.Normals[I2], Skinned2);
-                        }
-
+                        if (CoordinateMode == 2)
+                            return SDL_FPoint{Reflection.X * 0.5f + 0.5f, Reflection.Y * -0.5f + 0.5f};
+                        int SourceStage = Stage;
+                        if (CoordinateMode == 3)
+                            SourceStage = 0;
+                        else if (CoordinateMode >= 10 && CoordinateMode <= 17)
+                            SourceStage = CoordinateMode - 10;
+                        if (SourceStage == 0)
+                            return BaseUv;
+                        const std::vector<SDL_FPoint>* StageUvs =
+                            Surface->StageUvs[static_cast<std::size_t>(SourceStage)];
+                        if (StageUvs && VertexIndex < StageUvs->size())
+                            return (*StageUvs)[VertexIndex];
+                        return BaseUv;
+                    };
+                    // Everything a triangle corner takes from its vertex and normal.
+                    const auto MakeCorner = [&](uint32_t Index, const Vec3& WorldPoint, const Vec3& WorldNormal)
+                    {
+                        ObjectCorner Corner;
                         // Transform normals to view-space for GPU lighting.
                         // For unlit objects, pass zero normals so the shader skips lighting.
-                        Vec3 Vn0{}, Vn1{}, Vn2{};
-                        if (Object.UseLighting || MeshValue.BuiltInEffect != 0)
+                        if (Lit)
                         {
-                            Vn0 = dbc::WorldToViewDirection(K, Wn0.X, Wn0.Y, Wn0.Z);
-                            Vn1 = dbc::WorldToViewDirection(K, Wn1.X, Wn1.Y, Wn1.Z);
-                            Vn2 = dbc::WorldToViewDirection(K, Wn2.X, Wn2.Y, Wn2.Z);
+                            Corner.ViewNormal =
+                                dbc::WorldToViewDirection(K, WorldNormal.X, WorldNormal.Y, WorldNormal.Z);
                             // DBC FADE OBJECT: normal magnitude encodes the fade multiplier.
                             // The shader uses length(N) as a diffuse/specular multiplier:
                             //   0.015 → ambient only,  1.0 → normal,  2.0 → 2× bright.
@@ -2277,254 +2391,152 @@ namespace dbc
                             const float Fs = std::max(Object.FadeNormalScale, 0.015f);
                             if (Fs != 1.0f)
                             {
-                                Vn0.X *= Fs;
-                                Vn0.Y *= Fs;
-                                Vn0.Z *= Fs;
-                                Vn1.X *= Fs;
-                                Vn1.Y *= Fs;
-                                Vn1.Z *= Fs;
-                                Vn2.X *= Fs;
-                                Vn2.Y *= Fs;
-                                Vn2.Z *= Fs;
+                                Corner.ViewNormal.X *= Fs;
+                                Corner.ViewNormal.Y *= Fs;
+                                Corner.ViewNormal.Z *= Fs;
                             }
                         }
 
-                        SDL_Texture* Texture = nullptr;
-                        SDL_GPUTexture* GpuTexture = nullptr;
-                        std::array<SDL_GPUTexture*, 7> AuxiliaryGpuTextures{};
-                        SDL_GPUTexture* CubeGpuTexture = Object.CubeGpuTexture.get();
-                        bool BlendTransparent = false;
-                        int TextureImageId = Object.TextureImageId;
-                        if (TextureImageId == 0)
-                        {
-                            TextureImageId = MeshValue.TextureImageId;
-                        }
-                        if (const auto StageZero = MeshValue.TextureStageImageIds.find(0);
-                            StageZero != MeshValue.TextureStageImageIds.end())
-                            TextureImageId = StageZero->second;
-                        if (TextureImageId != 0)
-                        {
-                            Image* TexImg = K.ImageStoreRef().GetImage(TextureImageId);
-                            if (TexImg)
-                            {
-                                Texture = Object.TransparentBlack ? K.ImageStoreRef().EnsureBlackKeyTexture(*TexImg)
-                                                                  : TexImg->Texture;
-                                GpuTexture = dbc::ImageGpuTexture(K, *TexImg, Object.TransparentBlack);
-                                // transparent_black textures have alpha=0 for black pixels.
-                                // The fragment shader discards fragments with alpha <= 0.001,
-                                // so these objects stay in the OPAQUE pass (depth write ON):
-                                //  • black pixels → alpha=0 → discard → no depth/color write
-                                //  • non-black pixels → alpha=1 → normal depth write
-                                // This correctly blocks additive objects (ghost water, etc.)
-                                // behind opaque regions while allowing see-through on keyed areas.
-                                if (!Object.TransparentBlack)
-                                {
-                                    BlendTransparent = TexImg->HasPartialAlpha;
-                                }
-                            }
-                        }
-                        for (int Stage = 1; Stage < 8; ++Stage)
-                        {
-                            if (const auto StageImage = MeshValue.TextureStageImageIds.find(Stage);
-                                StageImage != MeshValue.TextureStageImageIds.end())
-                            {
-                                if (Image* AuxiliaryImage = K.ImageStoreRef().GetImage(StageImage->second))
-                                    AuxiliaryGpuTextures[static_cast<std::size_t>(Stage - 1)] =
-                                        dbc::ImageGpuTexture(K, *AuxiliaryImage, false);
-                            }
-                        }
-                        // Ghost mode 0 = additive blending, mode 1 = alpha blending.
-                        const bool BlendAdditive = Object.Ghosted && Object.GhostMode == 0;
-                        if (Object.Ghosted || Object.Alpha < 0.999f || Object.AlphaMapping)
-                        {
-                            BlendTransparent = true;
-                        }
-
-                        // LOAD OBJECT modes 2-5 preserve the imported diffuse material when texturing.
-                        const bool HasTexture = (GpuTexture != nullptr || Texture != nullptr);
-                        const bool UseMaterial = !HasTexture || MeshValue.TextureUsesMaterialColor;
-                        const SDL_FColor Col{std::clamp(Object.TintR * MeshValue.LimbTint.r *
-                                                            (UseMaterial ? MeshValue.MaterialColor.r : 1.0f),
-                                                        0.0f, 1.0f),
-                                             std::clamp(Object.TintG * MeshValue.LimbTint.g *
-                                                            (UseMaterial ? MeshValue.MaterialColor.g : 1.0f),
-                                                        0.0f, 1.0f),
-                                             std::clamp(Object.TintB * MeshValue.LimbTint.b *
-                                                            (UseMaterial ? MeshValue.MaterialColor.b : 1.0f),
-                                                        0.0f, 1.0f),
-                                             std::clamp(Object.Alpha, 0.0f, 1.0f)};
-                        // As in DBPro's fixed pipeline, vertex alpha only matters to objects that blend or
-                        // alpha-test. An opaque object stays opaque when RGB() leaves the alpha byte at zero.
-                        const bool UsesVertexAlpha =
-                            Object.Ghosted || Object.Alpha < 0.999f || Object.AlphaMapping || Object.TransparentBlack;
-                        const auto VertexColor = [&](uint32_t Index)
-                        {
-                            const uint32_t Packed =
-                                Index < MeshValue.DiffuseColors.size() ? MeshValue.DiffuseColors[Index] : 0xFFFFFFFFu;
-                            return SDL_FColor{
-                                Col.r * static_cast<float>((Packed >> 16u) & 0xFFu) / 255.0f,
-                                Col.g * static_cast<float>((Packed >> 8u) & 0xFFu) / 255.0f,
-                                Col.b * static_cast<float>(Packed & 0xFFu) / 255.0f,
-                                UsesVertexAlpha ? Col.a * static_cast<float>((Packed >> 24u) & 0xFFu) / 255.0f : Col.a,
-                            };
+                        const SDL_FColor& Col = Surface->Color;
+                        const uint32_t Packed =
+                            Index < MeshValue.DiffuseColors.size() ? MeshValue.DiffuseColors[Index] : 0xFFFFFFFFu;
+                        Corner.Color = SDL_FColor{
+                            Col.r * static_cast<float>((Packed >> 16u) & 0xFFu) / 255.0f,
+                            Col.g * static_cast<float>((Packed >> 8u) & 0xFFu) / 255.0f,
+                            Col.b * static_cast<float>(Packed & 0xFFu) / 255.0f,
+                            Surface->UsesVertexAlpha ? Col.a * static_cast<float>((Packed >> 24u) & 0xFFu) / 255.0f
+                                                     : Col.a,
                         };
-                        const SDL_FColor Color0 = VertexColor(I0);
-                        const SDL_FColor Color1 = VertexColor(I1);
-                        const SDL_FColor Color2 = VertexColor(I2);
 
-                        SDL_FPoint T0{Object.TexScrollU, Object.TexScrollV};
-                        SDL_FPoint T1{Object.TexScrollU, Object.TexScrollV};
-                        SDL_FPoint T2{Object.TexScrollU, Object.TexScrollV};
+                        SDL_FPoint Uv{Object.TexScrollU, Object.TexScrollV};
                         if (!MeshValue.Uvs.empty())
                         {
-                            if (I0 < MeshValue.Uvs.size())
-                            {
-                                T0 = MeshValue.Uvs[I0];
-                            }
-                            if (I1 < MeshValue.Uvs.size())
-                            {
-                                T1 = MeshValue.Uvs[I1];
-                            }
-                            if (I2 < MeshValue.Uvs.size())
-                            {
-                                T2 = MeshValue.Uvs[I2];
-                            }
-                            T0.x = T0.x * Object.TexScaleU + Object.TexScrollU;
-                            T0.y = T0.y * Object.TexScaleV + Object.TexScrollV;
-                            T1.x = T1.x * Object.TexScaleU + Object.TexScrollU;
-                            T1.y = T1.y * Object.TexScaleV + Object.TexScrollV;
-                            T2.x = T2.x * Object.TexScaleU + Object.TexScrollU;
-                            T2.y = T2.y * Object.TexScaleV + Object.TexScrollV;
+                            if (Index < MeshValue.Uvs.size())
+                                Uv = MeshValue.Uvs[Index];
+                            Uv.x = Uv.x * Object.TexScaleU + Object.TexScrollU;
+                            Uv.y = Uv.y * Object.TexScaleV + Object.TexScrollV;
                         }
-
-                        const auto ReflectionDirection = [&](const Vec3& WorldPoint, const Vec3& WorldNormal)
-                        {
-                            const Vec3 Camera = ActiveCameraPosition(K);
-                            const Vec3 Incident = Vec3Normalize(
-                                Vec3{WorldPoint.X - Camera.X, WorldPoint.Y - Camera.Y, WorldPoint.Z - Camera.Z});
-                            const Vec3 Normal = Vec3Normalize(WorldNormal);
-                            const float Projection = 2.0f * Vec3Dot(Incident, Normal);
-                            return Vec3Normalize(Vec3{Incident.X - Projection * Normal.X,
-                                                      Incident.Y - Projection * Normal.Y,
-                                                      Incident.Z - Projection * Normal.Z});
-                        };
-                        const Vec3 Reflection0 = ReflectionDirection(W0, Wn0);
-                        const Vec3 Reflection1 = ReflectionDirection(W1, Wn1);
-                        const Vec3 Reflection2 = ReflectionDirection(W2, Wn2);
-                        const auto ResolveStageUv = [&](uint32_t VertexIndex, int Stage, SDL_FPoint BaseUv,
-                                                        const Vec3& WorldNormal, const Vec3& Reflection)
-                        {
-                            int CoordinateMode = 0;
-                            if (const auto Mode = MeshValue.TextureStageCoordinateModes.find(Stage);
-                                Mode != MeshValue.TextureStageCoordinateModes.end())
-                                CoordinateMode = Mode->second;
-                            if (CoordinateMode == 1)
-                            {
-                                const Vec3 ViewNormal = Vec3Normalize(
-                                    dbc::WorldToViewDirection(K, WorldNormal.X, WorldNormal.Y, WorldNormal.Z));
-                                return SDL_FPoint{ViewNormal.X * 0.5f + 0.5f, ViewNormal.Y * -0.5f + 0.5f};
-                            }
-                            if (CoordinateMode == 2)
-                                return SDL_FPoint{Reflection.X * 0.5f + 0.5f, Reflection.Y * -0.5f + 0.5f};
-                            int SourceStage = Stage;
-                            if (CoordinateMode == 3)
-                                SourceStage = 0;
-                            else if (CoordinateMode >= 10 && CoordinateMode <= 17)
-                                SourceStage = CoordinateMode - 10;
-                            if (SourceStage == 0)
-                                return BaseUv;
-                            if (const auto StageUvs = MeshValue.UvStages.find(SourceStage);
-                                StageUvs != MeshValue.UvStages.end() && VertexIndex < StageUvs->second.size())
-                                return StageUvs->second[VertexIndex];
-                            return BaseUv;
-                        };
-                        T0 = ResolveStageUv(I0, 0, T0, Wn0, Reflection0);
-                        T1 = ResolveStageUv(I1, 0, T1, Wn1, Reflection1);
-                        T2 = ResolveStageUv(I2, 0, T2, Wn2, Reflection2);
-                        std::array<SDL_FPoint, 7> AuxiliaryUvs0{};
-                        std::array<SDL_FPoint, 7> AuxiliaryUvs1{};
-                        std::array<SDL_FPoint, 7> AuxiliaryUvs2{};
+                        const Vec3 Reflection = ReflectionDirection(WorldPoint, WorldNormal);
+                        Corner.Uv = ResolveStageUv(Index, 0, Uv, WorldNormal, Reflection);
                         for (int Stage = 1; Stage < 8; ++Stage)
-                        {
-                            const std::size_t AuxiliaryIndex = static_cast<std::size_t>(Stage - 1);
-                            AuxiliaryUvs0[AuxiliaryIndex] = ResolveStageUv(I0, Stage, T0, Wn0, Reflection0);
-                            AuxiliaryUvs1[AuxiliaryIndex] = ResolveStageUv(I1, Stage, T1, Wn1, Reflection1);
-                            AuxiliaryUvs2[AuxiliaryIndex] = ResolveStageUv(I2, Stage, T2, Wn2, Reflection2);
-                        }
+                            Corner.AuxiliaryUvs[static_cast<std::size_t>(Stage - 1)] =
+                                ResolveStageUv(Index, Stage, Corner.Uv, WorldNormal, Reflection);
 
                         if (MeshValue.BuiltInEffect == 2)
                         {
-                            const auto EffectUvs = [&](const Vec3& WorldPoint, const Vec3& WorldNormal)
+                            const Vec3 Normal = Vec3Normalize(WorldNormal);
+                            Vec3 ToLight{};
+                            if (K.Lights().LightVisible(0) != 0)
                             {
-                                const Vec3 Normal = Vec3Normalize(WorldNormal);
-                                Vec3 ToLight{};
-                                if (K.Lights().LightVisible(0) != 0)
+                                if (K.Lights().LightType(0) == 1 || K.Lights().LightType(0) == 2)
                                 {
-                                    if (K.Lights().LightType(0) == 1 || K.Lights().LightType(0) == 2)
-                                    {
-                                        ToLight = Vec3Normalize(Vec3{K.Lights().LightPositionX(0) - WorldPoint.X,
-                                                                     K.Lights().LightPositionY(0) - WorldPoint.Y,
-                                                                     K.Lights().LightPositionZ(0) - WorldPoint.Z});
-                                    }
-                                    else
-                                    {
-                                        ToLight = Vec3Normalize(Vec3{-K.Lights().LightDirectionX(0),
-                                                                     -K.Lights().LightDirectionY(0),
-                                                                     -K.Lights().LightDirectionZ(0)});
-                                    }
+                                    ToLight = Vec3Normalize(Vec3{K.Lights().LightPositionX(0) - WorldPoint.X,
+                                                                 K.Lights().LightPositionY(0) - WorldPoint.Y,
+                                                                 K.Lights().LightPositionZ(0) - WorldPoint.Z});
                                 }
-                                const Vec3 Camera = ActiveCameraPosition(K);
-                                const Vec3 ToEye = Vec3Normalize(
-                                    Vec3{Camera.X - WorldPoint.X, Camera.Y - WorldPoint.Y, Camera.Z - WorldPoint.Z});
-                                return std::array<SDL_FPoint, 2>{
-                                    SDL_FPoint{std::clamp(Vec3Dot(Normal, ToLight), 0.0f, 1.0f), 0.5f},
-                                    SDL_FPoint{std::clamp(Vec3Dot(Normal, ToEye), 0.0f, 1.0f), 0.5f}};
-                            };
-                            const auto Effect0 = EffectUvs(W0, Wn0);
-                            const auto Effect1 = EffectUvs(W1, Wn1);
-                            const auto Effect2 = EffectUvs(W2, Wn2);
-                            T0 = Effect0[0];
-                            T1 = Effect1[0];
-                            T2 = Effect2[0];
-                            AuxiliaryUvs0[0] = Effect0[1];
-                            AuxiliaryUvs1[0] = Effect1[1];
-                            AuxiliaryUvs2[0] = Effect2[1];
+                                else
+                                {
+                                    ToLight = Vec3Normalize(Vec3{-K.Lights().LightDirectionX(0),
+                                                                 -K.Lights().LightDirectionY(0),
+                                                                 -K.Lights().LightDirectionZ(0)});
+                                }
+                            }
+                            const Vec3 ToEye = Vec3Normalize(
+                                Vec3{Camera.X - WorldPoint.X, Camera.Y - WorldPoint.Y, Camera.Z - WorldPoint.Z});
+                            Corner.Uv = SDL_FPoint{std::clamp(Vec3Dot(Normal, ToLight), 0.0f, 1.0f), 0.5f};
+                            Corner.AuxiliaryUvs[0] = SDL_FPoint{std::clamp(Vec3Dot(Normal, ToEye), 0.0f, 1.0f), 0.5f};
                         }
                         else if (MeshValue.BuiltInEffect == 3)
                         {
-                            const auto EffectUvs = [&](const Vec3& WorldPoint, const Vec3& WorldNormal)
-                            {
-                                const Vec3 Normal = Vec3Normalize(WorldNormal);
-                                const Vec3 Camera = ActiveCameraPosition(K);
-                                const Vec3 Eye = Vec3Normalize(
-                                    Vec3{Camera.X - WorldPoint.X, Camera.Y - WorldPoint.Y, Camera.Z - WorldPoint.Z});
-                                const Vec3 Half =
-                                    Vec3Normalize(Vec3{Normal.X + Eye.X, Normal.Y + Eye.Y, Normal.Z + Eye.Z});
-                                return std::array<SDL_FPoint, 2>{
-                                    SDL_FPoint{Vec3Dot(Normal, Eye), Vec3Dot(Half, Normal)}, SDL_FPoint{Eye.X, Half.Y}};
-                            };
-                            const auto Effect0 = EffectUvs(W0, Wn0);
-                            const auto Effect1 = EffectUvs(W1, Wn1);
-                            const auto Effect2 = EffectUvs(W2, Wn2);
-                            T0 = Effect0[0];
-                            T1 = Effect1[0];
-                            T2 = Effect2[0];
-                            AuxiliaryUvs0[0] = Effect0[1];
-                            AuxiliaryUvs1[0] = Effect1[1];
-                            AuxiliaryUvs2[0] = Effect2[1];
+                            const Vec3 Normal = Vec3Normalize(WorldNormal);
+                            const Vec3 Eye = Vec3Normalize(
+                                Vec3{Camera.X - WorldPoint.X, Camera.Y - WorldPoint.Y, Camera.Z - WorldPoint.Z});
+                            const Vec3 Half = Vec3Normalize(Vec3{Normal.X + Eye.X, Normal.Y + Eye.Y, Normal.Z + Eye.Z});
+                            Corner.Uv = SDL_FPoint{Vec3Dot(Normal, Eye), Vec3Dot(Half, Normal)};
+                            Corner.AuxiliaryUvs[0] = SDL_FPoint{Eye.X, Half.Y};
+                        }
+                        Corner.Direction = Reflection;
+                        return Corner;
+                    };
+                    // With vertex normals a corner depends on its vertex only, so it is built once per vertex.
+                    if (VertexNormals)
+                    {
+                        Corners.resize(VertexCount);
+                        CornerReady.assign(VertexCount, 0);
+                    }
+                    const auto VertexCorner = [&](uint32_t Index) -> const ObjectCorner&
+                    {
+                        if (!CornerReady[Index])
+                        {
+                            const bool Skinned = !SkinnedVertices.empty() && SkinnedVertices[Index] != 0;
+                            Corners[Index] = MakeCorner(
+                                Index, WorldPositions[Index],
+                                ToWorld.Normal(Skinned ? SkinnedNormals[Index] : MeshValue.Normals[Index], Skinned));
+                            CornerReady[Index] = 1;
+                        }
+                        return Corners[Index];
+                    };
+
+                    for (size_t I = 0; I + 2 < MeshValue.Indices.size(); I += 3)
+                    {
+                        const uint32_t I0 = MeshValue.Indices[I];
+                        const uint32_t I1 = MeshValue.Indices[I + 1];
+                        const uint32_t I2 = MeshValue.Indices[I + 2];
+                        if (I0 >= VertexCount || I1 >= VertexCount || I2 >= VertexCount)
+                        {
+                            continue;
                         }
 
-                        Vec3 ShaderDirection0 = Reflection0;
-                        Vec3 ShaderDirection1 = Reflection1;
-                        Vec3 ShaderDirection2 = Reflection2;
+                        const Vec3& W0 = WorldPositions[I0];
+                        const Vec3& W1 = WorldPositions[I1];
+                        const Vec3& W2 = WorldPositions[I2];
+                        const Vec3& V0 = ViewPositions[I0];
+                        const Vec3& V1 = ViewPositions[I1];
+                        const Vec3& V2 = ViewPositions[I2];
+
+                        const Vec3 E1 = Vec3Sub(W1, W0);
+                        const Vec3 E2 = Vec3Sub(W2, W0);
+                        const Vec3 FaceNormal = Vec3Normalize(Vec3Cross(E1, E2));
+                        if (Object.Cull && !Reflecting)
+                        {
+                            const float Cx = (W0.X + W1.X + W2.X) / 3.0f;
+                            const float Cy = (W0.Y + W1.Y + W2.Y) / 3.0f;
+                            const float Cz = (W0.Z + W1.Z + W2.Z) / 3.0f;
+                            const Vec3 ToCam{Camera.X - Cx, Camera.Y - Cy, Camera.Z - Cz};
+                            const float Facing = Vec3Dot(FaceNormal, ToCam);
+                            if (Facing <= 0.0f)
+                            {
+                                continue;
+                            }
+                        }
+                        if (!Surface)
+                            Surface = ResolveObjectMeshSurface(K, Object, MeshValue);
+
+                        // Without vertex normals every corner takes the face normal.
+                        ObjectCorner Face0;
+                        ObjectCorner Face1;
+                        ObjectCorner Face2;
+                        if (!VertexNormals)
+                        {
+                            Face0 = MakeCorner(I0, W0, FaceNormal);
+                            Face1 = MakeCorner(I1, W1, FaceNormal);
+                            Face2 = MakeCorner(I2, W2, FaceNormal);
+                        }
+                        const ObjectCorner& C0 = VertexNormals ? VertexCorner(I0) : Face0;
+                        const ObjectCorner& C1 = VertexNormals ? VertexCorner(I1) : Face1;
+                        const ObjectCorner& C2 = VertexNormals ? VertexCorner(I2) : Face2;
+
+                        Vec3 ShaderDirection0 = C0.Direction;
+                        Vec3 ShaderDirection1 = C1.Direction;
+                        Vec3 ShaderDirection2 = C2.Direction;
                         if (MeshValue.BuiltInEffect == 1)
                         {
                             const Vec3 Edge1 = Vec3Sub(V1, V0);
                             const Vec3 Edge2 = Vec3Sub(V2, V0);
-                            const float DeltaU1 = T1.x - T0.x;
-                            const float DeltaV1 = T1.y - T0.y;
-                            const float DeltaU2 = T2.x - T0.x;
-                            const float DeltaV2 = T2.y - T0.y;
+                            const float DeltaU1 = C1.Uv.x - C0.Uv.x;
+                            const float DeltaV1 = C1.Uv.y - C0.Uv.y;
+                            const float DeltaU2 = C2.Uv.x - C0.Uv.x;
+                            const float DeltaV2 = C2.Uv.y - C0.Uv.y;
                             const float Determinant = DeltaU1 * DeltaV2 - DeltaU2 * DeltaV1;
                             Vec3 Tangent{};
                             if (std::abs(Determinant) > 0.000001f)
@@ -2536,7 +2548,7 @@ namespace dbc
                             }
                             if (Vec3Dot(Tangent, Tangent) < 0.000001f)
                             {
-                                const Vec3 Normal = Vec3Normalize(Vn0);
+                                const Vec3 Normal = Vec3Normalize(C0.ViewNormal);
                                 const Vec3 Axis =
                                     std::abs(Normal.Y) < 0.99f ? Vec3{0.0f, 1.0f, 0.0f} : Vec3{1.0f, 0.0f, 0.0f};
                                 Tangent = Vec3Normalize(Vec3Cross(Axis, Normal));
@@ -2562,19 +2574,19 @@ namespace dbc
                             }
 
                             Triangle Tri;
-                            Tri.Texture = Texture;
-                            Tri.GpuTexture = GpuTexture;
+                            Tri.Texture = Surface->Texture;
+                            Tri.GpuTexture = Surface->GpuTexture;
                             Tri.Depth = (Pd0 + Pd1 + Pd2) / 3.0f;
-                            const bool AutomaticTransparency =
-                                BlendTransparent || Color0.a < 0.999f || Color1.a < 0.999f || Color2.a < 0.999f;
+                            const bool AutomaticTransparency = Surface->BlendTransparent || C0.Color.a < 0.999f ||
+                                                               C1.Color.a < 0.999f || C2.Color.a < 0.999f;
                             Tri.Transparent = AlphaPhase == 2 || (AlphaPhase < 0 && AutomaticTransparency);
                             Tri.AlphaDepthWrite = AlphaPhase == 1;
-                            Tri.Additive = BlendAdditive;
+                            Tri.Additive = Surface->BlendAdditive;
                             Tri.VeryEarly = VeryEarly;
                             Tri.Is2d = true;
                             Tri.DepthTest = Object.DepthTest;
-                            Tri.DepthWrite = Object.DepthWrite && !BlendAdditive;
-                            Tri.Style = BuildSurfaceStyle(Object, MeshValue);
+                            Tri.DepthWrite = Object.DepthWrite && !Surface->BlendAdditive;
+                            Tri.Style = Surface->Style;
                             Tri.Pos[0][0] = Screen0.x;
                             Tri.Pos[0][1] = Screen0.y;
                             Tri.Pos[0][2] = 0.0f;
@@ -2584,28 +2596,19 @@ namespace dbc
                             Tri.Pos[2][0] = Screen2.x;
                             Tri.Pos[2][1] = Screen2.y;
                             Tri.Pos[2][2] = 0.0f;
-                            Tri.Normal[0][0] = 0.0f;
-                            Tri.Normal[0][1] = 0.0f;
-                            Tri.Normal[0][2] = 0.0f;
-                            Tri.Normal[1][0] = 0.0f;
-                            Tri.Normal[1][1] = 0.0f;
-                            Tri.Normal[1][2] = 0.0f;
-                            Tri.Normal[2][0] = 0.0f;
-                            Tri.Normal[2][1] = 0.0f;
-                            Tri.Normal[2][2] = 0.0f;
-                            Tri.Color[0] = Color0;
-                            Tri.Color[1] = Color1;
-                            Tri.Color[2] = Color2;
-                            Tri.Uv[0] = T0;
-                            Tri.Uv[1] = T1;
-                            Tri.Uv[2] = T2;
-                            Tri.AuxiliaryGpuTextures = AuxiliaryGpuTextures;
-                            Tri.CubeGpuTexture = CubeGpuTexture;
+                            Tri.Color[0] = C0.Color;
+                            Tri.Color[1] = C1.Color;
+                            Tri.Color[2] = C2.Color;
+                            Tri.Uv[0] = C0.Uv;
+                            Tri.Uv[1] = C1.Uv;
+                            Tri.Uv[2] = C2.Uv;
+                            Tri.AuxiliaryGpuTextures = Surface->AuxiliaryGpuTextures;
+                            Tri.CubeGpuTexture = Surface->CubeGpuTexture;
                             for (std::size_t Stage = 0; Stage < Tri.AuxiliaryUvs.size(); ++Stage)
                             {
-                                Tri.AuxiliaryUvs[Stage][0] = AuxiliaryUvs0[Stage];
-                                Tri.AuxiliaryUvs[Stage][1] = AuxiliaryUvs1[Stage];
-                                Tri.AuxiliaryUvs[Stage][2] = AuxiliaryUvs2[Stage];
+                                Tri.AuxiliaryUvs[Stage][0] = C0.AuxiliaryUvs[Stage];
+                                Tri.AuxiliaryUvs[Stage][1] = C1.AuxiliaryUvs[Stage];
+                                Tri.AuxiliaryUvs[Stage][2] = C2.AuxiliaryUvs[Stage];
                             }
                             Tri.CubeDirection[0][0] = ShaderDirection0.X;
                             Tri.CubeDirection[0][1] = ShaderDirection0.Y;
@@ -2617,56 +2620,32 @@ namespace dbc
                             Tri.CubeDirection[2][1] = ShaderDirection2.Y;
                             Tri.CubeDirection[2][2] = ShaderDirection2.Z;
                             OverlayTris.push_back(Tri);
+                            continue;
                         }
-                        else
+
+                        const auto ViewCorner = [](const Vec3& View, const ObjectCorner& Corner, const Vec3& Direction)
                         {
-                            ViewVertex Vv0{};
-                            Vv0.X = V0.X;
-                            Vv0.Y = V0.Y;
-                            Vv0.Z = V0.Z;
-                            Vv0.Nx = Vn0.X;
-                            Vv0.Ny = Vn0.Y;
-                            Vv0.Nz = Vn0.Z;
-                            Vv0.Uv = T0;
-                            Vv0.AuxiliaryUvs = AuxiliaryUvs0;
-                            Vv0.CubeX = ShaderDirection0.X;
-                            Vv0.CubeY = ShaderDirection0.Y;
-                            Vv0.CubeZ = ShaderDirection0.Z;
-                            Vv0.Color = Color0;
-
-                            ViewVertex Vv1{};
-                            Vv1.X = V1.X;
-                            Vv1.Y = V1.Y;
-                            Vv1.Z = V1.Z;
-                            Vv1.Nx = Vn1.X;
-                            Vv1.Ny = Vn1.Y;
-                            Vv1.Nz = Vn1.Z;
-                            Vv1.Uv = T1;
-                            Vv1.AuxiliaryUvs = AuxiliaryUvs1;
-                            Vv1.CubeX = ShaderDirection1.X;
-                            Vv1.CubeY = ShaderDirection1.Y;
-                            Vv1.CubeZ = ShaderDirection1.Z;
-                            Vv1.Color = Color1;
-
-                            ViewVertex Vv2{};
-                            Vv2.X = V2.X;
-                            Vv2.Y = V2.Y;
-                            Vv2.Z = V2.Z;
-                            Vv2.Nx = Vn2.X;
-                            Vv2.Ny = Vn2.Y;
-                            Vv2.Nz = Vn2.Z;
-                            Vv2.Uv = T2;
-                            Vv2.AuxiliaryUvs = AuxiliaryUvs2;
-                            Vv2.CubeX = ShaderDirection2.X;
-                            Vv2.CubeY = ShaderDirection2.Y;
-                            Vv2.CubeZ = ShaderDirection2.Z;
-                            Vv2.Color = Color2;
-
-                            dbc::AppendClippedViewTriangle(
-                                K, Vv0, Vv1, Vv2, Texture, GpuTexture, BlendTransparent, WorldTris, BlendAdditive,
-                                BuildSurfaceStyle(Object, MeshValue), AlphaPhase, VeryEarly, DepthBias, -1, 0,
-                                Object.DepthWrite, Object.DepthTest, AuxiliaryGpuTextures, CubeGpuTexture);
-                        }
+                            ViewVertex Vertex{};
+                            Vertex.X = View.X;
+                            Vertex.Y = View.Y;
+                            Vertex.Z = View.Z;
+                            Vertex.Nx = Corner.ViewNormal.X;
+                            Vertex.Ny = Corner.ViewNormal.Y;
+                            Vertex.Nz = Corner.ViewNormal.Z;
+                            Vertex.Uv = Corner.Uv;
+                            Vertex.AuxiliaryUvs = Corner.AuxiliaryUvs;
+                            Vertex.CubeX = Direction.X;
+                            Vertex.CubeY = Direction.Y;
+                            Vertex.CubeZ = Direction.Z;
+                            Vertex.Color = Corner.Color;
+                            return Vertex;
+                        };
+                        dbc::AppendClippedViewTriangle(
+                            K, ViewCorner(V0, C0, ShaderDirection0), ViewCorner(V1, C1, ShaderDirection1),
+                            ViewCorner(V2, C2, ShaderDirection2), Surface->Texture, Surface->GpuTexture,
+                            Surface->BlendTransparent, WorldTris, Surface->BlendAdditive, Surface->Style, AlphaPhase,
+                            VeryEarly, DepthBias, -1, 0, Object.DepthWrite, Object.DepthTest,
+                            Surface->AuxiliaryGpuTextures, Surface->CubeGpuTexture);
                     }
                 }
                 dbc::RenderObjectBounds(K, Object, WorldTris);
