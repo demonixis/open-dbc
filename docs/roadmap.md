@@ -54,16 +54,16 @@ headless runs:
 
 | Program | Triangles | Draw calls | CPU ms per frame |
 | --- | ---: | ---: | ---: |
-| `skinned` (stress) | 14,418 | 1 | 4.6 |
-| `distinct_meshes` (stress) | 127,712 | 1,705 | 2.9 |
-| `two_views` (stress) | 335,354 | 1,690 | 1.8 |
+| `skinned` (stress) | 14,418 | 1 | 4.8 |
+| `hive_defender` | 86,782 | 214 | 1.0 |
+| `distinct_meshes` (stress) | 127,712 | 401 | 0.8 |
 | `shared_mesh` (stress) | 27,384 | 1 | 0.6 |
-| `hive_defender` | 86,776 | 212 | 1.1 |
+| `two_views` (stress) | 335,354 | 5 | 0.5 |
 
-Objects that share a geometry draw as instances of one call, but each distinct
-geometry still costs a draw call: recording them takes 70 to 80% of the
-`distinct_meshes` and `two_views` frames. The skinned scene stays on the CPU path, where building the
-triangles takes about half of the frame.
+Objects that share a geometry draw as instances of one call; walking the objects
+to build their draws now takes half to two thirds of the mesh scenes' frames. The
+skinned scene stays on the CPU path, where building the triangles takes about half
+of the frame.
 
 Decisions:
 
@@ -82,7 +82,8 @@ Decisions:
 
 Work, in order:
 
-- [ ] Automatic instancing of objects that share a mesh and material.
+- [ ] Automatic instancing of objects loaded from the same file: share their
+  geometry, as clones and identical primitives do.
 - [ ] Automatic static batching: `MAKE STATIC OBJECT` snapshots first, then objects
   left unchanged, merged per material into spatial chunks that are culled.
 - [ ] Frustum culling and the other visibility tests: per limb and per chunk, bounds
