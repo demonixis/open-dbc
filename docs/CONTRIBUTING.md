@@ -21,6 +21,9 @@ program can be checked the same way, saving its last frame:
 build/default/tools/studio/opendbc.app/Contents/MacOS/opendbc run program.dba --dialect dbc --headless --max-frames 120 --capture-output frame.bmp
 ```
 
+A macOS release builds for Apple silicon and Intel at once with
+`cmake --preset release-macos` and `cmake --build --preset release-macos`.
+
 ASan and UBSan (GCC or Clang):
 
 ```bash

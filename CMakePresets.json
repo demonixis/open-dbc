@@ -22,6 +22,20 @@
       }
     },
     {
+      "name": "release-macos",
+      "displayName": "macOS Release, universal2 (arm64 and x86_64)",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build/release-macos",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64"
+      }
+    },
+    {
       "name": "windows-release",
       "displayName": "Windows x64 Release (MSVC developer shell)",
       "inherits": "release",
@@ -145,6 +159,11 @@
     {
       "name": "release",
       "configurePreset": "release",
+      "jobs": 2
+    },
+    {
+      "name": "release-macos",
+      "configurePreset": "release-macos",
       "jobs": 2
     },
     {

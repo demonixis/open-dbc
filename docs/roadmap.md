@@ -16,7 +16,8 @@
 
 Build and release:
 
-- [ ] Release presets: universal2 macOS and Linux on an old glibc.
+- [ ] Release presets: Linux on an old glibc. macOS has `release-macos` (universal2),
+  Windows `windows-release`.
 - [ ] Platform metadata: `.desktop` and AppStream.
 
 Robustness:
