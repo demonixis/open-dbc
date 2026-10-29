@@ -1,5 +1,6 @@
 add_executable(opendbc_shaderc opendbc_shaderc.cpp)
 target_link_libraries(opendbc_shaderc PRIVATE SDL3::SDL3 SDL3_shadercross::SDL3_shadercross)
+target_include_directories(opendbc_shaderc PRIVATE ${PROJECT_SOURCE_DIR}/src)
 dbc_enable_warnings(opendbc_shaderc)
 
 foreach(OPENDBC_SHADER_MODE IN ITEMS verify update)
