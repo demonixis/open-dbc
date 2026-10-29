@@ -102,8 +102,8 @@ Work:
 
 Exports build signed packages from the Build window ([usage.md](usage.md#export)).
 
-- [ ] Run the Windows export on Windows: icon and version resources, signtool
-  signing and verification. Only its portable parts are tested on macOS.
+- [ ] Qualify Windows export signing and verification with a trusted code signing
+  certificate.
 - [ ] Run the Linux export on Linux, then against the Steam Runtime.
 - [ ] Notarise a macOS export with a real notary profile, and archive and upload
   an iOS export from Xcode.

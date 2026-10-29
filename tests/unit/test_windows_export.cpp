@@ -82,6 +82,7 @@ namespace
         Request.ProjectRoot = Project;
         Request.EntrySource = Project / "main.dba";
         Request.OutputDirectory = Root / fs::path(u8"export-\u00e9");
+        fs::create_directories(Request.OutputDirectory);
         Request.HostProduct = dbc::PathFromUtf8(OPENDBC_TEST_RUNNER);
         Request.HostResources = dbc::PathFromUtf8(OPENDBC_TEST_STUDIO).parent_path();
         Request.Settings.AppName = "Unicode Game";
