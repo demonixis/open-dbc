@@ -260,6 +260,14 @@ namespace dbc
             return Geometry_;
         }
 
+        // Takes a geometry other records hold, shared until one of them edits it.
+        void ShareGeometry(std::shared_ptr<const MeshGeometry> Geometry)
+        {
+            // EditGeometry copies any geometry another record also holds, so sharing never lets one record change
+            // another's.
+            Geometry_ = std::const_pointer_cast<MeshGeometry>(std::move(Geometry));
+        }
+
       private:
         std::shared_ptr<MeshGeometry> Geometry_ = EmptyGeometry();
 

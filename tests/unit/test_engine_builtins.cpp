@@ -2584,6 +2584,48 @@ TEST_CASE("Objects that share a mesh, texture and surface draw as instances of o
     CHECK(Frames.Different * 200 < Frames.Covered);
 }
 
+TEST_CASE("Identical MAKE OBJECT primitives share their geometry until one is edited")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    Objects.MakeObjectCube(1, 2.0f);
+    Objects.MakeObjectCube(2, 2.0f);
+    Objects.MakeObjectBox(3, 2.0f, 2.0f, 2.0f);
+    Objects.MakeObjectCube(4, 3.0f);
+    Objects.MakeObjectSphere(5, 1.5f, 12, 10);
+    Objects.MakeObjectSphere(6, 1.5f, 12, 10);
+    Objects.MakeObjectSphere(7, 1.5f, 12, 11);
+    const auto Shares = [&](int A, int B)
+    { return Objects.GetObject(A)->Meshes.front().SharesGeometryWith(Objects.GetObject(B)->Meshes.front()); };
+    CHECK(Shares(1, 2));
+    CHECK(Shares(1, 3));
+    CHECK_FALSE(Shares(1, 4));
+    CHECK(Shares(5, 6));
+    CHECK_FALSE(Shares(5, 7));
+
+    // An edit stays with the edited object, and later cubes share the geometry left unchanged.
+    Objects.GetObject(2)->Meshes.front().EditGeometry().Vertices.front().X = 9.0f;
+    CHECK_FALSE(Shares(1, 2));
+    CHECK(Objects.GetObject(1)->Meshes.front().Geometry().Vertices.front().X == doctest::Approx(-1.0f));
+    Objects.MakeObjectCube(8, 2.0f);
+    CHECK(Shares(1, 8));
+
+    // Objects made apart with the same parameters draw as instances of one call.
+    for (const int Id : {2, 4, 5, 6, 7})
+        Objects.HideObject(Id);
+    Objects.PositionObject(1, -2.0f, 0.0f, 10.0f);
+    Objects.PositionObject(3, 0.0f, 0.0f, 10.0f);
+    Objects.PositionObject(8, 2.0f, 0.0f, 10.0f);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+    REQUIRE(Capture != nullptr);
+    SDL_DestroySurface(Capture);
+    CHECK(Kernel.Renderer().CachedMeshDraws().size() == 3);
+    CHECK(Kernel.Renderer().LastFrameDrawCalls() == 1);
+}
+
 TEST_CASE("Meshes stay on the CPU path where blending or the depth order decides the result")
 {
     dbc::EngineKernel Kernel;

@@ -3671,6 +3671,28 @@ namespace dbc
         return 0;
     }
 
+    template <typename Build> Mesh ObjectManager::PrimitiveMesh(const PrimitiveKey& Key, Build&& Make)
+    {
+        Mesh Result;
+        if (const auto Found = Primitives_.find(Key); Found != Primitives_.end())
+        {
+            std::shared_ptr<const MeshGeometry> Geometry = Found->second.Geometry.lock();
+            if (Geometry && Geometry->Revision == Found->second.Revision)
+            {
+                Result.ShareGeometry(std::move(Geometry));
+                return Result;
+            }
+        }
+        Result = Make();
+        if (Primitives_.size() >= PrimitivePruneSize_)
+        {
+            std::erase_if(Primitives_, [](const auto& Entry) { return Entry.second.Geometry.expired(); });
+            PrimitivePruneSize_ = std::max<std::size_t>(256, Primitives_.size() * 2);
+        }
+        Primitives_[Key] = SharedPrimitive{Result.SharedGeometry(), Result.Geometry().Revision};
+        return Result;
+    }
+
     bool ObjectManager::MakeObjectPlain(int ObjectId, float Width, float Height, int Orientation, std::string* Error)
     {
         if (Orientation != 0 && Orientation != 1)
@@ -3681,23 +3703,26 @@ namespace dbc
         }
         Object3D Object = NewObjectState();
         Object.Visible = true;
-        Mesh Plain = RendererSystem::MakePlainMesh(Width, Height);
-        if (!Kernel_.RuntimeCompatibility().PlainOrientationUsesObjectRotation())
-        {
-            if (Orientation == 0)
-            {
-                std::vector<uint32_t>& Indices = Plain.EditGeometry().Indices;
-                for (std::size_t Index = 0; Index + 2 < Indices.size(); Index += 3)
-                    std::swap(Indices[Index + 1], Indices[Index + 2]);
-                RendererSystem::RegenerateMeshNormals(Plain);
-            }
+        const bool RotatedByObject = Kernel_.RuntimeCompatibility().PlainOrientationUsesObjectRotation();
+        const bool Flipped = !RotatedByObject && Orientation == 0;
+        Object.Meshes.push_back(
+            PrimitiveMesh({4, std::bit_cast<uint32_t>(Width), std::bit_cast<uint32_t>(Height), Flipped ? 1u : 0u, 0},
+                          [&]
+                          {
+                              Mesh Plain = RendererSystem::MakePlainMesh(Width, Height);
+                              if (Flipped)
+                              {
+                                  std::vector<uint32_t>& Indices = Plain.EditGeometry().Indices;
+                                  for (std::size_t Index = 0; Index + 2 < Indices.size(); Index += 3)
+                                      std::swap(Indices[Index + 1], Indices[Index + 2]);
+                                  RendererSystem::RegenerateMeshNormals(Plain);
+                              }
+                              return Plain;
+                          }));
+        if (!RotatedByObject)
             Object.RotY = 0.0f;
-        }
         else
-        {
             Object.RotY = Orientation == 0 ? 180.0f : 0.0f;
-        }
-        Object.Meshes.push_back(std::move(Plain));
         Object.BoundingRadius = (std::abs(Width) + std::abs(Height)) * 0.25f;
         Objects_[ObjectId] = std::move(Object);
         NotifyObjectCreated(ObjectId);
@@ -3708,7 +3733,9 @@ namespace dbc
     {
         Object3D Object = NewObjectState();
         Object.Visible = true;
-        Object.Meshes.push_back(RendererSystem::MakeBoxMesh(Size, Size, Size));
+        const uint32_t SizeBits = std::bit_cast<uint32_t>(Size);
+        Object.Meshes.push_back(PrimitiveMesh({0, SizeBits, SizeBits, SizeBits, 0},
+                                              [&] { return RendererSystem::MakeBoxMesh(Size, Size, Size); }));
         Object.BoundingRadius = std::abs(Size) * 0.5f;
         Objects_[ObjectId] = std::move(Object);
         NotifyObjectCreated(ObjectId);
@@ -3718,7 +3745,9 @@ namespace dbc
     {
         Object3D Object = NewObjectState();
         Object.Visible = true;
-        Object.Meshes.push_back(RendererSystem::MakeBoxMesh(Width, Height, Depth));
+        Object.Meshes.push_back(PrimitiveMesh(
+            {0, std::bit_cast<uint32_t>(Width), std::bit_cast<uint32_t>(Height), std::bit_cast<uint32_t>(Depth), 0},
+            [&] { return RendererSystem::MakeBoxMesh(Width, Height, Depth); }));
         Object.BoundingRadius = (std::abs(Width) + std::abs(Height)) * 0.25f;
         Objects_[ObjectId] = std::move(Object);
         NotifyObjectCreated(ObjectId);
@@ -3728,7 +3757,9 @@ namespace dbc
     {
         Object3D Object = NewObjectState();
         Object.Visible = true;
-        Object.Meshes.push_back(RendererSystem::MakeSphereMesh(Radius * 0.5f, Rings, Segments));
+        Object.Meshes.push_back(PrimitiveMesh(
+            {1, std::bit_cast<uint32_t>(Radius), static_cast<uint32_t>(Rings), static_cast<uint32_t>(Segments), 0},
+            [&] { return RendererSystem::MakeSphereMesh(Radius * 0.5f, Rings, Segments); }));
         Object.BoundingRadius = std::abs(Radius) * 0.5f;
         Objects_[ObjectId] = std::move(Object);
         NotifyObjectCreated(ObjectId);
@@ -3738,7 +3769,9 @@ namespace dbc
     {
         Object3D Object = NewObjectState();
         Object.Visible = true;
-        Object.Meshes.push_back(RendererSystem::MakeCylinderMesh(Radius, Height, Segments, true, true));
+        Object.Meshes.push_back(PrimitiveMesh(
+            {2, std::bit_cast<uint32_t>(Radius), std::bit_cast<uint32_t>(Height), static_cast<uint32_t>(Segments), 0},
+            [&] { return RendererSystem::MakeCylinderMesh(Radius, Height, Segments, true, true); }));
         Object.BoundingRadius = std::max(std::abs(Radius), std::abs(Height));
         Objects_[ObjectId] = std::move(Object);
         NotifyObjectCreated(ObjectId);
@@ -3748,7 +3781,9 @@ namespace dbc
     {
         Object3D Object = NewObjectState();
         Object.Visible = true;
-        Object.Meshes.push_back(RendererSystem::MakeConeMesh(Radius, Height, Segments));
+        Object.Meshes.push_back(PrimitiveMesh(
+            {3, std::bit_cast<uint32_t>(Radius), std::bit_cast<uint32_t>(Height), static_cast<uint32_t>(Segments), 0},
+            [&] { return RendererSystem::MakeConeMesh(Radius, Height, Segments); }));
         Object.BoundingRadius = std::max(std::abs(Radius), std::abs(Height));
         Objects_[ObjectId] = std::move(Object);
         NotifyObjectCreated(ObjectId);

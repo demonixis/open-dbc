@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -406,11 +408,27 @@ namespace dbc
       private:
         [[nodiscard]] std::vector<AABB> CurrentStaticCollisionBoxes() const;
 
+        // The kind of a MAKE OBJECT primitive, then the bits of its parameters.
+        using PrimitiveKey = std::array<uint32_t, 5>;
+
+        // A primitive's geometry, shared by the objects made with the same parameters while one of them holds it
+        // unchanged, so that they draw as instances of one mesh.
+        struct SharedPrimitive
+        {
+            std::weak_ptr<const MeshGeometry> Geometry;
+            uint64_t Revision = 0;
+        };
+
+        template <typename Build> [[nodiscard]] Mesh PrimitiveMesh(const PrimitiveKey& Key, Build&& Make);
+
         EngineKernel& Kernel_;
         std::unordered_map<int, Object3D> Objects_;
         std::vector<Object3D> StaticObjects_;
         std::unordered_set<int> AttachedStaticObjectIds_;
         std::unordered_map<int, std::vector<Mesh>> Meshes_;
+        std::map<PrimitiveKey, SharedPrimitive> Primitives_;
+        // Entries of geometries no object holds any more are dropped once the map reaches this size.
+        std::size_t PrimitivePruneSize_ = 256;
         std::unordered_map<int, ParticleEmitter> Particles_;
         std::unique_ptr<SpatialHash> SpatialHash_;
         std::vector<AABB> StaticBoxes_;
