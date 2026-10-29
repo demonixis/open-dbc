@@ -2626,6 +2626,62 @@ TEST_CASE("Identical MAKE OBJECT primitives share their geometry until one is ed
     CHECK(Kernel.Renderer().LastFrameDrawCalls() == 1);
 }
 
+TEST_CASE("Objects loaded from one model share its geometry until one is edited")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    const std::filesystem::path Root(TEST_SOURCE_DIR);
+    const std::string Dome = (Root / "tests/fixtures/classic/models/dome.x").string();
+    REQUIRE(Objects.LoadObject(Dome, 1));
+    REQUIRE(Objects.LoadObject(Dome, 2));
+    const auto Shares = [&](int A, int B)
+    {
+        const std::vector<dbc::Mesh>& First = Objects.GetObject(A)->Meshes;
+        const std::vector<dbc::Mesh>& Second = Objects.GetObject(B)->Meshes;
+        REQUIRE(First.size() == Second.size());
+        REQUIRE_FALSE(First.empty());
+        return std::all_of(First.begin(), First.end(), [&](const dbc::Mesh& Value)
+                           { return Value.SharesGeometryWith(Second[static_cast<std::size_t>(&Value - &First[0])]); });
+    };
+    CHECK(Shares(1, 2));
+
+    // Bones name the nodes of each load's own scene, so a skinned mesh keeps its geometry.
+    const std::string Miko = (Root / "examples/dbpro/tutorials/camera/miko/miko.X").string();
+    REQUIRE(Objects.LoadObject(Miko, 5));
+    REQUIRE(Objects.LoadObject(Miko, 6));
+    int Skinned = 0;
+    for (std::size_t Index = 0; Index < Objects.GetObject(5)->Meshes.size(); ++Index)
+    {
+        const dbc::Mesh& First = Objects.GetObject(5)->Meshes[Index];
+        if (First.Geometry().BoneNodes.empty())
+            continue;
+        ++Skinned;
+        CHECK_FALSE(First.SharesGeometryWith(Objects.GetObject(6)->Meshes[Index]));
+    }
+    CHECK(Skinned > 0);
+    Objects.HideObject(5);
+    Objects.HideObject(6);
+
+    // An edit stays with the edited object; a later load still shares the unedited geometry.
+    Objects.GetObject(2)->Meshes.front().EditGeometry().Vertices.front().X += 1.0f;
+    CHECK_FALSE(Shares(1, 2));
+    REQUIRE(Objects.LoadObject(Dome, 3));
+    CHECK(Shares(1, 3));
+
+    // The loaded objects draw as instances.
+    Objects.HideObject(2);
+    Objects.PositionObject(1, -2.0f, 0.0f, 12.0f);
+    Objects.PositionObject(3, 2.0f, 0.0f, 12.0f);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+    REQUIRE(Capture != nullptr);
+    SDL_DestroySurface(Capture);
+    CHECK(Kernel.Renderer().CachedMeshDraws().size() == 2 * Objects.GetObject(1)->Meshes.size());
+    CHECK(static_cast<std::size_t>(Kernel.Renderer().LastFrameDrawCalls()) == Objects.GetObject(1)->Meshes.size());
+}
+
 TEST_CASE("Commands that change how an object draws refresh a still scene")
 {
     dbc::EngineKernel Kernel;

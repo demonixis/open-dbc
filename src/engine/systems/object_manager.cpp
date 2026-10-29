@@ -21,6 +21,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <string_view>
@@ -2787,6 +2788,27 @@ namespace dbc
         }
 
         // spatial_hash_key, segment_aabb_intersect — see collision_math.hpp
+        template <typename T> [[nodiscard]] bool SameBytes(const std::vector<T>& A, const std::vector<T>& B)
+        {
+            return A.size() == B.size() && (A.empty() || std::memcmp(A.data(), B.data(), A.size() * sizeof(T)) == 0);
+        }
+
+        // Bit for bit, so that sharing never changes what an object draws.
+        [[nodiscard]] bool SameGeometryContents(const MeshGeometry& A, const MeshGeometry& B)
+        {
+            if (!SameBytes(A.Vertices, B.Vertices) || !SameBytes(A.Normals, B.Normals) || !SameBytes(A.Uvs, B.Uvs) ||
+                !SameBytes(A.DiffuseColors, B.DiffuseColors) || !SameBytes(A.Indices, B.Indices) ||
+                std::memcmp(&A.BindTransform, &B.BindTransform, sizeof(A.BindTransform)) != 0 ||
+                !SameBytes(A.BoneInfluences, B.BoneInfluences) || !SameBytes(A.BoneNodes, B.BoneNodes) ||
+                !SameBytes(A.BoneOffsets, B.BoneOffsets) || A.UvStages.size() != B.UvStages.size())
+                return false;
+            return std::all_of(A.UvStages.begin(), A.UvStages.end(),
+                               [&](const auto& Stage)
+                               {
+                                   const auto Other = B.UvStages.find(Stage.first);
+                                   return Other != B.UvStages.end() && SameBytes(Stage.second, Other->second);
+                               });
+        }
     } // anonymous namespace
 
     // ── Constructor / destructor ─────────────────────────────────────
@@ -3212,6 +3234,8 @@ namespace dbc
             Object3D Object;
             if (!DecodeDboObject(Object, Data, Error))
                 return false;
+            for (std::size_t Index = 0; Index < Object.Meshes.size(); ++Index)
+                ShareLoadedGeometry(Resolved, Index, Object.Meshes[Index]);
             Object.CollisionShapeValue = Kernel_.RuntimeCompatibility().DefaultObjectCollisionShape();
             Object.ModelStructureSignature = ObjectStructureSignature(Object);
             Objects_[ObjectId] = std::move(Object);
@@ -3506,6 +3530,7 @@ namespace dbc
                         }
                     }
                 }
+                ShareLoadedGeometry(Resolved, Mi, Out);
                 Object.Meshes.push_back(std::move(Out));
             }
         }
@@ -3671,26 +3696,52 @@ namespace dbc
         return 0;
     }
 
-    template <typename Build> Mesh ObjectManager::PrimitiveMesh(const PrimitiveKey& Key, Build&& Make)
+    std::shared_ptr<const MeshGeometry> ObjectManager::FindSharedGeometry(const GeometryKey& Key) const
+    {
+        const auto Found = SharedGeometries_.find(Key);
+        if (Found == SharedGeometries_.end())
+            return nullptr;
+        std::shared_ptr<const MeshGeometry> Geometry = Found->second.Geometry.lock();
+        return Geometry && Geometry->Revision == Found->second.Revision ? Geometry : nullptr;
+    }
+
+    void ObjectManager::RememberSharedGeometry(const GeometryKey& Key, const Mesh& Value)
+    {
+        if (SharedGeometries_.size() >= SharedGeometryPruneSize_)
+        {
+            std::erase_if(SharedGeometries_, [](const auto& Entry) { return Entry.second.Geometry.expired(); });
+            SharedGeometryPruneSize_ = std::max<std::size_t>(256, SharedGeometries_.size() * 2);
+        }
+        SharedGeometries_[Key] = SharedGeometryEntry{Value.SharedGeometry(), Value.Geometry().Revision};
+    }
+
+    template <typename Build> Mesh ObjectManager::PrimitiveMesh(const GeometryKey& Key, Build&& Make)
     {
         Mesh Result;
-        if (const auto Found = Primitives_.find(Key); Found != Primitives_.end())
+        if (std::shared_ptr<const MeshGeometry> Geometry = FindSharedGeometry(Key))
         {
-            std::shared_ptr<const MeshGeometry> Geometry = Found->second.Geometry.lock();
-            if (Geometry && Geometry->Revision == Found->second.Revision)
-            {
-                Result.ShareGeometry(std::move(Geometry));
-                return Result;
-            }
+            Result.ShareGeometry(std::move(Geometry));
+            return Result;
         }
         Result = Make();
-        if (Primitives_.size() >= PrimitivePruneSize_)
-        {
-            std::erase_if(Primitives_, [](const auto& Entry) { return Entry.second.Geometry.expired(); });
-            PrimitivePruneSize_ = std::max<std::size_t>(256, Primitives_.size() * 2);
-        }
-        Primitives_[Key] = SharedPrimitive{Result.SharedGeometry(), Result.Geometry().Revision};
+        RememberSharedGeometry(Key, Result);
         return Result;
+    }
+
+    void ObjectManager::ShareLoadedGeometry(const std::string& Path, std::size_t MeshIndex, Mesh& Loaded)
+    {
+        // Bones name the nodes of each load's own scene.
+        if (!Loaded.Geometry().BoneNodes.empty() || !Loaded.Geometry().BoneInfluences.empty())
+            return;
+        const uint64_t PathHash = std::hash<std::string>{}(Path);
+        const GeometryKey Key{5, static_cast<uint32_t>(PathHash), static_cast<uint32_t>(PathHash >> 32u),
+                              static_cast<uint32_t>(MeshIndex), 0};
+        // The file may have changed since, and different paths may hash alike: only equal contents are shared.
+        std::shared_ptr<const MeshGeometry> Earlier = FindSharedGeometry(Key);
+        if (Earlier && SameGeometryContents(*Earlier, Loaded.Geometry()))
+            Loaded.ShareGeometry(std::move(Earlier));
+        else
+            RememberSharedGeometry(Key, Loaded);
     }
 
     bool ObjectManager::MakeObjectPlain(int ObjectId, float Width, float Height, int Orientation, std::string* Error)
