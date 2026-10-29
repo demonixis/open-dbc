@@ -459,7 +459,7 @@ namespace dbc::studio
         ImGui::Spacing();
         for (const core::RecoveryCopy& Copy : RecoveryCopies_)
             ImGui::BulletText("%s", Copy.Content.Path.empty() ? Copy.Content.Title.c_str()
-                                                              : Copy.Content.Path.string().c_str());
+                                                              : dbc::PathToUtf8(Copy.Content.Path).c_str());
         ImGui::Spacing();
         if (ImGui::Button("Restore"))
         {
