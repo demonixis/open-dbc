@@ -2135,6 +2135,32 @@ TEST_CASE("Portable object visibility and GPU capability queries preserve DBPro 
     CHECK(Kernel.Renderer().LastFrameDrawCalls() > 0);
 }
 
+TEST_CASE("TEXTURE OBJECT refreshes a still scene")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    const std::filesystem::path Images = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp";
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "beam.bmp").string(), 1));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "spark.bmp").string(), 2));
+    Kernel.Objects().MakeObjectCube(1, 2.0f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 10.0f);
+    Kernel.Objects().TextureObject(1, 1);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const auto DrawnTexture = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        REQUIRE_FALSE(Kernel.Renderer().CachedWorldTris().empty());
+        return Kernel.Renderer().CachedWorldTris().front().GpuTexture;
+    };
+
+    const SDL_GPUTexture* First = DrawnTexture();
+    Kernel.Objects().TextureObject(1, 2);
+    CHECK(DrawnTexture() != First);
+}
+
 TEST_CASE("DBPro BSP worlds load, draw the leaves their camera sees and delete")
 {
     const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();

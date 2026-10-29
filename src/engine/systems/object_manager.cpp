@@ -5590,6 +5590,7 @@ namespace dbc
         auto It = Objects_.find(ObjectId);
         if (It == Objects_.end())
             return;
+        It->second.TransformDirty = true;
         if (ImageId <= 0 || Kernel_.ImageStoreRef().ImageExist(ImageId) == 0)
         {
             if (ImageId > 0)
