@@ -124,7 +124,8 @@ along local axes or turns by steps from where the drag began. With several
 nodes, the gizmo sits at their centre (turned like the active node in
 **Local**) and moves, turns and scales them about it; the arrow next
 to it sets the steps (10 units, 15 degrees and 10 % by default). **Grid** shows
-or hides the ground grid, whose cells are 10 units.
+or hides the ground grid, whose cells are 10 units. A duplicate of `tree` or
+`tree_2` is named `tree_N`, one past the highest `tree_` number in the level.
 
 Dropping an image on a node textures it. Dropping a
 model or a sound places it on the ground under the cursor. In Assets, a

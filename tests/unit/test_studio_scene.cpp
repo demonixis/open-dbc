@@ -291,6 +291,13 @@ TEST_CASE("Scene numbers fill gaps from each space's base")
     CHECK(Document.Add(scene::NodeKind::Sound).Id == 1);
     Document.Nodes.erase(Document.Nodes.begin());
     CHECK(Document.Add(scene::NodeKind::Box).Id == 1000);
+    Document.Add(scene::NodeKind::Cube).Name = "tree";
+    CHECK(Document.CopyName("tree") == "tree_1");
+    Document.Add(scene::NodeKind::Cube).Name = "tree_3";
+    CHECK(Document.CopyName("tree") == "tree_4");
+    CHECK(Document.CopyName("tree_3") == "tree_4");
+    CHECK(Document.CopyName("tree_top") == "tree_top_1");
+    CHECK(Document.CopyName("tree_") == "tree__1");
     CHECK(scene::SanitizeLevelName("2 caves: deep!") == "Level2_caves_deep");
     CHECK(scene::LevelRelativePath("Main Hall").generic_string() == "levels/Main_Hall.dba");
 }

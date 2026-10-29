@@ -379,7 +379,7 @@ namespace dbc::studio
             for (scene::SceneNode& Copy : Copies)
             {
                 Copy.Id = Document_.NextId(scene::IdSpaceOf(Copy.Kind));
-                Copy.Name += " copy";
+                Copy.Name = Document_.CopyName(Copy.Name);
                 Selection_.push_back(Selection{scene::IdSpaceOf(Copy.Kind), Copy.Id});
                 Document_.Nodes.push_back(std::move(Copy));
             }

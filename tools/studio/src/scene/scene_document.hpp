@@ -229,6 +229,9 @@ namespace dbc::studio
             const SceneNode* Find(IdSpace Space, int Id) const;
             // A node of `Kind` with the next free number and engine-like defaults.
             SceneNode& Add(NodeKind Kind);
+            // A duplicate's name: "tree" or "tree_2" -> "tree_N", N one past the highest
+            // "tree_<number>" in the document.
+            std::string CopyName(const std::string& Name) const;
 
             bool operator==(const SceneDocument&) const = default;
         };

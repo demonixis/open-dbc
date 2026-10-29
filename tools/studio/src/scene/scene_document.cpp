@@ -150,6 +150,32 @@ namespace dbc::studio
             return nullptr;
         }
 
+        std::string SceneDocument::CopyName(const std::string& Name) const
+        {
+            // The number after the last '_', or nullopt when that suffix is not all digits.
+            const auto Suffix = [](const std::string& Text, std::size_t Underscore) -> std::optional<int>
+            {
+                if (Underscore == std::string::npos || Underscore + 1 == Text.size() ||
+                    Text.size() - Underscore > 10)
+                    return std::nullopt;
+                for (std::size_t Index = Underscore + 1; Index < Text.size(); ++Index)
+                    if (Text[Index] < '0' || Text[Index] > '9')
+                        return std::nullopt;
+                return std::stoi(Text.substr(Underscore + 1));
+            };
+            const std::size_t Underscore = Name.rfind('_');
+            const std::string Stem = Suffix(Name, Underscore) ? Name.substr(0, Underscore) : Name;
+            int Highest = 0;
+            for (const SceneNode& Node : Nodes)
+            {
+                const std::size_t At = Node.Name.rfind('_');
+                if (At == Stem.size() && Node.Name.compare(0, At, Stem) == 0)
+                    if (const std::optional<int> Count = Suffix(Node.Name, At))
+                        Highest = std::max(Highest, *Count);
+            }
+            return Stem + "_" + std::to_string(Highest + 1);
+        }
+
         SceneNode& SceneDocument::Add(NodeKind Kind)
         {
             SceneNode Node;
