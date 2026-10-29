@@ -93,7 +93,18 @@ are not portable with a non-zero `first_instance`, and indirect draws need
 opendbc run game.dba --headless --max-frames 300 --benchmark --benchmark-output bench.json
 ```
 
-writes frame times and both statistics. Headless frames ignore `SYNC RATE`, so
+writes frame times, the last frame's counts (triangles, draw calls, vertices,
+views, objects, those shown and those culled) and each renderer step's mean time:
+build, order, convert, upload and record. Headless frames ignore `SYNC RATE`, so
 frame times are the real cost. Measure Release builds: this path runs about ten
-times slower in Debug. On macOS, `sample <pid> 5` or Instruments attribute CPU
-time to functions; GPU time needs a Metal capture, PIX or RenderDoc.
+times slower in Debug.
+
+`scripts/benchmark_renderer.py run` measures every program of
+`tests/benchmarks/benchmarks.tsv`, the demos and the stress scenes beside it (one
+shared mesh, many distinct meshes, transparency, skinned characters, two views),
+and keeps each one's last frame; `compare` puts two builds side by side, pixels
+included. The stress scenes advance a fixed step per frame, so they draw the same
+frames on every run.
+
+On macOS, `sample <pid> 5` or Instruments attribute CPU time to functions; GPU
+time needs a Metal capture, PIX or RenderDoc.

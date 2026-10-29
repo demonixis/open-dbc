@@ -2245,6 +2245,45 @@ TEST_CASE("The screen layer keeps its GPU texture, uploads what changed and skip
         CHECK(ShownPixel(11 + Index * 20, 41) == Background);
 }
 
+TEST_CASE("Renderer frame stats count objects, culling and views without the debug overlay")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+    // In view, behind the camera, and hidden.
+    Kernel.Objects().MakeObjectCube(1, 1.0f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 10.0f);
+    Kernel.Objects().MakeObjectCube(2, 1.0f);
+    Kernel.Objects().PositionObject(2, 0.0f, 0.0f, -10.0f);
+    Kernel.Objects().MakeObjectCube(3, 1.0f);
+    Kernel.Objects().HideObject(3);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE_FALSE(Kernel.Debug().IsOverlayEnabled());
+
+    const auto CheckCounts = [&]
+    {
+        const dbc::RendererFrameStats& Stats = Kernel.Renderer().LastFrameStats();
+        CHECK(Stats.Views == 1);
+        CHECK(Stats.Objects == 3);
+        CHECK(Stats.VisibleObjects == 2);
+        CHECK(Stats.CulledObjects == 1);
+        CHECK(Stats.Triangles == Kernel.Renderer().LastFramePolygons());
+        CHECK(Stats.Batches == Kernel.Renderer().LastFrameDrawCalls());
+        CHECK(Stats.Triangles > 0);
+        CHECK(Stats.Vertices >= Stats.Triangles * 3);
+    };
+    Kernel.Renderer().RenderScene();
+    CheckCounts();
+    // Nothing moved: the cached scene is drawn again and still reports its objects.
+    Kernel.Renderer().RenderScene();
+    CheckCounts();
+    const dbc::RendererFrameStats Mean = Kernel.Renderer().MeanStepMilliseconds();
+    CHECK(Mean.BuildMilliseconds > 0.0);
+    CHECK(Mean.RecordMilliseconds > 0.0);
+}
+
 TEST_CASE("SET OBJECT FRAME redraws a still scene in the new pose")
 {
     dbc::EngineKernel Kernel;

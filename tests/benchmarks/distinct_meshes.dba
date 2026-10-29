@@ -1,0 +1,38 @@
+rem Renderer stress scene: 2,000 objects of distinct meshes and eight textures.
+rem Motion advances a fixed step per frame, so every run draws the same frames.
+sync on
+autocam off
+for t = 1 to 8
+   MakeChecker(t, rgb(t * 30, 255 - t * 25, 120), rgb(40, t * 20, 200 - t * 15))
+next t
+for i = 1 to 2000
+   select i mod 5
+      case 0 : make object sphere i, 1.2, 6 + i mod 7, 8 + i mod 9 : endcase
+      case 1 : make object cone i, 1.0 + (i mod 4) * 0.2 : endcase
+      case 2 : make object cylinder i, 1.0 + (i mod 3) * 0.3 : endcase
+      case 3 : make object box i, 1.0, 0.5 + (i mod 5) * 0.2, 1.0 : endcase
+      case default : make object cube i, 0.8 + (i mod 6) * 0.1 : endcase
+   endselect
+   texture object i, 1 + i mod 8
+   position object i, ((i - 1) mod 40) * 2.5 - 49, 0, ((i - 1) / 40) * 2.5
+   rotate object i, (i * 13) mod 360, (i * 7) mod 360, 0
+next i
+angle# = 0.0
+do
+   angle# = angle# + 0.5
+   position camera 0, sin(angle#) * 60, 30, 60 + cos(angle#) * 60
+   point camera 0, 0, 0, 60
+   sync
+loop
+
+function MakeChecker(Id, ColorA, ColorB)
+   create bitmap 1, 32, 32
+   ink ColorA, 0
+   box 0, 0, 16, 16
+   box 16, 16, 32, 32
+   ink ColorB, 0
+   box 16, 0, 32, 16
+   box 0, 16, 16, 32
+   get image Id, 0, 0, 32, 32
+   delete bitmap 1
+endfunction

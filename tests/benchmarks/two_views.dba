@@ -1,0 +1,34 @@
+rem Renderer stress scene: 1,000 textured objects seen by two cameras side by side, built once per view.
+rem Motion advances a fixed step per frame, so every run draws the same frames.
+sync on
+autocam off
+MakeChecker(1, rgb(200, 200, 60), rgb(60, 120, 60))
+for i = 1 to 1000
+   if i mod 2 = 0 then make object sphere i, 1.2 else make object cube i, 1
+   texture object i, 1
+   position object i, ((i - 1) mod 25) * 3 - 36, 0, ((i - 1) / 25) * 3
+next i
+make camera 1
+set camera view 0, 0, 0, screen width() / 2, screen height()
+set camera view 1, screen width() / 2, 0, screen width(), screen height()
+angle# = 0.0
+do
+   angle# = angle# + 0.5
+   position camera 0, sin(angle#) * 50, 25, 60 + cos(angle#) * 50
+   point camera 0, 0, 0, 60
+   position camera 1, cos(angle#) * 50, 40, 60 - sin(angle#) * 50
+   point camera 1, 0, 0, 60
+   sync
+loop
+
+function MakeChecker(Id, ColorA, ColorB)
+   create bitmap 1, 64, 64
+   ink ColorA, 0
+   box 0, 0, 32, 32
+   box 32, 32, 64, 64
+   ink ColorB, 0
+   box 32, 0, 64, 32
+   box 0, 32, 32, 64
+   get image Id, 0, 0, 64, 64
+   delete bitmap 1
+endfunction

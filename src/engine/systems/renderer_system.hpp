@@ -46,6 +46,26 @@ namespace dbc
         bool OverPreviousCamera = false;
     };
 
+    // What one presented frame drew, summed over its views, and the milliseconds each renderer step took.
+    struct RendererFrameStats
+    {
+        int Triangles = 0;
+        int Vertices = 0;
+        int Batches = 0;
+        int Views = 0;
+        // Objects the world pass went through, those of them shown, and those of these outside the view.
+        int Objects = 0;
+        int VisibleObjects = 0;
+        int CulledObjects = 0;
+        // Gathering the scene's triangles and shadow volumes, ordering them, converting everything to GPU vertices
+        // and batches, uploading those, and recording the draw calls.
+        double BuildMilliseconds = 0.0;
+        double OrderMilliseconds = 0.0;
+        double ConvertMilliseconds = 0.0;
+        double UploadMilliseconds = 0.0;
+        double RecordMilliseconds = 0.0;
+    };
+
     class RendererSystem
     {
       public:
@@ -229,13 +249,16 @@ namespace dbc
         // STATISTIC(1): triangles sent to the GPU by the last presented frame.
         [[nodiscard]] int LastFramePolygons() const
         {
-            return LastFramePolygons_;
+            return LastFrame_.Triangles;
         }
 
-        void RecordFramePolygons(int Count)
+        [[nodiscard]] const RendererFrameStats& LastFrameStats() const
         {
-            LastFramePolygons_ = Count;
+            return LastFrame_;
         }
+
+        // The mean milliseconds of each step over every frame presented so far; the counts are left at zero.
+        [[nodiscard]] RendererFrameStats MeanStepMilliseconds() const;
 
         // True when the last presented frame contained 3D world geometry.
         [[nodiscard]] bool LastFrameShowedWorld() const
@@ -246,12 +269,7 @@ namespace dbc
         // STATISTIC(5): draw calls submitted by the last presented frame.
         [[nodiscard]] int LastFrameDrawCalls() const
         {
-            return LastFrameDrawCalls_;
-        }
-
-        void RecordFrameDrawCalls(int Count)
-        {
-            LastFrameDrawCalls_ = Count;
+            return LastFrame_.Batches;
         }
 
         void SetNormalizeNormals(bool Enabled)
@@ -295,9 +313,12 @@ namespace dbc
         int ShadowPositionMode_ = 0;
         Vec3 ShadowPosition_{};
         bool HasCachedTris_ = false;
-        int LastFramePolygons_ = 0;
         bool LastFrameShowedWorld_ = false;
-        int LastFrameDrawCalls_ = 0;
+        // The frame being prepared, the last one presented, and the sums of every presented frame's steps.
+        RendererFrameStats Current_{};
+        RendererFrameStats LastFrame_{};
+        RendererFrameStats StepTotals_{};
+        std::size_t StatFrames_ = 0;
         bool NormalizeNormals_ = true;
         std::array<int, 3> GammaLevels_{255, 255, 255};
         bool MipmapModeOverride_ = false;

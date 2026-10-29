@@ -1,0 +1,33 @@
+rem Renderer stress scene: 2,500 instances of one textured cube, the case instancing serves.
+rem Motion advances a fixed step per frame, so every run draws the same frames.
+sync on
+autocam off
+MakeChecker(1, rgb(220, 120, 40), rgb(40, 90, 200))
+make object cube 1, 1
+texture object 1, 1
+for i = 2 to 2500
+   instance object i, 1
+next i
+for i = 1 to 2500
+   position object i, ((i - 1) mod 50) * 2 - 49, 0, ((i - 1) / 50) * 2
+   rotate object i, 0, (i * 7) mod 360, 0
+next i
+angle# = 0.0
+do
+   angle# = angle# + 0.5
+   position camera 0, sin(angle#) * 60, 30, 50 + cos(angle#) * 60
+   point camera 0, 0, 0, 50
+   sync
+loop
+
+function MakeChecker(Id, ColorA, ColorB)
+   create bitmap 1, 64, 64
+   ink ColorA, 0
+   box 0, 0, 32, 32
+   box 32, 32, 64, 64
+   ink ColorB, 0
+   box 32, 0, 64, 32
+   box 0, 32, 32, 64
+   get image Id, 0, 0, 64, 64
+   delete bitmap 1
+endfunction

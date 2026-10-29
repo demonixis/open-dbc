@@ -26,6 +26,10 @@ namespace dbc
         OrderedTriangles World;
         OrderedTriangles Reflected;
         OrderedTriangles Overlay;
+        // Objects the world pass went through, those of them shown, and those of these outside the view.
+        int Objects = 0;
+        int VisibleObjects = 0;
+        int CulledObjects = 0;
     };
 
     // Hash of everything in a surface style that splits batches; a mesh computes it once for all its triangles.

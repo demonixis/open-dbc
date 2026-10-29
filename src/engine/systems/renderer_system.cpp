@@ -2166,7 +2166,9 @@ namespace dbc
         Vec3 Direction{};
     };
 
-    void RenderObjects(EngineKernel& K, std::vector<Triangle>& WorldTris, std::vector<Triangle>& OverlayTris)
+    // Counts, when given, receives how many objects the pass went through, showed and culled.
+    void RenderObjects(EngineKernel& K, std::vector<Triangle>& WorldTris, std::vector<Triangle>& OverlayTris,
+                       SceneTriangles* Counts = nullptr)
     {
         const RenderView View = K.Renderer().ActiveView()
                                     ? *K.Renderer().ActiveView()
@@ -2195,8 +2197,12 @@ namespace dbc
         K.Objects().ForEachObject(
             [&](int Id, Object3D& Object)
             {
+                if (Counts)
+                    ++Counts->Objects;
                 if (!Object.Visible)
                     return;
+                if (Counts)
+                    ++Counts->VisibleObjects;
 
                 // ── Frustum culling (sphere test) ────────────────────────────────────
                 // Skip objects whose bounding sphere lies entirely outside the view frustum.
@@ -2214,7 +2220,11 @@ namespace dbc
                     const Vec3 Vc = dbc::WorldToViewPoint(K, WorldCenter.X, WorldCenter.Y, WorldCenter.Z);
 
                     if (!View.ContainsSphere({Vc.X, Vc.Y, Vc.Z}, WorldRadius, Object.Ghosted && Object.GhostMode == 0))
+                    {
+                        if (Counts)
+                            ++Counts->CulledObjects;
                         return;
+                    }
                 }
                 const auto& NodeGlobals = Object.CachedNodeGlobals;
 
@@ -3132,9 +3142,44 @@ namespace dbc
         Kernel_.Debug().SetLastRenderError(Error);
     }
 
+    namespace
+    {
+        [[nodiscard]] double TicksToMilliseconds(Uint64 Ticks)
+        {
+            return static_cast<double>(Ticks) * 1000.0 / static_cast<double>(SDL_GetPerformanceFrequency());
+        }
+
+        // Adds the time from its construction to its destruction to a step's milliseconds.
+        struct StepTimer
+        {
+            double& Milliseconds;
+            const Uint64 Start = SDL_GetPerformanceCounter();
+
+            ~StepTimer()
+            {
+                Milliseconds += TicksToMilliseconds(SDL_GetPerformanceCounter() - Start);
+            }
+        };
+    } // namespace
+
+    RendererFrameStats RendererSystem::MeanStepMilliseconds() const
+    {
+        RendererFrameStats Mean{};
+        if (StatFrames_ == 0)
+            return Mean;
+        const auto Frames = static_cast<double>(StatFrames_);
+        Mean.BuildMilliseconds = StepTotals_.BuildMilliseconds / Frames;
+        Mean.OrderMilliseconds = StepTotals_.OrderMilliseconds / Frames;
+        Mean.ConvertMilliseconds = StepTotals_.ConvertMilliseconds / Frames;
+        Mean.UploadMilliseconds = StepTotals_.UploadMilliseconds / Frames;
+        Mean.RecordMilliseconds = StepTotals_.RecordMilliseconds / Frames;
+        return Mean;
+    }
+
     RenderFrameState RendererSystem::PrepareFrame(double DeltaSeconds, bool Retain2d, bool HudLast)
     {
         EngineKernel& K = Kernel_;
+        Current_ = {};
         PrepareFrameSimulation(DeltaSeconds);
         // Persistent bitmap text and primitives are already represented by bitmap 0.
         if (K.RuntimeCompatibility().ScreenText() == ScreenTextLifetime::PersistentBitmap)
@@ -3205,6 +3250,8 @@ namespace dbc
             K.Camera().ClearRequested() && !K.Camera().HasCameraView() ? K.Camera().ClearColor() : BaseClearColorInt;
         const SDL_FColor ClearColor = UnpackColor(ClearColorInt);
 
+        const Uint64 BuildStart = SDL_GetPerformanceCounter();
+        Uint64 OrderTicks = 0;
         // Releasing the previous frame's scene lets a rebuild reuse the cached one in place.
         Geometry.Scene.reset();
         Vec3 ReflectionPoint{};
@@ -3253,9 +3300,11 @@ namespace dbc
                             dbc::RenderMatrix(K, Terrain, Tris);
                     });
                 dbc::RenderBspWorld(K, Tris);
-                dbc::RenderObjects(K, Tris, OverlayTris);
+                dbc::RenderObjects(K, Tris, OverlayTris, Scene.get());
                 dbc::RenderParticles(K, Tris);
+                Uint64 OrderStart = SDL_GetPerformanceCounter();
                 OrderWorldTriangles(Scene->World);
+                OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
                 if (HasReflection)
                 {
                     std::vector<Triangle> IgnoredOverlay;
@@ -3274,10 +3323,14 @@ namespace dbc
                         ReflectedTris.end());
                     for (Triangle& TriangleValue : ReflectedTris)
                         TriangleValue.Style.ReflectionPass = true;
+                    OrderStart = SDL_GetPerformanceCounter();
                     OrderWorldTriangles(Scene->Reflected);
+                    OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
                 }
                 // Overlays: always back-to-front (2D compositing order).
+                OrderStart = SDL_GetPerformanceCounter();
                 OrderOverlayTriangles(Scene->Overlay);
+                OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
                 CacheScene(Scene);
                 Geometry.Scene = std::move(Scene);
                 K.Camera().ClearDirty();
@@ -3288,6 +3341,9 @@ namespace dbc
         }
         const SceneTriangles& Scene = *Geometry.Scene;
         const std::vector<Triangle>& Tris = Scene.World.Triangles;
+        Current_.Objects += Scene.Objects;
+        Current_.VisibleObjects += Scene.VisibleObjects;
+        Current_.CulledObjects += Scene.CulledObjects;
 
         auto& ShadowSources = Geometry.ShadowSources;
         // Only shadow casters build volumes; copying every world triangle would cost more than the volumes.
@@ -3300,6 +3356,9 @@ namespace dbc
         ShadowTris.reserve(ShadowSources.size() * 4);
         dbc::BuildShadowVolumes(K, ShadowSources, ShadowTris);
         const bool HasShadow = !ShadowTris.empty();
+        const Uint64 ConvertStart = SDL_GetPerformanceCounter();
+        Current_.BuildMilliseconds += TicksToMilliseconds(ConvertStart - BuildStart - OrderTicks);
+        Current_.OrderMilliseconds += TicksToMilliseconds(OrderTicks);
 
         auto& Vertices = Geometry.Vertices;
         auto& Batches = Geometry.Batches;
@@ -3646,11 +3705,13 @@ namespace dbc
         Geometry.ClearColor = ClearColor;
         Geometry.HasReflection = HasReflection;
         Geometry.HasShadow = HasShadow;
+        Current_.ConvertMilliseconds += TicksToMilliseconds(SDL_GetPerformanceCounter() - ConvertStart);
         return true;
     }
 
     bool RendererSystem::UploadPreparedViews(std::span<PreparedViewGeometry> Geometry, SDL_GPUCommandBuffer* Cmd)
     {
+        const StepTimer Timer{Current_.UploadMilliseconds};
         if (!UploadStaticTerrains(Geometry, Cmd))
             return false;
         auto& Gpu = Kernel_.Gpu();
@@ -3691,6 +3752,7 @@ namespace dbc
                                             const PreparedViewGeometry& Geometry, SDL_GPUCommandBuffer* Cmd,
                                             RenderFrameState& Frame)
     {
+        const StepTimer Timer{Current_.RecordMilliseconds};
         EngineKernel& K = Kernel_;
         if (Frame.Finalized || !View.Valid() || !K.Gpu().GpuDevice() || !K.Gpu().GpuPipeline() ||
             !K.Gpu().GpuSampler() || !Cmd || !Target.Color || !Target.Depth || Target.Width != View.PhysicalWidth ||
@@ -4202,8 +4264,17 @@ namespace dbc
         }
         K.Camera().ConsumeClearRequests();
 
-        K.Renderer().RecordFramePolygons(Frame.Vertices / 3);
-        K.Renderer().RecordFrameDrawCalls(Frame.Batches);
+        Current_.Triangles = Frame.Vertices / 3;
+        Current_.Vertices = Frame.Vertices;
+        Current_.Batches = Frame.Batches;
+        Current_.Views = Frame.Views;
+        LastFrame_ = Current_;
+        StepTotals_.BuildMilliseconds += Current_.BuildMilliseconds;
+        StepTotals_.OrderMilliseconds += Current_.OrderMilliseconds;
+        StepTotals_.ConvertMilliseconds += Current_.ConvertMilliseconds;
+        StepTotals_.UploadMilliseconds += Current_.UploadMilliseconds;
+        StepTotals_.RecordMilliseconds += Current_.RecordMilliseconds;
+        ++StatFrames_;
         if (K.Debug().IsOverlayEnabled())
         {
             FrameStats Stats;
@@ -4887,6 +4958,9 @@ namespace dbc
         CachedScene_->World.Clear();
         CachedScene_->Reflected.Clear();
         CachedScene_->Overlay.Clear();
+        CachedScene_->Objects = 0;
+        CachedScene_->VisibleObjects = 0;
+        CachedScene_->CulledObjects = 0;
         return CachedScene_;
     }
 

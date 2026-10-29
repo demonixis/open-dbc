@@ -48,18 +48,20 @@ Publication:
 
 Move the renderer towards GPU-driven, data-driven rendering. Today most 3D
 geometry is transformed, sorted and uploaded on the CPU every frame
-([rendering.md](rendering.md)). Release baseline, Apple silicon, headless, 300 frames:
+([rendering.md](rendering.md)). `scripts/benchmark_renderer.py` baseline, Release,
+Apple silicon, median of three 300-frame headless runs:
 
-| Demo | Triangles | Batches | CPU ms per frame |
+| Program | Triangles | Draw calls | CPU ms per frame |
 | --- | ---: | ---: | ---: |
-| `hive_defender` | 40,089 | 8 | 11.7 |
-| `wave_racer` | 9,825 | 62 | 3.3 |
-| `dusk_rally` | 2,607 | 195 | 2.3 |
-| `reactor_breach` | 1,458 | 19 | 1.9 |
+| `two_views` (stress) | 156,116 | 3 | 37.7 |
+| `distinct_meshes` (stress) | 59,283 | 8 | 16.7 |
+| `hive_defender` | 41,542 | 8 | 12.0 |
+| `skinned` (stress) | 14,418 | 1 | 4.6 |
+| `shared_mesh` (stress) | 13,646 | 1 | 3.8 |
 
-In `hive_defender`, building object triangles takes 49% of the frame (clipping
-and filling the 624-byte `Triangle` records first), converting them to
-`GpuVertex` 25%, ordering them 20% and the VM about 2%.
+Building the triangles takes about half of each frame, ordering them and converting
+them to `GpuVertex` a fifth each, uploading 4%, recording the draw calls under 1%,
+and the VM about 2%.
 
 Decisions:
 
@@ -78,10 +80,6 @@ Decisions:
 
 Work, in order:
 
-- [ ] Benchmark: report vertices, batches and object counts without the debug
-  overlay, count culled objects, time each renderer step, and add stress scenes:
-  many objects sharing a mesh, many distinct ones, transparency, skinned characters
-  (no demo model has bones; a few tutorial models do), two views.
 - [ ] Shared mesh resources: `INSTANCE OBJECT` shares instead of copying, vertex
   edits copy on write, and a revision drives the GPU upload.
 - [ ] GPU-resident meshes: object-space buffers; the object matrix and material per

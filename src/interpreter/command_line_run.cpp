@@ -351,7 +351,7 @@ namespace dbc::interpreter
             const BenchmarkResult Value = Result ? Result->Benchmark : BenchmarkResult{};
             nlohmann::ordered_json Json = nlohmann::ordered_json::object();
             Json["schema"] = "opendbc-benchmark";
-            Json["version"] = 1;
+            Json["version"] = 2;
             Json["profile"] = ProfileId(Profile);
             Json["entry"] = dbc::GenericPathToUtf8(Entry);
             Json["status"] = Status;
@@ -365,20 +365,28 @@ namespace dbc::interpreter
             };
             if (Kernel)
             {
-                const FrameStats& Stats = Kernel->Debug().CurrentStats();
+                // The last frame's counts, summed over its views, and each renderer step's mean over the run.
+                const RendererFrameStats& Last = Kernel->Renderer().LastFrameStats();
+                const RendererFrameStats Mean = Kernel->Renderer().MeanStepMilliseconds();
                 Json["renderer"] = {
-                    {"triangles", Kernel->Renderer().LastFramePolygons()},
-                    {"draw_calls", Kernel->Renderer().LastFrameDrawCalls()},
-                    {"fps", Stats.Fps},
-                    {"vertices", Stats.TotalVertices},
-                    {"batches", Stats.TotalBatches},
-                    {"visible_objects", Stats.VisibleObjects},
-                    {"total_objects", Stats.TotalObjects},
+                    {"triangles", Last.Triangles},
+                    {"draw_calls", Last.Batches},
+                    {"vertices", Last.Vertices},
+                    {"views", Last.Views},
+                    {"objects", Last.Objects},
+                    {"visible_objects", Last.VisibleObjects},
+                    {"culled_objects", Last.CulledObjects},
+                };
+                Json["renderer_step_ms"] = {
+                    {"build", Mean.BuildMilliseconds},     {"order", Mean.OrderMilliseconds},
+                    {"convert", Mean.ConvertMilliseconds}, {"upload", Mean.UploadMilliseconds},
+                    {"record", Mean.RecordMilliseconds},
                 };
             }
             else
             {
                 Json["renderer"] = nullptr;
+                Json["renderer_step_ms"] = nullptr;
             }
             return Json;
         }

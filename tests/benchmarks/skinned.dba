@@ -1,0 +1,29 @@
+rem Renderer stress scene: 24 animated characters skinned on the CPU, from a DBPro tutorial model.
+rem Animation advances a fixed step per frame, so every run draws the same frames.
+sync on
+autocam off
+load image "../../examples/dbpro/tutorials/camera/miko/miko.jpg", 1
+for i = 1 to 24
+   load object "../../examples/dbpro/tutorials/camera/miko/miko.X", i
+   texture object i, 1
+   rem The model lies along Z; the tutorial stands it up the same way.
+   xrotate object i, 270
+   fix object pivot i
+   set object speed i, 0
+next i
+size# = object size(1)
+step# = size# * 0.45
+for i = 1 to 24
+   position object i, ((i - 1) mod 6) * step# - 2.5 * step#, 0, ((i - 1) / 6) * step#
+next i
+position camera 0, size# * 0.6, -1.6 * size#
+point camera 0, size# * 0.2, step# * 1.5
+frame# = 0.0
+do
+   frame# = frame# + 0.5
+   if frame# > 59 then frame# = 0.0
+   for i = 1 to 24
+      set object frame i, frame# + i
+   next i
+   sync
+loop

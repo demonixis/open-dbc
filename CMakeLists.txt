@@ -767,6 +767,19 @@ if(BUILD_TESTS)
         ENVIRONMENT "OPENDBC_HEADLESS=1"
     )
 
+    # Keeps the renderer stress scenes running; timing them is scripts/benchmark_renderer.py's job.
+    add_test(
+        NAME benchmark_scenes
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/benchmark_renderer.py run
+            --opendbc $<TARGET_FILE:opendbc> --output ${CMAKE_CURRENT_BINARY_DIR}/benchmark-scenes
+            --runs 1 --frames 3 --only shared_mesh distinct_meshes transparency skinned two_views
+    )
+    set_tests_properties(benchmark_scenes PROPERTIES
+        TIMEOUT 300
+        LABELS "runtime;qualification"
+        ENVIRONMENT "OPENDBC_HEADLESS=1"
+    )
+
     add_test(
         NAME readme_metrics_regeneration
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_readme_metrics.py --check

@@ -1,0 +1,15 @@
+name	source	profile	frames	isolation
+shared_mesh	tests/benchmarks/shared_mesh.dba	dbpro	300	read-only
+distinct_meshes	tests/benchmarks/distinct_meshes.dba	dbpro	300	read-only
+transparency	tests/benchmarks/transparency.dba	dbpro	300	read-only
+skinned	tests/benchmarks/skinned.dba	dbc	300	read-only
+two_views	tests/benchmarks/two_views.dba	dbpro	300	read-only
+cavern_dash	examples/dbc/demos/cavern_dash/cavern_dash.dba	dbc	300	copy-tree
+dune_armour	examples/dbc/demos/dune_armour/dune_armour.dba	dbc	300	copy-tree
+flooded_vault	examples/dbc/demos/flooded_vault/flooded_vault.dba	dbc	300	copy-tree
+frost_outpost	examples/dbc/demos/frost_outpost/frost_outpost.dba	dbc	300	copy-tree
+hive_defender	examples/dbc/demos/hive_defender/hive_defender.dba	dbc	300	copy-tree
+wave_racer	examples/dbc/demos/wave_racer/wave_racer.dba	dbc	300	copy-tree
+dusk_rally	examples/dbpro/demos/dusk_rally/dusk_rally.dbpro	dbpro	300	copy-tree
+reactor_breach	examples/dbpro/demos/reactor_breach/reactor_breach.dbpro	dbpro	300	copy-tree
+sky_gardens	examples/dbpro/demos/sky_gardens/sky_gardens.dbpro	dbpro	300	copy-tree

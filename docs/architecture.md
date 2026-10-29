@@ -116,6 +116,7 @@ Choices where the original cannot be reproduced portably:
 - BASIC goldens in `tests/dba/` (`.dba` + `.expected`);
 - example frames (`tests/qualification/example_frames.tsv`), which must not be
   black;
+- the renderer stress scenes of `tests/benchmarks/`, which must run;
 - audits and generator checks.
 
 Tests run four at a time with a 120 s default timeout. The `.dba` programs that

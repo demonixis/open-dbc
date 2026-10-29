@@ -1,0 +1,23 @@
+rem Renderer stress scene: 600 overlapping additive and alpha-blended planes, sorted back to front.
+rem Motion advances a fixed step per frame, so every run draws the same frames.
+sync on
+autocam off
+for i = 1 to 600
+   make object plain i, 6, 6
+   color object i, rgb((i * 37) mod 256, (i * 71) mod 256, (i * 113) mod 256)
+   set object cull i, 0
+   if i mod 2 = 0
+      ghost object on i
+   else
+      set alpha mapping on i, 40
+   endif
+   position object i, ((i - 1) mod 20) * 3 - 30, ((i - 1) / 20) mod 5 * 3 - 6, ((i - 1) / 100) * 4
+   rotate object i, 0, (i * 11) mod 360, 0
+next i
+angle# = 0.0
+do
+   angle# = angle# + 0.5
+   position camera 0, sin(angle#) * 40, 8, 10 + cos(angle#) * 40
+   point camera 0, 0, 0, 10
+   sync
+loop
