@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "core/text_encoding.hpp"
 #include "language/language_profile.hpp"
 #include <TextEditor.h>
 
@@ -74,6 +75,8 @@ namespace dbc::studio
             bool SaveCurrent();
             bool SaveCurrentAs(const std::filesystem::path& Path);
             bool SaveAll();
+            // Warnings from saving since the last call, for the Output panel.
+            std::vector<std::string> TakeNotices();
 
             void OpenFindReplace();
             void FormatCurrent();
@@ -91,12 +94,16 @@ namespace dbc::studio
                 bool Basic = true;
                 std::string Title;
                 std::unique_ptr<TextEditor> Editor;
+                // The editor holds UTF-8 with LF line endings; saving restores the file's own format.
+                core::TextFormat Format;
                 size_t SavedUndoIndex = 0;
                 bool Open = true;
             };
 
             void AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile, bool Basic,
-                             const std::string& Text);
+                             const std::string& Text, const core::TextFormat& Format = {});
+            // The document's text in its file format, or UTF-8 when the code page cannot hold it.
+            static std::string EncodedText(const Document& Doc, bool& Lossless);
             void ConfigureEditor(TextEditor& Editor, dbc::language::LanguageProfile Profile) const;
             void ConfigureEffectEditor(TextEditor& Editor) const;
             bool WriteDocument(Document& Doc, const std::filesystem::path& Path);
@@ -111,6 +118,7 @@ namespace dbc::studio
             const Document* SelectRequest_ = nullptr;
             int UntitledCount_ = 0;
             int PendingClose_ = -1;
+            std::vector<std::string> Notices_;
 
             const dba::CommandDatabase* Commands_ = nullptr;
             TextEditor::AutoCompleteConfig AutoComplete_;

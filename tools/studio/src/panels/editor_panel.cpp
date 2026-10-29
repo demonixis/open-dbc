@@ -5,6 +5,7 @@
 #include <cctype>
 #include <fstream>
 #include <sstream>
+#include <utility>
 
 #include <imgui.h>
 
@@ -181,12 +182,13 @@ namespace dbc::studio
         }
 
         void EditorPanel::AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile, bool Basic,
-                                      const std::string& Text)
+                                      const std::string& Text, const core::TextFormat& Format)
         {
             auto Doc = std::make_unique<Document>();
             Doc->Path = std::move(Path);
             Doc->Profile = Profile;
             Doc->Basic = Basic;
+            Doc->Format = Format;
             Doc->Title = Doc->Path.empty() ? ("untitled-" + std::to_string(++UntitledCount_) + ".dba")
                                            : dbc::PathToUtf8(Doc->Path.filename());
             Doc->Editor = std::make_unique<TextEditor>();
@@ -223,12 +225,14 @@ namespace dbc::studio
             }
 
             bool Ok = false;
-            const std::string Text = ReadFile(Target, Ok);
+            const std::string Bytes = ReadFile(Target, Ok);
             if (!Ok)
             {
                 return false;
             }
-            AddDocument(Target, ProjectProfile_, dbc::language::IsLanguageSource(Target), Text);
+            core::TextFormat Format;
+            const std::string Text = core::DecodeText(Bytes, Format);
+            AddDocument(Target, ProjectProfile_, dbc::language::IsLanguageSource(Target), Text, Format);
             return true;
         }
 
@@ -320,8 +324,9 @@ namespace dbc::studio
             std::vector<BufferedSource> Sources;
             for (const std::unique_ptr<Document>& Document : Documents_)
             {
+                bool Lossless = true;
                 if (Document->Basic && !Document->Path.empty() && Document->Profile == Profile && IsDirty(*Document))
-                    Sources.push_back({Document->Path, Document->Editor->GetText()});
+                    Sources.push_back({Document->Path, EncodedText(*Document, Lossless)});
             }
             return Sources;
         }
@@ -352,6 +357,20 @@ namespace dbc::studio
             Editor->SetFocus();
         }
 
+        std::string EditorPanel::EncodedText(const Document& Doc, bool& Lossless)
+        {
+            const std::string Text = Doc.Editor->GetText();
+            std::optional<std::string> Bytes = core::EncodeText(Text, Doc.Format);
+            Lossless = Bytes.has_value();
+            if (!Bytes)
+            {
+                core::TextFormat Utf8 = Doc.Format;
+                Utf8.Windows1252 = false;
+                Bytes = core::EncodeText(Text, Utf8);
+            }
+            return std::move(*Bytes);
+        }
+
         bool EditorPanel::WriteDocument(Document& Doc, const std::filesystem::path& Path)
         {
             // A tab keeps its kind: a BASIC buffer cannot be saved as an effect or the reverse.
@@ -359,16 +378,25 @@ namespace dbc::studio
             {
                 return false;
             }
+            bool Lossless = true;
+            const std::string Bytes = EncodedText(Doc, Lossless);
             std::ofstream Out(Path, std::ios::binary | std::ios::trunc);
             if (!Out)
             {
                 return false;
             }
 
-            Out << Doc.Editor->GetText();
+            Out << Bytes;
             if (!Out.good())
             {
                 return false;
+            }
+            if (!Lossless)
+            {
+                // Characters typed since opening have no Windows-1252 byte; UTF-8 keeps them.
+                Doc.Format.Windows1252 = false;
+                Notices_.push_back(Path.filename().string() +
+                                   " is now saved as UTF-8: Windows-1252 cannot store some of its characters.");
             }
 
             Doc.Path = Path;
@@ -414,6 +442,11 @@ namespace dbc::studio
                 }
             }
             return Saved;
+        }
+
+        std::vector<std::string> EditorPanel::TakeNotices()
+        {
+            return std::exchange(Notices_, {});
         }
 
         void EditorPanel::OpenFindReplace()

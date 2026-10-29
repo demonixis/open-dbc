@@ -40,6 +40,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/language.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/reference.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/editor_panel.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/text_encoding.cpp
     )
     target_include_directories(test_studio_editor PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
     target_link_libraries(test_studio_editor PRIVATE doctest_with_main dbc_language imgui_texteditor)

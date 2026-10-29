@@ -1,11 +1,13 @@
 #include <doctest/doctest.h>
 
+#include "core/text_encoding.hpp"
 #include "dba/command_database.hpp"
 #include "dba/reference.hpp"
 #include "panels/editor_panel.hpp"
 
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 
 #include <imgui.h>
 
@@ -127,4 +129,77 @@ TEST_CASE("Studio editor brings an already open tab to the front when it is open
     }
     ImGui::DestroyContext();
     std::filesystem::remove_all(Root, Error);
+}
+
+TEST_CASE("Studio text codec keeps Windows-1252, CRLF and BOM files byte for byte")
+{
+    std::string Every;
+    for (int Byte = 1; Byte < 256; ++Byte)
+        Every.push_back(static_cast<char>(Byte));
+    for (const std::string& Bytes :
+         {Every, std::string("print \"caf\xE9\"\r\nend\r\n"), std::string("\xEF\xBB\xBFprint \"caf\xC3\xA9\"\nend\n"),
+          std::string("print 1\r\nprint 2\r\n")})
+    {
+        core::TextFormat Format;
+        std::string Text = core::DecodeText(Bytes, Format);
+        // The editor drops carriage returns; saving restores them.
+        std::erase(Text, '\r');
+        const std::optional<std::string> Saved = core::EncodeText(Text, Format);
+        REQUIRE(Saved);
+        // A lone CR in the 255-byte sample is the one change a line-based editor makes.
+        if (Bytes == Every)
+            CHECK(*Saved == std::string(Every).erase(12, 1));
+        else
+            CHECK(*Saved == Bytes);
+    }
+
+    core::TextFormat Format;
+    CHECK(core::DecodeText("caf\xE9\r\n", Format) == "caf\xC3\xA9\r\n");
+    CHECK(Format.Windows1252);
+    CHECK(Format.Crlf);
+    CHECK_FALSE(Format.Bom);
+    CHECK(core::DecodeText("\x80", Format) == "\xE2\x82\xAC");
+
+    CHECK(core::DecodeText("plain\n", Format) == "plain\n");
+    CHECK_FALSE(Format.Windows1252);
+    CHECK_FALSE(Format.Crlf);
+
+    Format.Windows1252 = true;
+    CHECK_FALSE(core::EncodeText("\xE2\x86\x92", Format));
+}
+
+TEST_CASE("Studio editor saves a file in the format it was opened in")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-encoding";
+    std::error_code Error;
+    std::filesystem::remove_all(Root, Error);
+    std::filesystem::create_directories(Root, Error);
+    REQUIRE_FALSE(Error);
+    const std::string Original = "print \"caf\xE9\"\r\nend\r\n";
+    std::ofstream(Root / "main.dba", std::ios::binary) << Original;
+    const auto Read = [&]
+    {
+        std::ifstream Input(Root / "main.dba", std::ios::binary);
+        return std::string(std::istreambuf_iterator<char>(Input), {});
+    };
+
+    panels::EditorPanel Editor;
+    Editor.Initialize(nullptr);
+    REQUIRE(Editor.Open(Root / "main.dba"));
+    CHECK(Editor.CurrentEditor()->GetText() == "print \"caf\xC3\xA9\"\nend\n");
+    REQUIRE(Editor.SaveCurrent());
+    CHECK(Read() == Original);
+
+    // An unsaved run compiles the same bytes as the saved file.
+    REQUIRE(Editor.ReplaceText(Root / "main.dba", "print \"\xC3\xA9t\xC3\xA9\"\nend", false));
+    const std::vector<panels::BufferedSource> Dirty = Editor.DirtySources(dbc::language::LanguageProfile::Dbc);
+    REQUIRE(Dirty.size() == 1);
+    CHECK(Dirty.front().Text == "print \"\xE9t\xE9\"\r\nend");
+
+    // A character Windows-1252 cannot store turns the file into UTF-8, with a notice.
+    REQUIRE(Editor.ReplaceText(Root / "main.dba", "print \"\xE2\x86\x92\"\nend", false));
+    REQUIRE(Editor.SaveCurrent());
+    CHECK(Read() == "print \"\xE2\x86\x92\"\r\nend");
+    CHECK(Editor.TakeNotices().size() == 1);
+    CHECK(Editor.TakeNotices().empty());
 }

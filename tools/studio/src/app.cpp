@@ -397,6 +397,8 @@ namespace dbc::studio
             Dialog_.Poll();
             Execution_.Poll();
             PollExport();
+            for (const std::string& Notice : Editor_.TakeNotices())
+                Output_.Append(Notice, panels::OutputPanel::Severity::Notice);
 
             if (SDL_GetWindowFlags(Window_) & SDL_WINDOW_MINIMIZED)
             {

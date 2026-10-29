@@ -178,6 +178,8 @@ set(STUDIO_SOURCES
     src/core/settings.hpp
     src/core/snippet_library.cpp
     src/core/snippet_library.hpp
+    src/core/text_encoding.cpp
+    src/core/text_encoding.hpp
     src/core/workspace.cpp
     src/core/workspace.hpp
 
