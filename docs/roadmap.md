@@ -25,7 +25,6 @@ Robustness:
 - [ ] Studio: backup before each run, autosave, keep CP1252, CRLF and BOM, Problems panel.
 - [ ] Run the BASIC program in a child process so a crash cannot take the Studio down;
   no `try`/`catch` around the tick.
-- [ ] Depth limits for the parser, call stack, `GOSUB` and `DIM`; out-of-range literals.
 - [ ] Fuzzing: frontend, DDS, DBO, WAV, memblocks.
 
 Repository files:
