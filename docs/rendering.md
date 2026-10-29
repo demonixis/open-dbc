@@ -31,8 +31,8 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    shadow volumes are extruded on the CPU from the casters' triangles.
 3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
    triangles that share textures, blending, depth state and `SurfaceStyle` merge
-   into one `GpuBatch`. The 2D layer follows: bitmap 0 as one quad, text,
-   primitives, pasted images and sprites.
+   into one `GpuBatch`. The 2D layer follows: bitmap 0 as one quad when it
+   shows anything, text, primitives, pasted images and sprites.
 4. `UploadPreparedViews` copies the vertices of all views into one vertex buffer.
 5. `RecordPreparedView` draws the batches in passes: backdrop, 2D under the scene,
    opaque, transparent then additive pipelines, the reflection mask and reflected
@@ -45,6 +45,11 @@ A view's triangle lists are cached while the camera, every object, the visible
 particle emitters and the animations stay still, and shared with the view
 without a copy. Any change, or a second view, rebuilds them whole.
 
+Bitmap 0, the screen's 2D layer, keeps one GPU texture. Every write to a bitmap
+reports the rectangle it changed; before the layer is drawn, the texture receives
+those rectangles, up to eight kept apart, and the clear after a 3D frame erases
+only what was drawn since the previous one.
+
 Terrains are the exception. Their world-space vertices are uploaded once; each
 view picks the visible 16-cell blocks and their LOD step and draws them indexed,
 and the vertex shader applies the view through the `ModelView` uniform. Ghosted,
@@ -54,9 +59,7 @@ transparent and unculled terrains stay on the CPU path.
 
 CPU time grows with visible triangles, not objects: clipping and filling
 `Triangle` records, ordering them, then converting and uploading `GpuVertex`
-records. The VM is a small share of a 3D frame. The clear after each 3D frame
-destroys bitmap 0's GPU texture; the next frame creates and uploads a
-full-window texture again, even when nothing was drawn on it.
+records. The VM is a small share of a 3D frame.
 
 ## Compatibility constraints
 

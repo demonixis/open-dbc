@@ -11,7 +11,10 @@
 
 #include <SDL3/SDL_gpu.h>
 
+#include <cstdint>
+#include <limits>
 #include <memory>
+#include <span>
 
 #if __has_include(<SDL3_image/SDL_image.h>)
 #include <SDL3_image/SDL_image.h>
@@ -234,14 +237,9 @@ namespace dbc
         }
         Bitmaps_.clear();
 
-        for (auto& [Id, Tex] : BitmapGpuTextures_)
-        {
-            if (Tex && Kernel_.Gpu().GpuDevice())
-            {
-                SDL_ReleaseGPUTexture(Kernel_.Gpu().GpuDevice(), Tex);
-            }
-        }
-        BitmapGpuTextures_.clear();
+        for (auto& [Id, Entry] : BitmapTextures_)
+            ReleaseBitmapTexture(Entry);
+        BitmapTextures_.clear();
 
         for (auto& [Id, ImageValue] : Images_)
         {
@@ -464,6 +462,7 @@ namespace dbc
                 return false;
             }
             SDL_Rect DestinationRect{X, Y, ImageValue->Surface->w, ImageValue->Surface->h};
+            const SDL_Rect Written = DestinationRect;
             if (TransparentBlack)
             {
                 const Uint32 ColorKey = SDL_MapSurfaceRGBA(
@@ -483,7 +482,7 @@ namespace dbc
             }
             if (TransparentBlack)
                 SDL_SetSurfaceColorKey(ImageValue->Surface, false, 0);
-            InvalidateBitmapGpuTexture(CurrentBitmapId_);
+            InvalidateBitmapGpuTexture(CurrentBitmapId_, &Written);
             if (CurrentBitmapId_ > 0)
                 return true;
         }
@@ -809,6 +808,7 @@ namespace dbc
             return nullptr;
         }
         Bitmaps_[0] = Surface;
+        InvalidateBitmapGpuTexture(0);
         if (Mirrored)
             MirroredBitmaps_.insert(0);
         if (Flipped)
@@ -817,24 +817,125 @@ namespace dbc
         return Surface;
     }
 
+    namespace
+    {
+        [[nodiscard]] int64_t RectArea(const SDL_Rect& Rect)
+        {
+            return int64_t{Rect.w} * Rect.h;
+        }
+    } // namespace
+
+    void ImageStore::BitmapArea::Add(const SDL_Rect* Area)
+    {
+        if (!Area)
+        {
+            Whole = true;
+            Count = 0;
+            return;
+        }
+        if (Whole || Area->w <= 0 || Area->h <= 0)
+            return;
+        // Absorb every rectangle the new one touches, so that none overlap.
+        SDL_Rect Merged = *Area;
+        for (std::size_t Index = 0; Index < Count;)
+        {
+            if (!SDL_HasRectIntersection(&Merged, &Rects[Index]))
+            {
+                ++Index;
+                continue;
+            }
+            SDL_GetRectUnion(&Merged, &Rects[Index], &Merged);
+            Rects[Index] = Rects[--Count];
+            Index = 0;
+        }
+        if (Count < MaximumRects)
+        {
+            Rects[Count++] = Merged;
+            return;
+        }
+        // Full: merge with the rectangle whose union adds the least area, then place the union.
+        std::size_t Best = 0;
+        int64_t BestGrowth = std::numeric_limits<int64_t>::max();
+        for (std::size_t Index = 0; Index < Count; ++Index)
+        {
+            SDL_Rect Union{};
+            SDL_GetRectUnion(&Merged, &Rects[Index], &Union);
+            const int64_t Growth = RectArea(Union) - RectArea(Merged) - RectArea(Rects[Index]);
+            if (Growth < BestGrowth)
+            {
+                Best = Index;
+                BestGrowth = Growth;
+            }
+        }
+        SDL_GetRectUnion(&Merged, &Rects[Best], &Merged);
+        Rects[Best] = Rects[--Count];
+        Add(&Merged);
+    }
+
+    void ImageStore::BitmapArea::Add(const BitmapArea& Other)
+    {
+        if (Other.Whole)
+            Add(nullptr);
+        for (std::size_t Index = 0; Index < Other.Count; ++Index)
+            Add(&Other.Rects[Index]);
+    }
+
+    std::size_t ImageStore::BitmapArea::Clip(const SDL_Surface& Surface,
+                                             std::array<SDL_Rect, MaximumRects>& Output) const
+    {
+        const SDL_Rect Full{0, 0, Surface.w, Surface.h};
+        if (Whole)
+        {
+            Output[0] = Full;
+            return Full.w > 0 && Full.h > 0 ? 1 : 0;
+        }
+        std::size_t Written = 0;
+        for (std::size_t Index = 0; Index < Count; ++Index)
+            if (SDL_GetRectIntersection(&Rects[Index], &Full, &Output[Written]))
+                ++Written;
+        return Written;
+    }
+
+    void ImageStore::ReleaseBitmapTexture(BitmapTexture& Entry)
+    {
+        if (Entry.Texture && Kernel_.Gpu().GpuDevice())
+            SDL_ReleaseGPUTexture(Kernel_.Gpu().GpuDevice(), Entry.Texture);
+        Entry.Texture = nullptr;
+    }
+
     SDL_GPUTexture* ImageStore::GetBitmapGpuTexture(int BitmapId)
     {
-        const auto GpuIt = BitmapGpuTextures_.find(BitmapId);
-        if (GpuIt != BitmapGpuTextures_.end() && GpuIt->second)
-        {
-            return GpuIt->second;
-        }
         const auto BmpIt = Bitmaps_.find(BitmapId);
         if (BmpIt == Bitmaps_.end() || !BmpIt->second)
         {
             return nullptr;
         }
-        SDL_GPUTexture* Tex = Kernel_.Gpu().CreateGpuTextureFromSurface(BmpIt->second);
-        if (Tex)
+        SDL_Surface* Surface = BmpIt->second;
+        BitmapTexture& Entry = BitmapTextures_[BitmapId];
+        if (Entry.Drawn.Empty())
+            return nullptr;
+        if (!Entry.Texture || Entry.Width != Surface->w || Entry.Height != Surface->h)
         {
-            BitmapGpuTextures_[BitmapId] = Tex;
+            ReleaseBitmapTexture(Entry);
+            Entry.Texture = Kernel_.Gpu().CreateGpuTextureFromSurface(Surface);
+            if (!Entry.Texture)
+                return nullptr;
+            Entry.Width = Surface->w;
+            Entry.Height = Surface->h;
+            Entry.Pending.Clear();
+            return Entry.Texture;
         }
-        return Tex;
+        std::array<SDL_Rect, BitmapArea::MaximumRects> Areas{};
+        const std::size_t AreaCount = Entry.Pending.Clip(*Surface, Areas);
+        if (AreaCount != 0 && !Kernel_.Gpu().UpdateGpuTextureFromSurface(
+                                  Entry.Texture, Surface, std::span<const SDL_Rect>(Areas.data(), AreaCount)))
+        {
+            DBC_LOG_WARN("Bitmap {} texture update failed: {}", BitmapId, SDL_GetError());
+            ReleaseBitmapTexture(Entry);
+            return nullptr;
+        }
+        Entry.Pending.Clear();
+        return Entry.Texture;
     }
 
     void ImageStore::ClearScreenBitmap()
@@ -842,6 +943,7 @@ namespace dbc
         SDL_Surface* Screen = GetBitmapSurface(0);
         if (!Screen)
             return;
+        BitmapTexture& Entry = BitmapTextures_[0];
         // A picture loaded onto the screen may have no alpha channel: filling it with zero would paint
         // opaque black over the 3D scene instead of clearing the 2D layer.
         if (Screen->format != SDL_PIXELFORMAT_RGBA32)
@@ -855,23 +957,41 @@ namespace dbc
             SDL_DestroySurface(Screen);
             Bitmaps_[0] = Transparent;
             Screen = Transparent;
+            Entry.Drawn.Add(nullptr);
         }
-        if (!SDL_FillSurfaceRect(Screen, nullptr, 0))
+        std::array<SDL_Rect, BitmapArea::MaximumRects> Areas{};
+        const std::size_t AreaCount = Entry.Drawn.Clip(*Screen, Areas);
+        if (AreaCount != 0 && !SDL_FillSurfaceRects(Screen, Areas.data(), static_cast<int>(AreaCount), 0))
+        {
             DBC_LOG_WARN("Screen bitmap clear failed: {}", SDL_GetError());
-        InvalidateBitmapGpuTexture(0);
+            Entry.Pending.Add(nullptr);
+            return;
+        }
+        // The texture still shows what was erased.
+        Entry.Pending.Add(Entry.Drawn);
+        Entry.Drawn.Clear();
     }
 
-    void ImageStore::InvalidateBitmapGpuTexture(int BitmapId)
+    void ImageStore::InvalidateBitmapGpuTexture(int BitmapId, const SDL_Rect* Area)
     {
-        const auto It = BitmapGpuTextures_.find(BitmapId);
-        if (It != BitmapGpuTextures_.end())
+        BitmapTexture& Entry = BitmapTextures_[BitmapId];
+        // Clipped here, in 64 bits, so that no BASIC coordinate overflows the rectangle arithmetic.
+        SDL_Rect Inside{};
+        const SDL_Surface* Surface = GetBitmapSurface(BitmapId);
+        if (Area && Surface)
         {
-            if (It->second && Kernel_.Gpu().GpuDevice())
-            {
-                SDL_ReleaseGPUTexture(Kernel_.Gpu().GpuDevice(), It->second);
-            }
-            BitmapGpuTextures_.erase(It);
+            const int64_t Left = std::max<int64_t>(Area->x, 0);
+            const int64_t Top = std::max<int64_t>(Area->y, 0);
+            const int64_t Right = std::min<int64_t>(int64_t{Area->x} + Area->w, Surface->w);
+            const int64_t Bottom = std::min<int64_t>(int64_t{Area->y} + Area->h, Surface->h);
+            if (Right <= Left || Bottom <= Top)
+                return;
+            Inside = SDL_Rect{static_cast<int>(Left), static_cast<int>(Top), static_cast<int>(Right - Left),
+                              static_cast<int>(Bottom - Top)};
         }
+        const SDL_Rect* Changed = Area && Surface ? &Inside : nullptr;
+        Entry.Pending.Add(Changed);
+        Entry.Drawn.Add(Changed);
     }
 
     int ImageStore::BitmapWidth(int BitmapId) const
@@ -1463,6 +1583,7 @@ namespace dbc
         Bitmaps_[0] = Captured;
         MirroredBitmaps_.erase(0);
         FlippedBitmaps_.erase(0);
+        InvalidateBitmapGpuTexture(0);
         return Captured;
     }
 

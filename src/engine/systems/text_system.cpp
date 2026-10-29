@@ -629,6 +629,7 @@ namespace dbc
                                                                static_cast<Uint8>((Backdrop >> 8) & 0xFF),
                                                                static_cast<Uint8>(Backdrop & 0xFF), 255));
                     }
+                    const SDL_Rect Written = DstRect;
                     const bool Drawn = SDL_BlitSurface(TextSurface, nullptr, BmpSurface, &DstRect);
                     SDL_DestroySurface(TextSurface);
                     if (!Drawn)
@@ -637,7 +638,7 @@ namespace dbc
                             *Error = std::string("TEXT bitmap copy failed: ") + SDL_GetError();
                         return false;
                     }
-                    Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BmpId);
+                    Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BmpId, &Written);
                 }
             }
             if (BmpId > 0)

@@ -85,8 +85,6 @@ Work, in order:
 - [ ] CPU skinning: one bone palette per object and frame, not one per mesh and view
   and per `ObjectMeshVertex` query, and no copy of the mesh's vertices before
   skinning them.
-- [ ] Bitmap 0: keep its GPU texture, upload only what changed, skip the quad when
-  the layer is empty.
 - [ ] Shared mesh resources: `INSTANCE OBJECT` shares instead of copying, vertex
   edits copy on write, and a revision drives the GPU upload.
 - [ ] GPU-resident meshes: object-space buffers; the object matrix and material per

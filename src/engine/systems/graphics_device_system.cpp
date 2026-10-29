@@ -99,56 +99,49 @@ namespace dbc
             SDL_GetPointerProperty(Props, SDL_PROP_TEXTURE_GPU_TEXTURE_POINTER, nullptr));
     }
 
-    [[nodiscard]] SDL_GPUTexture* GraphicsDeviceSystem::CreateGpuTextureFromSurface(SDL_Surface* Surface)
+    namespace
     {
-        if (!GpuDevice_ || !Surface)
+        // A full mip chain for the runtime's default texture sampling.
+        [[nodiscard]] Uint32 SurfaceMipLevels(int Width, int Height)
         {
-            return nullptr;
+            Uint32 Levels = 1;
+            for (int Extent = std::max(Width, Height); Extent > 1; Extent >>= 1)
+                ++Levels;
+            return Levels;
         }
 
-        SDL_Surface* Rgba = Surface;
-        if (Surface->format != SDL_PIXELFORMAT_RGBA32)
+        // RGBA32 surfaces upload as they are; others through a converted copy the guard releases.
+        struct RgbaSurface
         {
-            Rgba = SDL_ConvertSurface(Surface, SDL_PIXELFORMAT_RGBA32);
-            if (!Rgba)
-            {
-                return nullptr;
-            }
-        }
+            SDL_Surface* Source = nullptr;
+            SDL_Surface* Value = nullptr;
 
-        const std::uint64_t ByteCount = static_cast<std::uint64_t>(Rgba->w) * static_cast<std::uint64_t>(Rgba->h) * 4;
-        if (Rgba->w <= 0 || Rgba->h <= 0 || Rgba->w > std::numeric_limits<int>::max() / 4 ||
-            ByteCount > std::numeric_limits<Uint32>::max())
-        {
-            if (Rgba != Surface)
-                SDL_DestroySurface(Rgba);
-            SDL_SetError("Image dimensions exceed the GPU transfer limit");
-            return nullptr;
-        }
-        SDL_GPUTextureCreateInfo TextureInfo{};
-        TextureInfo.type = SDL_GPU_TEXTURETYPE_2D;
-        TextureInfo.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB;
-        // Generate a full mip chain for the runtime's default texture sampling.
-        // SDL uses blits for that operation and requires COLOR_TARGET usage.
-        Uint32 Levels = 1;
-        for (int Extent = std::max(Rgba->w, Rgba->h); Extent > 1; Extent >>= 1)
-            ++Levels;
-        TextureInfo.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | (Levels > 1 ? SDL_GPU_TEXTUREUSAGE_COLOR_TARGET : 0);
-        TextureInfo.width = static_cast<Uint32>(Rgba->w);
-        TextureInfo.height = static_cast<Uint32>(Rgba->h);
-        TextureInfo.layer_count_or_depth = 1;
-        TextureInfo.num_levels = Levels;
-        TextureInfo.sample_count = SDL_GPU_SAMPLECOUNT_1;
-        TextureInfo.props = 0;
-        SDL_GPUTexture* GpuTexture = SDL_CreateGPUTexture(GpuDevice_, &TextureInfo);
-        if (!GpuTexture)
-        {
-            if (Rgba != Surface)
+            explicit RgbaSurface(SDL_Surface* Surface)
+                : Source(Surface),
+                  Value(Surface->format == SDL_PIXELFORMAT_RGBA32 ? Surface
+                                                                  : SDL_ConvertSurface(Surface, SDL_PIXELFORMAT_RGBA32))
             {
-                SDL_DestroySurface(Rgba);
             }
-            return nullptr;
-        }
+
+            ~RgbaSurface()
+            {
+                if (Value && Value != Source)
+                    SDL_DestroySurface(Value);
+            }
+
+            RgbaSurface(const RgbaSurface&) = delete;
+            RgbaSurface& operator=(const RgbaSurface&) = delete;
+        };
+    } // namespace
+
+    [[nodiscard]] bool GraphicsDeviceSystem::UploadRgbaAreas(SDL_GPUTexture* Texture, SDL_Surface* Rgba,
+                                                             std::span<const SDL_Rect> Areas)
+    {
+        std::uint64_t ByteCount = 0;
+        for (const SDL_Rect& Area : Areas)
+            ByteCount += static_cast<std::uint64_t>(Area.w) * static_cast<std::uint64_t>(Area.h) * 4;
+        if (ByteCount == 0 || ByteCount > std::numeric_limits<Uint32>::max())
+            return ByteCount == 0;
 
         SDL_GPUTransferBufferCreateInfo TransferInfo{};
         TransferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
@@ -156,39 +149,29 @@ namespace dbc
         TransferInfo.props = 0;
         SDL_GPUTransferBuffer* Transfer = SDL_CreateGPUTransferBuffer(GpuDevice_, &TransferInfo);
         if (!Transfer)
-        {
-            SDL_ReleaseGPUTexture(GpuDevice_, GpuTexture);
-            if (Rgba != Surface)
-            {
-                SDL_DestroySurface(Rgba);
-            }
-            return nullptr;
-        }
+            return false;
 
         Uint8* Dst = static_cast<Uint8*>(SDL_MapGPUTransferBuffer(GpuDevice_, Transfer, false));
         if (!Dst)
         {
             SDL_ReleaseGPUTransferBuffer(GpuDevice_, Transfer);
-            SDL_ReleaseGPUTexture(GpuDevice_, GpuTexture);
-            if (Rgba != Surface)
-            {
-                SDL_DestroySurface(Rgba);
-            }
-            return nullptr;
+            return false;
         }
-
-        const Uint8* Src = static_cast<const Uint8*>(Rgba->pixels);
-        const int RowBytes = Rgba->w * 4;
-        if (RowBytes == Rgba->pitch)
+        for (const SDL_Rect& Area : Areas)
         {
-            SDL_memcpy(Dst, Src, static_cast<size_t>(RowBytes) * static_cast<size_t>(Rgba->h));
-        }
-        else
-        {
-            for (int Y = 0; Y < Rgba->h; ++Y)
+            const Uint8* Src = static_cast<const Uint8*>(Rgba->pixels) +
+                               static_cast<std::size_t>(Area.y) * Rgba->pitch + static_cast<std::size_t>(Area.x) * 4;
+            const std::size_t RowBytes = static_cast<std::size_t>(Area.w) * 4;
+            if (Area.x == 0 && RowBytes == static_cast<std::size_t>(Rgba->pitch))
             {
-                SDL_memcpy(Dst + Y * RowBytes, Src + Y * Rgba->pitch, RowBytes);
+                SDL_memcpy(Dst, Src, RowBytes * static_cast<std::size_t>(Area.h));
             }
+            else
+            {
+                for (int Y = 0; Y < Area.h; ++Y)
+                    SDL_memcpy(Dst + Y * RowBytes, Src + static_cast<std::size_t>(Y) * Rgba->pitch, RowBytes);
+            }
+            Dst += RowBytes * static_cast<std::size_t>(Area.h);
         }
         SDL_UnmapGPUTransferBuffer(GpuDevice_, Transfer);
 
@@ -196,53 +179,93 @@ namespace dbc
         if (!Cmd)
         {
             SDL_ReleaseGPUTransferBuffer(GpuDevice_, Transfer);
-            SDL_ReleaseGPUTexture(GpuDevice_, GpuTexture);
-            if (Rgba != Surface)
-            {
-                SDL_DestroySurface(Rgba);
-            }
-            return nullptr;
+            return false;
         }
-
         GpuCommandBuffer Pending(Cmd);
         SDL_GPUCopyPass* CopyPass = SDL_BeginGPUCopyPass(Cmd);
         if (!CopyPass)
         {
             Pending.Abandon();
             SDL_ReleaseGPUTransferBuffer(GpuDevice_, Transfer);
-            SDL_ReleaseGPUTexture(GpuDevice_, GpuTexture);
-            if (Rgba != Surface)
-                SDL_DestroySurface(Rgba);
-            return nullptr;
+            return false;
         }
-        SDL_GPUTextureTransferInfo SrcInfo{};
-        SrcInfo.transfer_buffer = Transfer;
-        SDL_GPUTextureRegion DstRegion{};
-        DstRegion.texture = GpuTexture;
-        DstRegion.w = static_cast<Uint32>(Rgba->w);
-        DstRegion.h = static_cast<Uint32>(Rgba->h);
-        DstRegion.d = 1;
-        SDL_UploadToGPUTexture(CopyPass, &SrcInfo, &DstRegion, false);
-        SDL_EndGPUCopyPass(CopyPass);
-        if (Levels > 1)
-            SDL_GenerateMipmapsForGPUTexture(Cmd, GpuTexture);
-        if (!Pending.Submit())
+        Uint32 Offset = 0;
+        for (const SDL_Rect& Area : Areas)
         {
-            SDL_ReleaseGPUTransferBuffer(GpuDevice_, Transfer);
-            SDL_ReleaseGPUTexture(GpuDevice_, GpuTexture);
-            if (Rgba != Surface)
-            {
-                SDL_DestroySurface(Rgba);
-            }
+            SDL_GPUTextureTransferInfo SrcInfo{};
+            SrcInfo.transfer_buffer = Transfer;
+            SrcInfo.offset = Offset;
+            SrcInfo.pixels_per_row = static_cast<Uint32>(Area.w);
+            SrcInfo.rows_per_layer = static_cast<Uint32>(Area.h);
+            SDL_GPUTextureRegion DstRegion{};
+            DstRegion.texture = Texture;
+            DstRegion.x = static_cast<Uint32>(Area.x);
+            DstRegion.y = static_cast<Uint32>(Area.y);
+            DstRegion.w = static_cast<Uint32>(Area.w);
+            DstRegion.h = static_cast<Uint32>(Area.h);
+            DstRegion.d = 1;
+            // Overwritten in place: commands run in submission order, so frames already submitted still read the
+            // old contents, and an update of part of the texture keeps the rest.
+            SDL_UploadToGPUTexture(CopyPass, &SrcInfo, &DstRegion, false);
+            Offset += static_cast<Uint32>(Area.w) * static_cast<Uint32>(Area.h) * 4;
+        }
+        SDL_EndGPUCopyPass(CopyPass);
+        if (SurfaceMipLevels(Rgba->w, Rgba->h) > 1)
+            SDL_GenerateMipmapsForGPUTexture(Cmd, Texture);
+        const bool Submitted = Pending.Submit();
+        SDL_ReleaseGPUTransferBuffer(GpuDevice_, Transfer);
+        return Submitted;
+    }
+
+    [[nodiscard]] SDL_GPUTexture* GraphicsDeviceSystem::CreateGpuTextureFromSurface(SDL_Surface* Surface)
+    {
+        if (!GpuDevice_ || !Surface)
+        {
             return nullptr;
         }
 
-        SDL_ReleaseGPUTransferBuffer(GpuDevice_, Transfer);
-        if (Rgba != Surface)
+        const RgbaSurface Rgba(Surface);
+        if (!Rgba.Value)
+            return nullptr;
+        const std::uint64_t ByteCount =
+            static_cast<std::uint64_t>(Rgba.Value->w) * static_cast<std::uint64_t>(Rgba.Value->h) * 4;
+        if (Rgba.Value->w <= 0 || Rgba.Value->h <= 0 || Rgba.Value->w > std::numeric_limits<int>::max() / 4 ||
+            ByteCount > std::numeric_limits<Uint32>::max())
         {
-            SDL_DestroySurface(Rgba);
+            SDL_SetError("Image dimensions exceed the GPU transfer limit");
+            return nullptr;
+        }
+        SDL_GPUTextureCreateInfo TextureInfo{};
+        TextureInfo.type = SDL_GPU_TEXTURETYPE_2D;
+        TextureInfo.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB;
+        // SDL generates mipmaps with blits, which require COLOR_TARGET usage.
+        const Uint32 Levels = SurfaceMipLevels(Rgba.Value->w, Rgba.Value->h);
+        TextureInfo.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | (Levels > 1 ? SDL_GPU_TEXTUREUSAGE_COLOR_TARGET : 0);
+        TextureInfo.width = static_cast<Uint32>(Rgba.Value->w);
+        TextureInfo.height = static_cast<Uint32>(Rgba.Value->h);
+        TextureInfo.layer_count_or_depth = 1;
+        TextureInfo.num_levels = Levels;
+        TextureInfo.sample_count = SDL_GPU_SAMPLECOUNT_1;
+        TextureInfo.props = 0;
+        SDL_GPUTexture* GpuTexture = SDL_CreateGPUTexture(GpuDevice_, &TextureInfo);
+        if (!GpuTexture)
+            return nullptr;
+        const SDL_Rect Whole{0, 0, Rgba.Value->w, Rgba.Value->h};
+        if (!UploadRgbaAreas(GpuTexture, Rgba.Value, std::span<const SDL_Rect>(&Whole, 1)))
+        {
+            SDL_ReleaseGPUTexture(GpuDevice_, GpuTexture);
+            return nullptr;
         }
         return GpuTexture;
+    }
+
+    [[nodiscard]] bool GraphicsDeviceSystem::UpdateGpuTextureFromSurface(SDL_GPUTexture* Texture, SDL_Surface* Surface,
+                                                                         std::span<const SDL_Rect> Areas)
+    {
+        if (!GpuDevice_ || !Texture || !Surface)
+            return false;
+        const RgbaSurface Rgba(Surface);
+        return Rgba.Value && UploadRgbaAreas(Texture, Rgba.Value, Areas);
     }
 
     [[nodiscard]] SDL_GPUTexture* GraphicsDeviceSystem::CreateGpuCubeTextureFromSurfaces(

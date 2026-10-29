@@ -30,6 +30,19 @@ namespace dbc
             return ActiveBitmap(Kernel, BitmapId, Surface, Error);
         }
 
+        // The pixels between two corners, padded by one and clipped near the surface so that extreme BASIC
+        // coordinates cannot overflow.
+        SDL_Rect WrittenArea(const SDL_Surface& Surface, double X0, double Y0, double X1, double Y1)
+        {
+            const auto Clamp = [](double Value, int Size)
+            { return static_cast<int>(std::clamp(Value, -1.0, static_cast<double>(Size) + 1.0)); };
+            const int Left = Clamp(std::floor(std::min(X0, X1)) - 1.0, Surface.w);
+            const int Top = Clamp(std::floor(std::min(Y0, Y1)) - 1.0, Surface.h);
+            const int Right = Clamp(std::ceil(std::max(X0, X1)) + 1.0, Surface.w);
+            const int Bottom = Clamp(std::ceil(std::max(Y0, Y1)) + 1.0, Surface.h);
+            return SDL_Rect{Left, Top, Right - Left + 1, Bottom - Top + 1};
+        }
+
         void WritePixel(SDL_Surface* Surface, int X, int Y, int Color)
         {
             if (X < 0 || Y < 0 || X >= Surface->w || Y >= Surface->h)
@@ -134,7 +147,8 @@ namespace dbc
             return false;
         {
             WritePixel(Surface, X, Y, Color);
-            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId);
+            const SDL_Rect Written = WrittenArea(*Surface, X, Y, X, Y);
+            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId, &Written);
             if (BitmapId > 0)
                 return true;
         }
@@ -157,7 +171,8 @@ namespace dbc
             return false;
         {
             DrawSurfaceLine(Surface, X1, Y1, X2, Y2, Kernel_.Text().InkForeColor());
-            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId);
+            const SDL_Rect Written = WrittenArea(*Surface, X1, Y1, X2, Y2);
+            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId, &Written);
             if (BitmapId > 0)
                 return true;
         }
@@ -209,7 +224,8 @@ namespace dbc
                     WritePixel(Surface, X, Y, (Blend(16, U, V) << 16) | (Blend(8, U, V) << 8) | Blend(0, U, V));
                 }
             }
-            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId);
+            const SDL_Rect Written = WrittenArea(*Surface, X0, Y0, X1, Y1);
+            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId, &Written);
             if (BitmapId > 0)
                 return true;
         }
@@ -242,7 +258,8 @@ namespace dbc
                 PreviousX = NextX;
                 PreviousY = NextY;
             }
-            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId);
+            const SDL_Rect Written = WrittenArea(*Surface, X - R, Y - R, X + R, Y + R);
+            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId, &Written);
             if (BitmapId > 0)
                 return true;
         }
@@ -278,7 +295,8 @@ namespace dbc
                 PreviousX = NextX;
                 PreviousY = NextY;
             }
-            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId);
+            const SDL_Rect Written = WrittenArea(*Surface, X - Rx, Y - Ry, X + Rx, Y + Ry);
+            Kernel_.ImageStoreRef().InvalidateBitmapGpuTexture(BitmapId, &Written);
             if (BitmapId > 0)
                 return true;
         }

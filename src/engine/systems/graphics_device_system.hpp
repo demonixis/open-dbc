@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstdint>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -46,6 +47,10 @@ namespace dbc
 
         [[nodiscard]] static SDL_GPUTexture* GetGpuTextureFromSdlTexture(SDL_Texture* Texture);
         [[nodiscard]] SDL_GPUTexture* CreateGpuTextureFromSurface(SDL_Surface* Surface);
+        // Re-uploads Areas of Surface, which lie inside it, into a texture CreateGpuTextureFromSurface made from a
+        // surface of its size.
+        [[nodiscard]] bool UpdateGpuTextureFromSurface(SDL_GPUTexture* Texture, SDL_Surface* Surface,
+                                                       std::span<const SDL_Rect> Areas);
         [[nodiscard]] SDL_GPUTexture* CreateGpuCubeTextureFromSurfaces(const std::array<SDL_Surface*, 6>& Surfaces);
 
         // --- GPU pipeline lifecycle ---
@@ -205,6 +210,9 @@ namespace dbc
 
       private:
         friend class VrPresenter;
+
+        // Uploads Areas of an RGBA32 surface into the same areas of Texture, then regenerates its mip chain.
+        [[nodiscard]] bool UploadRgbaAreas(SDL_GPUTexture* Texture, SDL_Surface* Rgba, std::span<const SDL_Rect> Areas);
 
         struct EffectParameter
         {

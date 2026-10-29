@@ -2135,6 +2135,76 @@ TEST_CASE("Portable object visibility and GPU capability queries preserve DBPro 
     CHECK(Kernel.Renderer().LastFrameDrawCalls() > 0);
 }
 
+TEST_CASE("The screen layer keeps its GPU texture, uploads what changed and skips an empty layer")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+    // A small cube in the middle makes every frame a 3D frame, which clears the screen layer.
+    Kernel.Objects().MakeObjectCube(1, 1.0f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 10.0f);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    dbc::ImageStore& Store = Kernel.ImageStoreRef();
+    REQUIRE(Store.EnsureScreenBitmap() != nullptr);
+    const int Width = Kernel.Core().WindowWidth();
+    const int Height = Kernel.Core().WindowHeight();
+    const auto Paint = [&](SDL_Rect Area, Uint8 Red, Uint8 Green, Uint8 Blue)
+    {
+        SDL_Surface* Screen = Store.GetBitmapSurface(0);
+        REQUIRE(Screen != nullptr);
+        REQUIRE(SDL_FillSurfaceRect(Screen, &Area, SDL_MapSurfaceRGBA(Screen, Red, Green, Blue, 255)));
+        Store.InvalidateBitmapGpuTexture(0, &Area);
+    };
+    const auto ShownPixel = [&](int X, int Y)
+    {
+        std::array<Uint8, 4> Pixel{};
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        REQUIRE(SDL_ReadSurfacePixel(Capture, X, Y, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
+        SDL_DestroySurface(Capture);
+        return Pixel;
+    };
+
+    Kernel.Renderer().RenderScene();
+    CHECK(Kernel.Renderer().LastFrameShowedWorld());
+    // Nothing drawn since the clear: no texture to draw and no batch for the layer.
+    CHECK(Store.GetBitmapGpuTexture(0) == nullptr);
+    Kernel.Renderer().RenderScene();
+    const int EmptyLayerBatches = Kernel.Renderer().LastFrameDrawCalls();
+
+    Paint(SDL_Rect{0, 0, 8, 8}, 255, 0, 0);
+    SDL_GPUTexture* Texture = Store.GetBitmapGpuTexture(0);
+    REQUIRE(Texture != nullptr);
+    CHECK(ShownPixel(2, 2)[0] >= 240);
+    Kernel.Renderer().RenderScene();
+    CHECK(Kernel.Renderer().LastFrameDrawCalls() == EmptyLayerBatches + 1);
+
+    // The next frame paints elsewhere: the same texture is updated, and the corner erased by the clear shows
+    // the scene again instead of last frame's paint.
+    Paint(SDL_Rect{Width - 8, Height - 8, 8, 8}, 0, 255, 0);
+    CHECK(Store.GetBitmapGpuTexture(0) == Texture);
+    const auto Erased = ShownPixel(2, 2);
+    CHECK(Erased[0] <= 16);
+    const auto Painted = ShownPixel(Width - 3, Height - 3);
+    CHECK(Painted[1] >= 240);
+    CHECK(Painted[0] <= 16);
+
+    // More separate areas than the store keeps apart merge, and all of them still show, then clear.
+    const auto Background = ShownPixel(4, Height / 2);
+    Kernel.Renderer().RenderScene();
+    for (int Index = 0; Index < 12; ++Index)
+        Paint(SDL_Rect{10 + Index * 20, 40, 4, 4}, 0, 0, 255);
+    for (int Index = 0; Index < 12; ++Index)
+        CHECK(ShownPixel(11 + Index * 20, 41)[2] >= 240);
+    CHECK(ShownPixel(Width - 3, Height - 3) == Background);
+    Kernel.Renderer().RenderScene();
+    Paint(SDL_Rect{0, 0, 2, 2}, 255, 0, 0);
+    for (int Index = 0; Index < 12; ++Index)
+        CHECK(ShownPixel(11 + Index * 20, 41) == Background);
+}
+
 TEST_CASE("TEXTURE OBJECT refreshes a still scene")
 {
     dbc::EngineKernel Kernel;

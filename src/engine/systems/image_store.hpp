@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -59,9 +61,13 @@ namespace dbc
         SDL_Surface* GetBitmapSurface(int BitmapId) const;
         SDL_Surface* EnsureScreenBitmap(std::string* Error = nullptr);
         SDL_Surface* RequireBitmapSurface(int BitmapId, const char* Command, std::string* Error = nullptr);
+        // The bitmap's GPU texture, brought up to date. Null when the bitmap does not exist or has shown nothing
+        // since it was last cleared, so there is nothing to draw.
         SDL_GPUTexture* GetBitmapGpuTexture(int BitmapId);
-        void InvalidateBitmapGpuTexture(int BitmapId);
-        // Makes the screen bitmap transparent again, keeping it allocated and current.
+        // Records that the bitmap's pixels changed, within Area or anywhere. Every write to a bitmap reports it.
+        void InvalidateBitmapGpuTexture(int BitmapId, const SDL_Rect* Area = nullptr);
+        // Makes the screen bitmap transparent again, keeping it allocated and current. Only what was drawn since
+        // the last clear is erased, and the GPU texture catches up once something is drawn again.
         void ClearScreenBitmap();
 
         // Asset path resolution (static — no kernel needed).
@@ -104,7 +110,48 @@ namespace dbc
         EngineKernel& Kernel_;
         std::unordered_map<int, Image> Images_;
         std::unordered_map<int, SDL_Surface*> Bitmaps_;
-        std::unordered_map<int, SDL_GPUTexture*> BitmapGpuTextures_;
+
+        // Changed pixels as a few rectangles, clipped to the bitmap when used. Overlapping rectangles merge, and
+        // past MaximumRects the two whose union adds the least area do.
+        struct BitmapArea
+        {
+            static constexpr std::size_t MaximumRects = 8;
+
+            bool Whole = false;
+            std::array<SDL_Rect, MaximumRects> Rects{};
+            std::size_t Count = 0;
+
+            [[nodiscard]] bool Empty() const
+            {
+                return !Whole && Count == 0;
+            }
+
+            void Add(const SDL_Rect* Area);
+            void Add(const BitmapArea& Other);
+            // The rectangles inside Surface, or the whole surface; returns how many were written.
+            [[nodiscard]] std::size_t Clip(const SDL_Surface& Surface,
+                                           std::array<SDL_Rect, MaximumRects>& Output) const;
+
+            void Clear()
+            {
+                *this = {};
+            }
+        };
+
+        struct BitmapTexture
+        {
+            SDL_GPUTexture* Texture = nullptr;
+            int Width = 0;
+            int Height = 0;
+            // Where the texture differs from the bitmap.
+            BitmapArea Pending{true};
+            // Where the bitmap may hold visible pixels; unknown, so whole, until it is cleared.
+            BitmapArea Drawn{true};
+        };
+
+        void ReleaseBitmapTexture(BitmapTexture& Entry);
+
+        std::unordered_map<int, BitmapTexture> BitmapTextures_;
         std::unordered_set<int> MirroredBitmaps_;
         std::unordered_set<int> FlippedBitmaps_;
         std::unordered_map<std::string, int> TexturePathToImageId_;
