@@ -286,6 +286,15 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     )
     target_compile_definitions(test_artifact_export PRIVATE
         OPENDBC_TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+    if(WIN32)
+        target_sources(test_artifact_export PRIVATE test_windows_export.cpp)
+        target_compile_definitions(test_artifact_export PRIVATE
+            OPENDBC_TEST_RUNNER="$<TARGET_FILE:opendbc-runner>"
+            OPENDBC_TEST_STUDIO="$<TARGET_FILE:opendbc>"
+            OPENDBC_TEST_VERSION="${OPENDBC_VERSION}")
+        target_link_libraries(test_artifact_export PRIVATE version)
+        add_dependencies(test_artifact_export opendbc)
+    endif()
     doctest_discover_tests(test_artifact_export PROPERTIES LABELS "unit-studio-packaging")
 endif()
 

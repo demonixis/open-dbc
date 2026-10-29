@@ -134,6 +134,14 @@ command line and build machines read the environment:
 | `OPENDBC_SIGNTOOL` | `signtool.exe`, when no Windows SDK holds it |
 | `OPENDBC_ANDROID_KEYSTORE_PASSWORD`, `OPENDBC_ANDROID_KEY_PASSWORD` | Android keystore and key passwords |
 
+Windows native export tests inspect PE icon/version resources and launch the exported
+runner from Unicode directories. To qualify signing with an installed certificate,
+set `OPENDBC_WINDOWS_CERTIFICATE` and run
+`build/default/tests/unit/test_artifact_export.exe --no-skip --test-case="Windows signed exports pass Authenticode verification"`.
+This signs and timestamps both the runner and OpenXR loader, then verifies each
+with `signtool verify /pa`. It requires a trusted code signing certificate and
+access to the configured timestamp server.
+
 Android builds need a JDK 17 or newer and the Android SDK, found through
 `JAVA_HOME`, `ANDROID_HOME`, Android Studio or the Studio preferences; the first
 build downloads Gradle. The Build window creates the upload keystore Google Play

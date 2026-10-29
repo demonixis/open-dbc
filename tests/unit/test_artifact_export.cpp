@@ -115,6 +115,8 @@ namespace
         const fs::path Resources = Root;
 #if defined(_WIN32)
         Write(Resources / "openxr_loader.dll", "loader");
+        fs::copy_file(fs::path(OPENDBC_TEST_SOURCE_DIR) / "resources/editor.png", Resources / "editor.png",
+                      fs::copy_options::overwrite_existing);
 #else
         Write(Resources / "libopenxr_loader.so.1", "loader");
 #endif
@@ -165,7 +167,11 @@ namespace
                                             "</dict></plist>\n");
 #else
         const fs::path Host = Root / "opendbc-runner";
+#if defined(_WIN32)
+        fs::copy_file(fs::path(OPENDBC_TEST_RUNNER), Host, fs::copy_options::overwrite_existing);
+#else
         Write(Host, "runner");
+#endif
 #endif
         BindFakeRunner(Root);
         return Host;
