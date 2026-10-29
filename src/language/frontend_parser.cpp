@@ -268,8 +268,10 @@ namespace dbc::language::detail
             {
                 if (AtEnd())
                 {
-                    AddError(Diagnostics_, "DBC1103", "Expected an expression", {});
-                    return MakeError({});
+                    // The expression ended early: point at its last token, an operator or '('.
+                    const SourceSpan Span = Tokens_.empty() ? SourceSpan{} : Tokens_.back().Span;
+                    AddError(Diagnostics_, "DBC1103", "Expected an expression", Span);
+                    return MakeError(Span);
                 }
 
                 const Token First = Peek();

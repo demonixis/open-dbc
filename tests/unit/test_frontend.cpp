@@ -982,3 +982,17 @@ TEST_CASE("A leading UTF-8 byte order mark is skipped")
     REQUIRE_FALSE(Program.Tokens.empty());
     CHECK(dbc::language::Lexeme(*Document, Program.Tokens.front().Span) == "print");
 }
+
+TEST_CASE("An expression that ends early is reported at its last token")
+{
+    const dbc::language::Program Program =
+        dbc::language::Compile(Source("print 1\nx = 2 +\n", dbc::language::LanguageProfile::Dbc));
+    REQUIRE(HasCode(Program, "DBC1103"));
+    for (const auto& Diagnostic : Program.Diagnostics)
+    {
+        if (Diagnostic.Code != "DBC1103")
+            continue;
+        CHECK(Diagnostic.Span.Begin.Line == 2);
+        CHECK(Diagnostic.Span.Begin.Column == 7);
+    }
+}
