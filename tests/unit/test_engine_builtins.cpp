@@ -2330,6 +2330,30 @@ TEST_CASE("Renderer frame stats count objects, culling and views without the deb
     CHECK(Mean.RecordMilliseconds > 0.0);
 }
 
+TEST_CASE("CHANGE MESH redraws a still scene with the new limb mesh")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    Kernel.Objects().MakeObjectCube(1, 2.0f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 10.0f);
+    Kernel.Objects().MakeObjectSphere(2, 2.0f, 12, 12);
+    REQUIRE(Kernel.Objects().MakeMeshFromObject(1, 2));
+    Kernel.Objects().HideObject(2);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const auto DrawnTriangles = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        return Kernel.Renderer().CachedWorldTris().size();
+    };
+
+    const std::size_t Cube = DrawnTriangles();
+    REQUIRE(Kernel.Memblocks().ChangeMesh(1, 0, 1));
+    CHECK(DrawnTriangles() > Cube);
+}
+
 TEST_CASE("SET OBJECT FRAME redraws a still scene in the new pose")
 {
     dbc::EngineKernel Kernel;

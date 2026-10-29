@@ -1329,9 +1329,10 @@ namespace dbc
         while (static_cast<int>(Meshes.size()) <= LimbId)
             Meshes.emplace_back();
         Meshes[static_cast<size_t>(LimbId)] = (*Src)[0];
-        // Mesh replacement invalidates both historical and render bounds.
+        // Mesh replacement invalidates both historical and render bounds, and the drawn scene.
         Obj->BoundingRadius = -1.0f;
         Obj->RenderBoundingRadius = -1.0f;
+        Obj->TransformDirty = true;
         return true;
     }
 
