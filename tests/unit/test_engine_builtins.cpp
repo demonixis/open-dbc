@@ -2161,6 +2161,62 @@ TEST_CASE("TEXTURE OBJECT refreshes a still scene")
     CHECK(DrawnTexture() != First);
 }
 
+TEST_CASE("Rendered object vertices match the query transforms exactly")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    // A pivoted, ZYX-rotated, scaled cube whose second limb is scaled and linked to a rotated, offset first limb.
+    Objects.MakeObjectCube(1, 2.0f);
+    Objects.RotateObject(1, 17.0f, 33.0f, -21.0f);
+    REQUIRE(Objects.FixObjectPivot(1));
+    Objects.RotateObject(1, 9.0f, -14.0f, 27.0f);
+    REQUIRE(Objects.SetObjectRotationZyx(1));
+    Objects.ScaleObject(1, 120.0f, 80.0f, 95.0f);
+    Objects.PositionObject(1, -2.0f, 0.5f, 14.0f);
+    REQUIRE(Objects.MakeMeshFromObject(1, 1));
+    REQUIRE(Objects.AddLimb(1, 1, 1));
+    REQUIRE(Objects.AddLimb(1, 2, 1));
+    REQUIRE(Objects.OffsetLimb(1, 1, 1.5f, 0.0f, 0.0f));
+    REQUIRE(Objects.RotateLimb(1, 1, 30.0f, 10.0f, 5.0f));
+    REQUIRE(Objects.ScaleLimb(1, 2, 50.0f, 50.0f, 50.0f));
+    REQUIRE(Objects.OffsetLimb(1, 2, 0.0f, 1.2f, 0.0f));
+    REQUIRE(Objects.LinkLimb(1, 1, 2));
+    // A cone glued to the first limb.
+    Objects.MakeObjectCone(2, 1.0f, 2.0f, 8);
+    Objects.RotateObject(2, 0.0f, 45.0f, 0.0f);
+    REQUIRE(Objects.GlueObjectToLimb(2, 1, 1));
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+    REQUIRE(Capture != nullptr);
+    SDL_DestroySurface(Capture);
+
+    const dbc::RenderView View = Kernel.Renderer().CameraView(320, 240);
+    std::set<std::array<float, 3>> Expected;
+    for (const int Id : {1, 2})
+    {
+        const dbc::Object3D* Object = Objects.GetObject(Id);
+        REQUIRE(Object != nullptr);
+        for (const dbc::Mesh& MeshValue : Object->Meshes)
+            for (std::size_t Vertex = 0; Vertex < MeshValue.Vertices.size(); ++Vertex)
+            {
+                const dbc::Vec3 World = Kernel.Renderer().WorldMeshVertex(*Object, MeshValue, Vertex);
+                const glm::vec4 Point = View.WorldToView * glm::vec4(World.X, World.Y, World.Z, 1.0f);
+                Expected.insert({Point.x, Point.y, Point.z});
+            }
+    }
+    const std::vector<dbc::Triangle>& Triangles = Kernel.Renderer().CachedWorldTris();
+    REQUIRE(Triangles.size() > 12);
+    int Unmatched = 0;
+    for (const dbc::Triangle& TriangleValue : Triangles)
+        for (const auto& Corner : TriangleValue.Pos)
+            Unmatched += Expected.count({Corner[0], Corner[1], Corner[2]}) == 0 ? 1 : 0;
+    CHECK(Unmatched == 0);
+}
+
 TEST_CASE("Opaque objects interleaved in depth batch by texture")
 {
     dbc::EngineKernel Kernel;

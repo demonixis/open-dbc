@@ -938,117 +938,163 @@ namespace dbc
         return -1;
     }
 
-    [[nodiscard]] Vec3 ApplyProceduralLimbPoint(const Mesh& Limb, Vec3 Point)
+    // A limb's own transform, with its rotation sines and cosines computed once.
+    struct LimbSteps
     {
-        Point.X *= Limb.LimbScaleX;
-        Point.Y *= Limb.LimbScaleY;
-        Point.Z *= Limb.LimbScaleZ;
-        Point = RotateX(Point, Limb.LimbRotX);
-        Point = RotateY(Point, Limb.LimbRotY);
-        Point = RotateZ(Point, Limb.LimbRotZ);
-        Point.X += Limb.LimbOffX;
-        Point.Y += Limb.LimbOffY;
-        Point.Z += Limb.LimbOffZ;
+        Vec3 Scale{};
+        Vec3 NormalDivisor{};
+        SinCos X{};
+        SinCos Y{};
+        SinCos Z{};
+        Vec3 Offset{};
+    };
+
+    [[nodiscard]] LimbSteps MakeLimbSteps(const Mesh& Limb)
+    {
+        return LimbSteps{
+            {Limb.LimbScaleX, Limb.LimbScaleY, Limb.LimbScaleZ},
+            {std::max(0.0001f, std::abs(Limb.LimbScaleX)), std::max(0.0001f, std::abs(Limb.LimbScaleY)),
+             std::max(0.0001f, std::abs(Limb.LimbScaleZ))},
+            SinCosDegrees(Limb.LimbRotX),
+            SinCosDegrees(Limb.LimbRotY),
+            SinCosDegrees(Limb.LimbRotZ),
+            {Limb.LimbOffX, Limb.LimbOffY, Limb.LimbOffZ},
+        };
+    }
+
+    // Scaled and rotated, without the offset: how a glued object's directions follow its limb.
+    [[nodiscard]] Vec3 ApplyLimbRotation(const LimbSteps& Limb, Vec3 Point)
+    {
+        Point.X *= Limb.Scale.X;
+        Point.Y *= Limb.Scale.Y;
+        Point.Z *= Limb.Scale.Z;
+        Point = RotateX(Point, Limb.X);
+        Point = RotateY(Point, Limb.Y);
+        return RotateZ(Point, Limb.Z);
+    }
+
+    [[nodiscard]] Vec3 ApplyLimbPoint(const LimbSteps& Limb, Vec3 Point)
+    {
+        Point = ApplyLimbRotation(Limb, Point);
+        Point.X += Limb.Offset.X;
+        Point.Y += Limb.Offset.Y;
+        Point.Z += Limb.Offset.Z;
         return Point;
     }
 
-    [[nodiscard]] Vec3 ApplyProceduralLimbNormal(const Mesh& Limb, Vec3 Normal)
+    [[nodiscard]] Vec3 ApplyLimbNormal(const LimbSteps& Limb, Vec3 Normal)
     {
-        Normal.X /= std::max(0.0001f, std::abs(Limb.LimbScaleX));
-        Normal.Y /= std::max(0.0001f, std::abs(Limb.LimbScaleY));
-        Normal.Z /= std::max(0.0001f, std::abs(Limb.LimbScaleZ));
-        Normal = RotateX(Normal, Limb.LimbRotX);
-        Normal = RotateY(Normal, Limb.LimbRotY);
-        Normal = RotateZ(Normal, Limb.LimbRotZ);
-        return Normal;
+        Normal.X /= Limb.NormalDivisor.X;
+        Normal.Y /= Limb.NormalDivisor.Y;
+        Normal.Z /= Limb.NormalDivisor.Z;
+        Normal = RotateX(Normal, Limb.X);
+        Normal = RotateY(Normal, Limb.Y);
+        return RotateZ(Normal, Limb.Z);
     }
 
-    [[nodiscard]] Vec3 TransformProceduralMeshPoint(const Object3D& Object, const Mesh& MeshValue, const Vec3& Point)
+    // Calls Visit with each limb a procedural mesh's vertices pass through, its own first, then its parents.
+    template <typename Fn> void ForEachProceduralLimb(const Object3D& Object, const Mesh& MeshValue, Fn&& Visit)
     {
-        Vec3 Result = ApplyAiTransformPoint(MeshValue.BindTransform, Point);
         int LimbIndex = ProceduralMeshLimbIndex(Object, MeshValue);
         if (LimbIndex < 0)
-            return ApplyProceduralLimbPoint(MeshValue, Result);
-
+        {
+            Visit(MeshValue);
+            return;
+        }
         for (std::size_t Depth = 0; LimbIndex >= 0 && Depth < Object.Meshes.size(); ++Depth)
         {
             const std::size_t Index = static_cast<std::size_t>(LimbIndex);
             if (Index >= Object.Meshes.size())
                 break;
-            Result = ApplyProceduralLimbPoint(Object.Meshes[Index], Result);
+            Visit(Object.Meshes[Index]);
             LimbIndex = Index < Object.LimbTransforms.size() ? Object.LimbTransforms[Index].ParentLimb : -1;
         }
+    }
+
+    [[nodiscard]] Vec3 TransformProceduralMeshPoint(const Object3D& Object, const Mesh& MeshValue, const Vec3& Point)
+    {
+        Vec3 Result = ApplyAiTransformPoint(MeshValue.BindTransform, Point);
+        ForEachProceduralLimb(Object, MeshValue,
+                              [&](const Mesh& Limb) { Result = ApplyLimbPoint(MakeLimbSteps(Limb), Result); });
         return Result;
     }
 
     [[nodiscard]] Vec3 TransformProceduralMeshNormal(const Object3D& Object, const Mesh& MeshValue, const Vec3& Normal)
     {
         Vec3 Result = ApplyAiTransformVector(MeshValue.BindTransform, Normal);
-        int LimbIndex = ProceduralMeshLimbIndex(Object, MeshValue);
-        if (LimbIndex < 0)
-            return ApplyProceduralLimbNormal(MeshValue, Result);
-
-        for (std::size_t Depth = 0; LimbIndex >= 0 && Depth < Object.Meshes.size(); ++Depth)
-        {
-            const std::size_t Index = static_cast<std::size_t>(LimbIndex);
-            if (Index >= Object.Meshes.size())
-                break;
-            Result = ApplyProceduralLimbNormal(Object.Meshes[Index], Result);
-            LimbIndex = Index < Object.LimbTransforms.size() ? Object.LimbTransforms[Index].ParentLimb : -1;
-        }
+        ForEachProceduralLimb(Object, MeshValue,
+                              [&](const Mesh& Limb) { Result = ApplyLimbNormal(MakeLimbSteps(Limb), Result); });
         return Result;
+    }
+
+    // An object's own transform, with its rotation sines and cosines computed once.
+    struct ObjectSteps
+    {
+        Vec3 Scale{};
+        Vec3 VectorDivisor{};
+        bool ApplyPivot = false;
+        Mat3 Pivot{};
+        bool ZyxRotation = false;
+        SinCos X{};
+        SinCos Y{};
+        SinCos Z{};
+        Vec3 Position{};
+    };
+
+    [[nodiscard]] ObjectSteps MakeObjectSteps(const Object3D& Object)
+    {
+        return ObjectSteps{
+            {Object.ScaleX, Object.ScaleY, Object.ScaleZ},
+            {std::max(0.0001f, std::abs(Object.ScaleX)), std::max(0.0001f, std::abs(Object.ScaleY)),
+             std::max(0.0001f, std::abs(Object.ScaleZ))},
+            Object.ApplyPivot,
+            Object.PivotMatrix,
+            Object.UseZyxRotation,
+            SinCosDegrees(Object.RotX),
+            SinCosDegrees(Object.RotY),
+            SinCosDegrees(Object.RotZ),
+            {Object.PosX, Object.PosY, Object.PosZ},
+        };
+    }
+
+    [[nodiscard]] Vec3 ApplyObjectRotation(const ObjectSteps& Steps, Vec3 P)
+    {
+        if (Steps.ApplyPivot)
+            P = Mat3Apply(P, Steps.Pivot);
+        if (Steps.ZyxRotation)
+        {
+            P = RotateZ(P, Steps.Z);
+            P = RotateY(P, Steps.Y);
+            return RotateX(P, Steps.X);
+        }
+        P = RotateX(P, Steps.X);
+        P = RotateY(P, Steps.Y);
+        return RotateZ(P, Steps.Z);
+    }
+
+    [[nodiscard]] Vec3 ApplyObjectPoint(const ObjectSteps& Steps, const Vec3& In, bool IncludePosition)
+    {
+        Vec3 P = ApplyObjectRotation(Steps, Vec3{In.X * Steps.Scale.X, In.Y * Steps.Scale.Y, In.Z * Steps.Scale.Z});
+        if (IncludePosition)
+        {
+            P.X += Steps.Position.X;
+            P.Y += Steps.Position.Y;
+            P.Z += Steps.Position.Z;
+        }
+        return P;
+    }
+
+    [[nodiscard]] Vec3 ApplyObjectVector(const ObjectSteps& Steps, Vec3 P)
+    {
+        P.X /= Steps.VectorDivisor.X;
+        P.Y /= Steps.VectorDivisor.Y;
+        P.Z /= Steps.VectorDivisor.Z;
+        return ApplyObjectRotation(Steps, P);
     }
 
     [[nodiscard]] Vec3 TransformObjectSpacePoint(EngineKernel& K, const Object3D& Object, const Vec3& Local)
     {
-        auto ApplyLocalObjectTransform = [](const Object3D& Obj, const Vec3& In, bool IncludePosition)
-        {
-            Vec3 P{
-                In.X * Obj.ScaleX,
-                In.Y * Obj.ScaleY,
-                In.Z * Obj.ScaleZ,
-            };
-            if (Obj.ApplyPivot)
-            {
-                P = Mat3Apply(P, Obj.PivotMatrix);
-            }
-            if (Obj.UseZyxRotation)
-            {
-                P = RotateZ(P, Obj.RotZ);
-                P = RotateY(P, Obj.RotY);
-                P = RotateX(P, Obj.RotX);
-            }
-            else
-            {
-                P = RotateX(P, Obj.RotX);
-                P = RotateY(P, Obj.RotY);
-                P = RotateZ(P, Obj.RotZ);
-            }
-            if (IncludePosition)
-            {
-                P.X += Obj.PosX;
-                P.Y += Obj.PosY;
-                P.Z += Obj.PosZ;
-            }
-            return P;
-        };
-
-        auto ApplyLimbTransform = [](const Mesh& Limb, const Vec3& In)
-        {
-            Vec3 P = In;
-            P.X *= Limb.LimbScaleX;
-            P.Y *= Limb.LimbScaleY;
-            P.Z *= Limb.LimbScaleZ;
-            P = RotateX(P, Limb.LimbRotX);
-            P = RotateY(P, Limb.LimbRotY);
-            P = RotateZ(P, Limb.LimbRotZ);
-            P.X += Limb.LimbOffX;
-            P.Y += Limb.LimbOffY;
-            P.Z += Limb.LimbOffZ;
-            return P;
-        };
-
-        Vec3 P = ApplyLocalObjectTransform(Object, Local, Object.GlueMode != 2);
+        Vec3 P = ApplyObjectPoint(MakeObjectSteps(Object), Local, Object.GlueMode != 2);
         const Object3D* Current = &Object;
         int GlueDepth = 0;
         while (Current->GluedTargetObject > 0 && GlueDepth < 32)
@@ -1069,10 +1115,10 @@ namespace dbc
                 }
                 else
                 {
-                    P = ApplyLimbTransform(*Limb, P);
+                    P = ApplyLimbPoint(MakeLimbSteps(*Limb), P);
                 }
             }
-            P = ApplyLocalObjectTransform(*Target, P, Target->GlueMode != 2);
+            P = ApplyObjectPoint(MakeObjectSteps(*Target), P, Target->GlueMode != 2);
             Current = Target;
         }
         return P;
@@ -1080,44 +1126,7 @@ namespace dbc
 
     [[nodiscard]] Vec3 TransformObjectSpaceVector(EngineKernel& K, const Object3D& Object, const Vec3& Local)
     {
-        auto ApplyLocalObjectRotation = [](const Object3D& Obj, const Vec3& In)
-        {
-            Vec3 P = In;
-            P.X /= std::max(0.0001f, std::abs(Obj.ScaleX));
-            P.Y /= std::max(0.0001f, std::abs(Obj.ScaleY));
-            P.Z /= std::max(0.0001f, std::abs(Obj.ScaleZ));
-            if (Obj.ApplyPivot)
-            {
-                P = Mat3Apply(P, Obj.PivotMatrix);
-            }
-            if (Obj.UseZyxRotation)
-            {
-                P = RotateZ(P, Obj.RotZ);
-                P = RotateY(P, Obj.RotY);
-                P = RotateX(P, Obj.RotX);
-            }
-            else
-            {
-                P = RotateX(P, Obj.RotX);
-                P = RotateY(P, Obj.RotY);
-                P = RotateZ(P, Obj.RotZ);
-            }
-            return P;
-        };
-
-        auto ApplyLimbRotation = [](const Mesh& Limb, const Vec3& In)
-        {
-            Vec3 P = In;
-            P.X *= Limb.LimbScaleX;
-            P.Y *= Limb.LimbScaleY;
-            P.Z *= Limb.LimbScaleZ;
-            P = RotateX(P, Limb.LimbRotX);
-            P = RotateY(P, Limb.LimbRotY);
-            P = RotateZ(P, Limb.LimbRotZ);
-            return P;
-        };
-
-        Vec3 P = ApplyLocalObjectRotation(Object, Local);
+        Vec3 P = ApplyObjectVector(MakeObjectSteps(Object), Local);
         const Object3D* Current = &Object;
         int GlueDepth = 0;
         while (Current->GluedTargetObject > 0 && GlueDepth < 32)
@@ -1131,9 +1140,9 @@ namespace dbc
             if (const Mesh* Limb = dbc::FindLimbMesh(K, *Target, Current->GluedTargetLimb))
             {
                 if (Current->GlueMode != 1)
-                    P = ApplyLimbRotation(*Limb, P);
+                    P = ApplyLimbRotation(MakeLimbSteps(*Limb), P);
             }
-            P = ApplyLocalObjectRotation(*Target, P);
+            P = ApplyObjectVector(MakeObjectSteps(*Target), P);
             Current = Target;
         }
         return K.Renderer().NormalizeNormals() ? Vec3Normalize(P) : P;
@@ -1315,6 +1324,65 @@ namespace dbc
         const Vec3 N = TransformMeshNormalInObject(Object, MeshValue, Local, MeshTransform, ObjectSpace);
         return dbc::TransformObjectSpaceVector(K, Object, N);
     }
+
+    // Takes one mesh's points and normals to world space as TransformObjectPoint and TransformObjectNormal do,
+    // with the limb chain and every sine and cosine computed once. A glued object follows its glue chain per call.
+    class MeshWorldTransform
+    {
+      public:
+        MeshWorldTransform(EngineKernel& K, const Object3D& Object, const Mesh& MeshValue,
+                           const aiMatrix4x4* ImportedTransform)
+            : K_(K), Object_(Object), Bind_(MeshValue.BindTransform), Imported_(ImportedTransform),
+              Steps_(MakeObjectSteps(Object)), Glued_(Object.GluedTargetObject > 0),
+              NormalizeNormals_(K.Renderer().NormalizeNormals())
+        {
+            if (!ImportedTransform)
+                ForEachProceduralLimb(Object, MeshValue,
+                                      [&](const Mesh& Limb) { Limbs_.push_back(MakeLimbSteps(Limb)); });
+        }
+
+        [[nodiscard]] Vec3 Point(const Vec3& Local, bool ObjectSpace) const
+        {
+            Vec3 P = Local;
+            if (!ObjectSpace && Imported_)
+                P = ApplyAiTransformPoint(*Imported_, Local);
+            else if (!ObjectSpace)
+            {
+                P = ApplyAiTransformPoint(Bind_, Local);
+                for (const LimbSteps& Limb : Limbs_)
+                    P = ApplyLimbPoint(Limb, P);
+            }
+            return Glued_ ? dbc::TransformObjectSpacePoint(K_, Object_, P)
+                          : ApplyObjectPoint(Steps_, P, Object_.GlueMode != 2);
+        }
+
+        [[nodiscard]] Vec3 Normal(const Vec3& Local, bool ObjectSpace) const
+        {
+            Vec3 N = Local;
+            if (!ObjectSpace && Imported_)
+                N = ApplyAiTransformVector(*Imported_, Local);
+            else if (!ObjectSpace)
+            {
+                N = ApplyAiTransformVector(Bind_, Local);
+                for (const LimbSteps& Limb : Limbs_)
+                    N = ApplyLimbNormal(Limb, N);
+            }
+            if (Glued_)
+                return dbc::TransformObjectSpaceVector(K_, Object_, N);
+            const Vec3 World = ApplyObjectVector(Steps_, N);
+            return NormalizeNormals_ ? Vec3Normalize(World) : World;
+        }
+
+      private:
+        EngineKernel& K_;
+        const Object3D& Object_;
+        const aiMatrix4x4& Bind_;
+        const aiMatrix4x4* Imported_;
+        ObjectSteps Steps_;
+        bool Glued_;
+        bool NormalizeNormals_;
+        std::vector<LimbSteps> Limbs_;
+    };
 
     Mesh* FindLimbMesh([[maybe_unused]] EngineKernel& K, Object3D& Object, int LimbId)
     {
@@ -2120,6 +2188,7 @@ namespace dbc
                         }
                     }
                     const std::vector<aiMatrix4x4> BonePalette = BuildBonePalette(Object, MeshValue, NodeGlobals);
+                    const MeshWorldTransform ToWorld(K, Object, MeshValue, MeshTransform);
                     std::vector<Vec3> SkinnedPositions;
                     std::vector<Vec3> SkinnedNormals;
                     std::vector<uint8_t> SkinnedVertices;
@@ -2154,9 +2223,9 @@ namespace dbc
                         const Vec3& P0 = Skinned0 ? SkinnedPositions[I0] : MeshValue.Vertices[I0];
                         const Vec3& P1 = Skinned1 ? SkinnedPositions[I1] : MeshValue.Vertices[I1];
                         const Vec3& P2 = Skinned2 ? SkinnedPositions[I2] : MeshValue.Vertices[I2];
-                        const Vec3 W0 = dbc::TransformObjectPoint(K, Object, MeshValue, P0, MeshTransform, Skinned0);
-                        const Vec3 W1 = dbc::TransformObjectPoint(K, Object, MeshValue, P1, MeshTransform, Skinned1);
-                        const Vec3 W2 = dbc::TransformObjectPoint(K, Object, MeshValue, P2, MeshTransform, Skinned2);
+                        const Vec3 W0 = ToWorld.Point(P0, Skinned0);
+                        const Vec3 W1 = ToWorld.Point(P1, Skinned1);
+                        const Vec3 W2 = ToWorld.Point(P2, Skinned2);
 
                         const Vec3 V0 =
                             Object.LockToScreen ? Vec3{W0.X, W0.Y, W0.Z} : dbc::WorldToViewPoint(K, W0.X, W0.Y, W0.Z);
@@ -2187,15 +2256,9 @@ namespace dbc
                         Vec3 Wn2 = FaceNormal;
                         if (MeshValue.Normals.size() == MeshValue.Vertices.size())
                         {
-                            Wn0 = dbc::TransformObjectNormal(K, Object, MeshValue,
-                                                             Skinned0 ? SkinnedNormals[I0] : MeshValue.Normals[I0],
-                                                             MeshTransform, Skinned0);
-                            Wn1 = dbc::TransformObjectNormal(K, Object, MeshValue,
-                                                             Skinned1 ? SkinnedNormals[I1] : MeshValue.Normals[I1],
-                                                             MeshTransform, Skinned1);
-                            Wn2 = dbc::TransformObjectNormal(K, Object, MeshValue,
-                                                             Skinned2 ? SkinnedNormals[I2] : MeshValue.Normals[I2],
-                                                             MeshTransform, Skinned2);
+                            Wn0 = ToWorld.Normal(Skinned0 ? SkinnedNormals[I0] : MeshValue.Normals[I0], Skinned0);
+                            Wn1 = ToWorld.Normal(Skinned1 ? SkinnedNormals[I1] : MeshValue.Normals[I1], Skinned1);
+                            Wn2 = ToWorld.Normal(Skinned2 ? SkinnedNormals[I2] : MeshValue.Normals[I2], Skinned2);
                         }
 
                         // Transform normals to view-space for GPU lighting.

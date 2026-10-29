@@ -64,28 +64,47 @@ namespace dbc
     // Vec3 rotation (degrees)
     // -----------------------------------------------------------------------
 
-    [[nodiscard]] inline Vec3 RotateX(const Vec3& P, float Degrees)
+    // The sine and cosine of an angle in degrees, computed once to rotate many points by it.
+    struct SinCos
+    {
+        float S = 0.0f;
+        float C = 1.0f;
+    };
+
+    [[nodiscard]] inline SinCos SinCosDegrees(float Degrees)
     {
         const float A = Degrees * static_cast<float>(M_PI / 180.0);
-        const float C = std::cos(A);
-        const float S = std::sin(A);
-        return Vec3{P.X, P.Y * C - P.Z * S, P.Y * S + P.Z * C};
+        return SinCos{std::sin(A), std::cos(A)};
+    }
+
+    [[nodiscard]] inline Vec3 RotateX(const Vec3& P, SinCos R)
+    {
+        return Vec3{P.X, P.Y * R.C - P.Z * R.S, P.Y * R.S + P.Z * R.C};
+    }
+
+    [[nodiscard]] inline Vec3 RotateY(const Vec3& P, SinCos R)
+    {
+        return Vec3{P.X * R.C + P.Z * R.S, P.Y, -P.X * R.S + P.Z * R.C};
+    }
+
+    [[nodiscard]] inline Vec3 RotateZ(const Vec3& P, SinCos R)
+    {
+        return Vec3{P.X * R.C - P.Y * R.S, P.X * R.S + P.Y * R.C, P.Z};
+    }
+
+    [[nodiscard]] inline Vec3 RotateX(const Vec3& P, float Degrees)
+    {
+        return RotateX(P, SinCosDegrees(Degrees));
     }
 
     [[nodiscard]] inline Vec3 RotateY(const Vec3& P, float Degrees)
     {
-        const float A = Degrees * static_cast<float>(M_PI / 180.0);
-        const float C = std::cos(A);
-        const float S = std::sin(A);
-        return Vec3{P.X * C + P.Z * S, P.Y, -P.X * S + P.Z * C};
+        return RotateY(P, SinCosDegrees(Degrees));
     }
 
     [[nodiscard]] inline Vec3 RotateZ(const Vec3& P, float Degrees)
     {
-        const float A = Degrees * static_cast<float>(M_PI / 180.0);
-        const float C = std::cos(A);
-        const float S = std::sin(A);
-        return Vec3{P.X * C - P.Y * S, P.X * S + P.Y * C, P.Z};
+        return RotateZ(P, SinCosDegrees(Degrees));
     }
 
     // -----------------------------------------------------------------------
