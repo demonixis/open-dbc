@@ -15,6 +15,7 @@
 #include "core/recovery.hpp"
 #include "core/settings.hpp"
 #include "core/workspace.hpp"
+#include "toolchain/active_run_planner.hpp"
 #include "toolchain/android_keystore.hpp"
 #include "toolchain/artifact_export_service.hpp"
 #include "toolchain/execution_adapter.hpp"
@@ -34,6 +35,7 @@
 #include "panels/launcher_window.hpp"
 #include "panels/media_panel.hpp"
 #include "panels/output_panel.hpp"
+#include "panels/problems_panel.hpp"
 #include "panels/project_panel.hpp"
 #include "panels/project_settings_window.hpp"
 #include "panels/scene_editor.hpp"
@@ -89,6 +91,11 @@ namespace dbc::studio
         void RequestQuit();
 
         void RunActiveDocument();
+        // The current tab's run plan, unsaved tabs included; nullopt when it has none, said in Output if Report.
+        std::optional<toolchain::ActiveRunPlan> PlanCurrentRun(bool Report);
+        // Compiles the current BASIC tab and lists its diagnostics in Problems.
+        void CheckCurrentDocument();
+        void ShowProblems(const std::vector<toolchain::RunDiagnostic>& Diagnostics);
         void RunLauncherPath(const std::filesystem::path& Path);
         void StopRun();
         void OpenBuildWindow();
@@ -133,10 +140,13 @@ namespace dbc::studio
         ImGuiID EditorDockId_ = 0;
         // Same for the Code and Media panels, which open beside the Project panel.
         ImGuiID ProjectDockId_ = 0;
+        // And for Problems, which opens beside Output.
+        ImGuiID OutputDockId_ = 0;
 
         // Panel visibility
         bool ShowProject_ = true;
         bool ShowOutput_ = true;
+        bool ShowProblems_ = true;
         bool ShowCode_ = true;
         bool ShowMedia_ = true;
         bool ShowDemo_ = false;
@@ -153,6 +163,7 @@ namespace dbc::studio
         panels::ProjectPanel Project_;
         panels::EditorPanel Editor_;
         panels::OutputPanel Output_;
+        panels::ProblemsPanel Problems_;
         panels::AssetPreview Preview_;
         panels::CodePanel Code_;
         panels::MediaPanel Media_;

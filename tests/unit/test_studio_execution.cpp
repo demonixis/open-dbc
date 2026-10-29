@@ -160,3 +160,23 @@ TEST_CASE("The Studio runs programs in opendbc-runner and reports where they fai
         CHECK(Capture.ExitCode == 130);
     }
 }
+
+TEST_CASE("A check compiles the program without running it")
+{
+    toolchain::ExecutionAdapter Adapter;
+    RunCapture Capture;
+    Attach(Adapter, Capture);
+
+    toolchain::RunDocument Broken;
+    Broken.LogicalPath = WriteSource("check.dba", "print 1\nx = (\n");
+    const std::vector<toolchain::RunDiagnostic> Problems = Adapter.Check(std::move(Broken));
+    REQUIRE_FALSE(Problems.empty());
+    CHECK(Problems.front().Line == 2);
+    CHECK(Problems.front().Error);
+    CHECK_FALSE(Adapter.IsRunning());
+    CHECK_FALSE(Capture.Finished);
+
+    toolchain::RunDocument Valid;
+    Valid.LogicalPath = WriteSource("check.dba", "print 1\n");
+    CHECK(Adapter.Check(std::move(Valid)).empty());
+}

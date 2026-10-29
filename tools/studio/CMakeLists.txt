@@ -210,6 +210,8 @@ set(STUDIO_SOURCES
     src/panels/media_panel.hpp
     src/panels/output_panel.cpp
     src/panels/output_panel.hpp
+    src/panels/problems_panel.cpp
+    src/panels/problems_panel.hpp
     src/panels/project_panel.cpp
     src/panels/project_panel.hpp
     src/panels/project_settings_window.cpp

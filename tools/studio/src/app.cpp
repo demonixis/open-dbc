@@ -29,6 +29,7 @@ namespace dbc::studio
         constexpr const char* KPanelProject = "Project";
         constexpr const char* KPanelEditor = "Editor";
         constexpr const char* KPanelOutput = "Output";
+        constexpr const char* KPanelProblems = "Problems";
         constexpr const char* KPanelPreview = "Preview";
         constexpr const char* KPanelCode = "Code";
         constexpr const char* KPanelMedia = "Media";
@@ -233,15 +234,7 @@ namespace dbc::studio
             [this](int ExitCode, const std::vector<toolchain::RunDiagnostic>& Diagnostics)
         {
             ExecutionBusy_ = false;
-            Editor_.ClearErrorMarkers();
-            std::map<std::filesystem::path, std::map<int, std::string>> Markers;
-            for (const toolchain::RunDiagnostic& Diagnostic : Diagnostics)
-            {
-                if (Diagnostic.Error && Diagnostic.Line > 0)
-                    Markers[Diagnostic.Path].emplace(static_cast<int>(Diagnostic.Line), Diagnostic.Message);
-            }
-            for (const auto& [Path, Errors] : Markers)
-                Editor_.SetErrorMarkers(Path, Errors);
+            ShowProblems(Diagnostics);
             ExecutionTarget_.clear();
             if (ExitCode == 0)
                 Status_ = "Run finished";
@@ -254,6 +247,12 @@ namespace dbc::studio
         };
 
         Execution_.SetHandlers(OnLine, OnFinish);
+        Problems_.SetOnSelect(
+            [this](const std::filesystem::path& Path, std::uint32_t Line)
+            {
+                OpenFile(Path);
+                Editor_.GoToLine(Line);
+            });
 
         // Command line wins over the remembered folder.
         std::error_code Ec;
@@ -841,6 +840,7 @@ namespace dbc::studio
         if (Editor_.SaveCurrent())
         {
             Status_ = "Saved " + dbc::PathToUtf8(Editor_.CurrentPath().filename());
+            CheckCurrentDocument();
         }
         else
         {
@@ -1325,7 +1325,17 @@ namespace dbc::studio
         if (ShowOutput_)
         {
             ImGui::Begin(KPanelOutput, &ShowOutput_);
+            OutputDockId_ = ImGui::GetWindowDockID();
             Output_.Draw();
+            ImGui::End();
+        }
+
+        if (ShowProblems_)
+        {
+            if (OutputDockId_ != 0)
+                ImGui::SetNextWindowDockID(OutputDockId_, ImGuiCond_FirstUseEver);
+            if (ImGui::Begin(KPanelProblems, &ShowProblems_))
+                Problems_.Draw();
             ImGui::End();
         }
 
@@ -1362,6 +1372,7 @@ namespace dbc::studio
         ImGui::DockBuilderDockWindow(KPanelProject, Left);
         ImGui::DockBuilderDockWindow(KPanelEditor, Center);
         ImGui::DockBuilderDockWindow(KPanelPreview, Center);
+        ImGui::DockBuilderDockWindow(KPanelProblems, Bottom);
         ImGui::DockBuilderDockWindow(KPanelOutput, Bottom);
 
         ImGui::DockBuilderFinish(DockspaceId);
@@ -1437,6 +1448,7 @@ namespace dbc::studio
             if (ImGui::MenuItem("Save All", nullptr, false, Editor_.AnyDirty()))
             {
                 Editor_.SaveAll();
+                CheckCurrentDocument();
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Ctrl+Q"))
@@ -1601,6 +1613,7 @@ namespace dbc::studio
             ImGui::MenuItem(KPanelCode, nullptr, &ShowCode_);
             ImGui::MenuItem(KPanelMedia, nullptr, &ShowMedia_);
             ImGui::MenuItem(KPanelOutput, nullptr, &ShowOutput_);
+            ImGui::MenuItem(KPanelProblems, nullptr, &ShowProblems_);
             ImGui::Separator();
             if (ImGui::MenuItem("Reset Layout"))
             {
@@ -1831,16 +1844,8 @@ namespace dbc::studio
         RunActiveDocument();
     }
 
-    void App::RunActiveDocument()
+    std::optional<toolchain::ActiveRunPlan> App::PlanCurrentRun(bool Report)
     {
-        if (ExecutionBusy_)
-            return;
-        if (!Editor_.HasDocument())
-        {
-            Output_.Append("Nothing to run: open a .dba document.", panels::OutputPanel::Severity::Error);
-            return;
-        }
-
         std::vector<toolchain::MemorySource> Sources;
         const dbc::language::LanguageProfile Profile =
             ResolvedProject_ ? ResolvedProject_->Profile : dbc::language::LanguageProfile::Dbc;
@@ -1851,22 +1856,66 @@ namespace dbc::studio
             toolchain::PlanActiveRun(Editor_.CurrentPath(), ResolvedProject_, std::move(Sources));
         if (!Plan)
         {
-            Output_.Append(Plan.Error, panels::OutputPanel::Severity::Error);
-            return;
+            if (Report)
+                Output_.Append(Plan.Error, panels::OutputPanel::Severity::Error);
+            return std::nullopt;
         }
         if (!Plan.Blockers.empty())
         {
             for (const std::string& Blocker : Plan.Blockers)
-                Output_.Append(Blocker, panels::OutputPanel::Severity::Error);
+            {
+                if (Report)
+                    Output_.Append(Blocker, panels::OutputPanel::Severity::Error);
+            }
+            return std::nullopt;
+        }
+        return Plan;
+    }
+
+    void App::CheckCurrentDocument()
+    {
+        if (!Editor_.HasDocument() || !Editor_.CurrentIsBasic())
+            return;
+        // Saving a file the run plan cannot use is not an error worth reporting.
+        std::optional<toolchain::ActiveRunPlan> Plan = PlanCurrentRun(false);
+        if (Plan)
+            ShowProblems(Execution_.Check(std::move(*Plan->Document)));
+    }
+
+    void App::ShowProblems(const std::vector<toolchain::RunDiagnostic>& Diagnostics)
+    {
+        Editor_.ClearErrorMarkers();
+        std::map<std::filesystem::path, std::map<int, std::string>> Markers;
+        for (const toolchain::RunDiagnostic& Diagnostic : Diagnostics)
+        {
+            if (Diagnostic.Error && Diagnostic.Line > 0)
+                Markers[Diagnostic.Path].emplace(static_cast<int>(Diagnostic.Line), Diagnostic.Message);
+        }
+        for (const auto& [Path, Errors] : Markers)
+            Editor_.SetErrorMarkers(Path, Errors);
+        Problems_.Set(Diagnostics);
+    }
+
+    void App::RunActiveDocument()
+    {
+        if (ExecutionBusy_)
+            return;
+        if (!Editor_.HasDocument())
+        {
+            Output_.Append("Nothing to run: open a .dba document.", panels::OutputPanel::Severity::Error);
             return;
         }
 
-        toolchain::RunDocument Document = std::move(*Plan.Document);
+        std::optional<toolchain::ActiveRunPlan> Plan = PlanCurrentRun(true);
+        if (!Plan)
+            return;
+
+        toolchain::RunDocument Document = std::move(*Plan->Document);
         const std::filesystem::path Target = Document.LogicalPath;
-        Editor_.SetErrorMarkers(Target, {});
+        ShowProblems({});
 
         toolchain::RunOptions RunOptions = RunOptions_;
-        RunOptions.AssetRoot = dbc::PathToUtf8(Plan.AssetRoot);
+        RunOptions.AssetRoot = dbc::PathToUtf8(Plan->AssetRoot);
         Output_.Append("> " + Execution_.Describe() + "  " + dbc::PathToUtf8(Target) + "  --asset-root " +
                            RunOptions.AssetRoot,
                        panels::OutputPanel::Severity::Notice);

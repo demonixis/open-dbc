@@ -92,6 +92,8 @@ namespace dbc::studio
             bool IsVrPacing() const;
             // False when the program cannot start; compile errors still reach the finish handler.
             bool Run(RunDocument Document, const RunOptions& Options);
+            // Compiles Document without running it.
+            std::vector<RunDiagnostic> Check(RunDocument Document) const;
             void BeginEventFrame();
             void HandleEvent(const SDL_Event& Event);
             void Stop();

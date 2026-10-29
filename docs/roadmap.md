@@ -21,7 +21,6 @@ Build and release:
 
 Robustness:
 
-- [ ] Studio: Problems panel.
 - [ ] Fuzzing: frontend, DDS, DBO, WAV, memblocks.
 
 Repository files:

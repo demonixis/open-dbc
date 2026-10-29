@@ -182,6 +182,26 @@ namespace dbc::studio
             OnFinish_ = std::move(OnFinish);
         }
 
+        std::vector<RunDiagnostic> ExecutionAdapter::Check(RunDocument Document) const
+        {
+            std::vector<RunDiagnostic> Result;
+            std::filesystem::path Root;
+            std::string Error;
+            dbc::interpreter::ExecutionRequest Request;
+            if (!ResolveRoot(Document, Root, Error) || !MakeRequest(Document, Root, Request, Error))
+            {
+                RunDiagnostic Failure;
+                Failure.Path = Root;
+                Failure.Message = Error;
+                Result.push_back(std::move(Failure));
+                return Result;
+            }
+            for (const dbc::interpreter::ExecutionDiagnostic& Value :
+                 dbc::interpreter::BuildProgram(std::move(Request)).Diagnostics)
+                Result.push_back(ToRunDiagnostic(Value, Root));
+            return Result;
+        }
+
         void ExecutionAdapter::Report(const std::string& Line, bool IsError)
         {
             if (OnLine_)
