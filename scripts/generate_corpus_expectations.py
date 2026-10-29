@@ -34,9 +34,11 @@ def main() -> None:
     args = parser.parse_args()
 
     examples = ROOT / "examples"
-    sources = sorted(path for folder in ("dbc", "dbpro", "open-dbc")
-                     for path in (examples / folder).rglob("*")
-                     if path.is_file() and path.suffix.lower() == ".dba")
+    # Path ordering is case-insensitive on Windows; the committed inventory is not.
+    sources = sorted((path for folder in ("dbc", "dbpro", "open-dbc")
+                      for path in (examples / folder).rglob("*")
+                      if path.is_file() and path.suffix.lower() == ".dba"),
+                     key=lambda path: path.as_posix())
     profiles = load_corpus_profiles(args.output)
     rows = []
     for source in sources:
