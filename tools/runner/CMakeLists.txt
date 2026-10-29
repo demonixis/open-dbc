@@ -25,7 +25,12 @@ if(NOT IOS)
 endif()
 
 if(APPLE AND NOT IOS)
+    # Exported games keep this Info.plist; the export replaces their name, identifier, version and icon.
+    set(OPENDBC_MICROPHONE_USAGE "This game can record sound from the microphone.")
+    configure_file("${CMAKE_SOURCE_DIR}/resources/macos/Info.plist.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/macos-Info.plist.in" @ONLY)
     set_target_properties(opendbc-runner PROPERTIES
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/macos-Info.plist.in"
         MACOSX_BUNDLE_BUNDLE_NAME "OpenDBC Runner"
         MACOSX_BUNDLE_GUI_IDENTIFIER "net.demonixis.opendbc.runner"
     )

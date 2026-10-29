@@ -17,8 +17,7 @@
 Build and release:
 
 - [ ] Release presets: universal2 macOS and Linux on an old glibc.
-- [ ] Platform metadata: macOS entitlements, `.desktop` and AppStream. The macOS
-  `Info.plist` comes from CMake's bundle properties.
+- [ ] Platform metadata: `.desktop` and AppStream.
 
 Robustness:
 

@@ -419,8 +419,14 @@ if(IOS)
     )
 elseif(APPLE)
     # --- Full product: signed outside the App Store, drives the toolchains --
+    # configure_file fills the @VAR@ values; the ${MACOSX_BUNDLE_*} ones come from the target properties.
+    set(OPENDBC_MICROPHONE_USAGE "Programs run from OpenDBC can record sound from the microphone.")
+    configure_file("${CMAKE_SOURCE_DIR}/resources/macos/Info.plist.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/macos-Info.plist.in" @ONLY)
     set_target_properties(opendbc PROPERTIES
         MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/macos-Info.plist.in"
+        MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2026 Yannick Comte"
         MACOSX_BUNDLE_BUNDLE_NAME "OpenDBC"
         MACOSX_BUNDLE_GUI_IDENTIFIER "${OPENDBC_DESKTOP_BUNDLE_ID}"
         MACOSX_BUNDLE_BUNDLE_VERSION "${OPENDBC_BUILD_NUMBER}"
@@ -620,6 +626,7 @@ endif()
 if(APPLE AND NOT IOS)
     add_custom_command(TARGET opendbc POST_BUILD
         COMMAND /usr/bin/codesign --force --sign - --timestamp=none
+            --entitlements "${CMAKE_SOURCE_DIR}/resources/macos/opendbc.entitlements"
             "$<TARGET_BUNDLE_DIR:opendbc>"
         COMMENT "Ad-hoc signing the complete OpenDBC bundle"
         VERBATIM)

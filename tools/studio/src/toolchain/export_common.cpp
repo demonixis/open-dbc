@@ -1152,7 +1152,8 @@ namespace dbc::studio
                 Error = "macOS distribution builds need a Developer ID Application identity";
                 return false;
             }
-            // Plugins loaded by LOAD DLL, OpenXR runtimes and MoltenVK come from other teams or are unsigned.
+            // Plugins loaded by LOAD DLL, OpenXR runtimes and MoltenVK come from other teams or are unsigned;
+            // RECORD SOUND needs the microphone under the hardened runtime.
             const fs::path Entitlements = App.parent_path() / ".opendbc-entitlements.plist";
             {
                 std::ofstream Output(Entitlements, std::ios::binary | std::ios::trunc);
@@ -1161,6 +1162,7 @@ namespace dbc::studio
                           "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
                           "<plist version=\"1.0\"><dict>\n"
                           "  <key>com.apple.security.cs.disable-library-validation</key><true/>\n"
+                          "  <key>com.apple.security.device.audio-input</key><true/>\n"
                           "</dict></plist>\n";
                 if (!Output)
                 {
