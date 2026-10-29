@@ -1298,6 +1298,46 @@ TEST_CASE("Imported DBPro limb identifiers remain stable after removal")
     CHECK(Context.Checklist[16].Name == "x3ds_Head");
 }
 
+TEST_CASE("Batched world mesh vertices match the per-vertex query exactly")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("batched-vertices", 16, 16));
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    // A skinned, posed, rotated and scaled character, and a cube glued to it.
+    REQUIRE(Objects.LoadObject(
+        (std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/camera/miko/miko.X").string(), 1));
+    REQUIRE(Objects.SetObjectFrame(1, 23.5f));
+    Objects.RotateObject(1, 12.0f, 37.0f, -8.0f);
+    Objects.ScaleObject(1, 90.0f, 110.0f, 100.0f);
+    Objects.PositionObject(1, 3.0f, -2.0f, 40.0f);
+    Objects.MakeObjectCube(2, 1.0f);
+    Objects.RotateObject(2, 0.0f, 30.0f, 0.0f);
+    REQUIRE(Objects.GlueObjectToLimb(2, 1, 3));
+
+    std::size_t Compared = 0;
+    std::size_t Mismatched = 0;
+    for (const int Id : {1, 2})
+    {
+        const dbc::Object3D* Object = Objects.GetObject(Id);
+        REQUIRE(Object != nullptr);
+        for (const dbc::Mesh& MeshValue : Object->Meshes)
+        {
+            std::vector<dbc::Vec3> Batched;
+            Kernel.Renderer().WorldMeshVertices(*Object, MeshValue, Batched);
+            REQUIRE(Batched.size() == MeshValue.Vertices.size());
+            for (std::size_t Vertex = 0; Vertex < Batched.size(); ++Vertex)
+            {
+                const dbc::Vec3 Single = Kernel.Renderer().WorldMeshVertex(*Object, MeshValue, Vertex);
+                ++Compared;
+                if (Batched[Vertex].X != Single.X || Batched[Vertex].Y != Single.Y || Batched[Vertex].Z != Single.Z)
+                    ++Mismatched;
+            }
+        }
+    }
+    CHECK(Compared > 1000);
+    CHECK(Mismatched == 0);
+}
+
 TEST_CASE("Imported DBPro skeletal animation deforms weighted vertices")
 {
     dbc::EngineKernel Kernel;

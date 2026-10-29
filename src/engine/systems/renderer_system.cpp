@@ -2312,7 +2312,8 @@ namespace dbc
                     std::vector<uint8_t> SkinnedVertices;
                     if (!BonePalette.empty())
                     {
-                        SkinnedPositions = MeshValue.Vertices;
+                        // Only the vertices SkinMeshVertex accepts are read from these.
+                        SkinnedPositions.resize(MeshValue.Vertices.size());
                         SkinnedNormals.resize(MeshValue.Vertices.size());
                         SkinnedVertices.resize(MeshValue.Vertices.size());
                         for (std::size_t VertexIndex = 0; VertexIndex < MeshValue.Vertices.size(); ++VertexIndex)
@@ -5389,6 +5390,20 @@ namespace dbc
         if (VertexIndex >= MeshValue.Vertices.size())
             return WorldObjectOrigin(Object);
         return dbc::TransformObjectSpacePoint(Kernel_, Object, ObjectMeshVertex(Object, MeshValue, VertexIndex));
+    }
+
+    void RendererSystem::WorldMeshVertices(const Object3D& Object, const Mesh& MeshValue, std::vector<Vec3>& Vertices)
+    {
+        ObjectMeshVertices(Object, MeshValue, Vertices);
+        if (Object.GluedTargetObject > 0)
+        {
+            for (Vec3& Vertex : Vertices)
+                Vertex = dbc::TransformObjectSpacePoint(Kernel_, Object, Vertex);
+            return;
+        }
+        const ObjectSteps Steps = MakeObjectSteps(Object);
+        for (Vec3& Vertex : Vertices)
+            Vertex = ApplyObjectPoint(Steps, Vertex, Object.GlueMode != 2);
     }
 
     bool RendererSystem::ProjectPoint(float Wx, float Wy, float Wz, SDL_FPoint& OutPos, float& OutDepth)

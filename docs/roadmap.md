@@ -82,9 +82,6 @@ Work, in order:
   overlay, count culled objects, time each renderer step, and add stress scenes:
   many objects sharing a mesh, many distinct ones, transparency, skinned characters
   (no demo model has bones; a few tutorial models do), two views.
-- [ ] CPU skinning: one bone palette per object and frame, not one per mesh and view
-  and per `ObjectMeshVertex` query, and no copy of the mesh's vertices before
-  skinning them.
 - [ ] Shared mesh resources: `INSTANCE OBJECT` shares instead of copying, vertex
   edits copy on write, and a revision drives the GPU upload.
 - [ ] GPU-resident meshes: object-space buffers; the object matrix and material per

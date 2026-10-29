@@ -539,13 +539,9 @@ namespace dbc
                 if (MeshValue.Vertices.empty())
                     continue;
                 CollisionMeshSnapshot MeshSnapshot{};
-                MeshSnapshot.Vertices.reserve(MeshValue.Vertices.size());
-                for (std::size_t VertexIndex = 0; VertexIndex < MeshValue.Vertices.size(); ++VertexIndex)
-                {
-                    const Vec3 World = Kernel.Renderer().WorldMeshVertex(Object, MeshValue, VertexIndex);
-                    MeshSnapshot.Vertices.push_back(World);
+                Kernel.Renderer().WorldMeshVertices(Object, MeshValue, MeshSnapshot.Vertices);
+                for (const Vec3& World : MeshSnapshot.Vertices)
                     IncludeCollisionPoint(MeshSnapshot.Bounds, MeshSnapshot.BoundsValid, World);
-                }
 
                 if (Result.Shape == CollisionShape::Sphere)
                 {
@@ -621,15 +617,9 @@ namespace dbc
                 AABB MeshBounds{};
                 bool MeshBoundsValid = false;
                 std::vector<Vec3> Vertices;
-                if (Object.CollisionShapeValue == CollisionShape::Sphere)
-                    Vertices.reserve(MeshValue.Vertices.size());
-                for (std::size_t VertexIndex = 0; VertexIndex < MeshValue.Vertices.size(); ++VertexIndex)
-                {
-                    const Vec3 World = Kernel.Renderer().WorldMeshVertex(Object, MeshValue, VertexIndex);
+                Kernel.Renderer().WorldMeshVertices(Object, MeshValue, Vertices);
+                for (const Vec3& World : Vertices)
                     IncludeCollisionPoint(MeshBounds, MeshBoundsValid, World);
-                    if (Object.CollisionShapeValue == CollisionShape::Sphere)
-                        Vertices.push_back(World);
-                }
                 if (!MeshBoundsValid)
                     continue;
                 if (Object.CollisionShapeValue == CollisionShape::Polygon)

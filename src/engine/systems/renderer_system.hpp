@@ -126,6 +126,9 @@ namespace dbc
         void ObjectMeshVertices(const Object3D& Object, const Mesh& MeshValue, std::vector<Vec3>& Vertices);
         Vec3 WorldMeshPoint(const Object3D& Object, const Mesh& MeshValue, const Vec3& Point);
         Vec3 WorldMeshVertex(const Object3D& Object, const Mesh& MeshValue, std::size_t VertexIndex);
+        // Every vertex of a mesh as WorldMeshVertex gives them, with the bone palette and the object's transform
+        // built once for all of them.
+        void WorldMeshVertices(const Object3D& Object, const Mesh& MeshValue, std::vector<Vec3>& Vertices);
         bool ProjectPoint(float Wx, float Wy, float Wz, SDL_FPoint& OutPos, float& OutDepth);
         bool ProjectPointLocked(float Wx, float Wy, float Wz, SDL_FPoint& OutPos, float& OutDepth);
 
