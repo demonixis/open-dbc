@@ -150,21 +150,21 @@ namespace dbc::studio
             return nullptr;
         }
 
-        std::string SceneDocument::CopyName(const std::string& Name) const
+        std::string SceneDocument::CopyName(const std::string& OriginalName) const
         {
             // The number after the last '_', or nullopt when that suffix is not all digits.
             const auto Suffix = [](const std::string& Text, std::size_t Underscore) -> std::optional<int>
             {
-                if (Underscore == std::string::npos || Underscore + 1 == Text.size() ||
-                    Text.size() - Underscore > 10)
+                if (Underscore == std::string::npos || Underscore + 1 == Text.size() || Text.size() - Underscore > 10)
                     return std::nullopt;
                 for (std::size_t Index = Underscore + 1; Index < Text.size(); ++Index)
                     if (Text[Index] < '0' || Text[Index] > '9')
                         return std::nullopt;
                 return std::stoi(Text.substr(Underscore + 1));
             };
-            const std::size_t Underscore = Name.rfind('_');
-            const std::string Stem = Suffix(Name, Underscore) ? Name.substr(0, Underscore) : Name;
+            const std::size_t Underscore = OriginalName.rfind('_');
+            const std::string Stem =
+                Suffix(OriginalName, Underscore) ? OriginalName.substr(0, Underscore) : OriginalName;
             int Highest = 0;
             for (const SceneNode& Node : Nodes)
             {

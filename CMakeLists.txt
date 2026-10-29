@@ -50,6 +50,14 @@ endif()
 if(NOT OPENDBC_BUILD_NUMBER MATCHES "^[0-9]+$")
     set(OPENDBC_BUILD_NUMBER "1")
 endif()
+if(WIN32)
+    enable_language(RC)
+    if(OPENDBC_BUILD_NUMBER GREATER 65535)
+        message(FATAL_ERROR "Windows version resources require a build number no greater than 65535")
+    endif()
+    set(OPENDBC_WINDOWS_VERSION_COMMAS
+        "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},${OPENDBC_BUILD_NUMBER}")
+endif()
 if(GIT_FOUND)
     execute_process(
         COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
@@ -112,6 +120,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # compiled into OpenDBC or its statically linked dependencies.
 if(MSVC)
     add_compile_options(
+        /experimental:deterministic
         "/pathmap:${CMAKE_SOURCE_DIR}=."
         "/pathmap:${CMAKE_BINARY_DIR}=."
     )
@@ -402,6 +411,11 @@ if(APPLE OR (NOT ANDROID AND NOT IOS))
         set(SDLSHADERCROSS_DXC ON CACHE BOOL "" FORCE)
     endif()
     set(OPENDBC_SAVED_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    if(MSVC AND MSVC_VERSION GREATER_EQUAL 1950 AND SDLSHADERCROSS_DXC)
+        # Pinned DXC specializes is_nothrow_constructible for StringRef, also handled
+        # below for Apple Clang. VS 2026 diagnoses those legacy specializations.
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd5285")
+    endif()
     if(APPLE AND SDLSHADERCROSS_DXC)
         # Recent Apple Clang flags DXC's specializations; older releases reject the option.
         include(CheckCXXCompilerFlag)
@@ -440,7 +454,9 @@ if(APPLE OR (NOT ANDROID AND NOT IOS))
     unset(OPENDBC_SAVED_CMAKE_CXX_FLAGS)
     foreach(OPENDBC_SPIRV_CROSS_TARGET
             spirv-cross-core spirv-cross-glsl spirv-cross-cpp spirv-cross-reflect
-            spirv-cross-msl spirv-cross-hlsl spirv-cross-c)
+            spirv-cross-msl spirv-cross-hlsl spirv-cross-c
+            SPIRV-Tools-static SPIRV-Tools-opt SPIRV-Tools-link SPIRV-Tools-reduce
+            SPIRV-Tools-diff SPIRV-Tools-lint)
         if(TARGET ${OPENDBC_SPIRV_CROSS_TARGET})
             set_target_properties(${OPENDBC_SPIRV_CROSS_TARGET} PROPERTIES CXX_STANDARD 17)
         endif()
@@ -586,6 +602,8 @@ endif()
 option(BUILD_TESTS "Build DBA regression tests" ON)
 if(BUILD_TESTS)
     enable_testing()
+    # Avoid doctest's forward declarations of standard-library types on recent MSVC.
+    set(DOCTEST_USE_STD_HEADERS ON CACHE BOOL "Use standard headers in doctest" FORCE)
 
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     # "portable" marks checks whose result does not depend on the host platform (committed data,

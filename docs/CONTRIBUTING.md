@@ -8,6 +8,12 @@ cmake --build --preset default
 ctest --preset default
 ```
 
+On Windows, run these commands from an **x64 Native Tools Command Prompt** or
+Developer PowerShell for Visual Studio 2022 or newer, with the Windows SDK,
+Ninja and Python 3 available. `windows-release` configures and builds the x64
+release from the same developer shell. The Studio and runner PE version resources
+use the CMake project version and Git build number.
+
 The test presets run headless: no window takes focus and audio is silent. A single
 program can be checked the same way, saving its last frame:
 

@@ -15,8 +15,6 @@ endif()
 if(WIN32)
     # Exports replace this icon and version with the game's own.
     set(OPENDBC_RUNNER_ICON "${CMAKE_SOURCE_DIR}/resources/editor.ico")
-    set(OPENDBC_RUNNER_VERSION_COMMAS
-        "${OpenDBC_VERSION_MAJOR},${OpenDBC_VERSION_MINOR},0,${OPENDBC_BUILD_NUMBER}")
     configure_file(runner.rc.in "${CMAKE_CURRENT_BINARY_DIR}/runner.rc" @ONLY)
     target_sources(opendbc-runner PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/runner.rc")
 endif()

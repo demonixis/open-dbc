@@ -203,9 +203,9 @@ namespace dbc::studio
                 ImGui::DragFloat3("Rotation", &Node->Rotation.x, 0.5f);
             if (IsObject)
             {
-                const glm::vec3 Before = Node->Scale;
+                const glm::vec3 PreviousScale = Node->Scale;
                 if (ImGui::DragFloat3("Scale %", &Node->Scale.x, 0.5f, 0.0f, 100000.0f) && UniformScale_)
-                    Node->Scale = scene::ProportionalScale(Before, Node->Scale);
+                    Node->Scale = scene::ProportionalScale(PreviousScale, Node->Scale);
                 ImGui::Checkbox("Uniform scale", &UniformScale_);
                 if (ImGui::IsItemHovered())
                     ImGui::SetTooltip("Scaling one axis scales the others in proportion, here and with the gizmo");

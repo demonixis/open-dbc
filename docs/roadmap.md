@@ -16,11 +16,9 @@
 
 Build and release:
 
-- [ ] Release presets: universal2 macOS, Linux on an old glibc, Windows. Only the
-  host `release` preset exists.
-- [ ] Platform metadata: macOS entitlements, `.desktop` and AppStream, the Studio's
-  Windows `VERSIONINFO` (`editor.rc` holds only the icon). The macOS `Info.plist`
-  comes from CMake's bundle properties.
+- [ ] Release presets: universal2 macOS and Linux on an old glibc.
+- [ ] Platform metadata: macOS entitlements, `.desktop` and AppStream. The macOS
+  `Info.plist` comes from CMake's bundle properties.
 
 Robustness:
 

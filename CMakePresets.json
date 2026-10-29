@@ -22,6 +22,21 @@
       }
     },
     {
+      "name": "windows-release",
+      "displayName": "Windows x64 Release (MSVC developer shell)",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build/windows-release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      }
+    },
+    {
       "name": "sanitize",
       "displayName": "Desktop ASan and UBSan",
       "generator": "Ninja",
@@ -133,6 +148,11 @@
       "jobs": 2
     },
     {
+      "name": "windows-release",
+      "configurePreset": "windows-release",
+      "jobs": 2
+    },
+    {
       "name": "sanitize",
       "configurePreset": "sanitize",
       "jobs": 2
@@ -141,30 +161,40 @@
       "name": "shader-verify",
       "configurePreset": "shader-verify",
       "jobs": 2,
-      "targets": ["opendbc_verify_shaders"]
+      "targets": [
+        "opendbc_verify_shaders"
+      ]
     },
     {
       "name": "shader-update",
       "configurePreset": "shader-verify",
-      "targets": ["opendbc_update_shaders"]
+      "targets": [
+        "opendbc_update_shaders"
+      ]
     },
     {
       "name": "ios-runtime",
       "configurePreset": "ios-runtime",
       "jobs": 2,
-      "targets": ["opendbc_ios_runtime"]
+      "targets": [
+        "opendbc_ios_runtime"
+      ]
     },
     {
       "name": "ios-simulator-runtime",
       "configurePreset": "ios-simulator-runtime",
       "jobs": 2,
-      "targets": ["opendbc_ios_runtime"]
+      "targets": [
+        "opendbc_ios_runtime"
+      ]
     },
     {
       "name": "android-host",
       "configurePreset": "android-host",
       "jobs": 2,
-      "targets": ["opendbc_export_host_manifest"]
+      "targets": [
+        "opendbc_export_host_manifest"
+      ]
     }
   ],
   "testPresets": [
