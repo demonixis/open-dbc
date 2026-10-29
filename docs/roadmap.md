@@ -23,15 +23,18 @@ Build and release:
 Robustness:
 
 - [ ] Studio: backup before each run, autosave, keep CP1252, CRLF and BOM, Problems panel.
-- [ ] Run the BASIC program in a child process, or catch exceptions around the tick.
+- [ ] Run the BASIC program in a child process so a crash cannot take the Studio down;
+  no `try`/`catch` around the tick.
 - [ ] Depth limits for the parser, call stack, `GOSUB` and `DIM`; out-of-range literals.
 - [ ] UTF-8 paths on Windows, with a test.
 - [ ] Fuzzing: frontend, DDS, DBO, WAV, memblocks.
 
 Repository files:
 
-- [ ] `SECURITY.md` (running a `.dba` is running a native program), `CODE_OF_CONDUCT.md`, `CHANGELOG.md`.
-- [ ] Issue and PR templates, `CODEOWNERS`, Dependabot.
+- [ ] `CHANGELOG.md` at the root; `docs/SECURITY.md` (running a `.dba` is running a
+  native program) and `docs/CODE_OF_CONDUCT.md` beside `docs/CONTRIBUTING.md`.
+- [ ] Issue and PR templates, `CODEOWNERS`, Dependabot. No CI workflow for now: it
+  took too many iterations to get working.
 - [ ] README screenshots.
 
 Publication:
