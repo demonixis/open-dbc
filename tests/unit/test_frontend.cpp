@@ -973,3 +973,12 @@ TEST_CASE("Numeric literals must fit 64-bit integers and finite doubles")
         CHECK_FALSE(dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro)).HasErrors());
     }
 }
+
+TEST_CASE("A leading UTF-8 byte order mark is skipped")
+{
+    const auto Document = Source("\xEF\xBB\xBFprint 1\n", dbc::language::LanguageProfile::Dbc);
+    const dbc::language::Program Program = dbc::language::Compile(Document);
+    CHECK_FALSE(Program.HasErrors());
+    REQUIRE_FALSE(Program.Tokens.empty());
+    CHECK(dbc::language::Lexeme(*Document, Program.Tokens.front().Span) == "print");
+}

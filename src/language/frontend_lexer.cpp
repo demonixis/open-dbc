@@ -17,6 +17,9 @@ namespace dbc::language::detail
 
             std::vector<Token> Run()
             {
+                // Editors such as Notepad start UTF-8 files with a byte order mark.
+                if (Source_.Text.starts_with("\xEF\xBB\xBF"))
+                    Offset_ = 3;
                 while (!AtEnd())
                 {
                     const char Character = Peek();
