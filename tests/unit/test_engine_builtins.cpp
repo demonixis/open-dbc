@@ -2245,6 +2245,35 @@ TEST_CASE("The screen layer keeps its GPU texture, uploads what changed and skip
         CHECK(ShownPixel(11 + Index * 20, 41) == Background);
 }
 
+TEST_CASE("SET OBJECT FRAME redraws a still scene in the new pose")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    REQUIRE(Kernel.Objects().LoadObject(
+        (std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/camera/miko/miko.X").string(), 1));
+    const float Size = Kernel.Objects().ObjectSize(1);
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Camera().PositionCamera(0.0f, Size * 0.5f, -2.0f * Size, &Error); });
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const auto DrawnPositions = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        double Sum = 0.0;
+        for (const dbc::Triangle& TriangleValue : Kernel.Renderer().CachedWorldTris())
+            for (const auto& Corner : TriangleValue.Pos)
+                Sum += Corner[0] + Corner[1] * 3.0 + Corner[2] * 7.0;
+        return Sum;
+    };
+
+    REQUIRE(Kernel.Objects().SetObjectFrame(1, 5.0f));
+    const double First = DrawnPositions();
+    REQUIRE(Kernel.Objects().SetObjectFrame(1, 30.0f));
+    CHECK(DrawnPositions() != First);
+}
+
 TEST_CASE("TEXTURE OBJECT refreshes a still scene")
 {
     dbc::EngineKernel Kernel;

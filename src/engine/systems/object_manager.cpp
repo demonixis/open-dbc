@@ -7682,6 +7682,8 @@ namespace dbc
         if (!ObjectPointer)
             return false;
         Object3D& Object = *ObjectPointer;
+        // The new pose must reach the screen even when nothing else moves.
+        Object.TransformDirty = true;
         Object.Frame = std::max(0, Frame);
         if (!Object.ObjectKeyframes.empty())
         {
@@ -7715,6 +7717,8 @@ namespace dbc
         if (!ObjectPointer)
             return false;
         Object3D& Object = *ObjectPointer;
+        // The new pose must reach the screen even when nothing else moves.
+        Object.TransformDirty = true;
         Object.Frame = std::max(0, static_cast<int>(Frame));
         if (!Object.ObjectKeyframes.empty())
         {
