@@ -199,6 +199,15 @@ TEST_CASE("command line dispatch uses stable help and failure exit codes")
     CHECK(Output.find("--builtin-coverage-output") != std::string::npos);
     CHECK(Output.find("--benchmark-output") != std::string::npos);
 
+    Output.clear();
+    const std::array<std::string_view, 1> Version{"--version"};
+    CHECK(dbc::interpreter::DispatchCommandLine(Version, Environment) ==
+          static_cast<int>(dbc::interpreter::CommandLineExitCode::Success));
+    CHECK(Output == dbc::interpreter::CommandLineVersion());
+    CHECK(Output.starts_with("OpenDBC 0."));
+    const std::array<std::string_view, 3> RunVersion{"run", "program.obc", "--version"};
+    CHECK(dbc::interpreter::ParseCommandLine(RunVersion).VersionRequested);
+
     const std::array<std::string_view, 1> Invalid{"--unknown"};
     CHECK(dbc::interpreter::DispatchCommandLine(Invalid, Environment) ==
           static_cast<int>(dbc::interpreter::CommandLineExitCode::Usage));

@@ -54,6 +54,7 @@ namespace dbc::interpreter
         constexpr std::string_view HelpText =
             "Usage:\n"
             "  opendbc                              Open the Studio\n"
+            "  opendbc --version                    Print the version\n"
             "  opendbc studio [file-or-directory]   Open the Studio explicitly\n"
             "  opendbc run <source.dba|project.dbpro|program.obc> [--dialect <dbc|dbpro>] [options]\n"
             "  opendbc check <source.dba|project.dbpro> [--dialect <dbc|dbpro>]\n"
@@ -675,12 +676,17 @@ namespace dbc::interpreter
 
     CommandLineParseResult::operator bool() const
     {
-        return Command.has_value() && Error.empty() && !HelpRequested;
+        return Command.has_value() && Error.empty() && !HelpRequested && !VersionRequested;
     }
 
     std::string_view CommandLineHelp()
     {
         return HelpText;
+    }
+
+    std::string_view CommandLineVersion()
+    {
+        return "OpenDBC " OPENDBC_VERSION_STRING "\n";
     }
 
     CommandLineParseResult ParseCommandLine(std::span<const std::string_view> Arguments)
@@ -726,6 +732,11 @@ namespace dbc::interpreter
                 Result.HelpRequested = true;
                 return Result;
             }
+            else if (First == "--version")
+            {
+                Result.VersionRequested = true;
+                return Result;
+            }
             else if (!First.empty() && First.front() == '-')
             {
                 Result.Error = "Unknown command or option: " + std::string(First);
@@ -744,6 +755,11 @@ namespace dbc::interpreter
             if (Argument == "--help" || Argument == "-h")
             {
                 Result.HelpRequested = true;
+                return Result;
+            }
+            if (Argument == "--version")
+            {
+                Result.VersionRequested = true;
                 return Result;
             }
             if (Argument == "--json")

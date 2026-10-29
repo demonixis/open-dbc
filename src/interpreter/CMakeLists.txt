@@ -37,3 +37,5 @@ dbc_enable_warnings(dbc_interpreter)
 # Only this source sees the fingerprint, so a new fingerprint recompiles one file.
 set_source_files_properties(program_image.cpp PROPERTIES
     COMPILE_DEFINITIONS "OPENDBC_RUNTIME_FINGERPRINT=\"${OPENDBC_RUNTIME_FINGERPRINT}\"")
+set_source_files_properties(command_line_run.cpp PROPERTIES
+    COMPILE_DEFINITIONS "OPENDBC_VERSION_STRING=\"${OPENDBC_VERSION}\"")

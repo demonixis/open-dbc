@@ -24,7 +24,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"
     set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Oldest macOS release OpenDBC and its exports run on" FORCE)
 endif()
 
-project(OpenDBC VERSION 0.3 LANGUAGES C CXX)
+project(OpenDBC VERSION 0.4.0 LANGUAGES C CXX)
 
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL
     "Suppress deprecation warnings from pinned third-party CMake projects" FORCE)
@@ -33,7 +33,8 @@ set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL
 # Marketing version lives here and nowhere else. The build number comes from
 # the commit count: monotonic, automatic, and never regresses, which is what
 # TestFlight requires of every upload. It is refreshed when CMake re-runs.
-set(OPENDBC_VERSION "${PROJECT_VERSION}" CACHE STRING "Marketing version (CFBundleShortVersionString)")
+# Not a cache entry, so an existing build directory picks up a new version.
+set(OPENDBC_VERSION "${PROJECT_VERSION}")
 
 find_package(Git QUIET)
 if(GIT_FOUND)

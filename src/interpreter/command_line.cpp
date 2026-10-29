@@ -369,6 +369,11 @@ namespace dbc::interpreter
             Write(Environment.StandardOutput, stdout, CommandLineHelp());
             return Exit(CommandLineExitCode::Success);
         }
+        if (Parsed.VersionRequested)
+        {
+            Write(Environment.StandardOutput, stdout, CommandLineVersion());
+            return Exit(CommandLineExitCode::Success);
+        }
         if (!Parsed)
         {
             Write(Environment.StandardError, stderr, Parsed.Error + "\n");

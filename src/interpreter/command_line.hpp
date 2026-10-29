@@ -54,6 +54,7 @@ namespace dbc::interpreter
         std::optional<CommandLine> Command{};
         std::string Error{};
         bool HelpRequested = false;
+        bool VersionRequested = false;
 
         explicit operator bool() const;
     };
@@ -72,6 +73,8 @@ namespace dbc::interpreter
     };
 
     std::string_view CommandLineHelp();
+    // "OpenDBC <version>" followed by a newline.
+    std::string_view CommandLineVersion();
     CommandLineParseResult ParseCommandLine(std::span<const std::string_view> Arguments);
     int DispatchCommandLine(const CommandLine& Command, const CommandLineEnvironment& Environment = {});
     int DispatchCommandLine(std::span<const std::string_view> Arguments,

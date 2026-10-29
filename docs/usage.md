@@ -12,7 +12,8 @@ opendbc build   <source.dba|project.dbpro> [--dialect dbc|dbpro] --output <progr
 opendbc export  <source.dba|project.dbpro> --dialect dbc|dbpro --target <target> --output <dir> [--unsigned]
 ```
 
-`check` and `inspect` never open a window. `opendbc --help` lists every option.
+`check` and `inspect` never open a window. `opendbc --help` lists every option;
+`opendbc --version` and `opendbc-runner --version` print the version.
 
 `build` writes a program image: verified bytecode, the project's startup settings
 and source lines for run-time errors, with paths relative to the project. `run`

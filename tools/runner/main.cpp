@@ -59,6 +59,11 @@ int main(int Argc, char* Argv[])
         Write(stdout, HelpText);
         return static_cast<int>(dbc::interpreter::CommandLineExitCode::Success);
     }
+    if (Parsed.VersionRequested)
+    {
+        Write(stdout, dbc::interpreter::CommandLineVersion());
+        return static_cast<int>(dbc::interpreter::CommandLineExitCode::Success);
+    }
     if (!Parsed)
     {
         Write(stderr, Parsed.Error + "\n");
