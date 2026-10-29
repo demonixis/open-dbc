@@ -41,8 +41,6 @@ Repository files:
 
 Publication:
 
-- [ ] GitHub settings: secret scanning, private vulnerability reporting, protected `main`.
-  The repository is already public with all three off.
 - [ ] Signed tag `v0.4.0`, release with `SHA256SUMS` and an SBOM.
 - [ ] FAQ: no DarkBASIC content provided; unrelated to comma.ai `opendbc`.
 
