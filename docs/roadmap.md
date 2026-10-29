@@ -2,7 +2,9 @@
 
 ## Decisions
 
-- Publication from the GitHub repository `demonixis/open-dbc`, starting from a single initial commit.
+- The public repository is `demonixis/open-dbc`; its history starts from a single initial import.
+- No `DbcNew` / `DbProNew` profiles: OpenDBC runs Classic and Pro programs with
+  its own additional commands, and stays that way.
 - Signing OpenDBC's own releases (Apple notarisation, Windows) is done later, in one batch with
   openblood2 and oxrsys. Exported games are signed by the export ([usage.md](usage.md#export)).
 - Yannick Comte owns the code. No DarkBASIC Classic content is published or
@@ -14,8 +16,11 @@
 
 Build and release:
 
-- [ ] Release presets: universal2 macOS, Linux on an old glibc, Windows.
-- [ ] Platform metadata: `Info.plist` and entitlements, `.desktop` and AppStream, Windows `VERSIONINFO`.
+- [ ] Release presets: universal2 macOS, Linux on an old glibc, Windows. Only the
+  host `release` preset exists.
+- [ ] Platform metadata: macOS entitlements, `.desktop` and AppStream, the Studio's
+  Windows `VERSIONINFO` (`editor.rc` holds only the icon). The macOS `Info.plist`
+  comes from CMake's bundle properties.
 
 Robustness:
 
@@ -37,8 +42,19 @@ Repository files:
 Publication:
 
 - [ ] GitHub settings: secret scanning, private vulnerability reporting, protected `main`.
-- [ ] Public switch, signed tag `v0.4.0`, release with `SHA256SUMS` and an SBOM.
+  The repository is already public with all three off.
+- [ ] Signed tag `v0.4.0`, release with `SHA256SUMS` and an SBOM.
 - [ ] FAQ: no DarkBASIC content provided; unrelated to comma.ai `opendbc`.
+
+## Code quality
+
+- [ ] Code quality audit.
+- [ ] Separate the smoke-test code from the main code: a dedicated smoke `main`, or
+  one class compiled in Debug only.
+- [ ] Reformat every C++ source once with `.clang-format`, in its own commit: 66 of
+  276 files drift from it, before the blank lines `SeparateDefinitionBlocks` adds
+  between glued definitions. Replace `.editorconfig`, which holds a copy of the
+  clang-format YAML instead of EditorConfig settings.
 
 ## Classic multiplayer
 
@@ -128,7 +144,10 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 ## Towards 1.0
 
-- [ ] Decide whether to keep the `DbcNew` / `DbProNew` profiles.
+- [ ] Remove the `DbcNew` / `DbProNew` remnants: the reserved touch, orientation and
+  accelerometer commands become shared additions to both profiles or go away;
+  update `architecture.md`, the editorial data, the generators and the extension
+  rule in `AGENTS.md`.
 - [ ] Studio: embedded help, installed samples, welcome screen.
 - [ ] Split the largest source files; measure coverage; negative verifier tests.
 - [ ] One policy for missing objects, documented integer semantics, deterministic `RND`.
