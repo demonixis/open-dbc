@@ -69,8 +69,7 @@ if(NOT ANDROID AND NOT IOS)
     target_compile_definitions(test_studio_scene_render PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
                                TEST_OUTPUT_DIR="${CMAKE_BINARY_DIR}/tests")
     target_link_libraries(test_studio_scene_render PRIVATE doctest_with_main dbc_engine dbc_language)
-    doctest_discover_tests(test_studio_scene_render PROPERTIES LABELS "unit-studio"
-                           RESOURCE_LOCK "opendbc_runtime")
+    doctest_discover_tests(test_studio_scene_render PROPERTIES LABELS "unit-studio")
 
     add_executable(test_studio_media
         test_studio_media.cpp
@@ -99,7 +98,7 @@ add_executable(test_renderer test_renderer.cpp)
 target_include_directories(test_renderer PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(test_renderer PRIVATE doctest_with_main dbc_engine)
 dbc_enable_warnings(test_renderer)
-doctest_discover_tests(test_renderer PROPERTIES LABELS "unit-renderer" RESOURCE_LOCK "opendbc_runtime")
+doctest_discover_tests(test_renderer PROPERTIES LABELS "unit-renderer")
 
 # --- Test: collision math ---
 add_executable(test_collision_math test_collision_math.cpp)
@@ -122,7 +121,7 @@ doctest_discover_tests(test_terrain_mesh PROPERTIES LABELS "unit")
 add_executable(test_engine_builtins test_engine_builtins.cpp)
 target_compile_definitions(test_engine_builtins PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(test_engine_builtins PRIVATE doctest_with_main dbc_interpreter)
-doctest_discover_tests(test_engine_builtins PROPERTIES LABELS "unit" RESOURCE_LOCK "opendbc_runtime")
+doctest_discover_tests(test_engine_builtins PROPERTIES LABELS "unit")
 
 add_executable(test_network test_network.cpp)
 target_link_libraries(test_network PRIVATE doctest_with_main dbc_interpreter)
@@ -147,7 +146,7 @@ doctest_discover_tests(test_dll PROPERTIES LABELS "unit")
 add_executable(test_input_haptics test_input_haptics.cpp)
 target_include_directories(test_input_haptics PRIVATE ${ENGINE_SRC_DIR})
 target_link_libraries(test_input_haptics PRIVATE doctest_with_main dbc_engine)
-doctest_discover_tests(test_input_haptics PROPERTIES LABELS "unit" RESOURCE_LOCK "opendbc_runtime")
+doctest_discover_tests(test_input_haptics PROPERTIES LABELS "unit")
 
 add_executable(test_command_line test_command_line.cpp)
 target_link_libraries(test_command_line PRIVATE doctest_with_main dbc_interpreter)
@@ -155,7 +154,7 @@ doctest_discover_tests(test_command_line PROPERTIES LABELS "unit-cli")
 
 add_executable(test_program_image test_program_image.cpp)
 target_link_libraries(test_program_image PRIVATE doctest_with_main dbc_interpreter)
-doctest_discover_tests(test_program_image PROPERTIES LABELS "unit-cli" RESOURCE_LOCK "opendbc_runtime")
+doctest_discover_tests(test_program_image PROPERTIES LABELS "unit-cli")
 
 add_executable(test_project_resolver test_project_resolver.cpp)
 target_link_libraries(test_project_resolver PRIVATE doctest_with_main dbc_interpreter)
@@ -165,7 +164,7 @@ doctest_discover_tests(test_project_resolver PROPERTIES LABELS "unit-cli;unit-la
 add_executable(test_debug_system test_debug_system.cpp)
 target_include_directories(test_debug_system PRIVATE ${ENGINE_SRC_DIR})
 target_link_libraries(test_debug_system PRIVATE doctest_with_main dbc_engine)
-doctest_discover_tests(test_debug_system PROPERTIES LABELS "unit" RESOURCE_LOCK "opendbc_runtime")
+doctest_discover_tests(test_debug_system PROPERTIES LABELS "unit")
 
 if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     add_executable(test_dxc_optimizer test_dxc_optimizer.cpp)
@@ -193,7 +192,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         spirv-cross-core
         nlohmann_json::nlohmann_json
     )
-    doctest_discover_tests(test_shader_compiler PROPERTIES LABELS "unit-studio-shaders" RESOURCE_LOCK "opendbc_runtime")
+    doctest_discover_tests(test_shader_compiler PROPERTIES LABELS "unit-studio-shaders")
 
     add_executable(test_project_settings
         test_project_settings.cpp
@@ -261,7 +260,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     )
     target_compile_definitions(test_artifact_export PRIVATE
         OPENDBC_TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-    doctest_discover_tests(test_artifact_export PROPERTIES LABELS "unit-studio-packaging" RESOURCE_LOCK "opendbc_runtime")
+    doctest_discover_tests(test_artifact_export PROPERTIES LABELS "unit-studio-packaging")
 endif()
 
 # The tests are OpenDBC code too.
@@ -281,5 +280,5 @@ if(TARGET OpenXR::headers)
     target_link_libraries(test_vr PRIVATE doctest_with_main dbc_interpreter OpenXR::headers)
     target_compile_definitions(test_vr PRIVATE OPENDBC_OPENXR=1)
     dbc_enable_warnings(test_vr)
-    doctest_discover_tests(test_vr PROPERTIES LABELS "unit-vr" RESOURCE_LOCK "opendbc_runtime")
+    doctest_discover_tests(test_vr PROPERTIES LABELS "unit-vr")
 endif()

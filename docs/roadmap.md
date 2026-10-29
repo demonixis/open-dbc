@@ -15,7 +15,6 @@
 Build and release:
 
 - [ ] Release presets: universal2 macOS, Linux on an old glibc, Windows.
-- [ ] Tests: 120 s default timeout, parallel runs where no lock is needed.
 - [ ] FetchContent: shallow clones and a cache; `OPENDBC_WERROR` option.
 - [ ] Platform metadata: `Info.plist` and entitlements, `.desktop` and AppStream, Windows `VERSIONINFO`.
 

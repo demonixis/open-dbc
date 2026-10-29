@@ -4,6 +4,8 @@ sync on : sync rate 0
 perform checklist for graphics cards
 print "cards="; checklist quantity()
 if len(checklist string$(1)) > 0 then print "card has a name"
+rem A fixed folder: other tests create and delete files beside this one
+set dir "../fixtures/classic/bmp"
 perform checklist for files
 if checklist quantity() > 0 then print "files listed"
 perform checklist for display modes

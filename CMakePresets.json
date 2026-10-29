@@ -175,11 +175,11 @@
         "outputOnFailure": true
       },
       "execution": {
-        "jobs": 1,
+        "jobs": 4,
+        "timeout": 120,
         "noTestsAction": "error"
       },
       "environment": {
-        "CTEST_PARALLEL_LEVEL": "1",
         "OPENDBC_HEADLESS": "1",
         "SDL_ASSERT": "abort"
       }
@@ -191,12 +191,12 @@
         "outputOnFailure": true
       },
       "execution": {
-        "jobs": 1,
+        "jobs": 4,
+        "timeout": 120,
         "noTestsAction": "error"
       },
       "environment": {
         "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1",
-        "CTEST_PARALLEL_LEVEL": "1",
         "OPENDBC_HEADLESS": "1",
         "SDL_ASSERT": "abort",
         "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"

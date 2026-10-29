@@ -105,6 +105,10 @@ Choices where the original cannot be reproduced portably:
   black;
 - audits and generator checks.
 
+Tests run four at a time with a 120 s default timeout. The `.dba` programs that
+write files beside their source are listed in `DBA_TESTS_WRITING_FILES`
+(`CMakeLists.txt`); their runs and the behavior manifest generator share a lock.
+
 Checks whose result does not depend on the host carry the `portable` label:
 `ctest -L portable` runs them alone and `ctest -LE portable` skips them.
 

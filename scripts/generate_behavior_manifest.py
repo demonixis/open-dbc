@@ -5,6 +5,7 @@ import hashlib
 import json
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from basic_profiles import load_test_profiles
@@ -1492,56 +1493,65 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+def inspect(opendbc: Path, source: Path, profile: str, what: str) -> dict:
+    result = subprocess.run([str(opendbc), "inspect", str(source), "--json", "--dialect", profile],
+                            text=True, capture_output=True, check=False)
+    if result.returncode != 0:
+        raise SystemExit(f"cannot inspect {what}:\n{result.stderr}")
+    return json.loads(result.stdout)
+
+
+def run_golden(opendbc: Path, profile: str, source: Path, output_root: Path) -> tuple[dict, str]:
+    expected = source.with_suffix(".expected")
+    if not expected.is_file() or not expected.read_text().strip():
+        raise SystemExit(f"behavior witness has no non-empty oracle: {source}")
+    inspection = inspect(opendbc, source, profile, f"behavior witness {source}")
+    output = output_root / f"{source.stem}-{source.suffix[1:]}.out"
+    run = subprocess.run([
+        str(opendbc), "run", str(source), "--asset-root", str(source.parent),
+        "--dialect", profile, "--log-output", str(output), "--max-frames", "5",
+    ], text=True, capture_output=True, check=False)
+    if run.returncode != 0:
+        raise SystemExit(f"cannot execute behavior witness {source}:\n{run.stderr}")
+    expected_bytes = expected.read_bytes()
+    if not output.is_file() or output.read_bytes() != expected_bytes:
+        raise SystemExit(f"behavior witness output differs from its oracle: {source}")
+    return inspection, hashlib.sha256(expected_bytes).hexdigest()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Regenerate catalogue-linked BASIC behavior witnesses")
     parser.add_argument("--opendbc", type=Path, required=True)
     parser.add_argument("--output", type=Path,
                         default=ROOT / "tests/unit/builtin_behavior_manifest.tsv")
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--jobs", type=int, default=4)
     args = parser.parse_args()
 
     witnesses: dict[tuple[str, int, int], tuple[str, str, str, str, str]] = {}
     runtime_outputs = tempfile.TemporaryDirectory(prefix="opendbc-behavior-output-")
     output_root = Path(runtime_outputs.name)
-    directory = ROOT / "tests/dba"
     profiles = load_test_profiles(ROOT)
-    sources = sorted(directory.glob("test_*.dba"))
-    for source in sources:
-        profile = profiles[source.name]
-        expected = source.with_suffix(".expected")
-        if not expected.is_file() or not expected.read_text().strip():
-            raise SystemExit(f"behavior witness has no non-empty oracle: {source}")
-        result = subprocess.run([str(args.opendbc), "inspect", str(source), "--json",
-                                 "--dialect", profile],
-                                text=True, capture_output=True, check=False)
-        if result.returncode != 0:
-            raise SystemExit(f"cannot inspect behavior witness {source}:\n{result.stderr}")
-        inspection = json.loads(result.stdout)
-        output = output_root / f"{source.stem}-{source.suffix[1:]}.out"
-        run = subprocess.run([
-            str(args.opendbc), "run", str(source), "--asset-root", str(source.parent),
-            "--dialect", profile, "--log-output", str(output), "--max-frames", "5",
-        ], text=True, capture_output=True, check=False)
-        if run.returncode != 0:
-            raise SystemExit(f"cannot execute behavior witness {source}:\n{run.stderr}")
-        expected_bytes = expected.read_bytes()
-        if not output.is_file() or output.read_bytes() != expected_bytes:
-            raise SystemExit(f"behavior witness output differs from its oracle: {source}")
-        digest = hashlib.sha256(expected_bytes).hexdigest()
+    sources = sorted((ROOT / "tests/dba").glob("test_*.dba"))
+    # Programs run concurrently; results are folded in source order so the manifest stays stable.
+    with ThreadPoolExecutor(args.jobs) as pool:
+        goldens = list(pool.map(
+            lambda source: run_golden(args.opendbc, profiles[source.name], source, output_root), sources))
+    for source, (inspection, digest) in zip(sources, goldens):
         for use in inspection["builtin_overloads"]:
-            key = (profile, int(use["symbol_id"]), int(use["overload_id"]))
+            key = (profiles[source.name], int(use["symbol_id"]), int(use["overload_id"]))
             witnesses.setdefault(key, (use["kind"], use["name"], "golden-output", source.name, digest))
 
     with tempfile.TemporaryDirectory(prefix="opendbc-behavior-") as temporary:
-        for profile, kind, name, code, oracle, test in UNIT_WITNESSES:
-            source = Path(temporary) / "witness.dba"
+        def inspect_unit(index: int, witness: tuple[str, str, str, str, str, str]) -> dict:
+            profile, kind, name, code, oracle, test = witness
+            source = Path(temporary) / f"witness-{index}.dba"
             source.write_text(code)
-            result = subprocess.run([str(args.opendbc), "inspect", str(source), "--json",
-                                     "--dialect", profile],
-                                    text=True, capture_output=True, check=False)
-            if result.returncode != 0:
-                raise SystemExit(f"cannot inspect unit behavior witness {name}:\n{result.stderr}")
-            inspection = json.loads(result.stdout)
+            return inspect(args.opendbc, source, profile, f"unit behavior witness {name}")
+
+        with ThreadPoolExecutor(args.jobs) as pool:
+            inspections = list(pool.map(inspect_unit, range(len(UNIT_WITNESSES)), UNIT_WITNESSES))
+        for (profile, kind, name, code, oracle, test), inspection in zip(UNIT_WITNESSES, inspections):
             matches = [use for use in inspection["builtin_overloads"]
                        if use["kind"] == kind and use["name"] == name]
             if len(matches) != 1:

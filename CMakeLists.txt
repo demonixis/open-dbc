@@ -713,9 +713,11 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_behavior_manifest.py
             --opendbc $<TARGET_FILE:opendbc> --check
     )
+    # Batch gates that run every witness or example take longer than the 120 s default.
     set_tests_properties(behavior_manifest_regeneration PROPERTIES
+        TIMEOUT 300
         LABELS "unit;language;qualification;portable"
-        RESOURCE_LOCK "opendbc_runtime"
+        RESOURCE_LOCK "dba_written_files"
     )
 
     add_test(
@@ -725,7 +727,6 @@ if(BUILD_TESTS)
     )
     set_tests_properties(corpus_expectations_regeneration PROPERTIES
         LABELS "unit;language;qualification;portable"
-        RESOURCE_LOCK "opendbc_runtime"
     )
 
     add_test(
@@ -734,8 +735,8 @@ if(BUILD_TESTS)
             --opendbc $<TARGET_FILE:opendbc>
     )
     set_tests_properties(example_frames PROPERTIES
+        TIMEOUT 300
         LABELS "runtime;qualification"
-        RESOURCE_LOCK "opendbc_runtime"
         ENVIRONMENT "OPENDBC_HEADLESS=1"
     )
 
@@ -749,6 +750,11 @@ if(BUILD_TESTS)
 
     # DBA script regression tests
     set(DBA_TEST_DIR "${CMAKE_SOURCE_DIR}/tests/dba")
+    # These programs write files beside their source. Their source run, their image run and the
+    # behavior manifest generator share a lock so two runs of one program never write the same
+    # file at once; every other test runs in parallel.
+    set(DBA_TESTS_WRITING_FILES
+        test_array_namespace test_dbpro_display_image_text test_dbpro_file_memblock test_file_io test_images)
     file(STRINGS "${DBA_TEST_DIR}/test_profiles.tsv" DBA_TEST_PROFILES)
     foreach(profile_row ${DBA_TEST_PROFILES})
         if(profile_row MATCHES "^#" OR profile_row STREQUAL "")
@@ -782,8 +788,10 @@ if(BUILD_TESTS)
             set_tests_properties("dba_${test_name}" PROPERTIES
                 TIMEOUT 60
                 LABELS "dba;runtime"
-                RESOURCE_LOCK "opendbc_runtime"
             )
+            if(test_name IN_LIST DBA_TESTS_WRITING_FILES)
+                set_tests_properties("dba_${test_name}" PROPERTIES RESOURCE_LOCK "dba_written_files")
+            endif()
             if(TARGET opendbc-runner)
                 add_test(
                     NAME "dba_image_${test_name}"
@@ -800,8 +808,10 @@ if(BUILD_TESTS)
                 set_tests_properties("dba_image_${test_name}" PROPERTIES
                     TIMEOUT 60
                     LABELS "dba;runtime;runner"
-                    RESOURCE_LOCK "opendbc_runtime"
                 )
+                if(test_name IN_LIST DBA_TESTS_WRITING_FILES)
+                    set_tests_properties("dba_image_${test_name}" PROPERTIES RESOURCE_LOCK "dba_written_files")
+                endif()
             endif()
         endif()
     endforeach()
