@@ -46,12 +46,62 @@ Publication:
 
 ## Rendering performance
 
-Audit the graphics stack and move it towards GPU-driven, data-driven rendering.
+Move the renderer towards GPU-driven, data-driven rendering. Today most 3D
+geometry is transformed, sorted and uploaded on the CPU every frame
+([rendering.md](rendering.md)). Release baseline, Apple silicon, headless, 300 frames:
 
+| Demo | Triangles | Batches | CPU ms per frame |
+| --- | ---: | ---: | ---: |
+| `hive_defender` | 41,545 | 1,527 | 26.5 |
+| `wave_racer` | 9,824 | 262 | 5.6 |
+| `dusk_rally` | 2,618 | 1,278 | 3.1 |
+| `reactor_breach` | 1,462 | 722 | 3.2 |
+
+In `hive_defender`, building object triangles takes 45% of the frame, sorting the
+624-byte `Triangle` records 38% and the VM under 1%. At frame 120, grouping opaque
+triangles by texture instead of depth cuts `dusk_rally` from 1,287 batches to 54
+and `hive_defender` from 7,556 to 7.
+
+Decisions:
+
+- Meshes move to GPU buffers in object space, shared by every object that uses
+  them, and the vertex shader transforms and lights them, as for terrains. The CPU
+  path stays for what has no GPU form yet (CPU skinning, locked objects, shadow
+  volumes); each move keeps the constraints listed in rendering.md.
+- Sort compact draw keys (pipeline, textures, then depth), never geometry records.
+  Transparent and additive surfaces keep their back-to-front order per triangle
+  until a per-object order is qualified.
+- Per-instance data comes from an instance-rate vertex buffer bound at an offset,
+  not from `SV_InstanceID` with `first_instance`.
+- One build of the world serves every view; cameras and VR eyes change uniforms only.
+- GPU culling with compute and indirect draws waits until CPU culling measures as
+  a bottleneck.
+
+Work, in order:
+
+- [ ] Benchmark: report vertices, batches and object counts without the debug
+  overlay, count culled objects, time each renderer step, and add stress scenes:
+  many objects sharing a mesh, many distinct ones, transparency, animation, two views.
+- [ ] Sort keys instead of `Triangle` records, opaque batches grouped by state, and
+  no per-frame copy of the cached triangle lists.
+- [ ] Per-mesh work out of the triangle loop: textures, `SurfaceStyle`, stage
+  lookups and the object matrix, whose sines and cosines are recomputed per vertex;
+  each vertex transformed once rather than once per triangle that uses it.
+- [ ] Bitmap 0: keep its GPU texture, upload only what changed, skip the quad when
+  the layer is empty.
+- [ ] Shared mesh resources: `INSTANCE OBJECT` shares instead of copying, vertex
+  edits copy on write, and a revision drives the GPU upload.
+- [ ] GPU-resident meshes: object-space buffers; the object matrix and material per
+  draw; stage coordinates, built-in effects and fading in the vertex shader; vertex
+  formats sized to the stages a mesh uses.
 - [ ] GPU instancing.
 - [ ] Automatic instancing of objects that share a mesh and material.
-- [ ] Automatic static batching.
-- [ ] Frustum culling and the other visibility tests.
+- [ ] Automatic static batching: `MAKE STATIC OBJECT` snapshots first, then objects
+  left unchanged, merged per material into spatial chunks that are culled.
+- [ ] Frustum culling and the other visibility tests: per limb and per chunk, bounds
+  centred on the mesh, a spatial grid for large scenes, shadow casters, then
+  occlusion if measurements call for it.
+- [ ] GPU skinning, with the bone palette in a storage buffer.
 
 ## Classic multiplayer
 
