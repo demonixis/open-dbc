@@ -510,7 +510,10 @@ namespace dbc::studio
             OptionalColor("Emissive", Mat.Emissive, 0x000000);
             OptionalColor("Specular", Mat.Specular, 0xFFFFFF);
             OptionalFloat("Specular power", Mat.SpecularPower, 10.0f, 0.25f, 0.0f, 255.0f);
-            ImGui::Checkbox("Casts a shadow", &Mat.CastShadow);
+            // Without SET SHADOW POSITION the engine casts from light 0 at the origin, which
+            // lies on the ground of most levels; the first caster gets a fixed source above.
+            if (ImGui::Checkbox("Casts a shadow", &Mat.CastShadow) && Mat.CastShadow && !Document_.Env.ShadowMode)
+                Document_.Env.ShadowMode = -1;
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("SET SHADOW SHADING ON, cast from the shadow source in Level Settings");
         }
@@ -577,13 +580,33 @@ namespace dbc::studio
                         ImGui::SetTooltip("SET SHADOW POSITION; objects cast with Casts a shadow in their material");
                     if (Env.ShadowMode)
                     {
-                        bool Fixed = *Env.ShadowMode == -1;
-                        if (ImGui::Checkbox("Fixed position", &Fixed))
-                            Env.ShadowMode = Fixed ? -1 : 0;
-                        if (Fixed)
+                        // Light 0 and missing lights sit at the origin, on the ground of most
+                        // levels, where every volume lies along the floor; the labels say so.
+                        const auto Label = [&](int Mode)
+                        {
+                            if (Mode == -1)
+                                return std::string("Fixed position");
+                            const scene::SceneNode* Light =
+                                Mode > 0 ? Document_.Find(scene::IdSpace::Light, Mode) : nullptr;
+                            if (Light != nullptr)
+                                return "Light " + std::to_string(Mode) + ": " + Light->Name;
+                            return "Light " + std::to_string(Mode) + " (at the origin)";
+                        };
+                        if (ImGui::BeginCombo("Cast from", Label(*Env.ShadowMode).c_str()))
+                        {
+                            std::vector<int> Modes = {-1, 0};
+                            for (const scene::SceneNode& Node : Document_.Nodes)
+                                if (Node.Kind == scene::NodeKind::Light)
+                                    Modes.push_back(Node.Id);
+                            if (std::find(Modes.begin(), Modes.end(), *Env.ShadowMode) == Modes.end())
+                                Modes.push_back(*Env.ShadowMode);
+                            for (const int Mode : Modes)
+                                if (ImGui::Selectable(Label(Mode).c_str(), Mode == *Env.ShadowMode))
+                                    Env.ShadowMode = Mode;
+                            ImGui::EndCombo();
+                        }
+                        if (*Env.ShadowMode == -1)
                             ImGui::DragFloat3("Shadow position", &Env.ShadowPosition.x, 0.5f);
-                        else
-                            ImGui::InputInt("Shadow light", &*Env.ShadowMode);
                     }
                 }
 

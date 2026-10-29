@@ -138,5 +138,9 @@ import, so sizes, origins and UVs match the program. Lighting is simple
 per-pixel shading with ambient, up to eight lights, specular and linear fog.
 Faces are drawn from both sides. Pro shadows use the engine's method: stencil
 volumes extruded 2000 units from the shadow source (light 0 at the origin
-unless `SET SHADOW POSITION` says otherwise), darkened by 25 %. A model the import
-cannot read shows as a 10-unit box.
+unless `SET SHADOW POSITION` says otherwise), darkened by 25 %. A source on the
+ground, such as light 0 or a light that does not exist, lays every volume along
+the floor, which comes out as streaks and a grid of z-fighting in the Scene view
+and the game alike. Ticking **Casts a shadow** in a level without a source
+therefore sets a fixed one at (0, 100, 0). A model the import cannot read shows
+as a 10-unit box.
