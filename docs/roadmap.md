@@ -79,23 +79,28 @@ Decisions:
 - One build of the world serves every view; cameras and VR eyes change uniforms only.
 - GPU culling with compute and indirect draws waits until CPU culling measures as
   a bottleneck.
+- No static batching while draw calls stay cheap (at most 0.16 ms per frame in the
+  scenes measured). If thousands of distinct static meshes ever call for it,
+  merging their geometry is the portable answer: SDL_GPU cannot give each draw of
+  a multi-draw indirect call its own instance offset.
 
 Work, in order:
 
-- [ ] Automatic static batching: `MAKE STATIC OBJECT` snapshots first, then objects
-  left unchanged, merged per material into spatial chunks that are culled.
-- [ ] Frustum culling and the other visibility tests: per limb and per chunk, bounds
-  centred on the mesh, a spatial grid for large scenes, shadow casters, then
-  occlusion if measurements call for it.
-- [ ] GPU meshes for what still takes the CPU path: texture-coordinate modes,
-  built-in effects and auxiliary stages in the vertex shader, with vertex formats
-  sized to the stages a mesh uses; glued and locked objects; reflection passes;
-  scenes with order-dependent opaque objects; transparent objects once a
-  per-object order is qualified.
-- [ ] GPU skinning, last since no demo model has bones: bone indices and weights in
-  the mesh's vertex buffer, the object's bone palette in a vertex storage buffer,
-  positions and normals skinned in the vertex shader. Queries, collision and shadow
-  volumes keep skinning on the CPU from the same palette.
+- [ ] Keep the GPU mesh draws while the objects stay unchanged: a camera move
+  rebuilds only the CPU triangles, and each view culls the draws it keeps.
+- [ ] GPU meshes for what still takes the CPU path in the demos, measured first
+  (`wave_racer`, `dusk_rally`, `sky_gardens`): texture-coordinate modes, built-in
+  effects and auxiliary stages in the vertex shader, with vertex formats sized to
+  the stages a mesh uses; glued and locked objects; reflection passes; scenes with
+  order-dependent opaque objects; transparent objects once a per-object order is
+  qualified.
+- [ ] GPU skinning, the slowest stress scene: bone indices and weights in the mesh's
+  vertex buffer, the object's bone palette in a vertex storage buffer, positions and
+  normals skinned in the vertex shader. Queries, collision and shadow volumes keep
+  skinning on the CPU from the same palette.
+- [ ] Frustum culling and the other visibility tests: per limb, bounds centred on
+  the mesh, a spatial grid for large scenes, shadow casters, then occlusion if
+  measurements call for it.
 
 ## Classic multiplayer
 
