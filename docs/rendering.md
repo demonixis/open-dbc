@@ -33,16 +33,17 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    shadow volumes are extruded on the CPU from the casters' triangles.
 3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
    triangles that share textures, blending, depth state and `SurfaceStyle` merge
-   into one `GpuBatch`. GPU meshes, one batch each, take the place of the objects'
-   opaque triangles: after the very early phase and lower render priorities, before
-   particles, bounds and transparency. The 2D layer follows: bitmap 0 as one quad when it
+   into one `GpuBatch`. GPU meshes take the place of the objects' opaque triangles:
+   after the very early phase and lower render priorities, before particles,
+   bounds and transparency. The 2D layer follows: bitmap 0 as one quad when it
    shows anything, text, primitives, pasted images and sprites.
-4. `UploadPreparedViews` copies the vertices of all views into one vertex buffer.
+4. `UploadPreparedViews` copies the vertices of all views into one vertex buffer,
+   each view's GPU mesh instance records after its vertices.
 5. `RecordPreparedView` draws the batches in passes: backdrop, 2D under the scene,
    opaque, transparent then additive pipelines, the reflection mask and reflected
    scene, shadow volumes and their overlay, 2D over the scene. Each batch is one
    draw call that binds nine textures and pushes its texture-stage uniforms; a GPU
-   mesh also binds its buffers and pushes its matrices.
+   mesh batch also binds its buffers and draws every instance of its group.
 6. `FinalizeFrame` records `STATISTIC(1)` (triangles) and `STATISTIC(5)`
    (batches), then clears bitmap 0 after a 3D frame.
 
@@ -67,9 +68,13 @@ locked, glued, shadowed nor reflecting, and when the mesh has no bones, built-in
 effect, effect, auxiliary or cube stage, texture-coordinate mode or zero-length
 vertex normal. Its vertices and indices are uploaded once per `MeshGeometry`
 revision, so instances and clones share them, and released when that geometry
-changes or goes 300 frames undrawn. Each draw brings the object's matrices, colour,
-material, texture scale and scroll, fade and lighting; the GPU culls back faces. A
-mesh without vertex normals is uploaded with one vertex per triangle corner and that
+changes or goes 300 frames undrawn. Each object brings a 176-byte instance record:
+its world and normal matrices, colour, material, texture scale and scroll, fade and
+lighting, which `VSMesh`, the engine shader's second vertex entry, reads at
+instance rate; the GPU culls back faces. Draws of one geometry with one texture and
+`SurfaceStyle` make one instanced draw call: their records are sorted together and
+bound at the group's first, so `first_instance` stays zero. A mesh without vertex
+normals is uploaded with one vertex per triangle corner and that
 triangle's normal, which the inverse transpose of the world matrix turns into the
 world face normal the CPU path would use. While reflection shading is on, or an
 opaque object depends on the depth order (no depth test or write, alpha-tested
@@ -79,9 +84,9 @@ transparency modes), every mesh keeps the CPU path.
 
 On the CPU path, time grows with visible triangles, not objects: clipping and
 filling `Triangle` records, ordering them, then converting and uploading
-`GpuVertex` records. A GPU mesh costs one draw call whatever its size, so with many
-visible meshes recording the draws takes most of the frame. The VM is a small share
-of a 3D frame.
+`GpuVertex` records. A group of GPU meshes costs one draw call whatever its size and
+count, but distinct meshes cost one each, so with many of them recording the draws
+takes most of the frame. The VM is a small share of a 3D frame.
 
 ## Compatibility constraints
 

@@ -57,11 +57,12 @@ headless runs:
 | `skinned` (stress) | 14,418 | 1 | 4.6 |
 | `distinct_meshes` (stress) | 127,712 | 1,705 | 2.9 |
 | `two_views` (stress) | 335,354 | 1,690 | 1.8 |
-| `shared_mesh` (stress) | 27,384 | 2,282 | 1.3 |
+| `shared_mesh` (stress) | 27,384 | 1 | 0.6 |
 | `hive_defender` | 86,776 | 212 | 1.1 |
 
-With one draw call per GPU mesh, recording the draws takes 50 to 80% of the frame
-in the three mesh stress scenes. The skinned scene stays on the CPU path, where building the
+Objects that share a geometry draw as instances of one call, but each distinct
+geometry still costs a draw call: recording them takes 70 to 80% of the
+`distinct_meshes` and `two_views` frames. The skinned scene stays on the CPU path, where building the
 triangles takes about half of the frame.
 
 Decisions:
@@ -81,7 +82,6 @@ Decisions:
 
 Work, in order:
 
-- [ ] GPU instancing.
 - [ ] Automatic instancing of objects that share a mesh and material.
 - [ ] Automatic static batching: `MAKE STATIC OBJECT` snapshots first, then objects
   left unchanged, merged per material into spatial chunks that are culled.
