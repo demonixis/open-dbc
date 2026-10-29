@@ -87,10 +87,6 @@ Work, in order:
 - [ ] GPU-resident meshes: object-space buffers; the object matrix and material per
   draw; stage coordinates, built-in effects and fading in the vertex shader; vertex
   formats sized to the stages a mesh uses.
-- [ ] GPU skinning: bone indices and weights in the mesh's vertex buffer, the
-  object's bone palette in a vertex storage buffer, positions and normals skinned
-  in the vertex shader. Queries, collision and shadow volumes keep skinning on the
-  CPU from the same palette.
 - [ ] GPU instancing.
 - [ ] Automatic instancing of objects that share a mesh and material.
 - [ ] Automatic static batching: `MAKE STATIC OBJECT` snapshots first, then objects
@@ -98,6 +94,10 @@ Work, in order:
 - [ ] Frustum culling and the other visibility tests: per limb and per chunk, bounds
   centred on the mesh, a spatial grid for large scenes, shadow casters, then
   occlusion if measurements call for it.
+- [ ] GPU skinning, last since no demo model has bones: bone indices and weights in
+  the mesh's vertex buffer, the object's bone palette in a vertex storage buffer,
+  positions and normals skinned in the vertex shader. Queries, collision and shadow
+  volumes keep skinning on the CPU from the same palette.
 
 ## Classic multiplayer
 
