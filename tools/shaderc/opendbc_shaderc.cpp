@@ -1,7 +1,9 @@
 // Compiles one engine shader source to the canonical files the engine loads:
-// <stem>.vert.spv, <stem>.frag.spv, <stem>.vert.msl and <stem>.frag.msl. The MSL comes
-// from the same SDL_shadercross transpiler as runtime effects, so its bindings follow
-// SDL_GPU's Metal layout.
+// <stem>.vert.spv, <stem>.frag.spv, <stem>.vert.msl and <stem>.frag.msl from VSMain and
+// PSMain, then <other-stem>.vert.spv and .msl for each further vertex entry point named
+// with its stem, which shares the source's varyings. The MSL comes from the same
+// SDL_shadercross transpiler as runtime effects, so its bindings follow SDL_GPU's Metal
+// layout.
 
 #include "path_utf8.hpp"
 #include <SDL3/SDL.h>
@@ -86,9 +88,9 @@ namespace
 
 int main(int ArgumentCount, char** Arguments)
 {
-    if (ArgumentCount != 3)
+    if (ArgumentCount < 3 || ArgumentCount % 2 == 0)
     {
-        std::fprintf(stderr, "usage: opendbc_shaderc <source.hlsl> <output-stem>\n");
+        std::fprintf(stderr, "usage: opendbc_shaderc <source.hlsl> <output-stem> [<vertex-entry> <output-stem>]...\n");
         return 2;
     }
     const std::filesystem::path SourcePath = Arguments[1];
@@ -104,9 +106,12 @@ int main(int ArgumentCount, char** Arguments)
         return 1;
     }
     const std::string IncludeDirectory = dbc::PathToUtf8(SourcePath.parent_path());
-    const bool Compiled =
+    bool Compiled =
         CompileStage(Source, IncludeDirectory, Arguments[2], "VSMain", SDL_SHADERCROSS_SHADERSTAGE_VERTEX, "vert") &&
         CompileStage(Source, IncludeDirectory, Arguments[2], "PSMain", SDL_SHADERCROSS_SHADERSTAGE_FRAGMENT, "frag");
+    for (int Index = 3; Compiled && Index + 1 < ArgumentCount; Index += 2)
+        Compiled = CompileStage(Source, IncludeDirectory, Arguments[Index + 1], Arguments[Index],
+                                SDL_SHADERCROSS_SHADERSTAGE_VERTEX, "vert");
     SDL_ShaderCross_Quit();
     return Compiled ? 0 : 1;
 }

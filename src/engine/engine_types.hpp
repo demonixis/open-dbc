@@ -672,9 +672,11 @@ namespace dbc
         SurfaceStyle Style{};
         std::array<SDL_GPUTexture*, 7> AuxiliaryTextures{};
         SDL_GPUTexture* CubeTexture = nullptr;
-        // An object mesh drawn from its GPU buffers, its per-draw inputs at vertex MeshRecord of the frame's buffer.
+        // Instances of an object mesh drawn from its GPU buffers: the first one's draw, and where their records
+        // start among the view's GpuMeshInstance records.
         const GpuMeshDraw* MeshDraw = nullptr;
-        Uint32 MeshRecord = 0;
+        Uint32 FirstInstance = 0;
+        Uint32 InstanceCount = 0;
         // Static world-space terrain: drawn from its own vertex buffer with the view's terrain indices. A mesh
         // draws IndexCount indices from StaticIndices.
         SDL_GPUBuffer* StaticVertices = nullptr;
@@ -704,17 +706,21 @@ namespace dbc
         float ViewProj[16]{};
     };
 
-    // MeshUniforms of the engine vertex shader, column-major like glm; the defaults are identities.
-    struct GpuMeshUniforms
+    // One instance of a GPU-resident mesh, as the engine's VSMesh reads it: the object-to-world and normal
+    // matrices by rows, the normal rows' w holding the fade, 1 when lit and 1 to normalise; the colour scale, the
+    // texture scale (xy) and scroll (zw), and the material that CPU vertices carry in their box colours.
+    struct GpuMeshInstance
     {
-        float NormalTransform[16]{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                                  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
-        float ColorScale[4]{1.0f, 1.0f, 1.0f, 1.0f};
-        float UvTransform[4]{1.0f, 1.0f, 0.0f, 0.0f};
-        float NormalParams[4]{1.0f, 1.0f, 0.0f, 0.0f};
+        float World[3][4]{};
+        float Normal[3][4]{};
+        float ColorScale[4]{};
+        float UvTransform[4]{};
+        float BoxTr[4]{};
+        float BoxBr[4]{};
+        float BoxBl[4]{};
     };
 
-    static_assert(sizeof(GpuMeshUniforms) == 112, "mesh UBO size mismatch");
+    static_assert(sizeof(GpuMeshInstance) == 11 * 4 * sizeof(float), "VSMesh reads eleven float4 per instance");
 
     struct GpuFragmentUniforms
     {

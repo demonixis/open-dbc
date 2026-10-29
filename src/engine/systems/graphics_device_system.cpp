@@ -1143,7 +1143,7 @@ namespace dbc
             return false;
         }
 
-        SDL_GPUShader* VertexShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_VERTEX, 0, 3);
+        SDL_GPUShader* VertexShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_VERTEX, 0, 2);
         SDL_GPUShader* FragmentShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_FRAGMENT, 9, 2);
 
         if (!VertexShader || !FragmentShader)
@@ -1396,34 +1396,45 @@ namespace dbc
         TerrainInfo.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_LINE;
         GpuTerrainPipelines_[1] = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &TerrainInfo);
 
-        // GPU-resident object meshes: object-space position, normal, texture coordinates and colour per vertex, and
-        // the shader's other inputs once per draw from a GpuVertex record, as for terrain.
-        SDL_GPUVertexBufferDescription MeshBuffers[2]{TerrainBuffers[0], TerrainBuffers[1]};
-        MeshBuffers[0].pitch = sizeof(GpuMeshVertex);
-        SDL_GPUVertexAttribute MeshAttributes[15]{};
-        std::copy(std::begin(Attributes), std::end(Attributes), std::begin(MeshAttributes));
-        for (SDL_GPUVertexAttribute& Attribute : MeshAttributes)
-            Attribute.buffer_slot = 1;
-        MeshAttributes[0].buffer_slot = 0;
-        MeshAttributes[0].offset = offsetof(GpuMeshVertex, Position);
-        MeshAttributes[1].buffer_slot = 0;
-        MeshAttributes[1].offset = offsetof(GpuMeshVertex, Normal);
-        MeshAttributes[2].buffer_slot = 0;
-        MeshAttributes[2].offset = offsetof(GpuMeshVertex, Color);
-        MeshAttributes[3].buffer_slot = 0;
-        MeshAttributes[3].offset = offsetof(GpuMeshVertex, Uv);
-        SDL_GPUGraphicsPipelineCreateInfo MeshInfo = PipelineInfo;
-        MeshInfo.vertex_input_state.vertex_buffer_descriptions = MeshBuffers;
-        MeshInfo.vertex_input_state.num_vertex_buffers = 2;
-        MeshInfo.vertex_input_state.vertex_attributes = MeshAttributes;
-        // The CPU path culls the triangles facing away from the camera; the GPU does it here. Object triangles
-        // wind the other way round from terrain ones.
-        MeshInfo.rasterizer_state.front_face = SDL_GPU_FRONTFACE_CLOCKWISE;
-        for (std::size_t Index = 0; Index < GpuMeshPipelines_.size(); ++Index)
+        // GPU-resident object meshes, through VSMesh: object-space position, normal, colour and texture coordinates
+        // per vertex, and each instance's GpuMeshInstance record.
+        if (SDL_GPUShader* MeshShader =
+                CreateEngineShader("dbclassic_mesh", SDL_GPU_SHADERSTAGE_VERTEX, 0, 2, "VSMesh"))
         {
-            MeshInfo.rasterizer_state.cull_mode = Index < 2 ? SDL_GPU_CULLMODE_BACK : SDL_GPU_CULLMODE_NONE;
-            MeshInfo.rasterizer_state.fill_mode = Index % 2 == 0 ? SDL_GPU_FILLMODE_FILL : SDL_GPU_FILLMODE_LINE;
-            GpuMeshPipelines_[Index] = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &MeshInfo);
+            SDL_GPUVertexBufferDescription MeshBuffers[2]{TerrainBuffers[0], TerrainBuffers[1]};
+            MeshBuffers[0].pitch = sizeof(GpuMeshVertex);
+            MeshBuffers[1].pitch = sizeof(GpuMeshInstance);
+            SDL_GPUVertexAttribute MeshAttributes[15]{};
+            const Uint32 VertexOffsets[4]{offsetof(GpuMeshVertex, Position), offsetof(GpuMeshVertex, Normal),
+                                          offsetof(GpuMeshVertex, Color), offsetof(GpuMeshVertex, Uv)};
+            const SDL_GPUVertexElementFormat VertexFormats[4]{
+                SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2};
+            for (Uint32 Location = 0; Location < 15; ++Location)
+            {
+                SDL_GPUVertexAttribute& Attribute = MeshAttributes[Location];
+                Attribute.location = Location;
+                Attribute.buffer_slot = Location < 4 ? 0 : 1;
+                // The instance record is eleven consecutive float4s.
+                Attribute.format = Location < 4 ? VertexFormats[Location] : SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
+                Attribute.offset =
+                    Location < 4 ? VertexOffsets[Location] : (Location - 4) * static_cast<Uint32>(sizeof(float) * 4);
+            }
+            SDL_GPUGraphicsPipelineCreateInfo MeshInfo = PipelineInfo;
+            MeshInfo.vertex_shader = MeshShader;
+            MeshInfo.vertex_input_state.vertex_buffer_descriptions = MeshBuffers;
+            MeshInfo.vertex_input_state.num_vertex_buffers = 2;
+            MeshInfo.vertex_input_state.vertex_attributes = MeshAttributes;
+            // The CPU path culls the triangles facing away from the camera; the GPU does it here. Object triangles
+            // wind the other way round from terrain ones.
+            MeshInfo.rasterizer_state.front_face = SDL_GPU_FRONTFACE_CLOCKWISE;
+            for (std::size_t Index = 0; Index < GpuMeshPipelines_.size(); ++Index)
+            {
+                MeshInfo.rasterizer_state.cull_mode = Index < 2 ? SDL_GPU_CULLMODE_BACK : SDL_GPU_CULLMODE_NONE;
+                MeshInfo.rasterizer_state.fill_mode = Index % 2 == 0 ? SDL_GPU_FILLMODE_FILL : SDL_GPU_FILLMODE_LINE;
+                GpuMeshPipelines_[Index] = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &MeshInfo);
+            }
+            SDL_ReleaseGPUShader(GpuDevice_, MeshShader);
         }
 
         // Wireframe surfaces rasterise the same triangles as lines.
@@ -2080,7 +2091,8 @@ namespace dbc
 
     [[nodiscard]] SDL_GPUShader* GraphicsDeviceSystem::CreateEngineShader(std::string_view Name,
                                                                           SDL_GPUShaderStage Stage, Uint32 NumSamplers,
-                                                                          Uint32 NumUniformBuffers)
+                                                                          Uint32 NumUniformBuffers,
+                                                                          std::string_view EntryPoint)
     {
         if (!GpuDevice_)
             return nullptr;
@@ -2102,7 +2114,7 @@ namespace dbc
             DBC_LOG_ERROR("shader load failed: {}", Path);
             return nullptr;
         }
-        Definition.EntryPoint = Vertex ? "VSMain" : "PSMain";
+        Definition.EntryPoint = !EntryPoint.empty() ? std::string(EntryPoint) : (Vertex ? "VSMain" : "PSMain");
         Definition.MslEntryPoint = Definition.EntryPoint;
         Definition.SamplerCount = NumSamplers;
         Definition.UniformBufferCount = NumUniformBuffers;

@@ -265,9 +265,11 @@ namespace dbc
         // --- Private GPU helpers ---
 
         [[nodiscard]] static std::vector<Uint8> LoadFileBytes(const std::string& Path);
-        // Loads a canonical engine shader (shaders/<Name>.<vert|frag>.<spv|msl>) in the device's native format.
+        // Loads a canonical engine shader (shaders/<Name>.<vert|frag>.<spv|msl>) in the device's native format,
+        // its entry point VSMain or PSMain unless named.
         [[nodiscard]] SDL_GPUShader* CreateEngineShader(std::string_view Name, SDL_GPUShaderStage Stage,
-                                                        Uint32 NumSamplers, Uint32 NumUniformBuffers);
+                                                        Uint32 NumSamplers, Uint32 NumUniformBuffers,
+                                                        std::string_view EntryPoint = {});
         // MSL when the device cannot take SPIR-V (Metal); compiled shaders ship both forms.
         [[nodiscard]] SDL_GPUShaderFormat NativeShaderFormat() const;
         [[nodiscard]] SDL_GPUShader* CreateGpuShader(const EffectStage& EffectStageValue, SDL_GPUShaderStage Stage);

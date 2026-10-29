@@ -77,6 +77,7 @@ Desktop.ini
 *.spv
 !shaders/dbclassic_tri.frag.spv
 !shaders/dbclassic_tri.vert.spv
+!shaders/dbclassic_mesh.vert.spv
 !shaders/vr_transfer.vert.spv
 !shaders/vr_transfer.frag.spv
 !tools/studio/shaders/scene_line.frag.spv

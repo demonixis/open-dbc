@@ -2440,6 +2440,54 @@ TEST_CASE("TEXTURE OBJECT refreshes a still scene")
     CHECK(DrawnTexture() != First);
 }
 
+// The scene drawn with and without GPU meshes: the GPU draws and draw calls of the first frame, the pixels the
+// second covers and those where the two differ beyond rounding.
+struct GpuMeshComparison
+{
+    std::size_t GpuDraws = 0;
+    int DrawCalls = 0;
+    int Covered = 0;
+    int Different = 0;
+};
+
+static GpuMeshComparison CompareGpuMeshFrames(dbc::EngineKernel& Kernel)
+{
+    const auto Capture = [&](bool GpuMeshes)
+    {
+        Kernel.Renderer().SetGpuMeshesEnabled(GpuMeshes);
+        SDL_Surface* Frame = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Frame != nullptr);
+        return Frame;
+    };
+    GpuMeshComparison Result;
+    SDL_Surface* Gpu = Capture(true);
+    Result.GpuDraws = Kernel.Renderer().CachedMeshDraws().size();
+    Result.DrawCalls = Kernel.Renderer().LastFrameDrawCalls();
+    SDL_Surface* Cpu = Capture(false);
+    CHECK(Kernel.Renderer().CachedMeshDraws().empty());
+    REQUIRE(Gpu->w == Cpu->w);
+    REQUIRE(Gpu->h == Cpu->h);
+    // The two paths transform and clip in different orders, so only rounding and edge pixels may differ.
+    for (int Y = 0; Y < Gpu->h; ++Y)
+    {
+        for (int X = 0; X < Gpu->w; ++X)
+        {
+            Uint8 GpuPixel[4]{};
+            Uint8 CpuPixel[4]{};
+            REQUIRE(SDL_ReadSurfacePixel(Gpu, X, Y, &GpuPixel[0], &GpuPixel[1], &GpuPixel[2], &GpuPixel[3]));
+            REQUIRE(SDL_ReadSurfacePixel(Cpu, X, Y, &CpuPixel[0], &CpuPixel[1], &CpuPixel[2], &CpuPixel[3]));
+            Result.Covered += (CpuPixel[0] | CpuPixel[1] | CpuPixel[2]) != 0 ? 1 : 0;
+            int Difference = 0;
+            for (int Channel = 0; Channel < 3; ++Channel)
+                Difference += std::abs(static_cast<int>(GpuPixel[Channel]) - static_cast<int>(CpuPixel[Channel]));
+            Result.Different += Difference > 12 ? 1 : 0;
+        }
+    }
+    SDL_DestroySurface(Cpu);
+    SDL_DestroySurface(Gpu);
+    return Result;
+}
+
 TEST_CASE("Meshes drawn from GPU buffers look as the CPU path draws them")
 {
     dbc::EngineKernel Kernel;
@@ -2492,42 +2540,48 @@ TEST_CASE("Meshes drawn from GPU buffers look as the CPU path draws them")
     Objects.PositionObject(4, 0.0f, 3.5f, 16.0f);
     REQUIRE(Kernel.Core().EnsureInitialized());
 
-    const auto Capture = [&](bool GpuMeshes)
-    {
-        Kernel.Renderer().SetGpuMeshesEnabled(GpuMeshes);
-        SDL_Surface* Frame = Kernel.Renderer().CaptureScreen();
-        REQUIRE(Frame != nullptr);
-        return Frame;
-    };
-    SDL_Surface* Gpu = Capture(true);
-    CHECK(Kernel.Renderer().CachedMeshDraws().size() == 6);
-    SDL_Surface* Cpu = Capture(false);
-    CHECK(Kernel.Renderer().CachedMeshDraws().empty());
-    REQUIRE(Gpu->w == Cpu->w);
-    REQUIRE(Gpu->h == Cpu->h);
+    const GpuMeshComparison Frames = CompareGpuMeshFrames(Kernel);
+    CHECK(Frames.GpuDraws == 6);
+    CHECK(Frames.Covered > 640 * 480 / 10);
+    CHECK(Frames.Different * 200 < Frames.Covered);
+}
 
-    // The two paths transform and clip in different orders, so only rounding and edge pixels may differ.
-    int Covered = 0;
-    int Different = 0;
-    for (int Y = 0; Y < Gpu->h; ++Y)
+TEST_CASE("Objects that share a mesh, texture and surface draw as instances of one call")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 2.0f, -4.0f, &Error); });
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    const std::filesystem::path Images = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp";
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "beam.bmp").string(), 1));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "spark.bmp").string(), 2));
+    Objects.MakeObjectSphere(1, 1.5f, 12, 10);
+    Objects.TextureObject(1, 1);
+    // Clones and instances in a grid, each placed, turned, scaled and coloured its own way; the last one textured
+    // differently.
+    for (int Id = 2; Id <= 12; ++Id)
     {
-        for (int X = 0; X < Gpu->w; ++X)
-        {
-            Uint8 GpuPixel[4]{};
-            Uint8 CpuPixel[4]{};
-            REQUIRE(SDL_ReadSurfacePixel(Gpu, X, Y, &GpuPixel[0], &GpuPixel[1], &GpuPixel[2], &GpuPixel[3]));
-            REQUIRE(SDL_ReadSurfacePixel(Cpu, X, Y, &CpuPixel[0], &CpuPixel[1], &CpuPixel[2], &CpuPixel[3]));
-            Covered += (CpuPixel[0] | CpuPixel[1] | CpuPixel[2]) != 0 ? 1 : 0;
-            int Difference = 0;
-            for (int Channel = 0; Channel < 3; ++Channel)
-                Difference += std::abs(static_cast<int>(GpuPixel[Channel]) - static_cast<int>(CpuPixel[Channel]));
-            Different += Difference > 12 ? 1 : 0;
-        }
+        if (Id % 2 == 0)
+            Objects.CloneObject(Id, 1);
+        else
+            Objects.InstanceObject(Id, 1);
+        Objects.PositionObject(Id, static_cast<float>(Id % 4) * 2.0f - 3.0f, static_cast<float>(Id / 4) * 1.8f - 1.0f,
+                               8.0f + static_cast<float>(Id % 3));
+        Objects.RotateObject(Id, static_cast<float>(Id) * 17.0f, static_cast<float>(Id) * 29.0f, 0.0f);
+        Objects.ScaleObject(Id, 60.0f + static_cast<float>(Id) * 5.0f, 100.0f, 100.0f);
+        Objects.ColorObject(Id, 0x204060 * Id);
     }
-    CHECK(Covered > Gpu->w * Gpu->h / 10);
-    CHECK(Different * 200 < Covered);
-    SDL_DestroySurface(Cpu);
-    SDL_DestroySurface(Gpu);
+    Objects.HideObject(1);
+    Objects.TextureObject(12, 2);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+
+    const GpuMeshComparison Frames = CompareGpuMeshFrames(Kernel);
+    CHECK(Frames.GpuDraws == 11);
+    // Ten instances in one call, the differently textured one in another.
+    CHECK(Frames.DrawCalls == 2);
+    CHECK(Frames.Covered > 640 * 480 / 40);
+    CHECK(Frames.Different * 200 < Frames.Covered);
 }
 
 TEST_CASE("Meshes stay on the CPU path where blending or the depth order decides the result")

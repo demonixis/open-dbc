@@ -13,14 +13,6 @@ struct type_ModelUniforms
     float4x4 ModelView;
 };
 
-struct type_MeshUniforms
-{
-    float4x4 NormalTransform;
-    float4 ColorScale;
-    float4 UvTransform;
-    float4 NormalParams;
-};
-
 struct type_FragmentUniforms
 {
     float4 dir_light_direction;
@@ -77,34 +69,15 @@ struct VSMain_in
     float3 in_var_TEXCOORD11 [[attribute(14)]];
 };
 
-vertex VSMain_out VSMain(VSMain_in in [[stage_in]], constant type_VertexUniforms& VertexUniforms [[buffer(0)]], constant type_ModelUniforms& ModelUniforms [[buffer(1)]], constant type_MeshUniforms& MeshUniforms [[buffer(2)]])
+vertex VSMain_out VSMain(VSMain_in in [[stage_in]], constant type_VertexUniforms& VertexUniforms [[buffer(0)]], constant type_ModelUniforms& ModelUniforms [[buffer(1)]])
 {
     VSMain_out out = {};
-    float4 _131 = ModelUniforms.ModelView * float4(in.in_var_POSITION, 1.0);
-    float3 _145 = in.in_var_NORMAL * float3x3(float4(MeshUniforms.NormalTransform[0][0], MeshUniforms.NormalTransform[1][0], MeshUniforms.NormalTransform[2][0], MeshUniforms.NormalTransform[3][0]).xyz, float4(MeshUniforms.NormalTransform[0][1], MeshUniforms.NormalTransform[1][1], MeshUniforms.NormalTransform[2][1], MeshUniforms.NormalTransform[3][1]).xyz, float4(MeshUniforms.NormalTransform[0][2], MeshUniforms.NormalTransform[1][2], MeshUniforms.NormalTransform[2][2], MeshUniforms.NormalTransform[3][2]).xyz);
-    float3 _158;
-    if (MeshUniforms.NormalParams.z > 0.5)
-    {
-        float3 _157;
-        if (dot(_145, _145) > 9.9999999600419720025001879548654e-13)
-        {
-            _157 = fast::normalize(_145);
-        }
-        else
-        {
-            _157 = float3(0.0, 0.0, 1.0);
-        }
-        _158 = _157;
-    }
-    else
-    {
-        _158 = _145;
-    }
-    out.gl_Position = VertexUniforms.ViewProj * _131;
-    out.out_var_TEXCOORD0 = _131.xyz;
-    out.out_var_TEXCOORD1 = _158 * (MeshUniforms.NormalParams.x * MeshUniforms.NormalParams.y);
-    out.out_var_TEXCOORD2 = (in.in_var_TEXCOORD0 * MeshUniforms.UvTransform.xy) + MeshUniforms.UvTransform.zw;
-    out.out_var_TEXCOORD3 = in.in_var_COLOR * MeshUniforms.ColorScale;
+    float4 _117 = ModelUniforms.ModelView * float4(in.in_var_POSITION, 1.0);
+    out.gl_Position = VertexUniforms.ViewProj * _117;
+    out.out_var_TEXCOORD0 = _117.xyz;
+    out.out_var_TEXCOORD1 = in.in_var_NORMAL * float3x3(float4(ModelUniforms.ModelView[0][0], ModelUniforms.ModelView[1][0], ModelUniforms.ModelView[2][0], ModelUniforms.ModelView[3][0]).xyz, float4(ModelUniforms.ModelView[0][1], ModelUniforms.ModelView[1][1], ModelUniforms.ModelView[2][1], ModelUniforms.ModelView[3][1]).xyz, float4(ModelUniforms.ModelView[0][2], ModelUniforms.ModelView[1][2], ModelUniforms.ModelView[2][2], ModelUniforms.ModelView[3][2]).xyz);
+    out.out_var_TEXCOORD2 = in.in_var_TEXCOORD0;
+    out.out_var_TEXCOORD3 = in.in_var_COLOR;
     out.out_var_TEXCOORD4 = in.in_var_TEXCOORD1;
     out.out_var_TEXCOORD5 = in.in_var_TEXCOORD2;
     out.out_var_TEXCOORD6 = in.in_var_TEXCOORD3;

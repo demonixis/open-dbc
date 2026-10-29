@@ -28,6 +28,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <string_view>
+#include <tuple>
 
 #if __has_include(<SDL3_image/SDL_image.h>)
 #include <SDL3_image/SDL_image.h>
@@ -2320,26 +2321,88 @@ namespace dbc
 
         GpuMeshDraw Draw;
         Draw.Geometry = MeshValue.SharedGeometry();
-        Draw.World = World;
-        Draw.Normal = FaceNormals ? glm::transpose(glm::inverse(glm::mat3(World))) * (Determinant < 0.0f ? -1.0f : 1.0f)
-                                  : ToWorld.NormalMatrix();
+        GpuMeshInstance& Instance = Draw.Instance;
+        const glm::mat3 Normal =
+            FaceNormals ? glm::transpose(glm::inverse(glm::mat3(World))) * (Determinant < 0.0f ? -1.0f : 1.0f)
+                        : ToWorld.NormalMatrix();
+        for (int Row = 0; Row < 3; ++Row)
+        {
+            for (int Column = 0; Column < 4; ++Column)
+                Instance.World[Row][Column] = World[Column][Row];
+            for (int Column = 0; Column < 3; ++Column)
+                Instance.Normal[Row][Column] = Normal[Column][Row];
+        }
+        Instance.Normal[0][3] = std::max(Object.FadeNormalScale, 0.015f);
+        Instance.Normal[1][3] = Object.UseLighting ? 1.0f : 0.0f;
+        Instance.Normal[2][3] = FaceNormals || K.Renderer().NormalizeNormals() ? 1.0f : 0.0f;
         // As AppendGpuTriangle scales the corner colours by the diffuse material.
         const auto Channel = [](uint32_t Packed, unsigned Shift)
         { return static_cast<float>((Packed >> Shift) & 0xFFu) / 255.0f; };
-        Draw.ColorScale = {Surface.Color.r * Channel(Style.DiffuseColor, 16u),
-                           Surface.Color.g * Channel(Style.DiffuseColor, 8u),
-                           Surface.Color.b * Channel(Style.DiffuseColor, 0u), Surface.Color.a};
+        Instance.ColorScale[0] = Surface.Color.r * Channel(Style.DiffuseColor, 16u);
+        Instance.ColorScale[1] = Surface.Color.g * Channel(Style.DiffuseColor, 8u);
+        Instance.ColorScale[2] = Surface.Color.b * Channel(Style.DiffuseColor, 0u);
+        Instance.ColorScale[3] = Surface.Color.a;
         // A mesh without texture coordinates takes the scroll offset alone, as the CPU path does.
-        Draw.UvTransform = {Object.TexScaleU, Object.TexScaleV, Object.TexScrollU, Object.TexScrollV};
-        Draw.Fade = std::max(Object.FadeNormalScale, 0.015f);
-        Draw.Lit = Object.UseLighting;
-        Draw.NormalizeNormals = FaceNormals || K.Renderer().NormalizeNormals();
+        Instance.UvTransform[0] = Object.TexScaleU;
+        Instance.UvTransform[1] = Object.TexScaleV;
+        Instance.UvTransform[2] = Object.TexScrollU;
+        Instance.UvTransform[3] = Object.TexScrollV;
+        GpuVertex Material{};
+        FillSurfaceMaterial(Material, Style);
+        const float BoxTr[4]{Material.BoxTrR, Material.BoxTrG, Material.BoxTrB, Material.BoxTrA};
+        const float BoxBr[4]{Material.BoxBrR, Material.BoxBrG, Material.BoxBrB, Material.BoxBrA};
+        const float BoxBl[4]{Material.BoxBlR, Material.BoxBlG, Material.BoxBlB, Material.BoxBlA};
+        std::copy(std::begin(BoxTr), std::end(BoxTr), Instance.BoxTr);
+        std::copy(std::begin(BoxBr), std::end(BoxBr), Instance.BoxBr);
+        std::copy(std::begin(BoxBl), std::end(BoxBl), Instance.BoxBl);
         Draw.Cull = Object.Cull;
         Draw.Texture = Surface.GpuTexture;
         Draw.Style = Style;
-        FillSurfaceMaterial(Draw.Record, Style);
+        Draw.StyleHash = Surface.StyleHash;
         Draws.push_back(std::move(Draw));
         return true;
+    }
+
+    // Whether two GPU mesh draws can be instances of one draw call.
+    [[nodiscard]] bool SameGpuMeshDraw(const GpuMeshDraw& A, const GpuMeshDraw& B)
+    {
+        return A.Geometry == B.Geometry && A.Texture == B.Texture && A.Cull == B.Cull && A.StyleHash == B.StyleHash &&
+               A.Style == B.Style;
+    }
+
+    // Brings together the draws that one instanced call can make. Their order is otherwise free: GPU meshes are
+    // opaque and depth tested.
+    void GroupGpuMeshDraws(std::vector<GpuMeshDraw>& Draws)
+    {
+        // Compact keys are sorted, then each draw moves once, along the cycles of the permutation.
+        using Key = std::tuple<uint64_t, uint32_t, bool, uintptr_t, std::size_t>;
+        std::vector<Key> Keys(Draws.size());
+        for (std::size_t Index = 0; Index < Draws.size(); ++Index)
+        {
+            const GpuMeshDraw& Draw = Draws[Index];
+            Keys[Index] = {Draw.Geometry->Revision, Draw.StyleHash, Draw.Cull,
+                           reinterpret_cast<uintptr_t>(Draw.Texture), Index};
+        }
+        std::sort(Keys.begin(), Keys.end());
+        std::vector<std::size_t> Source(Draws.size());
+        for (std::size_t Position = 0; Position < Keys.size(); ++Position)
+            Source[Position] = std::get<4>(Keys[Position]);
+        for (std::size_t Start = 0; Start < Source.size(); ++Start)
+        {
+            if (Source[Start] == Start)
+                continue;
+            GpuMeshDraw Moved = std::move(Draws[Start]);
+            std::size_t Position = Start;
+            while (Source[Position] != Start)
+            {
+                const std::size_t From = Source[Position];
+                Draws[Position] = std::move(Draws[From]);
+                Source[Position] = Position;
+                Position = From;
+            }
+            Draws[Position] = std::move(Moved);
+            Source[Position] = Position;
+        }
     }
 
     // Scene, when given, receives how many objects the pass went through, showed and culled and, with GpuMeshes,
@@ -3497,6 +3560,7 @@ namespace dbc
                 dbc::RenderParticles(K, Tris);
                 Uint64 OrderStart = SDL_GetPerformanceCounter();
                 OrderWorldTriangles(Scene->World);
+                dbc::GroupGpuMeshDraws(Scene->MeshDraws);
                 OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
                 if (HasReflection)
                 {
@@ -3557,7 +3621,7 @@ namespace dbc
         auto& Batches = Geometry.Batches;
         Vertices.clear();
         Batches.clear();
-        Geometry.MeshRecords = 0;
+        Geometry.MeshInstances = 0;
         Geometry.MeshIndices = 0;
         {
             const std::size_t TriangleCount =
@@ -3926,34 +3990,44 @@ namespace dbc
         if (!UploadStaticTerrains(Geometry, Cmd) || !UploadGpuMeshes(Cmd))
             return false;
         auto& Gpu = Kernel_.Gpu();
-        std::size_t Count = 0;
+        // Each view's vertices, then its GPU mesh instance records, in the one frame vertex buffer.
+        std::size_t Bytes = 0;
         for (auto& View : Geometry)
         {
-            if (View.Vertices.size() > std::numeric_limits<Uint32>::max() / sizeof(GpuVertex) - Count)
+            const std::size_t ViewBytes =
+                View.Vertices.size() * sizeof(GpuVertex) + std::size_t{View.MeshInstances} * sizeof(GpuMeshInstance);
+            if (ViewBytes > std::numeric_limits<Uint32>::max() - Bytes)
             {
                 ReportRenderError("combined view geometry exceeds the GPU buffer limit");
                 return false;
             }
-            View.VertexOffset = static_cast<Uint32>(Count * sizeof(GpuVertex));
-            Count += View.Vertices.size();
+            View.VertexOffset = static_cast<Uint32>(Bytes);
+            View.MeshInstanceOffset = static_cast<Uint32>(Bytes + View.Vertices.size() * sizeof(GpuVertex));
+            Bytes += ViewBytes;
         }
-        if (!Count)
+        if (!Bytes)
             return true;
-        if (!Cmd || !Gpu.EnsureGpuVertexCapacity(static_cast<Uint32>(Count)))
+        const auto Count = static_cast<Uint32>((Bytes + sizeof(GpuVertex) - 1) / sizeof(GpuVertex));
+        if (!Cmd || !Gpu.EnsureGpuVertexCapacity(Count))
             return false;
         auto* Mapped =
             static_cast<std::byte*>(SDL_MapGPUTransferBuffer(Gpu.GpuDevice(), Gpu.GpuTransferBuffer(), true));
         if (!Mapped)
             return false;
         for (const auto& View : Geometry)
+        {
             if (!View.Vertices.empty())
                 SDL_memcpy(Mapped + View.VertexOffset, View.Vertices.data(), View.Vertices.size() * sizeof(GpuVertex));
+            for (Uint32 Index = 0; Index < View.MeshInstances; ++Index)
+                SDL_memcpy(Mapped + View.MeshInstanceOffset + Index * sizeof(GpuMeshInstance),
+                           &View.Scene->MeshDraws[Index].Instance, sizeof(GpuMeshInstance));
+        }
         SDL_UnmapGPUTransferBuffer(Gpu.GpuDevice(), Gpu.GpuTransferBuffer());
         SDL_GPUCopyPass* Copy = SDL_BeginGPUCopyPass(Cmd);
         if (!Copy)
             return false;
         SDL_GPUTransferBufferLocation Source{Gpu.GpuTransferBuffer(), 0};
-        SDL_GPUBufferRegion Destination{Gpu.GpuVertexBuffer(), 0, static_cast<Uint32>(Count * sizeof(GpuVertex))};
+        SDL_GPUBufferRegion Destination{Gpu.GpuVertexBuffer(), 0, static_cast<Uint32>(Bytes)};
         SDL_UploadToGPUBuffer(Copy, &Source, &Destination, true);
         SDL_EndGPUCopyPass(Copy);
         return true;
@@ -4017,14 +4091,10 @@ namespace dbc
         memcpy(OrthoUbo.ViewProj, &ProjOrtho[0][0], 64);
 
         SDL_PushGPUVertexUniformData(Cmd, 0, &PerspUbo, sizeof(GpuVertexUniforms));
-        // Slot 1 is the model-view matrix: identity for view-space vertices, the view for static terrain. Slot 2
-        // takes normals, colours and texture coordinates as they are, except for the draws that set it.
+        // Slot 1 is the model-view matrix: identity for view-space vertices, the view for static terrain and GPU
+        // meshes.
         const glm::mat4 IdentityModelView(1.0f);
         SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
-        const GpuMeshUniforms IdentityMesh{};
-        SDL_PushGPUVertexUniformData(Cmd, 2, &IdentityMesh, sizeof(IdentityMesh));
-        GpuMeshUniforms TerrainMesh{};
-        std::memcpy(TerrainMesh.NormalTransform, &View.WorldToView[0][0], sizeof(TerrainMesh.NormalTransform));
 
         GpuFragmentUniforms FragUbo = dbc::BuildFragmentUniforms(K);
         GpuFragmentUniforms FragUbo2d = FragUbo;
@@ -4080,7 +4150,7 @@ namespace dbc
         bool SkippedUntexturedBatches = false;
         SDL_GPUSampler* const Sampler = K.Gpu().GpuSampler();
         // Static terrain can be the only 3D content, with no per-frame vertices at all.
-        const bool HasGeometry = !Vertices.empty() || !Geometry.TerrainIndices.empty();
+        const bool HasGeometry = !Vertices.empty() || !Geometry.TerrainIndices.empty() || Geometry.MeshInstances != 0;
         if (!Sampler && HasGeometry)
         {
             K.Renderer().ReportRenderError("no GPU sampler");
@@ -4114,7 +4184,6 @@ namespace dbc
                 const auto RestoreSharedState = [&]
                 {
                     SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
-                    SDL_PushGPUVertexUniformData(Cmd, 2, &IdentityMesh, sizeof(IdentityMesh));
                     BindSharedVertices(Pass);
                     MeshStateBound = false;
                 };
@@ -4306,27 +4375,18 @@ namespace dbc
                     }
                     if (Batch.MeshDraw)
                     {
-                        const GpuMeshDraw& Draw = *Batch.MeshDraw;
+                        // The instance records are bound at the group's first, so first_instance stays 0.
                         const SDL_GPUBufferBinding MeshBindings[2]{
                             {Batch.StaticVertices, 0},
                             {VertexBinding.buffer,
-                             VertexBinding.offset + Batch.MeshRecord * static_cast<Uint32>(sizeof(GpuVertex))}};
+                             Geometry.MeshInstanceOffset +
+                                 Batch.FirstInstance * static_cast<Uint32>(sizeof(GpuMeshInstance))}};
                         SDL_BindGPUVertexBuffers(Pass, 0, MeshBindings, 2);
                         const SDL_GPUBufferBinding IndexBinding{Batch.StaticIndices, 0};
                         SDL_BindGPUIndexBuffer(Pass, &IndexBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
-                        const glm::mat4 ModelView = View.WorldToView * Draw.World;
-                        SDL_PushGPUVertexUniformData(Cmd, 1, &ModelView[0][0], sizeof(glm::mat4));
-                        GpuMeshUniforms MeshUniforms{};
-                        const glm::mat4 NormalTransform(glm::mat3(View.WorldToView) * Draw.Normal);
-                        std::memcpy(MeshUniforms.NormalTransform, &NormalTransform[0][0],
-                                    sizeof(MeshUniforms.NormalTransform));
-                        std::copy(Draw.ColorScale.begin(), Draw.ColorScale.end(), MeshUniforms.ColorScale);
-                        std::copy(Draw.UvTransform.begin(), Draw.UvTransform.end(), MeshUniforms.UvTransform);
-                        MeshUniforms.NormalParams[0] = Draw.Fade;
-                        MeshUniforms.NormalParams[1] = Draw.Lit ? 1.0f : 0.0f;
-                        MeshUniforms.NormalParams[2] = Draw.NormalizeNormals ? 1.0f : 0.0f;
-                        SDL_PushGPUVertexUniformData(Cmd, 2, &MeshUniforms, sizeof(MeshUniforms));
-                        SDL_DrawGPUIndexedPrimitives(Pass, Batch.IndexCount, 1, 0, 0, 0);
+                        if (!MeshStateBound)
+                            SDL_PushGPUVertexUniformData(Cmd, 1, &View.WorldToView[0][0], sizeof(glm::mat4));
+                        SDL_DrawGPUIndexedPrimitives(Pass, Batch.IndexCount, Batch.InstanceCount, 0, 0, 0);
                         MeshStateBound = true;
                         continue;
                     }
@@ -4345,7 +4405,6 @@ namespace dbc
                     const SDL_GPUBufferBinding IndexBinding{TerrainIndexBuffer_, 0};
                     SDL_BindGPUIndexBuffer(Pass, &IndexBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
                     SDL_PushGPUVertexUniformData(Cmd, 1, &View.WorldToView[0][0], sizeof(glm::mat4));
-                    SDL_PushGPUVertexUniformData(Cmd, 2, &TerrainMesh, sizeof(TerrainMesh));
                     SDL_DrawGPUIndexedPrimitives(Pass, Batch.IndexCount, 1,
                                                  Geometry.TerrainIndexOffset + Batch.FirstIndex, 0, 0);
                     RestoreSharedState();
@@ -4503,9 +4562,7 @@ namespace dbc
         Frame.WorldRendered |=
             (Geometry.Scene && (!Geometry.Scene->World.Triangles.empty() || !Geometry.Scene->MeshDraws.empty())) ||
             !Geometry.TerrainIndices.empty();
-        // A GPU mesh's record is no vertex; the indices it draws are.
-        Frame.Vertices += static_cast<int>(Vertices.size() - Geometry.MeshRecords + Geometry.TerrainIndices.size() +
-                                           Geometry.MeshIndices);
+        Frame.Vertices += static_cast<int>(Vertices.size() + Geometry.TerrainIndices.size() + Geometry.MeshIndices);
         Frame.Batches += static_cast<int>(Batches.size());
         ++Frame.Views;
         return true;
@@ -5591,25 +5648,31 @@ namespace dbc
 
     void RendererSystem::AppendGpuMeshes(const SceneTriangles& Scene, PreparedViewGeometry& Geometry)
     {
-        for (const GpuMeshDraw& Draw : Scene.MeshDraws)
+        const std::vector<GpuMeshDraw>& Draws = Scene.MeshDraws;
+        Geometry.MeshInstances = static_cast<Uint32>(Draws.size());
+        for (std::size_t First = 0; First < Draws.size();)
         {
+            const GpuMeshDraw& Draw = Draws[First];
+            std::size_t End = First + 1;
+            while (End < Draws.size() && SameGpuMeshDraw(Draws[End], Draw))
+                ++End;
             // Recreated here if released while a cached scene went undrawn.
-            GpuMeshBuffers* Entry = GpuMeshEntry(Draw.Geometry);
-            if (!Entry)
-                continue;
-            GpuBatch Batch;
-            // Like CPU triangles, an untextured mesh draws with the white texture.
-            Batch.Texture = Draw.Texture ? Draw.Texture : WhiteGpuTexture(Kernel_);
-            Batch.Style = Draw.Style;
-            Batch.MeshDraw = &Draw;
-            Batch.MeshRecord = static_cast<Uint32>(Geometry.Vertices.size());
-            Batch.StaticVertices = Entry->Vertices;
-            Batch.StaticIndices = Entry->Indices;
-            Batch.IndexCount = Entry->IndexCount;
-            Geometry.Vertices.push_back(Draw.Record);
-            Geometry.Batches.push_back(Batch);
-            ++Geometry.MeshRecords;
-            Geometry.MeshIndices += Batch.IndexCount;
+            if (const GpuMeshBuffers* Entry = GpuMeshEntry(Draw.Geometry))
+            {
+                GpuBatch Batch;
+                // Like CPU triangles, an untextured mesh draws with the white texture.
+                Batch.Texture = Draw.Texture ? Draw.Texture : WhiteGpuTexture(Kernel_);
+                Batch.Style = Draw.Style;
+                Batch.MeshDraw = &Draw;
+                Batch.FirstInstance = static_cast<Uint32>(First);
+                Batch.InstanceCount = static_cast<Uint32>(End - First);
+                Batch.StaticVertices = Entry->Vertices;
+                Batch.StaticIndices = Entry->Indices;
+                Batch.IndexCount = Entry->IndexCount;
+                Geometry.Batches.push_back(Batch);
+                Geometry.MeshIndices += Batch.IndexCount * Batch.InstanceCount;
+            }
+            First = End;
         }
     }
 

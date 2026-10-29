@@ -81,7 +81,8 @@ namespace
         fs::create_directories(HostShaders);
         for (const std::string_view Name :
              {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
-              "vr_transfer.vert.spv", "vr_transfer.frag.spv", "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
+              "dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl", "vr_transfer.vert.spv", "vr_transfer.frag.spv",
+              "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
         {
             fs::copy_file(SourceShaders / Name, ProductShaders / Name, fs::copy_options::overwrite_existing);
             fs::copy_file(SourceShaders / Name, HostShaders / Name, fs::copy_options::overwrite_existing);
@@ -94,9 +95,10 @@ namespace
                         BinaryHash + "\",\"needed\":[\"libc.so\"]}\n");
     }
 
-    constexpr std::array<std::string_view, 8> CanonicalShaders{
-        "dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
-        "vr_transfer.vert.spv",   "vr_transfer.frag.spv",   "vr_transfer.vert.msl",   "vr_transfer.frag.msl"};
+    constexpr std::array<std::string_view, 10> CanonicalShaders{
+        "dbclassic_tri.vert.spv",  "dbclassic_tri.frag.spv",  "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
+        "dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl", "vr_transfer.vert.spv",   "vr_transfer.frag.spv",
+        "vr_transfer.vert.msl",    "vr_transfer.frag.msl"};
 
     void CopyCanonicalShaders(const fs::path& Destination)
     {
@@ -1057,9 +1059,10 @@ TEST_CASE("artifact host shader validation rejects missing or changed shaders")
     CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
     fs::copy_file(Product / "vr_transfer.vert.spv", Host / "vr_transfer.vert.spv");
     fs::copy_file(Product / "vr_transfer.frag.spv", Host / "vr_transfer.frag.spv");
+    fs::copy_file(Product / "dbclassic_mesh.vert.spv", Host / "dbclassic_mesh.vert.spv");
     CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
-    for (const std::string_view Name :
-         {"dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl", "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
+    for (const std::string_view Name : {"dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl", "dbclassic_mesh.vert.msl",
+                                        "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
         fs::copy_file(Product / Name, Host / Name);
     REQUIRE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
     Write(Host / "dbclassic_tri.vert.msl", "changed");

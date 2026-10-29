@@ -26,7 +26,7 @@ SHADER_NAMES = tuple(
     for shader in ("dbclassic_tri", "vr_transfer")
     for format in ("spv", "msl")
     for stage in ("vert", "frag")
-)
+) + ("dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl")
 REQUIRED_LICENSES = ("LICENSE", "Dark-Basic-Pro-LICENSE.md", "MuseScore-General-SoundFont-LICENSE.md", "RapidJSON.txt")
 
 

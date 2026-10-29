@@ -607,7 +607,10 @@ TEST_CASE("XR stereo GPU frames share one upload and retain a gamma corrected ca
     CHECK(Fake.Releases == 2);
     CHECK(K.Objects().GetObject(1)->AnimTimeSeconds == doctest::Approx(0.1));
     auto& State = VrSystemTestAccess::Get(K.Vr());
-    CHECK(State.Geometry[1].VertexOffset == State.Geometry[0].Vertices.size() * sizeof(dbc::GpuVertex));
+    // Each eye's block holds its vertices, then the instance records of its GPU meshes.
+    CHECK(State.Geometry[0].MeshInstances == 1);
+    CHECK(State.Geometry[1].VertexOffset == State.Geometry[0].Vertices.size() * sizeof(dbc::GpuVertex) +
+                                                State.Geometry[0].MeshInstances * sizeof(dbc::GpuMeshInstance));
     CHECK(Near(K.Renderer().CameraView(80, 60).WorldToView, Camera));
     auto* Surface = K.Renderer().CaptureScreen();
     REQUIRE(Surface != nullptr);

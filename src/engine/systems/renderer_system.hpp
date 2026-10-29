@@ -26,23 +26,16 @@ namespace dbc
 {
     class EngineKernel;
 
-    // An opaque object mesh drawn from GPU buffers instead of CPU triangles: what its vertex shader needs, in
-    // world space so that every view can draw it.
+    // An opaque object mesh drawn from GPU buffers instead of CPU triangles: its instance record, in world space
+    // so that every view can draw it, and the state that decides which draws can share one instanced call.
     struct GpuMeshDraw
     {
         std::shared_ptr<const MeshGeometry> Geometry;
-        glm::mat4 World{1.0f};
-        glm::mat3 Normal{1.0f};
-        std::array<float, 4> ColorScale{1.0f, 1.0f, 1.0f, 1.0f};
-        std::array<float, 4> UvTransform{1.0f, 1.0f, 0.0f, 0.0f};
-        float Fade = 1.0f;
-        bool Lit = true;
-        bool NormalizeNormals = true;
+        GpuMeshInstance Instance{};
         bool Cull = true;
         SDL_GPUTexture* Texture = nullptr;
         SurfaceStyle Style{};
-        // The shader's per-draw vertex inputs: the material in the box colours.
-        GpuVertex Record{};
+        uint32_t StyleHash = 0;
     };
 
     // The scene of one view, shared by the views that draw it and the renderer's cache.
@@ -51,6 +44,7 @@ namespace dbc
         OrderedTriangles World;
         OrderedTriangles Reflected;
         OrderedTriangles Overlay;
+        // Grouped by geometry, texture and surface, so each group is one instanced draw.
         std::vector<GpuMeshDraw> MeshDraws;
         // Objects the world pass went through, those of them shown, and those of these outside the view.
         int Objects = 0;
@@ -64,8 +58,10 @@ namespace dbc
         std::vector<GpuBatch> Batches;
         // Shared with the renderer's cache, so a reused scene is never copied.
         std::shared_ptr<const SceneTriangles> Scene;
-        // The GPU mesh draws' per-draw records among Vertices, and the indices they draw.
-        Uint32 MeshRecords = 0;
+        // The scene's GPU mesh instance records, uploaded after Vertices at MeshInstanceOffset bytes, and the
+        // indices their draws cover.
+        Uint32 MeshInstances = 0;
+        Uint32 MeshInstanceOffset = 0;
         Uint32 MeshIndices = 0;
         std::vector<Triangle> ShadowSources, Shadows;
         SDL_FColor ClearColor{};

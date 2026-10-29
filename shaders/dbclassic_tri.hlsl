@@ -20,6 +20,29 @@ struct VertexInput
     [[vk::location(14)]] float3 cube_direction : TEXCOORD11;
 };
 
+// A GPU-resident mesh: object-space vertices, then one record per instance with the object-to-world rows, the
+// normal matrix rows, the object's colour, texture scale and scroll, and its material.
+struct MeshInput
+{
+    [[vk::location(0)]] float3 pos : POSITION;
+    [[vk::location(1)]] float3 normal : NORMAL;
+    [[vk::location(2)]] float4 color : COLOR;
+    [[vk::location(3)]] float2 uv : TEXCOORD0;
+    [[vk::location(4)]] float4 world0 : TEXCOORD1;
+    [[vk::location(5)]] float4 world1 : TEXCOORD2;
+    [[vk::location(6)]] float4 world2 : TEXCOORD3;
+    // w: the fade multiplying the normal's length, 1 when lit (0 for a zero normal), 1 to normalise first.
+    [[vk::location(7)]] float4 normal0 : TEXCOORD4;
+    [[vk::location(8)]] float4 normal1 : TEXCOORD5;
+    [[vk::location(9)]] float4 normal2 : TEXCOORD6;
+    [[vk::location(10)]] float4 color_scale : TEXCOORD7;
+    // xy scale, zw offset.
+    [[vk::location(11)]] float4 uv_transform : TEXCOORD8;
+    [[vk::location(12)]] float4 box_tr : TEXCOORD9;
+    [[vk::location(13)]] float4 box_br : TEXCOORD10;
+    [[vk::location(14)]] float4 box_bl : TEXCOORD11;
+};
+
 struct Varyings
 {
     float4 position : SV_Position;
@@ -45,23 +68,11 @@ cbuffer VertexUniforms : register(b0, space1)
     float4x4 ViewProj;
 };
 
-// Identity for geometry already in view space; the world-to-view matrix for static world-space meshes.
+// Identity for geometry already in view space; the world-to-view matrix for static world-space meshes and
+// GPU-resident meshes.
 cbuffer ModelUniforms : register(b1, space1)
 {
     float4x4 ModelView;
-};
-
-// How a draw's normals, colours and texture coordinates reach the fragment stage. Identities for vertices
-// prepared on the CPU; for a GPU-resident mesh, its object-to-view normal transform, the object's colour
-// and texture scale and scroll, and its fade.
-cbuffer MeshUniforms : register(b2, space1)
-{
-    float4x4 NormalTransform;
-    float4 ColorScale;
-    // xy scale, zw offset.
-    float4 UvTransform;
-    // x: fade, multiplying the normal's length; y: 1 when lit, 0 for a zero normal; z: 1 to normalise first.
-    float4 NormalParams;
 };
 
 Texture2D tex0 : register(t0, space2);
@@ -106,13 +117,9 @@ Varyings VSMain(VertexInput input)
     float4 view_pos = mul(ModelView, float4(input.pos, 1.0));
     output.position = mul(ViewProj, view_pos);
     output.view_pos = view_pos.xyz;
-    float3 normal = mul((float3x3)NormalTransform, input.normal);
-    // As the CPU path: a length too small to normalise gives +Z.
-    if (NormalParams.z > 0.5)
-        normal = dot(normal, normal) > 1e-12 ? normalize(normal) : float3(0.0, 0.0, 1.0);
-    output.normal = normal * (NormalParams.x * NormalParams.y);
-    output.uv = input.uv * UvTransform.xy + UvTransform.zw;
-    output.color = input.color * ColorScale;
+    output.normal = mul((float3x3)ModelView, input.normal);
+    output.uv = input.uv;
+    output.color = input.color;
     output.box_tr = input.box_tr;
     output.box_br = input.box_br;
     output.box_bl = input.box_bl;
@@ -124,6 +131,37 @@ Varyings VSMain(VertexInput input)
     output.aux_uv5 = input.aux_uv5;
     output.aux_uv6 = input.aux_uv6;
     output.cube_direction = input.cube_direction;
+    return output;
+}
+
+// Draws every instance of a GPU-resident mesh as the CPU path draws each object's triangles.
+Varyings VSMesh(MeshInput input)
+{
+    Varyings output;
+    const float3x4 world = float3x4(input.world0, input.world1, input.world2);
+    const float4 view_pos = mul(ModelView, float4(mul(world, float4(input.pos, 1.0)), 1.0));
+    output.position = mul(ViewProj, view_pos);
+    output.view_pos = view_pos.xyz;
+    const float3x3 normal_matrix = float3x3(input.normal0.xyz, input.normal1.xyz, input.normal2.xyz);
+    float3 normal = mul((float3x3)ModelView, mul(normal_matrix, input.normal));
+    // As the CPU path: a length too small to normalise gives +Z.
+    if (input.normal2.w > 0.5)
+        normal = dot(normal, normal) > 1e-12 ? normalize(normal) : float3(0.0, 0.0, 1.0);
+    output.normal = normal * (input.normal0.w * input.normal1.w);
+    output.uv = input.uv * input.uv_transform.xy + input.uv_transform.zw;
+    output.color = input.color * input.color_scale;
+    output.box_tr = input.box_tr;
+    output.box_br = input.box_br;
+    output.box_bl = input.box_bl;
+    // No texture stage but the first: the others take its coordinates, as on the CPU path.
+    output.aux_uv0 = output.uv;
+    output.aux_uv1 = output.uv;
+    output.aux_uv2 = output.uv;
+    output.aux_uv3 = output.uv;
+    output.aux_uv4 = output.uv;
+    output.aux_uv5 = output.uv;
+    output.aux_uv6 = output.uv;
+    output.cube_direction = float3(0.0, 0.0, 0.0);
     return output;
 }
 

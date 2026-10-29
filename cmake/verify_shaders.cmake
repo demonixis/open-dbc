@@ -14,18 +14,34 @@ file(MAKE_DIRECTORY "${OPENDBC_SHADER_VERIFY_DIR}")
 foreach(OPENDBC_SHADER IN ITEMS shaders/dbclassic_tri shaders/vr_transfer
                                 tools/studio/shaders/scene_mesh tools/studio/shaders/scene_line)
     get_filename_component(OPENDBC_SHADER_NAME "${OPENDBC_SHADER}" NAME)
+    get_filename_component(OPENDBC_SHADER_DIR "${OPENDBC_SHADER}" DIRECTORY)
+    set(OPENDBC_OUTPUTS)
+    foreach(OPENDBC_OUTPUT_NAME IN ITEMS vert.spv frag.spv vert.msl frag.msl)
+        list(APPEND OPENDBC_OUTPUTS "${OPENDBC_SHADER_NAME}.${OPENDBC_OUTPUT_NAME}")
+    endforeach()
+    # Further vertex entry points, each with the stem of its own canonical files.
+    set(OPENDBC_EXTRA_VERTEX_STAGES)
+    if(OPENDBC_SHADER STREQUAL "shaders/dbclassic_tri")
+        set(OPENDBC_EXTRA_VERTEX_STAGES VSMesh dbclassic_mesh)
+    endif()
+    set(OPENDBC_EXTRA_ARGUMENTS)
+    while(OPENDBC_EXTRA_VERTEX_STAGES)
+        list(POP_FRONT OPENDBC_EXTRA_VERTEX_STAGES OPENDBC_ENTRY OPENDBC_STEM)
+        list(APPEND OPENDBC_EXTRA_ARGUMENTS "${OPENDBC_ENTRY}" "${OPENDBC_SHADER_VERIFY_DIR}/${OPENDBC_STEM}")
+        list(APPEND OPENDBC_OUTPUTS "${OPENDBC_STEM}.vert.spv" "${OPENDBC_STEM}.vert.msl")
+    endwhile()
     execute_process(
         COMMAND "${OPENDBC_SHADERC}" "${OPENDBC_SOURCE_ROOT}/${OPENDBC_SHADER}.hlsl"
-                "${OPENDBC_SHADER_VERIFY_DIR}/${OPENDBC_SHADER_NAME}"
+                "${OPENDBC_SHADER_VERIFY_DIR}/${OPENDBC_SHADER_NAME}" ${OPENDBC_EXTRA_ARGUMENTS}
         RESULT_VARIABLE OPENDBC_RESULT
         OUTPUT_VARIABLE OPENDBC_OUTPUT
         ERROR_VARIABLE OPENDBC_ERROR)
     if(NOT OPENDBC_RESULT EQUAL 0)
         message(FATAL_ERROR "opendbc_shaderc failed: ${OPENDBC_OUTPUT}${OPENDBC_ERROR}")
     endif()
-    foreach(OPENDBC_OUTPUT_NAME IN ITEMS vert.spv frag.spv vert.msl frag.msl)
-        set(OPENDBC_EXPECTED "${OPENDBC_SOURCE_ROOT}/${OPENDBC_SHADER}.${OPENDBC_OUTPUT_NAME}")
-        set(OPENDBC_GENERATED "${OPENDBC_SHADER_VERIFY_DIR}/${OPENDBC_SHADER_NAME}.${OPENDBC_OUTPUT_NAME}")
+    foreach(OPENDBC_OUTPUT_NAME IN LISTS OPENDBC_OUTPUTS)
+        set(OPENDBC_EXPECTED "${OPENDBC_SOURCE_ROOT}/${OPENDBC_SHADER_DIR}/${OPENDBC_OUTPUT_NAME}")
+        set(OPENDBC_GENERATED "${OPENDBC_SHADER_VERIFY_DIR}/${OPENDBC_OUTPUT_NAME}")
         if(OPENDBC_SHADER_MODE STREQUAL "update")
             file(COPY_FILE "${OPENDBC_GENERATED}" "${OPENDBC_EXPECTED}" ONLY_IF_DIFFERENT)
             continue()
