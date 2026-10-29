@@ -19,12 +19,15 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    triangle it skins the vertices, transforms them to world then view space, culls
    back faces, resolves textures and the coordinates of the eight texture stages
    (sphere and reflection mapping and the built-in effects included), and clips
-   the result to the frustum into 624-byte `Triangle` records. The records are
-   sorted one by one: very early first, then opaque front to back, then
-   transparent and additive back to front, render priority first within each.
+   the result to the frustum into 624-byte `Triangle` records.
+   `OrderWorldTriangles` sorts their indices, never the records: very early
+   first, then opaque, then transparent and additive back to front, render
+   priority first within each phase. Opaque triangles go front to back, except
+   that each run of triangles that are depth tested and written and not blended
+   is grouped by draw state; the others keep their place between the runs.
    Reflection shading gathers the scene again with the mirrored view; stencil
    shadow volumes are extruded on the CPU from the casters' triangles.
-3. The sorted triangles become 164-byte `GpuVertex` records. Consecutive
+3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
    triangles that share textures, blending, depth state and `SurfaceStyle` merge
    into one `GpuBatch`. The 2D layer follows: bitmap 0 as one quad, text,
    primitives, pasted images and sprites.
@@ -36,9 +39,9 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
 6. `FinalizeFrame` records `STATISTIC(1)` (triangles) and `STATISTIC(5)`
    (batches), then clears bitmap 0 after a 3D frame.
 
-A view's triangle list is cached while the camera, every object, the visible
-particle emitters and the animations stay still. Any change, or a second view,
-rebuilds it whole.
+A view's triangle lists are cached while the camera, every object, the visible
+particle emitters and the animations stay still, and shared with the view
+without a copy. Any change, or a second view, rebuilds them whole.
 
 Terrains are the exception. Their world-space vertices are uploaded once; each
 view picks the visible 16-cell blocks and their LOD step and draws them indexed,
@@ -48,10 +51,8 @@ transparent and unculled terrains stay on the CPU path.
 ## Where frame time goes
 
 CPU time grows with visible triangles, not objects: per-triangle transforms and
-texture-stage lookups, the sort and copies of `Triangle` records, then the
-conversion and upload of `GpuVertex` records. The VM is a small share of a 3D
-frame. Sorting opaque triangles by depth interleaves objects, so consecutive
-triangles rarely share a texture and batches stay a few triangles long. The clear
+texture-stage lookups, then the conversion and upload of `GpuVertex` records.
+The VM is a small share of a 3D frame. The clear
 after each 3D frame destroys bitmap 0's GPU texture; the next frame creates and
 uploads a full-window texture again, even when nothing was drawn on it.
 
@@ -63,6 +64,8 @@ A faster path keeps what programs can observe:
   ZDEPTH`, `ZREAD` or `ZWRITE`, transparency mode 7 (very early), render
   priorities, and blended or additive surfaces, which are sorted back to front
   per triangle. Sorting them per object changes how intersecting ones overlap.
+  Among the grouped opaque surfaces, only coplanar ones of different draw states
+  depend on the grouping order.
 - Transparent objects below a transparency-mode-5 surface sort as if they were
   at the far plane.
 - Materials travel in vertex attributes: ambient, specular, emissive, alpha

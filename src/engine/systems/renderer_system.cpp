@@ -3158,12 +3158,8 @@ namespace dbc
             K.Camera().ClearRequested() && !K.Camera().HasCameraView() ? K.Camera().ClearColor() : BaseClearColorInt;
         const SDL_FColor ClearColor = UnpackColor(ClearColorInt);
 
-        auto& Tris = Geometry.World;
-        auto& ReflectedTris = Geometry.Reflected;
-        auto& OverlayTris = Geometry.Overlay;
-        Tris.clear();
-        ReflectedTris.clear();
-        OverlayTris.clear();
+        // Releasing the previous frame's scene lets a rebuild reuse the cached one in place.
+        Geometry.Scene.reset();
         Vec3 ReflectionPoint{};
         Vec3 ReflectionNormal{};
         bool HasReflection = false;
@@ -3194,6 +3190,10 @@ namespace dbc
 
             if (SceneDirty)
             {
+                std::shared_ptr<SceneTriangles> Scene = SceneForRebuild();
+                auto& Tris = Scene->World.Triangles;
+                auto& ReflectedTris = Scene->Reflected.Triangles;
+                auto& OverlayTris = Scene->Overlay.Triangles;
                 Tris.reserve(8192);
                 ReflectedTris.reserve(8192);
                 OverlayTris.reserve(2048);
@@ -3208,23 +3208,7 @@ namespace dbc
                 dbc::RenderBspWorld(K, Tris);
                 dbc::RenderObjects(K, Tris, OverlayTris);
                 dbc::RenderParticles(K, Tris);
-                const auto Phase = [](const Triangle& TriangleValue)
-                {
-                    if (TriangleValue.VeryEarly)
-                        return 0;
-                    return (TriangleValue.Transparent || TriangleValue.Additive) ? 2 : 1;
-                };
-                std::stable_sort(Tris.begin(), Tris.end(),
-                                 [&](const Triangle& A, const Triangle& B)
-                                 {
-                                     const int PhaseA = Phase(A);
-                                     const int PhaseB = Phase(B);
-                                     if (PhaseA != PhaseB)
-                                         return PhaseA < PhaseB;
-                                     if (A.RenderPriority != B.RenderPriority)
-                                         return A.RenderPriority < B.RenderPriority;
-                                     return PhaseA == 2 ? A.Depth > B.Depth : A.Depth < B.Depth;
-                                 });
+                OrderWorldTriangles(Scene->World);
                 if (HasReflection)
                 {
                     std::vector<Triangle> IgnoredOverlay;
@@ -3243,33 +3227,20 @@ namespace dbc
                         ReflectedTris.end());
                     for (Triangle& TriangleValue : ReflectedTris)
                         TriangleValue.Style.ReflectionPass = true;
-                    std::stable_sort(ReflectedTris.begin(), ReflectedTris.end(),
-                                     [&](const Triangle& A, const Triangle& B)
-                                     {
-                                         const int PhaseA = Phase(A);
-                                         const int PhaseB = Phase(B);
-                                         if (PhaseA != PhaseB)
-                                             return PhaseA < PhaseB;
-                                         if (A.RenderPriority != B.RenderPriority)
-                                             return A.RenderPriority < B.RenderPriority;
-                                         return PhaseA == 2 ? A.Depth > B.Depth : A.Depth < B.Depth;
-                                     });
+                    OrderWorldTriangles(Scene->Reflected);
                 }
                 // Overlays: always back-to-front (2D compositing order).
-                std::sort(OverlayTris.begin(), OverlayTris.end(),
-                          [](const Triangle& A, const Triangle& B) { return A.Depth > B.Depth; });
-                // Cache for next frame.
-                K.Renderer().CacheTris(Tris, ReflectedTris, OverlayTris);
+                OrderOverlayTriangles(Scene->Overlay);
+                CacheScene(Scene);
+                Geometry.Scene = std::move(Scene);
                 K.Camera().ClearDirty();
                 K.Objects().ClearAllDirtyFlags();
             }
             else
-            {
-                Tris = K.Renderer().CachedWorldTris();
-                ReflectedTris = K.Renderer().CachedReflectedTris();
-                OverlayTris = K.Renderer().CachedOverlayTris();
-            }
+                Geometry.Scene = CachedScene_;
         }
+        const SceneTriangles& Scene = *Geometry.Scene;
+        const std::vector<Triangle>& Tris = Scene.World.Triangles;
 
         auto& ShadowSources = Geometry.ShadowSources;
         // Only shadow casters build volumes; copying every world triangle would cost more than the volumes.
@@ -3288,9 +3259,23 @@ namespace dbc
         Vertices.clear();
         Batches.clear();
         {
-            Vertices.reserve(static_cast<size_t>(
-                (Tris.size() + ReflectedTris.size() + ShadowTris.size() + OverlayTris.size()) * 3 + 8192));
+            const std::size_t TriangleCount =
+                Tris.size() + Scene.Reflected.Triangles.size() + ShadowTris.size() + Scene.Overlay.Triangles.size();
+            Vertices.reserve(TriangleCount * 3 + 8192);
             Batches.reserve(2048);
+            const auto AppendOrdered = [&](const OrderedTriangles& List, std::vector<GpuVertex>& ListVertices,
+                                           std::vector<GpuBatch>& ListBatches)
+            {
+                for (const uint32_t Index : List.Order)
+                {
+                    const Triangle& Tri = List.Triangles[Index];
+                    dbc::AppendGpuTriangle(K, ListVertices, ListBatches, Tri.GpuTexture, Tri.Pos, Tri.Normal, Tri.Color,
+                                           Tri.Uv, Tri.Transparent, Tri.Is2d, Tri.Additive, Tri.Style, nullptr, false,
+                                           Tri.AlphaDepthWrite, Tri.MatrixGhostMode, Tri.DepthWrite, Tri.DepthTest,
+                                           Tri.AuxiliaryGpuTextures, Tri.CubeGpuTexture, &Tri.AuxiliaryUvs,
+                                           Tri.CubeDirection);
+                }
+            };
 
             // A camera that does not clear the whole target fills its viewport first; the scissor bounds the quad.
             SurfaceStyle ViewFillStyle{};
@@ -3361,38 +3346,14 @@ namespace dbc
             // DRAW TO BACK: 2D overlay goes before 3D world.
             // DRAW TO FRONT (default): 3D world goes first, 2D on top.
             const auto AppendOverlay = [&](std::vector<GpuVertex>& HudVertices, std::vector<GpuBatch>& HudBatches)
-            {
-                for (const Triangle& Tri : OverlayTris)
-                {
-                    dbc::AppendGpuTriangle(K, HudVertices, HudBatches, Tri.GpuTexture, Tri.Pos, Tri.Normal, Tri.Color,
-                                           Tri.Uv, Tri.Transparent, Tri.Is2d, Tri.Additive, Tri.Style, nullptr, false,
-                                           Tri.AlphaDepthWrite, Tri.MatrixGhostMode, Tri.DepthWrite, Tri.DepthTest,
-                                           Tri.AuxiliaryGpuTextures, Tri.CubeGpuTexture, &Tri.AuxiliaryUvs,
-                                           Tri.CubeDirection);
-                }
-            };
+            { AppendOrdered(Scene.Overlay, HudVertices, HudBatches); };
 
             if (!(Frame.HudLast || K.Draw().IsDrawToFront()) && Geometry.Hud)
                 AppendOverlay(Vertices, Batches);
 
-            for (const Triangle& Tri : Tris)
-            {
-                dbc::AppendGpuTriangle(K, Vertices, Batches, Tri.GpuTexture, Tri.Pos, Tri.Normal, Tri.Color, Tri.Uv,
-                                       Tri.Transparent, Tri.Is2d, Tri.Additive, Tri.Style, nullptr, false,
-                                       Tri.AlphaDepthWrite, Tri.MatrixGhostMode, Tri.DepthWrite, Tri.DepthTest,
-                                       Tri.AuxiliaryGpuTextures, Tri.CubeGpuTexture, &Tri.AuxiliaryUvs,
-                                       Tri.CubeDirection);
-            }
+            AppendOrdered(Scene.World, Vertices, Batches);
             AppendStaticTerrains(View, Geometry);
-
-            for (const Triangle& Tri : ReflectedTris)
-            {
-                dbc::AppendGpuTriangle(K, Vertices, Batches, Tri.GpuTexture, Tri.Pos, Tri.Normal, Tri.Color, Tri.Uv,
-                                       Tri.Transparent, Tri.Is2d, Tri.Additive, Tri.Style, nullptr, false,
-                                       Tri.AlphaDepthWrite, Tri.MatrixGhostMode, Tri.DepthWrite, Tri.DepthTest,
-                                       Tri.AuxiliaryGpuTextures, Tri.CubeGpuTexture, &Tri.AuxiliaryUvs,
-                                       Tri.CubeDirection);
-            }
+            AppendOrdered(Scene.Reflected, Vertices, Batches);
 
             for (const Triangle& Tri : ShadowTris)
             {
@@ -4167,7 +4128,8 @@ namespace dbc
         }
 
         Frame.HasErrors |= SkippedUntexturedBatches || FailedEffectBatches;
-        Frame.WorldRendered |= !Geometry.World.empty() || !Geometry.TerrainIndices.empty();
+        Frame.WorldRendered |=
+            (Geometry.Scene && !Geometry.Scene->World.Triangles.empty()) || !Geometry.TerrainIndices.empty();
         Frame.Vertices += static_cast<int>(Vertices.size() + Geometry.TerrainIndices.size());
         Frame.Batches += static_cast<int>(Batches.size());
         ++Frame.Views;
@@ -4864,6 +4826,17 @@ namespace dbc
     RendererSystem::~RendererSystem()
     {
         ReleaseStaticTerrains();
+    }
+
+    std::shared_ptr<SceneTriangles> RendererSystem::SceneForRebuild()
+    {
+        // Another view may still draw from the cached scene this frame.
+        if (CachedScene_.use_count() != 1)
+            return std::make_shared<SceneTriangles>();
+        CachedScene_->World.Clear();
+        CachedScene_->Reflected.Clear();
+        CachedScene_->Overlay.Clear();
+        return CachedScene_;
     }
 
     bool RendererSystem::DrawsTerrainOnGpu(const Matrix& Terrain) const

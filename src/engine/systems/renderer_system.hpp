@@ -4,11 +4,14 @@
 #include "../engine_types.hpp"
 #include "render_view.hpp"
 #include "terrain_mesh.hpp"
+#include "triangle_order.hpp"
 #include <optional>
 #include <span>
 
 #include <array>
+#include <cassert>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -27,7 +30,9 @@ namespace dbc
     {
         std::vector<GpuVertex> Vertices;
         std::vector<GpuBatch> Batches;
-        std::vector<Triangle> World, Reflected, Overlay, ShadowSources, Shadows;
+        // Shared with the renderer's cache, so a reused scene is never copied.
+        std::shared_ptr<const SceneTriangles> Scene;
+        std::vector<Triangle> ShadowSources, Shadows;
         SDL_FColor ClearColor{};
         Uint32 VertexOffset = 0;
         // Indices into static terrain vertex buffers, uploaded once per view at TerrainIndexOffset.
@@ -189,31 +194,24 @@ namespace dbc
 
         const std::vector<Triangle>& CachedWorldTris() const
         {
-            return CachedWorldTris_;
+            return CachedScene_->World.Triangles;
         }
 
         const std::vector<Triangle>& CachedReflectedTris() const
         {
-            return CachedReflectedTris_;
+            return CachedScene_->Reflected.Triangles;
         }
 
         const std::vector<Triangle>& CachedOverlayTris() const
         {
-            return CachedOverlayTris_;
+            return CachedScene_->Overlay.Triangles;
         }
 
-        void CacheTris(const std::vector<Triangle>& World, const std::vector<Triangle>& Reflected,
-                       const std::vector<Triangle>& Overlay)
+        void CacheScene(std::shared_ptr<SceneTriangles> Scene)
         {
-            CachedWorldTris_ = World;
-            CachedReflectedTris_ = Reflected;
-            CachedOverlayTris_ = Overlay;
+            assert(Scene);
+            CachedScene_ = std::move(Scene);
             HasCachedTris_ = true;
-        }
-
-        void CacheTris(const std::vector<Triangle>& World, const std::vector<Triangle>& Overlay)
-        {
-            CacheTris(World, {}, Overlay);
         }
 
         // Terrains drawn from static GPU buffers rather than per-frame CPU triangles.
@@ -275,6 +273,8 @@ namespace dbc
             bool PendingUpload = false;
         };
 
+        // An empty scene to rebuild into: the cached one, cleared, when no view still holds it.
+        std::shared_ptr<SceneTriangles> SceneForRebuild();
         void AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry);
         bool UploadStaticTerrains(std::span<PreparedViewGeometry> Geometry, SDL_GPUCommandBuffer* Commands);
         void ReleaseStaticTerrains();
@@ -284,9 +284,8 @@ namespace dbc
         PreparedViewGeometry FrameHud_;
         const RenderView* ActiveView_ = nullptr;
         std::optional<RenderView> CachedView_{};
-        std::vector<Triangle> CachedWorldTris_;
-        std::vector<Triangle> CachedReflectedTris_;
-        std::vector<Triangle> CachedOverlayTris_;
+        // Kept after invalidation: a rebuild refills it in place when no view still holds it.
+        std::shared_ptr<SceneTriangles> CachedScene_ = std::make_shared<SceneTriangles>();
         Vec3 ReflectionPoint_{};
         Vec3 ReflectionNormal_{0.0f, 1.0f, 0.0f};
         bool ReflectionViewEnabled_ = false;

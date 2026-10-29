@@ -2161,6 +2161,41 @@ TEST_CASE("TEXTURE OBJECT refreshes a still scene")
     CHECK(DrawnTexture() != First);
 }
 
+TEST_CASE("Opaque objects interleaved in depth batch by texture")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+    const std::filesystem::path Images = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp";
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "beam.bmp").string(), 1));
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "spark.bmp").string(), 2));
+    // Six cubes one behind the other, their textures alternating with depth.
+    for (int Id = 1; Id <= 6; ++Id)
+    {
+        Kernel.Objects().MakeObjectCube(Id, 2.0f);
+        Kernel.Objects().PositionObject(Id, static_cast<float>(Id % 2) * 3.0f - 1.5f, 0.0f, 6.0f + 4.0f * Id);
+        Kernel.Objects().TextureObject(Id, Id % 2 + 1);
+    }
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const auto DrawCalls = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        return Kernel.Renderer().LastFrameDrawCalls();
+    };
+
+    const int Alternating = DrawCalls();
+    for (int Id = 1; Id <= 6; ++Id)
+        Kernel.Objects().TextureObject(Id, 1);
+    const int Single = DrawCalls();
+    CHECK(Single > 0);
+    // The second texture costs one batch, not one per object.
+    CHECK(Alternating == Single + 1);
+}
+
 TEST_CASE("DBPro BSP worlds load, draw the leaves their camera sees and delete")
 {
     const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
@@ -2421,7 +2456,7 @@ TEST_CASE("Portable terrain matrices preserve DBPro grid texture normal and vect
     CHECK(MatrixValue->Normals[4] == doctest::Approx(2.0f));
     CHECK(MatrixValue->Normals[5] == doctest::Approx(3.0f));
 
-    Kernel.Renderer().CacheTris({}, {});
+    Kernel.Renderer().CacheScene(std::make_shared<dbc::SceneTriangles>());
     REQUIRE(Command(dbc::language::SymbolId::Command_SetMatrixHeight,
                     {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(0),
                      BuiltinValue::FromNumber(0)}));
