@@ -51,6 +51,19 @@ cbuffer ModelUniforms : register(b1, space1)
     float4x4 ModelView;
 };
 
+// How a draw's normals, colours and texture coordinates reach the fragment stage. Identities for vertices
+// prepared on the CPU; for a GPU-resident mesh, its object-to-view normal transform, the object's colour
+// and texture scale and scroll, and its fade.
+cbuffer MeshUniforms : register(b2, space1)
+{
+    float4x4 NormalTransform;
+    float4 ColorScale;
+    // xy scale, zw offset.
+    float4 UvTransform;
+    // x: fade, multiplying the normal's length; y: 1 when lit, 0 for a zero normal; z: 1 to normalise first.
+    float4 NormalParams;
+};
+
 Texture2D tex0 : register(t0, space2);
 Texture2D tex1 : register(t1, space2);
 Texture2D tex2 : register(t2, space2);
@@ -93,9 +106,13 @@ Varyings VSMain(VertexInput input)
     float4 view_pos = mul(ModelView, float4(input.pos, 1.0));
     output.position = mul(ViewProj, view_pos);
     output.view_pos = view_pos.xyz;
-    output.normal = mul((float3x3)ModelView, input.normal);
-    output.uv = input.uv;
-    output.color = input.color;
+    float3 normal = mul((float3x3)NormalTransform, input.normal);
+    // As the CPU path: a length too small to normalise gives +Z.
+    if (NormalParams.z > 0.5)
+        normal = dot(normal, normal) > 1e-12 ? normalize(normal) : float3(0.0, 0.0, 1.0);
+    output.normal = normal * (NormalParams.x * NormalParams.y);
+    output.uv = input.uv * UvTransform.xy + UvTransform.zw;
+    output.color = input.color * ColorScale;
     output.box_tr = input.box_tr;
     output.box_br = input.box_br;
     output.box_bl = input.box_bl;

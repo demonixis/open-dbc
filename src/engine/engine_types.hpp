@@ -682,6 +682,18 @@ namespace dbc
         float ViewProj[16]{};
     };
 
+    // MeshUniforms of the engine vertex shader, column-major like glm; the defaults are identities.
+    struct GpuMeshUniforms
+    {
+        float NormalTransform[16]{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                                  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+        float ColorScale[4]{1.0f, 1.0f, 1.0f, 1.0f};
+        float UvTransform[4]{1.0f, 1.0f, 0.0f, 0.0f};
+        float NormalParams[4]{1.0f, 1.0f, 0.0f, 0.0f};
+    };
+
+    static_assert(sizeof(GpuMeshUniforms) == 112, "mesh UBO size mismatch");
+
     struct GpuFragmentUniforms
     {
         float DirLightDirection[4]{};

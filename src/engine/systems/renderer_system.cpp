@@ -3823,9 +3823,14 @@ namespace dbc
         memcpy(OrthoUbo.ViewProj, &ProjOrtho[0][0], 64);
 
         SDL_PushGPUVertexUniformData(Cmd, 0, &PerspUbo, sizeof(GpuVertexUniforms));
-        // Slot 1 is the model-view matrix: identity for view-space vertices, the view for static terrain.
+        // Slot 1 is the model-view matrix: identity for view-space vertices, the view for static terrain. Slot 2
+        // takes normals, colours and texture coordinates as they are, except for the draws that set it.
         const glm::mat4 IdentityModelView(1.0f);
         SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
+        const GpuMeshUniforms IdentityMesh{};
+        SDL_PushGPUVertexUniformData(Cmd, 2, &IdentityMesh, sizeof(IdentityMesh));
+        GpuMeshUniforms TerrainMesh{};
+        std::memcpy(TerrainMesh.NormalTransform, &View.WorldToView[0][0], sizeof(TerrainMesh.NormalTransform));
 
         GpuFragmentUniforms FragUbo = dbc::BuildFragmentUniforms(K);
         GpuFragmentUniforms FragUbo2d = FragUbo;
@@ -4102,9 +4107,11 @@ namespace dbc
                     const SDL_GPUBufferBinding IndexBinding{TerrainIndexBuffer_, 0};
                     SDL_BindGPUIndexBuffer(Pass, &IndexBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
                     SDL_PushGPUVertexUniformData(Cmd, 1, &View.WorldToView[0][0], sizeof(glm::mat4));
+                    SDL_PushGPUVertexUniformData(Cmd, 2, &TerrainMesh, sizeof(TerrainMesh));
                     SDL_DrawGPUIndexedPrimitives(Pass, Batch.IndexCount, 1,
                                                  Geometry.TerrainIndexOffset + Batch.FirstIndex, 0, 0);
                     SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
+                    SDL_PushGPUVertexUniformData(Cmd, 2, &IdentityMesh, sizeof(IdentityMesh));
                     BindSharedVertices(Pass);
                 }
             };

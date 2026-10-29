@@ -1142,7 +1142,7 @@ namespace dbc
             return false;
         }
 
-        SDL_GPUShader* VertexShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_VERTEX, 0, 2);
+        SDL_GPUShader* VertexShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_VERTEX, 0, 3);
         SDL_GPUShader* FragmentShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_FRAGMENT, 9, 2);
 
         if (!VertexShader || !FragmentShader)
