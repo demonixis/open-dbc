@@ -94,9 +94,6 @@ Work, in order:
   sized to the stages a mesh uses; glued and locked objects; reflection passes;
   scenes with order-dependent opaque objects; transparent objects once a
   per-object order is qualified.
-- [ ] Commands that change how an object draws without moving it, such as
-  `GHOST OBJECT ON`, leave a still scene's cache in place: mark the object for
-  rebuilding.
 - [ ] GPU skinning, last since no demo model has bones: bone indices and weights in
   the mesh's vertex buffer, the object's bone palette in a vertex storage buffer,
   positions and normals skinned in the vertex shader. Queries, collision and shadow

@@ -2626,6 +2626,73 @@ TEST_CASE("Identical MAKE OBJECT primitives share their geometry until one is ed
     CHECK(Kernel.Renderer().LastFrameDrawCalls() == 1);
 }
 
+TEST_CASE("Commands that change how an object draws refresh a still scene")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    const std::filesystem::path Images = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp";
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "beam.bmp").string(), 1));
+    Objects.MakeObjectSphere(3, 1.0f, 8, 8);
+    REQUIRE(Objects.MakeMeshFromObject(1, 3));
+    Objects.DeleteObject(3);
+    Objects.MakeObjectCube(1, 2.0f);
+    Objects.PositionObject(1, 0.0f, 0.0f, 10.0f);
+    REQUIRE(Objects.AddLimb(1, 1, 1));
+    Objects.MakeObjectCube(2, 2.0f);
+    Objects.PositionObject(2, 3.0f, 0.0f, 10.0f);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+
+    // Each command runs on a scene drawn and cached, which must then be rebuilt.
+    const auto Refreshes = [&](const char* Name, auto&& Command)
+    {
+        INFO(std::string(Name));
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        REQUIRE(Kernel.Renderer().HasCachedTris());
+        REQUIRE_FALSE(Kernel.Objects().AnyObjectDirty());
+        Command();
+        CHECK((Kernel.Objects().AnyObjectDirty() || !Kernel.Renderer().HasCachedTris()));
+    };
+    Refreshes("GHOST OBJECT ON", [&] { Objects.GhostObjectOn(1); });
+    Refreshes("GHOST OBJECT OFF", [&] { Objects.GhostObjectOff(1); });
+    Refreshes("COLOR OBJECT", [&] { Objects.ColorObject(1, 0xFF0000); });
+    Refreshes("LOCK OBJECT ON", [&] { REQUIRE(Objects.LockObjectOn(1)); });
+    Refreshes("LOCK OBJECT OFF", [&] { REQUIRE(Objects.LockObjectOff(1)); });
+    Refreshes("DISABLE OBJECT ZDEPTH", [&] { REQUIRE(Objects.DisableObjectZdepth(1)); });
+    Refreshes("ENABLE OBJECT ZDEPTH", [&] { REQUIRE(Objects.EnableObjectZdepth(1)); });
+    Refreshes("SCALE OBJECT TEXTURE", [&] { REQUIRE(Objects.ScaleObjectTexture(1, 2.0f, 2.0f)); });
+    Refreshes("TEXTURE LIMB", [&] { REQUIRE(Objects.TextureLimb(1, 1, 1)); });
+    Refreshes("SCROLL LIMB TEXTURE", [&] { REQUIRE(Objects.ScrollLimbTexture(1, 1, 0.5f, 0.0f)); });
+    Refreshes("SCALE LIMB TEXTURE", [&] { REQUIRE(Objects.ScaleLimbTexture(1, 1, 2.0f, 2.0f)); });
+    Refreshes("SET OBJECT RADIUS", [&] { Objects.SetObjectRadius(1, 5.0f); });
+    Refreshes("SET VERTEXDATA POSITION",
+              [&]
+              {
+                  REQUIRE(Objects.LockVertexdataForLimb(1, 1));
+                  REQUIRE(Objects.SetVertexdataPosition(0, 0.0f, 3.0f, 0.0f));
+                  Objects.UnlockVertexdata();
+              });
+    Refreshes("DELETE OBJECT", [&] { Objects.DeleteObject(2); });
+
+    // End to end: a ghost blends with what is behind it, so the still frame changes.
+    const auto CenterPixel = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        std::array<Uint8, 4> Pixel{};
+        REQUIRE(
+            SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
+        SDL_DestroySurface(Capture);
+        return Pixel;
+    };
+    const std::array<Uint8, 4> Solid = CenterPixel();
+    Objects.GhostObjectOn(1);
+    CHECK(CenterPixel() != Solid);
+}
+
 TEST_CASE("Meshes stay on the CPU path where blending or the depth order decides the result")
 {
     dbc::EngineKernel Kernel;
@@ -2639,8 +2706,6 @@ TEST_CASE("Meshes stay on the CPU path where blending or the depth order decides
     REQUIRE(Kernel.Core().EnsureInitialized());
     const auto GpuDraws = [&]
     {
-        // Not every state command marks a still scene for rebuilding yet.
-        Kernel.Renderer().InvalidateTriCache();
         SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
         REQUIRE(Capture != nullptr);
         SDL_DestroySurface(Capture);

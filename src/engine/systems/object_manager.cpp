@@ -4159,7 +4159,9 @@ namespace dbc
     {
         Kernel_.Gpu().DeleteObjectEffect(ObjectId);
         AttachedStaticObjectIds_.erase(ObjectId);
-        Objects_.erase(ObjectId);
+        // No object is left to carry a dirty flag, so the cached scene goes.
+        if (Objects_.erase(ObjectId) != 0)
+            Kernel_.Renderer().InvalidateTriCache();
         ObjectHitHistory_.erase(ObjectId);
         LimbHitHistory_.erase(ObjectId);
         CollisionFeedback_.erase(ObjectId);
@@ -6389,6 +6391,7 @@ namespace dbc
         It->second.TintR = C.r;
         It->second.TintG = C.g;
         It->second.TintB = C.b;
+        It->second.TransformDirty = true;
     }
 
     void ObjectManager::FadeObject(int ObjectId, int Percent)
@@ -6415,6 +6418,7 @@ namespace dbc
             return;
         It->second.Ghosted = true;
         It->second.GhostMode = Mode;
+        It->second.TransformDirty = true;
     }
 
     void ObjectManager::GhostObjectOff(int ObjectId)
@@ -6423,6 +6427,7 @@ namespace dbc
         if (It == Objects_.end())
             return;
         It->second.Ghosted = false;
+        It->second.TransformDirty = true;
     }
 
     // ── Visibility / screen ──────────────────────────────────────────
@@ -6527,6 +6532,7 @@ namespace dbc
         if (!CheckedObject1)
             return false;
         CheckedObject1->LockToScreen = true;
+        CheckedObject1->TransformDirty = true;
         return true;
     }
 
@@ -6536,6 +6542,7 @@ namespace dbc
         if (!CheckedObject1)
             return false;
         CheckedObject1->LockToScreen = false;
+        CheckedObject1->TransformDirty = true;
         return true;
     }
 
@@ -6545,6 +6552,7 @@ namespace dbc
         if (!CheckedObject1)
             return false;
         CheckedObject1->ZdepthDisabled = true;
+        CheckedObject1->TransformDirty = true;
         return true;
     }
 
@@ -6554,6 +6562,7 @@ namespace dbc
         if (!CheckedObject1)
             return false;
         CheckedObject1->ZdepthDisabled = false;
+        CheckedObject1->TransformDirty = true;
         return true;
     }
 
@@ -8352,8 +8361,11 @@ namespace dbc
     void ObjectManager::SetObjectRadius(int ObjectId, float Radius)
     {
         auto* Obj = GetObject(ObjectId);
-        if (Obj)
-            Obj->BoundingRadius = Radius;
+        if (!Obj)
+            return;
+        // The radius bounds the object for view culling too.
+        Obj->BoundingRadius = Radius;
+        Obj->TransformDirty = true;
     }
 
     float ObjectManager::IntersectObject(int ObjectId, float X1, float Y1, float Z1, float X2, float Y2, float Z2)
