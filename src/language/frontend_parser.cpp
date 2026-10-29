@@ -1,4 +1,5 @@
 #include "frontend_internal.hpp"
+#include "numeric_conversion.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -272,16 +273,35 @@ namespace dbc::language::detail
                 }
 
                 const Token First = Peek();
-                if (First.Kind == TokenKind::Integer || First.Kind == TokenKind::Real)
+                if (First.Kind == TokenKind::Integer)
                 {
                     Advance();
                     auto Result = std::make_unique<Expression>();
-                    Result->Kind =
-                        First.Kind == TokenKind::Integer ? ExpressionKind::IntegerLiteral : ExpressionKind::RealLiteral;
+                    Result->Kind = ExpressionKind::IntegerLiteral;
                     Result->Span = First.Span;
                     Result->Text = TokenText(Source_, First);
-                    Result->Number = ParseNumber(Result->Text);
-                    Result->ResolvedType = {First.Kind == TokenKind::Integer ? TypeKind::Integer : TypeKind::Real, {}};
+                    if (!ParseInteger(Result->Text, Result->Integer))
+                    {
+                        AddError(Diagnostics_, "DBC1108", "Integer literal exceeds 9223372036854775807", First.Span);
+                        return MakeError(First.Span);
+                    }
+                    Result->Number = static_cast<double>(Result->Integer);
+                    Result->ResolvedType = {TypeKind::Integer, {}};
+                    return Result;
+                }
+                if (First.Kind == TokenKind::Real)
+                {
+                    Advance();
+                    auto Result = std::make_unique<Expression>();
+                    Result->Kind = ExpressionKind::RealLiteral;
+                    Result->Span = First.Span;
+                    Result->Text = TokenText(Source_, First);
+                    if (!ParseNumber(Result->Text, Result->Number))
+                    {
+                        AddError(Diagnostics_, "DBC1108", "Real literal is out of range", First.Span);
+                        return MakeError(First.Span);
+                    }
+                    Result->ResolvedType = {TypeKind::Real, {}};
                     return Result;
                 }
                 if (First.Kind == TokenKind::String)
@@ -473,21 +493,33 @@ namespace dbc::language::detail
                 return Words;
             }
 
-            static double ParseNumber(const std::string& Text)
+            // The VM's integers are 64-bit, so a literal must fit INT64_MAX; a negative literal is a unary minus.
+            static bool ParseInteger(std::string_view Text, std::int64_t& Result)
             {
+                int Base = 10;
                 if (!Text.empty() && Text.front() == '%')
                 {
-                    return static_cast<double>(std::strtoull(Text.c_str() + 1, nullptr, 2));
+                    Base = 2;
+                    Text.remove_prefix(1);
                 }
-                if (Text.size() > 2 && Text[0] == '0' && (Text[1] == 'c' || Text[1] == 'C'))
+                else if (Text.size() > 2 && Text[0] == '0' && (Text[1] == 'c' || Text[1] == 'C'))
                 {
-                    return static_cast<double>(std::strtoull(Text.c_str() + 2, nullptr, 8));
+                    Base = 8;
+                    Text.remove_prefix(2);
                 }
-                if (Text.size() > 2 && Text[0] == '0' && (Text[1] == 'x' || Text[1] == 'X'))
+                else if (Text.size() > 2 && Text[0] == '0' && (Text[1] == 'x' || Text[1] == 'X'))
                 {
-                    return static_cast<double>(std::strtoull(Text.c_str() + 2, nullptr, 16));
+                    Base = 16;
+                    Text.remove_prefix(2);
                 }
-                return std::strtod(Text.c_str(), nullptr);
+                std::uint64_t Value = 0;
+                // A radix prefix without digits keeps its historical value of 0.
+                const std::errc Error = std::from_chars(Text.data(), Text.data() + Text.size(), Value, Base).ec;
+                if (Error == std::errc::result_out_of_range ||
+                    Value > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()))
+                    return false;
+                Result = static_cast<std::int64_t>(Value);
+                return true;
             }
 
             static std::string DecodeString(std::string_view Text)
@@ -1558,6 +1590,7 @@ namespace dbc::language::detail
                 Result->Span = Span;
                 Result->ResolvedType = {TypeKind::Integer, {}};
                 Result->Number = static_cast<double>(Value);
+                Result->Integer = Value;
                 Result->Text = std::to_string(Value);
                 return Result;
             }

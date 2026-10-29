@@ -942,3 +942,34 @@ TEST_CASE("Nesting past the limit reports one diagnostic and parses what follows
     REQUIRE(Program.Diagnostics.size() == 1);
     CHECK(Program.Diagnostics.front().Code == "DBC1107");
 }
+
+TEST_CASE("Numeric literals must fit 64-bit integers and finite doubles")
+{
+    const std::vector<std::string> Rejected = {
+        "x = 9223372036854775808\n",
+        "x = 0x8000000000000000\n",
+        "x = 0x10000000000000000\n",
+        "x = %1" + Repeat("0", 63) + "\n",
+        "x# = 1.0e999\n",
+    };
+    for (const std::string& Text : Rejected)
+    {
+        INFO(Text);
+        const dbc::language::Program Program =
+            dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro));
+        REQUIRE(Program.Diagnostics.size() == 1);
+        CHECK(Program.Diagnostics.front().Code == "DBC1108");
+    }
+    const std::vector<std::string> Accepted = {
+        "x = 9223372036854775807\n",
+        "x = -9223372036854775807\n",
+        "x = 0xFFFFFFFF\n",
+        "x = %1" + Repeat("1", 62) + "\n",
+        "x# = 1.5e308\n",
+    };
+    for (const std::string& Text : Accepted)
+    {
+        INFO(Text);
+        CHECK_FALSE(dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro)).HasErrors());
+    }
+}

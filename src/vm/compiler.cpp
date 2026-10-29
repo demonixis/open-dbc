@@ -176,7 +176,7 @@ namespace dbc::vm
                 switch (Value.Kind)
                 {
                     case language::ExpressionKind::IntegerLiteral:
-                        return DataValue{{language::TypeKind::Integer, {}}, static_cast<std::int64_t>(Value.Number)};
+                        return DataValue{{language::TypeKind::Integer, {}}, Value.Integer};
                     case language::ExpressionKind::RealLiteral:
                     {
                         DataValue Result;
@@ -942,7 +942,7 @@ namespace dbc::vm
                     case language::ExpressionKind::Error:
                         return;
                     case language::ExpressionKind::IntegerLiteral:
-                        EmitInteger(Context, static_cast<std::int64_t>(Value.Number), Value.Span);
+                        EmitInteger(Context, Value.Integer, Value.Span);
                         return;
                     case language::ExpressionKind::RealLiteral:
                     {

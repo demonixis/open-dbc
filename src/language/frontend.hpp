@@ -157,6 +157,8 @@ namespace dbc::language
         Type ResolvedType{};
         std::string Text{};
         double Number = 0.0;
+        // An integer literal's exact value; Number holds it rounded to double.
+        std::int64_t Integer = 0;
         std::size_t ArrayRank = 0;
         ReferenceKind Reference = ReferenceKind::None;
         std::optional<SymbolId> Builtin{};

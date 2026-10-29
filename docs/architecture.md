@@ -45,6 +45,7 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 | Function call depth, the main program included | 100,000 frames | `DBC5000` at run time |
 | `GOSUB` without `RETURN` in one function | 100,000 | `DBC5000` at run time |
 | Elements of one array, from `DIM` or `ARRAY INSERT` | 2^25 (2 GiB of values) | `DBC5000` at run time |
+| Integer literals, decimal or radix; real literals | 9223372036854775807, kept exact; finite `double` | `DBC1108` |
 
 The parser, binder, compiler and AST destructors recurse once per nesting level;
 100 levels fit the 512 KB stack of a macOS secondary thread, where the Studio

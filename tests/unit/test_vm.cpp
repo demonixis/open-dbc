@@ -418,6 +418,22 @@ TEST_CASE("Function calls and GOSUB stop at their depth limits")
     CHECK(GosubError.find("GOSUB is nested more than") != std::string::npos);
 }
 
+TEST_CASE("Integer literals keep their exact 64-bit value")
+{
+    const auto Module = Compile("big = 9223372036854775807\n"
+                                "data 9223372036854775806\n"
+                                "read listed\n",
+                                dbc::language::LanguageProfile::DbPro);
+    TestHost Host;
+    dbc::vm::ExecutionSession Session;
+    REQUIRE(Session.Prepare(Module, Host));
+    RunToCompletion(Session);
+    REQUIRE(Session.Global("big") != nullptr);
+    REQUIRE(Session.Global("listed") != nullptr);
+    CHECK(Session.Global("big")->AsInteger() == std::numeric_limits<std::int64_t>::max());
+    CHECK(Session.Global("listed")->AsInteger() == std::numeric_limits<std::int64_t>::max() - 1);
+}
+
 TEST_CASE("DIM and ARRAY INSERT stop at the array size limit")
 {
     const auto Fail = [](const std::string& Text)
