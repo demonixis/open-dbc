@@ -730,7 +730,7 @@ TEST_CASE("Classic animations validate numbers, files, bitmaps and areas")
     CHECK(Number(SymbolId::Function_AnimationExist, 2) == 0);
 }
 
-#if defined(__APPLE__) || (defined(__linux__) && !defined(__ANDROID__))
+#if defined(__APPLE__) || defined(_WIN32) || (defined(__linux__) && !defined(__ANDROID__))
 TEST_CASE("Classic animations play decoded video into their bitmap")
 {
 #if defined(__linux__)
@@ -785,7 +785,7 @@ TEST_CASE("Classic animations play decoded video into their bitmap")
     // The fixture shows red for one second, then blue for one second.
     REQUIRE(Kernel.ImageStoreRef().CreateBitmap(1, 64, 48, &Error));
     const auto Outside = Pixel(40, 30);
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(_WIN32)
     const char* Video = "red_blue.mp4";
     constexpr int Width = 64;
 #else

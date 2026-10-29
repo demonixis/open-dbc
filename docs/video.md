@@ -10,7 +10,8 @@ OpenDBC ships no codec of its own.
 | --- | --- | --- |
 | macOS, iOS | AVFoundation | MP4, MOV and M4V (H.264, HEVC, ProRes); AVI only with Motion JPEG |
 | Linux | GStreamer 1.x | containers and codecs provided by the installed system plugins |
-| Windows, Android | none yet | nothing: every animation is inert |
+| Windows | Media Foundation | containers and codecs installed with Windows, including MP4/H.264 |
+| Android | none yet | nothing: every animation is inert |
 
 `LOAD ANIMATION` fails on a missing file. A file the platform cannot decode,
 including period AVI codecs unavailable on that system, loads as an
@@ -20,6 +21,17 @@ supported by the target system; MP4 (H.264) also needs a suitable decoder on Lin
 
 Each platform implements `VideoDecoder` (`src/engine/systems/video_decoder.hpp`)
 in its own file, chosen by `src/engine/CMakeLists.txt`.
+
+## Windows decoding
+
+The Media Engine plays audio and supplies BGRA frames through a WIC bitmap. A
+frame pump advances it independently of BASIC rendering; SDL_GPU keeps drawing
+the decoded pictures. Windows N editions need the Media Feature Pack. Missing
+media components and unsupported codecs follow the inert-animation behavior above.
+
+Windows tests exercise Unicode paths, H.264 frames, pause/resume, restart, end of
+playback, destruction during playback and invalid files. The fixture has no audio;
+audible output and hardware decoding still need separate qualification.
 
 ## Linux dependencies
 

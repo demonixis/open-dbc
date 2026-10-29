@@ -111,9 +111,9 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 ## Rendering and media
 
-- [ ] Video decoders for Windows (Media Foundation) and Android, each checked on
-  its platform, and an iOS run of AVFoundation; platforms without a decoder
-  load every animation inert today ([video.md](video.md)).
+- [ ] Android video decoder and an iOS run of AVFoundation; platforms without a
+  decoder load every animation inert today ([video.md](video.md)).
+- [ ] Qualify Windows Media Foundation with audible output and hardware decoding.
 - [ ] Qualify Linux GStreamer playback with real audio output, hardware decoding
   and exported games against the Steam Runtime ([video.md](video.md)).
 - [ ] `SET SHADOW SHADING ON` indoors: a cube in a closed box room, lit by a
