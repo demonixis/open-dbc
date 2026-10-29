@@ -2330,6 +2330,37 @@ TEST_CASE("Renderer frame stats count objects, culling and views without the deb
     CHECK(Mean.RecordMilliseconds > 0.0);
 }
 
+TEST_CASE("Objects locked to the screen cull their faces from the eye, wherever the camera is")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    Kernel.Objects().MakeObjectCube(1, 2.0f);
+    REQUIRE(Kernel.Objects().LockObjectOn(1));
+    Kernel.Objects().PositionObject(1, 1.5f, -1.0f, 6.0f);
+    Kernel.Objects().RotateObject(1, 25.0f, 35.0f, 0.0f);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    // The overlay triangles a camera position yields, as sorted screen corners.
+    const auto Drawn = [&](float X, float Y, float Z)
+    {
+        RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(X, Y, Z, &Error); });
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        std::vector<std::array<float, 6>> Triangles;
+        for (const dbc::Triangle& Value : Kernel.Renderer().CachedOverlayTris())
+            Triangles.push_back(
+                {Value.Pos[0][0], Value.Pos[0][1], Value.Pos[1][0], Value.Pos[1][1], Value.Pos[2][0], Value.Pos[2][1]});
+        std::sort(Triangles.begin(), Triangles.end());
+        return Triangles;
+    };
+
+    const auto AtOrigin = Drawn(0.0f, 0.0f, 0.0f);
+    CHECK(AtOrigin.size() == 6);
+    CHECK(Drawn(0.0f, 0.0f, 1000.0f) == AtOrigin);
+    CHECK(Drawn(-700.0f, 300.0f, -50.0f) == AtOrigin);
+}
+
 TEST_CASE("CHANGE MESH redraws a still scene with the new limb mesh")
 {
     dbc::EngineKernel Kernel;

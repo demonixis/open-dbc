@@ -2284,6 +2284,8 @@ namespace dbc
                     }
                 }
 
+                // An object locked to the screen lives in camera space, where the eye is the origin.
+                const Vec3 EyePoint = Object.LockToScreen ? Vec3{0.0f, 0.0f, 0.0f} : Camera;
                 for (const Mesh& MeshValue : Object.Meshes)
                 {
                     if (!MeshValue.Visible)
@@ -2371,7 +2373,7 @@ namespace dbc
                     const auto ReflectionDirection = [&](const Vec3& WorldPoint, const Vec3& WorldNormal)
                     {
                         const Vec3 Incident = Vec3Normalize(
-                            Vec3{WorldPoint.X - Camera.X, WorldPoint.Y - Camera.Y, WorldPoint.Z - Camera.Z});
+                            Vec3{WorldPoint.X - EyePoint.X, WorldPoint.Y - EyePoint.Y, WorldPoint.Z - EyePoint.Z});
                         const Vec3 Normal = Vec3Normalize(WorldNormal);
                         const float Projection = 2.0f * Vec3Dot(Incident, Normal);
                         return Vec3Normalize(Vec3{Incident.X - Projection * Normal.X,
@@ -2472,7 +2474,7 @@ namespace dbc
                                 }
                             }
                             const Vec3 ToEye = Vec3Normalize(
-                                Vec3{Camera.X - WorldPoint.X, Camera.Y - WorldPoint.Y, Camera.Z - WorldPoint.Z});
+                                Vec3{EyePoint.X - WorldPoint.X, EyePoint.Y - WorldPoint.Y, EyePoint.Z - WorldPoint.Z});
                             Corner.Uv = SDL_FPoint{std::clamp(Vec3Dot(Normal, ToLight), 0.0f, 1.0f), 0.5f};
                             Corner.AuxiliaryUvs[0] = SDL_FPoint{std::clamp(Vec3Dot(Normal, ToEye), 0.0f, 1.0f), 0.5f};
                         }
@@ -2480,7 +2482,7 @@ namespace dbc
                         {
                             const Vec3 Normal = Vec3Normalize(WorldNormal);
                             const Vec3 Eye = Vec3Normalize(
-                                Vec3{Camera.X - WorldPoint.X, Camera.Y - WorldPoint.Y, Camera.Z - WorldPoint.Z});
+                                Vec3{EyePoint.X - WorldPoint.X, EyePoint.Y - WorldPoint.Y, EyePoint.Z - WorldPoint.Z});
                             const Vec3 Half = Vec3Normalize(Vec3{Normal.X + Eye.X, Normal.Y + Eye.Y, Normal.Z + Eye.Z});
                             Corner.Uv = SDL_FPoint{Vec3Dot(Normal, Eye), Vec3Dot(Half, Normal)};
                             Corner.AuxiliaryUvs[0] = SDL_FPoint{Eye.X, Half.Y};
@@ -2532,7 +2534,7 @@ namespace dbc
                             const float Cx = (W0.X + W1.X + W2.X) / 3.0f;
                             const float Cy = (W0.Y + W1.Y + W2.Y) / 3.0f;
                             const float Cz = (W0.Z + W1.Z + W2.Z) / 3.0f;
-                            const Vec3 ToCam{Camera.X - Cx, Camera.Y - Cy, Camera.Z - Cz};
+                            const Vec3 ToCam{EyePoint.X - Cx, EyePoint.Y - Cy, EyePoint.Z - Cz};
                             const float Facing = Vec3Dot(FaceNormal, ToCam);
                             if (Facing <= 0.0f)
                             {
