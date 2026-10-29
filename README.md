@@ -52,6 +52,7 @@ ctest --preset default
 | CLI, Studio, exports, debugging | [docs/usage.md](docs/usage.md) |
 | Studio Scene view (level editor) | [docs/level-editor.md](docs/level-editor.md) |
 | Code layout, language pipeline, compatibility rules, tests | [docs/architecture.md](docs/architecture.md) |
+| Renderer frame, its costs and how to measure them | [docs/rendering.md](docs/rendering.md) |
 | Commands and their support state, per profile | [docs/reference/](docs/reference/) |
 | Desktop VR | [docs/vr.md](docs/vr.md) |
 | DBPro BSP worlds | [docs/bsp.md](docs/bsp.md) |
