@@ -418,6 +418,25 @@ TEST_CASE("Function calls and GOSUB stop at their depth limits")
     CHECK(GosubError.find("GOSUB is nested more than") != std::string::npos);
 }
 
+TEST_CASE("DIM and ARRAY INSERT stop at the array size limit")
+{
+    const auto Fail = [](const std::string& Text)
+    {
+        const auto Module = Compile(Text, dbc::language::LanguageProfile::DbPro);
+        TestHost Host;
+        dbc::vm::ExecutionSession Session;
+        REQUIRE(Session.Prepare(Module, Host));
+        CHECK(Session.Tick(1000).State == dbc::vm::SessionState::Failed);
+        return Session.Error();
+    };
+    const std::string Limit = std::to_string(dbc::vm::KMaxArrayElements);
+    // Bounds are inclusive: DIM a(n) holds n + 1 elements.
+    CHECK(Fail("dim a(" + Limit + ")\n").find("Array size exceeds") != std::string::npos);
+    CHECK(Fail("dim a(8191, 4096)\n").find("Array size exceeds") != std::string::npos);
+    CHECK(Fail("dim a(0)\narray insert at bottom a(), " + Limit + "\n").find("Array size exceeds") !=
+          std::string::npos);
+}
+
 TEST_CASE("DATA READ and RESTORE use the typed module pool")
 {
     const auto Module = Compile("type Holder\n"

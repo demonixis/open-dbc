@@ -665,8 +665,8 @@ namespace dbc::vm
                     ElementCount *= Extent;
                     Array->Dimensions.push_back(Extent);
                 }
-                if (ElementCount > Array->Elements.max_size())
-                    return Reject("Array size is too large");
+                if (ElementCount > KMaxArrayElements)
+                    return Reject("Array size exceeds " + std::to_string(KMaxArrayElements) + " elements");
                 Array->Elements.reserve(ElementCount);
                 Value Initial;
                 if (!DefaultValue(Array->ElementType, *Bytecode_, Initial, Error))
@@ -893,8 +893,9 @@ namespace dbc::vm
                             return Reject("Dynamic array operations require a one-dimensional array");
                         if (Position > Array.Elements.size())
                             return Reject("Array index is out of bounds");
-                        if (Quantity > Array.Elements.max_size() - Array.Elements.size())
-                            return Reject("Dynamic array is too large");
+                        if (Array.Elements.size() > KMaxArrayElements ||
+                            Quantity > KMaxArrayElements - Array.Elements.size())
+                            return Reject("Array size exceeds " + std::to_string(KMaxArrayElements) + " elements");
                         Value Initial;
                         if (!DefaultValue(Array.ElementType, *Bytecode_, Initial, Error))
                             return Reject(Error);

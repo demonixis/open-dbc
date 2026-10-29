@@ -15,6 +15,9 @@ namespace dbc::vm
     // Runaway recursion and GOSUB without RETURN stop with an error before they exhaust memory.
     inline constexpr std::size_t KMaxCallDepth = 100'000;
     inline constexpr std::size_t KMaxGosubDepth = 100'000;
+    // One array holds at most 2^25 elements (2 GiB of values): a wrong DIM or ARRAY INSERT size fails with an
+    // error instead of aborting the process on a failed allocation.
+    inline constexpr std::size_t KMaxArrayElements = std::size_t{1} << 25;
 
     enum class BuiltinState : std::uint8_t
     {
