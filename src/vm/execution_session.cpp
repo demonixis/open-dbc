@@ -1078,6 +1078,8 @@ namespace dbc::vm
                     return Reject("Function parameters exceed local slots");
                 if (Current.Stack.size() < Instruction.B)
                     return Reject("Operand stack underflow");
+                if (Frames_.size() >= KMaxCallDepth)
+                    return Reject("Function calls are nested more than " + std::to_string(KMaxCallDepth) + " deep");
                 const std::size_t Begin = Current.Stack.size() - Instruction.B;
 
                 Frame Next;
@@ -1143,6 +1145,9 @@ namespace dbc::vm
             case OpCode::CallLabel:
                 if (Instruction.A >= CurrentFunction.Code.size())
                     return Reject("Label target is out of range");
+                if (Current.Subroutines.size() >= KMaxGosubDepth)
+                    return Reject("GOSUB is nested more than " + std::to_string(KMaxGosubDepth) +
+                                  " deep without RETURN");
                 Current.Subroutines.push_back(Current.ProgramCounter + 1);
                 Current.ProgramCounter = Instruction.A;
                 return true;

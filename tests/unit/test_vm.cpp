@@ -378,6 +378,46 @@ TEST_CASE("GOSUB targets use an explicit subroutine stack")
     CHECK(Session.Global("value")->AsInteger() == 3);
 }
 
+TEST_CASE("Function calls and GOSUB stop at their depth limits")
+{
+    const auto Run = [](const std::string& Text, dbc::language::LanguageProfile Profile)
+    {
+        const auto Module = Compile(Text, Profile);
+        TestHost Host;
+        dbc::vm::ExecutionSession Session;
+        REQUIRE(Session.Prepare(Module, Host));
+        dbc::vm::TickResult Result;
+        do
+            Result = Session.Tick(1'000'000);
+        while (Result.State != dbc::vm::SessionState::Completed && Result.State != dbc::vm::SessionState::Failed);
+        return std::pair{Result.State, Session.Error()};
+    };
+    // The main program is the first frame.
+    const auto Dive = [&](std::size_t Calls)
+    {
+        const std::string Main = "dive(" + std::to_string(Calls) + ")\n";
+        return Run(Main + "function dive(n)\n"
+                          "  if n > 1 then dive(n - 1)\n"
+                          "endfunction\n",
+                   dbc::language::LanguageProfile::Dbc);
+    };
+    CHECK(Dive(dbc::vm::KMaxCallDepth - 1).first == dbc::vm::SessionState::Completed);
+    const auto [CallState, CallError] = Dive(dbc::vm::KMaxCallDepth);
+    CHECK(CallState == dbc::vm::SessionState::Failed);
+    CHECK(CallError.find("Function calls are nested more than") != std::string::npos);
+
+    const auto Descend = [&](std::size_t Pending)
+    {
+        const std::string Last = std::to_string(Pending);
+        return Run("deeper:\ncount = count + 1\nif count <= " + Last + " then gosub deeper\n",
+                   dbc::language::LanguageProfile::Dbc);
+    };
+    CHECK(Descend(dbc::vm::KMaxGosubDepth).first == dbc::vm::SessionState::Completed);
+    const auto [GosubState, GosubError] = Descend(dbc::vm::KMaxGosubDepth + 1);
+    CHECK(GosubState == dbc::vm::SessionState::Failed);
+    CHECK(GosubError.find("GOSUB is nested more than") != std::string::npos);
+}
+
 TEST_CASE("DATA READ and RESTORE use the typed module pool")
 {
     const auto Module = Compile("type Holder\n"

@@ -12,6 +12,10 @@
 
 namespace dbc::vm
 {
+    // Runaway recursion and GOSUB without RETURN stop with an error before they exhaust memory.
+    inline constexpr std::size_t KMaxCallDepth = 100'000;
+    inline constexpr std::size_t KMaxGosubDepth = 100'000;
+
     enum class BuiltinState : std::uint8_t
     {
         Completed,

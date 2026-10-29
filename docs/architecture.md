@@ -42,6 +42,8 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 | Limit | Value | Diagnostic |
 | --- | --- | --- |
 | Statement blocks, ELSEIF branches, inline `IF` bodies and expression operands, nested together | 100 levels | `DBC1226` for a block, `DBC1107` for an expression |
+| Function call depth, the main program included | 100,000 frames | `DBC5000` at run time |
+| `GOSUB` without `RETURN` in one function | 100,000 | `DBC5000` at run time |
 
 The parser, binder, compiler and AST destructors recurse once per nesting level;
 100 levels fit the 512 KB stack of a macOS secondary thread, where the Studio
