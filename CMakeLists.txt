@@ -164,6 +164,7 @@ endif()
 set(CMAKE_XCODE_GENERATE_SCHEME OFF)
 
 include(FetchContent)
+include(cmake/fetch_dependency.cmake)
 
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
@@ -200,10 +201,9 @@ if(NOT ANDROID AND NOT IOS)
     set(SDL_GPU_OPENXR ON CACHE BOOL "" FORCE)
 endif()
 
-FetchContent_Declare(
-  SDL3
-  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-  GIT_TAG c1ef7793c75c2bde6321ec0c9894ea0b2a7694fe
+opendbc_fetch_dependency(SDL3
+  https://github.com/libsdl-org/SDL.git
+  c1ef7793c75c2bde6321ec0c9894ea0b2a7694fe
   PATCH_COMMAND ${CMAKE_COMMAND}
                 -DOPENDBC_GIT_EXECUTABLE=${GIT_EXECUTABLE}
                 -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
@@ -219,9 +219,9 @@ function(opendbc_configure_openxr)
     set(BUILD_TESTS OFF)
     set(BUILD_LOADER ON)
     set(BUILD_CONFORMANCE_TESTS OFF)
-    FetchContent_Declare(opendbc_openxr
-        GIT_REPOSITORY https://github.com/KhronosGroup/OpenXR-SDK.git
-        GIT_TAG 105a2a674cd7aae85de8d6a43f2d2cbdaa80af60)
+    opendbc_fetch_dependency(opendbc_openxr
+        https://github.com/KhronosGroup/OpenXR-SDK.git
+        105a2a674cd7aae85de8d6a43f2d2cbdaa80af60)
     FetchContent_MakeAvailable(opendbc_openxr)
     set(OPENDBC_OPENXR_SOURCE_DIR "${opendbc_openxr_SOURCE_DIR}" PARENT_SCOPE)
 endfunction()
@@ -266,10 +266,9 @@ set(SDLIMAGE_XV OFF CACHE BOOL "" FORCE)
 set(SDLIMAGE_JPG_SAVE OFF CACHE BOOL "" FORCE)
 set(SDLIMAGE_BMP_SAVE OFF CACHE BOOL "" FORCE)
 
-FetchContent_Declare(
-  SDL3_image
-  GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
-  GIT_TAG ad58ecfc27a1bd09e510ceff8bbbdb1094806476
+opendbc_fetch_dependency(SDL3_image
+  https://github.com/libsdl-org/SDL_image.git
+  ad58ecfc27a1bd09e510ceff8bbbdb1094806476
 )
 FetchContent_MakeAvailable(SDL3_image)
 
@@ -294,10 +293,9 @@ set(SDLMIXER_VORBIS_TREMOR OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_VORBIS_VORBISFILE OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_WAVPACK OFF CACHE BOOL "" FORCE)
 
-FetchContent_Declare(
-  SDL3_mixer
-  GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
-  GIT_TAG da02588817a565fccfa60fa2f0bb661a3c77b8f0
+opendbc_fetch_dependency(SDL3_mixer
+  https://github.com/libsdl-org/SDL_mixer.git
+  da02588817a565fccfa60fa2f0bb661a3c77b8f0
 )
 FetchContent_MakeAvailable(SDL3_mixer)
 
@@ -308,10 +306,9 @@ set(SDLTTF_HARFBUZZ OFF CACHE BOOL "" FORCE)
 set(SDLTTF_PLUTOSVG OFF CACHE BOOL "" FORCE)
 set(SDLTTF_ZLIB ON CACHE BOOL "" FORCE)
 
-FetchContent_Declare(
-  SDL3_ttf
-  GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
-  GIT_TAG a1ce3670aec736ecbf0936c43f2f0cc53aa61e5b
+opendbc_fetch_dependency(SDL3_ttf
+  https://github.com/libsdl-org/SDL_ttf.git
+  a1ce3670aec736ecbf0936c43f2f0cc53aa61e5b
 )
 FetchContent_MakeAvailable(SDL3_ttf)
 if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND TARGET freetype)
@@ -333,45 +330,40 @@ set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_MD2_IMPORTER ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_MD3_IMPORTER ON CACHE BOOL "" FORCE)
 
-FetchContent_Declare(
-  assimp
-  GIT_REPOSITORY https://github.com/assimp/assimp.git
-  GIT_TAG c35200e38ea8f058812b83de2ef32c6093b0ece2
+opendbc_fetch_dependency(assimp
+  https://github.com/assimp/assimp.git
+  c35200e38ea8f058812b83de2ef32c6093b0ece2
 )
 FetchContent_MakeAvailable(assimp)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND TARGET assimp)
     target_compile_options(assimp PRIVATE -Wno-nontrivial-memcall)
 endif()
 
-FetchContent_Declare(
-  glm
-  GIT_REPOSITORY https://github.com/g-truc/glm.git
-  GIT_TAG 0af55ccecd98d4e5a8d1fad7de25ba429d60e863
+opendbc_fetch_dependency(glm
+  https://github.com/g-truc/glm.git
+  0af55ccecd98d4e5a8d1fad7de25ba429d60e863
 )
 set(GLM_ENABLE_CXX_17 ON CACHE BOOL "" FORCE)
 set(GLM_BUILD_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glm)
 
-FetchContent_Declare(
-  spdlog
-  GIT_REPOSITORY https://github.com/gabime/spdlog.git
-  GIT_TAG 6fa36017cfd5731d617e1a934f0e5ea9c4445b13
+opendbc_fetch_dependency(spdlog
+  https://github.com/gabime/spdlog.git
+  6fa36017cfd5731d617e1a934f0e5ea9c4445b13
 )
 set(SPDLOG_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(spdlog)
 
-FetchContent_Declare(
-  unordered_dense
-  GIT_REPOSITORY https://github.com/martinus/unordered_dense.git
-  GIT_TAG 73f3cbb237e84d483afafc743f1f14ec53e12314
+opendbc_fetch_dependency(unordered_dense
+  https://github.com/martinus/unordered_dense.git
+  73f3cbb237e84d483afafc743f1f14ec53e12314
 )
 FetchContent_MakeAvailable(unordered_dense)
 
 # Classic multiplayer runs over ENet, a small UDP library with reliable channels and fragmentation.
-FetchContent_Declare(
-  enet
-  GIT_REPOSITORY https://github.com/lsalzman/enet.git
-  GIT_TAG 2662c0de09e36f2a2030ccc2c528a3e4c9e8138a # v1.3.18
+opendbc_fetch_dependency(enet
+  https://github.com/lsalzman/enet.git
+  2662c0de09e36f2a2030ccc2c528a3e4c9e8138a # v1.3.18
 )
 FetchContent_MakeAvailable(enet)
 target_include_directories(enet SYSTEM INTERFACE ${enet_SOURCE_DIR}/include)
@@ -396,10 +388,9 @@ set(JPH_USE_DX12 OFF CACHE BOOL "" FORCE)
 set(JPH_USE_VK OFF CACHE BOOL "" FORCE)
 set(JPH_USE_MTL OFF CACHE BOOL "" FORCE)
 set(JPH_USE_CPU_COMPUTE OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(
-  JoltPhysics
-  GIT_REPOSITORY https://github.com/jrouwe/JoltPhysics.git
-  GIT_TAG e77f175595e64cb44218cc9d9d56fc365ad0e36a
+opendbc_fetch_dependency(JoltPhysics
+  https://github.com/jrouwe/JoltPhysics.git
+  e77f175595e64cb44218cc9d9d56fc365ad0e36a
   SOURCE_SUBDIR Build
 )
 FetchContent_MakeAvailable(JoltPhysics)
@@ -426,10 +417,9 @@ if(APPLE OR (NOT ANDROID AND NOT IOS))
     set(SDLSHADERCROSS_CLI OFF CACHE BOOL "" FORCE)
     set(SDLSHADERCROSS_TESTS OFF CACHE BOOL "" FORCE)
     set(SDLSHADERCROSS_INSTALL OFF CACHE BOOL "" FORCE)
-    FetchContent_Declare(
-    SDL3_shadercross
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL_shadercross.git
-    GIT_TAG 3a314481ede01f5d966f0e834019942e34c02b82
+    opendbc_fetch_dependency(SDL3_shadercross
+    https://github.com/libsdl-org/SDL_shadercross.git
+    3a314481ede01f5d966f0e834019942e34c02b82
     PATCH_COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=<SOURCE_DIR>
         -P ${CMAKE_SOURCE_DIR}/cmake/patch_shadercross_static_dxc.cmake
     )
@@ -836,10 +826,9 @@ if(BUILD_TESTS)
     # C++ unit tests (doctest)
     set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
     set(DOCTEST_NO_INSTALL ON CACHE BOOL "" FORCE)
-    FetchContent_Declare(
-        doctest
-        GIT_REPOSITORY https://github.com/doctest/doctest.git
-        GIT_TAG ae7a13539fb71f270b87eb2e874fbac80bc8dda2
+    opendbc_fetch_dependency(doctest
+        https://github.com/doctest/doctest.git
+        ae7a13539fb71f270b87eb2e874fbac80bc8dda2
     )
     FetchContent_MakeAvailable(doctest)
     list(APPEND CMAKE_MODULE_PATH ${doctest_SOURCE_DIR}/scripts/cmake)

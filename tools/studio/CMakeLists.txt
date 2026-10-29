@@ -8,10 +8,9 @@ include(FetchContent)
 
 # --- Dear ImGui (docking branch) -------------------------------------------
 # No CMakeLists upstream: FetchContent only populates, the target is built here.
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG 9b4eb24cee2071e61dc1f9ef3e5228097cdde720
+opendbc_fetch_dependency(imgui
+    https://github.com/ocornut/imgui.git
+    9b4eb24cee2071e61dc1f9ef3e5228097cdde720
 )
 FetchContent_MakeAvailable(imgui)
 
@@ -35,10 +34,9 @@ target_link_libraries(imgui PUBLIC SDL3::SDL3)
 # --- ImGuiColorTextEdit (goossens fork) ------------------------------------
 # Syntax-highlighting code editor widget: markers, squigglies, autocomplete,
 # hover callbacks and a built-in find/replace window.
-FetchContent_Declare(
-    imgui_texteditor
-    GIT_REPOSITORY https://github.com/goossens/ImGuiColorTextEdit.git
-    GIT_TAG cfc3f68ab307d695c66fde5fc90f16a8f14ca6cb
+opendbc_fetch_dependency(imgui_texteditor
+    https://github.com/goossens/ImGuiColorTextEdit.git
+    cfc3f68ab307d695c66fde5fc90f16a8f14ca6cb
 )
 FetchContent_MakeAvailable(imgui_texteditor)
 
@@ -57,10 +55,9 @@ target_link_libraries(imgui_texteditor PUBLIC imgui)
 # --- ImGuizmo --------------------------------------------------------------
 # Translate, rotate and scale gizmos for the Scene view. Its own CMakeLists builds
 # a copy of Dear ImGui, so only the sources are fetched (SOURCE_SUBDIR has none).
-FetchContent_Declare(
-    imguizmo
-    GIT_REPOSITORY https://github.com/CedricGuillemet/ImGuizmo.git
-    GIT_TAG 105e4fde45e4e74aae8973d98750820ef7aca7e2
+opendbc_fetch_dependency(imguizmo
+    https://github.com/CedricGuillemet/ImGuizmo.git
+    105e4fde45e4e74aae8973d98750820ef7aca7e2
     SOURCE_SUBDIR opendbc-sources-only
 )
 FetchContent_MakeAvailable(imguizmo)
@@ -72,10 +69,9 @@ target_link_libraries(imguizmo PUBLIC imgui)
 # --- nlohmann/json ---------------------------------------------------------
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(JSON_Install OFF CACHE INTERNAL "")
-FetchContent_Declare(
-    nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG 9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03
+opendbc_fetch_dependency(nlohmann_json
+    https://github.com/nlohmann/json.git
+    9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03
 )
 FetchContent_MakeAvailable(nlohmann_json)
 

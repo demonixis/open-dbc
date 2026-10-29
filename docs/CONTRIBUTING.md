@@ -23,6 +23,10 @@ cmake --build --preset sanitize
 ctest --preset sanitize
 ```
 
+Dependencies are pinned commits, fetched as shallow clones into
+`build/_deps-cache`, which every build directory shares; `-DOPENDBC_DEPENDENCY_CACHE=<dir>`
+moves it.
+
 ## Rules
 
 - Code conventions, error handling, architecture constraints and the validation
