@@ -1,39 +1,16 @@
-# "Microsoft" is the base style closest to C#
-BasedOnStyle:    Microsoft
+root = true
 
-Standard:        c++20
+# C++ layout lives in .clang-format; this covers the editors that do not read it.
+[*]
+insert_final_newline = true
 
-# --- Indentation ---
-IndentWidth:     4
-TabWidth:        4
-UseTab:          Never
+[{*.{cpp,hpp,h,c,mm,hlsl,fx,py,cmake},CMakeLists.txt}]
+indent_style = space
+indent_size = 4
 
-# --- Namespaces (indented) ---
-# "All" indents the code inside every namespace
-NamespaceIndentation: All
+[*.json]
+indent_style = space
+indent_size = 2
 
-# --- Braces (C# / Allman style) ---
-# Put every brace on its own line
-BreakBeforeBraces: Allman
-
-# --- C++ specific ---
-# Align pointers left (int* p), as in C# (implicit references)
-PointerAlignment: Left
-
-# Column limit
-ColumnLimit:     120
-
-# --- C#-like rules ---
-# No single-line if: always braces and a line break
-AllowShortIfStatementsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: Empty
-AllowShortBlocksOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-
-# switch/case: indent case labels inside the switch
-IndentCaseLabels: true
-
-# Spaces
-SpaceAfterTemplateKeyword: false
-SpaceBeforeAssignmentOperators: true
-SpaceInEmptyParentheses: false
+# BASIC sources keep their own encoding and line endings (Windows-1252, CRLF): no charset or
+# end_of_line here.

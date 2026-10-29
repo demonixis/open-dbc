@@ -42,10 +42,16 @@ Publication:
 - [ ] Code quality audit.
 - [ ] Separate the smoke-test code from the main code: a dedicated smoke `main`, or
   one class compiled in Debug only.
-- [ ] Reformat every C++ source once with `.clang-format`, in its own commit: 66 of
-  276 files drift from it, before the blank lines `SeparateDefinitionBlocks` adds
-  between glued definitions. Replace `.editorconfig`, which holds a copy of the
-  clang-format YAML instead of EditorConfig settings.
+- [ ] Architecture audit.
+
+## Rendering performance
+
+Audit the graphics stack and move it towards GPU-driven, data-driven rendering.
+
+- [ ] GPU instancing.
+- [ ] Automatic instancing of objects that share a mesh and material.
+- [ ] Automatic static batching.
+- [ ] Frustum culling and the other visibility tests.
 
 ## Classic multiplayer
 
