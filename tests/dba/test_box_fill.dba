@@ -5,13 +5,14 @@ create bitmap 1, 16, 16
 cls rgb(0, 0, 0)
 ink rgb(200, 100, 50), 0
 box 4, 4, 9, 9
-p = point(6, 6)
-print "inside="; rgbr(p); ","; rgbg(p); ","; rgbb(p)
-p = point(9, 9)
-print "edge="; rgbr(p); ","; rgbg(p); ","; rgbb(p)
-p = point(12, 12)
-print "outside="; rgbr(p); ","; rgbg(p); ","; rgbb(p)
+rem Read the pixels before PRINT can paint text over the bitmap
+InsidePixel = point(6, 6)
+EdgePixel = point(9, 9)
+OutsidePixel = point(12, 12)
 set current bitmap 0
+print "inside="; rgbr(InsidePixel); ","; rgbg(InsidePixel); ","; rgbb(InsidePixel)
+print "edge="; rgbr(EdgePixel); ","; rgbg(EdgePixel); ","; rgbb(EdgePixel)
+print "outside="; rgbr(OutsidePixel); ","; rgbg(OutsidePixel); ","; rgbb(OutsidePixel)
 print "TEST_DONE"
 sync
 end
