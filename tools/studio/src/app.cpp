@@ -230,10 +230,18 @@ namespace dbc::studio
                            IsError ? panels::OutputPanel::Severity::Error : panels::OutputPanel::Severity::Normal);
         };
         const toolchain::ExecutionAdapter::FinishHandler OnFinish =
-            [this](int ExitCode, const std::map<int, std::string>& Errors)
+            [this](int ExitCode, const std::vector<toolchain::RunDiagnostic>& Diagnostics)
         {
             ExecutionBusy_ = false;
-            Editor_.SetErrorMarkers(ExecutionTarget_, Errors);
+            Editor_.ClearErrorMarkers();
+            std::map<std::filesystem::path, std::map<int, std::string>> Markers;
+            for (const toolchain::RunDiagnostic& Diagnostic : Diagnostics)
+            {
+                if (Diagnostic.Error && Diagnostic.Line > 0)
+                    Markers[Diagnostic.Path].emplace(static_cast<int>(Diagnostic.Line), Diagnostic.Message);
+            }
+            for (const auto& [Path, Errors] : Markers)
+                Editor_.SetErrorMarkers(Path, Errors);
             ExecutionTarget_.clear();
             if (ExitCode == 0)
                 Status_ = "Run finished";
@@ -1509,10 +1517,13 @@ namespace dbc::studio
                 Settings_.DebugOverlay = RunOptions_.DebugOverlay;
                 Settings_.Save();
             }
-            if (ImGui::MenuItem("Dump Scene and Renderer", "F4", false, ExecutionBusy_))
+#if defined(DBC_STUDIO_SANDBOXED)
+            // A desktop program runs in its own process and window, where F4 writes the dumps.
+            if (ImGui::MenuItem("Dump Scene and Renderer", "F4", false, Execution_.CanDumpDiagnostics()))
             {
                 Execution_.DumpDiagnostics();
             }
+#endif
 #if !defined(DBC_STUDIO_SANDBOXED)
             if (ImGui::MenuItem("Compile HLSL Effect...", nullptr, false, !ExecutionBusy_))
             {

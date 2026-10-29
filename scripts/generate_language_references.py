@@ -509,7 +509,7 @@ def render_open_dbc_reference(rows: list[dict]) -> str:
         "| Facility | Where | What it does |",
         "|---|---|---|",
         "| Debug overlay | **F3** in the program window; Build → *Debug Overlay on Launch*; `--debug-overlay` | Shows renderer, object, camera, sync and last-error state. |",
-        "| Diagnostic dumps | **F4** in the program window; Build → *Dump Scene and Renderer* | Writes scene and renderer diagnostic text files. |",
+        "| Diagnostic dumps | **F4** in the program window; Build → *Dump Scene and Renderer* in the iOS and Android Studio | Writes scene and renderer diagnostic text files. |",
         "| Log verbosity | `opendbc run ... --log-level trace\\|debug\\|info\\|warn\\|error`; Build → *Log Level* | Selects the spdlog level for the rotating log and console. |",
         "| Frame bound | `opendbc run ... --max-frames N` | Ends after N presented frames. |",
         "| Asset root | `opendbc run ... --asset-root DIR`; Studio project context | Resolves relative media and file paths. |",

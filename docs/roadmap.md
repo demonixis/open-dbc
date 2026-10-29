@@ -22,8 +22,6 @@ Build and release:
 Robustness:
 
 - [ ] Studio: Problems panel.
-- [ ] Run the BASIC program in a child process so a crash cannot take the Studio down;
-  no `try`/`catch` around the tick.
 - [ ] Fuzzing: frontend, DDS, DBO, WAV, memblocks.
 
 Repository files:

@@ -55,6 +55,9 @@ hosts do not emulate drive letters or UNC paths.
 ## Studio
 
 **F5** runs the active `.dba` tab, unsaved edits included; **Shift+F5** stops it.
+The Studio compiles the program, then runs it in `opendbc-runner`, a separate
+process with its own window, so a crash or hang in the program leaves the Studio
+running; its `open-dbc.log` still goes beside the source.
 A standalone source finds its media beside itself; a DBPro project uses its
 descriptor's media root and source order. The Output panel shows the source and
 asset root of each run, and diagnostics are marked in the matching tab.

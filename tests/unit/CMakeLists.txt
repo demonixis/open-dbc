@@ -267,6 +267,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         test_artifact_export.cpp
         test_export_readiness.cpp
         test_process_runner.cpp
+        test_studio_execution.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/android_keystore.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/artifact_export_service.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_android.cpp
@@ -275,6 +276,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_ios.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_job.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/export_readiness.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/execution_adapter.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/process_runner.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/toolchain_locator.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/windows_resources.cpp
@@ -289,11 +291,12 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         nlohmann_json::nlohmann_json
     )
     target_compile_definitions(test_artifact_export PRIVATE
-        OPENDBC_TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+        OPENDBC_TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+        OPENDBC_TEST_RUNNER="$<TARGET_FILE:opendbc-runner>")
+    add_dependencies(test_artifact_export opendbc-runner)
     if(WIN32)
         target_sources(test_artifact_export PRIVATE test_windows_export.cpp)
         target_compile_definitions(test_artifact_export PRIVATE
-            OPENDBC_TEST_RUNNER="$<TARGET_FILE:opendbc-runner>"
             OPENDBC_TEST_STUDIO="$<TARGET_FILE:opendbc>"
             OPENDBC_TEST_VERSION="${OPENDBC_VERSION}")
         target_link_libraries(test_artifact_export PRIVATE version)

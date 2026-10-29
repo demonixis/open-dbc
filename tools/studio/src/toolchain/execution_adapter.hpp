@@ -1,11 +1,15 @@
 #pragma once
 
+#include <atomic>
+#include <cstdint>
 #include <filesystem>
 #include <functional>
-#include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <thread>
 #include <vector>
 
 #include <SDL3/SDL_events.h>
@@ -20,8 +24,6 @@ namespace dbc
     namespace interpreter
     {
         class ExecutionService;
-        struct ExecutionDiagnostic;
-        struct ExecutionResult;
         struct ExecutionTick;
     } // namespace interpreter
 } // namespace dbc
@@ -51,11 +53,29 @@ namespace dbc::studio
             std::optional<dbc::interpreter::ResolvedProject> Project;
         };
 
+        // A compile-time or run-time diagnostic and where it points.
+        struct RunDiagnostic
+        {
+            std::filesystem::path Path;
+            std::uint32_t Line = 0;
+            std::uint32_t Column = 0;
+            std::string Code;
+            std::string Message;
+            bool Error = true;
+        };
+
+        // Reads a diagnostic line as `opendbc run` prints it: "path:line:column: DBCnnnn: message", the position
+        // being optional. A relative path resolves against SourceRoot.
+        std::optional<RunDiagnostic> ParseRunDiagnostic(std::string_view Line, const std::filesystem::path& SourceRoot);
+
+        // Runs the active program for the Studio. Desktop Studios compile it, then run the program image in
+        // opendbc-runner, a child process: a crash or a hang in the program leaves the Studio running and Stop
+        // always ends it. The iOS and Android Studios cannot start processes and run it in-process.
         class ExecutionAdapter
         {
           public:
             using LineHandler = std::function<void(const std::string& Line, bool IsError)>;
-            using FinishHandler = std::function<void(int ExitCode, const std::map<int, std::string>& Errors)>;
+            using FinishHandler = std::function<void(int ExitCode, const std::vector<RunDiagnostic>& Diagnostics)>;
 
             ~ExecutionAdapter();
 
@@ -64,34 +84,61 @@ namespace dbc::studio
             ExecutionAdapter();
 
             void SetHandlers(LineHandler OnLine, FinishHandler OnFinish);
+            // The opendbc-runner executable; the one installed beside the Studio by default.
+            void SetRunner(std::filesystem::path Runner);
 
             bool IsRunning() const;
             bool IsVrEnabled() const;
             bool IsVrPacing() const;
+            // False when the program cannot start; compile errors still reach the finish handler.
             bool Run(RunDocument Document, const RunOptions& Options);
             void BeginEventFrame();
             void HandleEvent(const SDL_Event& Event);
             void Stop();
+            // Forwards the program's output and reports its end; called once per Studio frame.
             void Poll();
             void Shutdown();
-            // Writes the scene and renderer dumps of the running program (the same as F4 in its window).
+            // Writes the scene and renderer dumps of an in-process program (F4 in a child program's window).
             void DumpDiagnostics();
+            bool CanDumpDiagnostics() const;
 
             std::string Describe() const;
 
           private:
-            void ReportDiagnostics(const dbc::interpreter::ExecutionResult& Result,
-                                   std::map<int, std::string>& RootErrors);
+            void Report(const std::string& Line, bool IsError);
+            void Finish(int ExitCode);
+
+            std::filesystem::path RootLogicalPath_;
+            std::vector<RunDiagnostic> Diagnostics_;
+            LineHandler OnLine_;
+            FinishHandler OnFinish_;
+            bool StopRequested_ = false;
+
+#if defined(DBC_STUDIO_SANDBOXED)
+            // Reports the finished program's diagnostics and releases its runtime.
+            void Complete();
             void ServiceSuspension(const dbc::interpreter::ExecutionTick& Tick);
-            void Finish();
             void ShutdownRuntime();
 
             std::unique_ptr<dbc::EngineKernel> Kernel_;
             std::unique_ptr<dbc::interpreter::ExecutionService> Execution_;
-            std::filesystem::path RootLogicalPath_;
-            LineHandler OnLine_;
-            FinishHandler OnFinish_;
-            bool StopRequested_ = false;
+#else
+            void StopChild();
+
+            std::filesystem::path Runner_;
+            // Program images go in a folder of their own, removed at shutdown.
+            std::filesystem::path RunDirectory_;
+            std::filesystem::path Image_;
+            std::filesystem::path SourceRoot_;
+            std::thread Worker_;
+            std::atomic<bool> Cancel_ = false;
+            // Filled by the worker, drained by Poll.
+            std::mutex Mutex_;
+            std::vector<std::string> Lines_;
+            bool Done_ = false;
+            int ExitCode_ = 0;
+            std::string LaunchError_;
+#endif
         };
     } // namespace toolchain
 

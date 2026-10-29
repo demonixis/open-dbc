@@ -25,7 +25,11 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 - The profile is resolved before lexing and never changes during a run.
 - The VM never reparses text and has no engine dependency; the builtin bridge is
   the only layer that knows both VM values and engine calls.
-- `SYNC` and waits yield, so the Studio stays responsive and can stop a program.
+- Desktop Studios compile the program with the unsaved tabs, then run its image
+  in `opendbc-runner`, a child process: a crash or hang in the program leaves the
+  Studio running, and Stop sends `SIGTERM`, which ends the run as cancelled. The
+  iOS and Android Studios cannot start processes and run programs in-process,
+  where `SYNC` and waits yield so the Studio stays responsive.
 - A program image (`.obc`, `src/interpreter/program_image.cpp`) stores the
   bytecode and project startup under the runtime fingerprint; loading it checks
   the container, then the verifier runs as for freshly compiled bytecode.
