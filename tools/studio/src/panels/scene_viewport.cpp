@@ -478,8 +478,8 @@ namespace dbc::studio
                 glm::vec3 Scale(glm::length(glm::vec3(Model[0])), glm::length(glm::vec3(Model[1])),
                                 glm::length(glm::vec3(Model[2])));
                 Scale = glm::max(Scale, glm::vec3(1e-4f));
-                const glm::mat3 Rotation(glm::vec3(Model[0]) / Scale.x, glm::vec3(Model[1]) / Scale.y,
-                                         glm::vec3(Model[2]) / Scale.z);
+                const glm::mat3 Rotation{glm::vec3(Model[0]) / Scale.x, glm::vec3(Model[1]) / Scale.y,
+                                         glm::vec3(Model[2]) / Scale.z};
                 if (Node == nullptr)
                 {
                     Env.CameraPosition = Position;
