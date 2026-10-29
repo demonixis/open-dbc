@@ -162,17 +162,24 @@ namespace dbc
                     if (!MeshValue.Visible)
                         continue;
                     const auto VertexAt = [&](uint32_t Index) -> const Vec3*
-                    { return Index < MeshValue.Vertices.size() ? &MeshValue.Vertices[Index] : nullptr; };
-                    const std::size_t TriangleCount =
-                        MeshValue.Indices.empty() ? MeshValue.Vertices.size() / 3 : MeshValue.Indices.size() / 3;
+                    {
+                        return Index < MeshValue.Geometry().Vertices.size() ? &MeshValue.Geometry().Vertices[Index]
+                                                                            : nullptr;
+                    };
+                    const std::size_t TriangleCount = MeshValue.Geometry().Indices.empty()
+                                                          ? MeshValue.Geometry().Vertices.size() / 3
+                                                          : MeshValue.Geometry().Indices.size() / 3;
                     for (std::size_t TriangleIndex = 0; TriangleIndex < TriangleCount; ++TriangleIndex)
                     {
-                        const uint32_t I0 = MeshValue.Indices.empty() ? static_cast<uint32_t>(TriangleIndex * 3)
-                                                                      : MeshValue.Indices[TriangleIndex * 3];
-                        const uint32_t I1 = MeshValue.Indices.empty() ? static_cast<uint32_t>(TriangleIndex * 3 + 1)
-                                                                      : MeshValue.Indices[TriangleIndex * 3 + 1];
-                        const uint32_t I2 = MeshValue.Indices.empty() ? static_cast<uint32_t>(TriangleIndex * 3 + 2)
-                                                                      : MeshValue.Indices[TriangleIndex * 3 + 2];
+                        const uint32_t I0 = MeshValue.Geometry().Indices.empty()
+                                                ? static_cast<uint32_t>(TriangleIndex * 3)
+                                                : MeshValue.Geometry().Indices[TriangleIndex * 3];
+                        const uint32_t I1 = MeshValue.Geometry().Indices.empty()
+                                                ? static_cast<uint32_t>(TriangleIndex * 3 + 1)
+                                                : MeshValue.Geometry().Indices[TriangleIndex * 3 + 1];
+                        const uint32_t I2 = MeshValue.Geometry().Indices.empty()
+                                                ? static_cast<uint32_t>(TriangleIndex * 3 + 2)
+                                                : MeshValue.Geometry().Indices[TriangleIndex * 3 + 2];
                         const Vec3* Local0 = VertexAt(I0);
                         const Vec3* Local1 = VertexAt(I1);
                         const Vec3* Local2 = VertexAt(I2);
@@ -720,49 +727,51 @@ namespace dbc
                      SDL_FPoint Ta = SDL_FPoint{0.0f, 0.0f}, SDL_FPoint Tb = SDL_FPoint{1.0f, 0.0f},
                      SDL_FPoint Tc = SDL_FPoint{1.0f, 1.0f})
     {
-        const uint32_t Base = static_cast<uint32_t>(MeshValue.Vertices.size());
-        MeshValue.Vertices.push_back(A);
-        MeshValue.Vertices.push_back(B);
-        MeshValue.Vertices.push_back(C);
-        MeshValue.Uvs.push_back(Ta);
-        MeshValue.Uvs.push_back(Tb);
-        MeshValue.Uvs.push_back(Tc);
-        MeshValue.Indices.push_back(Base + 0);
-        MeshValue.Indices.push_back(Base + 1);
-        MeshValue.Indices.push_back(Base + 2);
+        MeshGeometry& Geometry = MeshValue.EditGeometry();
+        const uint32_t Base = static_cast<uint32_t>(Geometry.Vertices.size());
+        Geometry.Vertices.push_back(A);
+        Geometry.Vertices.push_back(B);
+        Geometry.Vertices.push_back(C);
+        Geometry.Uvs.push_back(Ta);
+        Geometry.Uvs.push_back(Tb);
+        Geometry.Uvs.push_back(Tc);
+        Geometry.Indices.push_back(Base + 0);
+        Geometry.Indices.push_back(Base + 1);
+        Geometry.Indices.push_back(Base + 2);
     }
 
     void RegenerateMeshNormals(Mesh& MeshValue)
     {
-        if (MeshValue.Vertices.empty())
+        MeshGeometry& Geometry = MeshValue.EditGeometry();
+        if (Geometry.Vertices.empty())
         {
-            MeshValue.Normals.clear();
+            Geometry.Normals.clear();
             return;
         }
-        MeshValue.Normals.assign(MeshValue.Vertices.size(), Vec3{0.0f, 0.0f, 0.0f});
-        for (size_t I = 0; I + 2 < MeshValue.Indices.size(); I += 3)
+        Geometry.Normals.assign(Geometry.Vertices.size(), Vec3{0.0f, 0.0f, 0.0f});
+        for (size_t I = 0; I + 2 < Geometry.Indices.size(); I += 3)
         {
-            const uint32_t I0 = MeshValue.Indices[I];
-            const uint32_t I1 = MeshValue.Indices[I + 1];
-            const uint32_t I2 = MeshValue.Indices[I + 2];
-            if (I0 >= MeshValue.Vertices.size() || I1 >= MeshValue.Vertices.size() || I2 >= MeshValue.Vertices.size())
+            const uint32_t I0 = Geometry.Indices[I];
+            const uint32_t I1 = Geometry.Indices[I + 1];
+            const uint32_t I2 = Geometry.Indices[I + 2];
+            if (I0 >= Geometry.Vertices.size() || I1 >= Geometry.Vertices.size() || I2 >= Geometry.Vertices.size())
             {
                 continue;
             }
-            const Vec3 E1 = Vec3Sub(MeshValue.Vertices[I1], MeshValue.Vertices[I0]);
-            const Vec3 E2 = Vec3Sub(MeshValue.Vertices[I2], MeshValue.Vertices[I0]);
+            const Vec3 E1 = Vec3Sub(Geometry.Vertices[I1], Geometry.Vertices[I0]);
+            const Vec3 E2 = Vec3Sub(Geometry.Vertices[I2], Geometry.Vertices[I0]);
             const Vec3 Fn = Vec3Normalize(Vec3Cross(E1, E2));
-            MeshValue.Normals[I0].X += Fn.X;
-            MeshValue.Normals[I0].Y += Fn.Y;
-            MeshValue.Normals[I0].Z += Fn.Z;
-            MeshValue.Normals[I1].X += Fn.X;
-            MeshValue.Normals[I1].Y += Fn.Y;
-            MeshValue.Normals[I1].Z += Fn.Z;
-            MeshValue.Normals[I2].X += Fn.X;
-            MeshValue.Normals[I2].Y += Fn.Y;
-            MeshValue.Normals[I2].Z += Fn.Z;
+            Geometry.Normals[I0].X += Fn.X;
+            Geometry.Normals[I0].Y += Fn.Y;
+            Geometry.Normals[I0].Z += Fn.Z;
+            Geometry.Normals[I1].X += Fn.X;
+            Geometry.Normals[I1].Y += Fn.Y;
+            Geometry.Normals[I1].Z += Fn.Z;
+            Geometry.Normals[I2].X += Fn.X;
+            Geometry.Normals[I2].Y += Fn.Y;
+            Geometry.Normals[I2].Z += Fn.Z;
         }
-        for (Vec3& N : MeshValue.Normals)
+        for (Vec3& N : Geometry.Normals)
         {
             N = Vec3Normalize(N);
         }
@@ -821,11 +830,12 @@ namespace dbc
     Mesh MakeSphereMesh(float Radius, int Rings, int Segments)
     {
         Mesh MeshValue;
+        MeshGeometry& Geometry = MeshValue.EditGeometry();
         const int R = std::max(3, Rings);
         const int S = std::max(3, Segments);
-        MeshValue.Vertices.reserve(static_cast<size_t>(R + 1) * static_cast<size_t>(S + 1));
-        MeshValue.Normals.reserve(static_cast<size_t>(R + 1) * static_cast<size_t>(S + 1));
-        MeshValue.Uvs.reserve(static_cast<size_t>(R + 1) * static_cast<size_t>(S + 1));
+        Geometry.Vertices.reserve(static_cast<size_t>(R + 1) * static_cast<size_t>(S + 1));
+        Geometry.Normals.reserve(static_cast<size_t>(R + 1) * static_cast<size_t>(S + 1));
+        Geometry.Uvs.reserve(static_cast<size_t>(R + 1) * static_cast<size_t>(S + 1));
 
         for (int I = 0; I <= R; ++I)
         {
@@ -839,9 +849,9 @@ namespace dbc
                 const float Th = static_cast<float>(2.0 * M_PI) * U;
                 const float Ct = std::cos(Th);
                 const float St = std::sin(Th);
-                MeshValue.Vertices.push_back(Vec3{Radius * St * Cp, Radius * Sp, Radius * Ct * Cp});
-                MeshValue.Normals.push_back(Vec3Normalize(Vec3{St * Cp, Sp, Ct * Cp}));
-                MeshValue.Uvs.push_back(SDL_FPoint{U, 1.0f - V});
+                Geometry.Vertices.push_back(Vec3{Radius * St * Cp, Radius * Sp, Radius * Ct * Cp});
+                Geometry.Normals.push_back(Vec3Normalize(Vec3{St * Cp, Sp, Ct * Cp}));
+                Geometry.Uvs.push_back(SDL_FPoint{U, 1.0f - V});
             }
         }
 
@@ -854,12 +864,12 @@ namespace dbc
                 const uint32_t B = static_cast<uint32_t>(A + 1);
                 const uint32_t C = static_cast<uint32_t>((I + 1) * Stride + J);
                 const uint32_t D = static_cast<uint32_t>(C + 1);
-                MeshValue.Indices.push_back(A);
-                MeshValue.Indices.push_back(D);
-                MeshValue.Indices.push_back(C);
-                MeshValue.Indices.push_back(A);
-                MeshValue.Indices.push_back(B);
-                MeshValue.Indices.push_back(D);
+                Geometry.Indices.push_back(A);
+                Geometry.Indices.push_back(D);
+                Geometry.Indices.push_back(C);
+                Geometry.Indices.push_back(A);
+                Geometry.Indices.push_back(B);
+                Geometry.Indices.push_back(D);
             }
         }
         return MeshValue;
@@ -1015,7 +1025,7 @@ namespace dbc
 
     [[nodiscard]] Vec3 TransformProceduralMeshPoint(const Object3D& Object, const Mesh& MeshValue, const Vec3& Point)
     {
-        Vec3 Result = ApplyAiTransformPoint(MeshValue.BindTransform, Point);
+        Vec3 Result = ApplyAiTransformPoint(MeshValue.Geometry().BindTransform, Point);
         ForEachProceduralLimb(Object, MeshValue,
                               [&](const Mesh& Limb) { Result = ApplyLimbPoint(MakeLimbSteps(Limb), Result); });
         return Result;
@@ -1023,7 +1033,7 @@ namespace dbc
 
     [[nodiscard]] Vec3 TransformProceduralMeshNormal(const Object3D& Object, const Mesh& MeshValue, const Vec3& Normal)
     {
-        Vec3 Result = ApplyAiTransformVector(MeshValue.BindTransform, Normal);
+        Vec3 Result = ApplyAiTransformVector(MeshValue.Geometry().BindTransform, Normal);
         ForEachProceduralLimb(Object, MeshValue,
                               [&](const Mesh& Limb) { Result = ApplyLimbNormal(MakeLimbSteps(Limb), Result); });
         return Result;
@@ -1264,13 +1274,14 @@ namespace dbc
     {
         if (!Object.AssimpScene || NodeGlobals.empty())
             return {};
-        std::vector<aiMatrix4x4> Palette(MeshValue.BoneNodes.size());
+        const MeshGeometry& Geometry = MeshValue.Geometry();
+        std::vector<aiMatrix4x4> Palette(Geometry.BoneNodes.size());
         for (std::size_t BoneIndex = 0;
-             BoneIndex < MeshValue.BoneNodes.size() && BoneIndex < MeshValue.BoneOffsets.size(); ++BoneIndex)
+             BoneIndex < Geometry.BoneNodes.size() && BoneIndex < Geometry.BoneOffsets.size(); ++BoneIndex)
         {
-            const auto Global = NodeGlobals.find(MeshValue.BoneNodes[BoneIndex]);
+            const auto Global = NodeGlobals.find(Geometry.BoneNodes[BoneIndex]);
             if (Global != NodeGlobals.end())
-                Palette[BoneIndex] = Object.RootInverseTransform * Global->second * MeshValue.BoneOffsets[BoneIndex];
+                Palette[BoneIndex] = Object.RootInverseTransform * Global->second * Geometry.BoneOffsets[BoneIndex];
         }
         return Palette;
     }
@@ -1278,9 +1289,10 @@ namespace dbc
     [[nodiscard]] bool SkinMeshVertex(const Mesh& MeshValue, std::size_t VertexIndex,
                                       const std::vector<aiMatrix4x4>& BonePalette, Vec3& Point, Vec3& Normal)
     {
-        if (VertexIndex >= MeshValue.Vertices.size() || VertexIndex >= MeshValue.BoneInfluences.size())
+        const MeshGeometry& Geometry = MeshValue.Geometry();
+        if (VertexIndex >= Geometry.Vertices.size() || VertexIndex >= Geometry.BoneInfluences.size())
             return false;
-        const BoneInfluence& Influence = MeshValue.BoneInfluences[VertexIndex];
+        const BoneInfluence& Influence = Geometry.BoneInfluences[VertexIndex];
         Vec3 SkinnedPoint{};
         Vec3 SkinnedNormal{};
         float Total = 0.0f;
@@ -1291,13 +1303,13 @@ namespace dbc
             if (BoneIndex < 0 || Weight <= 0.0f || static_cast<std::size_t>(BoneIndex) >= BonePalette.size())
                 continue;
             const aiMatrix4x4& Palette = BonePalette[static_cast<std::size_t>(BoneIndex)];
-            const Vec3 WeightedPoint = ApplyAiTransformPoint(Palette, MeshValue.Vertices[VertexIndex]);
+            const Vec3 WeightedPoint = ApplyAiTransformPoint(Palette, Geometry.Vertices[VertexIndex]);
             SkinnedPoint.X += WeightedPoint.X * Weight;
             SkinnedPoint.Y += WeightedPoint.Y * Weight;
             SkinnedPoint.Z += WeightedPoint.Z * Weight;
-            if (MeshValue.Normals.size() == MeshValue.Vertices.size())
+            if (Geometry.Normals.size() == Geometry.Vertices.size())
             {
-                const Vec3 WeightedNormal = ApplyAiTransformVector(Palette, MeshValue.Normals[VertexIndex]);
+                const Vec3 WeightedNormal = ApplyAiTransformVector(Palette, Geometry.Normals[VertexIndex]);
                 SkinnedNormal.X += WeightedNormal.X * Weight;
                 SkinnedNormal.Y += WeightedNormal.Y * Weight;
                 SkinnedNormal.Z += WeightedNormal.Z * Weight;
@@ -1334,7 +1346,7 @@ namespace dbc
       public:
         MeshWorldTransform(EngineKernel& K, const Object3D& Object, const Mesh& MeshValue,
                            const aiMatrix4x4* ImportedTransform)
-            : K_(K), Object_(Object), Bind_(MeshValue.BindTransform), Imported_(ImportedTransform),
+            : K_(K), Object_(Object), Bind_(MeshValue.Geometry().BindTransform), Imported_(ImportedTransform),
               Steps_(MakeObjectSteps(Object)), Glued_(Object.GluedTargetObject > 0),
               NormalizeNormals_(K.Renderer().NormalizeNormals())
         {
@@ -1793,9 +1805,9 @@ namespace dbc
         bool First = true;
         for (const Mesh& MeshValue : Object.Meshes)
         {
-            for (const Vec3& Vertex : MeshValue.Vertices)
+            for (const Vec3& Vertex : MeshValue.Geometry().Vertices)
             {
-                Vec3 Local = ApplyAiTransformPoint(MeshValue.BindTransform, Vertex);
+                Vec3 Local = ApplyAiTransformPoint(MeshValue.Geometry().BindTransform, Vertex);
                 Local.X *= MeshValue.LimbScaleX;
                 Local.Y *= MeshValue.LimbScaleY;
                 Local.Z *= MeshValue.LimbScaleZ;
@@ -1837,19 +1849,20 @@ namespace dbc
         Style.Ambient = false;
         const auto AppendMesh = [&](const Mesh& BoundsMesh, const SDL_FColor& Color)
         {
-            for (std::size_t Index = 0; Index + 2 < BoundsMesh.Indices.size(); Index += 3)
+            for (std::size_t Index = 0; Index + 2 < BoundsMesh.Geometry().Indices.size(); Index += 3)
             {
                 ViewVertex Vertices[3]{};
                 bool Valid = true;
                 for (int Corner = 0; Corner < 3; ++Corner)
                 {
-                    const uint32_t VertexIndex = BoundsMesh.Indices[Index + static_cast<std::size_t>(Corner)];
-                    if (VertexIndex >= BoundsMesh.Vertices.size())
+                    const uint32_t VertexIndex =
+                        BoundsMesh.Geometry().Indices[Index + static_cast<std::size_t>(Corner)];
+                    if (VertexIndex >= BoundsMesh.Geometry().Vertices.size())
                     {
                         Valid = false;
                         break;
                     }
-                    const Vec3& Source = BoundsMesh.Vertices[VertexIndex];
+                    const Vec3& Source = BoundsMesh.Geometry().Vertices[VertexIndex];
                     const Vec3 World = TransformObjectSpacePoint(
                         K, Object, Vec3{Center.X + Source.X, Center.Y + Source.Y, Center.Z + Source.Z});
                     const Vec3 View = dbc::WorldToViewPoint(K, World.X, World.Y, World.Z);
@@ -2149,7 +2162,7 @@ namespace dbc
             if (const auto Mode = MeshValue.TextureStageCoordinateModes.find(Stage);
                 Mode != MeshValue.TextureStageCoordinateModes.end())
                 Surface.CoordinateModes[Index] = Mode->second;
-            if (const auto Uvs = MeshValue.UvStages.find(Stage); Uvs != MeshValue.UvStages.end())
+            if (const auto Uvs = MeshValue.Geometry().UvStages.find(Stage); Uvs != MeshValue.Geometry().UvStages.end())
                 Surface.StageUvs[Index] = &Uvs->second;
         }
         return Surface;
@@ -2252,9 +2265,10 @@ namespace dbc
                         float LocalMaxY = std::numeric_limits<float>::lowest();
                         for (const Mesh& BoundMesh : Object.Meshes)
                         {
-                            for (const Vec3& Vertex : BoundMesh.Vertices)
+                            for (const Vec3& Vertex : BoundMesh.Geometry().Vertices)
                             {
-                                const Vec3 BoundVertex = ApplyAiTransformPoint(BoundMesh.BindTransform, Vertex);
+                                const Vec3 BoundVertex =
+                                    ApplyAiTransformPoint(BoundMesh.Geometry().BindTransform, Vertex);
                                 LocalMinY = std::min(LocalMinY, BoundVertex.Y);
                                 LocalMaxY = std::max(LocalMaxY, BoundVertex.Y);
                             }
@@ -2317,16 +2331,17 @@ namespace dbc
                     }
                     const std::vector<aiMatrix4x4> BonePalette = BuildBonePalette(Object, MeshValue, NodeGlobals);
                     const MeshWorldTransform ToWorld(K, Object, MeshValue, MeshTransform);
+                    const MeshGeometry& Geometry = MeshValue.Geometry();
                     std::vector<Vec3> SkinnedPositions;
                     std::vector<Vec3> SkinnedNormals;
                     std::vector<uint8_t> SkinnedVertices;
                     if (!BonePalette.empty())
                     {
                         // Only the vertices SkinMeshVertex accepts are read from these.
-                        SkinnedPositions.resize(MeshValue.Vertices.size());
-                        SkinnedNormals.resize(MeshValue.Vertices.size());
-                        SkinnedVertices.resize(MeshValue.Vertices.size());
-                        for (std::size_t VertexIndex = 0; VertexIndex < MeshValue.Vertices.size(); ++VertexIndex)
+                        SkinnedPositions.resize(Geometry.Vertices.size());
+                        SkinnedNormals.resize(Geometry.Vertices.size());
+                        SkinnedVertices.resize(Geometry.Vertices.size());
+                        for (std::size_t VertexIndex = 0; VertexIndex < Geometry.Vertices.size(); ++VertexIndex)
                         {
                             SkinnedVertices[VertexIndex] =
                                 SkinMeshVertex(MeshValue, VertexIndex, BonePalette, SkinnedPositions[VertexIndex],
@@ -2336,14 +2351,14 @@ namespace dbc
                         }
                     }
                     // Each vertex is transformed once, not once per triangle that uses it.
-                    const std::size_t VertexCount = MeshValue.Vertices.size();
+                    const std::size_t VertexCount = Geometry.Vertices.size();
                     WorldPositions.resize(VertexCount);
                     ViewPositions.resize(VertexCount);
                     for (std::size_t Vertex = 0; Vertex < VertexCount; ++Vertex)
                     {
                         const bool Skinned = !SkinnedVertices.empty() && SkinnedVertices[Vertex] != 0;
                         const Vec3 World =
-                            ToWorld.Point(Skinned ? SkinnedPositions[Vertex] : MeshValue.Vertices[Vertex], Skinned);
+                            ToWorld.Point(Skinned ? SkinnedPositions[Vertex] : Geometry.Vertices[Vertex], Skinned);
                         WorldPositions[Vertex] = World;
                         ViewPositions[Vertex] =
                             Object.LockToScreen ? World : dbc::WorldToViewPoint(K, World.X, World.Y, World.Z);
@@ -2351,7 +2366,7 @@ namespace dbc
 
                     // Resolved by the first visible triangle, so a mesh that shows none loads no texture.
                     std::optional<ObjectMeshSurface> Surface;
-                    const bool VertexNormals = MeshValue.Normals.size() == VertexCount;
+                    const bool VertexNormals = Geometry.Normals.size() == VertexCount;
                     const bool Lit = Object.UseLighting || MeshValue.BuiltInEffect != 0;
                     const auto ReflectionDirection = [&](const Vec3& WorldPoint, const Vec3& WorldNormal)
                     {
@@ -2414,7 +2429,7 @@ namespace dbc
 
                         const SDL_FColor& Col = Surface->Color;
                         const uint32_t Packed =
-                            Index < MeshValue.DiffuseColors.size() ? MeshValue.DiffuseColors[Index] : 0xFFFFFFFFu;
+                            Index < Geometry.DiffuseColors.size() ? Geometry.DiffuseColors[Index] : 0xFFFFFFFFu;
                         Corner.Color = SDL_FColor{
                             Col.r * static_cast<float>((Packed >> 16u) & 0xFFu) / 255.0f,
                             Col.g * static_cast<float>((Packed >> 8u) & 0xFFu) / 255.0f,
@@ -2424,10 +2439,10 @@ namespace dbc
                         };
 
                         SDL_FPoint Uv{Object.TexScrollU, Object.TexScrollV};
-                        if (!MeshValue.Uvs.empty())
+                        if (!Geometry.Uvs.empty())
                         {
-                            if (Index < MeshValue.Uvs.size())
-                                Uv = MeshValue.Uvs[Index];
+                            if (Index < Geometry.Uvs.size())
+                                Uv = Geometry.Uvs[Index];
                             Uv.x = Uv.x * Object.TexScaleU + Object.TexScrollU;
                             Uv.y = Uv.y * Object.TexScaleV + Object.TexScrollV;
                         }
@@ -2486,17 +2501,17 @@ namespace dbc
                             const bool Skinned = !SkinnedVertices.empty() && SkinnedVertices[Index] != 0;
                             Corners[Index] = MakeCorner(
                                 Index, WorldPositions[Index],
-                                ToWorld.Normal(Skinned ? SkinnedNormals[Index] : MeshValue.Normals[Index], Skinned));
+                                ToWorld.Normal(Skinned ? SkinnedNormals[Index] : Geometry.Normals[Index], Skinned));
                             CornerReady[Index] = 1;
                         }
                         return Corners[Index];
                     };
 
-                    for (size_t I = 0; I + 2 < MeshValue.Indices.size(); I += 3)
+                    for (size_t I = 0; I + 2 < Geometry.Indices.size(); I += 3)
                     {
-                        const uint32_t I0 = MeshValue.Indices[I];
-                        const uint32_t I1 = MeshValue.Indices[I + 1];
-                        const uint32_t I2 = MeshValue.Indices[I + 2];
+                        const uint32_t I0 = Geometry.Indices[I];
+                        const uint32_t I1 = Geometry.Indices[I + 1];
+                        const uint32_t I2 = Geometry.Indices[I + 2];
                         if (I0 >= VertexCount || I1 >= VertexCount || I2 >= VertexCount)
                         {
                             continue;
@@ -5429,10 +5444,10 @@ namespace dbc
 
     Vec3 RendererSystem::ObjectMeshVertex(const Object3D& Object, const Mesh& MeshValue, std::size_t VertexIndex)
     {
-        if (VertexIndex >= MeshValue.Vertices.size())
+        if (VertexIndex >= MeshValue.Geometry().Vertices.size())
             return {};
         const aiMatrix4x4* CurrentMeshTransform = CurrentImportedMeshTransform(Object, MeshValue);
-        Vec3 Point = MeshValue.Vertices[VertexIndex];
+        Vec3 Point = MeshValue.Geometry().Vertices[VertexIndex];
         Vec3 Normal{};
         const std::vector<aiMatrix4x4> BonePalette = BuildBonePalette(Object, MeshValue, Object.CachedNodeGlobals);
         const bool Skinned = SkinMeshVertex(MeshValue, VertexIndex, BonePalette, Point, Normal);
@@ -5441,12 +5456,12 @@ namespace dbc
 
     void RendererSystem::ObjectMeshVertices(const Object3D& Object, const Mesh& MeshValue, std::vector<Vec3>& Vertices)
     {
-        Vertices.resize(MeshValue.Vertices.size());
+        Vertices.resize(MeshValue.Geometry().Vertices.size());
         const aiMatrix4x4* CurrentMeshTransform = CurrentImportedMeshTransform(Object, MeshValue);
         const std::vector<aiMatrix4x4> BonePalette = BuildBonePalette(Object, MeshValue, Object.CachedNodeGlobals);
-        for (std::size_t VertexIndex = 0; VertexIndex < MeshValue.Vertices.size(); ++VertexIndex)
+        for (std::size_t VertexIndex = 0; VertexIndex < MeshValue.Geometry().Vertices.size(); ++VertexIndex)
         {
-            Vec3 Point = MeshValue.Vertices[VertexIndex];
+            Vec3 Point = MeshValue.Geometry().Vertices[VertexIndex];
             Vec3 Normal{};
             const bool Skinned = SkinMeshVertex(MeshValue, VertexIndex, BonePalette, Point, Normal);
             Vertices[VertexIndex] =
@@ -5461,7 +5476,7 @@ namespace dbc
 
     Vec3 RendererSystem::WorldMeshVertex(const Object3D& Object, const Mesh& MeshValue, std::size_t VertexIndex)
     {
-        if (VertexIndex >= MeshValue.Vertices.size())
+        if (VertexIndex >= MeshValue.Geometry().Vertices.size())
             return WorldObjectOrigin(Object);
         return dbc::TransformObjectSpacePoint(Kernel_, Object, ObjectMeshVertex(Object, MeshValue, VertexIndex));
     }

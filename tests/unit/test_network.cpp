@@ -286,10 +286,10 @@ TEST_CASE("Classic net games carry memblocks, images, bitmaps, sounds and meshes
         std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/memblocks/behold.wav";
     REQUIRE(Source.Audio().LoadSound(SoundPath.string(), 1, false, false, &Error));
     dbc::Mesh Triangle;
-    Triangle.Vertices = {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}};
-    Triangle.Normals = {{0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}};
-    Triangle.Uvs = {{0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}};
-    Triangle.Indices = {0, 1, 2};
+    Triangle.EditGeometry().Vertices = {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}};
+    Triangle.EditGeometry().Normals = {{0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}};
+    Triangle.EditGeometry().Uvs = {{0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}};
+    Triangle.EditGeometry().Indices = {0, 1, 2};
     Source.Objects().StoreMesh(1, std::move(Triangle));
 
     CHECK_FALSE(Host.Command(SymbolId::Command_SendNetMessageMemblock, {Number(2), Number(9)}));
@@ -356,7 +356,7 @@ TEST_CASE("Classic net games carry memblocks, images, bitmaps, sounds and meshes
                 const std::vector<dbc::Mesh>* Meshes = Target.Objects().GetMeshes(6);
                 REQUIRE(Meshes != nullptr);
                 REQUIRE_FALSE(Meshes->empty());
-                CHECK(Meshes->front().Vertices.size() >= 3);
+                CHECK(Meshes->front().Geometry().Vertices.size() >= 3);
                 break;
             }
             default:

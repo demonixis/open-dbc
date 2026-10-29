@@ -134,23 +134,24 @@ namespace dbc::studio
             {
                 CpuMesh Mesh;
                 const auto Vec = [](const dbc::Vec3& Value) { return glm::vec3(Value.X, Value.Y, Value.Z); };
-                for (std::size_t Index = 0; Index + 2 < Source.Indices.size(); Index += 3)
+                for (std::size_t Index = 0; Index + 2 < Source.Geometry().Indices.size(); Index += 3)
                 {
-                    std::uint32_t Corner[3] = {Source.Indices[Index], Source.Indices[Index + 1],
-                                               Source.Indices[Index + 2]};
+                    std::uint32_t Corner[3] = {Source.Geometry().Indices[Index], Source.Geometry().Indices[Index + 1],
+                                               Source.Geometry().Indices[Index + 2]};
                     if (Flip)
                         std::swap(Corner[1], Corner[2]);
                     MeshVertex Triangle[3];
                     for (int Side = 0; Side < 3; ++Side)
                     {
-                        Triangle[Side].Position = Vec(Source.Vertices[Corner[Side]]);
-                        if (Corner[Side] < Source.Uvs.size())
-                            Triangle[Side].Uv = {Source.Uvs[Corner[Side]].x, Source.Uvs[Corner[Side]].y};
+                        Triangle[Side].Position = Vec(Source.Geometry().Vertices[Corner[Side]]);
+                        if (Corner[Side] < Source.Geometry().Uvs.size())
+                            Triangle[Side].Uv = {Source.Geometry().Uvs[Corner[Side]].x,
+                                                 Source.Geometry().Uvs[Corner[Side]].y};
                     }
-                    if (Source.Normals.size() == Source.Vertices.size())
+                    if (Source.Geometry().Normals.size() == Source.Geometry().Vertices.size())
                     {
                         for (int Side = 0; Side < 3; ++Side)
-                            Triangle[Side].Normal = Vec(Source.Normals[Corner[Side]]);
+                            Triangle[Side].Normal = Vec(Source.Geometry().Normals[Corner[Side]]);
                         Mesh.Vertices.insert(Mesh.Vertices.end(), Triangle, Triangle + 3);
                     }
                     else

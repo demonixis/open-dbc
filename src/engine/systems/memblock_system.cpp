@@ -175,14 +175,15 @@ namespace dbc
             }
 
             Mesh Result;
+            MeshGeometry& Geometry = Result.EditGeometry();
             if (FaceCount == 0)
             {
-                Result.Vertices = std::move(Vertices);
-                Result.Normals.resize(Result.Vertices.size());
-                for (std::size_t Index = 0; Index < Result.Normals.size() && Index < Normals.size(); ++Index)
-                    Result.Normals[Index] = Normals[Index];
-                Result.Uvs = std::move(TextureCoordinates);
-                Result.DiffuseColors.assign(Result.Vertices.size(), 0xFFFFFFFFu);
+                Geometry.Vertices = std::move(Vertices);
+                Geometry.Normals.resize(Geometry.Vertices.size());
+                for (std::size_t Index = 0; Index < Geometry.Normals.size() && Index < Normals.size(); ++Index)
+                    Geometry.Normals[Index] = Normals[Index];
+                Geometry.Uvs = std::move(TextureCoordinates);
+                Geometry.DiffuseColors.assign(Geometry.Vertices.size(), 0xFFFFFFFFu);
                 {
                     Output = std::move(Result);
                     return true;
@@ -192,11 +193,11 @@ namespace dbc
             std::size_t ExpandedCount{};
             if (!CheckedSectionSize(ExpandedCount, FaceCount, 3u, Command, "expanded face", Error))
                 return false;
-            Result.Vertices.reserve(ExpandedCount);
-            Result.Normals.reserve(ExpandedCount);
-            Result.Uvs.reserve(ExpandedCount);
-            Result.DiffuseColors.reserve(ExpandedCount);
-            Result.Indices.reserve(ExpandedCount);
+            Geometry.Vertices.reserve(ExpandedCount);
+            Geometry.Normals.reserve(ExpandedCount);
+            Geometry.Uvs.reserve(ExpandedCount);
+            Geometry.DiffuseColors.reserve(ExpandedCount);
+            Geometry.Indices.reserve(ExpandedCount);
             for (uint32_t Face = 0; Face < FaceCount; ++Face)
             {
                 const std::size_t Record =
@@ -217,11 +218,11 @@ namespace dbc
                             *Error = std::string(Command) + " has an out-of-range Classic face index";
                         return false;
                     }
-                    Result.Vertices.push_back(Vertices[VertexIndex]);
-                    Result.Normals.push_back(Normals[NormalIndex]);
-                    Result.Uvs.push_back(TextureCoordinates[VertexIndex]);
-                    Result.DiffuseColors.push_back(0xFFFFFFFFu);
-                    Result.Indices.push_back(static_cast<uint32_t>(Result.Indices.size()));
+                    Geometry.Vertices.push_back(Vertices[VertexIndex]);
+                    Geometry.Normals.push_back(Normals[NormalIndex]);
+                    Geometry.Uvs.push_back(TextureCoordinates[VertexIndex]);
+                    Geometry.DiffuseColors.push_back(0xFFFFFFFFu);
+                    Geometry.Indices.push_back(static_cast<uint32_t>(Geometry.Indices.size()));
                 }
             }
             {
@@ -233,8 +234,9 @@ namespace dbc
         bool EncodeClassicMesh(std::vector<uint8_t>& Output, const Mesh& Source, std::string* Error = nullptr)
         {
             constexpr const char* Command = "MAKE MEMBLOCK FROM MESH";
-            const bool Indexed = !Source.Indices.empty();
-            const std::size_t VertexCount = Indexed ? Source.Indices.size() : Source.Vertices.size();
+            const bool Indexed = !Source.Geometry().Indices.empty();
+            const std::size_t VertexCount =
+                Indexed ? Source.Geometry().Indices.size() : Source.Geometry().Vertices.size();
             if (VertexCount % 3u != 0u)
             {
                 if (Error)
@@ -273,17 +275,18 @@ namespace dbc
             WriteScalar<uint32_t>(Result, 28, static_cast<uint32_t>(TextureOffset));
             for (std::size_t Index = 0; Index < VertexCount; ++Index)
             {
-                const uint32_t SourceIndex = Indexed ? Source.Indices[Index] : static_cast<uint32_t>(Index);
-                if (SourceIndex >= Source.Vertices.size())
+                const uint32_t SourceIndex = Indexed ? Source.Geometry().Indices[Index] : static_cast<uint32_t>(Index);
+                if (SourceIndex >= Source.Geometry().Vertices.size())
                 {
                     if (Error)
                         *Error = std::string(Command) + " found an invalid mesh index";
                     return false;
                 }
-                const Vec3 Position = Source.Vertices[SourceIndex];
-                const Vec3 Normal = SourceIndex < Source.Normals.size() ? Source.Normals[SourceIndex] : Vec3{};
+                const Vec3 Position = Source.Geometry().Vertices[SourceIndex];
+                const Vec3 Normal =
+                    SourceIndex < Source.Geometry().Normals.size() ? Source.Geometry().Normals[SourceIndex] : Vec3{};
                 const SDL_FPoint TextureCoordinate =
-                    SourceIndex < Source.Uvs.size() ? Source.Uvs[SourceIndex] : SDL_FPoint{};
+                    SourceIndex < Source.Geometry().Uvs.size() ? Source.Geometry().Uvs[SourceIndex] : SDL_FPoint{};
                 if (!RequireFinite(Position, Command, Error))
                     return false;
                 if (!RequireFinite(Normal, Command, Error))
@@ -1194,30 +1197,31 @@ namespace dbc
         }
 
         Mesh Result;
-        Result.Vertices.reserve(VertexCount);
-        Result.Normals.reserve(VertexCount);
-        Result.Uvs.reserve(VertexCount);
-        Result.DiffuseColors.reserve(VertexCount);
-        Result.Indices.reserve(VertexCount);
+        MeshGeometry& Geometry = Result.EditGeometry();
+        Geometry.Vertices.reserve(VertexCount);
+        Geometry.Normals.reserve(VertexCount);
+        Geometry.Uvs.reserve(VertexCount);
+        Geometry.DiffuseColors.reserve(VertexCount);
+        Geometry.Indices.reserve(VertexCount);
         for (uint32_t Index = 0; Index < VertexCount; ++Index)
         {
             const uint8_t* Vertex = Data->data() + 12 + static_cast<std::size_t>(Index) * Stride;
             Vec3 Position{};
             std::memcpy(&Position, Vertex, sizeof(Position));
-            Result.Vertices.push_back(Position);
+            Geometry.Vertices.push_back(Position);
             Vec3 Normal{};
             if (NormalOffset != 0)
                 std::memcpy(&Normal, Vertex + NormalOffset, sizeof(Normal));
-            Result.Normals.push_back(Normal);
+            Geometry.Normals.push_back(Normal);
             uint32_t Diffuse = 0xFFFFFFFFu;
             if (DiffuseOffset != 0)
                 std::memcpy(&Diffuse, Vertex + DiffuseOffset, sizeof(Diffuse));
-            Result.DiffuseColors.push_back(Diffuse);
+            Geometry.DiffuseColors.push_back(Diffuse);
             SDL_FPoint Uv{};
             if (UvOffset != 0)
                 std::memcpy(&Uv, Vertex + UvOffset, sizeof(Uv));
-            Result.Uvs.push_back(Uv);
-            Result.Indices.push_back(Index);
+            Geometry.Uvs.push_back(Uv);
+            Geometry.Indices.push_back(Index);
         }
         Kernel_.Objects().StoreMesh(MeshId, std::move(Result));
         return true;
@@ -1259,8 +1263,8 @@ namespace dbc
         {
             return EncodeClassicMesh(Output, Source, Error);
         }
-        const bool Indexed = !Source.Indices.empty();
-        const std::size_t VertexCount = Indexed ? Source.Indices.size() : Source.Vertices.size();
+        const bool Indexed = !Source.Geometry().Indices.empty();
+        const std::size_t VertexCount = Indexed ? Source.Geometry().Indices.size() : Source.Geometry().Vertices.size();
         constexpr uint32_t Fvf = 0x0152u;
         constexpr uint32_t Stride = 36u;
         if (VertexCount > (std::numeric_limits<std::size_t>::max() - 12u) / Stride ||
@@ -1277,21 +1281,24 @@ namespace dbc
         std::memcpy(Result.data() + 8, &Count, 4);
         for (std::size_t Index = 0; Index < VertexCount; ++Index)
         {
-            const uint32_t SourceIndex = Indexed ? Source.Indices[Index] : static_cast<uint32_t>(Index);
-            if (SourceIndex >= Source.Vertices.size())
+            const uint32_t SourceIndex = Indexed ? Source.Geometry().Indices[Index] : static_cast<uint32_t>(Index);
+            if (SourceIndex >= Source.Geometry().Vertices.size())
             {
                 if (Error)
                     *Error = std::string(Command) + " found an invalid mesh index";
                 return false;
             }
             uint8_t* Vertex = Result.data() + 12u + Index * Stride;
-            std::memcpy(Vertex, &Source.Vertices[SourceIndex], sizeof(Vec3));
-            const Vec3 Normal = SourceIndex < Source.Normals.size() ? Source.Normals[SourceIndex] : Vec3{};
+            std::memcpy(Vertex, &Source.Geometry().Vertices[SourceIndex], sizeof(Vec3));
+            const Vec3 Normal =
+                SourceIndex < Source.Geometry().Normals.size() ? Source.Geometry().Normals[SourceIndex] : Vec3{};
             std::memcpy(Vertex + 12, &Normal, sizeof(Vec3));
-            const uint32_t Diffuse =
-                SourceIndex < Source.DiffuseColors.size() ? Source.DiffuseColors[SourceIndex] : 0xFFFFFFFFu;
+            const uint32_t Diffuse = SourceIndex < Source.Geometry().DiffuseColors.size()
+                                         ? Source.Geometry().DiffuseColors[SourceIndex]
+                                         : 0xFFFFFFFFu;
             std::memcpy(Vertex + 24, &Diffuse, 4);
-            const SDL_FPoint Uv = SourceIndex < Source.Uvs.size() ? Source.Uvs[SourceIndex] : SDL_FPoint{};
+            const SDL_FPoint Uv =
+                SourceIndex < Source.Geometry().Uvs.size() ? Source.Geometry().Uvs[SourceIndex] : SDL_FPoint{};
             std::memcpy(Vertex + 28, &Uv, sizeof(SDL_FPoint));
         }
         Output = std::move(Result);

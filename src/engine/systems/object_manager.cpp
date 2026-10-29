@@ -183,22 +183,23 @@ namespace dbc
 
         void SmoothMeshNormals(Mesh& MeshValue, float Percentage)
         {
-            if (MeshValue.Normals.size() != MeshValue.Vertices.size())
+            if (MeshValue.Geometry().Normals.size() != MeshValue.Geometry().Vertices.size())
                 return;
 
-            const std::vector<Vec3> Source = MeshValue.Normals;
+            const std::vector<Vec3> Source = MeshValue.Geometry().Normals;
             const float Threshold = std::clamp(Percentage, 0.0f, 100.0f) / 100.0f;
-            for (std::size_t VertexIndex = 0; VertexIndex < MeshValue.Vertices.size(); ++VertexIndex)
+            MeshGeometry& Geometry = MeshValue.EditGeometry();
+            for (std::size_t VertexIndex = 0; VertexIndex < Geometry.Vertices.size(); ++VertexIndex)
             {
                 Vec3 Average = Source[VertexIndex];
                 unsigned AverageCount = 1;
                 unsigned SharedCount = 0;
-                for (std::size_t ScanIndex = 0; ScanIndex < MeshValue.Vertices.size() && SharedCount < 32; ++ScanIndex)
+                for (std::size_t ScanIndex = 0; ScanIndex < Geometry.Vertices.size() && SharedCount < 32; ++ScanIndex)
                 {
                     if (VertexIndex == ScanIndex)
                         continue;
-                    const Vec3& Vertex = MeshValue.Vertices[VertexIndex];
-                    const Vec3& ScanVertex = MeshValue.Vertices[ScanIndex];
+                    const Vec3& Vertex = Geometry.Vertices[VertexIndex];
+                    const Vec3& ScanVertex = Geometry.Vertices[ScanIndex];
                     if (Vertex.X != ScanVertex.X || Vertex.Y != ScanVertex.Y || Vertex.Z != ScanVertex.Z)
                         continue;
 
@@ -217,7 +218,7 @@ namespace dbc
                     }
                 }
                 const float Divisor = static_cast<float>(AverageCount);
-                MeshValue.Normals[VertexIndex] = {Average.X / Divisor, Average.Y / Divisor, Average.Z / Divisor};
+                Geometry.Normals[VertexIndex] = {Average.X / Divisor, Average.Y / Divisor, Average.Z / Divisor};
             }
         }
 
@@ -301,7 +302,7 @@ namespace dbc
         {
             AABB Box{};
             bool First = true;
-            for (const Vec3& Vertex : MeshValue.Vertices)
+            for (const Vec3& Vertex : MeshValue.Geometry().Vertices)
             {
                 const Vec3 World = K.Renderer().WorldMeshPoint(Object, MeshValue, Vertex);
                 if (First)
@@ -360,17 +361,17 @@ namespace dbc
             {
                 if (!MeshValue.Visible)
                     continue;
-                for (std::size_t I = 0; I + 2 < MeshValue.Indices.size(); I += 3)
+                for (std::size_t I = 0; I + 2 < MeshValue.Geometry().Indices.size(); I += 3)
                 {
-                    const uint32_t I0 = MeshValue.Indices[I];
-                    const uint32_t I1 = MeshValue.Indices[I + 1];
-                    const uint32_t I2 = MeshValue.Indices[I + 2];
-                    if (I0 >= MeshValue.Vertices.size() || I1 >= MeshValue.Vertices.size() ||
-                        I2 >= MeshValue.Vertices.size())
+                    const uint32_t I0 = MeshValue.Geometry().Indices[I];
+                    const uint32_t I1 = MeshValue.Geometry().Indices[I + 1];
+                    const uint32_t I2 = MeshValue.Geometry().Indices[I + 2];
+                    if (I0 >= MeshValue.Geometry().Vertices.size() || I1 >= MeshValue.Geometry().Vertices.size() ||
+                        I2 >= MeshValue.Geometry().Vertices.size())
                         continue;
-                    const Vec3 A = K.Renderer().WorldMeshPoint(Object, MeshValue, MeshValue.Vertices[I0]);
-                    const Vec3 B = K.Renderer().WorldMeshPoint(Object, MeshValue, MeshValue.Vertices[I1]);
-                    const Vec3 C = K.Renderer().WorldMeshPoint(Object, MeshValue, MeshValue.Vertices[I2]);
+                    const Vec3 A = K.Renderer().WorldMeshPoint(Object, MeshValue, MeshValue.Geometry().Vertices[I0]);
+                    const Vec3 B = K.Renderer().WorldMeshPoint(Object, MeshValue, MeshValue.Geometry().Vertices[I1]);
+                    const Vec3 C = K.Renderer().WorldMeshPoint(Object, MeshValue, MeshValue.Geometry().Vertices[I2]);
                     float T = 0.0f;
                     if (RayTriangleIntersect(Origin, Direction, A, B, C, T))
                         Best = std::min(Best, T);
@@ -536,7 +537,7 @@ namespace dbc
 
             for (const Mesh& MeshValue : Object.Meshes)
             {
-                if (MeshValue.Vertices.empty())
+                if (MeshValue.Geometry().Vertices.empty())
                     continue;
                 CollisionMeshSnapshot MeshSnapshot{};
                 Kernel.Renderer().WorldMeshVertices(Object, MeshValue, MeshSnapshot.Vertices);
@@ -571,15 +572,16 @@ namespace dbc
                         Faces.push_back({A, B, C});
                     MeshSnapshot.Primitives.push_back(std::move(Primitive));
                 };
-                if (MeshValue.Indices.empty())
+                if (MeshValue.Geometry().Indices.empty())
                 {
                     for (std::size_t Index = 0; Index + 2 < MeshSnapshot.Vertices.size(); Index += 3)
                         AddFace(Index, Index + 1, Index + 2);
                 }
                 else
                 {
-                    for (std::size_t Index = 0; Index + 2 < MeshValue.Indices.size(); Index += 3)
-                        AddFace(MeshValue.Indices[Index], MeshValue.Indices[Index + 1], MeshValue.Indices[Index + 2]);
+                    for (std::size_t Index = 0; Index + 2 < MeshValue.Geometry().Indices.size(); Index += 3)
+                        AddFace(MeshValue.Geometry().Indices[Index], MeshValue.Geometry().Indices[Index + 1],
+                                MeshValue.Geometry().Indices[Index + 2]);
                 }
                 if (MeshSnapshot.Primitives.empty())
                     continue;
@@ -612,7 +614,7 @@ namespace dbc
 
             for (const Mesh& MeshValue : Object.Meshes)
             {
-                if (MeshValue.Vertices.empty())
+                if (MeshValue.Geometry().Vertices.empty())
                     continue;
                 AABB MeshBounds{};
                 bool MeshBoundsValid = false;
@@ -1382,16 +1384,16 @@ namespace dbc
             constexpr uint32_t Fvf = 0x0152u;
             constexpr uint32_t Stride = 36u;
             DboBuffer Result;
-            if (Value.Vertices.size() > std::numeric_limits<uint32_t>::max())
+            if (Value.Geometry().Vertices.size() > std::numeric_limits<uint32_t>::max())
             {
                 if (Error)
                     *Error = "SAVE OBJECT mesh has too many vertices";
                 return false;
             }
-            bool UseIndices = !Value.Indices.empty();
-            for (uint32_t Index : Value.Indices)
+            bool UseIndices = !Value.Geometry().Indices.empty();
+            for (uint32_t Index : Value.Geometry().Indices)
             {
-                if (Index >= Value.Vertices.size())
+                if (Index >= Value.Geometry().Vertices.size())
                 {
                     if (Error)
                         *Error = "SAVE OBJECT found an invalid mesh index";
@@ -1401,12 +1403,12 @@ namespace dbc
             }
 
             std::vector<uint32_t> VertexOrder;
-            if (!UseIndices && !Value.Indices.empty())
-                VertexOrder = Value.Indices;
+            if (!UseIndices && !Value.Geometry().Indices.empty())
+                VertexOrder = Value.Geometry().Indices;
             else
             {
-                VertexOrder.reserve(Value.Vertices.size());
-                for (std::size_t Index = 0; Index < Value.Vertices.size(); ++Index)
+                VertexOrder.reserve(Value.Geometry().Vertices.size());
+                for (std::size_t Index = 0; Index < Value.Geometry().Vertices.size(); ++Index)
                     VertexOrder.push_back(static_cast<uint32_t>(Index));
             }
             if (VertexOrder.size() > std::numeric_limits<uint32_t>::max())
@@ -1419,30 +1421,32 @@ namespace dbc
             Result.AppendU32Block(DboMeshFvf, Fvf);
             Result.AppendU32Block(DboMeshFvfSize, Stride);
             Result.AppendU32Block(DboMeshVertexCount, static_cast<uint32_t>(VertexOrder.size()));
-            Result.AppendU32Block(DboMeshIndexCount, UseIndices ? static_cast<uint32_t>(Value.Indices.size()) : 0u);
+            Result.AppendU32Block(DboMeshIndexCount,
+                                  UseIndices ? static_cast<uint32_t>(Value.Geometry().Indices.size()) : 0u);
 
             DboBuffer VertexData;
             for (uint32_t Index : VertexOrder)
             {
-                VertexData.AppendBytes(&Value.Vertices[Index], sizeof(Vec3));
-                const Vec3 Normal = Index < Value.Normals.size() ? Value.Normals[Index] : Vec3{};
+                VertexData.AppendBytes(&Value.Geometry().Vertices[Index], sizeof(Vec3));
+                const Vec3 Normal = Index < Value.Geometry().Normals.size() ? Value.Geometry().Normals[Index] : Vec3{};
                 VertexData.AppendBytes(&Normal, sizeof(Vec3));
-                const uint32_t Diffuse = Index < Value.DiffuseColors.size() ? Value.DiffuseColors[Index] : 0xFFFFFFFFu;
+                const uint32_t Diffuse =
+                    Index < Value.Geometry().DiffuseColors.size() ? Value.Geometry().DiffuseColors[Index] : 0xFFFFFFFFu;
                 VertexData.AppendU32(Diffuse);
-                const SDL_FPoint Uv = Index < Value.Uvs.size() ? Value.Uvs[Index] : SDL_FPoint{};
+                const SDL_FPoint Uv = Index < Value.Geometry().Uvs.size() ? Value.Geometry().Uvs[Index] : SDL_FPoint{};
                 VertexData.AppendBytes(&Uv, sizeof(SDL_FPoint));
             }
             Result.AppendBlock(DboMeshVertexData, VertexData);
             if (UseIndices)
             {
                 DboBuffer IndexData;
-                for (uint32_t Index : Value.Indices)
+                for (uint32_t Index : Value.Geometry().Indices)
                     IndexData.AppendU16(static_cast<uint16_t>(Index));
                 Result.AppendBlock(DboMeshIndexData, IndexData);
             }
             Result.AppendU32Block(DboMeshPrimitiveType, 4u);
             Result.AppendU32Block(DboMeshDrawVertexCount, static_cast<uint32_t>(VertexOrder.size()));
-            const std::size_t ElementCount = UseIndices ? Value.Indices.size() : VertexOrder.size();
+            const std::size_t ElementCount = UseIndices ? Value.Geometry().Indices.size() : VertexOrder.size();
             Result.AppendU32Block(DboMeshDrawPrimitiveCount, static_cast<uint32_t>(ElementCount / 3u));
             DboBuffer Visible;
             const uint8_t Flag = Value.Visible ? 1u : 0u;
@@ -1471,7 +1475,7 @@ namespace dbc
                 Name.AppendString("OpenDBC Limb " + std::to_string(Index));
                 Result.AppendBlock(DboFrameName, Name);
 
-                const aiMatrix4x4& Matrix = Object.Meshes[Index].BindTransform;
+                const aiMatrix4x4& Matrix = Object.Meshes[Index].Geometry().BindTransform;
                 DboBuffer MatrixPayload = DboFloatPayload(
                     {Matrix.a1, Matrix.a2, Matrix.a3, Matrix.a4, Matrix.b1, Matrix.b2, Matrix.b3, Matrix.b4, Matrix.c1,
                      Matrix.c2, Matrix.c3, Matrix.c4, Matrix.d1, Matrix.d2, Matrix.d3, Matrix.d4});
@@ -1584,26 +1588,27 @@ namespace dbc
             }
 
             Mesh Result;
-            Result.BindTransform = Transform;
+            MeshGeometry& Geometry = Result.EditGeometry();
+            Geometry.BindTransform = Transform;
             Result.Visible = Fields.Visible;
-            Result.Vertices.reserve(Fields.VertexCount);
-            Result.Normals.reserve(Fields.VertexCount);
-            Result.Uvs.reserve(Fields.VertexCount);
-            Result.DiffuseColors.reserve(Fields.VertexCount);
+            Geometry.Vertices.reserve(Fields.VertexCount);
+            Geometry.Normals.reserve(Fields.VertexCount);
+            Geometry.Uvs.reserve(Fields.VertexCount);
+            Geometry.DiffuseColors.reserve(Fields.VertexCount);
             for (uint32_t Index = 0; Index < Fields.VertexCount; ++Index)
             {
                 const uint8_t* Vertex = Fields.VertexData.data() + static_cast<std::size_t>(Index) * Fields.Stride;
                 Vec3 Position{};
                 std::memcpy(&Position, Vertex, sizeof(Position));
-                Result.Vertices.push_back(Position);
+                Geometry.Vertices.push_back(Position);
                 Vec3 Normal{};
                 if (NormalOffset != 0)
                     std::memcpy(&Normal, Vertex + NormalOffset, sizeof(Normal));
-                Result.Normals.push_back(Normal);
+                Geometry.Normals.push_back(Normal);
                 uint32_t Diffuse = 0xFFFFFFFFu;
                 if (DiffuseOffset != 0)
                     std::memcpy(&Diffuse, Vertex + DiffuseOffset, 4);
-                Result.DiffuseColors.push_back(Diffuse);
+                Geometry.DiffuseColors.push_back(Diffuse);
                 SDL_FPoint Uv{};
                 if (UvOffset != 0 && UvOffset + sizeof(Uv) <= Fields.Stride)
                     std::memcpy(&Uv, Vertex + UvOffset, sizeof(Uv));
@@ -1615,7 +1620,7 @@ namespace dbc
                         *Error = "LOAD OBJECT DBO contains non-finite vertex data";
                     return false;
                 }
-                Result.Uvs.push_back(Uv);
+                Geometry.Uvs.push_back(Uv);
             }
             if (Fields.IndexCount > 0)
             {
@@ -1635,13 +1640,13 @@ namespace dbc
                             *Error = "LOAD OBJECT found a DBO index outside the vertex data";
                         return false;
                     }
-                    Result.Indices.push_back(Value);
+                    Geometry.Indices.push_back(Value);
                 }
             }
             else
             {
                 for (uint32_t Index = 0; Index < Fields.VertexCount; ++Index)
-                    Result.Indices.push_back(Index);
+                    Geometry.Indices.push_back(Index);
             }
             {
                 Output = std::move(Result);
@@ -2576,20 +2581,20 @@ namespace dbc
             for (const Mesh& MeshValue : Object.Meshes)
             {
                 Hasher.U32(1);
-                Hasher.U32(static_cast<uint32_t>(MeshValue.Indices.size()));
-                for (const uint32_t Index : MeshValue.Indices)
+                Hasher.U32(static_cast<uint32_t>(MeshValue.Geometry().Indices.size()));
+                for (const uint32_t Index : MeshValue.Geometry().Indices)
                 {
-                    if (Index >= MeshValue.Vertices.size())
+                    if (Index >= MeshValue.Geometry().Vertices.size())
                     {
                         Hasher.U32(std::numeric_limits<uint32_t>::max());
                         continue;
                     }
-                    const Vec3& Vertex = MeshValue.Vertices[Index];
+                    const Vec3& Vertex = MeshValue.Geometry().Vertices[Index];
                     Hasher.Float(Vertex.X);
                     Hasher.Float(Vertex.Y);
                     Hasher.Float(Vertex.Z);
                 }
-                const aiMatrix4x4& Matrix = MeshValue.BindTransform;
+                const aiMatrix4x4& Matrix = MeshValue.Geometry().BindTransform;
                 for (const float Component :
                      {Matrix.a1, Matrix.a2, Matrix.a3, Matrix.a4, Matrix.b1, Matrix.b2, Matrix.b3, Matrix.b4, Matrix.c1,
                       Matrix.c2, Matrix.c3, Matrix.c4, Matrix.d1, Matrix.d2, Matrix.d3, Matrix.d4})
@@ -3016,29 +3021,31 @@ namespace dbc
             if (!Source || Source->mNumVertices == 0)
                 continue;
             Mesh Result;
-            Result.Vertices.reserve(Source->mNumVertices);
-            Result.Normals.reserve(Source->mNumVertices);
-            Result.Uvs.reserve(Source->mNumVertices);
-            Result.DiffuseColors.reserve(Source->mNumVertices);
+            MeshGeometry& Geometry = Result.EditGeometry();
+            Geometry.Vertices.reserve(Source->mNumVertices);
+            Geometry.Normals.reserve(Source->mNumVertices);
+            Geometry.Uvs.reserve(Source->mNumVertices);
+            Geometry.DiffuseColors.reserve(Source->mNumVertices);
             for (unsigned int VertexIndex = 0; VertexIndex < Source->mNumVertices; ++VertexIndex)
             {
                 const aiVector3D& Position = Source->mVertices[VertexIndex];
-                Result.Vertices.push_back({Position.x, Position.y, Position.z});
+                Geometry.Vertices.push_back({Position.x, Position.y, Position.z});
                 const aiVector3D Normal =
                     Source->HasNormals() ? Source->mNormals[VertexIndex] : aiVector3D(0.0f, 0.0f, 0.0f);
-                Result.Normals.push_back(Vec3Normalize({Normal.x, Normal.y, Normal.z}));
+                Geometry.Normals.push_back(Vec3Normalize({Normal.x, Normal.y, Normal.z}));
                 const aiVector3D Uv =
                     Source->HasTextureCoords(0) ? Source->mTextureCoords[0][VertexIndex] : aiVector3D(0.0f, 0.0f, 0.0f);
-                Result.Uvs.push_back({Uv.x, Uv.y});
-                Result.DiffuseColors.push_back(0xFFFFFFFFu);
+                Geometry.Uvs.push_back({Uv.x, Uv.y});
+                Geometry.DiffuseColors.push_back(0xFFFFFFFFu);
             }
             for (unsigned int FaceIndex = 0; FaceIndex < Source->mNumFaces; ++FaceIndex)
             {
                 const aiFace& Face = Source->mFaces[FaceIndex];
                 if (Face.mNumIndices == 3)
-                    Result.Indices.insert(Result.Indices.end(), {Face.mIndices[0], Face.mIndices[1], Face.mIndices[2]});
+                    Geometry.Indices.insert(Geometry.Indices.end(),
+                                            {Face.mIndices[0], Face.mIndices[1], Face.mIndices[2]});
             }
-            if (!Result.Indices.empty())
+            if (!Geometry.Indices.empty())
                 Loaded.push_back(std::move(Result));
         }
         if (Loaded.empty())
@@ -3071,18 +3078,19 @@ namespace dbc
             return false;
         }
         const Mesh& Value = It->second.front();
-        Output << "xof 0303txt 0032\nMesh {\n" << Value.Vertices.size() << ";\n";
-        for (std::size_t Index = 0; Index < Value.Vertices.size(); ++Index)
+        Output << "xof 0303txt 0032\nMesh {\n" << Value.Geometry().Vertices.size() << ";\n";
+        for (std::size_t Index = 0; Index < Value.Geometry().Vertices.size(); ++Index)
         {
-            const Vec3& Position = Value.Vertices[Index];
+            const Vec3& Position = Value.Geometry().Vertices[Index];
             Output << Position.X << ';' << Position.Y << ';' << Position.Z << ';'
-                   << (Index + 1 == Value.Vertices.size() ? ";\n" : ",\n");
+                   << (Index + 1 == Value.Geometry().Vertices.size() ? ";\n" : ",\n");
         }
-        Output << Value.Indices.size() / 3 << ";\n";
-        for (std::size_t Index = 0; Index + 2 < Value.Indices.size(); Index += 3)
+        Output << Value.Geometry().Indices.size() / 3 << ";\n";
+        for (std::size_t Index = 0; Index + 2 < Value.Geometry().Indices.size(); Index += 3)
         {
-            Output << "3;" << Value.Indices[Index] << ',' << Value.Indices[Index + 1] << ',' << Value.Indices[Index + 2]
-                   << ';' << (Index + 3 == Value.Indices.size() ? ";\n" : ",\n");
+            Output << "3;" << Value.Geometry().Indices[Index] << ',' << Value.Geometry().Indices[Index + 1] << ','
+                   << Value.Geometry().Indices[Index + 2] << ';'
+                   << (Index + 3 == Value.Geometry().Indices.size() ? ";\n" : ",\n");
         }
         Output << "}\n";
         Output.close();
@@ -3265,40 +3273,41 @@ namespace dbc
             }
 
             Mesh Out;
+            MeshGeometry& Geometry = Out.EditGeometry();
             Out.SourceMeshIndex = static_cast<int>(Mi);
             const bool HasVertexNormals = ImportedMesh->HasNormals();
-            Out.Vertices.reserve(ImportedMesh->mNumVertices);
-            Out.Normals.reserve(ImportedMesh->mNumVertices);
-            Out.Uvs.reserve(ImportedMesh->mNumVertices);
+            Geometry.Vertices.reserve(ImportedMesh->mNumVertices);
+            Geometry.Normals.reserve(ImportedMesh->mNumVertices);
+            Geometry.Uvs.reserve(ImportedMesh->mNumVertices);
             for (unsigned int Vi = 0; Vi < ImportedMesh->mNumVertices; ++Vi)
             {
                 const aiVector3D& V = ImportedMesh->mVertices[Vi];
-                Out.Vertices.push_back(Vec3{V.x, V.y, V.z});
+                Geometry.Vertices.push_back(Vec3{V.x, V.y, V.z});
                 if (HasVertexNormals)
                 {
                     const aiVector3D& N = ImportedMesh->mNormals[Vi];
-                    Out.Normals.push_back(Vec3Normalize(Vec3{N.x, N.y, N.z}));
+                    Geometry.Normals.push_back(Vec3Normalize(Vec3{N.x, N.y, N.z}));
                 }
                 else
                 {
-                    Out.Normals.push_back(Vec3{0.0f, 0.0f, 0.0f});
+                    Geometry.Normals.push_back(Vec3{0.0f, 0.0f, 0.0f});
                 }
                 if (ImportedMesh->HasTextureCoords(0))
                 {
                     const aiVector3D& Uv = ImportedMesh->mTextureCoords[0][Vi];
-                    Out.Uvs.push_back(SDL_FPoint{Uv.x, Uv.y});
+                    Geometry.Uvs.push_back(SDL_FPoint{Uv.x, Uv.y});
                 }
                 else
                 {
-                    Out.Uvs.push_back(SDL_FPoint{0.0f, 0.0f});
+                    Geometry.Uvs.push_back(SDL_FPoint{0.0f, 0.0f});
                 }
             }
 
             if (ImportedMesh->HasBones() && Scene->mRootNode)
             {
-                Out.BoneInfluences.resize(ImportedMesh->mNumVertices);
-                Out.BoneNodes.reserve(ImportedMesh->mNumBones);
-                Out.BoneOffsets.reserve(ImportedMesh->mNumBones);
+                Geometry.BoneInfluences.resize(ImportedMesh->mNumVertices);
+                Geometry.BoneNodes.reserve(ImportedMesh->mNumBones);
+                Geometry.BoneOffsets.reserve(ImportedMesh->mNumBones);
                 for (unsigned int BoneSourceIndex = 0; BoneSourceIndex < ImportedMesh->mNumBones; ++BoneSourceIndex)
                 {
                     const aiBone* Bone = ImportedMesh->mBones[BoneSourceIndex];
@@ -3308,16 +3317,16 @@ namespace dbc
                     if (!BoneNode)
                         continue;
 
-                    const int BoneIndex = static_cast<int>(Out.BoneNodes.size());
-                    Out.BoneNodes.push_back(BoneNode);
-                    Out.BoneOffsets.push_back(Bone->mOffsetMatrix);
+                    const int BoneIndex = static_cast<int>(Geometry.BoneNodes.size());
+                    Geometry.BoneNodes.push_back(BoneNode);
+                    Geometry.BoneOffsets.push_back(Bone->mOffsetMatrix);
                     for (unsigned int WeightIndex = 0; WeightIndex < Bone->mNumWeights; ++WeightIndex)
                     {
                         const aiVertexWeight& SourceWeight = Bone->mWeights[WeightIndex];
-                        if (SourceWeight.mVertexId >= Out.BoneInfluences.size() ||
+                        if (SourceWeight.mVertexId >= Geometry.BoneInfluences.size() ||
                             !std::isfinite(SourceWeight.mWeight) || SourceWeight.mWeight <= 0.0f)
                             continue;
-                        BoneInfluence& Influence = Out.BoneInfluences[SourceWeight.mVertexId];
+                        BoneInfluence& Influence = Geometry.BoneInfluences[SourceWeight.mVertexId];
                         for (std::size_t Slot = 0; Slot < Influence.Weights.size(); ++Slot)
                         {
                             if (SourceWeight.mWeight <= Influence.Weights[Slot])
@@ -3333,7 +3342,7 @@ namespace dbc
                         }
                     }
                 }
-                for (BoneInfluence& Influence : Out.BoneInfluences)
+                for (BoneInfluence& Influence : Geometry.BoneInfluences)
                 {
                     float Total = 0.0f;
                     for (float Weight : Influence.Weights)
@@ -3346,7 +3355,7 @@ namespace dbc
                 }
             }
 
-            Out.Indices.reserve(ImportedMesh->mNumFaces * 3);
+            Geometry.Indices.reserve(ImportedMesh->mNumFaces * 3);
             for (unsigned int Fi = 0; Fi < ImportedMesh->mNumFaces; ++Fi)
             {
                 const aiFace& F = ImportedMesh->mFaces[Fi];
@@ -3357,28 +3366,28 @@ namespace dbc
                 uint32_t I0 = F.mIndices[0];
                 uint32_t I1 = F.mIndices[1];
                 uint32_t I2 = F.mIndices[2];
-                if (HasVertexNormals && I0 < Out.Vertices.size() && I1 < Out.Vertices.size() &&
-                    I2 < Out.Vertices.size())
+                if (HasVertexNormals && I0 < Geometry.Vertices.size() && I1 < Geometry.Vertices.size() &&
+                    I2 < Geometry.Vertices.size())
                 {
-                    const Vec3 Face = Vec3Cross(Vec3Sub(Out.Vertices[I1], Out.Vertices[I0]),
-                                                Vec3Sub(Out.Vertices[I2], Out.Vertices[I0]));
+                    const Vec3 Face = Vec3Cross(Vec3Sub(Geometry.Vertices[I1], Geometry.Vertices[I0]),
+                                                Vec3Sub(Geometry.Vertices[I2], Geometry.Vertices[I0]));
                     const Vec3 Avg{
-                        Out.Normals[I0].X + Out.Normals[I1].X + Out.Normals[I2].X,
-                        Out.Normals[I0].Y + Out.Normals[I1].Y + Out.Normals[I2].Y,
-                        Out.Normals[I0].Z + Out.Normals[I1].Z + Out.Normals[I2].Z,
+                        Geometry.Normals[I0].X + Geometry.Normals[I1].X + Geometry.Normals[I2].X,
+                        Geometry.Normals[I0].Y + Geometry.Normals[I1].Y + Geometry.Normals[I2].Y,
+                        Geometry.Normals[I0].Z + Geometry.Normals[I1].Z + Geometry.Normals[I2].Z,
                     };
                     if (Vec3Dot(Face, Avg) < 0.0f)
                     {
                         std::swap(I1, I2);
                     }
                 }
-                Out.Indices.push_back(I0);
-                Out.Indices.push_back(I1);
-                Out.Indices.push_back(I2);
+                Geometry.Indices.push_back(I0);
+                Geometry.Indices.push_back(I1);
+                Geometry.Indices.push_back(I2);
             }
 
             bool HasValidNormals = false;
-            for (const Vec3& N : Out.Normals)
+            for (const Vec3& N : Geometry.Normals)
             {
                 if (std::fabs(N.X) + std::fabs(N.Y) + std::fabs(N.Z) > 0.01f)
                 {
@@ -3392,13 +3401,13 @@ namespace dbc
             }
             else
             {
-                for (Vec3& N : Out.Normals)
+                for (Vec3& N : Geometry.Normals)
                 {
                     N = Vec3Normalize(N);
                 }
             }
 
-            if (!Out.Vertices.empty() && !Out.Indices.empty())
+            if (!Geometry.Vertices.empty() && !Geometry.Indices.empty())
             {
                 const auto NodeIt = Object.MeshNodeByIndex.find(Mi);
                 if (NodeIt != Object.MeshNodeByIndex.end())
@@ -3418,7 +3427,7 @@ namespace dbc
                         {
                             Bind = Bind * (*It)->mTransformation;
                         }
-                        Out.BindTransform = Bind;
+                        Geometry.BindTransform = Bind;
                     }
                 }
                 if (ImportedMesh->mMaterialIndex < Scene->mNumMaterials)
@@ -3677,8 +3686,9 @@ namespace dbc
         {
             if (Orientation == 0)
             {
-                for (std::size_t Index = 0; Index + 2 < Plain.Indices.size(); Index += 3)
-                    std::swap(Plain.Indices[Index + 1], Plain.Indices[Index + 2]);
+                std::vector<uint32_t>& Indices = Plain.EditGeometry().Indices;
+                for (std::size_t Index = 0; Index + 2 < Indices.size(); Index += 3)
+                    std::swap(Indices[Index + 1], Indices[Index + 2]);
                 RendererSystem::RegenerateMeshNormals(Plain);
             }
             Object.RotY = 0.0f;
@@ -3770,45 +3780,48 @@ namespace dbc
             return false;
         const Object3D& Object = *ObjectPointer;
         Mesh Result;
+        MeshGeometry& Geometry = Result.EditGeometry();
         for (const Mesh& Source : Object.Meshes)
         {
             if (IgnoreMode == 1 && !Source.Visible)
                 continue;
-            const uint32_t VertexBase = static_cast<uint32_t>(Result.Vertices.size());
-            for (const Vec3& Position : Source.Vertices)
+            const uint32_t VertexBase = static_cast<uint32_t>(Geometry.Vertices.size());
+            for (const Vec3& Position : Source.Geometry().Vertices)
             {
-                const aiVector3D Transformed = Source.BindTransform * aiVector3D(Position.X, Position.Y, Position.Z);
-                Result.Vertices.push_back({Transformed.x, Transformed.y, Transformed.z});
+                const aiVector3D Transformed =
+                    Source.Geometry().BindTransform * aiVector3D(Position.X, Position.Y, Position.Z);
+                Geometry.Vertices.push_back({Transformed.x, Transformed.y, Transformed.z});
             }
-            Result.Normals.resize(VertexBase, Vec3{});
-            Result.Normals.insert(Result.Normals.end(), Source.Normals.begin(), Source.Normals.end());
-            Result.Normals.resize(Result.Vertices.size(), Vec3{});
-            Result.Uvs.resize(VertexBase, SDL_FPoint{});
-            Result.Uvs.insert(Result.Uvs.end(), Source.Uvs.begin(), Source.Uvs.end());
-            Result.Uvs.resize(Result.Vertices.size(), SDL_FPoint{});
-            Result.DiffuseColors.resize(VertexBase, 0xFFFFFFFFu);
-            Result.DiffuseColors.insert(Result.DiffuseColors.end(), Source.DiffuseColors.begin(),
-                                        Source.DiffuseColors.end());
-            Result.DiffuseColors.resize(Result.Vertices.size(), 0xFFFFFFFFu);
-            for (const auto& [Stage, Values] : Source.UvStages)
+            Geometry.Normals.resize(VertexBase, Vec3{});
+            Geometry.Normals.insert(Geometry.Normals.end(), Source.Geometry().Normals.begin(),
+                                    Source.Geometry().Normals.end());
+            Geometry.Normals.resize(Geometry.Vertices.size(), Vec3{});
+            Geometry.Uvs.resize(VertexBase, SDL_FPoint{});
+            Geometry.Uvs.insert(Geometry.Uvs.end(), Source.Geometry().Uvs.begin(), Source.Geometry().Uvs.end());
+            Geometry.Uvs.resize(Geometry.Vertices.size(), SDL_FPoint{});
+            Geometry.DiffuseColors.resize(VertexBase, 0xFFFFFFFFu);
+            Geometry.DiffuseColors.insert(Geometry.DiffuseColors.end(), Source.Geometry().DiffuseColors.begin(),
+                                          Source.Geometry().DiffuseColors.end());
+            Geometry.DiffuseColors.resize(Geometry.Vertices.size(), 0xFFFFFFFFu);
+            for (const auto& [Stage, Values] : Source.Geometry().UvStages)
             {
-                auto& Target = Result.UvStages[Stage];
+                auto& Target = Geometry.UvStages[Stage];
                 Target.resize(VertexBase, SDL_FPoint{});
                 Target.insert(Target.end(), Values.begin(), Values.end());
-                Target.resize(Result.Vertices.size(), SDL_FPoint{});
+                Target.resize(Geometry.Vertices.size(), SDL_FPoint{});
             }
-            for (uint32_t Index : Source.Indices)
+            for (uint32_t Index : Source.Geometry().Indices)
             {
-                if (Index >= Source.Vertices.size())
+                if (Index >= Source.Geometry().Vertices.size())
                 {
                     if (Error)
                         *Error = "MAKE MESH FROM OBJECT found an invalid object mesh index";
                     return false;
                 }
-                Result.Indices.push_back(VertexBase + Index);
+                Geometry.Indices.push_back(VertexBase + Index);
             }
         }
-        if (Result.Vertices.empty() || Result.Indices.empty())
+        if (Geometry.Vertices.empty() || Geometry.Indices.empty())
         {
             if (Error)
                 *Error = "MAKE MESH FROM OBJECT found no triangle geometry";
@@ -3932,9 +3945,15 @@ namespace dbc
         Object.Meshes.resize(static_cast<std::size_t>(LimbId));
         Mesh Added = MeshStoreIt->second.front();
         Added.SourceMeshIndex = -1;
-        Added.BoneInfluences.clear();
-        Added.BoneNodes.clear();
-        Added.BoneOffsets.clear();
+        // An added limb has no skeleton; it shares the stored geometry unless that has one to drop.
+        if (const MeshGeometry& Stored = Added.Geometry();
+            !Stored.BoneInfluences.empty() || !Stored.BoneNodes.empty() || !Stored.BoneOffsets.empty())
+        {
+            MeshGeometry& Geometry = Added.EditGeometry();
+            Geometry.BoneInfluences.clear();
+            Geometry.BoneNodes.clear();
+            Geometry.BoneOffsets.clear();
+        }
         Object.Meshes.push_back(std::move(Added));
         Object.LimbTransforms.resize(static_cast<std::size_t>(LimbId) + 1);
         Object.TransformDirty = true;
@@ -5137,13 +5156,14 @@ namespace dbc
             Writer.U32(static_cast<uint32_t>(Object.Meshes.size()));
             for (const Mesh& MeshValue : Object.Meshes)
             {
-                if (MeshValue.Vertices.size() > PortableVertexLimit || MeshValue.Indices.size() > PortableIndexLimit)
+                if (MeshValue.Geometry().Vertices.size() > PortableVertexLimit ||
+                    MeshValue.Geometry().Indices.size() > PortableIndexLimit)
                 {
                     if (Error)
                         *Error = "SAVE STATIC OBJECTS mesh exceeds vertex or index limits";
                     return false;
                 }
-                const aiMatrix4x4& Matrix = MeshValue.BindTransform;
+                const aiMatrix4x4& Matrix = MeshValue.Geometry().BindTransform;
                 for (float Value :
                      {Matrix.a1, Matrix.a2, Matrix.a3, Matrix.a4, Matrix.b1, Matrix.b2, Matrix.b3, Matrix.b4, Matrix.c1,
                       Matrix.c2, Matrix.c3, Matrix.c4, Matrix.d1, Matrix.d2, Matrix.d3, Matrix.d4})
@@ -5172,16 +5192,19 @@ namespace dbc
                 Writer.Float(MeshValue.LimbScaleX);
                 Writer.Float(MeshValue.LimbScaleY);
                 Writer.Float(MeshValue.LimbScaleZ);
-                Writer.U32(static_cast<uint32_t>(MeshValue.Vertices.size()));
-                for (std::size_t Index = 0; Index < MeshValue.Vertices.size(); ++Index)
+                Writer.U32(static_cast<uint32_t>(MeshValue.Geometry().Vertices.size()));
+                for (std::size_t Index = 0; Index < MeshValue.Geometry().Vertices.size(); ++Index)
                 {
-                    const Vec3 Normal = Index < MeshValue.Normals.size() ? MeshValue.Normals[Index] : Vec3{};
-                    const SDL_FPoint Uv = Index < MeshValue.Uvs.size() ? MeshValue.Uvs[Index] : SDL_FPoint{};
-                    const uint32_t Diffuse =
-                        Index < MeshValue.DiffuseColors.size() ? MeshValue.DiffuseColors[Index] : 0xFFFFFFFFu;
-                    Writer.Float(MeshValue.Vertices[Index].X);
-                    Writer.Float(MeshValue.Vertices[Index].Y);
-                    Writer.Float(MeshValue.Vertices[Index].Z);
+                    const Vec3 Normal =
+                        Index < MeshValue.Geometry().Normals.size() ? MeshValue.Geometry().Normals[Index] : Vec3{};
+                    const SDL_FPoint Uv =
+                        Index < MeshValue.Geometry().Uvs.size() ? MeshValue.Geometry().Uvs[Index] : SDL_FPoint{};
+                    const uint32_t Diffuse = Index < MeshValue.Geometry().DiffuseColors.size()
+                                                 ? MeshValue.Geometry().DiffuseColors[Index]
+                                                 : 0xFFFFFFFFu;
+                    Writer.Float(MeshValue.Geometry().Vertices[Index].X);
+                    Writer.Float(MeshValue.Geometry().Vertices[Index].Y);
+                    Writer.Float(MeshValue.Geometry().Vertices[Index].Z);
                     Writer.Float(Normal.X);
                     Writer.Float(Normal.Y);
                     Writer.Float(Normal.Z);
@@ -5189,10 +5212,10 @@ namespace dbc
                     Writer.Float(Uv.y);
                     Writer.U32(Diffuse);
                 }
-                Writer.U32(static_cast<uint32_t>(MeshValue.Indices.size()));
-                for (uint32_t Index : MeshValue.Indices)
+                Writer.U32(static_cast<uint32_t>(MeshValue.Geometry().Indices.size()));
+                for (uint32_t Index : MeshValue.Geometry().Indices)
                 {
-                    if (Index >= MeshValue.Vertices.size())
+                    if (Index >= MeshValue.Geometry().Vertices.size())
                     {
                         if (Error)
                             *Error = "SAVE STATIC OBJECTS found an invalid mesh index";
@@ -5388,22 +5411,23 @@ namespace dbc
             for (uint32_t MeshIndex = 0; MeshIndex < MeshCount; ++MeshIndex)
             {
                 Mesh MeshValue;
-                MeshValue.BindTransform.a1 = Reader.Float();
-                MeshValue.BindTransform.a2 = Reader.Float();
-                MeshValue.BindTransform.a3 = Reader.Float();
-                MeshValue.BindTransform.a4 = Reader.Float();
-                MeshValue.BindTransform.b1 = Reader.Float();
-                MeshValue.BindTransform.b2 = Reader.Float();
-                MeshValue.BindTransform.b3 = Reader.Float();
-                MeshValue.BindTransform.b4 = Reader.Float();
-                MeshValue.BindTransform.c1 = Reader.Float();
-                MeshValue.BindTransform.c2 = Reader.Float();
-                MeshValue.BindTransform.c3 = Reader.Float();
-                MeshValue.BindTransform.c4 = Reader.Float();
-                MeshValue.BindTransform.d1 = Reader.Float();
-                MeshValue.BindTransform.d2 = Reader.Float();
-                MeshValue.BindTransform.d3 = Reader.Float();
-                MeshValue.BindTransform.d4 = Reader.Float();
+                MeshGeometry& Geometry = MeshValue.EditGeometry();
+                Geometry.BindTransform.a1 = Reader.Float();
+                Geometry.BindTransform.a2 = Reader.Float();
+                Geometry.BindTransform.a3 = Reader.Float();
+                Geometry.BindTransform.a4 = Reader.Float();
+                Geometry.BindTransform.b1 = Reader.Float();
+                Geometry.BindTransform.b2 = Reader.Float();
+                Geometry.BindTransform.b3 = Reader.Float();
+                Geometry.BindTransform.b4 = Reader.Float();
+                Geometry.BindTransform.c1 = Reader.Float();
+                Geometry.BindTransform.c2 = Reader.Float();
+                Geometry.BindTransform.c3 = Reader.Float();
+                Geometry.BindTransform.c4 = Reader.Float();
+                Geometry.BindTransform.d1 = Reader.Float();
+                Geometry.BindTransform.d2 = Reader.Float();
+                Geometry.BindTransform.d3 = Reader.Float();
+                Geometry.BindTransform.d4 = Reader.Float();
                 MeshValue.SourceMeshIndex = Reader.I32();
                 MeshValue.Visible = Reader.U8();
                 if (!LoadTexture(Reader.String(), MeshValue.TextureImageId))
@@ -5437,16 +5461,16 @@ namespace dbc
                         *Error = "LOAD STATIC OBJECTS mesh has too many vertices";
                     return false;
                 }
-                MeshValue.Vertices.reserve(VertexCount);
-                MeshValue.Normals.reserve(VertexCount);
-                MeshValue.Uvs.reserve(VertexCount);
-                MeshValue.DiffuseColors.reserve(VertexCount);
+                Geometry.Vertices.reserve(VertexCount);
+                Geometry.Normals.reserve(VertexCount);
+                Geometry.Uvs.reserve(VertexCount);
+                Geometry.DiffuseColors.reserve(VertexCount);
                 for (uint32_t Index = 0; Index < VertexCount; ++Index)
                 {
-                    MeshValue.Vertices.push_back({Reader.Float(), Reader.Float(), Reader.Float()});
-                    MeshValue.Normals.push_back({Reader.Float(), Reader.Float(), Reader.Float()});
-                    MeshValue.Uvs.push_back({Reader.Float(), Reader.Float()});
-                    MeshValue.DiffuseColors.push_back(Reader.U32());
+                    Geometry.Vertices.push_back({Reader.Float(), Reader.Float(), Reader.Float()});
+                    Geometry.Normals.push_back({Reader.Float(), Reader.Float(), Reader.Float()});
+                    Geometry.Uvs.push_back({Reader.Float(), Reader.Float()});
+                    Geometry.DiffuseColors.push_back(Reader.U32());
                 }
                 const uint32_t IndexCount = Reader.U32();
                 if (IndexCount > PortableIndexLimit)
@@ -5455,7 +5479,7 @@ namespace dbc
                         *Error = "LOAD STATIC OBJECTS mesh has too many indices";
                     return false;
                 }
-                MeshValue.Indices.reserve(IndexCount);
+                Geometry.Indices.reserve(IndexCount);
                 for (uint32_t Index = 0; Index < IndexCount; ++Index)
                 {
                     const uint32_t Value = Reader.U32();
@@ -5465,7 +5489,7 @@ namespace dbc
                             *Error = "LOAD STATIC OBJECTS found an invalid mesh index";
                         return false;
                     }
-                    MeshValue.Indices.push_back(Value);
+                    Geometry.Indices.push_back(Value);
                 }
                 Object.Meshes.push_back(std::move(MeshValue));
             }
@@ -6276,15 +6300,15 @@ namespace dbc
         {
             if (Stage == 0)
             {
-                for (SDL_FPoint& Uv : MeshValue.Uvs)
+                for (SDL_FPoint& Uv : MeshValue.EditGeometry().Uvs)
                 {
                     Uv.x *= U;
                     Uv.y *= V;
                 }
             }
-            else if (auto It = MeshValue.UvStages.find(Stage); It != MeshValue.UvStages.end())
+            else if (MeshValue.Geometry().UvStages.contains(Stage))
             {
-                for (SDL_FPoint& Uv : It->second)
+                for (SDL_FPoint& Uv : MeshValue.EditGeometry().UvStages.at(Stage))
                 {
                     Uv.x *= U;
                     Uv.y *= V;
@@ -6828,15 +6852,15 @@ namespace dbc
                         {
                             if (Stage == 0)
                             {
-                                for (SDL_FPoint& Uv : MeshValue.Uvs)
+                                for (SDL_FPoint& Uv : MeshValue.EditGeometry().Uvs)
                                 {
                                     Uv.x += U;
                                     Uv.y += V;
                                 }
                             }
-                            else if (auto It = MeshValue.UvStages.find(Stage); It != MeshValue.UvStages.end())
+                            else if (MeshValue.Geometry().UvStages.contains(Stage))
                             {
-                                for (SDL_FPoint& Uv : It->second)
+                                for (SDL_FPoint& Uv : MeshValue.EditGeometry().UvStages.at(Stage))
                                 {
                                     Uv.x += U;
                                     Uv.y += V;
@@ -6873,15 +6897,15 @@ namespace dbc
                         {
                             if (Stage == 0)
                             {
-                                for (SDL_FPoint& Uv : MeshValue.Uvs)
+                                for (SDL_FPoint& Uv : MeshValue.EditGeometry().Uvs)
                                 {
                                     Uv.x *= U;
                                     Uv.y *= V;
                                 }
                             }
-                            else if (auto It = MeshValue.UvStages.find(Stage); It != MeshValue.UvStages.end())
+                            else if (MeshValue.Geometry().UvStages.contains(Stage))
                             {
-                                for (SDL_FPoint& Uv : It->second)
+                                for (SDL_FPoint& Uv : MeshValue.EditGeometry().UvStages.at(Stage))
                                 {
                                     Uv.x *= U;
                                     Uv.y *= V;
@@ -7051,7 +7075,7 @@ namespace dbc
             return It->second.LimbNodes[static_cast<std::size_t>(LimbId)] != nullptr ? 1 : 0;
         }
         return static_cast<std::size_t>(LimbId) < It->second.Meshes.size() &&
-                       !It->second.Meshes[static_cast<std::size_t>(LimbId)].Vertices.empty()
+                       !It->second.Meshes[static_cast<std::size_t>(LimbId)].Geometry().Vertices.empty()
                    ? 1
                    : 0;
     }
@@ -7138,27 +7162,30 @@ namespace dbc
             return false;
         }
         const Mesh Source = It->second.front();
-        const uint32_t VertexBase = static_cast<uint32_t>(Target.Vertices.size());
-        Target.Vertices.insert(Target.Vertices.end(), Source.Vertices.begin(), Source.Vertices.end());
-        Target.Normals.resize(VertexBase, Vec3{});
-        Target.Normals.insert(Target.Normals.end(), Source.Normals.begin(), Source.Normals.end());
-        Target.Normals.resize(Target.Vertices.size(), Vec3{});
-        Target.Uvs.resize(VertexBase, SDL_FPoint{});
-        Target.Uvs.insert(Target.Uvs.end(), Source.Uvs.begin(), Source.Uvs.end());
-        Target.Uvs.resize(Target.Vertices.size(), SDL_FPoint{});
-        Target.DiffuseColors.resize(VertexBase, 0xFFFFFFFFu);
-        Target.DiffuseColors.insert(Target.DiffuseColors.end(), Source.DiffuseColors.begin(),
-                                    Source.DiffuseColors.end());
-        Target.DiffuseColors.resize(Target.Vertices.size(), 0xFFFFFFFFu);
-        for (const auto& [Stage, Values] : Source.UvStages)
+        MeshGeometry& Geometry = Target.EditGeometry();
+        const uint32_t VertexBase = static_cast<uint32_t>(Geometry.Vertices.size());
+        Geometry.Vertices.insert(Geometry.Vertices.end(), Source.Geometry().Vertices.begin(),
+                                 Source.Geometry().Vertices.end());
+        Geometry.Normals.resize(VertexBase, Vec3{});
+        Geometry.Normals.insert(Geometry.Normals.end(), Source.Geometry().Normals.begin(),
+                                Source.Geometry().Normals.end());
+        Geometry.Normals.resize(Geometry.Vertices.size(), Vec3{});
+        Geometry.Uvs.resize(VertexBase, SDL_FPoint{});
+        Geometry.Uvs.insert(Geometry.Uvs.end(), Source.Geometry().Uvs.begin(), Source.Geometry().Uvs.end());
+        Geometry.Uvs.resize(Geometry.Vertices.size(), SDL_FPoint{});
+        Geometry.DiffuseColors.resize(VertexBase, 0xFFFFFFFFu);
+        Geometry.DiffuseColors.insert(Geometry.DiffuseColors.end(), Source.Geometry().DiffuseColors.begin(),
+                                      Source.Geometry().DiffuseColors.end());
+        Geometry.DiffuseColors.resize(Geometry.Vertices.size(), 0xFFFFFFFFu);
+        for (const auto& [Stage, Values] : Source.Geometry().UvStages)
         {
-            auto& TargetValues = Target.UvStages[Stage];
+            auto& TargetValues = Geometry.UvStages[Stage];
             TargetValues.resize(VertexBase, SDL_FPoint{});
             TargetValues.insert(TargetValues.end(), Values.begin(), Values.end());
-            TargetValues.resize(Target.Vertices.size(), SDL_FPoint{});
+            TargetValues.resize(Geometry.Vertices.size(), SDL_FPoint{});
         }
-        for (uint32_t Index : Source.Indices)
-            Target.Indices.push_back(VertexBase + Index);
+        for (uint32_t Index : Source.Geometry().Indices)
+            Geometry.Indices.push_back(VertexBase + Index);
         return true;
     }
 
@@ -7169,19 +7196,20 @@ namespace dbc
         if (!ValuePointer)
             return false;
         Mesh& Value = *ValuePointer;
-        if (VertexStart < 0 || VertexEnd < VertexStart || VertexEnd >= static_cast<int>(Value.Vertices.size()) ||
-            IndexStart < 0 || IndexEnd < IndexStart || IndexEnd >= static_cast<int>(Value.Indices.size()))
+        if (VertexStart < 0 || VertexEnd < VertexStart ||
+            VertexEnd >= static_cast<int>(Value.Geometry().Vertices.size()) || IndexStart < 0 ||
+            IndexEnd < IndexStart || IndexEnd >= static_cast<int>(Value.Geometry().Indices.size()))
         {
             if (Error)
                 *Error = "DELETE MESH FROM VERTEXDATA range is outside the locked mesh";
             return false;
         }
         const uint32_t RemovedVertices = static_cast<uint32_t>(VertexEnd - VertexStart + 1);
-        for (std::size_t Position = 0; Position < Value.Indices.size(); ++Position)
+        for (std::size_t Position = 0; Position < Value.Geometry().Indices.size(); ++Position)
         {
             if (Position >= static_cast<std::size_t>(IndexStart) && Position <= static_cast<std::size_t>(IndexEnd))
                 continue;
-            const uint32_t Index = Value.Indices[Position];
+            const uint32_t Index = Value.Geometry().Indices[Position];
             if (Index >= static_cast<uint32_t>(VertexStart) && Index <= static_cast<uint32_t>(VertexEnd))
             {
                 if (Error)
@@ -7191,17 +7219,18 @@ namespace dbc
         }
         const auto CompleteChannel = [VertexEnd](const auto& Values)
         { return Values.empty() || static_cast<std::size_t>(VertexEnd) < Values.size(); };
-        if (!CompleteChannel(Value.Vertices) || !CompleteChannel(Value.Normals) || !CompleteChannel(Value.Uvs) ||
-            !CompleteChannel(Value.DiffuseColors) ||
-            !std::all_of(Value.UvStages.begin(), Value.UvStages.end(),
+        if (!CompleteChannel(Value.Geometry().Vertices) || !CompleteChannel(Value.Geometry().Normals) ||
+            !CompleteChannel(Value.Geometry().Uvs) || !CompleteChannel(Value.Geometry().DiffuseColors) ||
+            !std::all_of(Value.Geometry().UvStages.begin(), Value.Geometry().UvStages.end(),
                          [&](const auto& Stage) { return CompleteChannel(Stage.second); }))
         {
             if (Error)
                 *Error = "DELETE MESH FROM VERTEXDATA found an incomplete vertex channel";
             return false;
         }
-        Value.Indices.erase(Value.Indices.begin() + IndexStart, Value.Indices.begin() + IndexEnd + 1);
-        for (uint32_t& Index : Value.Indices)
+        MeshGeometry& Geometry = Value.EditGeometry();
+        Geometry.Indices.erase(Geometry.Indices.begin() + IndexStart, Geometry.Indices.begin() + IndexEnd + 1);
+        for (uint32_t& Index : Geometry.Indices)
         {
             if (Index > static_cast<uint32_t>(VertexEnd))
                 Index -= RemovedVertices;
@@ -7213,11 +7242,11 @@ namespace dbc
 
             Values.erase(Values.begin() + VertexStart, Values.begin() + VertexEnd + 1);
         };
-        EraseRange(Value.Vertices);
-        EraseRange(Value.Normals);
-        EraseRange(Value.Uvs);
-        EraseRange(Value.DiffuseColors);
-        for (auto& [Stage, Values] : Value.UvStages)
+        EraseRange(Geometry.Vertices);
+        EraseRange(Geometry.Normals);
+        EraseRange(Geometry.Uvs);
+        EraseRange(Geometry.DiffuseColors);
+        for (auto& [Stage, Values] : Geometry.UvStages)
             EraseRange(Values);
         return true;
     }
@@ -7232,31 +7261,34 @@ namespace dbc
             return false;
         }
         Mesh& Value = It->second.front();
-        if (Value.Indices.empty())
+        if (Value.Geometry().Indices.empty())
             return true;
         Mesh Expanded = Value;
-        Expanded.Vertices.clear();
-        Expanded.Normals.clear();
-        Expanded.Uvs.clear();
-        Expanded.DiffuseColors.clear();
-        Expanded.UvStages.clear();
-        Expanded.Indices.clear();
-        for (uint32_t SourceIndex : Value.Indices)
+        MeshGeometry& Geometry = Expanded.EditGeometry();
+        Geometry.Vertices.clear();
+        Geometry.Normals.clear();
+        Geometry.Uvs.clear();
+        Geometry.DiffuseColors.clear();
+        Geometry.UvStages.clear();
+        Geometry.Indices.clear();
+        // Value still holds the unexpanded geometry: Expanded detached from it above.
+        const MeshGeometry& Source = Value.Geometry();
+        for (uint32_t SourceIndex : Source.Indices)
         {
-            if (SourceIndex >= Value.Vertices.size())
+            if (SourceIndex >= Source.Vertices.size())
             {
                 if (Error)
                     *Error = "CONVERT MESH TO VERTEXDATA found an invalid index";
                 return false;
             }
-            Expanded.Vertices.push_back(Value.Vertices[SourceIndex]);
-            Expanded.Normals.push_back(SourceIndex < Value.Normals.size() ? Value.Normals[SourceIndex] : Vec3{});
-            Expanded.Uvs.push_back(SourceIndex < Value.Uvs.size() ? Value.Uvs[SourceIndex] : SDL_FPoint{});
-            Expanded.DiffuseColors.push_back(SourceIndex < Value.DiffuseColors.size() ? Value.DiffuseColors[SourceIndex]
-                                                                                      : 0xFFFFFFFFu);
-            for (const auto& [Stage, Values] : Value.UvStages)
-                Expanded.UvStages[Stage].push_back(SourceIndex < Values.size() ? Values[SourceIndex] : SDL_FPoint{});
-            Expanded.Indices.push_back(static_cast<uint32_t>(Expanded.Indices.size()));
+            Geometry.Vertices.push_back(Source.Vertices[SourceIndex]);
+            Geometry.Normals.push_back(SourceIndex < Source.Normals.size() ? Source.Normals[SourceIndex] : Vec3{});
+            Geometry.Uvs.push_back(SourceIndex < Source.Uvs.size() ? Source.Uvs[SourceIndex] : SDL_FPoint{});
+            Geometry.DiffuseColors.push_back(
+                SourceIndex < Source.DiffuseColors.size() ? Source.DiffuseColors[SourceIndex] : 0xFFFFFFFFu);
+            for (const auto& [Stage, Values] : Source.UvStages)
+                Geometry.UvStages[Stage].push_back(SourceIndex < Values.size() ? Values[SourceIndex] : SDL_FPoint{});
+            Geometry.Indices.push_back(static_cast<uint32_t>(Geometry.Indices.size()));
         }
         Value = std::move(Expanded);
         return true;
@@ -7268,7 +7300,7 @@ namespace dbc
         if (!CheckedLockedVertexMesh1)
             return false;
         {
-            Output = static_cast<int>(CheckedLockedVertexMesh1->Vertices.size());
+            Output = static_cast<int>(CheckedLockedVertexMesh1->Geometry().Vertices.size());
             return true;
         }
     }
@@ -7279,7 +7311,7 @@ namespace dbc
         if (!CheckedLockedVertexMesh1)
             return false;
         {
-            Output = static_cast<int>(CheckedLockedVertexMesh1->Indices.size());
+            Output = static_cast<int>(CheckedLockedVertexMesh1->Geometry().Indices.size());
             return true;
         }
     }
@@ -7290,13 +7322,13 @@ namespace dbc
         if (!ValuePointer)
             return false;
         Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Vertices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Vertices.size()))
         {
             if (Error)
                 *Error = "SET VERTEXDATA POSITION vertex is outside the locked mesh";
             return false;
         }
-        Value.Vertices[static_cast<std::size_t>(Index)] = {X, Y, Z};
+        Value.EditGeometry().Vertices[static_cast<std::size_t>(Index)] = {X, Y, Z};
         return true;
     }
 
@@ -7306,14 +7338,15 @@ namespace dbc
         if (!ValuePointer)
             return false;
         Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Vertices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Vertices.size()))
         {
             if (Error)
                 *Error = "SET VERTEXDATA NORMALS vertex is outside the locked mesh";
             return false;
         }
-        Value.Normals.resize(Value.Vertices.size(), Vec3{});
-        Value.Normals[static_cast<std::size_t>(Index)] = {X, Y, Z};
+        MeshGeometry& Geometry = Value.EditGeometry();
+        Geometry.Normals.resize(Geometry.Vertices.size(), Vec3{});
+        Geometry.Normals[static_cast<std::size_t>(Index)] = {X, Y, Z};
         return true;
     }
 
@@ -7323,14 +7356,15 @@ namespace dbc
         if (!ValuePointer)
             return false;
         Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Vertices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Vertices.size()))
         {
             if (Error)
                 *Error = "SET VERTEXDATA DIFFUSE vertex is outside the locked mesh";
             return false;
         }
-        Value.DiffuseColors.resize(Value.Vertices.size(), 0xFFFFFFFFu);
-        Value.DiffuseColors[static_cast<std::size_t>(Index)] = Color;
+        MeshGeometry& Geometry = Value.EditGeometry();
+        Geometry.DiffuseColors.resize(Geometry.Vertices.size(), 0xFFFFFFFFu);
+        Geometry.DiffuseColors[static_cast<std::size_t>(Index)] = Color;
         return true;
     }
 
@@ -7340,14 +7374,15 @@ namespace dbc
         if (!ValuePointer)
             return false;
         Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Vertices.size()) || Stage < 0 || Stage > 7)
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Vertices.size()) || Stage < 0 || Stage > 7)
         {
             if (Error)
                 *Error = "SET VERTEXDATA UV vertex or stage is outside the locked mesh";
             return false;
         }
-        auto& Values = Stage == 0 ? Value.Uvs : Value.UvStages[Stage];
-        Values.resize(Value.Vertices.size(), SDL_FPoint{});
+        MeshGeometry& Geometry = Value.EditGeometry();
+        auto& Values = Stage == 0 ? Geometry.Uvs : Geometry.UvStages[Stage];
+        Values.resize(Geometry.Vertices.size(), SDL_FPoint{});
         Values[static_cast<std::size_t>(Index)] = {U, V};
         return true;
     }
@@ -7358,14 +7393,14 @@ namespace dbc
         if (!TargetPointer)
             return false;
         Mesh& Target = *TargetPointer;
-        if (Index < 0 || Index >= static_cast<int>(Target.Indices.size()) || Value < 0 ||
-            Value >= static_cast<int>(Target.Vertices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Target.Geometry().Indices.size()) || Value < 0 ||
+            Value >= static_cast<int>(Target.Geometry().Vertices.size()))
         {
             if (Error)
                 *Error = "SET INDEXDATA index or vertex is outside the locked mesh";
             return false;
         }
-        Target.Indices[static_cast<std::size_t>(Index)] = static_cast<uint32_t>(Value);
+        Target.EditGeometry().Indices[static_cast<std::size_t>(Index)] = static_cast<uint32_t>(Value);
         return true;
     }
 
@@ -7375,14 +7410,14 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Vertices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Vertices.size()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA POSITION X vertex is outside the locked mesh";
             return false;
         }
         {
-            Output = Value.Vertices[static_cast<std::size_t>(Index)].X;
+            Output = Value.Geometry().Vertices[static_cast<std::size_t>(Index)].X;
             return true;
         }
     }
@@ -7393,14 +7428,14 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Vertices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Vertices.size()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA POSITION Y vertex is outside the locked mesh";
             return false;
         }
         {
-            Output = Value.Vertices[static_cast<std::size_t>(Index)].Y;
+            Output = Value.Geometry().Vertices[static_cast<std::size_t>(Index)].Y;
             return true;
         }
     }
@@ -7411,14 +7446,14 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Vertices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Vertices.size()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA POSITION Z vertex is outside the locked mesh";
             return false;
         }
         {
-            Output = Value.Vertices[static_cast<std::size_t>(Index)].Z;
+            Output = Value.Geometry().Vertices[static_cast<std::size_t>(Index)].Z;
             return true;
         }
     }
@@ -7429,14 +7464,14 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Normals.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Normals.size()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA NORMALS X vertex has no normal";
             return false;
         }
         {
-            Output = Value.Normals[static_cast<std::size_t>(Index)].X;
+            Output = Value.Geometry().Normals[static_cast<std::size_t>(Index)].X;
             return true;
         }
     }
@@ -7447,14 +7482,14 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Normals.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Normals.size()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA NORMALS Y vertex has no normal";
             return false;
         }
         {
-            Output = Value.Normals[static_cast<std::size_t>(Index)].Y;
+            Output = Value.Geometry().Normals[static_cast<std::size_t>(Index)].Y;
             return true;
         }
     }
@@ -7465,14 +7500,14 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Normals.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Normals.size()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA NORMALS Z vertex has no normal";
             return false;
         }
         {
-            Output = Value.Normals[static_cast<std::size_t>(Index)].Z;
+            Output = Value.Geometry().Normals[static_cast<std::size_t>(Index)].Z;
             return true;
         }
     }
@@ -7483,15 +7518,15 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Vertices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Vertices.size()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA DIFFUSE vertex is outside the locked mesh";
             return false;
         }
         {
-            Output = static_cast<int>(Index < static_cast<int>(Value.DiffuseColors.size())
-                                          ? Value.DiffuseColors[static_cast<std::size_t>(Index)]
+            Output = static_cast<int>(Index < static_cast<int>(Value.Geometry().DiffuseColors.size())
+                                          ? Value.Geometry().DiffuseColors[static_cast<std::size_t>(Index)]
                                           : 0xFFFFFFFFu);
             return true;
         }
@@ -7503,10 +7538,11 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        const auto It = Value.UvStages.find(Stage);
-        const auto& Values = Stage == 0 ? Value.Uvs : (It != Value.UvStages.end() ? It->second : Value.Uvs);
+        const auto It = Value.Geometry().UvStages.find(Stage);
+        const auto& Values = Stage == 0 ? Value.Geometry().Uvs
+                                        : (It != Value.Geometry().UvStages.end() ? It->second : Value.Geometry().Uvs);
         if (Stage < 0 || Stage > 7 || Index < 0 || Index >= static_cast<int>(Values.size()) ||
-            (Stage != 0 && It == Value.UvStages.end()))
+            (Stage != 0 && It == Value.Geometry().UvStages.end()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA U vertex or stage is outside the locked mesh";
@@ -7524,10 +7560,11 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        const auto It = Value.UvStages.find(Stage);
-        const auto& Values = Stage == 0 ? Value.Uvs : (It != Value.UvStages.end() ? It->second : Value.Uvs);
+        const auto It = Value.Geometry().UvStages.find(Stage);
+        const auto& Values = Stage == 0 ? Value.Geometry().Uvs
+                                        : (It != Value.Geometry().UvStages.end() ? It->second : Value.Geometry().Uvs);
         if (Stage < 0 || Stage > 7 || Index < 0 || Index >= static_cast<int>(Values.size()) ||
-            (Stage != 0 && It == Value.UvStages.end()))
+            (Stage != 0 && It == Value.Geometry().UvStages.end()))
         {
             if (Error)
                 *Error = "GET VERTEXDATA V vertex or stage is outside the locked mesh";
@@ -7545,14 +7582,14 @@ namespace dbc
         if (!ValuePointer)
             return false;
         const Mesh& Value = *ValuePointer;
-        if (Index < 0 || Index >= static_cast<int>(Value.Indices.size()))
+        if (Index < 0 || Index >= static_cast<int>(Value.Geometry().Indices.size()))
         {
             if (Error)
                 *Error = "GET INDEXDATA index is outside the locked mesh";
             return false;
         }
         {
-            Output = static_cast<int>(Value.Indices[static_cast<std::size_t>(Index)]);
+            Output = static_cast<int>(Value.Geometry().Indices[static_cast<std::size_t>(Index)]);
             return true;
         }
     }
@@ -8864,7 +8901,10 @@ namespace dbc
             Object.DiffuseColor = 0xFFFFFFFFu;
             const uint32_t VertexColor = Color | 0xFF000000u;
             for (Mesh& Value : Object.Meshes)
-                Value.DiffuseColors.assign(Value.Vertices.size(), VertexColor);
+            {
+                MeshGeometry& Geometry = Value.EditGeometry();
+                Geometry.DiffuseColors.assign(Geometry.Vertices.size(), VertexColor);
+            }
         }
         else
         {

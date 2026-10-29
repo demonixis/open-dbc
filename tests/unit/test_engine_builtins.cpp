@@ -166,11 +166,11 @@ TEST_CASE("Primitive meshes use outward winding and enable culling by default")
         CHECK(Object->Cull);
         REQUIRE_FALSE(Object->Meshes.empty());
         const dbc::Mesh& Mesh = Object->Meshes.front();
-        for (size_t Index = 0; Index + 2 < Mesh.Indices.size(); Index += 3)
+        for (size_t Index = 0; Index + 2 < Mesh.Geometry().Indices.size(); Index += 3)
         {
-            const dbc::Vec3& A = Mesh.Vertices[Mesh.Indices[Index]];
-            const dbc::Vec3& B = Mesh.Vertices[Mesh.Indices[Index + 1]];
-            const dbc::Vec3& C = Mesh.Vertices[Mesh.Indices[Index + 2]];
+            const dbc::Vec3& A = Mesh.Geometry().Vertices[Mesh.Geometry().Indices[Index]];
+            const dbc::Vec3& B = Mesh.Geometry().Vertices[Mesh.Geometry().Indices[Index + 1]];
+            const dbc::Vec3& C = Mesh.Geometry().Vertices[Mesh.Geometry().Indices[Index + 2]];
             const dbc::Vec3 Normal = dbc::Vec3Cross(dbc::Vec3Sub(B, A), dbc::Vec3Sub(C, A));
             if (dbc::Vec3Dot(Normal, Normal) < 0.000001f)
                 continue;
@@ -183,9 +183,10 @@ TEST_CASE("Primitive meshes use outward winding and enable culling by default")
     REQUIRE(Plain != nullptr);
     CHECK(Plain->Cull);
     const dbc::Mesh& Mesh = Plain->Meshes.front();
-    const dbc::Vec3 Normal =
-        dbc::Vec3Cross(dbc::Vec3Sub(Mesh.Vertices[Mesh.Indices[1]], Mesh.Vertices[Mesh.Indices[0]]),
-                       dbc::Vec3Sub(Mesh.Vertices[Mesh.Indices[2]], Mesh.Vertices[Mesh.Indices[0]]));
+    const dbc::Vec3 Normal = dbc::Vec3Cross(dbc::Vec3Sub(Mesh.Geometry().Vertices[Mesh.Geometry().Indices[1]],
+                                                         Mesh.Geometry().Vertices[Mesh.Geometry().Indices[0]]),
+                                            dbc::Vec3Sub(Mesh.Geometry().Vertices[Mesh.Geometry().Indices[2]],
+                                                         Mesh.Geometry().Vertices[Mesh.Geometry().Indices[0]]));
     CHECK(Normal.Z > 0.0f);
 }
 
@@ -231,7 +232,7 @@ TEST_CASE("Historical text X frame matrices accept only the missing final termin
     const dbc::Object3D* Sky = Kernel.Objects().GetObject(1);
     REQUIRE(Sky != nullptr);
     REQUIRE_FALSE(Sky->Meshes.empty());
-    CHECK(Sky->Meshes.front().Indices.size() == 12);
+    CHECK(Sky->Meshes.front().Geometry().Indices.size() == 12);
 
     const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
     const std::filesystem::path InvalidPath =
@@ -288,7 +289,7 @@ TEST_CASE("Classic imported X frames retain the DBC object root limb")
     CHECK(Kernel.Objects().LimbExist(1, 19) == 1);
 
     const auto Probe = std::find_if(Classic->Meshes.begin(), Classic->Meshes.end(),
-                                    [](const dbc::Mesh& Mesh) { return !Mesh.Vertices.empty(); });
+                                    [](const dbc::Mesh& Mesh) { return !Mesh.Geometry().Vertices.empty(); });
     REQUIRE(Probe != Classic->Meshes.end());
     const dbc::Vec3 Before = Kernel.Renderer().WorldMeshVertex(*Classic, *Probe, 0);
     REQUIRE(Kernel.Objects().RotateLimb(1, 0, 0.0f, 90.0f, 0.0f));
@@ -839,10 +840,11 @@ TEST_CASE("Swarm Classic plains face negative Z while DBPro orientations remain 
         REQUIRE(Object != nullptr);
         REQUIRE_FALSE(Object->Meshes.empty());
         const dbc::Mesh& Mesh = Object->Meshes.front();
-        REQUIRE(Mesh.Indices.size() >= 3);
-        const dbc::Vec3 Normal =
-            dbc::Vec3Cross(dbc::Vec3Sub(Mesh.Vertices[Mesh.Indices[1]], Mesh.Vertices[Mesh.Indices[0]]),
-                           dbc::Vec3Sub(Mesh.Vertices[Mesh.Indices[2]], Mesh.Vertices[Mesh.Indices[0]]));
+        REQUIRE(Mesh.Geometry().Indices.size() >= 3);
+        const dbc::Vec3 Normal = dbc::Vec3Cross(dbc::Vec3Sub(Mesh.Geometry().Vertices[Mesh.Geometry().Indices[1]],
+                                                             Mesh.Geometry().Vertices[Mesh.Geometry().Indices[0]]),
+                                                dbc::Vec3Sub(Mesh.Geometry().Vertices[Mesh.Geometry().Indices[2]],
+                                                             Mesh.Geometry().Vertices[Mesh.Geometry().Indices[0]]));
         return Normal.Z;
     };
 
@@ -1074,7 +1076,7 @@ TEST_CASE("JetSki rider keeps Classic limb numbering transforms and hidden attac
 
     const dbc::Mesh* BodyMesh = Kernel.Renderer().FindLimbMesh(*Rider, 1);
     REQUIRE(BodyMesh != nullptr);
-    REQUIRE_FALSE(BodyMesh->Vertices.empty());
+    REQUIRE_FALSE(BodyMesh->Geometry().Vertices.empty());
     const dbc::Vec3 VertexBefore = Kernel.Renderer().WorldMeshVertex(*Rider, *BodyMesh, 0);
     const dbc::Vec3 OriginBefore = Kernel.Renderer().WorldLimbOrigin(*Rider, 1);
     REQUIRE(Kernel.Objects().OffsetLimb(1, 1, 7.0f, -3.0f, 11.0f));
@@ -1097,12 +1099,12 @@ TEST_CASE("JetSki rider keeps Classic limb numbering transforms and hidden attac
     bool FirstRenderedVertex = true;
     for (const dbc::Mesh& Mesh : Rider->Meshes)
     {
-        if (Mesh.Vertices.empty())
+        if (Mesh.Geometry().Vertices.empty())
             continue;
-        CHECK(Mesh.Indices.size() % 3 == 0);
-        for (const std::uint32_t Index : Mesh.Indices)
-            CHECK(Index < Mesh.Vertices.size());
-        for (std::size_t VertexIndex = 0; VertexIndex < Mesh.Vertices.size(); ++VertexIndex)
+        CHECK(Mesh.Geometry().Indices.size() % 3 == 0);
+        for (const std::uint32_t Index : Mesh.Geometry().Indices)
+            CHECK(Index < Mesh.Geometry().Vertices.size());
+        for (std::size_t VertexIndex = 0; VertexIndex < Mesh.Geometry().Vertices.size(); ++VertexIndex)
         {
             const dbc::Vec3 Position = Kernel.Renderer().WorldMeshVertex(*Rider, Mesh, VertexIndex);
             CHECK(std::isfinite(Position.X));
@@ -1298,6 +1300,50 @@ TEST_CASE("Imported DBPro limb identifiers remain stable after removal")
     CHECK(Context.Checklist[16].Name == "x3ds_Head");
 }
 
+TEST_CASE("Clones, instances and objects made from a mesh share geometry until one of them edits it")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("shared-geometry", 16, 16));
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    Objects.MakeObjectCube(1, 2.0f);
+    Objects.CloneObject(2, 1);
+    Objects.InstanceObject(3, 1);
+    const auto MeshOf = [&](int Id) -> const dbc::Mesh&
+    {
+        const dbc::Object3D* Object = Objects.GetObject(Id);
+        REQUIRE(Object != nullptr);
+        REQUIRE(Object->Meshes.size() == 1);
+        return Object->Meshes.front();
+    };
+    CHECK(MeshOf(2).SharesGeometryWith(MeshOf(1)));
+    CHECK(MeshOf(3).SharesGeometryWith(MeshOf(1)));
+    const uint64_t Revision = MeshOf(1).Geometry().Revision;
+    const dbc::Vec3 Corner = MeshOf(1).Geometry().Vertices.front();
+
+    // Editing the source detaches it: a new revision, and the clone and the instance keep the old vertex.
+    REQUIRE(Objects.LockVertexdataForLimb(1, 0));
+    REQUIRE(Objects.SetVertexdataPosition(0, 9.0f, 9.0f, 9.0f));
+    Objects.UnlockVertexdata();
+    CHECK(MeshOf(1).Geometry().Vertices.front().X == 9.0f);
+    CHECK(MeshOf(1).Geometry().Revision != Revision);
+    CHECK_FALSE(MeshOf(1).SharesGeometryWith(MeshOf(3)));
+    CHECK(MeshOf(2).SharesGeometryWith(MeshOf(3)));
+    CHECK(MeshOf(3).Geometry().Vertices.front().X == Corner.X);
+    CHECK(MeshOf(3).Geometry().Revision == Revision);
+
+    // An object made from a stored mesh shares it, and editing the stored mesh leaves the object as it was.
+    REQUIRE(Objects.MakeMeshFromObject(1, 2));
+    Objects.MakeObject(4, 1, 0);
+    const std::vector<dbc::Mesh>* Stored = Objects.GetMeshes(1);
+    REQUIRE(Stored != nullptr);
+    CHECK(MeshOf(4).SharesGeometryWith(Stored->front()));
+    REQUIRE(Objects.LockVertexdataForMesh(1));
+    REQUIRE(Objects.SetVertexdataPosition(0, -5.0f, 0.0f, 0.0f));
+    Objects.UnlockVertexdata();
+    CHECK(Objects.GetMeshes(1)->front().Geometry().Vertices.front().X == -5.0f);
+    CHECK(MeshOf(4).Geometry().Vertices.front().X != -5.0f);
+}
+
 TEST_CASE("Batched world mesh vertices match the per-vertex query exactly")
 {
     dbc::EngineKernel Kernel;
@@ -1324,7 +1370,7 @@ TEST_CASE("Batched world mesh vertices match the per-vertex query exactly")
         {
             std::vector<dbc::Vec3> Batched;
             Kernel.Renderer().WorldMeshVertices(*Object, MeshValue, Batched);
-            REQUIRE(Batched.size() == MeshValue.Vertices.size());
+            REQUIRE(Batched.size() == MeshValue.Geometry().Vertices.size());
             for (std::size_t Vertex = 0; Vertex < Batched.size(); ++Vertex)
             {
                 const dbc::Vec3 Single = Kernel.Renderer().WorldMeshVertex(*Object, MeshValue, Vertex);
@@ -1349,16 +1395,16 @@ TEST_CASE("Imported DBPro skeletal animation deforms weighted vertices")
     REQUIRE(Object != nullptr);
     REQUIRE_FALSE(Object->AnimationClips.empty());
     const auto MeshIt = std::find_if(Object->Meshes.begin(), Object->Meshes.end(),
-                                     [](const dbc::Mesh& Mesh) { return !Mesh.BoneInfluences.empty(); });
+                                     [](const dbc::Mesh& Mesh) { return !Mesh.Geometry().BoneInfluences.empty(); });
     REQUIRE(MeshIt != Object->Meshes.end());
     const dbc::Mesh& Mesh = *MeshIt;
-    REQUIRE(Mesh.BoneInfluences.size() == Mesh.Vertices.size());
-    REQUIRE(Mesh.BoneNodes.size() == Mesh.BoneOffsets.size());
+    REQUIRE(Mesh.Geometry().BoneInfluences.size() == Mesh.Geometry().Vertices.size());
+    REQUIRE(Mesh.Geometry().BoneNodes.size() == Mesh.Geometry().BoneOffsets.size());
 
-    std::size_t AnimatedVertex = Mesh.Vertices.size();
-    for (std::size_t Vertex = 0; Vertex < Mesh.BoneInfluences.size(); ++Vertex)
+    std::size_t AnimatedVertex = Mesh.Geometry().Vertices.size();
+    for (std::size_t Vertex = 0; Vertex < Mesh.Geometry().BoneInfluences.size(); ++Vertex)
     {
-        const dbc::BoneInfluence& Influence = Mesh.BoneInfluences[Vertex];
+        const dbc::BoneInfluence& Influence = Mesh.Geometry().BoneInfluences[Vertex];
         float Total = 0.0f;
         int Count = 0;
         bool Animated = false;
@@ -1369,17 +1415,17 @@ TEST_CASE("Imported DBPro skeletal animation deforms weighted vertices")
             ++Count;
             Total += Influence.Weights[Slot];
             REQUIRE(Influence.Indices[Slot] >= 0);
-            REQUIRE(static_cast<std::size_t>(Influence.Indices[Slot]) < Mesh.BoneNodes.size());
-            const aiNode* Node = Mesh.BoneNodes[static_cast<std::size_t>(Influence.Indices[Slot])];
+            REQUIRE(static_cast<std::size_t>(Influence.Indices[Slot]) < Mesh.Geometry().BoneNodes.size());
+            const aiNode* Node = Mesh.Geometry().BoneNodes[static_cast<std::size_t>(Influence.Indices[Slot])];
             Animated = Animated || (Node && Object->AnimChannelByNode.contains(Node->mName.C_Str()));
         }
         CHECK(Count <= 4);
         if (Count > 0)
             CHECK(Total == doctest::Approx(1.0f));
-        if (AnimatedVertex == Mesh.Vertices.size() && Animated)
+        if (AnimatedVertex == Mesh.Geometry().Vertices.size() && Animated)
             AnimatedVertex = Vertex;
     }
-    REQUIRE(AnimatedVertex < Mesh.Vertices.size());
+    REQUIRE(AnimatedVertex < Mesh.Geometry().Vertices.size());
 
     REQUIRE(Kernel.Objects().SetObjectFrame(1, 0));
     const dbc::Vec3 BindPoint = Kernel.Renderer().WorldMeshVertex(*Object, Mesh, AnimatedVertex);
@@ -2379,7 +2425,7 @@ TEST_CASE("Rendered object vertices match the query transforms exactly")
         const dbc::Object3D* Object = Objects.GetObject(Id);
         REQUIRE(Object != nullptr);
         for (const dbc::Mesh& MeshValue : Object->Meshes)
-            for (std::size_t Vertex = 0; Vertex < MeshValue.Vertices.size(); ++Vertex)
+            for (std::size_t Vertex = 0; Vertex < MeshValue.Geometry().Vertices.size(); ++Vertex)
             {
                 const dbc::Vec3 World = Kernel.Renderer().WorldMeshVertex(*Object, MeshValue, Vertex);
                 const glm::vec4 Point = View.WorldToView * glm::vec4(World.X, World.Y, World.Z, 1.0f);
@@ -3027,21 +3073,23 @@ TEST_CASE("DBPro object depth UV alpha and bounds controls drive portable render
     dbc::Object3D* Object = Kernel.Objects().GetObject(1);
     REQUIRE(Object != nullptr);
     REQUIRE_FALSE(Object->Meshes.empty());
-    const std::vector<SDL_FPoint> OriginalUvs = Object->Meshes.front().Uvs;
-    Object->Meshes.front().UvStages[1] = OriginalUvs;
+    const std::vector<SDL_FPoint> OriginalUvs = Object->Meshes.front().Geometry().Uvs;
+    Object->Meshes.front().EditGeometry().UvStages[1] = OriginalUvs;
     REQUIRE(Command(dbc::language::SymbolId::Command_ScaleObjectTexture,
                     {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(3)}));
     REQUIRE(Command(dbc::language::SymbolId::Command_ScaleObjectTexture,
                     {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(4),
                      BuiltinValue::FromNumber(5)}));
-    REQUIRE(Object->Meshes.front().Uvs.size() == OriginalUvs.size());
-    REQUIRE(Object->Meshes.front().UvStages.at(1).size() == OriginalUvs.size());
+    REQUIRE(Object->Meshes.front().Geometry().Uvs.size() == OriginalUvs.size());
+    REQUIRE(Object->Meshes.front().Geometry().UvStages.at(1).size() == OriginalUvs.size());
     for (std::size_t Index = 0; Index < OriginalUvs.size(); ++Index)
     {
-        CHECK(Object->Meshes.front().Uvs[Index].x == doctest::Approx(OriginalUvs[Index].x * 2.0f));
-        CHECK(Object->Meshes.front().Uvs[Index].y == doctest::Approx(OriginalUvs[Index].y * 3.0f));
-        CHECK(Object->Meshes.front().UvStages.at(1)[Index].x == doctest::Approx(OriginalUvs[Index].x * 4.0f));
-        CHECK(Object->Meshes.front().UvStages.at(1)[Index].y == doctest::Approx(OriginalUvs[Index].y * 5.0f));
+        CHECK(Object->Meshes.front().Geometry().Uvs[Index].x == doctest::Approx(OriginalUvs[Index].x * 2.0f));
+        CHECK(Object->Meshes.front().Geometry().Uvs[Index].y == doctest::Approx(OriginalUvs[Index].y * 3.0f));
+        CHECK(Object->Meshes.front().Geometry().UvStages.at(1)[Index].x ==
+              doctest::Approx(OriginalUvs[Index].x * 4.0f));
+        CHECK(Object->Meshes.front().Geometry().UvStages.at(1)[Index].y ==
+              doctest::Approx(OriginalUvs[Index].y * 5.0f));
     }
 
     REQUIRE(Command(dbc::language::SymbolId::Command_DisableObjectZread, {BuiltinValue::FromNumber(1)}));
@@ -4639,8 +4687,8 @@ TEST_CASE("DBPro object materials drive the stock shader")
     CHECK(Object->SpecularPower == doctest::Approx(7.5f));
     CHECK(Object->EmissiveColor == 0xFF0000u);
     REQUIRE_FALSE(Object->Meshes.empty());
-    REQUIRE_FALSE(Object->Meshes.front().DiffuseColors.empty());
-    CHECK(Object->Meshes.front().DiffuseColors.front() == 0xFFFFFFFFu);
+    REQUIRE_FALSE(Object->Meshes.front().Geometry().DiffuseColors.empty());
+    CHECK(Object->Meshes.front().Geometry().DiffuseColors.front() == 0xFFFFFFFFu);
     REQUIRE(Kernel.Core().EnsureInitialized());
 
     const auto CaptureCenter = [&]()
@@ -5167,15 +5215,15 @@ TEST_CASE("DBPro object and limb normal commands rewrite rendered geometry")
     Object->Cull = false;
     REQUIRE_FALSE(Object->Meshes.empty());
     dbc::Mesh& Mesh = Object->Meshes.front();
-    Mesh.Vertices = {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
-                     {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
-    Mesh.Indices = {0, 1, 2, 3, 4, 5};
-    Mesh.Uvs.assign(Mesh.Vertices.size(), SDL_FPoint{});
+    Mesh.EditGeometry().Vertices = {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
+                                    {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
+    Mesh.EditGeometry().Indices = {0, 1, 2, 3, 4, 5};
+    Mesh.EditGeometry().Uvs.assign(Mesh.Geometry().Vertices.size(), SDL_FPoint{});
     const std::vector<dbc::Vec3> Faceted = {
         {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
         {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
     };
-    Mesh.Normals = Faceted;
+    Mesh.EditGeometry().Normals = Faceted;
 
     BuiltinContext Context;
     Context.Kernel = &Kernel;
@@ -5193,31 +5241,31 @@ TEST_CASE("DBPro object and limb normal commands rewrite rendered geometry")
     };
 
     ObjectCommand(dbc::language::SymbolId::Command_SetObjectSmoothing, 50.0);
-    CHECK(Mesh.Normals[0].X == doctest::Approx(0.0f));
-    CHECK(Mesh.Normals[0].Z == doctest::Approx(1.0f));
+    CHECK(Mesh.Geometry().Normals[0].X == doctest::Approx(0.0f));
+    CHECK(Mesh.Geometry().Normals[0].Z == doctest::Approx(1.0f));
     ObjectCommand(dbc::language::SymbolId::Command_SetObjectSmoothing, 100.0);
-    CHECK(Mesh.Normals[0].X == doctest::Approx(0.5f));
-    CHECK(Mesh.Normals[0].Z == doctest::Approx(0.5f));
-    CHECK(Mesh.Normals[3].X == doctest::Approx(0.5f));
-    CHECK(Mesh.Normals[3].Z == doctest::Approx(0.5f));
+    CHECK(Mesh.Geometry().Normals[0].X == doctest::Approx(0.5f));
+    CHECK(Mesh.Geometry().Normals[0].Z == doctest::Approx(0.5f));
+    CHECK(Mesh.Geometry().Normals[3].X == doctest::Approx(0.5f));
+    CHECK(Mesh.Geometry().Normals[3].Z == doctest::Approx(0.5f));
 
-    Mesh.Normals.assign(Mesh.Vertices.size(), dbc::Vec3{});
+    Mesh.EditGeometry().Normals.assign(Mesh.Geometry().Vertices.size(), dbc::Vec3{});
     REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetObjectNormals, {BuiltinValue::FromNumber(1)},
                           Error));
-    CHECK(Mesh.Normals[0].X == doctest::Approx(0.0f));
-    CHECK(Mesh.Normals[0].Z == doctest::Approx(1.0f));
-    CHECK(Mesh.Normals[3].X == doctest::Approx(1.0f));
-    CHECK(Mesh.Normals[3].Z == doctest::Approx(0.0f));
+    CHECK(Mesh.Geometry().Normals[0].X == doctest::Approx(0.0f));
+    CHECK(Mesh.Geometry().Normals[0].Z == doctest::Approx(1.0f));
+    CHECK(Mesh.Geometry().Normals[3].X == doctest::Approx(1.0f));
+    CHECK(Mesh.Geometry().Normals[3].Z == doctest::Approx(0.0f));
 
-    Mesh.Normals = Faceted;
+    Mesh.EditGeometry().Normals = Faceted;
     LimbCommand(dbc::language::SymbolId::Command_SetLimbSmoothing, 200.0);
-    CHECK(Mesh.Normals[0].X == doctest::Approx(0.5f));
-    CHECK(Mesh.Normals[0].Z == doctest::Approx(0.5f));
-    Mesh.Normals.assign(Mesh.Vertices.size(), dbc::Vec3{});
+    CHECK(Mesh.Geometry().Normals[0].X == doctest::Approx(0.5f));
+    CHECK(Mesh.Geometry().Normals[0].Z == doctest::Approx(0.5f));
+    Mesh.EditGeometry().Normals.assign(Mesh.Geometry().Vertices.size(), dbc::Vec3{});
     REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetLimbNormals,
                           {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0)}, Error));
-    CHECK(Mesh.Normals[0].Z == doctest::Approx(1.0f));
-    CHECK(Mesh.Normals[3].X == doctest::Approx(1.0f));
+    CHECK(Mesh.Geometry().Normals[0].Z == doctest::Approx(1.0f));
+    CHECK(Mesh.Geometry().Normals[3].X == doctest::Approx(1.0f));
 
     REQUIRE(Kernel.Core().EnsureInitialized());
     SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
@@ -5406,7 +5454,7 @@ TEST_CASE("Portable limb checklist colour and texture transforms preserve stage 
     dbc::Object3D* Target = Kernel.Objects().GetObject(2);
     REQUIRE(Target != nullptr);
     REQUIRE(Target->Meshes.size() == 3);
-    REQUIRE_FALSE(Target->Meshes[1].Uvs.empty());
+    REQUIRE_FALSE(Target->Meshes[1].Geometry().Uvs.empty());
 
     BuiltinContext Context;
     Context.Kernel = &Kernel;
@@ -5421,21 +5469,21 @@ TEST_CASE("Portable limb checklist colour and texture transforms preserve stage 
         CHECK(Target->Meshes[1].LimbTint.g == doctest::Approx(0x34 / 255.0f));
         CHECK(Target->Meshes[1].LimbTint.b == doctest::Approx(0x56 / 255.0f));
 
-        Target->Meshes[1].Uvs.front() = SDL_FPoint{1.0f, 2.0f};
+        Target->Meshes[1].EditGeometry().Uvs.front() = SDL_FPoint{1.0f, 2.0f};
         REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollLimbTexture,
                               {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0.25),
                                BuiltinValue::FromNumber(0.5)},
                               Error));
-        CHECK(Target->Meshes[1].Uvs.front().x == doctest::Approx(1.25f));
-        CHECK(Target->Meshes[1].Uvs.front().y == doctest::Approx(2.5f));
+        CHECK(Target->Meshes[1].Geometry().Uvs.front().x == doctest::Approx(1.25f));
+        CHECK(Target->Meshes[1].Geometry().Uvs.front().y == doctest::Approx(2.5f));
 
-        Target->Meshes[1].Uvs.front() = SDL_FPoint{1.0f, 2.0f};
+        Target->Meshes[1].EditGeometry().Uvs.front() = SDL_FPoint{1.0f, 2.0f};
         REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScaleLimbTexture,
                               {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(2.0),
                                BuiltinValue::FromNumber(3.0)},
                               Error));
-        CHECK(Target->Meshes[1].Uvs.front().x == doctest::Approx(2.0f));
-        CHECK(Target->Meshes[1].Uvs.front().y == doctest::Approx(6.0f));
+        CHECK(Target->Meshes[1].Geometry().Uvs.front().x == doctest::Approx(2.0f));
+        CHECK(Target->Meshes[1].Geometry().Uvs.front().y == doctest::Approx(6.0f));
 
         REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_PerformChecklistForObjectLimbs,
                               {BuiltinValue::FromNumber(2)}, Error));
@@ -5456,26 +5504,26 @@ TEST_CASE("Portable limb checklist colour and texture transforms preserve stage 
     }
 
     Context.Profile = dbc::language::LanguageProfile::DbPro;
-    Target->Meshes[1].UvStages[2] = Target->Meshes[1].Uvs;
-    Target->Meshes[1].UvStages[2].front() = SDL_FPoint{1.0f, 2.0f};
+    Target->Meshes[1].EditGeometry().UvStages[2] = Target->Meshes[1].Geometry().Uvs;
+    Target->Meshes[1].EditGeometry().UvStages[2].front() = SDL_FPoint{1.0f, 2.0f};
     REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollLimbTexture,
                           {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(2),
                            BuiltinValue::FromNumber(0.5), BuiltinValue::FromNumber(0.25)},
                           Error));
-    CHECK(Target->Meshes[1].UvStages[2].front().x == doctest::Approx(1.5f));
-    CHECK(Target->Meshes[1].UvStages[2].front().y == doctest::Approx(2.25f));
+    CHECK(Target->Meshes[1].EditGeometry().UvStages[2].front().x == doctest::Approx(1.5f));
+    CHECK(Target->Meshes[1].EditGeometry().UvStages[2].front().y == doctest::Approx(2.25f));
     REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScaleLimbTexture,
                           {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(2),
                            BuiltinValue::FromNumber(2.0), BuiltinValue::FromNumber(4.0)},
                           Error));
-    CHECK(Target->Meshes[1].UvStages[2].front().x == doctest::Approx(3.0f));
-    CHECK(Target->Meshes[1].UvStages[2].front().y == doctest::Approx(9.0f));
+    CHECK(Target->Meshes[1].EditGeometry().UvStages[2].front().x == doctest::Approx(3.0f));
+    CHECK(Target->Meshes[1].EditGeometry().UvStages[2].front().y == doctest::Approx(9.0f));
 
     REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollLimbTexture,
                           {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(3),
                            BuiltinValue::FromNumber(1.0), BuiltinValue::FromNumber(1.0)},
                           Error));
-    CHECK_FALSE(Target->Meshes[1].UvStages.contains(3));
+    CHECK_FALSE(Target->Meshes[1].Geometry().UvStages.contains(3));
     CHECK_FALSE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScaleLimbTexture,
                               {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(-1),
                                BuiltinValue::FromNumber(1.0), BuiltinValue::FromNumber(1.0)},
@@ -5546,7 +5594,7 @@ TEST_CASE("Classic mesh memblocks use the documented 32-byte indexed layout with
     REQUIRE(SourceMeshes != nullptr);
     REQUIRE_FALSE(SourceMeshes->empty());
     const dbc::Mesh& Source = SourceMeshes->front();
-    REQUIRE_FALSE(Source.Indices.empty());
+    REQUIRE_FALSE(Source.Geometry().Indices.empty());
 
     REQUIRE(Kernel.Memblocks().MakeMemblockFromMesh(1, 10, &MemblockError));
     const int VertexCount = ReadEngineNumber<int>(
@@ -5565,7 +5613,7 @@ TEST_CASE("Classic mesh memblocks use the documented 32-byte indexed layout with
         [&](std::string& Error, int& Output) { return Kernel.Memblocks().ReadMemblockDword(Output, 1, 24, &Error); });
     const int TextureOffset = ReadEngineNumber<int>(
         [&](std::string& Error, int& Output) { return Kernel.Memblocks().ReadMemblockDword(Output, 1, 28, &Error); });
-    CHECK(VertexCount == static_cast<int>(Source.Indices.size()));
+    CHECK(VertexCount == static_cast<int>(Source.Geometry().Indices.size()));
     CHECK(VertexOffset == 32);
     CHECK(NormalCount == VertexCount);
     CHECK(NormalOffset == VertexOffset + VertexCount * 12);
@@ -5595,9 +5643,9 @@ TEST_CASE("Classic mesh memblocks use the documented 32-byte indexed layout with
     const std::vector<dbc::Mesh>* DecodedMeshes = Kernel.Objects().GetMeshes(11);
     REQUIRE(DecodedMeshes != nullptr);
     REQUIRE_FALSE(DecodedMeshes->empty());
-    REQUIRE_FALSE(DecodedMeshes->front().Vertices.empty());
-    CHECK(DecodedMeshes->front().Vertices.front().X == doctest::Approx(MutatedX));
-    CHECK(DecodedMeshes->front().Indices.size() == static_cast<std::size_t>(VertexCount));
+    REQUIRE_FALSE(DecodedMeshes->front().Geometry().Vertices.empty());
+    CHECK(DecodedMeshes->front().Geometry().Vertices.front().X == doctest::Approx(MutatedX));
+    CHECK(DecodedMeshes->front().Geometry().Indices.size() == static_cast<std::size_t>(VertexCount));
     CHECK(Kernel.Memblocks().ChangeMeshFromMemblock(11, 1, &MemblockError));
 
     Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
@@ -5608,7 +5656,7 @@ TEST_CASE("Classic mesh memblocks use the documented 32-byte indexed layout with
                                 { return Kernel.Memblocks().ReadMemblockDword(Output, 2, 4, &Error); }) == 36);
     CHECK(ReadEngineNumber<int>([&](std::string& Error, int& Output)
                                 { return Kernel.Memblocks().MemblockSize(Output, 2, &Error); }) ==
-          12 + static_cast<int>(Source.Indices.size()) * 36);
+          12 + static_cast<int>(Source.Geometry().Indices.size()) * 36);
 }
 
 TEST_CASE("DBPro vertex diffuse takes DWORD colours and keeps opaque objects opaque")
@@ -5720,7 +5768,7 @@ TEST_CASE("Portable mesh vertex data memblocks and DBO preserve mutable geometry
                                 { return Kernel.Objects().VertexdataIndexCount(Output, &Error); }) == OriginalIndices);
     CHECK(ReadEngineNumber<float>([&](std::string& Error, float& Output)
                                   { return Kernel.Objects().VertexdataPositionX(Output, 0, &Error); }) ==
-          doctest::Approx(Kernel.Objects().GetMeshes(10)->front().Vertices[1].X));
+          doctest::Approx(Kernel.Objects().GetMeshes(10)->front().Geometry().Vertices[1].X));
     Kernel.Objects().UnlockVertexdata();
 
     REQUIRE(Kernel.Memblocks().ChangeMeshFromMemblock(10, 1, &MemblockError));
@@ -5773,8 +5821,9 @@ TEST_CASE("Portable mesh vertex data memblocks and DBO preserve mutable geometry
     const dbc::Object3D* RoundTrip = Kernel.Objects().GetObject(5);
     REQUIRE(RoundTrip != nullptr);
     REQUIRE(RoundTrip->Meshes.size() == Kernel.Objects().GetObject(2)->Meshes.size());
-    CHECK(RoundTrip->Meshes.front().Vertices.size() == Kernel.Objects().GetObject(2)->Meshes.front().Vertices.size());
-    CHECK(RoundTrip->Meshes.front().DiffuseColors.front() == 0xFFFFFFFFu);
+    CHECK(RoundTrip->Meshes.front().Geometry().Vertices.size() ==
+          Kernel.Objects().GetObject(2)->Meshes.front().Geometry().Vertices.size());
+    CHECK(RoundTrip->Meshes.front().Geometry().DiffuseColors.front() == 0xFFFFFFFFu);
     {
         std::string Error;
         CHECK_FALSE(Kernel.Objects().SaveObject((ObjectPath.string() + ".x"), 2, &Error));
@@ -7704,7 +7753,7 @@ TEST_CASE("Polygon collision uses current world geometry and preserves DBC query
     REQUIRE(Kernel.Objects().SetObjectCollisionToPolygons(14));
     CHECK(Kernel.Objects().ObjectCollision(13, 14) == 1);
     REQUIRE(Kernel.Objects().GetObject(13));
-    for (dbc::Vec3& Vertex : Kernel.Objects().GetObject(13)->Meshes.front().Vertices)
+    for (dbc::Vec3& Vertex : Kernel.Objects().GetObject(13)->Meshes.front().EditGeometry().Vertices)
         Vertex.X += 50.0f;
     CHECK(Kernel.Objects().ObjectCollision(13, 14) == 0);
 
@@ -7813,7 +7862,7 @@ TEST_CASE("Collision feedback separates complete multi-surface polygon sets")
     REQUIRE(ParallelWalls != nullptr);
     REQUIRE(ParallelWalls->Meshes.size() == 1);
     dbc::Mesh SecondParallelWall = ParallelWalls->Meshes.front();
-    for (dbc::Vec3& Vertex : SecondParallelWall.Vertices)
+    for (dbc::Vec3& Vertex : SecondParallelWall.EditGeometry().Vertices)
         Vertex.X += 1.0f;
     ParallelWalls->Meshes.push_back(std::move(SecondParallelWall));
     REQUIRE(Kernel.Objects().SetObjectCollisionToPolygons(2));
@@ -7834,7 +7883,7 @@ TEST_CASE("Collision feedback separates complete multi-surface polygon sets")
     REQUIRE(CornerWalls != nullptr);
     REQUIRE(CornerWalls->Meshes.size() == 1);
     dbc::Mesh SecondCornerWall = CornerWalls->Meshes.front();
-    SecondCornerWall.Vertices = {{-10.0f, 0.5f, -10.0f}, {10.0f, 0.5f, -10.0f}, {0.0f, 0.5f, 10.0f}};
+    SecondCornerWall.EditGeometry().Vertices = {{-10.0f, 0.5f, -10.0f}, {10.0f, 0.5f, -10.0f}, {0.0f, 0.5f, 10.0f}};
     CornerWalls->Meshes.push_back(std::move(SecondCornerWall));
     REQUIRE(Kernel.Objects().SetObjectCollisionToPolygons(2));
 
@@ -8593,10 +8642,12 @@ TEST_CASE("Classic restored object commands preserve typed state and historical 
     CHECK(Plain->RotY == doctest::Approx(0.0f));
     REQUIRE_FALSE(Plain->Meshes.empty());
     const dbc::Mesh& PlainMesh = Plain->Meshes.front();
-    REQUIRE(PlainMesh.Indices.size() >= 3);
-    const dbc::Vec3 PlainNormal = dbc::Vec3Cross(
-        dbc::Vec3Sub(PlainMesh.Vertices[PlainMesh.Indices[1]], PlainMesh.Vertices[PlainMesh.Indices[0]]),
-        dbc::Vec3Sub(PlainMesh.Vertices[PlainMesh.Indices[2]], PlainMesh.Vertices[PlainMesh.Indices[0]]));
+    REQUIRE(PlainMesh.Geometry().Indices.size() >= 3);
+    const dbc::Vec3 PlainNormal =
+        dbc::Vec3Cross(dbc::Vec3Sub(PlainMesh.Geometry().Vertices[PlainMesh.Geometry().Indices[1]],
+                                    PlainMesh.Geometry().Vertices[PlainMesh.Geometry().Indices[0]]),
+                       dbc::Vec3Sub(PlainMesh.Geometry().Vertices[PlainMesh.Geometry().Indices[2]],
+                                    PlainMesh.Geometry().Vertices[PlainMesh.Geometry().Indices[0]]));
     CHECK(PlainNormal.Z < 0.0f);
     REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_TurnObjectLeft,
                           {BuiltinValue::FromNumber(6), BuiltinValue::FromNumber(10)}, Error));

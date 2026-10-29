@@ -4,6 +4,7 @@
 // Split from the former monolithic engine_state.hpp.
 
 #include <array>
+#include <atomic>
 #include <cstdint>
 #include <limits>
 #include <map>
@@ -194,7 +195,8 @@ namespace dbc
         std::array<float, 4> Weights{};
     };
 
-    struct Mesh
+    // The geometry of a mesh: what objects, limbs and stored meshes share until one of them edits it.
+    struct MeshGeometry
     {
         std::vector<Vec3> Vertices;
         std::vector<Vec3> Normals;
@@ -202,6 +204,18 @@ namespace dbc
         std::unordered_map<int, std::vector<SDL_FPoint>> UvStages;
         std::vector<uint32_t> DiffuseColors;
         std::vector<uint32_t> Indices;
+        aiMatrix4x4 BindTransform;
+        std::vector<BoneInfluence> BoneInfluences;
+        std::vector<const aiNode*> BoneNodes;
+        std::vector<aiMatrix4x4> BoneOffsets;
+        // Changes with every edit and differs between any two geometries, so it identifies these contents.
+        uint64_t Revision = 0;
+    };
+
+    // A limb's record: its geometry, shared by copies until one edits it, and the state that belongs to the
+    // object that owns the record.
+    struct Mesh
+    {
         int TextureImageId = 0;
         std::unordered_map<int, int> TextureStageImageIds;
         std::unordered_map<int, int> TextureStageAddressModes;
@@ -225,11 +239,42 @@ namespace dbc
         float LimbScaleX = 1.0f;
         float LimbScaleY = 1.0f;
         float LimbScaleZ = 1.0f;
-        aiMatrix4x4 BindTransform;
-        std::vector<BoneInfluence> BoneInfluences;
-        std::vector<const aiNode*> BoneNodes;
-        std::vector<aiMatrix4x4> BoneOffsets;
+
+        [[nodiscard]] const MeshGeometry& Geometry() const
+        {
+            return *Geometry_;
+        }
+
+        // The geometry to change, detached first when another record shares it; its revision changes. A
+        // reference taken earlier from Geometry() may then name the previous, still shared geometry.
+        MeshGeometry& EditGeometry();
+
+        [[nodiscard]] bool SharesGeometryWith(const Mesh& Other) const
+        {
+            return Geometry_ == Other.Geometry_;
+        }
+
+      private:
+        std::shared_ptr<MeshGeometry> Geometry_ = EmptyGeometry();
+
+        [[nodiscard]] static const std::shared_ptr<MeshGeometry>& EmptyGeometry();
     };
+
+    inline const std::shared_ptr<MeshGeometry>& Mesh::EmptyGeometry()
+    {
+        // Held here as well, so a record that starts from it detaches before its first edit.
+        static const std::shared_ptr<MeshGeometry> Empty = std::make_shared<MeshGeometry>();
+        return Empty;
+    }
+
+    inline MeshGeometry& Mesh::EditGeometry()
+    {
+        static std::atomic<uint64_t> LastRevision{0};
+        if (Geometry_.use_count() != 1)
+            Geometry_ = std::make_shared<MeshGeometry>(*Geometry_);
+        Geometry_->Revision = ++LastRevision;
+        return *Geometry_;
+    }
 
     struct LimbTransform
     {
