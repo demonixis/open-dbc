@@ -1,9 +1,10 @@
 # Rendering
 
 The engine draws through SDL_GPU with one HLSL shader, `shaders/dbclassic_tri.hlsl`,
-plus the pipelines of loaded effects. Most 3D geometry is still built on the CPU
-every frame; [roadmap.md](roadmap.md#rendering-performance) lists the work that
-moves it to the GPU.
+plus the pipelines of loaded effects. Opaque object meshes and terrains draw from
+GPU buffers; the rest of the 3D geometry is still built on the CPU every frame.
+[roadmap.md](roadmap.md#rendering-performance) lists the work that moves it to the
+GPU.
 
 ## A frame
 
@@ -15,7 +16,8 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
 
 1. `PrepareFrame` advances animations and particles and refreshes the text atlas.
 2. `BuildPreparedView`, once per view, gathers world triangles from matrices,
-   terrains left on the CPU, the BSP world, objects and particles. An object mesh
+   terrains left on the CPU, the BSP world, objects and particles. A mesh that the
+   GPU can draw (below) becomes a `GpuMeshDraw` instead. Any other object mesh
    skins and transforms each vertex once, to world then view space, and resolves
    its textures and style on its first visible triangle. Each triangle is culled
    if it faces away; its corners take their normal, colour and the coordinates of
@@ -31,13 +33,16 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    shadow volumes are extruded on the CPU from the casters' triangles.
 3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
    triangles that share textures, blending, depth state and `SurfaceStyle` merge
-   into one `GpuBatch`. The 2D layer follows: bitmap 0 as one quad when it
+   into one `GpuBatch`. GPU meshes, one batch each, take the place of the objects'
+   opaque triangles: after the very early phase and lower render priorities, before
+   particles, bounds and transparency. The 2D layer follows: bitmap 0 as one quad when it
    shows anything, text, primitives, pasted images and sprites.
 4. `UploadPreparedViews` copies the vertices of all views into one vertex buffer.
 5. `RecordPreparedView` draws the batches in passes: backdrop, 2D under the scene,
    opaque, transparent then additive pipelines, the reflection mask and reflected
    scene, shadow volumes and their overlay, 2D over the scene. Each batch is one
-   draw call that binds nine textures and pushes its texture-stage uniforms.
+   draw call that binds nine textures and pushes its texture-stage uniforms; a GPU
+   mesh also binds its buffers and pushes its matrices.
 6. `FinalizeFrame` records `STATISTIC(1)` (triangles) and `STATISTIC(5)`
    (batches), then clears bitmap 0 after a 3D frame.
 
@@ -55,11 +60,28 @@ view picks the visible 16-cell blocks and their LOD step and draws them indexed,
 and the vertex shader applies the view through the `ModelView` uniform. Ghosted,
 transparent and unculled terrains stay on the CPU path.
 
+Object meshes take the same route where the result cannot change. A mesh draws from
+GPU buffers when its object is opaque (not ghosted, faded by alpha, alpha-mapped,
+black-keyed or given a transparency mode), depth tested and written, and neither
+locked, glued, shadowed nor reflecting, and when the mesh has no bones, built-in
+effect, effect, auxiliary or cube stage, texture-coordinate mode or zero-length
+vertex normal. Its vertices and indices are uploaded once per `MeshGeometry`
+revision, so instances and clones share them, and released when that geometry
+changes or goes 300 frames undrawn. Each draw brings the object's matrices, colour,
+material, texture scale and scroll, fade and lighting; the GPU culls back faces. A
+mesh without vertex normals is uploaded with one vertex per triangle corner and that
+triangle's normal, which the inverse transpose of the world matrix turns into the
+world face normal the CPU path would use. While reflection shading is on, or an
+opaque object depends on the depth order (no depth test or write, alpha-tested
+transparency modes), every mesh keeps the CPU path.
+
 ## Where frame time goes
 
-CPU time grows with visible triangles, not objects: clipping and filling
-`Triangle` records, ordering them, then converting and uploading `GpuVertex`
-records. The VM is a small share of a 3D frame.
+On the CPU path, time grows with visible triangles, not objects: clipping and
+filling `Triangle` records, ordering them, then converting and uploading
+`GpuVertex` records. A GPU mesh costs one draw call whatever its size, so with many
+visible meshes recording the draws takes most of the frame. The VM is a small share
+of a 3D frame.
 
 ## Compatibility constraints
 
@@ -77,7 +99,8 @@ A faster path keeps what programs can observe:
   override and alpha-test threshold. `FADE OBJECT` scales the normal's length,
   which the shader reads as a light multiplier; unlit surfaces have a zero normal.
 - Vertex alpha only counts for objects that blend or alpha-test.
-- `STATISTIC(1)` counts the triangles sent and `STATISTIC(5)` the batches drawn.
+- `STATISTIC(1)` counts the triangles sent, back faces of GPU meshes included,
+  and `STATISTIC(5)` the batches drawn.
 - `LOCK OBJECT ON` objects are projected on the CPU into the 2D overlay.
 - Queries such as `LIMB POSITION X`, vertex data and collision transform on the
   CPU in `ObjectManager`, independently of drawing.

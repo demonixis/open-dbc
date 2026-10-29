@@ -46,22 +46,23 @@ Publication:
 
 ## Rendering performance
 
-Move the renderer towards GPU-driven, data-driven rendering. Today most 3D
-geometry is transformed, sorted and uploaded on the CPU every frame
-([rendering.md](rendering.md)). `scripts/benchmark_renderer.py` baseline, Release,
-Apple silicon, median of three 300-frame headless runs:
+Move the renderer towards GPU-driven, data-driven rendering. Opaque object meshes
+and terrains draw from GPU buffers; everything else is still transformed, sorted and
+uploaded on the CPU every frame ([rendering.md](rendering.md)).
+`scripts/benchmark_renderer.py`, Release, Apple silicon, median of three 300-frame
+headless runs:
 
 | Program | Triangles | Draw calls | CPU ms per frame |
 | --- | ---: | ---: | ---: |
-| `two_views` (stress) | 156,116 | 3 | 37.7 |
-| `distinct_meshes` (stress) | 59,283 | 8 | 16.7 |
-| `hive_defender` | 41,542 | 8 | 12.0 |
 | `skinned` (stress) | 14,418 | 1 | 4.6 |
-| `shared_mesh` (stress) | 13,646 | 1 | 3.8 |
+| `distinct_meshes` (stress) | 127,712 | 1,705 | 2.9 |
+| `two_views` (stress) | 335,354 | 1,690 | 1.8 |
+| `shared_mesh` (stress) | 27,384 | 2,282 | 1.3 |
+| `hive_defender` | 86,776 | 212 | 1.1 |
 
-Building the triangles takes about half of each frame, ordering them and converting
-them to `GpuVertex` a fifth each, uploading 4%, recording the draw calls under 1%,
-and the VM about 2%.
+With one draw call per GPU mesh, recording the draws takes 50 to 80% of the frame
+in the three mesh stress scenes. The skinned scene stays on the CPU path, where building the
+triangles takes about half of the frame.
 
 Decisions:
 
@@ -80,10 +81,6 @@ Decisions:
 
 Work, in order:
 
-- [ ] GPU-resident meshes: an object-space buffer per shared `MeshGeometry`,
-  uploaded again when its revision changes; the object matrix and material per
-  draw; stage coordinates, built-in effects and fading in the vertex shader; vertex
-  formats sized to the stages a mesh uses.
 - [ ] GPU instancing.
 - [ ] Automatic instancing of objects that share a mesh and material.
 - [ ] Automatic static batching: `MAKE STATIC OBJECT` snapshots first, then objects
@@ -91,6 +88,17 @@ Work, in order:
 - [ ] Frustum culling and the other visibility tests: per limb and per chunk, bounds
   centred on the mesh, a spatial grid for large scenes, shadow casters, then
   occlusion if measurements call for it.
+- [ ] GPU meshes for what still takes the CPU path: texture-coordinate modes,
+  built-in effects and auxiliary stages in the vertex shader, with vertex formats
+  sized to the stages a mesh uses; glued and locked objects; reflection passes;
+  scenes with order-dependent opaque objects; transparent objects once a
+  per-object order is qualified.
+- [ ] Static terrain draws after particles and object bounds, whereas its CPU
+  triangles come before the objects (render priority −1): give it its priority's
+  place among the batches.
+- [ ] Commands that change how an object draws without moving it, such as
+  `GHOST OBJECT ON`, leave a still scene's cache in place: mark the object for
+  rebuilding.
 - [ ] GPU skinning, last since no demo model has bones: bone indices and weights in
   the mesh's vertex buffer, the object's bone palette in a vertex storage buffer,
   positions and normals skinned in the vertex shader. Queries, collision and shadow
