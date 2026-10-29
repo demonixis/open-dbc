@@ -37,6 +37,16 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
   `RuntimeCompatibilityPolicy`. Engine systems read that policy, never a file
   name or dialect string. Each run starts from a fresh policy.
 
+## Limits
+
+| Limit | Value | Diagnostic |
+| --- | --- | --- |
+| Statement blocks, ELSEIF branches, inline `IF` bodies and expression operands, nested together | 100 levels | `DBC1226` for a block, `DBC1107` for an expression |
+
+The parser, binder, compiler and AST destructors recurse once per nesting level;
+100 levels fit the 512 KB stack of a macOS secondary thread, where the Studio
+builds exports.
+
 ## Catalogue
 
 `src/language/language_catalogue.inc` is the only list of commands, functions,

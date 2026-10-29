@@ -2,6 +2,7 @@
 #include "path_utf8.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
@@ -66,12 +67,31 @@ namespace dbc::language::detail
             return {TypeKind::UserDefined, std::move(Name)};
         }
 
+        // Restores a nesting depth when the parse step that deepened it returns.
+        class DepthScope
+        {
+          public:
+            explicit DepthScope(std::size_t& Depth) : Depth_(Depth), Saved_(Depth) {}
+
+            ~DepthScope()
+            {
+                Depth_ = Saved_;
+            }
+
+            DepthScope(const DepthScope&) = delete;
+            DepthScope& operator=(const DepthScope&) = delete;
+
+          private:
+            std::size_t& Depth_;
+            std::size_t Saved_;
+        };
+
         class ExpressionReader
         {
           public:
             ExpressionReader(const SourceDocument& Source, std::span<const Token> Tokens,
-                             std::vector<Diagnostic>& Diagnostics)
-                : Source_(Source), Tokens_(Tokens), Diagnostics_(Diagnostics)
+                             std::vector<Diagnostic>& Diagnostics, std::size_t Depth)
+                : Source_(Source), Tokens_(Tokens), Diagnostics_(Diagnostics), Depth_(Depth)
             {
             }
 
@@ -83,6 +103,11 @@ namespace dbc::language::detail
                     return MakeError({});
                 }
                 std::unique_ptr<Expression> Result = ParseBinary(0);
+                if (TooDeep_)
+                {
+                    // The truncated tree would only add binder errors after DBC1107.
+                    return MakeError(Merge(Tokens_.front().Span, Tokens_.back().Span));
+                }
                 if (!AtEnd())
                 {
                     AddError(Diagnostics_, "DBC1101", "Unexpected token after expression", Peek().Span);
@@ -136,13 +161,37 @@ namespace dbc::language::detail
                 return Result;
             }
 
+            // Parentheses, calls, unary operators, members and each operator of a chain nest the tree one
+            // level deeper. Past the limit the rest of the expression is skipped with a single error.
+            bool Deepen()
+            {
+                if (Depth_ < KMaxNestingDepth)
+                {
+                    ++Depth_;
+                    return true;
+                }
+                if (!TooDeep_)
+                {
+                    AddError(Diagnostics_, "DBC1107", "Expression is nested too deeply",
+                             AtEnd() ? Tokens_.back().Span : Peek().Span);
+                    TooDeep_ = true;
+                }
+                Position_ = Tokens_.size();
+                return false;
+            }
+
             std::unique_ptr<Expression> ParseBinary(int MinimumPrecedence)
             {
+                const DepthScope Scope(Depth_);
                 std::unique_ptr<Expression> Left = ParseUnary();
                 while (!AtEnd())
                 {
                     const auto Operator = BinaryOperator(Peek());
                     if (!Operator || Operator->Precedence < MinimumPrecedence)
+                    {
+                        break;
+                    }
+                    if (!Deepen())
                     {
                         break;
                     }
@@ -167,6 +216,12 @@ namespace dbc::language::detail
                 if (!AtEnd() && (Peek().Kind == TokenKind::Plus || Peek().Kind == TokenKind::Minus ||
                                  IsWord(Source_, Peek(), "NOT")))
                 {
+                    const DepthScope Scope(Depth_);
+                    const SourceSpan Span = Peek().Span;
+                    if (!Deepen())
+                    {
+                        return MakeError(Span);
+                    }
                     const Token Operator = Advance();
                     std::unique_ptr<Expression> Operand = ParseUnary();
                     auto Result = std::make_unique<Expression>();
@@ -183,9 +238,14 @@ namespace dbc::language::detail
 
             std::unique_ptr<Expression> ParsePostfix()
             {
+                const DepthScope Scope(Depth_);
                 std::unique_ptr<Expression> Result = ParsePrimary();
                 while (!AtEnd() && Peek().Kind == TokenKind::Dot)
                 {
+                    if (!Deepen())
+                    {
+                        return Result;
+                    }
                     const Token Dot = Advance();
                     if (AtEnd() || Peek().Kind != TokenKind::Word)
                     {
@@ -234,10 +294,16 @@ namespace dbc::language::detail
                     Result->ResolvedType = {TypeKind::String, {}};
                     return Result;
                 }
-                if (Match(TokenKind::LeftParen))
+                const DepthScope Scope(Depth_);
+                if (First.Kind == TokenKind::LeftParen)
                 {
+                    if (!Deepen())
+                    {
+                        return MakeError(First.Span);
+                    }
+                    Advance();
                     std::unique_ptr<Expression> Result = ParseBinary(0);
-                    if (!Match(TokenKind::RightParen))
+                    if (!Match(TokenKind::RightParen) && !TooDeep_)
                     {
                         AddError(Diagnostics_, "DBC1104", "Expected ')'", First.Span);
                     }
@@ -277,12 +343,12 @@ namespace dbc::language::detail
                 auto Result = std::make_unique<Expression>();
                 Result->Kind = ExpressionKind::CallOrIndex;
                 Result->Text = std::move(Name);
-                if (!Match(TokenKind::RightParen))
+                if (!Match(TokenKind::RightParen) && Deepen())
                 {
                     for (;;)
                     {
                         Result->Children.push_back(ParseBinary(0));
-                        if (Match(TokenKind::RightParen))
+                        if (Match(TokenKind::RightParen) || TooDeep_)
                         {
                             break;
                         }
@@ -452,6 +518,8 @@ namespace dbc::language::detail
             std::span<const Token> Tokens_;
             std::vector<Diagnostic>& Diagnostics_;
             std::size_t Position_ = 0;
+            std::size_t Depth_ = 0;
+            bool TooDeep_ = false;
         };
 
         class Parser
@@ -669,18 +737,85 @@ namespace dbc::language::detail
                 return true;
             }
 
+            bool EndsBlock(const Segment& Value, std::initializer_list<std::string_view> Terminators) const
+            {
+                for (const std::string_view Terminator : Terminators)
+                {
+                    if (FirstIs(Value, Terminator) && (Terminator != "LOOP" || Value.Tokens.size() == 1) &&
+                        (Terminator != "NEXT" || IsTerminator(Value)))
+                        return true;
+                }
+                return false;
+            }
+
+            bool OpensBlock(const Segment& Value) const
+            {
+                if (FirstIs(Value, "IF"))
+                {
+                    const std::size_t Then = FindTopLevelWord(Value.Tokens, "THEN", 1);
+                    return Then == Npos || Then + 1 >= Value.Tokens.size();
+                }
+                return FirstIs(Value, "FOR") || FirstIs(Value, "WHILE") || FirstIs(Value, "REPEAT") ||
+                       FirstIs(Value, "DO") || FirstIs(Value, "SELECT");
+            }
+
+            bool ClosesBlock(const Segment& Value) const
+            {
+                return IsTerminator(Value) &&
+                       (FirstIs(Value, "NEXT") || FirstIs(Value, "ENDWHILE") || FirstIs(Value, "UNTIL") ||
+                        FirstIs(Value, "LOOP") || FirstIs(Value, "ENDIF") || FirstIs(Value, "ENDSELECT"));
+            }
+
+            // Checks that a block statement's body fits one level below the current depth. Callers check before
+            // parsing the header, so an over-deep IF or FOR gets this one error and none for its condition.
+            bool RoomForBlock(const SourceSpan& Span)
+            {
+                if (Depth_ < KMaxNestingDepth)
+                    return true;
+                AddError(Program_.Diagnostics, "DBC1226", "Blocks are nested too deeply", Span);
+                return false;
+            }
+
+            // The skips below count nested blocks instead of recursing, so the enclosing statement still finds
+            // its terminator.
+            void SkipBlock(std::initializer_list<std::string_view> Terminators)
+            {
+                std::size_t Open = 0;
+                while (!AtEnd())
+                {
+                    const Segment& Value = Peek();
+                    if (Open == 0 && EndsBlock(Value, Terminators))
+                        return;
+                    if (OpensBlock(Value))
+                        ++Open;
+                    else if (Open > 0 && ClosesBlock(Value))
+                        --Open;
+                    ++Position_;
+                }
+            }
+
+            void SkipStatement()
+            {
+                std::size_t Open = 0;
+                do
+                {
+                    if (OpensBlock(Peek()))
+                        ++Open;
+                    else if (Open > 0 && ClosesBlock(Peek()))
+                        --Open;
+                    ++Position_;
+                } while (!AtEnd() && Open > 0);
+            }
+
             std::vector<Statement> ParseBlock(std::initializer_list<std::string_view> Terminators)
             {
                 std::vector<Statement> Result;
+                const DepthScope Scope(Depth_);
+                assert(Depth_ < KMaxNestingDepth); // RoomForBlock ran before the header.
+                ++Depth_;
                 while (!AtEnd())
                 {
-                    bool Stop = false;
-                    for (const std::string_view Terminator : Terminators)
-                    {
-                        Stop |= FirstIs(Peek(), Terminator) && (Terminator != "LOOP" || Peek().Tokens.size() == 1) &&
-                                (Terminator != "NEXT" || IsTerminator(Peek()));
-                    }
-                    if (Stop)
+                    if (EndsBlock(Peek(), Terminators))
                         break;
                     if (FirstIs(Peek(), "FUNCTION") || IsTypeDeclaration(Peek()))
                     {
@@ -698,6 +833,12 @@ namespace dbc::language::detail
             {
                 if (AtEnd())
                     return {};
+                const bool Block = FirstIs(Peek(), "IF") || OpensBlock(Peek());
+                if (Block && !RoomForBlock(Peek().Span))
+                {
+                    SkipStatement();
+                    return {};
+                }
                 if (FirstIs(Peek(), "FOR"))
                     return ParseFor();
                 if (FirstIs(Peek(), "WHILE"))
@@ -819,9 +960,17 @@ namespace dbc::language::detail
                 }
 
                 Result.Body = ParseBlock({"ELSEIF", "ELSE", "ENDIF"});
+                const DepthScope Scope(Depth_);
                 Statement* Branch = &Result;
                 while (!AtEnd() && FirstIs(Peek(), "ELSEIF"))
                 {
+                    // Each ELSEIF branch sits in the ELSE body of the previous one.
+                    ++Depth_;
+                    if (!RoomForBlock(Peek().Span))
+                    {
+                        SkipBlock({"ENDIF"});
+                        break;
+                    }
                     Segment ElseIfHeader = Take();
                     const std::size_t ElseIfThen = FindTopLevelWord(ElseIfHeader.Tokens, "THEN", 1);
                     Statement ElseIf;
@@ -1290,6 +1439,9 @@ namespace dbc::language::detail
                                                     std::size_t End)
             {
                 std::vector<Statement> Result;
+                const DepthScope Scope(Depth_);
+                assert(Depth_ < KMaxNestingDepth); // RoomForBlock ran before the IF.
+                ++Depth_;
                 std::size_t PartBegin = Begin;
                 int Depth = 0;
                 for (std::size_t Index = Begin; Index <= End; ++Index)
@@ -1314,6 +1466,8 @@ namespace dbc::language::detail
                             const std::size_t Then = FindTopLevelWord(Value.Tokens, "THEN", 1);
                             if (Then != Npos)
                             {
+                                if (!RoomForBlock(Value.Span))
+                                    break;
                                 Statement Nested;
                                 Nested.Kind = StatementKind::If;
                                 Nested.Span = Value.Span;
@@ -1353,7 +1507,7 @@ namespace dbc::language::detail
                     return Error;
                 }
                 return ExpressionReader(Source_, std::span<const Token>(Tokens).subspan(Begin, End - Begin),
-                                        Program_.Diagnostics)
+                                        Program_.Diagnostics, Depth_)
                     .Parse();
             }
 
@@ -1470,6 +1624,7 @@ namespace dbc::language::detail
             const SourceDocument& Source_;
             std::vector<Segment> Segments_;
             std::size_t Position_ = 0;
+            std::size_t Depth_ = 0;
         };
     } // namespace
 

@@ -11,9 +11,10 @@ target_compile_definitions(test_language_catalogue PRIVATE TEST_SOURCE_DIR="${CM
 target_link_libraries(test_language_catalogue PRIVATE doctest_with_main dbc_language)
 doctest_discover_tests(test_language_catalogue PROPERTIES LABELS "unit-language-qualification")
 
+find_package(Threads REQUIRED)
 add_executable(test_frontend test_frontend.cpp)
 target_compile_definitions(test_frontend PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-target_link_libraries(test_frontend PRIVATE doctest_with_main opendbc_vm)
+target_link_libraries(test_frontend PRIVATE doctest_with_main opendbc_vm Threads::Threads)
 doctest_discover_tests(test_frontend PROPERTIES LABELS "unit-language-frontend-qualification")
 
 add_executable(test_vm test_vm.cpp)

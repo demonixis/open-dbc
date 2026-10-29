@@ -15,6 +15,10 @@
 
 namespace dbc::language
 {
+    // Statement blocks and expression operands share this nesting budget. The parser, binder, compiler and AST
+    // destructors recurse once per level, so the limit keeps them within a 512 KB thread stack.
+    inline constexpr std::size_t KMaxNestingDepth = 100;
+
     struct SourcePosition
     {
         std::size_t Offset = 0;

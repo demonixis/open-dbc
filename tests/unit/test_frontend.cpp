@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace
@@ -33,6 +34,86 @@ namespace
     {
         std::ifstream Input(Path, std::ios::binary);
         return {std::istreambuf_iterator<char>(Input), std::istreambuf_iterator<char>()};
+    }
+
+    std::string Repeat(std::string_view Text, std::size_t Count)
+    {
+        std::string Result;
+        for (std::size_t Index = 0; Index < Count; ++Index)
+            Result += Text;
+        return Result;
+    }
+
+    // Each shape nests Depth levels deep under the shared statement and expression budget.
+    std::vector<std::string> NestedPrograms(std::size_t Depth)
+    {
+        std::string Loops;
+        for (std::size_t Index = 0; Index < Depth; ++Index)
+            Loops += "for i" + std::to_string(Index) + " = 1 to 1\n";
+        Loops += "x = 1\n";
+        for (std::size_t Index = Depth; Index > 0; --Index)
+            Loops += "next i" + std::to_string(Index - 1) + "\n";
+        std::string ElseIfs = "if x = 0\nx = 1\n";
+        // The IF body is one level deep and each ELSEIF branch nests one more.
+        for (std::size_t Index = 1; Index < Depth; ++Index)
+            ElseIfs += "elseif x = " + std::to_string(Index) + "\nx = 2\n";
+        ElseIfs += "endif\n";
+        return {
+            "x = " + Repeat("(", Depth) + "1" + Repeat(")", Depth) + "\n",
+            "x = 1" + Repeat("+1", Depth) + "\n",
+            "x = " + Repeat("- ", Depth) + "1\n",
+            "x = " + Repeat("abs(", Depth) + "1" + Repeat(")", Depth) + "\n",
+            Loops,
+            ElseIfs,
+            Repeat("if x = 0 then ", Depth) + "x = 1\n",
+            Repeat("if x = 0\n", Depth / 2) + "x = " + Repeat("(", Depth - Depth / 2) + "1" +
+                Repeat(")", Depth - Depth / 2) + "\n" + Repeat("endif\n", Depth / 2),
+        };
+    }
+
+    struct NestedBuild
+    {
+        std::vector<std::string> Codes{};
+        bool Lowered = false;
+    };
+
+    NestedBuild BuildNested(const std::string& Text)
+    {
+        NestedBuild Result;
+        const dbc::language::Program Program =
+            dbc::language::Compile(Source(Text + "y = 2\n", dbc::language::LanguageProfile::DbPro));
+        for (const auto& Diagnostic : Program.Diagnostics)
+            Result.Codes.push_back(Diagnostic.Code);
+        if (!Program.HasErrors())
+        {
+            const dbc::vm::CompileResult Lowered = dbc::vm::Lower(Program);
+            Result.Lowered = Lowered.Success() && dbc::vm::Verify(*Lowered.Bytecode).Success();
+        }
+        return Result;
+    }
+
+    // macOS gives secondary threads 512 KB of stack, the least of the supported hosts, and the Studio
+    // builds exports on such a thread. AddressSanitizer frames are larger, so it builds in place.
+    std::vector<NestedBuild> BuildOnSecondaryThread(const std::vector<std::string>& Programs)
+    {
+        std::vector<NestedBuild> Results;
+        const auto Build = [&]
+        {
+            for (const std::string& Text : Programs)
+                Results.push_back(BuildNested(Text));
+        };
+#if defined(__SANITIZE_ADDRESS__)
+        Build();
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+        Build();
+#else
+        std::thread(Build).join();
+#endif
+#else
+        std::thread(Build).join();
+#endif
+        return Results;
     }
 } // namespace
 
@@ -826,4 +907,38 @@ TEST_CASE("The typed parser accepts every tracked BASIC example")
         }
     }
     CHECK(Parsed == Expected.size());
+}
+
+TEST_CASE("Blocks and expressions nest up to the limit on a 512 KB thread")
+{
+    const std::vector<std::string> Programs = NestedPrograms(dbc::language::KMaxNestingDepth);
+    const std::vector<NestedBuild> Results = BuildOnSecondaryThread(Programs);
+    REQUIRE(Results.size() == Programs.size());
+    for (std::size_t Index = 0; Index < Results.size(); ++Index)
+    {
+        INFO("shape " << Index);
+        CHECK(Results[Index].Codes.empty());
+        CHECK(Results[Index].Lowered);
+    }
+}
+
+TEST_CASE("Nesting past the limit reports one diagnostic and parses what follows")
+{
+    const std::vector<std::string> Programs = NestedPrograms(dbc::language::KMaxNestingDepth + 1);
+    const std::vector<std::string> Expected = {"DBC1107", "DBC1107", "DBC1107", "DBC1107",
+                                               "DBC1226", "DBC1226", "DBC1226", "DBC1107"};
+    REQUIRE(Programs.size() == Expected.size());
+    const std::vector<NestedBuild> Results = BuildOnSecondaryThread(Programs);
+    REQUIRE(Results.size() == Programs.size());
+    for (std::size_t Index = 0; Index < Results.size(); ++Index)
+    {
+        INFO("shape " << Index);
+        CHECK(Results[Index].Codes == std::vector<std::string>{Expected[Index]});
+    }
+
+    const std::string Members = "x = a" + Repeat(".b", dbc::language::KMaxNestingDepth + 1) + "\n";
+    const dbc::language::Program Program =
+        dbc::language::LexAndParse(Source(Members, dbc::language::LanguageProfile::DbPro));
+    REQUIRE(Program.Diagnostics.size() == 1);
+    CHECK(Program.Diagnostics.front().Code == "DBC1107");
 }
