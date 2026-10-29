@@ -2,8 +2,11 @@
 
 #include "engine/systems/core_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
+#include "interpreter/basic_path.hpp"
+#include "interpreter/command_line.hpp"
 #include "interpreter/project_resolver.hpp"
 #include "interpreter/runtime_startup.hpp"
+#include "path_utf8.hpp"
 
 #include <chrono>
 #include <filesystem>
@@ -36,6 +39,53 @@ namespace
         std::filesystem::path Root;
     };
 } // namespace
+
+TEST_CASE("UTF-8 project paths survive CLI parsing source loading includes and file operations")
+{
+    ProjectFixture Fixture;
+    const std::filesystem::path Folder(u8"caf\u00e9-\u65e5\u672c-\U0001f3ae");
+    const std::filesystem::path Main(u8"d\u00e9part.dba");
+    const std::filesystem::path Include(u8"\u65e5\u672c.dba");
+    const std::filesystem::path Data(u8"r\u00e9sultat-\U0001f3ae.txt");
+    const auto Root = Fixture.Root / Folder;
+    const auto Entry = Root / Main;
+    const auto Log = Root / std::filesystem::path(u8"sortie-\u65e5\u672c.txt");
+    const std::string DataName = dbc::PathToUtf8(Data);
+    Fixture.Write(Folder / Include, "print 42\n");
+    std::string Source = "#include \"" + dbc::PathToUtf8(Include) + "\"\n";
+    Source += "make file \"" + DataName + "\"\n";
+    Source += "print file exist(\"" + DataName + "\")\n";
+    Source += "delete file \"" + DataName + "\"\n";
+    Source += "open to write 1, \"" + DataName + "\"\n";
+    Source += "write string 1, \"unicode-data\"\nclose file 1\nend\n";
+    Fixture.Write(Folder / Main, Source);
+    const std::string EntryText = dbc::PathToUtf8(Entry);
+    const std::string LogText = dbc::PathToUtf8(Log);
+    const std::string RootText = dbc::PathToUtf8(Root);
+    CHECK(dbc::PathFromUtf8(EntryText) == Entry);
+    CHECK(dbc::interpreter::NormalizeBasicPath(Entry) == Entry.lexically_normal());
+    const std::vector<std::string_view> Arguments = {"run",          EntryText, "--dialect",    "dbc",  "--headless",
+                                                     "--asset-root", RootText,  "--log-output", LogText};
+    const auto Parsed = dbc::interpreter::ParseCommandLine(Arguments);
+    REQUIRE(Parsed.Command);
+    CHECK(Parsed.Command->Path == Entry);
+    CHECK(Parsed.Command->Execution.AssetRoot == Root);
+    CHECK(Parsed.Command->Execution.LogOutputPath == Log);
+    std::string Output;
+    dbc::interpreter::CommandLineEnvironment Environment;
+    Environment.StandardOutput = [&](std::string_view Text) { Output += Text; };
+    Environment.StandardError = [&](std::string_view Text) { Output += Text; };
+    CHECK(dbc::interpreter::DispatchCommandLine(*Parsed.Command, Environment) == 0);
+    INFO(Output);
+    CHECK(std::filesystem::is_regular_file(Root / Data));
+    std::ifstream Input(Log, std::ios::binary);
+    const std::string Logged{std::istreambuf_iterator<char>(Input), std::istreambuf_iterator<char>()};
+    CHECK(Logged == "42\n1\n");
+    std::filesystem::path Confined;
+    std::string Error;
+    CHECK(dbc::interpreter::ResolveConfinedBasicPath(Root, Include, Confined, &Error));
+    CHECK_FALSE(dbc::interpreter::ResolveConfinedBasicPath(Root, "../outside.dba", Confined, &Error));
+}
 
 TEST_CASE("project resolution follows forced configuration descriptor and detection precedence")
 {

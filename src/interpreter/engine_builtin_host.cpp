@@ -1,5 +1,6 @@
 #include "engine_builtin_host.hpp"
 #include "atomic_file.hpp"
+#include "path_utf8.hpp"
 
 #include "basic_path.hpp"
 #include "engine/systems/core_system.hpp"
@@ -600,12 +601,12 @@ namespace dbc::interpreter::detail
             (*Array)->ElementType.Kind != language::TypeKind::Real)
             return Failed("LOAD ARRAY and SAVE ARRAY support numeric arrays only");
         const std::filesystem::path Path =
-            ResolveBasicPath(Context_.AssetRoot, Invocation.Arguments.front().AsString());
+            ResolveBasicPath(Context_.AssetRoot, dbc::PathFromUtf8(Invocation.Arguments.front().AsString()));
         if (Invocation.ReplacesArray)
         {
             std::ifstream Input(Path, std::ios::binary);
             if (!Input)
-                return Failed("LOAD ARRAY cannot open '" + Path.string() + "'");
+                return Failed("LOAD ARRAY cannot open '" + dbc::PathToUtf8(Path) + "'");
             // The original only recommends that the saved and loaded arrays match: the official swarm
             // demo ships a hiscore file shorter than its array, so a short file fills what it holds.
             vm::Value Replacement = Invocation.ArrayArgument->Clone();
@@ -617,9 +618,9 @@ namespace dbc::interpreter::detail
                 if (Input.gcount() == 0 && Input.eof())
                     break;
                 if (Input.gcount() != static_cast<std::streamsize>(sizeof(Number)))
-                    return Failed("LOAD ARRAY found a truncated record in '" + Path.string() + "'");
+                    return Failed("LOAD ARRAY found a truncated record in '" + dbc::PathToUtf8(Path) + "'");
                 if (Input.bad())
-                    return Failed("LOAD ARRAY failed while reading '" + Path.string() + "'");
+                    return Failed("LOAD ARRAY failed while reading '" + dbc::PathToUtf8(Path) + "'");
                 Element = Target.ElementType.Kind == language::TypeKind::Real
                               ? vm::Value::Real(static_cast<double>(Number))
                               : vm::Value::Integer(Number);

@@ -3,6 +3,7 @@
 // from the same SDL_shadercross transpiler as runtime effects, so its bindings follow
 // SDL_GPU's Metal layout.
 
+#include "path_utf8.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3_shadercross/SDL_shadercross.h>
 
@@ -36,7 +37,7 @@ namespace
         Stream.close();
         if (!Stream)
         {
-            std::fprintf(stderr, "opendbc_shaderc: cannot write %s\n", Path.string().c_str());
+            std::fprintf(stderr, "opendbc_shaderc: cannot write %s\n", dbc::PathToUtf8(Path).c_str());
             return false;
         }
         return true;
@@ -90,7 +91,7 @@ int main(int ArgumentCount, char** Arguments)
     std::string Source;
     if (!ReadText(SourcePath, Source))
     {
-        std::fprintf(stderr, "opendbc_shaderc: cannot read %s\n", SourcePath.string().c_str());
+        std::fprintf(stderr, "opendbc_shaderc: cannot read %s\n", dbc::PathToUtf8(SourcePath).c_str());
         return 1;
     }
     if (!SDL_ShaderCross_Init())
@@ -98,7 +99,7 @@ int main(int ArgumentCount, char** Arguments)
         std::fprintf(stderr, "opendbc_shaderc: SDL_shadercross initialization failed: %s\n", SDL_GetError());
         return 1;
     }
-    const std::string IncludeDirectory = SourcePath.parent_path().string();
+    const std::string IncludeDirectory = dbc::PathToUtf8(SourcePath.parent_path());
     const bool Compiled =
         CompileStage(Source, IncludeDirectory, Arguments[2], "VSMain", SDL_SHADERCROSS_SHADERSTAGE_VERTEX, "vert") &&
         CompileStage(Source, IncludeDirectory, Arguments[2], "PSMain", SDL_SHADERCROSS_SHADERSTAGE_FRAGMENT, "frag");

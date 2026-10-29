@@ -1,4 +1,5 @@
 #include "scene/scene_codegen.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -1277,7 +1278,7 @@ namespace dbc::studio
 
         std::filesystem::path LevelRelativePath(const std::string& Name)
         {
-            return std::filesystem::path(KLevelFolder) / (SanitizeLevelName(Name) + ".dba");
+            return dbc::PathFromUtf8(KLevelFolder) / (SanitizeLevelName(Name) + ".dba");
         }
     } // namespace scene
 

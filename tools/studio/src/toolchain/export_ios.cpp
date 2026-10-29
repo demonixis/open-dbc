@@ -1,4 +1,5 @@
 #include "export_internal.hpp"
+#include "path_utf8.hpp"
 
 #include <array>
 #include <fstream>
@@ -121,11 +122,11 @@ namespace dbc::studio
                 return false;
             }
             const std::string Json = Values.dump();
-            if (!Context.Run(
-                    {"/usr/bin/plutil", "-replace", "UISupportedInterfaceOrientations", "-json", Json, Plist.string()},
-                    Error) ||
+            if (!Context.Run({"/usr/bin/plutil", "-replace", "UISupportedInterfaceOrientations", "-json", Json,
+                              dbc::PathToUtf8(Plist)},
+                             Error) ||
                 !Context.Run({"/usr/bin/plutil", "-replace", "UISupportedInterfaceOrientations~ipad", "-json", Json,
-                              Plist.string()},
+                              dbc::PathToUtf8(Plist)},
                              Error))
                 return false;
             const std::array<std::pair<std::string_view, const std::string*>, 4> Permissions = {{
@@ -136,9 +137,9 @@ namespace dbc::studio
             }};
             for (const auto& [Key, Value] : Permissions)
             {
-                if (!Value->empty() &&
-                    !Context.Run({"/usr/bin/plutil", "-insert", std::string(Key), "-string", *Value, Plist.string()},
-                                 Error))
+                if (!Value->empty() && !Context.Run({"/usr/bin/plutil", "-insert", std::string(Key), "-string", *Value,
+                                                     dbc::PathToUtf8(Plist)},
+                                                    Error))
                     return false;
             }
             return true;
@@ -186,7 +187,7 @@ namespace dbc::studio
             std::error_code FileError;
             if (fs::exists(Result.OutputPath, FileError))
             {
-                Result.Error = "Export destination already exists: " + Result.OutputPath.string();
+                Result.Error = "Export destination already exists: " + dbc::PathToUtf8(Result.OutputPath);
                 Result.OutputPath.clear();
                 return Result;
             }
@@ -222,8 +223,9 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
-            Result.Messages.push_back("Published " + Result.OutputPath.string());
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) +
+                                      " asset files");
+            Result.Messages.push_back("Published " + dbc::PathToUtf8(Result.OutputPath));
             Result.Messages.push_back("Open " + ProductName +
                                       ".xcodeproj in Xcode, choose your team under Signing & Capabilities, then use "
                                       "Product > Archive to upload to App Store Connect");

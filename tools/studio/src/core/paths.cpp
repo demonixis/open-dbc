@@ -1,4 +1,5 @@
 #include "paths.hpp"
+#include "path_utf8.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -10,7 +11,7 @@ namespace dbc::studio
 
         fs::path PathFromSdl(const char* Raw)
         {
-            return (Raw != nullptr) ? fs::path(Raw) : fs::path();
+            return (Raw != nullptr) ? dbc::PathFromUtf8(Raw) : fs::path();
         }
     } // namespace
 

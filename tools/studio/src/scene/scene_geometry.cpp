@@ -1,4 +1,5 @@
 #include "scene/scene_geometry.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -266,7 +267,7 @@ namespace dbc::studio
                 aiProcess_ImproveCacheLocality | aiProcess_ConvertToLeftHanded | aiProcess_GenSmoothNormals |
                 aiProcess_CalcTangentSpace | aiProcess_GenUVCoords | aiProcess_TransformUVCoords |
                 aiProcess_FindInvalidData | aiProcess_FindDegenerates;
-            const AssimpImportResult Imported = RendererSystem::ImportSceneWithFlags(Path.string(), Flags);
+            const AssimpImportResult Imported = RendererSystem::ImportSceneWithFlags(dbc::PathToUtf8(Path), Flags);
             if (Imported.Scene == nullptr)
             {
                 Error = Imported.ImporterValue && *Imported.ImporterValue->GetErrorString()
@@ -301,7 +302,7 @@ namespace dbc::studio
                 aiProcess_CalcTangentSpace | aiProcess_GenUVCoords | aiProcess_TransformUVCoords |
                 aiProcess_FindInvalidData | aiProcess_FindDegenerates | aiProcess_PreTransformVertices |
                 aiProcess_OptimizeMeshes;
-            const AssimpImportResult Imported = RendererSystem::ImportSceneWithFlags(Path.string(), Flags);
+            const AssimpImportResult Imported = RendererSystem::ImportSceneWithFlags(dbc::PathToUtf8(Path), Flags);
             if (Imported.Scene == nullptr)
             {
                 Error = Imported.ImporterValue && *Imported.ImporterValue->GetErrorString()
@@ -351,7 +352,7 @@ namespace dbc::studio
 
         bool LoadTerrainMesh(const std::filesystem::path& Heightmap, CpuMesh& Out, std::string& Error)
         {
-            SDL_Surface* Loaded = IMG_Load(Heightmap.string().c_str());
+            SDL_Surface* Loaded = IMG_Load(dbc::PathToUtf8(Heightmap).c_str());
             if (Loaded == nullptr)
             {
                 Error = SDL_GetError();

@@ -1,4 +1,5 @@
 #include "media_panel.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <array>
@@ -113,7 +114,7 @@ namespace dbc::studio
                     if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && OnActivate_)
                         OnActivate_(File.Path);
                     ImGui::SetTooltip("%s\n%s", std::string(core::MediaKindLabel(File.Kind)).c_str(),
-                                      File.Path.string().c_str());
+                                      dbc::PathToUtf8(File.Path).c_str());
                 }
                 ImGui::PopID();
                 ImGui::TableNextColumn();

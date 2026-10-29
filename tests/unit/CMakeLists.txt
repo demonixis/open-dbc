@@ -75,7 +75,7 @@ if(NOT ANDROID AND NOT IOS)
         test_studio_media.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
     )
-    target_include_directories(test_studio_media PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
+    target_include_directories(test_studio_media PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src ${ENGINE_SRC_DIR})
     target_link_libraries(test_studio_media PRIVATE doctest_with_main)
     doctest_discover_tests(test_studio_media PROPERTIES LABELS "unit-studio")
 

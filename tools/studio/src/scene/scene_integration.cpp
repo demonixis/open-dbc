@@ -1,4 +1,5 @@
 #include "scene/scene_integration.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -165,10 +166,9 @@ namespace dbc::studio
             for (const MainLink& Link : Links)
             {
                 const std::string Wanted = NormalizedInclude(Link.IncludePath);
-                const bool Included =
-                    std::any_of(Program.Includes.begin(), Program.Includes.end(),
-                                [&](const lang::IncludeDeclaration& Include)
-                                { return NormalizedInclude(Include.Path.generic_string()) == Wanted; });
+                const bool Included = std::any_of(
+                    Program.Includes.begin(), Program.Includes.end(), [&](const lang::IncludeDeclaration& Include)
+                    { return NormalizedInclude(dbc::GenericPathToUtf8(Include.Path)) == Wanted; });
                 if (!Included)
                     Includes.push_back("#include \"" + Link.IncludePath + "\"");
 

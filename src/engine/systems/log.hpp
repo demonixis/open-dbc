@@ -1,5 +1,7 @@
 #pragma once
 
+#include "path_utf8.hpp"
+
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
@@ -82,8 +84,8 @@ namespace dbc::log
         std::shared_ptr<spdlog::logger> Logger;
         try
         {
-            auto FileSink =
-                std::make_shared<spdlog::sinks::rotating_file_sink_mt>(LogDir + "/open-dbc.log", 5 * 1024 * 1024, 3);
+            auto FileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+                (dbc::PathFromUtf8(LogDir) / "open-dbc.log").native(), 5 * 1024 * 1024, 3);
             Logger = std::make_shared<spdlog::logger>("dbc", spdlog::sinks_init_list{ConsoleSink, FileSink});
         }
         catch (const spdlog::spdlog_ex&)

@@ -1,4 +1,5 @@
 #include "workspace.hpp"
+#include "path_utf8.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -17,7 +18,7 @@ namespace dbc::studio
             // On iOS this is the app's own Documents directory, which is what the
             // Files app shows once the bundle opts in to file sharing.
             const char* Documents = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
-            return (Documents != nullptr) ? fs::path(Documents) : fs::path();
+            return (Documents != nullptr) ? dbc::PathFromUtf8(Documents) : fs::path();
         }
 #endif
 
@@ -76,9 +77,9 @@ namespace dbc::studio
                 // App-specific external storage: no permission needed, and it shows
                 // up as Android/data/<package>/files when the device is plugged in.
                 const char* external = SDL_GetAndroidExternalStoragePath();
-                AddLocation(Location{"My Projects", external != nullptr ? fs::path(external) / "projects" : fs::path(),
-                                     Kind::AppDocuments, true,
-                                     "Visible over USB in Android/data/<package>/files/projects"});
+                AddLocation(
+                    Location{"My Projects", external != nullptr ? dbc::PathFromUtf8(external) / "projects" : fs::path(),
+                             Kind::AppDocuments, true, "Visible over USB in Android/data/<package>/files/projects"});
             }
 #else
             if constexpr (platform::IsIos())
@@ -101,8 +102,8 @@ namespace dbc::studio
 
             if constexpr (platform::HasFreeformFileSystem())
             {
-                AddLocation(
-                    Location{"File System", fs::path("/"), Kind::FileSystem, true, "Open any folder on this machine"});
+                AddLocation(Location{"File System", dbc::PathFromUtf8("/"), Kind::FileSystem, true,
+                                     "Open any folder on this machine"});
             }
         }
 

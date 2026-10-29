@@ -356,6 +356,9 @@ set(GLM_ENABLE_CXX_17 ON CACHE BOOL "" FORCE)
 set(GLM_BUILD_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glm)
 
+if(WIN32)
+    set(SPDLOG_WCHAR_FILENAMES ON CACHE BOOL "Use native Windows paths for log files" FORCE)
+endif()
 opendbc_fetch_dependency(spdlog
   https://github.com/gabime/spdlog.git
   6fa36017cfd5731d617e1a934f0e5ea9c4445b13

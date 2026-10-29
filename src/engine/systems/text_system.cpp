@@ -7,6 +7,7 @@
 #include "graphics_device_system.hpp"
 #include "image_store.hpp"
 #include "log.hpp"
+#include "path_utf8.hpp"
 #include "sprite_system.hpp"
 #include "text_state.hpp"
 
@@ -162,7 +163,7 @@ namespace dbc
 #elif defined(_WIN32)
         if (const char* WinDir = SDL_getenv("WINDIR"))
         {
-            Roots.emplace_back(std::filesystem::path(WinDir) / "Fonts");
+            Roots.emplace_back(dbc::PathFromUtf8(WinDir) / "Fonts");
         }
         else
         {
@@ -173,14 +174,14 @@ namespace dbc
         Roots.emplace_back("/Library/Fonts");
         if (const char* Home = SDL_getenv("HOME"))
         {
-            Roots.emplace_back(std::filesystem::path(Home) / "Library/Fonts");
+            Roots.emplace_back(dbc::PathFromUtf8(Home) / "Library/Fonts");
         }
 #else
         Roots.emplace_back("/usr/share/fonts");
         if (const char* Home = SDL_getenv("HOME"))
         {
-            Roots.emplace_back(std::filesystem::path(Home) / ".fonts");
-            Roots.emplace_back(std::filesystem::path(Home) / ".local/share/fonts");
+            Roots.emplace_back(dbc::PathFromUtf8(Home) / ".fonts");
+            Roots.emplace_back(dbc::PathFromUtf8(Home) / ".local/share/fonts");
         }
 #endif
 
@@ -207,12 +208,12 @@ namespace dbc
                 {
                     continue;
                 }
-                const std::string Ext = ToLower(It->path().extension().string());
+                const std::string Ext = ToLower(dbc::PathToUtf8(It->path().extension()));
                 if (Ext != ".ttf" && Ext != ".otf" && Ext != ".ttc")
                 {
                     continue;
                 }
-                const std::string Path = It->path().string();
+                const std::string Path = dbc::PathToUtf8(It->path());
                 if (Seen.insert(Path).second)
                 {
                     SystemFontCandidates_.push_back(Path);
@@ -252,7 +253,7 @@ namespace dbc
             const std::string CandidateKey = CanonicalFontName(Candidate);
             for (const std::string& Path : SystemFontCandidates_)
             {
-                const std::string StemKey = CanonicalFontName(std::filesystem::path(Path).stem().string());
+                const std::string StemKey = CanonicalFontName(dbc::PathToUtf8(dbc::PathFromUtf8(Path).stem()));
                 if (StemKey == CandidateKey)
                 {
                     SystemFontResolveCache_[RequestedLower] = Path;

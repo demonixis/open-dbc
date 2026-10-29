@@ -1,6 +1,7 @@
 #include "project_settings_window.hpp"
 #include "engine/systems/log.hpp"
 #include "interpreter/atomic_file.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <array>
@@ -124,7 +125,7 @@ namespace dbc::studio
                 return false;
             }
 
-            ImGui::TextDisabled("%s", core::ProjectSettings::FilePath(Root_).string().c_str());
+            ImGui::TextDisabled("%s", dbc::PathToUtf8(core::ProjectSettings::FilePath(Root_)).c_str());
             ImGui::Separator();
 
             if (ImGui::BeginTabBar("##settings"))

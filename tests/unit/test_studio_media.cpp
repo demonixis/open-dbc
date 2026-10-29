@@ -1,6 +1,9 @@
 #include <doctest/doctest.h>
 
 #include "core/media_catalogue.hpp"
+#include "path_utf8.hpp"
+
+#include <chrono>
 
 #include <filesystem>
 #include <fstream>
@@ -45,4 +48,36 @@ TEST_CASE("Studio media scan skips hidden entries and honours the limit")
     CHECK(Limited.Truncated);
 
     std::filesystem::remove_all(Root, Error);
+}
+
+TEST_CASE("Studio media preserves UTF-8 names through native filesystem paths")
+{
+    namespace fs = std::filesystem;
+    const auto Root = fs::temp_directory_path() /
+                      ("opendbc-media-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    struct Cleanup
+    {
+        fs::path Path;
+
+        ~Cleanup()
+        {
+            std::error_code Error;
+            fs::remove_all(Path, Error);
+        }
+    } Owner{Root};
+
+    const fs::path Folder = Root / fs::path(u8"caf\u00e9-\u65e5\u672c-\U0001f3ae");
+    const fs::path Relative(u8"image-\u00e9-\u65e5-\U0001f3ae.png");
+    fs::create_directories(Folder);
+    std::ofstream(Folder / Relative, std::ios::binary) << "data";
+    const auto Scan = core::ScanMedia(dbc::PathFromUtf8(dbc::PathToUtf8(Folder)), 10);
+    REQUIRE(Scan.Files.size() == 1);
+    CHECK(Scan.Files[0].RelativeName == dbc::PathToUtf8(Relative));
+    CHECK(Scan.Files[0].Kind == core::MediaKind::Image);
+    CHECK(Scan.Files[0].Size == 4);
+    std::ifstream Input(Folder / dbc::PathFromUtf8(Scan.Files[0].RelativeName), std::ios::binary);
+    std::string Contents;
+    Input >> Contents;
+    CHECK(Contents == "data");
 }

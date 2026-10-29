@@ -1,4 +1,5 @@
 #include "dbpro_project.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -96,7 +97,7 @@ namespace dbc::language
         {
             std::string Result(Value);
             std::replace(Result.begin(), Result.end(), '\\', '/');
-            return std::filesystem::path(Result).lexically_normal();
+            return dbc::PathFromUtf8(Result).lexically_normal();
         }
 
         bool IsOutside(const std::filesystem::path& Relative)
@@ -122,18 +123,18 @@ namespace dbc::language
                 std::vector<std::filesystem::path> Matches;
                 if (std::filesystem::is_directory(Current, IteratorError))
                 {
-                    const std::string Wanted = Lower(Segment.string());
+                    const std::string Wanted = Lower(dbc::PathToUtf8(Segment));
                     for (const std::filesystem::directory_entry& Entry :
                          std::filesystem::directory_iterator(Current, IteratorError))
                     {
-                        if (Lower(Entry.path().filename().string()) == Wanted)
+                        if (Lower(dbc::PathToUtf8(Entry.path().filename())) == Wanted)
                             Matches.push_back(Entry.path().filename());
                     }
                 }
                 if (Matches.size() > 1)
                 {
                     Error = "Path is ambiguous because multiple entries differ only by case: " +
-                            (Current / Segment).string();
+                            dbc::PathToUtf8((Current / Segment));
                     return std::nullopt;
                 }
                 Current /= Matches.empty() ? Segment : Matches.front();
@@ -390,7 +391,7 @@ namespace dbc::language
         const std::optional<std::string> Main = Result.Value("main");
         if (!Main || Trim(*Main).empty())
             AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, 1, "Missing project main source");
-        else if (Lower(PortablePath(*Main).extension().string()) != ".dba")
+        else if (Lower(dbc::PathToUtf8(PortablePath(*Main).extension())) != ".dba")
             AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, 1,
                           "Project main source must use the .dba extension");
 
@@ -458,16 +459,16 @@ namespace dbc::language
                 AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, Line, std::move(Error));
                 return std::nullopt;
             }
-            if (Lower(Path->extension().string()) != ".dba")
+            if (Lower(dbc::PathToUtf8(Path->extension())) != ".dba")
             {
                 AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, Line,
-                              "Project source must use the .dba extension: " + Path->string());
+                              "Project source must use the .dba extension: " + dbc::PathToUtf8(*Path));
                 return std::nullopt;
             }
             if (!std::filesystem::is_regular_file(*Path))
             {
                 AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, Line,
-                              "Project source does not exist: " + Path->string());
+                              "Project source does not exist: " + dbc::PathToUtf8(*Path));
                 return std::nullopt;
             }
             return Path;
@@ -498,7 +499,7 @@ namespace dbc::language
             {
                 if (!Sources.insert(*Path).second)
                     AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, Entry->Line,
-                                  "Duplicate project source: " + Path->string());
+                                  "Duplicate project source: " + dbc::PathToUtf8(*Path));
                 else
                     Result.OrderedSources.push_back(*Path);
             }
@@ -513,7 +514,7 @@ namespace dbc::language
                 AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, 1, std::move(Error));
             else if (!std::filesystem::is_directory(*Path))
                 AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, 1,
-                              "Media root is not a directory: " + Path->string());
+                              "Media root is not a directory: " + dbc::PathToUtf8(*Path));
             else
                 Result.AssetRoot = *Path;
         }

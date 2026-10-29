@@ -1,10 +1,11 @@
-#include <algorithm>
 #include "project_settings.hpp"
+#include "path_utf8.hpp"
+#include <algorithm>
 
+#include "engine/systems/log.hpp"
+#include "interpreter/atomic_file.hpp"
 #include <fstream>
 #include <limits>
-#include "interpreter/atomic_file.hpp"
-#include "engine/systems/log.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -82,7 +83,7 @@ namespace dbc::studio
                     S = Parse(Text);
             }
             if (!S.LoadError.empty())
-                DBC_LOG_ERROR("{}: {}", FilePath(ProjectRoot).string(), S.LoadError);
+                DBC_LOG_ERROR("{}: {}", dbc::PathToUtf8(FilePath(ProjectRoot)), S.LoadError);
             return S;
         }
 

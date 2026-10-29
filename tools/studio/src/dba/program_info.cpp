@@ -1,4 +1,5 @@
 #include "program_info.hpp"
+#include "path_utf8.hpp"
 
 #include "language/language_catalogue.hpp"
 
@@ -101,7 +102,7 @@ namespace dbc::studio
                 if (Error)
                     break;
                 const fs::path& Path = It->path();
-                const std::string Name = Path.filename().string();
+                const std::string Name = dbc::PathToUtf8(Path.filename());
                 if (!Name.empty() && Name.front() == '.')
                 {
                     if (It->is_directory(Error))
@@ -117,7 +118,7 @@ namespace dbc::studio
                 Info.Path = Path;
                 Info.Profile = Profile;
                 const fs::path Relative = fs::relative(Path, Root, Error);
-                Info.RelativeName = Error ? Name : Relative.generic_string();
+                Info.RelativeName = Error ? Name : dbc::GenericPathToUtf8(Relative);
                 Info.Size = It->file_size(Error);
 
                 std::ifstream Input(Path);

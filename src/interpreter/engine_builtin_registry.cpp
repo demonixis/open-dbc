@@ -24,9 +24,10 @@
 #include "engine/systems/video_system.hpp"
 #include "engine/systems/vr_system.hpp"
 #include "engine_builtin_api/all.hpp"
-#include "registry_file.hpp"
 #include "language/language_catalogue.hpp"
 #include "language/numeric_conversion.hpp"
+#include "path_utf8.hpp"
+#include "registry_file.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -1493,14 +1494,18 @@ namespace dbc::interpreter::detail
                                       Camera.ClampedFarPlane(), true);
         }
 
+        fs::path ResolveNativeAssetPath(const BuiltinContext& Ctx, const std::string& Input)
+        {
+            return ResolveBasicPath(Ctx.AssetRoot, dbc::PathFromUtf8(Input));
+        }
+
         std::string ResolveAssetPath(const BuiltinContext& Ctx, const std::string& Input)
         {
-            return ResolveBasicPath(Ctx.AssetRoot, fs::path(Input)).string();
+            return dbc::PathToUtf8(ResolveNativeAssetPath(Ctx, Input));
         }
 
         // DBPro tried the map name as given, then the same name in the pk3's folder.
-        bool LoadBspCommand(BuiltinContext& Ctx, const std::string& Pk3, const std::string& MapName,
-                            std::string* Error)
+        bool LoadBspCommand(BuiltinContext& Ctx, const std::string& Pk3, const std::string& MapName, std::string* Error)
         {
             std::vector<std::string> Candidates{ResolveAssetPath(Ctx, MapName)};
             const std::size_t Separator = Pk3.find_last_of("/\\");
@@ -1635,9 +1640,9 @@ namespace dbc::interpreter::detail
                 return false;
             }
             std::error_code OperationError;
-            const fs::path Canonical = fs::weakly_canonical(Buffer.data(), OperationError);
+            const fs::path Canonical = fs::weakly_canonical(dbc::PathFromUtf8(Buffer.data()), OperationError);
             {
-                Output = OperationError ? std::string(Buffer.data()) : Canonical.string();
+                Output = OperationError ? std::string(Buffer.data()) : dbc::PathToUtf8(Canonical);
                 return true;
             }
 #elif defined(_WIN32)
@@ -1687,14 +1692,14 @@ namespace dbc::interpreter::detail
         double FileSize(BuiltinContext& Ctx, const std::string& Input)
         {
             std::error_code Error;
-            const std::uintmax_t Size = fs::file_size(ResolveAssetPath(Ctx, Input), Error);
+            const std::uintmax_t Size = fs::file_size(ResolveNativeAssetPath(Ctx, Input), Error);
             return Error ? 0.0 : static_cast<double>(Size);
         }
 
         bool ReadByteFromFile(double& Output, BuiltinContext& Ctx, const std::string& Input, int Position,
                               std::string* Error = nullptr)
         {
-            const fs::path Path = ResolveAssetPath(Ctx, Input);
+            const fs::path Path = ResolveNativeAssetPath(Ctx, Input);
             if (Position < 0)
             {
                 Output = 0.0;
@@ -1704,7 +1709,7 @@ namespace dbc::interpreter::detail
             if (!File)
             {
                 if (Error)
-                    *Error = "READ BYTE FROM FILE cannot open '" + Path.string() + "'";
+                    *Error = "READ BYTE FROM FILE cannot open '" + dbc::PathToUtf8(Path) + "'";
                 return false;
             }
             File.seekg(Position);
@@ -1719,12 +1724,12 @@ namespace dbc::interpreter::detail
         bool RequireDirectory(fs::path& Output, BuiltinContext& Ctx, const std::string& Input, std::string_view Command,
                               std::string* Error = nullptr)
         {
-            const fs::path Path = ResolveAssetPath(Ctx, Input);
+            const fs::path Path = ResolveNativeAssetPath(Ctx, Input);
             std::error_code OperationError;
             if (!fs::is_directory(Path, OperationError))
             {
                 if (Error)
-                    *Error = std::string(Command) + " requires an existing directory: '" + Path.string() + "'";
+                    *Error = std::string(Command) + " requires an existing directory: '" + dbc::PathToUtf8(Path) + "'";
                 return false;
             }
             {
@@ -1736,20 +1741,20 @@ namespace dbc::interpreter::detail
         bool RenameFile(BuiltinContext& Ctx, const std::vector<BuiltinValue>& Args, std::string_view Command,
                         std::string* Error = nullptr)
         {
-            const fs::path Source = ResolveAssetPath(Ctx, Args[0].AsString());
-            const fs::path Destination = ResolveAssetPath(Ctx, Args[1].AsString());
+            const fs::path Source = ResolveNativeAssetPath(Ctx, Args[0].AsString());
+            const fs::path Destination = ResolveNativeAssetPath(Ctx, Args[1].AsString());
             std::error_code OperationError;
             if (!fs::is_regular_file(Source, OperationError))
             {
                 if (Error)
-                    *Error = std::string(Command) + " source does not exist: '" + Source.string() + "'";
+                    *Error = std::string(Command) + " source does not exist: '" + dbc::PathToUtf8(Source) + "'";
                 return false;
             }
             OperationError.clear();
             if (fs::exists(Destination, OperationError))
             {
                 if (Error)
-                    *Error = std::string(Command) + " refuses to overwrite: '" + Destination.string() + "'";
+                    *Error = std::string(Command) + " refuses to overwrite: '" + dbc::PathToUtf8(Destination) + "'";
                 return false;
             }
             fs::rename(Source, Destination, OperationError);
@@ -1875,7 +1880,7 @@ namespace dbc::interpreter::detail
             constexpr std::string_view MountRoot = "/mnt";
 #endif
             std::error_code ScanError;
-            for (fs::directory_iterator It(fs::path(MountRoot), ScanError), End; !ScanError && It != End;
+            for (fs::directory_iterator It(dbc::PathFromUtf8(MountRoot), ScanError), End; !ScanError && It != End;
                  It.increment(ScanError))
             {
                 std::error_code TypeError;
@@ -1908,11 +1913,11 @@ namespace dbc::interpreter::detail
             std::error_code OperationError;
             for (fs::directory_iterator It(Context.AssetRoot, OperationError), End; !OperationError && It != End;
                  It.increment(OperationError))
-                Names.push_back(It->path().filename().string());
+                Names.push_back(dbc::PathToUtf8(It->path().filename()));
             if (OperationError)
             {
                 if (Error)
-                    *Error = "DIR failed for '" + Context.AssetRoot.string() + "': " + OperationError.message();
+                    *Error = "DIR failed for '" + dbc::PathToUtf8(Context.AssetRoot) + "': " + OperationError.message();
                 return false;
             }
             std::sort(Names.begin(), Names.end());
@@ -1931,7 +1936,7 @@ namespace dbc::interpreter::detail
             for (const fs::path& Path : Paths)
             {
                 ChecklistItem Item;
-                Item.Name = Path.string();
+                Item.Name = dbc::PathToUtf8(Path);
                 Context.Checklist.push_back(std::move(Item));
             }
             return true;
@@ -1943,7 +1948,7 @@ namespace dbc::interpreter::detail
             if (!DrivePaths(Paths, Error))
                 return false;
             for (const fs::path& Path : Paths)
-                if (!EmitLine(Context, Path.string(), Error))
+                if (!EmitLine(Context, dbc::PathToUtf8(Path), Error))
                     return false;
             return true;
         }
@@ -1958,7 +1963,7 @@ namespace dbc::interpreter::detail
                 return false;
             }
             HostFileLaunchRequest Request;
-            Request.FileName = ResolveAssetPath(Context, Arguments[0].AsString());
+            Request.FileName = ResolveNativeAssetPath(Context, Arguments[0].AsString());
             Request.CommandLine = Arguments[1].AsString();
             Request.WorkingDirectory = Context.AssetRoot;
             if (!Arguments[2].AsString().empty() &&
@@ -1984,7 +1989,7 @@ namespace dbc::interpreter::detail
                 if (Context.Profile == language::LanguageProfile::Dbc)
                 {
                     DBC_LOG_DEBUG("EXECUTE FILE ignored unavailable Classic host target '{}': {}",
-                                  Request.FileName.string(), OperationError);
+                                  dbc::PathToUtf8(Request.FileName), OperationError);
                     return true;
                 }
                 {
@@ -2072,7 +2077,7 @@ namespace dbc::interpreter::detail
                 if (fs::is_symlink(Status))
                 {
                     if (Error)
-                        *Error = "WRITE DIRBLOCK refuses symbolic links: '" + It->path().string() + "'";
+                        *Error = "WRITE DIRBLOCK refuses symbolic links: '" + dbc::PathToUtf8(It->path()) + "'";
                     return false;
                 }
                 if (fs::is_directory(Status) || fs::is_regular_file(Status))
@@ -2087,17 +2092,17 @@ namespace dbc::interpreter::detail
             if (FileError)
             {
                 if (Error)
-                    *Error = "WRITE DIRBLOCK cannot scan '" + Root.string() + "': " + FileError.message();
+                    *Error = "WRITE DIRBLOCK cannot scan '" + dbc::PathToUtf8(Root) + "': " + FileError.message();
                 return false;
             }
             std::sort(Entries.begin(), Entries.end(), [](const auto& Left, const auto& Right)
-                      { return Left.path().generic_string() < Right.path().generic_string(); });
+                      { return dbc::GenericPathToUtf8(Left.path()) < dbc::GenericPathToUtf8(Right.path()); });
 
             std::uint64_t AggregateBytes = 0;
             std::uint64_t AggregatePathBytes = 0;
             for (const fs::directory_entry& Entry : Entries)
             {
-                const std::string Relative = Entry.path().lexically_relative(Root).generic_string();
+                const std::string Relative = dbc::GenericPathToUtf8(Entry.path().lexically_relative(Root));
                 if (Relative.empty() || Relative.size() > static_cast<std::size_t>(KMaximumDirblockPathBytes) ||
                     Relative.size() > KMaximumDirblockAggregatePathBytes - AggregatePathBytes)
                 {
@@ -2121,7 +2126,7 @@ namespace dbc::interpreter::detail
                 if (FileError)
                 {
                     if (Error)
-                        *Error = "WRITE DIRBLOCK cannot inspect '" + Entry.path().string() + "'";
+                        *Error = "WRITE DIRBLOCK cannot inspect '" + dbc::PathToUtf8(Entry.path()) + "'";
                     return false;
                 }
             }
@@ -2132,7 +2137,7 @@ namespace dbc::interpreter::detail
                 return false;
             for (const fs::directory_entry& Entry : Entries)
             {
-                const std::string Relative = Entry.path().lexically_relative(Root).generic_string();
+                const std::string Relative = dbc::GenericPathToUtf8(Entry.path().lexically_relative(Root));
                 if (Relative.empty() || Relative.size() > static_cast<std::size_t>(KMaximumDirblockPathBytes))
                 {
                     if (Error)
@@ -2148,7 +2153,7 @@ namespace dbc::interpreter::detail
                 if (FileError)
                 {
                     if (Error)
-                        *Error = "WRITE DIRBLOCK cannot inspect '" + Entry.path().string() + "'";
+                        *Error = "WRITE DIRBLOCK cannot inspect '" + dbc::PathToUtf8(Entry.path()) + "'";
                     return false;
                 }
                 if (!Context.Kernel->FileIO().FileWriteLong(FileNumber, Directory ? 1 : 0, Error))
@@ -2159,7 +2164,8 @@ namespace dbc::interpreter::detail
                 if (FileError || Size > static_cast<std::uintmax_t>(KMaximumDirblockFileBytes))
                 {
                     if (Error)
-                        *Error = "WRITE DIRBLOCK file is unreadable or too large: '" + Entry.path().string() + "'";
+                        *Error =
+                            "WRITE DIRBLOCK file is unreadable or too large: '" + dbc::PathToUtf8(Entry.path()) + "'";
                     return false;
                 }
                 std::ifstream Input(Entry.path(), std::ios::binary);
@@ -2168,7 +2174,7 @@ namespace dbc::interpreter::detail
                                                              static_cast<std::streamsize>(Bytes.size()))))
                 {
                     if (Error)
-                        *Error = "WRITE DIRBLOCK cannot read '" + Entry.path().string() + "'";
+                        *Error = "WRITE DIRBLOCK cannot read '" + dbc::PathToUtf8(Entry.path()) + "'";
                     return false;
                 }
                 if (!Context.Kernel->FileIO().FileWriteLong(FileNumber, static_cast<int>(Bytes.size()), Error))
@@ -2183,7 +2189,7 @@ namespace dbc::interpreter::detail
                           std::string* Error = nullptr)
         {
             std::error_code FileError;
-            const fs::path ResolvedDestination = fs::absolute(ResolveAssetPath(Context, Folder), FileError);
+            const fs::path ResolvedDestination = fs::absolute(ResolveNativeAssetPath(Context, Folder), FileError);
             if (FileError)
             {
                 if (Error)
@@ -2223,7 +2229,7 @@ namespace dbc::interpreter::detail
             if (FileError)
             {
                 if (Error)
-                    *Error = "READ DIRBLOCK cannot create '" + Destination.string() + "'";
+                    *Error = "READ DIRBLOCK cannot create '" + dbc::PathToUtf8(Destination) + "'";
                 return false;
             }
 
@@ -2252,7 +2258,8 @@ namespace dbc::interpreter::detail
                                                             Error))
                     return false;
                 const fs::path Relative =
-                    NormalizeBasicPath(fs::path(std::string(PathBytes.begin(), PathBytes.end()))).lexically_normal();
+                    NormalizeBasicPath(dbc::PathFromUtf8(std::string(PathBytes.begin(), PathBytes.end())))
+                        .lexically_normal();
                 if (Relative.empty() || Relative.is_absolute() || *Relative.begin() == "..")
                 {
                     if (Error)
@@ -2283,7 +2290,7 @@ namespace dbc::interpreter::detail
                     if (FileError)
                     {
                         if (Error)
-                            *Error = "READ DIRBLOCK cannot create '" + Output.string() + "'";
+                            *Error = "READ DIRBLOCK cannot create '" + dbc::PathToUtf8(Output) + "'";
                         return false;
                     }
                     continue;
@@ -2341,7 +2348,7 @@ namespace dbc::interpreter::detail
                                                                 static_cast<std::streamsize>(Bytes.size()))))
                 {
                     if (Error)
-                        *Error = "READ DIRBLOCK cannot write '" + Output.string() + "'";
+                        *Error = "READ DIRBLOCK cannot write '" + dbc::PathToUtf8(Output) + "'";
                     return false;
                 }
             }
@@ -2644,25 +2651,27 @@ namespace dbc::interpreter::detail
                                   [](BuiltinContext& Ctx, const std::vector<BuiltinValue>& Args, int,
                                      std::string& Error)
                                   {
-                                      const fs::path Source = ResolveAssetPath(Ctx, Args[0].AsString());
-                                      const fs::path Destination = ResolveAssetPath(Ctx, Args[1].AsString());
+                                      const fs::path Source = ResolveNativeAssetPath(Ctx, Args[0].AsString());
+                                      const fs::path Destination = ResolveNativeAssetPath(Ctx, Args[1].AsString());
                                       std::error_code StatusError;
                                       if (!fs::is_regular_file(Source, StatusError))
                                       {
-                                          Error = "COPY FILE source is not a readable file: '" + Source.string() + "'";
+                                          Error = "COPY FILE source is not a readable file: '" +
+                                                  dbc::PathToUtf8(Source) + "'";
                                           return false;
                                       }
                                       StatusError.clear();
                                       if (fs::exists(Destination, StatusError))
                                       {
-                                          Error = "COPY FILE refuses to overwrite: '" + Destination.string() + "'";
+                                          Error =
+                                              "COPY FILE refuses to overwrite: '" + dbc::PathToUtf8(Destination) + "'";
                                           return false;
                                       }
                                       std::error_code CopyError;
                                       if (!fs::copy_file(Source, Destination, fs::copy_options::none, CopyError))
                                       {
-                                          Error = "COPY FILE failed from '" + Source.string() + "' to '" +
-                                                  Destination.string() + "': " + CopyError.message();
+                                          Error = "COPY FILE failed from '" + dbc::PathToUtf8(Source) + "' to '" +
+                                                  dbc::PathToUtf8(Destination) + "': " + CopyError.message();
                                           return false;
                                       }
                                       return true;
@@ -2986,11 +2995,11 @@ namespace dbc::interpreter::detail
                                       int, std::string& Error)
                                   {
                                       (void)Error;
-                                      const fs::path Path = ResolveAssetPath(Ctx, Args[0].AsString());
+                                      const fs::path Path = ResolveNativeAssetPath(Ctx, Args[0].AsString());
                                       std::ofstream Output(Path, std::ios::binary | std::ios::trunc);
                                       if (!Output)
                                       {
-                                          Error = "MAKE FILE failed for '" + Path.string() + "'";
+                                          Error = "MAKE FILE failed for '" + dbc::PathToUtf8(Path) + "'";
                                           return false;
                                       }
                                       return true;
@@ -3001,11 +3010,11 @@ namespace dbc::interpreter::detail
                                      std::string& Error)
                                   {
                                       (void)Error;
-                                      const fs::path Path = ResolveAssetPath(Ctx, Args[0].AsString());
+                                      const fs::path Path = ResolveNativeAssetPath(Ctx, Args[0].AsString());
                                       std::error_code FileError;
                                       if (!fs::is_regular_file(Path, FileError) || !fs::remove(Path, FileError))
                                       {
-                                          Error = "DELETE FILE failed for '" + Path.string() + "'";
+                                          Error = "DELETE FILE failed for '" + dbc::PathToUtf8(Path) + "'";
                                           return false;
                                       }
                                       return true;
@@ -3016,11 +3025,11 @@ namespace dbc::interpreter::detail
                                      std::string& Error)
                                   {
                                       (void)Error;
-                                      const fs::path Path = ResolveAssetPath(Ctx, Args[0].AsString());
+                                      const fs::path Path = ResolveNativeAssetPath(Ctx, Args[0].AsString());
                                       std::error_code FileError;
                                       if (!fs::create_directory(Path, FileError))
                                       {
-                                          Error = "MAKE DIRECTORY failed for '" + Path.string() + "'";
+                                          Error = "MAKE DIRECTORY failed for '" + dbc::PathToUtf8(Path) + "'";
                                           return false;
                                       }
                                       return true;
@@ -3031,12 +3040,13 @@ namespace dbc::interpreter::detail
                                      std::string& Error)
                                   {
                                       (void)Error;
-                                      const fs::path Path = ResolveAssetPath(Ctx, Args[0].AsString());
+                                      const fs::path Path = ResolveNativeAssetPath(Ctx, Args[0].AsString());
                                       std::error_code FileError;
                                       const fs::file_status Status = fs::symlink_status(Path, FileError);
                                       if (FileError || fs::is_symlink(Status))
                                       {
-                                          Error = "DELETE DIRECTORY refuses a symbolic link: '" + Path.string() + "'";
+                                          Error = "DELETE DIRECTORY refuses a symbolic link: '" +
+                                                  dbc::PathToUtf8(Path) + "'";
                                           return false;
                                       }
                                       const fs::path Canonical = fs::weakly_canonical(Path, FileError);
@@ -3046,13 +3056,13 @@ namespace dbc::interpreter::detail
                                           Canonical == Canonical.root_path() || (!ActiveError && Canonical == Active))
                                       {
                                           Error = "DELETE DIRECTORY refuses an invalid or active directory: '" +
-                                                  Path.string() + "'";
+                                                  dbc::PathToUtf8(Path) + "'";
                                           return false;
                                       }
                                       FileError.clear();
                                       if (fs::remove_all(Canonical, FileError) == 0 || FileError)
                                       {
-                                          Error = "DELETE DIRECTORY failed for '" + Path.string() + "'";
+                                          Error = "DELETE DIRECTORY failed for '" + dbc::PathToUtf8(Path) + "'";
                                           return false;
                                       }
                                       return true;
@@ -3092,7 +3102,7 @@ namespace dbc::interpreter::detail
                                   [](BuiltinContext& Ctx, const std::vector<BuiltinValue>&, int, std::string& Error)
                                   {
                                       (void)Error;
-                                      if (!Ctx.Kernel->FileIO().FindFirst(Ctx.AssetRoot.string(), &Error))
+                                      if (!Ctx.Kernel->FileIO().FindFirst(dbc::PathToUtf8(Ctx.AssetRoot), &Error))
                                           return false;
                                       return true;
                                   }}},
@@ -3351,13 +3361,14 @@ namespace dbc::interpreter::detail
                                       if (Args.size() > 2 && !Args[2].AsInt(IntegerArgument1, &Error))
                                           return false;
                                       (void)Error;
-                                      const fs::path Path = ResolveAssetPath(Ctx, Args[0].AsString());
+                                      const fs::path Path = ResolveNativeAssetPath(Ctx, Args[0].AsString());
                                       const int Position = IntegerArgument0;
                                       std::error_code FileError;
                                       const std::uintmax_t Size = fs::file_size(Path, FileError);
                                       if (FileError || Position < 0 || static_cast<std::uintmax_t>(Position) >= Size)
                                       {
-                                          Error = "WRITE BYTE TO FILE position is outside '" + Path.string() + "'";
+                                          Error =
+                                              "WRITE BYTE TO FILE position is outside '" + dbc::PathToUtf8(Path) + "'";
                                           return false;
                                       }
                                       std::fstream File(Path, std::ios::in | std::ios::out | std::ios::binary);
@@ -3366,7 +3377,7 @@ namespace dbc::interpreter::detail
                                       File.write(&Byte, 1);
                                       if (!File)
                                       {
-                                          Error = "WRITE BYTE TO FILE failed for '" + Path.string() + "'";
+                                          Error = "WRITE BYTE TO FILE failed for '" + dbc::PathToUtf8(Path) + "'";
                                           return false;
                                       }
                                       return true;
@@ -3553,27 +3564,27 @@ namespace dbc::interpreter::detail
                                       (void)Error;
                                       EmptyChecklist(Ctx);
                                       std::error_code Ec;
-                                      const fs::path Dir =
-                                          ResolveAssetPath(Ctx, Args.empty() ? std::string(".") : Args[0].AsString());
+                                      const fs::path Dir = ResolveNativeAssetPath(
+                                          Ctx, Args.empty() ? std::string(".") : Args[0].AsString());
                                       std::vector<fs::directory_entry> Entries;
                                       for (fs::directory_iterator It(Dir, Ec), End; !Ec && It != End; It.increment(Ec))
                                           Entries.push_back(*It);
                                       if (Ec)
                                       {
-                                          Error = "PERFORM CHECKLIST FOR FILES failed for '" + Dir.string() +
+                                          Error = "PERFORM CHECKLIST FOR FILES failed for '" + dbc::PathToUtf8(Dir) +
                                                   "': " + Ec.message();
                                           return false;
                                       }
                                       std::sort(Entries.begin(), Entries.end(),
                                                 [](const auto& Left, const auto& Right)
                                                 {
-                                                    return Left.path().filename().string() <
-                                                           Right.path().filename().string();
+                                                    return dbc::PathToUtf8(Left.path().filename()) <
+                                                           dbc::PathToUtf8(Right.path().filename());
                                                 });
                                       for (const auto& Entry : Entries)
                                       {
                                           ChecklistItem Item;
-                                          Item.Name = Entry.path().filename().string();
+                                          Item.Name = dbc::PathToUtf8(Entry.path().filename());
                                           std::error_code EntryError;
                                           const auto Status = Entry.status(EntryError);
                                           if (EntryError)
@@ -3662,7 +3673,7 @@ namespace dbc::interpreter::detail
                                   namespace fs = std::filesystem;
                                   std::error_code Ec;
                                   const bool Exists =
-                                      fs::is_regular_file(ResolveAssetPath(Ctx, Args[0].AsString()), Ec);
+                                      fs::is_regular_file(ResolveNativeAssetPath(Ctx, Args[0].AsString()), Ec);
                                   return BuiltinValue::FromNumber(Exists ? 1.0 : 0.0);
                               }}},
                             {"RGBB",

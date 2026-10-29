@@ -1,5 +1,6 @@
 #include "registry_file.hpp"
 #include "atomic_file.hpp"
+#include "path_utf8.hpp"
 
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_stdinc.h>
@@ -52,13 +53,14 @@ namespace dbc::interpreter
             if (!std::filesystem::exists(File, StatusError))
             {
                 if (StatusError)
-                    return Fail(Error, "Cannot inspect registry file '" + File.string() + "': " + StatusError.message());
+                    return Fail(Error, "Cannot inspect registry file '" + dbc::PathToUtf8(File) +
+                                           "': " + StatusError.message());
                 Registry = nlohmann::json::object();
                 return true;
             }
             std::ifstream Input(File, std::ios::binary);
             if (!Input)
-                return Fail(Error, "Cannot open registry file '" + File.string() + "'");
+                return Fail(Error, "Cannot open registry file '" + dbc::PathToUtf8(File) + "'");
             const std::string Text{std::istreambuf_iterator<char>(Input), std::istreambuf_iterator<char>()};
             Registry = nlohmann::json::parse(Text, nullptr, false);
             bool Valid = Registry.is_object();
@@ -73,7 +75,7 @@ namespace dbc::interpreter
                 }
             }
             if (!Valid)
-                return Fail(Error, "Registry file '" + File.string() +
+                return Fail(Error, "Registry file '" + dbc::PathToUtf8(File) +
                                        "' must hold an object of folders mapping key names to 32-bit integers");
             return true;
         }
@@ -85,7 +87,7 @@ namespace dbc::interpreter
         if (Raw == nullptr)
             return {};
         const std::unique_ptr<char, decltype(&SDL_free)> Owner(Raw, SDL_free);
-        return std::filesystem::path(Raw) / "registry.json";
+        return dbc::PathFromUtf8(Raw) / "registry.json";
     }
 
     bool ReadRegistryValue(const std::filesystem::path& File, std::string_view Folder, std::string_view Key,

@@ -1,4 +1,5 @@
 #include "execution_service.hpp"
+#include "path_utf8.hpp"
 
 #include "basic_path.hpp"
 #include "engine/systems/audio_system.hpp"
@@ -97,7 +98,7 @@ namespace dbc::interpreter
         bool IsExecutableFile(const std::filesystem::path& Path)
         {
 #if defined(_WIN32)
-            std::string Extension = Path.extension().string();
+            std::string Extension = dbc::PathToUtf8(Path.extension());
             std::transform(Extension.begin(), Extension.end(), Extension.begin(),
                            [](unsigned char Value) { return static_cast<char>(std::tolower(Value)); });
             return Extension == ".exe" || Extension == ".com" || Extension == ".bat" || Extension == ".cmd";
@@ -116,7 +117,7 @@ namespace dbc::interpreter
         std::string FileUrl(const std::filesystem::path& Path)
         {
             static constexpr char Hex[] = "0123456789ABCDEF";
-            const std::string Source = Path.generic_string();
+            const std::string Source = dbc::GenericPathToUtf8(Path);
             std::string Result = "file://";
             Result.reserve(Result.size() + Source.size());
             for (const unsigned char Character : Source)
@@ -141,14 +142,14 @@ namespace dbc::interpreter
             std::error_code PathError;
             if (!std::filesystem::exists(Request.FileName, PathError) || PathError)
             {
-                Error = "EXECUTE FILE cannot find '" + Request.FileName.string() + "'";
+                Error = "EXECUTE FILE cannot find '" + dbc::PathToUtf8(Request.FileName) + "'";
                 return false;
             }
             if (!IsExecutableFile(Request.FileName))
             {
                 if (!SDL_OpenURL(FileUrl(Request.FileName).c_str()))
                 {
-                    Error = "EXECUTE FILE cannot open '" + Request.FileName.string() + "': " + SDL_GetError();
+                    Error = "EXECUTE FILE cannot open '" + dbc::PathToUtf8(Request.FileName) + "': " + SDL_GetError();
                     return false;
                 }
                 return true;
@@ -159,7 +160,7 @@ namespace dbc::interpreter
                 return false;
             std::vector<std::string> OwnedArguments;
             OwnedArguments.reserve(Parsed->size() + 1);
-            OwnedArguments.push_back(Request.FileName.string());
+            OwnedArguments.push_back(dbc::PathToUtf8(Request.FileName));
             OwnedArguments.insert(OwnedArguments.end(), std::make_move_iterator(Parsed->begin()),
                                   std::make_move_iterator(Parsed->end()));
             std::vector<const char*> Arguments;
@@ -178,14 +179,14 @@ namespace dbc::interpreter
             if (!Request.WorkingDirectory.empty())
             {
                 SDL_SetStringProperty(Properties, SDL_PROP_PROCESS_CREATE_WORKING_DIRECTORY_STRING,
-                                      Request.WorkingDirectory.string().c_str());
+                                      dbc::PathToUtf8(Request.WorkingDirectory).c_str());
             }
             SDL_SetBooleanProperty(Properties, SDL_PROP_PROCESS_CREATE_BACKGROUND_BOOLEAN, !Request.WaitForTermination);
             SDL_Process* Process = SDL_CreateProcessWithProperties(Properties);
             SDL_DestroyProperties(Properties);
             if (!Process)
             {
-                Error = "EXECUTE FILE cannot launch '" + Request.FileName.string() + "': " + SDL_GetError();
+                Error = "EXECUTE FILE cannot launch '" + dbc::PathToUtf8(Request.FileName) + "': " + SDL_GetError();
                 return false;
             }
             if (Request.WaitForTermination)
@@ -193,7 +194,8 @@ namespace dbc::interpreter
                 int ExitCode = 0;
                 if (!SDL_WaitProcess(Process, true, &ExitCode))
                 {
-                    Error = "EXECUTE FILE cannot wait for '" + Request.FileName.string() + "': " + SDL_GetError();
+                    Error =
+                        "EXECUTE FILE cannot wait for '" + dbc::PathToUtf8(Request.FileName) + "': " + SDL_GetError();
                     SDL_DestroyProcess(Process);
                     return false;
                 }
@@ -484,13 +486,18 @@ namespace dbc::interpreter
 
         if (!Impl_->Request.Options.LogOutputPath.empty())
         {
-            // Binary mode: Windows text mode would turn each '\n' into "\r\n" and break the golden outputs.
-            Impl_->Log.reset(std::fopen(Impl_->Request.Options.LogOutputPath.string().c_str(), "wb"));
+// Binary mode: Windows text mode would turn each '\n' into "\r\n" and break the golden outputs.
+#if defined(_WIN32)
+            Impl_->Log.reset(_wfopen(Impl_->Request.Options.LogOutputPath.c_str(), L"wb"));
+#else
+            Impl_->Log.reset(std::fopen(Impl_->Request.Options.LogOutputPath.c_str(), "wb"));
+#endif
             if (!Impl_->Log)
             {
                 Impl_->Result.State = ExecutionState::Failed;
                 Impl_->Result.Diagnostics.push_back(detail::InputDiagnostic(
-                    "DBC1004", "Failed to open log output '" + Impl_->Request.Options.LogOutputPath.string() + "'",
+                    "DBC1004",
+                    "Failed to open log output '" + dbc::PathToUtf8(Impl_->Request.Options.LogOutputPath) + "'",
                     Impl_->Request.Options.LogOutputPath));
                 Impl_->FinishBenchmark();
                 return false;

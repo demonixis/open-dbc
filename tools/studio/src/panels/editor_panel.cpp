@@ -1,4 +1,5 @@
 #include "editor_panel.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -33,7 +34,7 @@ namespace dbc::studio
 
         std::string LowerExtension(const std::filesystem::path& Path)
         {
-            std::string Extension = Path.extension().string();
+            std::string Extension = dbc::PathToUtf8(Path.extension());
             std::transform(Extension.begin(), Extension.end(), Extension.begin(),
                            [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
             return Extension;
@@ -187,7 +188,7 @@ namespace dbc::studio
             Doc->Profile = Profile;
             Doc->Basic = Basic;
             Doc->Title = Doc->Path.empty() ? ("untitled-" + std::to_string(++UntitledCount_) + ".dba")
-                                           : Doc->Path.filename().string();
+                                           : dbc::PathToUtf8(Doc->Path.filename());
             Doc->Editor = std::make_unique<TextEditor>();
             if (Basic)
                 ConfigureEditor(*Doc->Editor, Profile);
@@ -374,7 +375,7 @@ namespace dbc::studio
             Doc.Profile = ProjectProfile_;
             if (Doc.Basic)
                 ConfigureEditor(*Doc.Editor, Doc.Profile);
-            Doc.Title = Path.filename().string();
+            Doc.Title = dbc::PathToUtf8(Path.filename());
             Doc.SavedUndoIndex = Doc.Editor->GetUndoIndex();
             return true;
         }
@@ -593,7 +594,7 @@ namespace dbc::studio
 
                         if (!Doc.Path.empty() && ImGui::IsItemHovered())
                         {
-                            ImGui::SetTooltip("%s", Doc.Path.string().c_str());
+                            ImGui::SetTooltip("%s", dbc::PathToUtf8(Doc.Path).c_str());
                         }
 
                         Doc.Editor->Render("##editor", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None);

@@ -1,4 +1,5 @@
 #include "frontend_internal.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -12,7 +13,7 @@ namespace dbc::language
     {
         std::string SourceKey(const SourceDocument& Source)
         {
-            return Source.LogicalPath.lexically_normal().generic_string();
+            return dbc::GenericPathToUtf8(Source.LogicalPath.lexically_normal());
         }
 
         void IncludeError(Program& Value, const IncludeDeclaration& Include, std::string Code, std::string Message)
@@ -54,7 +55,7 @@ namespace dbc::language
                 if (!Included)
                 {
                     IncludeError(Result, Include, "DBC1223",
-                                 Error.empty() ? "Failed to load #INCLUDE '" + Include.Path.string() + "'"
+                                 Error.empty() ? "Failed to load #INCLUDE '" + dbc::PathToUtf8(Include.Path) + "'"
                                                : std::move(Error));
                     continue;
                 }
@@ -110,7 +111,7 @@ namespace dbc::language
     {
         std::ostringstream Output;
         const std::filesystem::path& Path = Value.LogicalPath.empty() ? Source.LogicalPath : Value.LogicalPath;
-        Output << Path.string() << ':' << Value.Span.Begin.Line << ':' << Value.Span.Begin.Column << ": "
+        Output << dbc::PathToUtf8(Path) << ':' << Value.Span.Begin.Line << ':' << Value.Span.Begin.Column << ": "
                << (Value.Severity == DiagnosticSeverity::Error ? "error" : "warning") << ' ' << Value.Code << ": "
                << Value.Message;
         return Output.str();
@@ -164,7 +165,8 @@ namespace dbc::language
                          [](const Diagnostic& Left, const Diagnostic& Right)
                          {
                              if (Left.LogicalPath != Right.LogicalPath)
-                                 return Left.LogicalPath.generic_string() < Right.LogicalPath.generic_string();
+                                 return dbc::GenericPathToUtf8(Left.LogicalPath) <
+                                        dbc::GenericPathToUtf8(Right.LogicalPath);
                              if (Left.Span.Begin.Offset != Right.Span.Begin.Offset)
                              {
                                  return Left.Span.Begin.Offset < Right.Span.Begin.Offset;

@@ -1,4 +1,5 @@
 #include "snippet_library.hpp"
+#include "path_utf8.hpp"
 
 #include "interpreter/atomic_file.hpp"
 #include "language/frontend.hpp"
@@ -151,7 +152,7 @@ namespace dbc::studio
         Snippet ParseSnippet(std::string_view FileName, std::string_view Text)
         {
             Snippet Result;
-            Result.Name = std::filesystem::path(FileName).stem().string();
+            Result.Name = dbc::PathToUtf8(dbc::PathFromUtf8(FileName).stem());
             std::string Normalized;
             Normalized.reserve(Text.size());
             for (const char Character : Text)
@@ -222,13 +223,13 @@ namespace dbc::studio
             std::error_code Error;
             for (const std::filesystem::directory_entry& Entry : std::filesystem::directory_iterator(Folder, Error))
             {
-                if (!Entry.is_regular_file(Error) || Lower(Entry.path().extension().string()) != ".dba")
+                if (!Entry.is_regular_file(Error) || Lower(dbc::PathToUtf8(Entry.path().extension())) != ".dba")
                     continue;
                 std::ifstream Input(Entry.path(), std::ios::binary);
                 const std::string Text(std::istreambuf_iterator<char>(Input), {});
                 if (Input.bad())
                     continue;
-                Snippet Value = ParseSnippet(Entry.path().filename().string(), Text);
+                Snippet Value = ParseSnippet(dbc::PathToUtf8(Entry.path().filename()), Text);
                 Value.Path = Entry.path();
                 Result.push_back(std::move(Value));
             }
@@ -250,11 +251,11 @@ namespace dbc::studio
                 Error = "The snippet is empty.";
                 return {};
             }
-            const std::filesystem::path Path = Folder / (Stem + ".dba");
+            const std::filesystem::path Path = Folder / dbc::PathFromUtf8(Stem + ".dba");
             std::error_code FileError;
             if (std::filesystem::exists(Path, FileError) || FileError)
             {
-                Error = "A snippet file named " + Path.filename().string() + " already exists.";
+                Error = "A snippet file named " + dbc::PathToUtf8(Path.filename()) + " already exists.";
                 return {};
             }
             if (!dbc::interpreter::AtomicWriteText(Path, FormatSnippet(Value), &Error))

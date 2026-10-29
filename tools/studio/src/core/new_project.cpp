@@ -1,4 +1,5 @@
 #include "new_project.hpp"
+#include "path_utf8.hpp"
 
 #include "core/project_settings.hpp"
 #include "interpreter/atomic_file.hpp"
@@ -122,19 +123,19 @@ namespace dbc::studio
             std::error_code Error;
             if (!std::filesystem::is_directory(Request.Location, Error))
             {
-                Result.Error = "The location is not a folder: " + Request.Location.string();
+                Result.Error = "The location is not a folder: " + dbc::PathToUtf8(Request.Location);
                 return Result;
             }
-            const std::filesystem::path Root = (Request.Location / Request.Name).lexically_normal();
+            const std::filesystem::path Root = (Request.Location / dbc::PathFromUtf8(Request.Name)).lexically_normal();
             if (std::filesystem::exists(Root, Error) || Error)
             {
-                Result.Error = Error ? "Cannot inspect " + Root.string() + ": " + Error.message()
+                Result.Error = Error ? "Cannot inspect " + dbc::PathToUtf8(Root) + ": " + Error.message()
                                      : "A file or folder named " + Request.Name + " already exists there.";
                 return Result;
             }
             if (!std::filesystem::create_directory(Root, Error))
             {
-                Result.Error = "Cannot create " + Root.string() + ": " + Error.message();
+                Result.Error = "Cannot create " + dbc::PathToUtf8(Root) + ": " + Error.message();
                 return Result;
             }
 
@@ -157,7 +158,7 @@ namespace dbc::studio
                 Settings.LanguageEntry = KMainSource;
                 Written = Settings.Save(Root);
                 if (!Written)
-                    Result.Error = "Cannot write " + ProjectSettings::FilePath(Root).string();
+                    Result.Error = "Cannot write " + dbc::PathToUtf8(ProjectSettings::FilePath(Root));
             }
             if (!Written)
             {

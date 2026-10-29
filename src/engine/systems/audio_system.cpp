@@ -3,6 +3,7 @@
 #include "engine_kernel.hpp"
 #include "image_store.hpp"
 #include "log.hpp"
+#include "path_utf8.hpp"
 
 #if __has_include(<SDL3_mixer/SDL_mixer.h>)
 #include <SDL3_mixer/SDL_mixer.h>
@@ -433,7 +434,7 @@ namespace dbc
             Slot.FormatTag = SDL_AUDIO_ISFLOAT(Spec.format) ? 3 : 1;
         }
 
-        std::ifstream Input(Resolved, std::ios::binary);
+        std::ifstream Input(dbc::PathFromUtf8(Resolved), std::ios::binary);
         const std::vector<std::uint8_t> FileData((std::istreambuf_iterator<char>(Input)),
                                                  std::istreambuf_iterator<char>());
         if (FileData.size() >= 12 && std::memcmp(FileData.data(), "RIFF", 4) == 0 &&
@@ -1323,7 +1324,7 @@ namespace dbc
         std::vector<std::uint8_t> Wave;
         if (!BuildWaveData(Wave, Slot, Error))
             return false;
-        const std::filesystem::path Destination(Path);
+        const std::filesystem::path Destination = dbc::PathFromUtf8(Path);
         if (Destination.empty())
         {
             if (Error)
@@ -1668,8 +1669,8 @@ namespace dbc
             return Audio;
 
         const std::string FirstError = SDL_GetError();
-        const fs::path BasePath = fs::path(Resolved);
-        std::string Extension = BasePath.extension().string();
+        const fs::path BasePath = dbc::PathFromUtf8(Resolved);
+        std::string Extension = dbc::PathToUtf8(BasePath.extension());
         std::transform(Extension.begin(), Extension.end(), Extension.begin(),
                        [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
         if (Extension != ".mid" && Extension != ".midi")
@@ -1683,8 +1684,8 @@ namespace dbc
         static constexpr std::array<const char*, 2> KFallbackExts = {".mp3", ".wav"};
         for (const char* FallbackExtension : KFallbackExts)
         {
-            const fs::path Candidate = StemPath.string() + FallbackExtension;
-            const std::string CandidateString = Candidate.string();
+            const fs::path Candidate = dbc::PathFromUtf8(dbc::PathToUtf8(StemPath) + FallbackExtension);
+            const std::string CandidateString = dbc::PathToUtf8(Candidate);
             if (MIX_Audio* Audio = MIX_LoadAudio(Mixer_, CandidateString.c_str(), false))
             {
                 DBC_LOG_INFO("LoadMusic fallback: {} -> {}", RequestedPath, CandidateString);

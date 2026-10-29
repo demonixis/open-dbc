@@ -1,4 +1,5 @@
 #include "execution_service.hpp"
+#include "path_utf8.hpp"
 
 #include "basic_path.hpp"
 #include "execution_diagnostics.hpp"
@@ -29,7 +30,7 @@ namespace dbc::interpreter
 
         std::string PathKey(const std::filesystem::path& Value)
         {
-            return NormalizePath(Value).generic_string();
+            return dbc::GenericPathToUtf8(NormalizePath(Value));
         }
 
         bool ValidateLogicalProfile(const std::filesystem::path& Path, language::LanguageProfile Profile,
@@ -44,7 +45,7 @@ namespace dbc::interpreter
                 return true;
             if (!language::IsLanguageSource(Path))
             {
-                Error = "BASIC source must use the .dba extension: " + Path.string();
+                Error = "BASIC source must use the .dba extension: " + dbc::PathToUtf8(Path);
                 return false;
             }
             (void)Profile;
@@ -156,7 +157,7 @@ namespace dbc::interpreter
             for (std::size_t Index = 1; Index < Request.OrderedProjectSources.size(); ++Index)
             {
                 const std::filesystem::path UnitPath = NormalizePath(Request.OrderedProjectSources[Index]);
-                if (UnitPath.generic_string().find('"') != std::string::npos)
+                if (dbc::GenericPathToUtf8(UnitPath).find('"') != std::string::npos)
                 {
                     Result.Diagnostics.push_back(
                         InputDiagnostic("DBC1006", "Project source path cannot contain a quote", UnitPath));
@@ -168,7 +169,7 @@ namespace dbc::interpreter
                     IncludePath = UnitPath;
                 if (!RootText.empty() && RootText.back() != '\n')
                     RootText.push_back('\n');
-                RootText += "#include \"" + IncludePath.generic_string() + "\"\n";
+                RootText += "#include \"" + dbc::GenericPathToUtf8(IncludePath) + "\"\n";
             }
             const auto RootDocument = std::make_shared<const language::SourceDocument>(
                 language::SourceDocument{Root->second.LogicalPath, std::move(RootText), Request.Profile});
@@ -206,7 +207,7 @@ namespace dbc::interpreter
                     if (!Loaded)
                     {
                         if (LoadError.empty())
-                            LoadError = "Unable to load #INCLUDE '" + LogicalPath.string() + "'";
+                            LoadError = "Unable to load #INCLUDE '" + dbc::PathToUtf8(LogicalPath) + "'";
                         return {};
                     }
                     Loaded->LogicalPath = LogicalPath;
@@ -214,7 +215,7 @@ namespace dbc::interpreter
                 }
                 if (Unit == Sources.end())
                 {
-                    LoadError = "#INCLUDE source is not present in memory: " + LogicalPath.string();
+                    LoadError = "#INCLUDE source is not present in memory: " + dbc::PathToUtf8(LogicalPath);
                     return {};
                 }
                 Used.insert(Key);
@@ -310,15 +311,15 @@ namespace dbc::interpreter
         const std::filesystem::path NormalizedPath = NormalizeBasicPath(LogicalPath);
         if (!language::IsLanguageSource(NormalizedPath))
         {
-            Error = "BASIC source must use the .dba extension: " + NormalizedPath.string();
+            Error = "BASIC source must use the .dba extension: " + dbc::PathToUtf8(NormalizedPath);
             return std::nullopt;
         }
         (void)Profile;
         std::size_t Size = 0;
-        void* Bytes = SDL_LoadFile(NormalizedPath.string().c_str(), &Size);
+        void* Bytes = SDL_LoadFile(dbc::PathToUtf8(NormalizedPath).c_str(), &Size);
         if (Bytes == nullptr)
         {
-            Error = "Failed to read source file '" + NormalizedPath.string() + "'";
+            Error = "Failed to read source file '" + dbc::PathToUtf8(NormalizedPath) + "'";
             return std::nullopt;
         }
         const std::string Text(static_cast<const char*>(Bytes), Size);

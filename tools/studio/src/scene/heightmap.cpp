@@ -1,4 +1,5 @@
 #include "scene/heightmap.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -70,7 +71,7 @@ namespace dbc::studio
 
         std::filesystem::path TerrainHeightmapPath(const std::string& LevelName, int TerrainId)
         {
-            return std::filesystem::path("heightmaps") /
+            return dbc::PathFromUtf8("heightmaps") /
                    (SanitizeLevelName(LevelName) + "_terrain" + std::to_string(TerrainId) + ".png");
         }
 
@@ -85,7 +86,7 @@ namespace dbc::studio
             std::filesystem::create_directories(Path.parent_path(), FileError);
             if (FileError)
             {
-                Error = "Cannot create " + Path.parent_path().string() + ": " + FileError.message();
+                Error = "Cannot create " + dbc::PathToUtf8(Path.parent_path()) + ": " + FileError.message();
                 return false;
             }
             SDL_Surface* Surface = SDL_CreateSurface(Size, Size, SDL_PIXELFORMAT_RGB24);
@@ -103,7 +104,7 @@ namespace dbc::studio
             // Written beside the target first, so a failed save leaves the old image intact.
             std::filesystem::path Temporary = Path;
             Temporary += ".tmp";
-            const bool Saved = IMG_SavePNG(Surface, Temporary.string().c_str());
+            const bool Saved = IMG_SavePNG(Surface, dbc::PathToUtf8(Temporary).c_str());
             SDL_DestroySurface(Surface);
             if (!Saved)
             {
@@ -114,7 +115,7 @@ namespace dbc::studio
             std::filesystem::rename(Temporary, Path, FileError);
             if (FileError)
             {
-                Error = "Cannot write " + Path.string() + ": " + FileError.message();
+                Error = "Cannot write " + dbc::PathToUtf8(Path) + ": " + FileError.message();
                 std::filesystem::remove(Temporary, FileError);
                 return false;
             }

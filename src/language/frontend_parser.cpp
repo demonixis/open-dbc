@@ -1,4 +1,5 @@
 #include "frontend_internal.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -1282,7 +1283,7 @@ namespace dbc::language::detail
                 {
                     Path = Path.substr(1, Path.size() - 2);
                 }
-                Program_.Includes.push_back({Value.Span, std::filesystem::path(Path), Program_.Statements.size()});
+                Program_.Includes.push_back({Value.Span, dbc::PathFromUtf8(Path), Program_.Statements.size()});
             }
 
             std::vector<Statement> ParseInlineBlock(const std::vector<Token>& Tokens, std::size_t Begin,

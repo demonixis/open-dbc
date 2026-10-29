@@ -1,4 +1,5 @@
 #include "export_internal.hpp"
+#include "path_utf8.hpp"
 #include "toolchain_locator.hpp"
 #include "windows_resources.hpp"
 
@@ -38,12 +39,14 @@ namespace dbc::studio
                     return false;
             }
             const fs::path Icon = App / "Contents/Resources/artifact.icns";
-            if (!Context.Run({"/usr/bin/iconutil", "-c", "icns", "-o", Icon.string(), IconSet.string()}, Error) ||
+            if (!Context.Run({"/usr/bin/iconutil", "-c", "icns", "-o", dbc::PathToUtf8(Icon), dbc::PathToUtf8(IconSet)},
+                             Error) ||
                 !RemoveRequired(IconSet, Error))
                 return false;
             const fs::path Plist = App / "Contents/Info.plist";
             return Context.Run(
-                {"/usr/bin/plutil", "-replace", "CFBundleIconFile", "-string", "artifact.icns", Plist.string()}, Error);
+                {"/usr/bin/plutil", "-replace", "CFBundleIconFile", "-string", "artifact.icns", dbc::PathToUtf8(Plist)},
+                Error);
         }
 #endif
 
@@ -82,8 +85,17 @@ namespace dbc::studio
         {
             const std::string Thumbprint =
                 NormalizeCertificateThumbprint(Toolchain.WindowsCertificate).value_or(std::string{});
-            return {Signtool.string(), "sign", "/fd",       "SHA256",   "/td",        "SHA256",
-                    "/tr",             Toolchain.WindowsTimestampUrl, "/sha1", Thumbprint, File.string()};
+            return {dbc::PathToUtf8(Signtool),
+                    "sign",
+                    "/fd",
+                    "SHA256",
+                    "/td",
+                    "SHA256",
+                    "/tr",
+                    Toolchain.WindowsTimestampUrl,
+                    "/sha1",
+                    Thumbprint,
+                    dbc::PathToUtf8(File)};
         }
 
         bool FinishWindowsFolder(const ExportContext& Context, const ArtifactExportRequest& Request,
@@ -115,7 +127,7 @@ namespace dbc::studio
             Version.Copyright = Request.Metadata.Copyright;
             Version.Version = Request.Settings.VersionName;
             Version.Build = Request.Settings.VersionCode;
-            Version.OriginalFilename = Executable.filename().string();
+            Version.OriginalFilename = dbc::PathToUtf8(Executable.filename());
             if (!UpdateWindowsExecutableResources(Executable, Icons, Version, Error))
                 return false;
             if (!Request.Sign)
@@ -135,7 +147,7 @@ namespace dbc::studio
             for (const fs::path& File : {Executable, Stage / "openxr_loader.dll"})
             {
                 if (!Context.Run(WindowsSignArguments(*Signtool, Request.Toolchain, File), Error) ||
-                    !Context.Run({Signtool->string(), "verify", "/pa", File.string()}, Error))
+                    !Context.Run({dbc::PathToUtf8(*Signtool), "verify", "/pa", dbc::PathToUtf8(File)}, Error))
                     return false;
             }
             return true;
@@ -169,7 +181,7 @@ namespace dbc::studio
                                                          const std::string& ProductName, const fs::path& Archive)
         {
             // bsdtar on Windows 10+ and GNU tar both pick the format from the archive name.
-            return {"tar", "-a", "-cf", Archive.string(), "-C", OutputDirectory.string(), ProductName};
+            return {"tar", "-a", "-cf", dbc::PathToUtf8(Archive), "-C", dbc::PathToUtf8(OutputDirectory), ProductName};
         }
 
         ArtifactExportResult ExportDesktop(const ExportContext& Context, const ArtifactExportRequest& Request,
@@ -190,13 +202,13 @@ namespace dbc::studio
             std::error_code FileError;
             if (fs::exists(Result.OutputPath, FileError))
             {
-                Result.Error = "Export destination already exists: " + Result.OutputPath.string();
+                Result.Error = "Export destination already exists: " + dbc::PathToUtf8(Result.OutputPath);
                 Result.OutputPath.clear();
                 return Result;
             }
             if (Request.Sign && fs::exists(Archive, FileError))
             {
-                Result.Error = "Export destination already exists: " + Archive.string();
+                Result.Error = "Export destination already exists: " + dbc::PathToUtf8(Archive);
                 Result.OutputPath.clear();
                 return Result;
             }
@@ -234,16 +246,17 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
-            Result.Messages.push_back("Published " + Result.OutputPath.string());
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) +
+                                      " asset files");
+            Result.Messages.push_back("Published " + dbc::PathToUtf8(Result.OutputPath));
             if (Request.Sign)
             {
                 // A zip keeps the signature and the stapled ticket for direct downloads.
-                if (!Context.Run({"/usr/bin/ditto", "-c", "-k", "--keepParent", Result.OutputPath.string(),
-                                  Archive.string()},
+                if (!Context.Run({"/usr/bin/ditto", "-c", "-k", "--keepParent", dbc::PathToUtf8(Result.OutputPath),
+                                  dbc::PathToUtf8(Archive)},
                                  Result.Error))
                     return Result;
-                Result.Messages.push_back("Published " + Archive.string());
+                Result.Messages.push_back("Published " + dbc::PathToUtf8(Archive));
                 if (!Notarize)
                     Result.Messages.push_back("Signed but not notarized: other Macs will block it until it is "
                                               "notarized with a notary profile");
@@ -272,13 +285,14 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
-            Result.Messages.push_back("Published " + Result.OutputPath.string());
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) +
+                                      " asset files");
+            Result.Messages.push_back("Published " + dbc::PathToUtf8(Result.OutputPath));
             if (Request.Sign)
             {
                 if (!Context.Run(DesktopArchiveArguments(Request.OutputDirectory, ProductName, Archive), Result.Error))
                     return Result;
-                Result.Messages.push_back("Published " + Archive.string());
+                Result.Messages.push_back("Published " + dbc::PathToUtf8(Archive));
             }
 #endif
             return Result;

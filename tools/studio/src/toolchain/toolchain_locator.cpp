@@ -1,4 +1,5 @@
 #include "toolchain_locator.hpp"
+#include "path_utf8.hpp"
 #include "process_runner.hpp"
 
 #include <SDL3/SDL.h>
@@ -97,7 +98,7 @@ namespace dbc::studio
             Search.JdkRoots = {"/Applications/Android Studio.app/Contents/jbr/Contents/Home",
                                "/Library/Java/JavaVirtualMachines", "/opt/homebrew/opt", "/usr/local/opt"};
             if (Home)
-                Search.AndroidSdkRoots.push_back(fs::path(*Home) / "Library/Android/sdk");
+                Search.AndroidSdkRoots.push_back(dbc::PathFromUtf8(*Home) / "Library/Android/sdk");
             Search.AndroidSdkRoots.push_back("/opt/homebrew/share/android-commandlinetools");
             Search.AndroidSdkRoots.push_back("/usr/local/share/android-commandlinetools");
 #elif defined(_WIN32)
@@ -105,13 +106,13 @@ namespace dbc::studio
                                "C:/Program Files/Eclipse Adoptium", "C:/Program Files/Microsoft"};
             Search.WindowsSdkBinRoots = {"C:/Program Files (x86)/Windows Kits/10/bin"};
             if (const auto LocalAppData = Search.Variable("LOCALAPPDATA"))
-                Search.AndroidSdkRoots.push_back(fs::path(*LocalAppData) / "Android/Sdk");
+                Search.AndroidSdkRoots.push_back(dbc::PathFromUtf8(*LocalAppData) / "Android/Sdk");
 #else
             Search.JdkRoots = {"/opt/android-studio/jbr", "/usr/lib/jvm"};
             if (Home)
             {
-                Search.JdkRoots.insert(Search.JdkRoots.begin(), fs::path(*Home) / "android-studio/jbr");
-                Search.AndroidSdkRoots.push_back(fs::path(*Home) / "Android/Sdk");
+                Search.JdkRoots.insert(Search.JdkRoots.begin(), dbc::PathFromUtf8(*Home) / "android-studio/jbr");
+                Search.AndroidSdkRoots.push_back(dbc::PathFromUtf8(*Home) / "Android/Sdk");
             }
 #endif
             return Search;
@@ -141,7 +142,7 @@ namespace dbc::studio
             if (Search.Variable)
             {
                 if (const auto JavaHome = Search.Variable("JAVA_HOME"))
-                    Candidates.emplace_back(*JavaHome);
+                    Candidates.emplace_back(dbc::PathFromUtf8(*JavaHome));
             }
             for (const fs::path& Root : Search.JdkRoots)
             {
@@ -162,7 +163,7 @@ namespace dbc::studio
                 for (const std::string_view Name : {"ANDROID_HOME", "ANDROID_SDK_ROOT"})
                 {
                     if (const auto Value = Search.Variable(Name))
-                        Candidates.emplace_back(*Value);
+                        Candidates.emplace_back(dbc::PathFromUtf8(*Value));
                 }
             }
             Candidates.insert(Candidates.end(), Search.AndroidSdkRoots.begin(), Search.AndroidSdkRoots.end());
@@ -178,7 +179,7 @@ namespace dbc::studio
             {
                 // Compare 36.0.0 > 35.0.1 numerically; preview folders such as 36.0.0-rc1 rank by their numbers.
                 std::vector<int> Version;
-                const std::string Name = It->path().filename().string();
+                const std::string Name = dbc::PathToUtf8(It->path().filename());
                 const char* Cursor = Name.data();
                 const char* NameEnd = Name.data() + Name.size();
                 while (Cursor < NameEnd)
@@ -247,8 +248,8 @@ namespace dbc::studio
         std::optional<std::string> MacMinimumSystem(const fs::path& Binary)
         {
 #if defined(__APPLE__)
-            const ProcessResult Result =
-                RunProcess({{"/usr/bin/xcrun", "vtool", "-show-build", Binary.string()}, {}, {}}, {}, nullptr, true);
+            const ProcessResult Result = RunProcess(
+                {{"/usr/bin/xcrun", "vtool", "-show-build", dbc::PathToUtf8(Binary)}, {}, {}}, {}, nullptr, true);
             const std::size_t At = Result ? Result.Output.find("minos ") : std::string::npos;
             if (At == std::string::npos)
                 return std::nullopt;
@@ -266,7 +267,7 @@ namespace dbc::studio
             if (Search.Variable)
             {
                 if (const auto Configured = Search.Variable("OPENDBC_SIGNTOOL"))
-                    return fs::path(*Configured);
+                    return dbc::PathFromUtf8(*Configured);
             }
             std::optional<fs::path> Latest;
             for (const fs::path& Root : Search.WindowsSdkBinRoots)

@@ -1,4 +1,5 @@
 #include "panels/scene_editor.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <array>
@@ -108,7 +109,7 @@ namespace dbc::studio
             {
                 const std::filesystem::path& Path = Entry.path();
                 if (Entry.is_regular_file(Error) && dbc::language::IsLanguageSource(Path))
-                    Names.push_back(Path.stem().string());
+                    Names.push_back(dbc::PathToUtf8(Path.stem()));
             }
             std::sort(Names.begin(), Names.end());
             return Names;
@@ -129,12 +130,13 @@ namespace dbc::studio
             const std::optional<std::string> Text = Host_.ReadSource(LevelPath(Name));
             if (!Text)
             {
-                Host_.Log("Cannot read level " + LevelPath(Name).string(), true);
+                Host_.Log("Cannot read level " + dbc::PathToUtf8(LevelPath(Name)), true);
                 return;
             }
             scene::LevelReadResult Read = scene::ReadLevel(*Text, Name, Project_->Profile);
             for (const scene::ReadError& Error : Read.Errors)
-                Host_.Log(LevelPath(Name).string() + ":" + std::to_string(Error.Line) + ": " + Error.Message, true);
+                Host_.Log(dbc::PathToUtf8(LevelPath(Name)) + ":" + std::to_string(Error.Line) + ": " + Error.Message,
+                          true);
             if (!Read.Ok())
                 Host_.Log("The level stays read-only until these lines are fixed in the code editor", true);
             Document_ = std::move(Read.Document);
@@ -175,7 +177,7 @@ namespace dbc::studio
                 const std::optional<std::string> Text = Host_.ReadSource(GamePath());
                 if (!Text)
                 {
-                    GameErrors_.push_back({0, "Cannot read " + GamePath().string()});
+                    GameErrors_.push_back({0, "Cannot read " + dbc::PathToUtf8(GamePath())});
                 }
                 else
                 {
@@ -184,7 +186,8 @@ namespace dbc::studio
                     GameErrors_ = std::move(Read.Errors);
                 }
                 for (const scene::ReadError& Read : GameErrors_)
-                    Host_.Log(GamePath().string() + ":" + std::to_string(Read.Line) + ": " + Read.Message, true);
+                    Host_.Log(dbc::PathToUtf8(GamePath()) + ":" + std::to_string(Read.Line) + ": " + Read.Message,
+                              true);
             }
             SavedGame_ = Game_;
         }
@@ -207,7 +210,7 @@ namespace dbc::studio
 
             if (!Host_.WriteSource(LevelPath(Document_.Name), scene::WriteLevel(Document_), true))
             {
-                Host_.Log("Cannot write " + LevelPath(Document_.Name).string(), true);
+                Host_.Log("Cannot write " + dbc::PathToUtf8(LevelPath(Document_.Name)), true);
                 return false;
             }
             Saved_ = Document_;
@@ -216,7 +219,7 @@ namespace dbc::studio
             {
                 if (!Host_.WriteSource(GamePath(), scene::WriteGame(Game_, Project_->Profile), true))
                 {
-                    Host_.Log("Cannot write " + GamePath().string(), true);
+                    Host_.Log("Cannot write " + dbc::PathToUtf8(GamePath()), true);
                     return false;
                 }
                 GameFileExists_ = true;
@@ -231,11 +234,11 @@ namespace dbc::studio
             const std::optional<std::string> Text = Host_.ReadSource(Main);
             if (!Text)
             {
-                Host_.Log("Cannot read the main source " + Main.string(), true);
+                Host_.Log("Cannot read the main source " + dbc::PathToUtf8(Main), true);
                 return false;
             }
             const auto Relative = [&](const std::filesystem::path& Path)
-            { return Path.lexically_relative(Main.parent_path()).generic_string(); };
+            { return dbc::GenericPathToUtf8(Path.lexically_relative(Main.parent_path())); };
 
             std::vector<scene::MainLink> Links;
             if (GameFileExists_)
@@ -246,10 +249,10 @@ namespace dbc::studio
                 return true;
             if (!Host_.WriteSource(Main, Linked.Text, false))
             {
-                Host_.Log("Cannot update the main source " + Main.string(), true);
+                Host_.Log("Cannot update the main source " + dbc::PathToUtf8(Main), true);
                 return false;
             }
-            Host_.Log("Added the level's #include and call to " + Main.filename().string(), false);
+            Host_.Log("Added the level's #include and call to " + dbc::PathToUtf8(Main.filename()), false);
             return true;
         }
 
@@ -353,7 +356,7 @@ namespace dbc::studio
                 return;
             scene::SceneNode& Node = Document_.Add(Kind);
             Node.Asset = Relative;
-            Node.Name = std::filesystem::path(Relative).stem().string();
+            Node.Name = dbc::PathToUtf8(dbc::PathFromUtf8(Relative).stem());
             if (At)
             {
                 Node.Position = *At;
@@ -598,7 +601,7 @@ namespace dbc::studio
                 return;
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
             ImGui::TextWrapped("Read-only: %s has lines the Scene view did not write.",
-                               scene::LevelRelativePath(Document_.Name).generic_string().c_str());
+                               dbc::GenericPathToUtf8(scene::LevelRelativePath(Document_.Name)).c_str());
             for (const scene::ReadError& Error : ReadErrors_)
                 ImGui::BulletText("Line %u: %s", Error.Line, Error.Message.c_str());
             ImGui::PopStyleColor();
@@ -679,10 +682,9 @@ namespace dbc::studio
                 return;
             if (ImGui::IsWindowAppearing())
                 ImGui::SetKeyboardFocusHere();
-            const bool Entered = ImGui::InputText("Name", NewLevelName_, sizeof(NewLevelName_),
-                                                  ImGuiInputTextFlags_EnterReturnsTrue);
-            ImGui::TextDisabled("Saved as %s",
-                                scene::LevelRelativePath(NewLevelName_).generic_string().c_str());
+            const bool Entered =
+                ImGui::InputText("Name", NewLevelName_, sizeof(NewLevelName_), ImGuiInputTextFlags_EnterReturnsTrue);
+            ImGui::TextDisabled("Saved as %s", dbc::GenericPathToUtf8(scene::LevelRelativePath(NewLevelName_)).c_str());
             if (Entered || ImGui::Button("Create"))
             {
                 if (Dirty())

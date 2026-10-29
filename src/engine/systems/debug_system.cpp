@@ -6,6 +6,7 @@
 #include "light_manager.hpp"
 #include "log.hpp"
 #include "object_manager.hpp"
+#include "path_utf8.hpp"
 #include "text_system.hpp"
 
 #include <SDL3/SDL_gpu.h>
@@ -183,7 +184,7 @@ namespace dbc
     void DebugSystem::DumpScene(const std::string& Path)
     {
         const std::string OutPath = Path.empty() ? "open-dbc-dump-scene.txt" : Path;
-        std::ofstream Out(OutPath);
+        std::ofstream Out(dbc::PathFromUtf8(OutPath));
         if (!Out.is_open())
         {
             DBC_LOG_ERROR("DumpScene: failed to open {}", OutPath);
@@ -230,7 +231,7 @@ namespace dbc
     void DebugSystem::DumpRenderer(const std::string& Path)
     {
         const std::string OutPath = Path.empty() ? "open-dbc-dump-renderer.txt" : Path;
-        std::ofstream Out(OutPath);
+        std::ofstream Out(dbc::PathFromUtf8(OutPath));
         if (!Out.is_open())
         {
             DBC_LOG_ERROR("DumpRenderer: failed to open {}", OutPath);

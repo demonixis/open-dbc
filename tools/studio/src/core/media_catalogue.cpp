@@ -1,4 +1,5 @@
 #include "media_catalogue.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -55,7 +56,7 @@ namespace dbc::studio
                 {".otf", MediaKind::Font},
             };
 
-            std::string Name = Path.extension().string();
+            std::string Name = dbc::PathToUtf8(Path.extension());
             std::transform(Name.begin(), Name.end(), Name.begin(),
                            [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
             for (const Extension& Value : KExtensions)
@@ -79,7 +80,7 @@ namespace dbc::studio
                 if (Error)
                     break;
                 const fs::path& Path = It->path();
-                const std::string Name = Path.filename().string();
+                const std::string Name = dbc::PathToUtf8(Path.filename());
                 if (!Name.empty() && Name.front() == '.')
                 {
                     if (It->is_directory(Error))
@@ -101,15 +102,15 @@ namespace dbc::studio
                 File.Path = Path;
                 File.Kind = *Kind;
                 const fs::path Relative = fs::relative(Path, Root, Error);
-                File.RelativeName = Error ? Name : Relative.generic_string();
+                File.RelativeName = Error ? Name : dbc::GenericPathToUtf8(Relative);
                 File.Size = It->file_size(Error);
                 if (Error)
                     File.Size = 0;
                 Result.Files.push_back(std::move(File));
             }
 
-            std::sort(Result.Files.begin(), Result.Files.end(),
-                      [](const MediaFile& Left, const MediaFile& Right) { return Left.RelativeName < Right.RelativeName; });
+            std::sort(Result.Files.begin(), Result.Files.end(), [](const MediaFile& Left, const MediaFile& Right)
+                      { return Left.RelativeName < Right.RelativeName; });
             return Result;
         }
     } // namespace core

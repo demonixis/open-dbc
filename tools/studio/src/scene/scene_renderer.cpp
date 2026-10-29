@@ -1,4 +1,5 @@
 #include "scene/scene_renderer.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -302,16 +303,17 @@ namespace dbc::studio
             switch (Node.Kind)
             {
                 case NodeKind::Model:
-                    return "model:" + (AssetRoot / Node.Asset).lexically_normal().string();
+                    return "model:" + dbc::PathToUtf8((AssetRoot / dbc::PathFromUtf8(Node.Asset)).lexically_normal());
                 case NodeKind::Terrain:
                 {
                     // The Scene view rewrites generated heightmaps in place: the write
                     // time makes a new image a new mesh.
-                    const std::filesystem::path Path = (AssetRoot / Node.Asset).lexically_normal();
+                    const std::filesystem::path Path = (AssetRoot / dbc::PathFromUtf8(Node.Asset)).lexically_normal();
                     std::error_code Error;
                     const auto Written = std::filesystem::last_write_time(Path, Error);
-                    return "terrain:" + Path.string() + "@" +
-                           (Error ? std::string() : std::to_string(static_cast<long long>(Written.time_since_epoch().count())));
+                    return "terrain:" + dbc::PathToUtf8(Path) + "@" +
+                           (Error ? std::string()
+                                  : std::to_string(static_cast<long long>(Written.time_since_epoch().count())));
                 }
                 case NodeKind::Light:
                 case NodeKind::Sound:
@@ -364,17 +366,17 @@ namespace dbc::studio
             Geometry Entry;
             if (Node.Kind == NodeKind::Model || Node.Kind == NodeKind::Terrain)
             {
-                const std::filesystem::path Path = AssetRoot / Node.Asset;
+                const std::filesystem::path Path = AssetRoot / dbc::PathFromUtf8(Node.Asset);
                 Entry.Folder = Path.parent_path();
                 std::string Error;
-                const bool Loaded = !Node.Asset.empty() && (Node.Kind == NodeKind::Model
-                                                                ? LoadModelMesh(Path, Entry.Mesh, Error)
-                                                                : LoadTerrainMesh(Path, Entry.Mesh, Error));
+                const bool Loaded =
+                    !Node.Asset.empty() && (Node.Kind == NodeKind::Model ? LoadModelMesh(Path, Entry.Mesh, Error)
+                                                                         : LoadTerrainMesh(Path, Entry.Mesh, Error));
                 if (!Loaded)
                 {
                     // A box stands in, so the node can still be seen and picked.
                     if (!Node.Asset.empty() && Failed_.emplace(Key, true).second)
-                        Errors_.push_back("Scene preview: cannot load " + Path.string() + ": " + Error);
+                        Errors_.push_back("Scene preview: cannot load " + dbc::PathToUtf8(Path) + ": " + Error);
                     SceneNode Placeholder;
                     Placeholder.Kind = NodeKind::Cube;
                     Entry.Mesh = BuildMesh(Placeholder, Document.Profile);
@@ -390,7 +392,7 @@ namespace dbc::studio
 
         SDL_GPUTexture* SceneRenderer::FindTexture(const std::filesystem::path& Path)
         {
-            const std::string Key = Path.lexically_normal().string();
+            const std::string Key = dbc::PathToUtf8(Path.lexically_normal());
             if (const auto Found = Textures_.find(Key); Found != Textures_.end())
                 return Found->second.Texture;
             if (Failed_.count(Key) != 0)
@@ -400,7 +402,7 @@ namespace dbc::studio
             if (!core::LoadGpuImage(Gpu_, Path, Image, Error))
             {
                 Failed_.emplace(Key, true);
-                Errors_.push_back("Scene preview: " + Path.string() + ": " + Error);
+                Errors_.push_back("Scene preview: " + dbc::PathToUtf8(Path) + ": " + Error);
                 return nullptr;
             }
             return Textures_.emplace(Key, Image).first->second.Texture;
@@ -437,7 +439,7 @@ namespace dbc::studio
                 return nullptr;
             // LOAD OBJECT looks next to the model, then in the media folder; names in
             // old model files often disagree with the files' case.
-            const std::filesystem::path Name(Part.Texture);
+            const std::filesystem::path Name = dbc::PathFromUtf8(Part.Texture);
             for (const std::filesystem::path& Base : {Entry.Folder, AssetRoot})
             {
                 std::filesystem::path Resolved;
@@ -634,7 +636,7 @@ namespace dbc::studio
                 if (!Mat.Flags.Ambient)
                     Item.Fragment.Ambient = glm::vec4(0.0f);
                 Item.Fragment.Flags.y = Mat.Flags.Lighting ? 1.0f : 0.0f;
-                Item.Texture = Mat.Texture.empty() ? nullptr : FindTexture(AssetRoot / Mat.Texture);
+                Item.Texture = Mat.Texture.empty() ? nullptr : FindTexture(AssetRoot / dbc::PathFromUtf8(Mat.Texture));
                 Item.Fragment.Flags.x = Item.Texture != nullptr ? 1.0f : 0.0f;
                 Item.Blend = Mat.Ghost;
                 Item.Wireframe = Mat.Flags.Wireframe;

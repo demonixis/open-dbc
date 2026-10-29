@@ -1,5 +1,6 @@
 #include "export_readiness.hpp"
 #include "export_internal.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -55,7 +56,7 @@ namespace dbc::studio
             }
             if (!Request.Sign)
                 return;
-            fs::path Keystore = Request.Settings.AndroidKeystorePath;
+            fs::path Keystore = dbc::PathFromUtf8(Request.Settings.AndroidKeystorePath);
             if (!Keystore.empty() && Keystore.is_relative())
                 Keystore = Request.ProjectRoot / Keystore;
             std::error_code FileError;
@@ -190,8 +191,9 @@ namespace dbc::studio
         ExportToolchain ResolveExportToolchain(const core::Settings& Settings, const ToolchainSearch& Search)
         {
             ExportToolchain Toolchain;
-            Toolchain.JavaHome = LocateJavaHome(Settings.JavaHome, Search).value_or(fs::path{});
-            Toolchain.AndroidSdk = LocateAndroidSdk(Settings.AndroidSdk, Search).value_or(fs::path{});
+            Toolchain.JavaHome = LocateJavaHome(dbc::PathFromUtf8(Settings.JavaHome), Search).value_or(fs::path{});
+            Toolchain.AndroidSdk =
+                LocateAndroidSdk(dbc::PathFromUtf8(Settings.AndroidSdk), Search).value_or(fs::path{});
             // Build machines configure signing through the environment instead of the Studio preferences.
             const auto Choose = [&Search](const char* Variable, const std::string& Configured)
             {

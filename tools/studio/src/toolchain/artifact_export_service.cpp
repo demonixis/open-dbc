@@ -1,6 +1,7 @@
 #include "artifact_export_service.hpp"
 #include "core/paths.hpp"
 #include "export_internal.hpp"
+#include "path_utf8.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -20,9 +21,9 @@ namespace dbc::studio
                 return {{}, {}, Request.Settings.LoadError};
             std::error_code Error;
             if (!fs::is_directory(Request.OutputDirectory, Error))
-                return {{}, {}, "Export destination is not a directory: " + Request.OutputDirectory.string()};
+                return {{}, {}, "Export destination is not a directory: " + dbc::PathToUtf8(Request.OutputDirectory)};
             const internal::ExportContext Context{&Progress};
-            Context.Note("Compiling " + Request.EntrySource.filename().string());
+            Context.Note("Compiling " + dbc::PathToUtf8(Request.EntrySource.filename()));
             std::vector<std::uint8_t> Image;
             std::string ProgramError;
             if (!internal::BuildExportProgram(Request, Image, ProgramError))

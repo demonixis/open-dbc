@@ -1,4 +1,5 @@
 #include "execution_adapter.hpp"
+#include "path_utf8.hpp"
 
 #include <chrono>
 #include <string_view>
@@ -24,7 +25,7 @@ namespace dbc::studio
             {
                 std::string Result;
                 if (!Diagnostic.LogicalPath.empty())
-                    Result += Diagnostic.LogicalPath.string();
+                    Result += dbc::PathToUtf8(Diagnostic.LogicalPath);
                 if (Diagnostic.Begin.Line > 0)
                 {
                     if (!Result.empty())
@@ -98,8 +99,8 @@ namespace dbc::studio
             StopRequested_ = false;
 
             const std::filesystem::path LogDirectory =
-                RootLogicalPath_.parent_path().empty() ? std::filesystem::path(".") : RootLogicalPath_.parent_path();
-            dbc::log::Init(Options.LogLevel, LogDirectory.string());
+                RootLogicalPath_.parent_path().empty() ? dbc::PathFromUtf8(".") : RootLogicalPath_.parent_path();
+            dbc::log::Init(Options.LogLevel, dbc::PathToUtf8(LogDirectory));
 
             const dbc::interpreter::ProjectStartup Startup =
                 Document.Project ? Document.Project->Startup : dbc::interpreter::ProjectStartup{};
@@ -177,7 +178,7 @@ namespace dbc::studio
                 Request.Sources.push_back(std::move(*Unit));
             }
             Request.Options.AssetRoot =
-                Options.AssetRoot.empty() ? RootLogicalPath_.parent_path() : std::filesystem::path(Options.AssetRoot);
+                Options.AssetRoot.empty() ? RootLogicalPath_.parent_path() : dbc::PathFromUtf8(Options.AssetRoot);
             Request.Options.Output = [this](std::string_view Text)
             {
                 if (OnLine_)

@@ -1,5 +1,6 @@
 #include "project_resolver.hpp"
 #include "basic_path.hpp"
+#include "path_utf8.hpp"
 
 #include "language/language_profile.hpp"
 
@@ -38,14 +39,14 @@ namespace dbc::interpreter
             std::ifstream Input(Path, std::ios::binary);
             if (!Input)
             {
-                Error = "Failed to read '" + Path.string() + "'";
+                Error = "Failed to read '" + dbc::PathToUtf8(Path) + "'";
                 return std::nullopt;
             }
             std::ostringstream Text;
             Text << Input.rdbuf();
             if (!Input.good() && !Input.eof())
             {
-                Error = "Failed while reading '" + Path.string() + "'";
+                Error = "Failed while reading '" + dbc::PathToUtf8(Path) + "'";
                 return std::nullopt;
             }
             return Text.str();
@@ -56,7 +57,7 @@ namespace dbc::interpreter
             std::error_code PathError;
             std::filesystem::path Result = std::filesystem::absolute(Path, PathError).lexically_normal();
             if (PathError)
-                Error = "Cannot resolve '" + Path.string() + "': " + PathError.message();
+                Error = "Cannot resolve '" + dbc::PathToUtf8(Path) + "': " + PathError.message();
             return Result;
         }
 
@@ -130,7 +131,7 @@ namespace dbc::interpreter
                         std::string(".opendbc-project.json language.") + Name + " must be a non-empty relative path";
                     return;
                 }
-                const std::filesystem::path Path = NormalizeBasicPath(Value->get<std::string>());
+                const std::filesystem::path Path = NormalizeBasicPath(dbc::PathFromUtf8(Value->get<std::string>()));
                 if (Path.is_absolute() || (!Path.empty() && *Path.begin() == ".."))
                 {
                     Result.Error =
@@ -164,7 +165,7 @@ namespace dbc::interpreter
 
         bool ExcludedDirectory(const std::filesystem::path& Path)
         {
-            const std::string Name = Lower(Path.filename().string());
+            const std::string Name = Lower(dbc::PathToUtf8(Path.filename()));
             return Name == ".git" || Name == ".svn" || Name == ".hg" || Name == "dist" || Name == "exports" ||
                    Name == ".idea" || Name == ".vscode" || Name.starts_with("build");
         }
@@ -277,7 +278,8 @@ namespace dbc::interpreter
         void ApplyProjectConfiguration(ResolvedProject& Project)
         {
             const language::DbProProjectDocument& Document = *Project.Descriptor;
-            Project.Metadata.Name = Document.Value("project name").value_or(Project.DescriptorPath->stem().string());
+            Project.Metadata.Name =
+                Document.Value("project name").value_or(dbc::PathToUtf8(Project.DescriptorPath->stem()));
             Project.Metadata.Executable = Document.Value("executable").value_or(std::string{});
             Project.Metadata.Icon = Document.Value("icon1").value_or(std::string{});
             Project.Metadata.VersionName =
@@ -414,7 +416,7 @@ namespace dbc::interpreter
         {
             if (!std::filesystem::is_regular_file(Target))
             {
-                Result.Error = "Source file does not exist: " + Target.string();
+                Result.Error = "Source file does not exist: " + dbc::PathToUtf8(Target);
                 return Result;
             }
             const std::filesystem::path Root = FindProjectRoot(Target.parent_path());
@@ -464,7 +466,7 @@ namespace dbc::interpreter
         }
         if (!std::filesystem::is_directory(Target))
         {
-            Result.Error = "Target must be a .dba source, .dbpro project or folder: " + Target.string();
+            Result.Error = "Target must be a .dba source, .dbpro project or folder: " + dbc::PathToUtf8(Target);
             return Result;
         }
 

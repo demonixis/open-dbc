@@ -1,4 +1,5 @@
 #include "android_keystore.hpp"
+#include "path_utf8.hpp"
 #include "process_runner.hpp"
 
 #include <algorithm>
@@ -52,13 +53,13 @@ namespace dbc::studio
 #else
             const fs::path Keytool = JavaHome / "bin/keytool";
 #endif
-            return {Keytool.string(),
+            return {dbc::PathToUtf8(Keytool),
                     "-genkeypair",
                     "-noprompt",
                     "-storetype",
                     "PKCS12",
                     "-keystore",
-                    Request.Path.string(),
+                    dbc::PathToUtf8(Request.Path),
                     "-alias",
                     Request.Alias,
                     "-keyalg",

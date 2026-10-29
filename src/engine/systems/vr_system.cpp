@@ -4,6 +4,7 @@
 #include "gpu_command_buffer.hpp"
 #include "graphics_device_system.hpp"
 #include "log.hpp"
+#include "path_utf8.hpp"
 #include "vr_system_internal.hpp"
 #include <algorithm>
 #include <cmath>
@@ -252,9 +253,9 @@ namespace dbc
             if (const char* Base = SDL_GetBasePath())
             {
                 std::error_code Error;
-                const auto Path = std::filesystem::path(Base) / Loader;
+                const auto Path = dbc::PathFromUtf8(Base) / Loader;
                 if (std::filesystem::is_regular_file(Path, Error))
-                    SDL_SetHint(SDL_HINT_OPENXR_LIBRARY, Path.string().c_str());
+                    SDL_SetHint(SDL_HINT_OPENXR_LIBRARY, dbc::PathToUtf8(Path).c_str());
             }
         }
         const auto Props = SDL_CreateProperties();

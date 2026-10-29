@@ -6,6 +6,7 @@
 #include "image_store.hpp"
 #include "log.hpp"
 #include "object_manager.hpp"
+#include "path_utf8.hpp"
 #include "terrain_mesh.hpp"
 
 #include <algorithm>
@@ -821,8 +822,8 @@ namespace dbc
             return false;
         }
 
-        fs::path Requested(Path);
-        std::string Filename = Requested.filename().string();
+        fs::path Requested = dbc::PathFromUtf8(Path);
+        std::string Filename = dbc::PathToUtf8(Requested.filename());
         std::transform(Filename.begin(), Filename.end(), Filename.begin(),
                        [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
         fs::path ManifestPath;
@@ -832,7 +833,7 @@ namespace dbc
         }
         else if (Requested.has_extension())
         {
-            ManifestPath = Requested.parent_path() / (Requested.stem().string() + ".effect.json");
+            ManifestPath = (std::filesystem::path(Requested).replace_extension(".effect.json"));
         }
         else
         {
@@ -847,24 +848,25 @@ namespace dbc
             if (ContainsLegacyShaderAssembly(Requested))
             {
                 if (Error)
-                    *Error = "LOAD EFFECT does not support legacy DirectX shader assembly in " + Requested.string();
+                    *Error =
+                        "LOAD EFFECT does not support legacy DirectX shader assembly in " + dbc::PathToUtf8(Requested);
                 return false;
             }
             {
                 if (Error)
-                    *Error = "LOAD EFFECT cannot read compiled manifest " + ManifestPath.string();
+                    *Error = "LOAD EFFECT cannot read compiled manifest " + dbc::PathToUtf8(ManifestPath);
                 return false;
             }
         }
 
         EffectResource Loaded;
-        Loaded.ManifestPath = ManifestPath.string();
+        Loaded.ManifestPath = dbc::PathToUtf8(ManifestPath);
         Loaded.TextureFlag = TextureFlag;
         Loaded.DoNotGenerateExtraData = DoNotGenerateExtraData;
         const auto ManifestFailure = [&](std::string Message)
         {
             if (Error)
-                *Error = "LOAD EFFECT invalid manifest " + ManifestPath.string() + ": " + Message;
+                *Error = "LOAD EFFECT invalid manifest " + dbc::PathToUtf8(ManifestPath) + ": " + Message;
             return false;
         };
         const auto ReadInteger = [&](const nlohmann::json& Node, const char* Name, int& Value)
@@ -890,9 +892,9 @@ namespace dbc
             {
                 const auto ReadSibling = [&](const char* Field, fs::path& File)
                 {
-                    File = Node.at(Field).get<std::string>();
-                    if (File.empty() || File.is_absolute() || File.has_parent_path() || File == "." ||
-                        File == ".." || File.string().find_first_of("\\:") != std::string::npos)
+                    File = dbc::PathFromUtf8(Node.at(Field).get<std::string>());
+                    if (File.empty() || File.is_absolute() || File.has_parent_path() || File == "." || File == ".." ||
+                        dbc::PathToUtf8(File).find_first_of("\\:") != std::string::npos)
                         return ManifestFailure(Name + " stage file must be a sibling filename");
                     return true;
                 };
@@ -1015,7 +1017,7 @@ namespace dbc
 
                 std::error_code PathError;
                 const fs::path StageRoot = fs::weakly_canonical(
-                    ManifestPath.has_parent_path() ? ManifestPath.parent_path() : fs::path("."), PathError);
+                    ManifestPath.has_parent_path() ? ManifestPath.parent_path() : dbc::PathFromUtf8("."), PathError);
                 if (PathError)
                     return ManifestFailure("cannot resolve the stage directory: " + PathError.message());
                 const fs::path StagePath = fs::weakly_canonical(StageRoot / File, PathError);
@@ -1024,10 +1026,10 @@ namespace dbc
                 const fs::path MslPath = fs::weakly_canonical(StageRoot / MslFile, PathError);
                 if (PathError || MslPath.parent_path() != StageRoot)
                     return ManifestFailure(Name + " stage file must remain inside its manifest directory");
-                Stage.Msl = LoadFileBytes(MslPath.string());
+                Stage.Msl = LoadFileBytes(dbc::PathToUtf8(MslPath));
                 if (Stage.Msl.empty() || std::find(Stage.Msl.begin(), Stage.Msl.end(), Uint8{0}) != Stage.Msl.end())
                     return ManifestFailure(Name + " stage is not valid MSL source");
-                Stage.Bytecode = LoadFileBytes(StagePath.string());
+                Stage.Bytecode = LoadFileBytes(dbc::PathToUtf8(StagePath));
                 std::uint32_t Magic = 0;
                 if (Stage.Bytecode.size() < sizeof(Magic) || Stage.Bytecode.size() % sizeof(Magic) != 0)
                     return ManifestFailure(Name + " stage is not valid SPIR-V");
@@ -1096,7 +1098,7 @@ namespace dbc
         catch (const nlohmann::json::exception& JsonError)
         {
             if (Error)
-                *Error = "LOAD EFFECT invalid manifest " + ManifestPath.string() + ": " + JsonError.what();
+                *Error = "LOAD EFFECT invalid manifest " + dbc::PathToUtf8(ManifestPath) + ": " + JsonError.what();
             return false;
         }
 

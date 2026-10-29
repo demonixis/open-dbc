@@ -5,6 +5,7 @@
 #include "image_store.hpp"
 #include "log.hpp"
 #include "object_manager.hpp"
+#include "path_utf8.hpp"
 #include "renderer_system.hpp"
 
 #include <algorithm>
@@ -108,7 +109,7 @@ namespace dbc
         // Texture names are relative to the map and may not leave its folder.
         bool ConfinedTextureName(const std::string& Name)
         {
-            const fs::path Relative = fs::path(Name).lexically_normal();
+            const fs::path Relative = dbc::PathFromUtf8(Name).lexically_normal();
             if (Name.empty() || Relative.is_absolute() || Relative.has_root_name())
                 return false;
             for (const fs::path& Part : Relative)
@@ -335,15 +336,14 @@ namespace dbc
 
     BspWorldSystem::~BspWorldSystem() = default;
 
-    bool BspWorldSystem::Load(const std::string& Pk3Path, const std::vector<std::string>& MapPaths,
-                              std::string* Error)
+    bool BspWorldSystem::Load(const std::string& Pk3Path, const std::vector<std::string>& MapPaths, std::string* Error)
     {
         fs::path Found;
         for (const std::string& Candidate : MapPaths)
         {
             if (Candidate.empty())
                 continue;
-            if (!ResolveExisting(fs::path(Candidate), Found, Error))
+            if (!ResolveExisting(dbc::PathFromUtf8(Candidate), Found, Error))
                 return false;
             if (!Found.empty())
                 break;
@@ -352,7 +352,7 @@ namespace dbc
         if (Found.empty())
         {
             fs::path Archive;
-            if (!Pk3Path.empty() && !ResolveExisting(fs::path(Pk3Path), Archive, Error))
+            if (!Pk3Path.empty() && !ResolveExisting(dbc::PathFromUtf8(Pk3Path), Archive, Error))
                 return false;
             if (!Archive.empty())
                 return Fail(Error, "LOAD BSP cannot read maps from pk3 archives (Quake 3): '" + Pk3Path + "'");
@@ -361,7 +361,7 @@ namespace dbc
 
         std::vector<uint8_t> Bytes;
         if (!ReadFileBytes(Found, Bytes))
-            return Fail(Error, "LOAD BSP cannot read '" + Found.string() + "'");
+            return Fail(Error, "LOAD BSP cannot read '" + dbc::PathToUtf8(Found) + "'");
         BspMap Parsed;
         std::string ParseError;
         if (!ParseDbProBsp(Bytes, Parsed, &ParseError))
@@ -369,13 +369,13 @@ namespace dbc
             const BspFileFormat Format = DetectQuakeBspFormat(Bytes);
             if (Format != BspFileFormat::Unknown)
                 return Fail(Error, std::string("LOAD BSP cannot read ") + BspFileFormatName(Format) + " maps: '" +
-                                       Found.string() + "'");
-            return Fail(Error, "LOAD BSP cannot read '" + Found.string() + "': " + ParseError);
+                                       dbc::PathToUtf8(Found) + "'");
+            return Fail(Error, "LOAD BSP cannot read '" + dbc::PathToUtf8(Found) + "': " + ParseError);
         }
 
         Delete();
         Map_ = std::move(Parsed);
-        LoadTextures(Found.parent_path().string());
+        LoadTextures(dbc::PathToUtf8(Found.parent_path()));
         BuildCollisionTriangles();
         Loaded_ = true;
         Kernel_.Renderer().InvalidateTriCache();
@@ -408,15 +408,15 @@ namespace dbc
             return 0;
         }
         static constexpr std::array<const char*, 5> KConvertedExtensions{".png", ".jpg", ".dds", ".tga", ".bmp"};
-        const fs::path Directory(MapDirectory);
+        const fs::path Directory = dbc::PathFromUtf8(MapDirectory);
         fs::path Resolved;
         std::string ResolveError;
-        if (!ResolveCaseInsensitivePath(Resolved, Directory, fs::path(Name), &ResolveError))
+        if (!ResolveCaseInsensitivePath(Resolved, Directory, dbc::PathFromUtf8(Name), &ResolveError))
             DBC_LOG_WARN("LOAD BSP cannot inspect texture '{}': {}", Name, ResolveError);
         // The shipped examples carry converted media: the same stem with another image extension.
         for (std::size_t Extension = 0; Resolved.empty() && Extension < KConvertedExtensions.size(); ++Extension)
         {
-            fs::path Alternative = fs::path(Name).replace_extension(KConvertedExtensions[Extension]);
+            fs::path Alternative = dbc::PathFromUtf8(Name).replace_extension(KConvertedExtensions[Extension]);
             if (!ResolveCaseInsensitivePath(Resolved, Directory, Alternative, nullptr))
                 Resolved.clear();
         }
@@ -426,9 +426,9 @@ namespace dbc
             DBC_LOG_WARN("LOAD BSP cannot find texture '{}'", Name);
             return 0;
         }
-        const int ImageId = Kernel_.ImageStoreRef().LoadImageInternalFromPath(Resolved.string());
+        const int ImageId = Kernel_.ImageStoreRef().LoadImageInternalFromPath(dbc::PathToUtf8(Resolved));
         if (ImageId == 0)
-            DBC_LOG_WARN("LOAD BSP cannot load texture '{}'", Resolved.string());
+            DBC_LOG_WARN("LOAD BSP cannot load texture '{}'", dbc::PathToUtf8(Resolved));
         return ImageId;
     }
 

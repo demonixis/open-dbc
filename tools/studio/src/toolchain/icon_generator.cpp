@@ -1,4 +1,5 @@
 #include "icon_generator.hpp"
+#include "path_utf8.hpp"
 
 #include <fstream>
 
@@ -26,14 +27,14 @@ namespace dbc::studio
                 return false;
             }
 
-            fs::path Source(IconSource);
+            fs::path Source = dbc::PathFromUtf8(IconSource);
             if (Source.is_relative())
                 Source = ProjectRoot / Source;
 
-            SDL_Surface* Original = IMG_Load(Source.string().c_str());
+            SDL_Surface* Original = IMG_Load(dbc::PathToUtf8(Source).c_str());
             if (Original == nullptr)
             {
-                WriteLog("  Cannot load icon: " + Source.string());
+                WriteLog("  Cannot load icon: " + dbc::PathToUtf8(Source));
                 return false;
             }
 
@@ -43,11 +44,11 @@ namespace dbc::studio
             if (Error)
             {
                 SDL_DestroySurface(Original);
-                WriteLog("  Cannot create icon directory: " + IconsDirectory.string());
+                WriteLog("  Cannot create icon directory: " + dbc::PathToUtf8(IconsDirectory));
                 return false;
             }
 
-            if (!IMG_SavePNG(Original, (IconsDirectory / "source.png").string().c_str()))
+            if (!IMG_SavePNG(Original, dbc::PathToUtf8((IconsDirectory / "source.png")).c_str()))
             {
                 SDL_DestroySurface(Original);
                 WriteLog("  Cannot write source icon");
@@ -72,7 +73,7 @@ namespace dbc::studio
                 fs::create_directories(Target.parent_path(), Error);
                 if (Error)
                 {
-                    WriteLog("  Cannot create icon directory: " + Target.parent_path().string());
+                    WriteLog("  Cannot create icon directory: " + dbc::PathToUtf8(Target.parent_path()));
                     Success = false;
                     Error.clear();
                     continue;
@@ -86,11 +87,11 @@ namespace dbc::studio
                     continue;
                 }
 
-                if (IMG_SavePNG(Scaled, Target.string().c_str()))
+                if (IMG_SavePNG(Scaled, dbc::PathToUtf8(Target).c_str()))
                     Generated.push_back(RelativePath);
                 else
                 {
-                    WriteLog("  Cannot write " + Target.string());
+                    WriteLog("  Cannot write " + dbc::PathToUtf8(Target));
                     Success = false;
                 }
                 SDL_DestroySurface(Scaled);
@@ -109,7 +110,7 @@ namespace dbc::studio
             Manifest << Metadata.dump(4) << '\n';
             Success = Manifest.good() && Success;
 
-            WriteLog("> Icons generated in " + IconsDirectory.string());
+            WriteLog("> Icons generated in " + dbc::PathToUtf8(IconsDirectory));
             return Success;
         }
     } // namespace toolchain

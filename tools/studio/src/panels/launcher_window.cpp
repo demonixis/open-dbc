@@ -1,4 +1,5 @@
 #include "launcher_window.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -89,9 +90,10 @@ namespace dbc::studio
             Programs_.clear();
             dba::ProgramInfo Info;
             Info.Path = Project.EntrySource;
-            Info.RelativeName = Project.DescriptorPath
-                                    ? Project.DescriptorPath->filename().string()
-                                    : Project.EntrySource.lexically_relative(Project.ProjectRoot).generic_string();
+            Info.RelativeName =
+                Project.DescriptorPath
+                    ? dbc::PathToUtf8(Project.DescriptorPath->filename())
+                    : dbc::GenericPathToUtf8(Project.EntrySource.lexically_relative(Project.ProjectRoot));
             Info.Profile = Project.Profile;
             Info.Title = Project.Startup.Title;
             std::error_code Error;
@@ -118,7 +120,7 @@ namespace dbc::studio
             {
                 if (ImGui::Button("Open Folder...") && Dialog_ != nullptr)
                 {
-                    Dialog_->OpenFolder(Parent, Folder_.string(),
+                    Dialog_->OpenFolder(Parent, dbc::PathToUtf8(Folder_),
                                         [this](const std::string& Path)
                                         {
                                             if (!Path.empty())
@@ -131,7 +133,7 @@ namespace dbc::studio
                 // No file picker on iOS: the workspace roots are the only way in.
                 ImGui::SetNextItemWidth(220.0f);
                 const std::string Preview =
-                    Folder_.empty() ? std::string("Choose a location") : Folder_.filename().string();
+                    Folder_.empty() ? std::string("Choose a location") : dbc::PathToUtf8(Folder_.filename());
                 if (ImGui::BeginCombo("##location", Preview.c_str()))
                 {
                     for (const core::Workspace::Location& LocationValue : Workspace_->Locations())
@@ -158,7 +160,7 @@ namespace dbc::studio
             }
             else
             {
-                ImGui::TextDisabled("%s  -  %zu program(s)", Folder_.string().c_str(), Programs_.size());
+                ImGui::TextDisabled("%s  -  %zu program(s)", dbc::PathToUtf8(Folder_).c_str(), Programs_.size());
             }
         }
 
@@ -220,7 +222,7 @@ namespace dbc::studio
             const dba::ProgramInfo& Program = Programs_[static_cast<size_t>(Selected_)];
 
             ImGui::PushFont(nullptr, ImGui::GetFontSize() * 1.3f);
-            ImGui::TextUnformatted(Program.Title.empty() ? Program.Path.filename().string().c_str()
+            ImGui::TextUnformatted(Program.Title.empty() ? dbc::PathToUtf8(Program.Path.filename()).c_str()
                                                          : Program.Title.c_str());
             ImGui::PopFont();
             ImGui::TextDisabled("%s", Program.RelativeName.c_str());

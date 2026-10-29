@@ -1,5 +1,6 @@
 #pragma once
 
+#include "path_utf8.hpp"
 #include <atomic>
 #include <cerrno>
 #include <chrono>
@@ -69,11 +70,11 @@ namespace dbc::interpreter
                 std::filesystem::remove(Temporary, RemoveError);
             }
             if (Error)
-                *Error = "Cannot create an exclusive temporary file for '" + Destination.string() + "'";
+                *Error = "Cannot create an exclusive temporary file for '" + dbc::PathToUtf8(Destination) + "'";
             return false;
         }
         if (Error)
-            *Error = "Cannot allocate a unique temporary file for '" + Destination.string() + "'";
+            *Error = "Cannot allocate a unique temporary file for '" + dbc::PathToUtf8(Destination) + "'";
         return false;
     }
 
@@ -93,17 +94,19 @@ namespace dbc::interpreter
         if (FileError)
         {
             if (Error)
-                *Error = "Cannot create output directory '" + Parent.string() + "': " + FileError.message();
+                *Error = "Cannot create output directory '" + dbc::PathToUtf8(Parent) + "': " + FileError.message();
             return false;
         }
         std::filesystem::path Temporary;
         std::FILE* Output = nullptr;
         if (!CreateExclusiveTemporary(Path, Temporary, Output, Error))
             return false;
+
         struct TemporaryCleanup
         {
             std::filesystem::path Value;
             bool Active = true;
+
             ~TemporaryCleanup()
             {
                 if (!Active)
@@ -112,13 +115,14 @@ namespace dbc::interpreter
                 std::filesystem::remove(Value, RemoveError);
             }
         } Cleanup{Temporary};
+
         const bool Written =
             std::fwrite(Bytes.data(), 1, Bytes.size(), Output) == Bytes.size() && std::fflush(Output) == 0;
         const bool Closed = std::fclose(Output) == 0;
         if (!Written || !Closed)
         {
             if (Error)
-                *Error = "Cannot finish output '" + Path.string() + "'";
+                *Error = "Cannot finish output '" + dbc::PathToUtf8(Path) + "'";
             return false;
         }
 #if defined(_WIN32)
@@ -126,7 +130,7 @@ namespace dbc::interpreter
                          MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
         {
             if (Error)
-                *Error = "Cannot publish output '" + Path.string() + "'";
+                *Error = "Cannot publish output '" + dbc::PathToUtf8(Path) + "'";
             return false;
         }
 #else
@@ -134,7 +138,7 @@ namespace dbc::interpreter
         if (FileError)
         {
             if (Error)
-                *Error = "Cannot publish output '" + Path.string() + "': " + FileError.message();
+                *Error = "Cannot publish output '" + dbc::PathToUtf8(Path) + "': " + FileError.message();
             return false;
         }
 #endif

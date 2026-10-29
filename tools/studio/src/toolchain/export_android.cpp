@@ -1,4 +1,5 @@
 #include "export_internal.hpp"
+#include "path_utf8.hpp"
 #include "toolchain_locator.hpp"
 
 #include <algorithm>
@@ -124,7 +125,7 @@ namespace dbc::studio
                 const fs::path Jarsigner = Toolchain.JavaHome / "bin/jarsigner";
 #endif
                 const std::optional<std::string> Output = Context.RunCapturing(
-                    {{Jarsigner.string(), "-verify", Package.string()}, {}, {}}, Error);
+                    {{dbc::PathToUtf8(Jarsigner), "-verify", dbc::PathToUtf8(Package)}, {}, {}}, Error);
                 if (!Output)
                     return false;
                 if (Output->find("jar verified.") == std::string::npos)
@@ -145,8 +146,8 @@ namespace dbc::studio
 #else
             const fs::path Apksigner = *BuildTools / "apksigner";
 #endif
-            return Context.Run({{Apksigner.string(), "verify", "--verbose", Package.string()},
-                                {{"JAVA_HOME", Toolchain.JavaHome.string()}},
+            return Context.Run({{dbc::PathToUtf8(Apksigner), "verify", "--verbose", dbc::PathToUtf8(Package)},
+                                {{"JAVA_HOME", dbc::PathToUtf8(Toolchain.JavaHome)}},
                                 {}},
                                Error);
         }
@@ -163,7 +164,7 @@ namespace dbc::studio
             Result.OutputPath = Request.OutputDirectory / (ProductName + (Bundle ? ".aab" : ".apk"));
             if (fs::exists(Result.OutputPath, FileError))
             {
-                Result.Error = "Export destination already exists: " + Result.OutputPath.string();
+                Result.Error = "Export destination already exists: " + dbc::PathToUtf8(Result.OutputPath);
                 Result.OutputPath.clear();
                 return Result;
             }
@@ -226,7 +227,7 @@ namespace dbc::studio
             }
             if (UseSigning)
             {
-                Keystore = Request.Settings.AndroidKeystorePath;
+                Keystore = dbc::PathFromUtf8(Request.Settings.AndroidKeystorePath);
                 if (Keystore.is_relative())
                     Keystore = Request.ProjectRoot / Keystore;
                 const fs::file_status KeystoreStatus = fs::symlink_status(Keystore, FileError);
@@ -256,7 +257,8 @@ namespace dbc::studio
                        << "versionCode=" << Request.Settings.VersionCode << '\n'
                        << "minSdk=" << Request.Settings.AndroidMinSdk << '\n'
                        << "targetSdk=" << Request.Settings.AndroidTargetSdk << '\n'
-                       << "keystorePath=" << PropertyValue(UseSigning ? Keystore.string() : std::string{}) << '\n'
+                       << "keystorePath=" << PropertyValue(UseSigning ? dbc::PathToUtf8(Keystore) : std::string{})
+                       << '\n'
                        << "keyAlias=" << PropertyValue(UseSigning ? Request.Settings.AndroidKeyAlias : std::string{})
                        << '\n';
             if (!Properties.good())
@@ -307,7 +309,8 @@ namespace dbc::studio
                 return Result;
             }
             std::ofstream LocalProperties(Project / "local.properties", std::ios::binary | std::ios::trunc);
-            LocalProperties << "sdk.dir=" << PropertyValue(Request.Toolchain.AndroidSdk.generic_string()) << '\n';
+            LocalProperties << "sdk.dir=" << PropertyValue(dbc::GenericPathToUtf8(Request.Toolchain.AndroidSdk))
+                            << '\n';
             LocalProperties.close();
             if (!LocalProperties)
             {
@@ -322,9 +325,9 @@ namespace dbc::studio
 #endif
             const std::string Task = Bundle ? ":app:bundleRelease" : ":app:assembleRelease";
             ProcessRequest Gradle{
-                {GradleScript.string(), "-p", Project.string(), "--no-daemon", "--max-workers=2", Task},
-                {{"JAVA_HOME", Request.Toolchain.JavaHome.string()},
-                 {"ANDROID_HOME", Request.Toolchain.AndroidSdk.string()}},
+                {dbc::PathToUtf8(GradleScript), "-p", dbc::PathToUtf8(Project), "--no-daemon", "--max-workers=2", Task},
+                {{"JAVA_HOME", dbc::PathToUtf8(Request.Toolchain.JavaHome)},
+                 {"ANDROID_HOME", dbc::PathToUtf8(Request.Toolchain.AndroidSdk)}},
                 Project};
             if (UseSigning)
             {
@@ -353,8 +356,9 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) + " asset files");
-            Result.Messages.push_back("Published " + Result.OutputPath.string());
+            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) +
+                                      " asset files");
+            Result.Messages.push_back("Published " + dbc::PathToUtf8(Result.OutputPath));
             return Result;
         }
     } // namespace toolchain::internal

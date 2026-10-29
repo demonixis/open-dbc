@@ -1,4 +1,5 @@
 #include "asset_preview.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -35,7 +36,7 @@ namespace dbc::studio
     {
         AssetPreview::Kind AssetPreview::KindOf(const std::filesystem::path& Path)
         {
-            const std::string Ext = ToLower(Path.extension().string());
+            const std::string Ext = ToLower(dbc::PathToUtf8(Path.extension()));
 
             if (Ext == ".png" || Ext == ".jpg" || Ext == ".jpeg" || Ext == ".bmp" || Ext == ".tga" || Ext == ".gif" ||
                 Ext == ".webp")
@@ -153,7 +154,7 @@ namespace dbc::studio
                 }
             }
 
-            Audio_ = MIX_LoadAudio(Mixer_, Path.string().c_str(), false);
+            Audio_ = MIX_LoadAudio(Mixer_, dbc::PathToUtf8(Path).c_str(), false);
             if (Audio_ == nullptr)
             {
                 Error_ = std::string("Cannot load audio: ") + SDL_GetError();
@@ -243,7 +244,7 @@ namespace dbc::studio
                 return;
             }
 
-            ImGui::TextUnformatted(Path_.filename().string().c_str());
+            ImGui::TextUnformatted(dbc::PathToUtf8(Path_.filename()).c_str());
             ImGui::SameLine();
             if (ImGui::SmallButton("Close"))
             {

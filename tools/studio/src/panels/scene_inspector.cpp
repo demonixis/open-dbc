@@ -2,6 +2,7 @@
 // in place; SceneEditor::CommitIfIdle() records an undo step once no widget is held.
 
 #include "panels/scene_editor.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -325,7 +326,7 @@ namespace dbc::studio
             {
                 std::optional<scene::ModelAnimation> Read(std::in_place);
                 std::string Error;
-                if (!scene::ReadModelAnimation(Project_->AssetRoot / Asset, *Read, Error))
+                if (!scene::ReadModelAnimation(Project_->AssetRoot / dbc::PathFromUtf8(Asset), *Read, Error))
                     Read.reset();
                 Found = ModelAnimations_.emplace(Asset, std::move(Read)).first;
             }
@@ -449,13 +450,13 @@ namespace dbc::studio
                 if (scene::WriteHeightmap(Project_->AssetRoot / Relative, HeightmapSize_, *Generated, TerrainError_))
                 {
                     TerrainError_.clear();
-                    Node.Asset = Relative.generic_string();
+                    Node.Asset = dbc::GenericPathToUtf8(Relative);
                     RefreshAssets();
                 }
             }
             if (!TerrainError_.empty())
                 ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", TerrainError_.c_str());
-            ImGui::TextDisabled("Writes %s", Relative.generic_string().c_str());
+            ImGui::TextDisabled("Writes %s", dbc::GenericPathToUtf8(Relative).c_str());
         }
 
         void SceneEditor::DrawMaterial(scene::SceneNode& Node)
@@ -546,7 +547,7 @@ namespace dbc::studio
             scene::Environment& Env = Document_.Env;
             if (ImGui::CollapsingHeader("Level", ImGuiTreeNodeFlags_DefaultOpen))
             {
-                ImGui::TextDisabled("%s", scene::LevelRelativePath(Document_.Name).generic_string().c_str());
+                ImGui::TextDisabled("%s", dbc::GenericPathToUtf8(scene::LevelRelativePath(Document_.Name)).c_str());
                 ImGui::TextDisabled("Function %s()", scene::LevelFunctionName(Document_).c_str());
 
                 Heading("Light and colour");

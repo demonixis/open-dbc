@@ -1,6 +1,7 @@
 #include "file_io_system.hpp"
 #include "engine_kernel.hpp"
 #include "log.hpp"
+#include "path_utf8.hpp"
 #include <cmath>
 
 #include <algorithm>
@@ -140,7 +141,7 @@ namespace dbc
         }
         auto Fh = std::make_unique<FileHandle>();
         Fh->Mode = FileMode::Read;
-        Fh->Stream.open(Path, std::ios::in | std::ios::binary);
+        Fh->Stream.open(dbc::PathFromUtf8(Path), std::ios::in | std::ios::binary);
         if (!Fh->Stream.is_open())
         {
             if (Error)
@@ -162,7 +163,7 @@ namespace dbc
             return false;
         }
         std::error_code StatusError;
-        if (std::filesystem::exists(Path, StatusError))
+        if (std::filesystem::exists(dbc::PathFromUtf8(Path), StatusError))
         {
             if (Error)
                 *Error = "OPEN TO WRITE refuses to overwrite: '" + Path + "'";
@@ -176,7 +177,7 @@ namespace dbc
         }
         auto Fh = std::make_unique<FileHandle>();
         Fh->Mode = FileMode::Write;
-        Fh->Stream.open(Path, std::ios::out | std::ios::binary | std::ios::trunc);
+        Fh->Stream.open(dbc::PathFromUtf8(Path), std::ios::out | std::ios::binary | std::ios::trunc);
         if (!Fh->Stream.is_open())
         {
             if (Error)
@@ -199,7 +200,7 @@ namespace dbc
         }
         auto Fh = std::make_unique<FileHandle>();
         Fh->Mode = FileMode::Write;
-        Fh->Stream.open(Path, std::ios::out | std::ios::binary | std::ios::app);
+        Fh->Stream.open(dbc::PathFromUtf8(Path), std::ios::out | std::ios::binary | std::ios::app);
         if (!Fh->Stream.is_open())
         {
             if (Error)
@@ -311,7 +312,7 @@ namespace dbc
         if (FileError)
         {
             if (Error)
-                *Error = "WRITE FILEBLOCK cannot read '" + Path.string() + "': " + FileError.message();
+                *Error = "WRITE FILEBLOCK cannot read '" + dbc::PathToUtf8(Path) + "': " + FileError.message();
             return false;
         }
         if (Size > static_cast<std::uintmax_t>(std::numeric_limits<std::int32_t>::max()))
@@ -325,7 +326,7 @@ namespace dbc
         if (!Input.is_open())
         {
             if (Error)
-                *Error = "WRITE FILEBLOCK cannot open '" + Path.string() + "'";
+                *Error = "WRITE FILEBLOCK cannot open '" + dbc::PathToUtf8(Path) + "'";
             return false;
         }
         std::vector<uint8_t> Bytes(static_cast<std::size_t>(Size));
@@ -471,7 +472,7 @@ namespace dbc
         if (!Output.is_open())
         {
             if (Error)
-                *Error = "READ FILEBLOCK cannot create '" + Path.string() + "'";
+                *Error = "READ FILEBLOCK cannot create '" + dbc::PathToUtf8(Path) + "'";
             return false;
         }
         if (!Bytes.empty())
@@ -480,7 +481,7 @@ namespace dbc
             if (!Output)
             {
                 if (Error)
-                    *Error = "READ FILEBLOCK failed while writing '" + Path.string() + "'";
+                    *Error = "READ FILEBLOCK failed while writing '" + dbc::PathToUtf8(Path) + "'";
                 return false;
             }
         }
@@ -586,7 +587,7 @@ namespace dbc
             return true;
         }
         const auto& Entry = FindEntries_[FindIndex_];
-        FindFileName_ = Entry.path().filename().string();
+        FindFileName_ = dbc::PathToUtf8(Entry.path().filename());
         std::error_code Ec;
         FindFileType_ = Entry.is_directory(Ec) ? 1 : 0;
         if (Ec)
@@ -626,8 +627,7 @@ namespace dbc
         FindEntries_.clear();
         FindIndex_ = 0;
         std::error_code Ec;
-        const std::filesystem::path Dir =
-            Path.empty() ? std::filesystem::current_path(Ec) : std::filesystem::path(Path);
+        const std::filesystem::path Dir = Path.empty() ? std::filesystem::current_path(Ec) : dbc::PathFromUtf8(Path);
         if (Ec)
         {
             if (Error)
@@ -639,11 +639,11 @@ namespace dbc
         if (Ec)
         {
             if (Error)
-                *Error = "Cannot scan directory '" + Dir.string() + "': " + Ec.message();
+                *Error = "Cannot scan directory '" + dbc::PathToUtf8(Dir) + "': " + Ec.message();
             return false;
         }
         std::sort(FindEntries_.begin(), FindEntries_.end(), [](const auto& Left, const auto& Right)
-                  { return Left.path().filename().string() < Right.path().filename().string(); });
+                  { return dbc::PathToUtf8(Left.path().filename()) < dbc::PathToUtf8(Right.path().filename()); });
         if (!UpdateFindEntry(Error))
             return false;
         return true;

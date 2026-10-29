@@ -6,6 +6,7 @@
 #include "graphics_device_system.hpp"
 #include "image_store.hpp"
 #include "log.hpp"
+#include "path_utf8.hpp"
 #include "platform_io.hpp"
 #include "polygon_collision.hpp"
 #include "renderer_system.hpp"
@@ -2062,7 +2063,7 @@ namespace dbc
         bool ReadPortableFile(std::vector<uint8_t>& Output, const std::string& Path, const char* Command,
                               std::string* Error = nullptr)
         {
-            std::ifstream Input(Path, std::ios::binary | std::ios::ate);
+            std::ifstream Input(dbc::PathFromUtf8(Path), std::ios::binary | std::ios::ate);
             if (!Input)
             {
                 if (Error)
@@ -2101,7 +2102,7 @@ namespace dbc
                     *Error = std::string(Command) + " data exceeds the 256 MiB limit";
                 return false;
             }
-            std::ofstream Output(Path, std::ios::binary | std::ios::trunc);
+            std::ofstream Output(dbc::PathFromUtf8(Path), std::ios::binary | std::ios::trunc);
             if (!Output)
             {
                 if (Error)
@@ -2585,12 +2586,12 @@ namespace dbc
         bool LoadModelStructureSignature(std::string& Output, const std::string& Path, bool AddSyntheticRoot,
                                          std::string* Error = nullptr)
         {
-            std::string Extension = std::filesystem::path(Path).extension().string();
+            std::string Extension = dbc::PathToUtf8(dbc::PathFromUtf8(Path).extension());
             std::transform(Extension.begin(), Extension.end(), Extension.begin(),
                            [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
             if (Extension == ".dbo")
             {
-                std::ifstream Input(Path, std::ios::binary);
+                std::ifstream Input(dbc::PathFromUtf8(Path), std::ios::binary);
                 if (!Input)
                 {
                     if (Error)
@@ -3046,7 +3047,7 @@ namespace dbc
         std::string Resolved;
         if (!ImageStore::ResolveAssetPath(Resolved, Path, Error))
             return false;
-        std::ofstream Output(Resolved, std::ios::binary | std::ios::trunc);
+        std::ofstream Output(dbc::PathFromUtf8(Resolved), std::ios::binary | std::ios::trunc);
         if (!Output)
         {
             if (Error)
@@ -3156,13 +3157,13 @@ namespace dbc
         std::string Resolved;
         if (!ImageStore::ResolveAssetPath(Resolved, Path, Error))
             return false;
-        const fs::path ResolvedPath = fs::path(Resolved);
-        std::string Extension = ResolvedPath.extension().string();
+        const fs::path ResolvedPath = dbc::PathFromUtf8(Resolved);
+        std::string Extension = dbc::PathToUtf8(ResolvedPath.extension());
         std::transform(Extension.begin(), Extension.end(), Extension.begin(),
                        [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
         if (Extension == ".dbo")
         {
-            std::ifstream Input(Resolved, std::ios::binary);
+            std::ifstream Input(dbc::PathFromUtf8(Resolved), std::ios::binary);
             if (!Input)
             {
                 if (Error)
@@ -3440,14 +3441,14 @@ namespace dbc
                             }
                             else
                             {
-                                fs::path TexturePath = ResolvedPath.parent_path() / fs::path(TexName);
+                                fs::path TexturePath = ResolvedPath.parent_path() / dbc::PathFromUtf8(TexName);
                                 bool Exists = false;
                                 if (!PathExists(TexturePath, Exists, Error))
                                     return false;
                                 if (!Exists)
                                 {
                                     if (!ResolveCaseInsensitivePath(TexturePath, ResolvedPath.parent_path(),
-                                                                    fs::path(TexName), Error))
+                                                                    dbc::PathFromUtf8(TexName), Error))
                                         return false;
                                     Exists = !TexturePath.empty();
                                 }
@@ -3456,13 +3457,13 @@ namespace dbc
                                     std::string GlobalPath;
                                     if (!ImageStore::ResolveAssetPath(GlobalPath, TexName, Error))
                                         return false;
-                                    TexturePath = fs::path(GlobalPath);
+                                    TexturePath = dbc::PathFromUtf8(GlobalPath);
                                     if (!PathExists(TexturePath, Exists, Error))
                                         return false;
                                 }
                                 if (Exists)
                                     Out.TextureImageId = Kernel_.ImageStoreRef().LoadImageInternalFromPath(
-                                        TexturePath.string(), DivideTextureSize);
+                                        dbc::PathToUtf8(TexturePath), DivideTextureSize);
                             }
 
                             if (Out.TextureImageId != 0)
@@ -3502,7 +3503,7 @@ namespace dbc
         std::string Resolved;
         if (!ImageStore::ResolveAssetPath(Resolved, Path, Error))
             return false;
-        std::string Extension = std::filesystem::path(Resolved).extension().string();
+        std::string Extension = dbc::PathToUtf8(dbc::PathFromUtf8(Resolved).extension());
         std::transform(Extension.begin(), Extension.end(), Extension.begin(),
                        [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
         if (Extension != ".dbo")
@@ -3514,7 +3515,7 @@ namespace dbc
         std::vector<uint8_t> Data;
         if (!EncodeDboObject(Data, Object, Error))
             return false;
-        std::ofstream Output(Resolved, std::ios::binary | std::ios::trunc);
+        std::ofstream Output(dbc::PathFromUtf8(Resolved), std::ios::binary | std::ios::trunc);
         if (!Output)
         {
             if (Error)
@@ -5004,7 +5005,7 @@ namespace dbc
         std::string Resolved;
         if (!ImageStore::ResolveAssetPath(Resolved, Path, Error))
             return false;
-        const std::filesystem::path ArchiveDirectory = std::filesystem::path(Resolved).parent_path();
+        const std::filesystem::path ArchiveDirectory = dbc::PathFromUtf8(Resolved).parent_path();
         const auto RelativeTexture = [&](int ImageId)
         {
             const std::string Source = TextureSourcePath(Kernel_, ImageId);
@@ -5014,7 +5015,7 @@ namespace dbc
             const auto Root = std::filesystem::weakly_canonical(ArchiveDirectory, OperationError);
             if (OperationError)
                 return std::string{};
-            const auto Candidate = std::filesystem::weakly_canonical(std::filesystem::path(Source), OperationError);
+            const auto Candidate = std::filesystem::weakly_canonical(dbc::PathFromUtf8(Source), OperationError);
             if (OperationError)
                 return std::string{};
             const auto Relative = Candidate.lexically_relative(Root);
@@ -5023,7 +5024,7 @@ namespace dbc
             for (const auto& Part : Relative)
                 if (Part == "..")
                     return std::string{};
-            return Relative.generic_string();
+            return dbc::GenericPathToUtf8(Relative);
         };
 
         std::vector<Object3D> Objects;
@@ -5187,7 +5188,7 @@ namespace dbc
         std::string Resolved;
         if (!ImageStore::ResolveAssetPath(Resolved, Path, Error))
             return false;
-        const std::filesystem::path ArchiveDirectory = std::filesystem::path(Resolved).parent_path();
+        const std::filesystem::path ArchiveDirectory = dbc::PathFromUtf8(Resolved).parent_path();
         const auto LoadTexture = [&](const std::string& Relative, int& TextureId)
         {
             if (Relative.empty())
@@ -5195,7 +5196,7 @@ namespace dbc
                 TextureId = 0;
                 return true;
             }
-            const std::filesystem::path Input(Relative);
+            const std::filesystem::path Input = dbc::PathFromUtf8(Relative);
             if (Input.is_absolute())
             {
                 if (Error)
@@ -5237,7 +5238,7 @@ namespace dbc
                 TextureId = 0;
                 return true;
             }
-            TextureId = Kernel_.ImageStoreRef().LoadImageInternalFromPath(CanonicalCandidate.string());
+            TextureId = Kernel_.ImageStoreRef().LoadImageInternalFromPath(dbc::PathToUtf8(CanonicalCandidate));
             return true;
         };
 

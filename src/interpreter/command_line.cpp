@@ -1,7 +1,8 @@
 #include "command_line.hpp"
-#include "command_line_detail.hpp"
 #include "atomic_file.hpp"
 #include "basic_path.hpp"
+#include "command_line_detail.hpp"
+#include "path_utf8.hpp"
 
 #include "engine/systems/core_system.hpp"
 #include "engine/systems/debug_system.hpp"
@@ -83,8 +84,8 @@ namespace dbc::interpreter
                 return std::nullopt;
             WriteStandard(stderr, "Multiple DBPro projects found:\n");
             for (std::size_t Index = 0; Index < Candidates.size(); ++Index)
-                WriteStandard(stderr,
-                              "  " + std::to_string(Index + 1) + ": " + Candidates[Index].filename().string() + "\n");
+                WriteStandard(stderr, "  " + std::to_string(Index + 1) + ": " +
+                                          dbc::PathToUtf8(Candidates[Index].filename()) + "\n");
             WriteStandard(stderr, "Project number: ");
             char Answer[32]{};
             if (std::fgets(Answer, sizeof(Answer), stdin) == nullptr)
@@ -129,7 +130,7 @@ namespace dbc::interpreter
             if (IsProgramImagePath(*Command.Path))
             {
                 if (Command.Action != CommandLineAction::Run)
-                    return {{}, {}, "Only run accepts a program image: " + Command.Path->string()};
+                    return {{}, {}, "Only run accepts a program image: " + dbc::PathToUtf8(*Command.Path)};
                 return MakeImageRequest(Command);
             }
             ProjectResolveResult Resolved = ResolveCommandProject(Command, Environment);
@@ -187,15 +188,15 @@ namespace dbc::interpreter
             std::ostringstream Output;
             if (Command.Json)
             {
-                Output << "{\"path\":\"" << JsonEscape(Value.RootLogicalPath.generic_string()) << "\","
+                Output << "{\"path\":\"" << JsonEscape(dbc::GenericPathToUtf8(Value.RootLogicalPath)) << "\","
                        << "\"inputKind\":\"" << JsonEscape(Value.InputKind) << "\","
                        << "\"dialect\":\"" << (Value.Profile == language::LanguageProfile::Dbc ? "dbc" : "dbpro")
                        << "\","
                        << "\"dialectSource\":\"" << JsonEscape(Value.DialectSource) << "\","
-                       << "\"entry\":\"" << JsonEscape(Value.RootLogicalPath.generic_string()) << "\","
+                       << "\"entry\":\"" << JsonEscape(dbc::GenericPathToUtf8(Value.RootLogicalPath)) << "\","
                        << "\"projectFile\":";
                 if (Value.ProjectFile)
-                    Output << '"' << JsonEscape(Value.ProjectFile->generic_string()) << '"';
+                    Output << '"' << JsonEscape(dbc::GenericPathToUtf8(*Value.ProjectFile)) << '"';
                 else
                     Output << "null";
                 Output << ",\"orderedSources\":[";
@@ -203,7 +204,7 @@ namespace dbc::interpreter
                 {
                     if (Index > 0)
                         Output << ',';
-                    Output << '"' << JsonEscape(Value.OrderedSources[Index].generic_string()) << '"';
+                    Output << '"' << JsonEscape(dbc::GenericPathToUtf8(Value.OrderedSources[Index])) << '"';
                 }
                 Output << "],\"profile\":\"" << JsonEscape(language::ProfileName(Value.Profile)) << "\","
                        << "\"sources\":" << Value.SourceCount << ',' << "\"bytes\":" << Value.ByteCount << ','
@@ -241,7 +242,7 @@ namespace dbc::interpreter
             }
             else
             {
-                Output << "Path: " << Value.RootLogicalPath.string() << '\n'
+                Output << "Path: " << dbc::PathToUtf8(Value.RootLogicalPath) << '\n'
                        << "Input: " << Value.InputKind << '\n'
                        << "Profile: " << language::ProfileName(Value.Profile) << '\n'
                        << "Dialect source: " << Value.DialectSource << '\n'
@@ -304,7 +305,7 @@ namespace dbc::interpreter
                                  std::string_view(reinterpret_cast<const char*>(Image.data()), Image.size()), &Error))
             {
                 Write(Environment.StandardError, stderr,
-                      "Failed to write program image '" + Command.ExportOutput.string() + "': " + Error + "\n");
+                      "Failed to write program image '" + dbc::PathToUtf8(Command.ExportOutput) + "': " + Error + "\n");
                 return Exit(CommandLineExitCode::Target);
             }
             return Exit(CommandLineExitCode::Success);

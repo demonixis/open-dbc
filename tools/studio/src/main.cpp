@@ -1,3 +1,4 @@
+#include "path_utf8.hpp"
 #include <cstdio>
 #include <filesystem>
 #include <optional>
@@ -30,7 +31,8 @@ namespace dbc::studio
             SDL_SetAppMetadata("OpenDBC", OPENDBC_VERSION_STRING, "net.demonixis.opendbc");
 
             App Studio;
-            if (!Studio.Initialize(Command.Path ? Command.Path->string() : std::string(), Command.RequestedProfile))
+            if (!Studio.Initialize(Command.Path ? dbc::PathToUtf8(*Command.Path) : std::string(),
+                                   Command.RequestedProfile))
             {
                 Studio.Shutdown();
                 return 1;

@@ -5,6 +5,7 @@
 #include "engine_kernel.hpp"
 #include "graphics_device_system.hpp"
 #include "log.hpp"
+#include "path_utf8.hpp"
 #include "renderer_system.hpp"
 #include "sprite_system.hpp"
 
@@ -23,9 +24,9 @@
 #include "platform_io.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <filesystem>
-#include <cassert>
 
 namespace dbc
 {
@@ -94,7 +95,7 @@ namespace dbc
         bool EnsureParentDirectory(const std::string& Path, std::string* Error = nullptr)
         {
             namespace fs = std::filesystem;
-            const fs::path OutPath(Path);
+            const fs::path OutPath = dbc::PathFromUtf8(Path);
             const fs::path Parent = OutPath.parent_path();
             if (!Parent.empty())
             {
@@ -170,7 +171,7 @@ namespace dbc
         {
             if (TextureFlag != 1)
                 return false;
-            std::string Extension = std::filesystem::path(Path).extension().string();
+            std::string Extension = dbc::PathToUtf8(dbc::PathFromUtf8(Path).extension());
             std::transform(Extension.begin(), Extension.end(), Extension.begin(),
                            [](unsigned char Value) { return static_cast<char>(std::tolower(Value)); });
             return Extension == ".png" || Extension == ".dds" || Extension == ".tga";
@@ -1499,7 +1500,7 @@ namespace dbc
 #if defined(DBC_MOBILE) && defined(__APPLE__)
         if (const char* BasePath = SDL_GetBasePath())
         {
-            Output = (std::filesystem::path(BasePath) / Normalized).string();
+            Output = dbc::PathToUtf8((dbc::PathFromUtf8(BasePath) / dbc::PathFromUtf8(Normalized)));
             return true;
         }
         {
@@ -1515,14 +1516,15 @@ namespace dbc
 #endif
 
         namespace fs = std::filesystem;
-        const fs::path Raw = fs::path(Normalized);
+        const fs::path Raw = dbc::PathFromUtf8(Normalized);
 
-        std::vector<fs::path> SearchRoots = {fs::path("."), fs::path(".."), fs::path("../.."), fs::path("../../.."),
-                                             fs::path("../../../..")};
+        std::vector<fs::path> SearchRoots = {dbc::PathFromUtf8("."), dbc::PathFromUtf8(".."),
+                                             dbc::PathFromUtf8("../.."), dbc::PathFromUtf8("../../.."),
+                                             dbc::PathFromUtf8("../../../..")};
 
         if (const char* BasePathC = SDL_GetBasePath())
         {
-            const fs::path ExeBase(BasePathC);
+            const fs::path ExeBase = dbc::PathFromUtf8(BasePathC);
             SearchRoots.push_back(ExeBase);
             SearchRoots.push_back(ExeBase / "..");
             SearchRoots.push_back(ExeBase / "../..");
@@ -1542,7 +1544,7 @@ namespace dbc
             if (DirectExists)
             {
                 {
-                    Output = Direct.string();
+                    Output = dbc::PathToUtf8(Direct);
                     return true;
                 }
             }
@@ -1552,7 +1554,7 @@ namespace dbc
             if (!DirectCi.empty())
             {
                 {
-                    Output = DirectCi.string();
+                    Output = dbc::PathToUtf8(DirectCi);
                     return true;
                 }
             }
@@ -1564,7 +1566,7 @@ namespace dbc
             if (InAssetsExists)
             {
                 {
-                    Output = InAssets.string();
+                    Output = dbc::PathToUtf8(InAssets);
                     return true;
                 }
             }
@@ -1574,14 +1576,14 @@ namespace dbc
             if (!InAssetsCi.empty())
             {
                 {
-                    Output = InAssetsCi.string();
+                    Output = dbc::PathToUtf8(InAssetsCi);
                     return true;
                 }
             }
         }
 
         {
-            Output = Raw.string();
+            Output = dbc::PathToUtf8(Raw);
             return true;
         }
     }

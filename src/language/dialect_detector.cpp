@@ -1,4 +1,5 @@
 #include "dialect_detector.hpp"
+#include "path_utf8.hpp"
 
 #include "frontend.hpp"
 
@@ -19,7 +20,7 @@ namespace dbc::language
                             std::string Detail, const std::filesystem::path& FallbackPath)
         {
             const std::filesystem::path Path = Span.LogicalPath.empty() ? FallbackPath : Span.LogicalPath;
-            EvidenceKey Key{Profile, Kind, Path.generic_string(), Span.Begin.Line, Detail};
+            EvidenceKey Key{Profile, Kind, dbc::GenericPathToUtf8(Path), Span.Begin.Line, Detail};
             if (Seen.insert(Key).second)
                 Evidence.push_back({Profile, Kind, Path, Span.Begin.Line, std::move(Detail)});
         }
@@ -219,7 +220,7 @@ namespace dbc::language
             DialectDetection Current = DetectDialect(Source);
             for (DialectEvidence& Value : Current.Evidence)
             {
-                EvidenceKey Key{Value.Profile, Value.Kind, Value.LogicalPath.generic_string(), Value.Line,
+                EvidenceKey Key{Value.Profile, Value.Kind, dbc::GenericPathToUtf8(Value.LogicalPath), Value.Line,
                                 Value.Detail};
                 if (Seen.insert(Key).second)
                     Evidence.push_back(std::move(Value));

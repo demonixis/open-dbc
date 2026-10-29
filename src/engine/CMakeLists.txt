@@ -44,6 +44,7 @@ target_link_libraries(dbc_engine
 )
 
 target_include_directories(dbc_engine PRIVATE ${PROJECT_SOURCE_DIR}/sdk)
+target_include_directories(dbc_engine PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
 add_dependencies(dbc_engine opendbc_shaders)
 dbc_enable_warnings(dbc_engine)

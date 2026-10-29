@@ -1,14 +1,15 @@
 #include "app.hpp"
 #include "engine/systems/log.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cctype>
 #include <fstream>
-#include <iterator>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlgpu3.h>
 #include <imgui_internal.h>
+#include <iterator>
 
 #include "core/paths.hpp"
 #include "interpreter/atomic_file.hpp"
@@ -138,7 +139,7 @@ namespace dbc::studio
         // Opens the folder holding Path in Finder, Explorer or the desktop's file manager.
         void RevealInFileManager(const std::filesystem::path& Path)
         {
-            const std::string Folder = std::filesystem::absolute(Path).parent_path().generic_string();
+            const std::string Folder = dbc::GenericPathToUtf8(std::filesystem::absolute(Path).parent_path());
             std::string Url = Folder.starts_with('/') ? "file://" : "file:///";
             static constexpr char Hex[] = "0123456789ABCDEF";
             for (const unsigned char Character : Folder)
@@ -208,7 +209,7 @@ namespace dbc::studio
             {
                 if (panels::AssetPreview::KindOf(Path) == panels::AssetPreview::Kind::None &&
                     !panels::EditorPanel::CanOpen(Path))
-                    Status_ = "No preview for " + Path.filename().string();
+                    Status_ = "No preview for " + dbc::PathToUtf8(Path.filename());
                 else
                     OpenFile(Path);
             });
@@ -250,7 +251,7 @@ namespace dbc::studio
         std::error_code Ec;
         if (!OpenPath.empty())
         {
-            const std::filesystem::path Path(OpenPath);
+            const std::filesystem::path Path = dbc::PathFromUtf8(OpenPath);
             if (std::filesystem::is_directory(Path, Ec))
             {
                 OpenFolder(Path);
@@ -260,12 +261,14 @@ namespace dbc::studio
                 OpenFile(Path);
             }
         }
-        else if (!Settings_.ProjectFolder.empty() && std::filesystem::is_directory(Settings_.ProjectFolder, Ec))
+        else if (!Settings_.ProjectFolder.empty() &&
+                 std::filesystem::is_directory(dbc::PathFromUtf8(Settings_.ProjectFolder), Ec))
         {
-            OpenFolder(Settings_.ProjectFolder);
-            if (!Settings_.LastFile.empty() && std::filesystem::is_regular_file(Settings_.LastFile, Ec))
+            OpenFolder(dbc::PathFromUtf8(Settings_.ProjectFolder));
+            if (!Settings_.LastFile.empty() &&
+                std::filesystem::is_regular_file(dbc::PathFromUtf8(Settings_.LastFile), Ec))
             {
-                OpenFile(Settings_.LastFile);
+                OpenFile(dbc::PathFromUtf8(Settings_.LastFile));
             }
         }
 
@@ -320,7 +323,7 @@ namespace dbc::studio
             Io.ConfigDpiScaleFonts = true;
             Io.ConfigDpiScaleViewports = true;
 
-            IniPath_ = (core::paths::PrefDir() / "studio-layout.ini").string();
+            IniPath_ = dbc::PathToUtf8((core::paths::PrefDir() / "studio-layout.ini"));
             Io.IniFilename = IniPath_.c_str();
 
             Theme::Apply(Scale_ * core::platform::UiScaleHint());
@@ -456,8 +459,8 @@ namespace dbc::studio
         Media_.SetRoot(Folder);
         ProjectSettings_ = std::move(LoadedSettings);
         const std::string PreviousFolder = Settings_.ProjectFolder;
-        Settings_.ProjectFolder = Folder.string();
-        if (!PreviousFolder.empty() && std::filesystem::path(PreviousFolder) != Folder)
+        Settings_.ProjectFolder = dbc::PathToUtf8(Folder);
+        if (!PreviousFolder.empty() && dbc::PathFromUtf8(PreviousFolder) != Folder)
             Settings_.LastFile.clear();
         Settings_.Save();
         if (!ResolveWorkspace(Folder, InitialProfile_))
@@ -479,7 +482,7 @@ namespace dbc::studio
             Project_.SetRoot(File.parent_path());
             Media_.SetRoot(File.parent_path());
             ProjectSettings_ = std::move(LoadedSettings);
-            Settings_.ProjectFolder = File.parent_path().string();
+            Settings_.ProjectFolder = dbc::PathToUtf8(File.parent_path());
             Settings_.Save();
             DialectLocked_ = true;
             if (ResolveWorkspace(File, dbc::language::LanguageProfile::DbPro) && ResolvedProject_)
@@ -494,9 +497,9 @@ namespace dbc::studio
         {
             if (!Preview_.Open(File))
             {
-                Output_.Append("[ERROR] Cannot preview " + File.string(), panels::OutputPanel::Severity::Error);
+                Output_.Append("[ERROR] Cannot preview " + dbc::PathToUtf8(File), panels::OutputPanel::Severity::Error);
             }
-            Status_ = File.filename().string();
+            Status_ = dbc::PathToUtf8(File.filename());
             return;
         }
 
@@ -505,26 +508,26 @@ namespace dbc::studio
 
         if (!Editor_.Open(File))
         {
-            Output_.Append("[ERROR] Cannot open " + File.string(), panels::OutputPanel::Severity::Error);
-            Status_ = "Cannot open " + File.filename().string();
+            Output_.Append("[ERROR] Cannot open " + dbc::PathToUtf8(File), panels::OutputPanel::Severity::Error);
+            Status_ = "Cannot open " + dbc::PathToUtf8(File.filename());
             return;
         }
 
-        Settings_.LastFile = File.string();
+        Settings_.LastFile = dbc::PathToUtf8(File);
 
         Settings_.Save();
 
-        Status_ = File.filename().string();
+        Status_ = dbc::PathToUtf8(File.filename());
     }
 
     void App::ShowOpenFileDialog()
     {
-        const std::string Start = Project_.Root().empty() ? std::string() : Project_.Root().string();
+        const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
         Dialog_.OpenFile(Window_, Start, "DBA source or HLSL effect", KOpenFilter,
                          [this](const std::string& Path)
                          {
                              if (!Path.empty())
-                                 OpenFile(Path);
+                                 OpenFile(dbc::PathFromUtf8(Path));
                          });
     }
 
@@ -584,14 +587,14 @@ namespace dbc::studio
         // Beside the open project, else where downloaded projects go. Sandboxed
         // builds can only write there anyway.
         const bool Beside = core::platform::HasFreeformFileSystem() && !Project_.Root().empty();
-        NewProjectLocation_ = (Beside ? Project_.Root().parent_path() : Workspace_.ImportRoot()).string();
+        NewProjectLocation_ = dbc::PathToUtf8((Beside ? Project_.Root().parent_path() : Workspace_.ImportRoot()));
         NewProjectProfile_ = ResolvedProject_ ? ResolvedProject_->Profile : dbc::language::LanguageProfile::Dbc;
         NewProjectRequested_ = true;
     }
 
     void App::CreateNewProject()
     {
-        const std::filesystem::path Location = NewProjectLocation_;
+        const std::filesystem::path Location = dbc::PathFromUtf8(NewProjectLocation_);
         if (!Workspace_.IsWritable(Location))
         {
             NewProjectError_ = "The location is read-only.";
@@ -606,7 +609,7 @@ namespace dbc::studio
         }
         NewProjectError_.clear();
         ImGui::CloseCurrentPopup();
-        Output_.Append("Created project " + Created.Root.string());
+        Output_.Append("Created project " + dbc::PathToUtf8(Created.Root));
         OpenFolder(Created.Root);
         if (ResolvedProject_)
             OpenFile(Created.MainSource);
@@ -651,7 +654,7 @@ namespace dbc::studio
             Launcher_.SetProject(*ResolvedProject_);
         else
             Launcher_.SetFolder(ResolvedProject_->ProjectRoot, ResolvedProject_->Profile);
-        Status_ = "Opened " + ResolvedProject_->ProjectRoot.string() + " as " +
+        Status_ = "Opened " + dbc::PathToUtf8(ResolvedProject_->ProjectRoot) + " as " +
                   std::string(dbc::language::ProfileName(ResolvedProject_->Profile));
         for (const std::string& Warning : ResolvedProject_->Warnings)
             Output_.Append(Warning, panels::OutputPanel::Severity::Notice);
@@ -745,10 +748,10 @@ namespace dbc::studio
             ProjectSettings_.LanguageProjectFile.clear();
         else if (ResolvedProject_ && ResolvedProject_->DescriptorPath)
             ProjectSettings_.LanguageProjectFile =
-                ResolvedProject_->DescriptorPath->lexically_relative(Project_.Root()).generic_string();
+                dbc::GenericPathToUtf8(ResolvedProject_->DescriptorPath->lexically_relative(Project_.Root()));
         if (ResolvedProject_)
             ProjectSettings_.LanguageEntry =
-                ResolvedProject_->EntrySource.lexically_relative(Project_.Root()).generic_string();
+                dbc::GenericPathToUtf8(ResolvedProject_->EntrySource.lexically_relative(Project_.Root()));
         if (!ProjectSettings_.Save(Project_.Root()))
             Output_.Append("Cannot save the project dialect", panels::OutputPanel::Severity::Error);
     }
@@ -762,7 +765,7 @@ namespace dbc::studio
 
         if (Editor_.SaveCurrent())
         {
-            Status_ = "Saved " + Editor_.CurrentPath().filename().string();
+            Status_ = "Saved " + dbc::PathToUtf8(Editor_.CurrentPath().filename());
         }
         else
         {
@@ -777,7 +780,7 @@ namespace dbc::studio
             return;
         }
 
-        const std::string Start = Project_.Root().empty() ? std::string() : Project_.Root().string();
+        const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
         const bool Basic = Editor_.CurrentIsBasic();
         Dialog_.SaveFile(Window_, Start, Basic ? "DBA source" : "HLSL effect", Basic ? KDbaFilter : KHlslFilter,
                          [this](const std::string& Path)
@@ -788,9 +791,9 @@ namespace dbc::studio
                                  Status_ = "Quit cancelled";
                                  return;
                              }
-                             if (Editor_.SaveCurrentAs(Path))
+                             if (Editor_.SaveCurrentAs(dbc::PathFromUtf8(Path)))
                              {
-                                 Status_ = "Saved " + std::filesystem::path(Path).filename().string();
+                                 Status_ = "Saved " + dbc::PathToUtf8(dbc::PathFromUtf8(Path).filename());
                                  Project_.Refresh();
                                  if (QuitSaveInProgress_)
                                  {
@@ -887,7 +890,7 @@ namespace dbc::studio
                     Descriptor = *PendingResolution_.PendingDescriptor;
                 else if (!dbc::language::IsDbProProject(Descriptor) && !PendingResolution_.ProjectCandidates.empty())
                     Descriptor = PendingResolution_.ProjectCandidates.front();
-                Settings_.SetProjectPathRemapping(Descriptor, PendingRawPath_, PendingLocalPath_);
+                Settings_.SetProjectPathRemapping(Descriptor, PendingRawPath_, dbc::PathFromUtf8(PendingLocalPath_));
                 Settings_.Save();
                 ResolveWorkspace(PendingResolveTarget_, PendingResolveProfile_);
                 ImGui::CloseCurrentPopup();
@@ -898,7 +901,7 @@ namespace dbc::studio
         {
             for (const std::filesystem::path& Candidate : PendingResolution_.ProjectCandidates)
             {
-                if (ImGui::Button(Candidate.filename().string().c_str()))
+                if (ImGui::Button(dbc::PathToUtf8(Candidate.filename()).c_str()))
                 {
                     ResolveWorkspace(Candidate, dbc::language::LanguageProfile::DbPro);
                     ImGui::CloseCurrentPopup();
@@ -996,10 +999,11 @@ namespace dbc::studio
             ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", NewProjectError_.c_str());
         else if (Ready)
         {
-            const std::filesystem::path Root = std::filesystem::path(NewProjectLocation_) / NewProjectName_.data();
+            const std::filesystem::path Root =
+                dbc::PathFromUtf8(NewProjectLocation_) / dbc::PathFromUtf8(NewProjectName_.data());
             const char* Descriptor =
                 NewProjectProfile_ == dbc::language::LanguageProfile::DbPro ? ".dbpro" : ".opendbc-project.json";
-            ImGui::TextDisabled("Creates %s with main.dba and %s", Root.string().c_str(), Descriptor);
+            ImGui::TextDisabled("Creates %s with main.dba and %s", dbc::PathToUtf8(Root).c_str(), Descriptor);
         }
 
         ImGui::BeginDisabled(!Ready || Dialog_.IsOpen());
@@ -1316,12 +1320,13 @@ namespace dbc::studio
                 }
                 if (ImGui::MenuItem("Open Folder...", "Ctrl+Shift+O"))
                 {
-                    const std::string Start = Project_.Root().empty() ? std::string() : Project_.Root().string();
+                    const std::string Start =
+                        Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
                     Dialog_.OpenFolder(Window_, Start,
                                        [this](const std::string& Path)
                                        {
                                            if (!Path.empty())
-                                               OpenFolder(Path);
+                                               OpenFolder(dbc::PathFromUtf8(Path));
                                        });
                 }
             }
@@ -1443,32 +1448,33 @@ namespace dbc::studio
 #if !defined(DBC_STUDIO_SANDBOXED)
             if (ImGui::MenuItem("Compile HLSL Effect...", nullptr, false, !ExecutionBusy_))
             {
-                const std::string Start = Project_.Root().empty() ? std::string() : Project_.Root().string();
-                Dialog_.OpenFile(
-                    Window_, Start, "HLSL effect", KHlslFilter,
-                    [this](const std::string& Path)
-                    {
-                        if (Path.empty())
-                            return;
-                        const toolchain::ShaderCompileResult Result = ShaderCompiler_.CompileHlslEffect(Path);
-                        if (!Result.Success)
-                        {
-                            Output_.Append("[ERROR] " + Result.Error, panels::OutputPanel::Severity::Error);
-                            Status_ = "HLSL effect compilation failed";
-                            return;
-                        }
-                        Output_.Append("> Compiled " + Result.ManifestPath.filename().string(),
-                                       panels::OutputPanel::Severity::Notice);
-                        Output_.Append("  " + Result.VertexPath.string());
-                        Output_.Append("  " + Result.FragmentPath.string());
-                        Status_ = "Compiled " + Result.ManifestPath.filename().string();
-                    });
+                const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
+                Dialog_.OpenFile(Window_, Start, "HLSL effect", KHlslFilter,
+                                 [this](const std::string& Path)
+                                 {
+                                     if (Path.empty())
+                                         return;
+                                     const toolchain::ShaderCompileResult Result =
+                                         ShaderCompiler_.CompileHlslEffect(dbc::PathFromUtf8(Path));
+                                     if (!Result.Success)
+                                     {
+                                         Output_.Append("[ERROR] " + Result.Error,
+                                                        panels::OutputPanel::Severity::Error);
+                                         Status_ = "HLSL effect compilation failed";
+                                         return;
+                                     }
+                                     Output_.Append("> Compiled " + dbc::PathToUtf8(Result.ManifestPath.filename()),
+                                                    panels::OutputPanel::Severity::Notice);
+                                     Output_.Append("  " + dbc::PathToUtf8(Result.VertexPath));
+                                     Output_.Append("  " + dbc::PathToUtf8(Result.FragmentPath));
+                                     Status_ = "Compiled " + dbc::PathToUtf8(Result.ManifestPath.filename());
+                                 });
             }
 #endif
             ImGui::Separator();
-            const bool CanExport = core::platform::CanExportArtifacts() && !ExecutionBusy_ &&
-                                   !ExportJob_.Running() && ResolvedProject_.has_value() &&
-                                   ResolvedProject_->ExportBlockers.empty() && !ResolvedProject_->EntrySource.empty();
+            const bool CanExport = core::platform::CanExportArtifacts() && !ExecutionBusy_ && !ExportJob_.Running() &&
+                                   ResolvedProject_.has_value() && ResolvedProject_->ExportBlockers.empty() &&
+                                   !ResolvedProject_->EntrySource.empty();
             if (ImGui::MenuItem("Build...", nullptr, false, CanExport))
                 OpenBuildWindow();
             if (ExportJob_.Running() && ImGui::MenuItem("Cancel Export"))
@@ -1781,8 +1787,9 @@ namespace dbc::studio
         Editor_.SetErrorMarkers(Target, {});
 
         toolchain::RunOptions RunOptions = RunOptions_;
-        RunOptions.AssetRoot = Plan.AssetRoot.string();
-        Output_.Append("> " + Execution_.Describe() + "  " + Target.string() + "  --asset-root " + RunOptions.AssetRoot,
+        RunOptions.AssetRoot = dbc::PathToUtf8(Plan.AssetRoot);
+        Output_.Append("> " + Execution_.Describe() + "  " + dbc::PathToUtf8(Target) + "  --asset-root " +
+                           RunOptions.AssetRoot,
                        panels::OutputPanel::Severity::Notice);
 
         ExecutionTarget_ = Target;
@@ -1791,7 +1798,7 @@ namespace dbc::studio
         if (Started)
         {
             ExecutionBusy_ = true;
-            Status_ = "Running " + Target.filename().string();
+            Status_ = "Running " + dbc::PathToUtf8(Target.filename());
         }
         else if (!ExecutionBusy_)
         {
@@ -1814,11 +1821,11 @@ namespace dbc::studio
     {
         if (!ResolvedProject_)
             return;
-        const std::string Root = ResolvedProject_->ProjectRoot.string();
+        const std::string Root = dbc::PathToUtf8(ResolvedProject_->ProjectRoot);
         // The default sits inside the project, where exports skip their own output folder.
         const auto Saved = Settings_.ExportFolders.find(Root);
         const std::filesystem::path Default = ResolvedProject_->ProjectRoot / "exports";
-        BuildWindow_.Open(Saved != Settings_.ExportFolders.end() ? Saved->second : Default.string());
+        BuildWindow_.Open(Saved != Settings_.ExportFolders.end() ? Saved->second : dbc::PathToUtf8(Default));
         BuildWindow_.SetSigningIdentities(toolchain::ListSigningIdentities());
         RefreshExportChecks();
     }
@@ -1826,7 +1833,7 @@ namespace dbc::studio
     toolchain::ArtifactExportRequest App::MakeBuildRequest() const
     {
         return toolchain::MakeArtifactExportRequest(
-            *ResolvedProject_, ProjectSettings_, BuildWindow_.Target(), BuildWindow_.OutputFolder(),
+            *ResolvedProject_, ProjectSettings_, BuildWindow_.Target(), dbc::PathFromUtf8(BuildWindow_.OutputFolder()),
             BuildWindow_.Distribution(),
             toolchain::ResolveExportToolchain(Settings_, toolchain::ToolchainSearch::Host()), ExportSecrets_);
     }
@@ -1861,8 +1868,8 @@ namespace dbc::studio
             {
                 const std::filesystem::path Suggested =
                     ResolvedProject_ ? ResolvedProject_->ProjectRoot.parent_path() / "release.keystore"
-                                     : std::filesystem::path("release.keystore");
-                Dialog_.SaveFile(Window_, Suggested.string(), "Keystore", "keystore",
+                                     : dbc::PathFromUtf8("release.keystore");
+                Dialog_.SaveFile(Window_, dbc::PathToUtf8(Suggested), "Keystore", "keystore",
                                  [this](const std::string& Path)
                                  {
                                      if (!Path.empty())
@@ -1887,7 +1894,7 @@ namespace dbc::studio
     {
         panels::BuildWindow::KeystoreForm& Form = BuildWindow_.Keystore();
         toolchain::AndroidKeystoreRequest Request;
-        Request.Path = Form.Path;
+        Request.Path = dbc::PathFromUtf8(Form.Path);
         Request.Alias = Form.Alias;
         Request.Password = Form.Password;
         Request.CommonName = Form.CommonName;
@@ -1903,7 +1910,7 @@ namespace dbc::studio
             Output_.Append("Cannot create the keystore: " + Error, panels::OutputPanel::Severity::Error);
             return;
         }
-        ProjectSettings_.AndroidKeystorePath = Request.Path.string();
+        ProjectSettings_.AndroidKeystorePath = dbc::PathToUtf8(Request.Path);
         ProjectSettings_.AndroidKeyAlias = Request.Alias;
         if (ResolvedProject_ && !ProjectSettings_.Save(ResolvedProject_->ProjectRoot))
             Output_.Append("Cannot save the keystore in the project settings.", panels::OutputPanel::Severity::Error);
@@ -1913,8 +1920,9 @@ namespace dbc::studio
         Form.Password.clear();
         Form.Confirm.clear();
         Status_ = "Keystore created";
-        Output_.Append("Created " + Request.Path.string() + ". Back it up with its password: every Google Play "
-                       "update must be signed with it.",
+        Output_.Append("Created " + dbc::PathToUtf8(Request.Path) +
+                           ". Back it up with its password: every Google Play "
+                           "update must be signed with it.",
                        panels::OutputPanel::Severity::Notice);
         RefreshExportChecks();
     }
@@ -1932,7 +1940,7 @@ namespace dbc::studio
         RefreshExportChecks();
         if (!toolchain::ReadyToExport(ExportChecks_))
             return;
-        const std::filesystem::path Folder = BuildWindow_.OutputFolder();
+        const std::filesystem::path Folder = dbc::PathFromUtf8(BuildWindow_.OutputFolder());
         std::error_code FileError;
         std::filesystem::create_directories(Folder, FileError);
         if (FileError)
@@ -1942,7 +1950,7 @@ namespace dbc::studio
                            panels::OutputPanel::Severity::Error);
             return;
         }
-        Settings_.ExportFolders[ResolvedProject_->ProjectRoot.string()] = Folder.string();
+        Settings_.ExportFolders[dbc::PathToUtf8(ResolvedProject_->ProjectRoot)] = dbc::PathToUtf8(Folder);
         Settings_.Save();
         if (!ExportJob_.Start(MakeBuildRequest()))
         {
@@ -1953,7 +1961,7 @@ namespace dbc::studio
                              BuildWindow_.Target() == toolchain::ArtifactTarget::AndroidBundle;
         IncrementVersionAfterExport_ = Android && BuildWindow_.Distribution() && BuildWindow_.IncrementVersionCode();
         Status_ = "Exporting...";
-        Output_.Append("Exporting " + ResolvedProject_->EntrySource.filename().string() + "...",
+        Output_.Append("Exporting " + dbc::PathToUtf8(ResolvedProject_->EntrySource.filename()) + "...",
                        panels::OutputPanel::Severity::Notice);
     }
 
@@ -1974,7 +1982,7 @@ namespace dbc::studio
             return;
         }
         LastExport_ = Result->OutputPath;
-        Status_ = "Exported " + Result->OutputPath.filename().string();
+        Status_ = "Exported " + dbc::PathToUtf8(Result->OutputPath.filename());
         if (std::exchange(IncrementVersionAfterExport_, false) && ResolvedProject_)
         {
             ++ProjectSettings_.VersionCode;

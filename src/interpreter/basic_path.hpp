@@ -1,5 +1,6 @@
 #pragma once
 
+#include "path_utf8.hpp"
 #include <algorithm>
 #include <filesystem>
 #include <string>
@@ -9,10 +10,10 @@ namespace dbc::interpreter
     inline std::filesystem::path NormalizeBasicPath(const std::filesystem::path& Input)
     {
         const bool NativeAbsolute = Input.is_absolute();
-        std::string Text = Input.string();
+        std::string Text = dbc::PathToUtf8(Input);
         std::replace(Text.begin(), Text.end(), '\\', '/');
 
-        std::filesystem::path Result = std::filesystem::path(Text).lexically_normal();
+        std::filesystem::path Result = dbc::PathFromUtf8(Text).lexically_normal();
         if (!NativeAbsolute && Result.is_absolute())
             Result = Result.relative_path();
         return Result;
@@ -50,7 +51,7 @@ namespace dbc::interpreter
         if (Relative.empty() || Relative.is_absolute() || *Relative.begin() == "..")
         {
             if (Error)
-                *Error = "Source path must remain inside its root: " + Input.string();
+                *Error = "Source path must remain inside its root: " + dbc::PathToUtf8(Input);
             return false;
         }
         Result = Candidate;

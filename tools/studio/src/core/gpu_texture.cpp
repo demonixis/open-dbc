@@ -1,4 +1,5 @@
 #include "core/gpu_texture.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -116,7 +117,7 @@ namespace dbc::studio
         bool LoadGpuImage(SDL_GPUDevice* Gpu, const std::filesystem::path& Path, GpuImage& Out, std::string& Error,
                           int MaxSize)
         {
-            SDL_Surface* Loaded = IMG_Load(Path.string().c_str());
+            SDL_Surface* Loaded = IMG_Load(dbc::PathToUtf8(Path).c_str());
             if (Loaded == nullptr)
             {
                 Error = std::string("Cannot load image: ") + SDL_GetError();

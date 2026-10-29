@@ -1,4 +1,5 @@
 #include "shader_compiler.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -374,14 +375,14 @@ namespace dbc::studio
             std::ofstream Stream(Temporary, std::ios::binary | std::ios::trunc);
             if (!Stream)
             {
-                Error = "Cannot write " + Temporary.string();
+                Error = "Cannot write " + dbc::PathToUtf8(Temporary);
                 return false;
             }
             Stream.write(reinterpret_cast<const char*>(Bytes), static_cast<std::streamsize>(ByteCount));
             Stream.close();
             if (!Stream)
             {
-                Error = "Cannot write " + Temporary.string();
+                Error = "Cannot write " + dbc::PathToUtf8(Temporary);
                 std::filesystem::remove(Temporary, RemoveError);
                 return false;
             }
@@ -403,7 +404,7 @@ namespace dbc::studio
             if (!RenameError)
                 return true;
 
-            Error = "Cannot publish " + Target.string() + ": " + RenameError.message();
+            Error = "Cannot publish " + dbc::PathToUtf8(Target) + ": " + RenameError.message();
             return false;
         }
 
@@ -427,11 +428,11 @@ namespace dbc::studio
             std::error_code FileError;
             if (!std::filesystem::is_regular_file(Source, FileError))
             {
-                Result.Error = "HLSL source is not a regular file: " + Source.string();
+                Result.Error = "HLSL source is not a regular file: " + dbc::PathToUtf8(Source);
                 return Result;
             }
 
-            std::string Extension = Source.extension().string();
+            std::string Extension = dbc::PathToUtf8(Source.extension());
             for (char& Character : Extension)
                 Character = static_cast<char>(SDL_tolower(static_cast<unsigned char>(Character)));
             if (Extension != ".fx" && Extension != ".hlsl")
@@ -443,42 +444,42 @@ namespace dbc::studio
             std::ifstream Stream(Source, std::ios::binary);
             if (!Stream)
             {
-                Result.Error = "Cannot read HLSL source: " + Source.string();
+                Result.Error = "Cannot read HLSL source: " + dbc::PathToUtf8(Source);
                 return Result;
             }
             std::string SourceText((std::istreambuf_iterator<char>(Stream)), std::istreambuf_iterator<char>());
             if (!Stream.good() && !Stream.eof())
             {
-                Result.Error = "Cannot read HLSL source: " + Source.string();
+                Result.Error = "Cannot read HLSL source: " + dbc::PathToUtf8(Source);
                 return Result;
             }
             if (SourceText.empty())
             {
-                Result.Error = "HLSL source is empty: " + Source.string();
+                Result.Error = "HLSL source is empty: " + dbc::PathToUtf8(Source);
                 return Result;
             }
             if (SourceText.find('\0') != std::string::npos)
             {
-                Result.Error = "HLSL source contains an embedded null byte: " + Source.string();
+                Result.Error = "HLSL source contains an embedded null byte: " + dbc::PathToUtf8(Source);
                 return Result;
             }
 
             std::vector<TechniqueDefinition> TechniqueDefinitions;
             if (!ParseTechniques(SourceText, TechniqueDefinitions, Result.Error))
             {
-                Result.Error = Source.filename().string() + ": " + Result.Error;
+                Result.Error = dbc::PathToUtf8(Source.filename()) + ": " + Result.Error;
                 return Result;
             }
             if (ContainsLegacyShaderAssembly(SourceText))
             {
-                Result.Error = Source.filename().string() +
+                Result.Error = dbc::PathToUtf8(Source.filename()) +
                                ": legacy DirectX shader assembly is not supported; port the effect to HLSL";
                 return Result;
             }
             if (ContainsLegacyEffectFrameworkTechnique(SourceText) &&
                 (!DefinesEntryPoint(SourceText, "VSMain") || !DefinesEntryPoint(SourceText, "PSMain")))
             {
-                Result.Error = Source.filename().string() +
+                Result.Error = dbc::PathToUtf8(Source.filename()) +
                                ": legacy DirectX Effect Framework techniques are not supported; convert the effect to "
                                "VSMain/PSMain and // opendbc:technique declarations";
                 return Result;
@@ -496,7 +497,8 @@ namespace dbc::studio
                 return Result;
             }
 
-            const std::string IncludeDirectory = Source.parent_path().empty() ? "." : Source.parent_path().string();
+            const std::string IncludeDirectory =
+                Source.parent_path().empty() ? "." : dbc::PathToUtf8(Source.parent_path());
             const std::set<std::string> BooleanParameters = HlslBooleanParameters(SourceText);
             CompiledStage Vertex;
             CompiledStage Fragment;
@@ -505,7 +507,7 @@ namespace dbc::studio
                 !CompileStage(SourceText, IncludeDirectory, BooleanParameters, "PSMain",
                               SDL_SHADERCROSS_SHADERSTAGE_FRAGMENT, Fragment, Result.Error))
             {
-                Result.Error = Source.filename().string() + ": " + Result.Error;
+                Result.Error = dbc::PathToUtf8(Source.filename()) + ": " + Result.Error;
                 return Result;
             }
 
@@ -521,37 +523,39 @@ namespace dbc::studio
                                   Definition.FragmentEntryPoint.c_str(), SDL_SHADERCROSS_SHADERSTAGE_FRAGMENT,
                                   Technique.Fragment, Result.Error))
                 {
-                    Result.Error = Source.filename().string() + ": technique " + Definition.Name + ": " + Result.Error;
+                    Result.Error =
+                        dbc::PathToUtf8(Source.filename()) + ": technique " + Definition.Name + ": " + Result.Error;
                     return Result;
                 }
                 Techniques.push_back(std::move(Technique));
             }
 
             const std::filesystem::path Stem = Source.parent_path() / Source.stem();
-            Result.VertexPath = Stem.string() + ".vert.spv";
-            Result.FragmentPath = Stem.string() + ".frag.spv";
-            Result.ManifestPath = Stem.string() + ".effect.json";
+            Result.VertexPath = (std::filesystem::path(Stem) += ".vert.spv");
+            Result.FragmentPath = (std::filesystem::path(Stem) += ".frag.spv");
+            Result.ManifestPath = (std::filesystem::path(Stem) += ".effect.json");
 
             const auto NameStage = [](CompiledStage& Stage, const std::filesystem::path& StageStem)
             {
-                Stage.Metadata["file"] = StageStem.filename().generic_string() + ".spv";
-                Stage.Metadata["msl_file"] = StageStem.filename().generic_string() + ".msl";
+                Stage.Metadata["file"] = dbc::GenericPathToUtf8(StageStem.filename()) + ".spv";
+                Stage.Metadata["msl_file"] = dbc::GenericPathToUtf8(StageStem.filename()) + ".msl";
             };
-            NameStage(Vertex, Stem.string() + ".vert");
-            NameStage(Fragment, Stem.string() + ".frag");
+            NameStage(Vertex, (std::filesystem::path(Stem) += ".vert"));
+            NameStage(Fragment, (std::filesystem::path(Stem) += ".frag"));
             nlohmann::json TechniqueManifest = nlohmann::json::array();
             for (CompiledTechnique& Technique : Techniques)
             {
-                const std::filesystem::path TechniqueStem = Stem.string() + "." + Technique.Definition.Name;
-                NameStage(Technique.Vertex, TechniqueStem.string() + ".vert");
-                NameStage(Technique.Fragment, TechniqueStem.string() + ".frag");
+                const std::filesystem::path TechniqueStem =
+                    dbc::PathFromUtf8(dbc::PathToUtf8(Stem) + "." + Technique.Definition.Name);
+                NameStage(Technique.Vertex, (std::filesystem::path(TechniqueStem) += ".vert"));
+                NameStage(Technique.Fragment, (std::filesystem::path(TechniqueStem) += ".frag"));
                 TechniqueManifest.push_back(
                     {{"name", Technique.Definition.Name},
                      {"stages", {{"vertex", Technique.Vertex.Metadata}, {"fragment", Technique.Fragment.Metadata}}}});
             }
             nlohmann::json Manifest = {
                 {"format", "opendbc-effect-v1"},
-                {"source", Source.filename().generic_string()},
+                {"source", dbc::GenericPathToUtf8(Source.filename())},
                 {"source_language", "hlsl"},
                 {"stages", {{"vertex", Vertex.Metadata}, {"fragment", Fragment.Metadata}}},
                 {"techniques", std::move(TechniqueManifest)},
@@ -562,18 +566,19 @@ namespace dbc::studio
             std::vector<std::pair<const void*, std::size_t>> Payloads;
             const auto AddStage = [&](const CompiledStage& Stage, const std::filesystem::path& StageStem)
             {
-                Targets.push_back(StageStem.string() + ".spv");
+                Targets.push_back((std::filesystem::path(StageStem) += ".spv"));
                 Payloads.emplace_back(Stage.Bytes.data(), Stage.Bytes.size());
-                Targets.push_back(StageStem.string() + ".msl");
+                Targets.push_back((std::filesystem::path(StageStem) += ".msl"));
                 Payloads.emplace_back(Stage.Msl.data(), Stage.Msl.size());
             };
-            AddStage(Vertex, Stem.string() + ".vert");
-            AddStage(Fragment, Stem.string() + ".frag");
+            AddStage(Vertex, (std::filesystem::path(Stem) += ".vert"));
+            AddStage(Fragment, (std::filesystem::path(Stem) += ".frag"));
             for (const CompiledTechnique& Technique : Techniques)
             {
-                const std::filesystem::path TechniqueStem = Stem.string() + "." + Technique.Definition.Name;
-                AddStage(Technique.Vertex, TechniqueStem.string() + ".vert");
-                AddStage(Technique.Fragment, TechniqueStem.string() + ".frag");
+                const std::filesystem::path TechniqueStem =
+                    dbc::PathFromUtf8(dbc::PathToUtf8(Stem) + "." + Technique.Definition.Name);
+                AddStage(Technique.Vertex, (std::filesystem::path(TechniqueStem) += ".vert"));
+                AddStage(Technique.Fragment, (std::filesystem::path(TechniqueStem) += ".frag"));
             }
             Targets.push_back(Result.ManifestPath);
 

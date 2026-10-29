@@ -1,5 +1,6 @@
 #include "embedded_artifact.hpp"
 #include "atomic_file.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <array>
@@ -51,7 +52,7 @@ namespace dbc::interpreter
         std::optional<std::string> LoadBytes(const std::filesystem::path& Path)
         {
             std::size_t Size = 0;
-            void* Bytes = SDL_LoadFile(Path.string().c_str(), &Size);
+            void* Bytes = SDL_LoadFile(dbc::PathToUtf8(Path).c_str(), &Size);
             if (Bytes == nullptr)
                 return std::nullopt;
             const std::unique_ptr<void, decltype(&SDL_free)> Owner(Bytes, SDL_free);
@@ -84,7 +85,7 @@ namespace dbc::interpreter
             {
                 std::error_code Ignored;
                 std::filesystem::remove(Temporary, Ignored);
-                Error = "Cannot publish embedded artifact file: " + Destination.string();
+                Error = "Cannot publish embedded artifact file: " + dbc::PathToUtf8(Destination);
                 return false;
             }
             return true;
@@ -103,7 +104,7 @@ namespace dbc::interpreter
             {
                 std::error_code Ignored;
                 std::filesystem::remove(Temporary, Ignored);
-                Error = "Cannot finish embedded artifact file: " + Destination.string();
+                Error = "Cannot finish embedded artifact file: " + dbc::PathToUtf8(Destination);
                 return false;
             }
             return PublishTemporary(Temporary, Destination, Error);
@@ -112,10 +113,10 @@ namespace dbc::interpreter
         bool CopyAtomic(const std::filesystem::path& Source, const std::filesystem::path& Destination,
                         std::string& Error)
         {
-            SDL_IOStream* Input = SDL_IOFromFile(Source.string().c_str(), "rb");
+            SDL_IOStream* Input = SDL_IOFromFile(dbc::PathToUtf8(Source).c_str(), "rb");
             if (Input == nullptr)
             {
-                Error = "Cannot open embedded artifact file: " + Source.string();
+                Error = "Cannot open embedded artifact file: " + dbc::PathToUtf8(Source);
                 return false;
             }
             const std::unique_ptr<SDL_IOStream, decltype(&SDL_CloseIO)> InputOwner(Input, SDL_CloseIO);
@@ -139,7 +140,7 @@ namespace dbc::interpreter
             {
                 std::error_code Ignored;
                 std::filesystem::remove(Temporary, Ignored);
-                Error = "Cannot copy embedded artifact file: " + Source.string();
+                Error = "Cannot copy embedded artifact file: " + dbc::PathToUtf8(Source);
                 return false;
             }
             return PublishTemporary(Temporary, Destination, Error);
@@ -161,7 +162,7 @@ namespace dbc::interpreter
                 {
                     if (std::filesystem::is_symlink(Status) || !std::filesystem::is_directory(Status))
                     {
-                        Error = "Writable artifact payload contains an unsafe directory: " + Current.string();
+                        Error = "Writable artifact payload contains an unsafe directory: " + dbc::PathToUtf8(Current);
                         return false;
                     }
                     continue;
@@ -192,7 +193,7 @@ namespace dbc::interpreter
 
     std::optional<std::string> detail::ArtifactContentHashFile(const std::filesystem::path& Path)
     {
-        SDL_IOStream* Input = SDL_IOFromFile(Path.string().c_str(), "rb");
+        SDL_IOStream* Input = SDL_IOFromFile(dbc::PathToUtf8(Path).c_str(), "rb");
         if (Input == nullptr)
             return std::nullopt;
         const std::unique_ptr<SDL_IOStream, decltype(&SDL_CloseIO)> InputOwner(Input, SDL_CloseIO);
@@ -236,7 +237,7 @@ namespace dbc::interpreter
             }
             for (auto It = State["files"].begin(); It != State["files"].end(); ++It)
             {
-                if (!It.value().is_string() || !SafeRelativePath(It.key()) ||
+                if (!It.value().is_string() || !SafeRelativePath(dbc::PathFromUtf8(It.key())) ||
                     !ValidContentHash(It.value().get_ref<const std::string&>()))
                 {
                     Error = "The writable artifact payload state has an invalid file entry";
@@ -248,15 +249,15 @@ namespace dbc::interpreter
 
         std::map<std::string, std::string> Current;
         for (const ArtifactFile& File : Files)
-            Current.emplace(File.RelativePath.generic_string(), File.ContentHash);
+            Current.emplace(dbc::GenericPathToUtf8(File.RelativePath), File.ContentHash);
 
         std::error_code FileError;
         for (const auto& [Path, OldHash] : Previous)
         {
             if (Current.contains(Path))
                 continue;
-            const std::filesystem::path Destination = DestinationRoot / Path;
-            if (!EnsurePayloadDirectory(DestinationRoot, std::filesystem::path(Path).parent_path(), Error))
+            const std::filesystem::path Destination = DestinationRoot / dbc::PathFromUtf8(Path);
+            if (!EnsurePayloadDirectory(DestinationRoot, dbc::PathFromUtf8(Path).parent_path(), Error))
                 return false;
             const std::optional<std::string> ExistingHash = ArtifactContentHashFile(Destination);
             if (ExistingHash && *ExistingHash == OldHash)
@@ -272,7 +273,7 @@ namespace dbc::interpreter
 
         for (const ArtifactFile& File : Files)
         {
-            const std::string Key = File.RelativePath.generic_string();
+            const std::string Key = dbc::GenericPathToUtf8(File.RelativePath);
             const std::filesystem::path Source = SourceRoot / File.RelativePath;
             const std::optional<std::string> SourceHash = ArtifactContentHashFile(Source);
             if (!SourceHash)
@@ -335,15 +336,15 @@ namespace dbc::interpreter
         const auto ProgramValue = Manifest.find("program");
         if (ProgramValue == Manifest.end() || !ProgramValue->is_string())
             return {{}, "The embedded OpenDBC artifact manifest has no program image"};
-        const std::filesystem::path RelativeProgram = ProgramValue->get<std::string>();
-        if (!SafeRelativePath(RelativeProgram) || Lower(RelativeProgram.extension().string()) != ".obc")
+        const std::filesystem::path RelativeProgram = dbc::PathFromUtf8(ProgramValue->get<std::string>());
+        if (!SafeRelativePath(RelativeProgram) || Lower(dbc::PathToUtf8(RelativeProgram.extension())) != ".obc")
             return {{}, "The embedded OpenDBC artifact program must be a relative .obc path"};
         std::filesystem::path RelativeAssetRoot;
         if (const auto AssetValue = Manifest.find("assetRoot"); AssetValue != Manifest.end())
         {
             if (!AssetValue->is_string())
                 return {{}, "The embedded OpenDBC artifact asset root is invalid"};
-            RelativeAssetRoot = AssetValue->get<std::string>();
+            RelativeAssetRoot = dbc::PathFromUtf8(AssetValue->get<std::string>());
             if (!RelativeAssetRoot.empty() && !SafeRelativePath(RelativeAssetRoot))
                 return {{}, "The embedded OpenDBC artifact asset root is not a safe relative path"};
         }
@@ -368,17 +369,17 @@ namespace dbc::interpreter
             if (!Value.is_object() || !Value.contains("path") || !Value["path"].is_string() ||
                 !Value.contains("hash") || !Value["hash"].is_string())
                 return {{}, "The embedded OpenDBC artifact payload inventory is invalid"};
-            const std::filesystem::path Relative = Value["path"].get<std::string>();
+            const std::filesystem::path Relative = dbc::PathFromUtf8(Value["path"].get<std::string>());
             const std::string Hash = Value["hash"].get<std::string>();
             if (!SafeRelativePath(Relative))
                 return {{}, "The embedded OpenDBC artifact payload contains an unsafe path"};
             if (!ValidContentHash(Hash))
                 return {{}, "The embedded OpenDBC artifact payload contains an invalid content hash"};
-            if (!FileKeys.insert(Relative.generic_string()).second)
+            if (!FileKeys.insert(dbc::GenericPathToUtf8(Relative)).second)
                 return {{}, "The embedded OpenDBC artifact payload contains duplicate paths"};
             Files.push_back({Relative, Hash});
         }
-        if (!FileKeys.contains(RelativeProgram.generic_string()))
+        if (!FileKeys.contains(dbc::GenericPathToUtf8(RelativeProgram)))
             return {{}, "The embedded OpenDBC artifact payload does not contain its program image"};
 
         const std::filesystem::path Resources = ApkAssets ? std::filesystem::path{} : ResourceRoot;
@@ -397,7 +398,7 @@ namespace dbc::interpreter
             if (RawPrefPath == nullptr)
                 return {{}, "Cannot locate writable storage for the embedded artifact"};
             const std::unique_ptr<char, decltype(&SDL_free)> PrefOwner(RawPrefPath, SDL_free);
-            PayloadRoot = std::filesystem::path(RawPrefPath) / "payload";
+            PayloadRoot = dbc::PathFromUtf8(RawPrefPath) / "payload";
         }
         std::string ExtractError;
         if (!detail::SynchronizeArtifactPayload(Resources / "artifact", PayloadRoot, Files, ExtractError))

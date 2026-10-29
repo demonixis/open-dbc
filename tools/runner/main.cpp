@@ -4,6 +4,7 @@
 #include "interpreter/command_line.hpp"
 #include "interpreter/embedded_artifact.hpp"
 #include "interpreter/program_image.hpp"
+#include "path_utf8.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -31,7 +32,7 @@ int main(int Argc, char* Argv[])
 {
     const char* Base = SDL_GetBasePath();
     const dbc::interpreter::EmbeddedArtifactResult Embedded =
-        dbc::interpreter::FindEmbeddedArtifact(Base ? std::filesystem::path(Base) : std::filesystem::path{});
+        dbc::interpreter::FindEmbeddedArtifact(Base ? dbc::PathFromUtf8(Base) : std::filesystem::path{});
     if (!Embedded.Error.empty())
     {
         Write(stderr, Embedded.Error + "\n");
@@ -43,8 +44,8 @@ int main(int Argc, char* Argv[])
     std::string AssetRoot;
     if (Embedded.Artifact)
     {
-        Program = Embedded.Artifact->ProgramPath.string();
-        AssetRoot = Embedded.Artifact->AssetRoot.string();
+        Program = dbc::PathToUtf8(Embedded.Artifact->ProgramPath);
+        AssetRoot = dbc::PathToUtf8(Embedded.Artifact->AssetRoot);
         Arguments.insert(Arguments.end(), {Program, "--asset-root", AssetRoot});
     }
     else

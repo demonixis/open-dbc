@@ -1,6 +1,7 @@
 #include "settings.hpp"
 #include "engine/systems/log.hpp"
 #include "interpreter/atomic_file.hpp"
+#include "path_utf8.hpp"
 #include <type_traits>
 
 #include <fstream>
@@ -43,7 +44,7 @@ namespace dbc::studio
             std::string RemappingKey(const std::filesystem::path& Descriptor, std::string_view RawPath)
             {
                 std::error_code Error;
-                return std::filesystem::absolute(Descriptor, Error).lexically_normal().generic_string() + "\n" +
+                return dbc::GenericPathToUtf8(std::filesystem::absolute(Descriptor, Error).lexically_normal()) + "\n" +
                        std::string(RawPath);
             }
         } // namespace
@@ -125,13 +126,13 @@ namespace dbc::studio
             const auto Found = ProjectPathRemappings.find(RemappingKey(Descriptor, RawPath));
             if (Found == ProjectPathRemappings.end())
                 return std::nullopt;
-            return std::filesystem::path(Found->second);
+            return dbc::PathFromUtf8(Found->second);
         }
 
         void Settings::SetProjectPathRemapping(const std::filesystem::path& Descriptor, std::string_view RawPath,
                                                const std::filesystem::path& LocalPath)
         {
-            ProjectPathRemappings[RemappingKey(Descriptor, RawPath)] = LocalPath.string();
+            ProjectPathRemappings[RemappingKey(Descriptor, RawPath)] = dbc::PathToUtf8(LocalPath);
         }
 
         void Settings::ClearProjectPathRemappings()

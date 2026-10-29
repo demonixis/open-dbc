@@ -1,4 +1,5 @@
 #include "execution_session.hpp"
+#include "path_utf8.hpp"
 
 #include "verifier.hpp"
 
@@ -31,7 +32,7 @@ namespace dbc::vm
             {
                 Result << " at line " << Failure.Span.Begin.Line << ", column " << Failure.Span.Begin.Column;
                 if (!Failure.Span.LogicalPath.empty())
-                    Result << " in " << Failure.Span.LogicalPath.string();
+                    Result << " in " << dbc::PathToUtf8(Failure.Span.LogicalPath);
             }
             return Result.str();
         }

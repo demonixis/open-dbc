@@ -5,6 +5,7 @@
 // Extracted from resource_systems.cpp and graphics_device.cpp (batch 4.1).
 
 #include "engine_types.hpp"
+#include "path_utf8.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -208,7 +209,7 @@ namespace dbc
         if (FileError && FileError != std::errc::no_such_file_or_directory && FileError != std::errc::not_a_directory)
         {
             if (Error)
-                *Error = "Cannot inspect path '" + Path.string() + "': " + FileError.message();
+                *Error = "Cannot inspect path '" + dbc::PathToUtf8(Path) + "': " + FileError.message();
             return false;
         }
         Exists = Found;
@@ -223,7 +224,7 @@ namespace dbc
         const fs::path Remainder = Relative.is_absolute() ? Relative.relative_path() : Relative;
         for (const auto& Part : Remainder)
         {
-            const std::string Piece = Part.string();
+            const std::string Piece = dbc::PathToUtf8(Part);
             if (Piece.empty() || Piece == ".")
                 continue;
             if (Piece == "..")
@@ -252,7 +253,7 @@ namespace dbc
             if (FileError)
             {
                 if (Error)
-                    *Error = "Cannot inspect directory '" + Current.string() + "': " + FileError.message();
+                    *Error = "Cannot inspect directory '" + dbc::PathToUtf8(Current) + "': " + FileError.message();
                 return false;
             }
             if (!Directory)
@@ -264,7 +265,7 @@ namespace dbc
             fs::path Found;
             for (fs::directory_iterator It(Current, FileError), End; !FileError && It != End; It.increment(FileError))
             {
-                if (ToLowerAscii(It->path().filename().string()) == Wanted)
+                if (ToLowerAscii(dbc::PathToUtf8(It->path().filename())) == Wanted)
                 {
                     Found = It->path();
                     break;
@@ -273,7 +274,7 @@ namespace dbc
             if (FileError)
             {
                 if (Error)
-                    *Error = "Cannot enumerate directory '" + Current.string() + "': " + FileError.message();
+                    *Error = "Cannot enumerate directory '" + dbc::PathToUtf8(Current) + "': " + FileError.message();
                 return false;
             }
             if (Found.empty())

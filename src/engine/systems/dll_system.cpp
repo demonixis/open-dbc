@@ -1,6 +1,7 @@
 #include "dll_system.hpp"
 #include "engine_kernel.hpp"
 #include "memblock_system.hpp"
+#include "path_utf8.hpp"
 
 #include <SDL3/SDL_loadso.h>
 #include <opendbc_plugin.h>
@@ -31,12 +32,12 @@ namespace dbc
         std::vector<std::filesystem::path> Candidates(const std::filesystem::path& Path)
         {
             std::vector<std::filesystem::path> Result{Path};
-            std::string Extension = Path.extension().string();
+            std::string Extension = dbc::PathToUtf8(Path.extension());
             std::transform(Extension.begin(), Extension.end(), Extension.begin(),
                            [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
             if (Extension == ".dll" && Extension != KLibraryExtension)
             {
-                const std::string Stem = Path.stem().string();
+                const std::string Stem = dbc::PathToUtf8(Path.stem());
                 Result.push_back(Path.parent_path() / (Stem + KLibraryExtension));
                 Result.push_back(Path.parent_path() / ("lib" + Stem + KLibraryExtension));
             }
@@ -93,17 +94,17 @@ namespace dbc
             }
         }
         if (Found.empty())
-            return Fail(Error, "LOAD DLL cannot find '" + Path.string() + "'");
+            return Fail(Error, "LOAD DLL cannot find '" + dbc::PathToUtf8(Path) + "'");
 
-        SDL_SharedObject* Library = SDL_LoadObject(Found.string().c_str());
+        SDL_SharedObject* Library = SDL_LoadObject(dbc::PathToUtf8(Found).c_str());
         if (Library == nullptr)
-            return Fail(Error, "LOAD DLL cannot load '" + Found.string() + "': " + SDL_GetError());
+            return Fail(Error, "LOAD DLL cannot load '" + dbc::PathToUtf8(Found) + "': " + SDL_GetError());
         using AbiVersion = std::uint32_t (*)();
         const auto Version = reinterpret_cast<AbiVersion>(SDL_LoadFunction(Library, "opendbc_plugin_abi_version"));
         if (Version == nullptr || Version() != OPENDBC_PLUGIN_ABI_VERSION)
         {
             SDL_UnloadObject(Library);
-            return Fail(Error, "LOAD DLL '" + Found.string() + "' is not an OpenDBC plugin of ABI version " +
+            return Fail(Error, "LOAD DLL '" + dbc::PathToUtf8(Found) + "' is not an OpenDBC plugin of ABI version " +
                                    std::to_string(OPENDBC_PLUGIN_ABI_VERSION));
         }
         Libraries_[Number] = Library;

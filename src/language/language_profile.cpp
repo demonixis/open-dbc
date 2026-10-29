@@ -1,4 +1,5 @@
 #include "language_profile.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -42,12 +43,12 @@ namespace dbc::language
 
     bool IsLanguageSource(const std::filesystem::path& Path)
     {
-        return LowerAscii(Path.extension().string()) == ".dba";
+        return LowerAscii(dbc::PathToUtf8(Path.extension())) == ".dba";
     }
 
     bool IsDbProProject(const std::filesystem::path& Path)
     {
-        return LowerAscii(Path.extension().string()) == ".dbpro";
+        return LowerAscii(dbc::PathToUtf8(Path.extension())) == ".dbpro";
     }
 
     bool Supports(LanguageProfile Profile, LanguageFeature Feature)

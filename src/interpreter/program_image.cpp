@@ -1,4 +1,5 @@
 #include "program_image.hpp"
+#include "path_utf8.hpp"
 
 #include <bit>
 #include <cctype>
@@ -17,13 +18,12 @@ namespace dbc::interpreter
 
         std::string PathText(const std::filesystem::path& Path)
         {
-            const std::u8string Text = Path.generic_u8string();
-            return std::string(Text.begin(), Text.end());
+            return dbc::GenericPathToUtf8(Path);
         }
 
         std::filesystem::path TextPath(const std::string& Text)
         {
-            return std::filesystem::path(std::u8string(Text.begin(), Text.end()));
+            return dbc::PathFromUtf8(Text);
         }
 
         class Writer
@@ -336,7 +336,7 @@ namespace dbc::interpreter
 
     bool IsProgramImagePath(const std::filesystem::path& Path)
     {
-        std::string Extension = Path.extension().string();
+        std::string Extension = dbc::PathToUtf8(Path.extension());
         for (char& Character : Extension)
             Character = static_cast<char>(std::tolower(static_cast<unsigned char>(Character)));
         return Extension == ProgramImageExtension;

@@ -1,4 +1,5 @@
 #include "snippet_window.hpp"
+#include "path_utf8.hpp"
 
 #include "theme.hpp"
 
@@ -154,7 +155,7 @@ namespace dbc::studio
             if (!UserFolder_.empty())
             {
                 ImGui::SameLine();
-                ImGui::TextDisabled("My Snippets: %s", UserFolder_.string().c_str());
+                ImGui::TextDisabled("My Snippets: %s", dbc::PathToUtf8(UserFolder_).c_str());
             }
             if (Inserted)
                 ImGui::CloseCurrentPopup();
@@ -181,7 +182,7 @@ namespace dbc::studio
             const bool Pro = Profile_ == dbc::language::LanguageProfile::DbPro;
             ImGui::Checkbox(Pro ? "Also offer it to DBC projects" : "Also offer it to DBPro projects",
                             &SaveBothProfiles_);
-            ImGui::TextDisabled("Saved in %s", UserFolder_.string().c_str());
+            ImGui::TextDisabled("Saved in %s", dbc::PathToUtf8(UserFolder_).c_str());
             if (!SaveError_.empty())
                 ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", SaveError_.c_str());
 

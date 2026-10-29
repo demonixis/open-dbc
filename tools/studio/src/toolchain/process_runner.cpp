@@ -1,4 +1,5 @@
 #include "process_runner.hpp"
+#include "path_utf8.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -131,7 +132,7 @@ namespace dbc::studio
             SDL_SetPointerProperty(Properties, SDL_PROP_PROCESS_CREATE_ARGS_POINTER, Values.data());
             if (Environment)
                 SDL_SetPointerProperty(Properties, SDL_PROP_PROCESS_CREATE_ENVIRONMENT_POINTER, Environment.get());
-            const std::string WorkingDirectory = Request.WorkingDirectory.string();
+            const std::string WorkingDirectory = dbc::PathToUtf8(Request.WorkingDirectory);
             if (!WorkingDirectory.empty())
                 SDL_SetStringProperty(Properties, SDL_PROP_PROCESS_CREATE_WORKING_DIRECTORY_STRING,
                                       WorkingDirectory.c_str());

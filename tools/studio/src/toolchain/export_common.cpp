@@ -3,6 +3,7 @@
 #include "interpreter/execution_service.hpp"
 #include "interpreter/program_image.hpp"
 #include "language/language_profile.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <array>
@@ -256,7 +257,7 @@ namespace dbc::studio
 
         static bool IsExcludedDirectory(const fs::path& Path)
         {
-            const std::string Name = Lower(Path.filename().string());
+            const std::string Name = Lower(dbc::PathToUtf8(Path.filename()));
             return Name == ".git" || Name == ".svn" || Name == ".hg" || Name == ".idea" || Name == ".vs" ||
                    Name == ".codex" || Name == "node_modules" || Name == "exports" || Name == "export" ||
                    Name == "dist" || Name == "out" || Name == "cmakefiles" || Name == "__pycache__" ||
@@ -271,15 +272,15 @@ namespace dbc::studio
                 ".m",   ".mm",      ".swift",   ".java",      ".kt",       ".kts", ".cs",    ".go",
                 ".rs",  ".py",      ".rb",      ".sh",        ".bat",      ".ps1", ".cmake", ".gradle",
                 ".sln", ".vcxproj", ".pbxproj", ".xcodeproj", ".expected", ".apk", ".aab",   ".ipa"};
-            const std::string Name = Lower(Path.filename().string());
+            const std::string Name = Lower(dbc::PathToUtf8(Path.filename()));
             return Name == "cmakelists.txt" || Name == "makefile" || Name == ".gitignore" || Name == ".gitattributes" ||
-                   Extensions.contains(Lower(Path.extension().string()));
+                   Extensions.contains(Lower(dbc::PathToUtf8(Path.extension())));
         }
 
         static bool IsGeneratedRuntimeOutput(const fs::path& Path)
         {
-            const std::string Name = Lower(Path.filename().string());
-            const std::string Extension = Lower(Path.extension().string());
+            const std::string Name = Lower(dbc::PathToUtf8(Path.filename()));
+            const std::string Extension = Lower(dbc::PathToUtf8(Path.extension()));
             return Name == "open-dbc.log" || (Name.starts_with("open-dbc.") && Extension == ".log") ||
                    (Name.starts_with("open-dbc-crash-") && Extension == ".log") || Name == "open-dbc-dump-scene.txt" ||
                    Name == "open-dbc-dump-renderer.txt" || Name == "selftest-final.png";
@@ -287,8 +288,8 @@ namespace dbc::studio
 
         static bool IsSensitive(const fs::path& Path)
         {
-            const std::string Name = Lower(Path.filename().string());
-            const std::string Extension = Lower(Path.extension().string());
+            const std::string Name = Lower(dbc::PathToUtf8(Path.filename()));
+            const std::string Extension = Lower(dbc::PathToUtf8(Path.extension()));
             return Name == ".env" || Name.starts_with(".env.") || Name.find("credential") != std::string::npos ||
                    Name.find("password") != std::string::npos || Name.find("passwd") != std::string::npos ||
                    Name.find("secret") != std::string::npos || Name.find("token") != std::string::npos ||
@@ -298,14 +299,14 @@ namespace dbc::studio
 
         static bool IsProjectMetadata(const fs::path& Path)
         {
-            return Lower(Path.filename().string()) == ".opendbc-project.json";
+            return Lower(dbc::PathToUtf8(Path.filename())) == ".opendbc-project.json";
         }
 
         // Exports ship the program image they compile, never BASIC sources, project descriptors or
         // other images.
         static bool IsBasicSource(const fs::path& Path)
         {
-            const std::string Extension = Lower(Path.extension().string());
+            const std::string Extension = Lower(dbc::PathToUtf8(Path.extension()));
             return Extension == ".dba" || Extension == ".dbpro" || Extension == ".obc";
         }
 
@@ -327,7 +328,7 @@ namespace dbc::studio
 
         std::string SafeProductName(const core::ProjectSettings& Settings, const fs::path& Entry)
         {
-            std::string Value = Settings.AppName.empty() ? Entry.stem().string() : Settings.AppName;
+            std::string Value = Settings.AppName.empty() ? dbc::PathToUtf8(Entry.stem()) : Settings.AppName;
             Value.erase(
                 std::remove_if(
                     Value.begin(), Value.end(), [](unsigned char Character)
@@ -493,10 +494,10 @@ namespace dbc::studio
             if (!Published)
             {
                 std::error_code FileError;
-                Error =
-                    fs::exists(Destination, FileError) && !FileError
-                        ? "Export destination already exists: " + Destination.string()
-                        : "Cannot publish artifact atomically without replacing a destination: " + Destination.string();
+                Error = fs::exists(Destination, FileError) && !FileError
+                            ? "Export destination already exists: " + dbc::PathToUtf8(Destination)
+                            : "Cannot publish artifact atomically without replacing a destination: " +
+                                  dbc::PathToUtf8(Destination);
             }
             return Published;
         }
@@ -507,14 +508,14 @@ namespace dbc::studio
             fs::create_directories(Destination.parent_path(), FileError);
             if (FileError)
             {
-                Error = "Cannot create artifact directory '" + Destination.parent_path().string() +
+                Error = "Cannot create artifact directory '" + dbc::PathToUtf8(Destination.parent_path()) +
                         "': " + FileError.message();
                 return false;
             }
             fs::copy_file(Source, Destination, fs::copy_options::overwrite_existing, FileError);
             if (FileError)
             {
-                Error = "Cannot copy '" + Source.string() + "': " + FileError.message();
+                Error = "Cannot copy '" + dbc::PathToUtf8(Source) + "': " + FileError.message();
                 return false;
             }
             const fs::perms Permissions = fs::status(Source, FileError).permissions();
@@ -529,7 +530,7 @@ namespace dbc::studio
             const fs::path CanonicalSource = fs::weakly_canonical(Source, FileError);
             if (FileError || !fs::is_directory(CanonicalSource, FileError))
             {
-                Error = "Artifact host directory does not exist: " + Source.string();
+                Error = "Artifact host directory does not exist: " + dbc::PathToUtf8(Source);
                 return false;
             }
             const fs::path CanonicalDestinationParent = fs::weakly_canonical(Destination.parent_path(), FileError);
@@ -567,7 +568,7 @@ namespace dbc::studio
                 }
                 if (fs::is_symlink(Status))
                 {
-                    Error = "Artifact hosts cannot contain symlinks: " + It->path().string();
+                    Error = "Artifact hosts cannot contain symlinks: " + dbc::PathToUtf8(It->path());
                     return false;
                 }
                 const fs::path Relative = fs::relative(It->path(), CanonicalSource, FileError);
@@ -605,7 +606,7 @@ namespace dbc::studio
             std::filesystem::remove_all(Path, FileError);
             if (FileError || std::filesystem::exists(Path, FileError))
             {
-                Error = "Cannot remove artifact staging content: " + Path.string();
+                Error = "Cannot remove artifact staging content: " + dbc::PathToUtf8(Path);
                 return false;
             }
             return true;
@@ -703,13 +704,13 @@ namespace dbc::studio
             const fs::path ProjectRoot = fs::weakly_canonical(Request.ProjectRoot, FileError);
             if (FileError || !fs::is_directory(ProjectRoot, FileError))
             {
-                Error = "Project root does not exist: " + Request.ProjectRoot.string();
+                Error = "Project root does not exist: " + dbc::PathToUtf8(Request.ProjectRoot);
                 return false;
             }
             const fs::path Entry = fs::weakly_canonical(Request.EntrySource, FileError);
             if (FileError || !fs::is_regular_file(Entry, FileError))
             {
-                Error = "BASIC entry does not exist: " + Request.EntrySource.string();
+                Error = "BASIC entry does not exist: " + dbc::PathToUtf8(Request.EntrySource);
                 return false;
             }
             fs::path OutputRoot = fs::weakly_canonical(Request.OutputDirectory, FileError);
@@ -729,7 +730,7 @@ namespace dbc::studio
                 Error = "Artifact output directory cannot be the project root";
                 return false;
             }
-            if (Lower(Entry.extension().string()) != ".dba")
+            if (Lower(dbc::PathToUtf8(Entry.extension())) != ".dba")
             {
                 Error = "BASIC entry must be a .dba file";
                 return false;
@@ -744,7 +745,8 @@ namespace dbc::studio
             std::optional<fs::path> ConfiguredKeystore;
             if (!Request.Settings.AndroidKeystorePath.empty())
             {
-                fs::path Keystore = dbc::interpreter::NormalizeBasicPath(Request.Settings.AndroidKeystorePath);
+                fs::path Keystore =
+                    dbc::interpreter::NormalizeBasicPath(dbc::PathFromUtf8(Request.Settings.AndroidKeystorePath));
                 if (Keystore.is_relative())
                     Keystore = ProjectRoot / Keystore;
                 Keystore = fs::weakly_canonical(Keystore, FileError);
@@ -771,7 +773,7 @@ namespace dbc::studio
                 }
                 if (fs::is_symlink(Status))
                 {
-                    Error = "Projects containing symlinks cannot be exported: " + It->path().string();
+                    Error = "Projects containing symlinks cannot be exported: " + dbc::PathToUtf8(It->path());
                     return false;
                 }
                 if (fs::is_directory(Status))
@@ -803,7 +805,7 @@ namespace dbc::studio
                 if (IsSensitive(It->path()))
                 {
                     Error = "Project contains a file that may contain secrets and must be excluded explicitly: " +
-                            It->path().string();
+                            dbc::PathToUtf8(It->path());
                     return false;
                 }
                 const fs::path Relative = fs::relative(It->path(), ProjectRoot, FileError);
@@ -817,7 +819,7 @@ namespace dbc::studio
                 const std::optional<std::string> Hash = HashFile(PayloadRoot / Relative);
                 if (!Hash)
                 {
-                    Error = "Cannot hash copied artifact payload file: " + (PayloadRoot / Relative).string();
+                    Error = "Cannot hash copied artifact payload file: " + dbc::PathToUtf8((PayloadRoot / Relative));
                     return false;
                 }
                 Files.push_back({Relative, *Hash});
@@ -831,7 +833,7 @@ namespace dbc::studio
                 fs::weakly_canonical(Request.AssetRoot.empty() ? ProjectRoot : Request.AssetRoot, FileError);
             if (FileError || !fs::is_directory(AssetRoot, FileError))
             {
-                Error = "Artifact asset root does not exist: " + Request.AssetRoot.string();
+                Error = "Artifact asset root does not exist: " + dbc::PathToUtf8(Request.AssetRoot);
                 return false;
             }
             RelativeAssetRoot = fs::relative(AssetRoot, ProjectRoot, FileError);
@@ -852,7 +854,7 @@ namespace dbc::studio
                     const fs::file_status Status = It->symlink_status(FileError);
                     if (FileError || fs::is_symlink(Status))
                     {
-                        Error = "Remapped DBPro media cannot contain symlinks: " + It->path().string();
+                        Error = "Remapped DBPro media cannot contain symlinks: " + dbc::PathToUtf8(It->path());
                         return false;
                     }
                     const fs::path Relative = fs::relative(It->path(), AssetRoot, FileError);
@@ -884,7 +886,8 @@ namespace dbc::studio
                         continue;
                     if (IsSensitive(It->path()))
                     {
-                        Error = "Remapped DBPro media contains a file that may expose secrets: " + It->path().string();
+                        Error = "Remapped DBPro media contains a file that may expose secrets: " +
+                                dbc::PathToUtf8(It->path());
                         return false;
                     }
                     const fs::path Destination = RelativeAssetRoot / Relative;
@@ -906,8 +909,9 @@ namespace dbc::studio
                 Error = "Cannot inspect remapped DBPro media: " + FileError.message();
                 return false;
             }
-            std::sort(Files.begin(), Files.end(), [](const auto& Left, const auto& Right)
-                      { return Left.RelativePath.generic_string() < Right.RelativePath.generic_string(); });
+            std::sort(
+                Files.begin(), Files.end(), [](const auto& Left, const auto& Right)
+                { return dbc::GenericPathToUtf8(Left.RelativePath) < dbc::GenericPathToUtf8(Right.RelativePath); });
             return true;
         }
 
@@ -918,14 +922,16 @@ namespace dbc::studio
             nlohmann::json Manifest;
             Manifest["format"] = dbc::interpreter::EmbeddedArtifactFormat;
             Manifest["program"] = ProgramImageName;
-            Manifest["assetRoot"] = RelativeAssetRoot.generic_string();
-            const std::string StorageSeed = Request.Settings.BundleId.empty()
-                                                ? fs::absolute(Request.ProjectRoot).lexically_normal().generic_string()
-                                                : Request.Settings.BundleId;
+            Manifest["assetRoot"] = dbc::GenericPathToUtf8(RelativeAssetRoot);
+            const std::string StorageSeed =
+                Request.Settings.BundleId.empty()
+                    ? dbc::GenericPathToUtf8(fs::absolute(Request.ProjectRoot).lexically_normal())
+                    : Request.Settings.BundleId;
             Manifest["storage"] = "artifact-" + dbc::interpreter::detail::ArtifactContentHash(StorageSeed);
             Manifest["files"] = nlohmann::json::array();
             for (const dbc::interpreter::detail::ArtifactFile& File : Files)
-                Manifest["files"].push_back({{"path", File.RelativePath.generic_string()}, {"hash", File.ContentHash}});
+                Manifest["files"].push_back(
+                    {{"path", dbc::GenericPathToUtf8(File.RelativePath)}, {"hash", File.ContentHash}});
             std::ofstream Output(ResourceRoot / dbc::interpreter::EmbeddedArtifactManifestName,
                                  std::ios::binary | std::ios::trunc);
             if (!Output)
@@ -960,9 +966,11 @@ namespace dbc::studio
                 Error = "Cannot write the artifact program image";
                 return false;
             }
-            Files.push_back({fs::path(ProgramImageName), dbc::interpreter::detail::ArtifactContentHash(Bytes)});
-            std::sort(Files.begin(), Files.end(), [](const auto& Left, const auto& Right)
-                      { return Left.RelativePath.generic_string() < Right.RelativePath.generic_string(); });
+            Files.push_back(
+                {dbc::PathFromUtf8(ProgramImageName), dbc::interpreter::detail::ArtifactContentHash(Bytes)});
+            std::sort(
+                Files.begin(), Files.end(), [](const auto& Left, const auto& Right)
+                { return dbc::GenericPathToUtf8(Left.RelativePath) < dbc::GenericPathToUtf8(Right.RelativePath); });
             return WriteManifest(Request, ResourceRoot, RelativeAssetRoot, Files, Error);
         }
 
@@ -972,7 +980,7 @@ namespace dbc::studio
             fs::path Source;
             if (!Request.Settings.IconSource.empty())
             {
-                Source = Request.Settings.IconSource;
+                Source = dbc::PathFromUtf8(Request.Settings.IconSource);
                 if (Source.is_relative())
                     Source = Request.ProjectRoot / Source;
             }
@@ -988,7 +996,7 @@ namespace dbc::studio
                     Error = "Artifact icon must be a regular non-symlink PNG file";
                 return std::nullopt;
             }
-            if (Lower(Source.extension().string()) != ".png")
+            if (Lower(dbc::PathToUtf8(Source.extension())) != ".png")
             {
                 Error = "Artifact icon source must be a PNG file";
                 return std::nullopt;
@@ -1002,13 +1010,13 @@ namespace dbc::studio
             return Source;
         }
 
-        bool WriteScaledPng(const ExportContext& Context, const fs::path& Source, const fs::path& Destination,
-                            int Size, bool Opaque, std::string& Error)
+        bool WriteScaledPng(const ExportContext& Context, const fs::path& Source, const fs::path& Destination, int Size,
+                            bool Opaque, std::string& Error)
         {
-            SDL_Surface* Original = IMG_Load(Source.string().c_str());
+            SDL_Surface* Original = IMG_Load(dbc::PathToUtf8(Source).c_str());
             if (Original == nullptr)
             {
-                Error = "Cannot load artifact icon: " + Source.string();
+                Error = "Cannot load artifact icon: " + dbc::PathToUtf8(Source);
                 return false;
             }
             const std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> OriginalOwner(Original,
@@ -1040,7 +1048,7 @@ namespace dbc::studio
             fs::create_directories(Destination.parent_path(), FileError);
             if (FileError)
             {
-                Error = "Cannot write artifact icon: " + Destination.string();
+                Error = "Cannot write artifact icon: " + dbc::PathToUtf8(Destination);
                 return false;
             }
 #if defined(__APPLE__)
@@ -1048,15 +1056,15 @@ namespace dbc::studio
             {
                 fs::path Bitmap = Destination;
                 Bitmap += ".opendbc.bmp";
-                if (!SDL_SaveBMP(SurfaceToSave, Bitmap.string().c_str()) ||
-                    !Context.Run(
-                        {"/usr/bin/sips", "-s", "format", "png", Bitmap.string(), "--out", Destination.string()},
-                        Error))
+                if (!SDL_SaveBMP(SurfaceToSave, dbc::PathToUtf8(Bitmap).c_str()) ||
+                    !Context.Run({"/usr/bin/sips", "-s", "format", "png", dbc::PathToUtf8(Bitmap), "--out",
+                                  dbc::PathToUtf8(Destination)},
+                                 Error))
                 {
                     std::error_code Ignored;
                     fs::remove(Bitmap, Ignored);
                     if (Error.empty())
-                        Error = "Cannot write opaque artifact icon: " + Destination.string();
+                        Error = "Cannot write opaque artifact icon: " + dbc::PathToUtf8(Destination);
                     return false;
                 }
                 return RemoveRequired(Bitmap, Error);
@@ -1069,9 +1077,9 @@ namespace dbc::studio
                 return false;
             }
 #endif
-            if (!IMG_SavePNG(SurfaceToSave, Destination.string().c_str()))
+            if (!IMG_SavePNG(SurfaceToSave, dbc::PathToUtf8(Destination).c_str()))
             {
-                Error = "Cannot write artifact icon: " + Destination.string();
+                Error = "Cannot write artifact icon: " + dbc::PathToUtf8(Destination);
                 return false;
             }
             return true;
@@ -1081,7 +1089,8 @@ namespace dbc::studio
         bool AdHocSignAppleBundle(const ExportContext& Context, const fs::path& Bundle, std::string& Error)
         {
             return Context.Run(
-                {"/usr/bin/codesign", "--force", "--deep", "--sign", "-", "--timestamp=none", Bundle.string()}, Error);
+                {"/usr/bin/codesign", "--force", "--deep", "--sign", "-", "--timestamp=none", dbc::PathToUtf8(Bundle)},
+                Error);
         }
 
         bool SetAppleMetadata(const ExportContext& Context, const fs::path& App, const core::ProjectSettings& Settings,
@@ -1108,9 +1117,9 @@ namespace dbc::studio
             }
             const auto ReplaceString = [&Context, &Plist, &Error](std::string_view Key, std::string_view Value)
             {
-                return Context.Run(
-                    {"/usr/bin/plutil", "-replace", std::string(Key), "-string", std::string(Value), Plist.string()},
-                    Error);
+                return Context.Run({"/usr/bin/plutil", "-replace", std::string(Key), "-string", std::string(Value),
+                                    dbc::PathToUtf8(Plist)},
+                                   Error);
             };
             if (!ReplaceString("CFBundleIdentifier", BundleId) || !ReplaceString("CFBundleDisplayName", ProductName) ||
                 !ReplaceString("CFBundleName", ProductName) ||
@@ -1181,15 +1190,15 @@ namespace dbc::studio
             for (const fs::path& Code : Nested)
             {
                 std::vector<std::string> Arguments = Signing;
-                Arguments.push_back(Code.string());
+                Arguments.push_back(dbc::PathToUtf8(Code));
                 if (!Context.Run(Arguments, Error))
                     return false;
             }
             std::vector<std::string> Arguments = Signing;
-            Arguments.insert(Arguments.end(), {"--entitlements", Entitlements.string(), App.string()});
-            return Context.Run(Arguments, Error) &&
-                   Context.Run({"/usr/bin/codesign", "--verify", "--strict", "--deep", "--verbose=2", App.string()},
-                               Error);
+            Arguments.insert(Arguments.end(), {"--entitlements", dbc::PathToUtf8(Entitlements), dbc::PathToUtf8(App)});
+            return Context.Run(Arguments, Error) && Context.Run({"/usr/bin/codesign", "--verify", "--strict", "--deep",
+                                                                 "--verbose=2", dbc::PathToUtf8(App)},
+                                                                Error);
         }
 
         bool NotarizeMacApp(const ExportContext& Context, const fs::path& App, const std::string& Profile,
@@ -1197,12 +1206,14 @@ namespace dbc::studio
         {
             const fs::path Archive = App.parent_path() / ".opendbc-notarization.zip";
             const StageCleanup ArchiveCleanup{Archive};
-            if (!Context.Run({"/usr/bin/ditto", "-c", "-k", "--keepParent", App.string(), Archive.string()}, Error))
+            if (!Context.Run(
+                    {"/usr/bin/ditto", "-c", "-k", "--keepParent", dbc::PathToUtf8(App), dbc::PathToUtf8(Archive)},
+                    Error))
                 return false;
             Context.Note("Submitting to Apple notarization; this usually takes a few minutes");
             const std::optional<std::string> Output =
-                Context.RunCapturing({{"/usr/bin/xcrun", "notarytool", "submit", Archive.string(), "--keychain-profile",
-                                       Profile, "--wait", "--output-format", "json"},
+                Context.RunCapturing({{"/usr/bin/xcrun", "notarytool", "submit", dbc::PathToUtf8(Archive),
+                                       "--keychain-profile", Profile, "--wait", "--output-format", "json"},
                                       {},
                                       {}},
                                      Error);
@@ -1214,15 +1225,15 @@ namespace dbc::studio
             if (Status != "Accepted")
             {
                 const std::string Id = Verdict.is_object() ? Verdict.value("id", std::string{}) : std::string{};
-                Error = "Apple notarization did not accept the app (" + (Status.empty() ? "no verdict" : Status) +
-                        ")" +
+                Error = "Apple notarization did not accept the app (" + (Status.empty() ? "no verdict" : Status) + ")" +
                         (Id.empty() ? std::string{}
                                     : ". Details: xcrun notarytool log " + Id + " --keychain-profile " + Profile);
                 return false;
             }
-            return Context.Run({"/usr/bin/xcrun", "stapler", "staple", App.string()}, Error) &&
-                   Context.Run({"/usr/sbin/spctl", "--assess", "--type", "execute", "--verbose=2", App.string()},
-                               Error);
+            return Context.Run({"/usr/bin/xcrun", "stapler", "staple", dbc::PathToUtf8(App)}, Error) &&
+                   Context.Run(
+                       {"/usr/sbin/spctl", "--assess", "--type", "execute", "--verbose=2", dbc::PathToUtf8(App)},
+                       Error);
         }
 #endif
     } // namespace toolchain::internal

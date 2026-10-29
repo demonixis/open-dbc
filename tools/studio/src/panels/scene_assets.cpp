@@ -2,6 +2,7 @@
 // that drag onto the viewport and the inspector's file fields.
 
 #include "panels/scene_editor.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -217,7 +218,7 @@ namespace dbc::studio
                     }
                 }
 
-                const std::string Label = File.Path.filename().string();
+                const std::string Label = dbc::PathToUtf8(File.Path.filename());
                 ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + Tile);
                 ImGui::TextDisabled("%s", Label.c_str());
                 ImGui::PopTextWrapPos();

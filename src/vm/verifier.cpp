@@ -1,4 +1,5 @@
 #include "verifier.hpp"
+#include "path_utf8.hpp"
 
 #include "language/language_catalogue.hpp"
 
@@ -107,7 +108,8 @@ namespace dbc::vm
                                  [](const language::Diagnostic& Left, const language::Diagnostic& Right)
                                  {
                                      if (Left.LogicalPath != Right.LogicalPath)
-                                         return Left.LogicalPath.generic_string() < Right.LogicalPath.generic_string();
+                                         return dbc::GenericPathToUtf8(Left.LogicalPath) <
+                                                dbc::GenericPathToUtf8(Right.LogicalPath);
                                      if (Left.Span.Begin.Offset != Right.Span.Begin.Offset)
                                          return Left.Span.Begin.Offset < Right.Span.Begin.Offset;
                                      if (Left.Code != Right.Code)

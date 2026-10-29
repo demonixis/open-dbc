@@ -1,7 +1,8 @@
-#include "command_line.hpp"
-#include "command_line_detail.hpp"
 #include "atomic_file.hpp"
 #include "basic_path.hpp"
+#include "command_line.hpp"
+#include "command_line_detail.hpp"
+#include "path_utf8.hpp"
 
 #include "engine/systems/core_system.hpp"
 #include "engine/systems/debug_system.hpp"
@@ -178,7 +179,7 @@ namespace dbc::interpreter
             std::ostringstream Result;
             if (!Value.LogicalPath.empty())
             {
-                Result << Value.LogicalPath.string();
+                Result << dbc::PathToUtf8(Value.LogicalPath);
                 if (Value.Begin.Line > 0)
                     Result << ':' << Value.Begin.Line << ':' << Value.Begin.Column;
                 Result << ": ";
@@ -264,7 +265,7 @@ namespace dbc::interpreter
             }
             catch (const nlohmann::json::exception& Exception)
             {
-                Error = "Cannot serialize evidence output '" + Path.string() + "': " + Exception.what();
+                Error = "Cannot serialize evidence output '" + dbc::PathToUtf8(Path) + "': " + Exception.what();
                 return false;
             }
         }
@@ -276,7 +277,7 @@ namespace dbc::interpreter
             Json["schema"] = "opendbc-builtin-coverage";
             Json["version"] = 1;
             Json["profile"] = ProfileId(Profile);
-            Json["entry"] = Entry.generic_string();
+            Json["entry"] = dbc::GenericPathToUtf8(Entry);
             Json["status"] = Status;
             Json["frames"] = Result ? Result->FrameCount : 0;
 
@@ -350,7 +351,7 @@ namespace dbc::interpreter
             Json["schema"] = "opendbc-benchmark";
             Json["version"] = 1;
             Json["profile"] = ProfileId(Profile);
-            Json["entry"] = Entry.generic_string();
+            Json["entry"] = dbc::GenericPathToUtf8(Entry);
             Json["status"] = Status;
             Json["prepare_ms"] = Value.PrepareMilliseconds;
             Json["total_ms"] = Value.TotalMilliseconds;
@@ -422,17 +423,20 @@ namespace dbc::interpreter
         DiskRequestResult MakeImageRequest(const CommandLine& Command)
         {
             std::size_t Size = 0;
-            void* Bytes = SDL_LoadFile(Command.Path->string().c_str(), &Size);
+            void* Bytes = SDL_LoadFile(dbc::PathToUtf8(*Command.Path).c_str(), &Size);
             if (Bytes == nullptr)
-                return {{}, {}, "Failed to read program image '" + Command.Path->string() + "'"};
+                return {{}, {}, "Failed to read program image '" + dbc::PathToUtf8(*Command.Path) + "'"};
             const ProgramImageReadResult Read =
                 ReadProgramImage(std::span<const std::uint8_t>(static_cast<const std::uint8_t*>(Bytes), Size));
             SDL_free(Bytes);
             if (!Read.Image)
-                return {{}, {}, Command.Path->string() + ": " + Read.Error};
+                return {{}, {}, dbc::PathToUtf8(*Command.Path) + ": " + Read.Error};
             const language::LanguageProfile Profile = Read.Image->Bytecode->Profile;
             if (Command.RequestedProfile && *Command.RequestedProfile != Profile)
-                return {{}, {}, Command.Path->string() + " was built for " + std::string(language::ProfileName(Profile))};
+                return {{},
+                        {},
+                        dbc::PathToUtf8(*Command.Path) + " was built for " +
+                            std::string(language::ProfileName(Profile))};
 
             ResolvedProject Project;
             Project.InputKind = ProjectInputKind::Source;
@@ -485,13 +489,13 @@ namespace dbc::interpreter
 #if defined(DBC_MOBILE)
         if (char* PreferencePath = SDL_GetPrefPath("OpenDBC", "OpenDBC"))
         {
-            LogDirectory = PreferencePath;
+            LogDirectory = dbc::PathFromUtf8(PreferencePath);
             SDL_free(PreferencePath);
         }
 #endif
         if (LogDirectory.empty())
             LogDirectory = ".";
-        dbc::log::Init(Command.LogLevel, LogDirectory.string());
+        dbc::log::Init(Command.LogLevel, dbc::PathToUtf8(LogDirectory));
 
         for (const std::string& Blocker : Loaded.Project->RunBlockers)
         {
@@ -651,12 +655,12 @@ namespace dbc::interpreter
         if (!Command.CaptureOutput.empty())
         {
             SDL_Surface* Frame = Kernel.Renderer().ReadLastHeadlessFrame();
-            const bool Saved = Frame && SDL_SaveBMP(Frame, Command.CaptureOutput.string().c_str());
+            const bool Saved = Frame && SDL_SaveBMP(Frame, dbc::PathToUtf8(Command.CaptureOutput).c_str());
             SDL_DestroySurface(Frame);
             if (!Saved)
             {
                 Write(Environment.StandardError, stderr,
-                      "Failed to save the last frame to " + Command.CaptureOutput.string() + "\n");
+                      "Failed to save the last frame to " + dbc::PathToUtf8(Command.CaptureOutput) + "\n");
                 return Finish(CommandLineExitCode::Runtime, "capture-failed", &Result, &Kernel);
             }
         }
@@ -744,7 +748,7 @@ namespace dbc::interpreter
             }
             else
             {
-                Command.Path = std::filesystem::path(First);
+                Command.Path = dbc::PathFromUtf8(First);
                 ++Index;
             }
         }
@@ -809,17 +813,17 @@ namespace dbc::interpreter
                     return Result;
                 }
                 if (Argument == "--asset-root")
-                    Command.Execution.AssetRoot = Value;
+                    Command.Execution.AssetRoot = dbc::PathFromUtf8(Value);
                 else if (Argument == "--command-line")
                     Command.CommandLineOverride = std::string(Value);
                 else if (Argument == "--log-output")
-                    Command.Execution.LogOutputPath = Value;
+                    Command.Execution.LogOutputPath = dbc::PathFromUtf8(Value);
                 else if (Argument == "--builtin-coverage-output")
-                    Command.Execution.BuiltinCoverageOutputPath = Value;
+                    Command.Execution.BuiltinCoverageOutputPath = dbc::PathFromUtf8(Value);
                 else if (Argument == "--benchmark-output")
-                    Command.Execution.BenchmarkOutputPath = Value;
+                    Command.Execution.BenchmarkOutputPath = dbc::PathFromUtf8(Value);
                 else if (Argument == "--capture-output")
-                    Command.CaptureOutput = Value;
+                    Command.CaptureOutput = dbc::PathFromUtf8(Value);
                 else if (Argument == "--log-level")
                     Command.LogLevel = Value;
                 else if (Argument == "--dialect")
@@ -834,7 +838,7 @@ namespace dbc::interpreter
                 else if (Argument == "--target")
                     Command.ExportTarget = Value;
                 else if (Argument == "--output")
-                    Command.ExportOutput = Value;
+                    Command.ExportOutput = dbc::PathFromUtf8(Value);
                 else
                 {
                     std::size_t Number = 0;
@@ -875,7 +879,7 @@ namespace dbc::interpreter
                 Result.Error = "Unexpected argument: " + std::string(Argument);
                 return Result;
             }
-            Command.Path = std::filesystem::path(Argument);
+            Command.Path = dbc::PathFromUtf8(Argument);
         }
 
         if (Command.Action != CommandLineAction::Inspect && Command.Json)

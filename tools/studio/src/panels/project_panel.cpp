@@ -1,4 +1,5 @@
 #include "project_panel.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -21,7 +22,7 @@ namespace dbc::studio
 
         bool IsHidden(const fs::path& Path)
         {
-            const std::string Name = Path.filename().string();
+            const std::string Name = dbc::PathToUtf8(Path.filename());
             return !Name.empty() && Name.front() == '.';
         }
 
@@ -51,7 +52,7 @@ namespace dbc::studio
         {
             Tree_ = Node{};
             Tree_.Path = Root_;
-            Tree_.Name = Root_.filename().string();
+            Tree_.Name = dbc::PathToUtf8(Root_.filename());
             Tree_.Directory = true;
 
             if (!Root_.empty())
@@ -91,7 +92,8 @@ namespace dbc::studio
                           {
                               return ADir;
                           }
-                          return ToLower(A.path().filename().string()) < ToLower(B.path().filename().string());
+                          return ToLower(dbc::PathToUtf8(A.path().filename())) <
+                                 ToLower(dbc::PathToUtf8(B.path().filename()));
                       });
 
             for (const fs::directory_entry& Entry : Entries)
@@ -99,7 +101,7 @@ namespace dbc::studio
                 std::error_code DirEc;
                 Node Child;
                 Child.Path = Entry.path();
-                Child.Name = Entry.path().filename().string();
+                Child.Name = dbc::PathToUtf8(Entry.path().filename());
                 Child.Directory = Entry.is_directory(DirEc);
                 NodeValue.Children.push_back(std::move(Child));
             }
@@ -161,7 +163,7 @@ namespace dbc::studio
                 return;
             }
 
-            ImGui::TextUnformatted(Tree_.Name.empty() ? Root_.string().c_str() : Tree_.Name.c_str());
+            ImGui::TextUnformatted(Tree_.Name.empty() ? dbc::PathToUtf8(Root_).c_str() : Tree_.Name.c_str());
             ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Refresh").x -
                             ImGui::GetStyle().FramePadding.x * 2.0f);
             if (ImGui::SmallButton("Refresh"))
@@ -177,7 +179,7 @@ namespace dbc::studio
                     for (std::size_t Index = 0; Index < OrderedSources_.size(); ++Index)
                     {
                         const std::string Name = (Index == 0 ? "Main: " : std::to_string(Index) + ": ") +
-                                                 OrderedSources_[Index].filename().string();
+                                                 dbc::PathToUtf8(OrderedSources_[Index].filename());
                         ImGui::TreeNodeEx(Name.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen |
                                                             ImGuiTreeNodeFlags_SpanAvailWidth);
                         if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && OnActivate_)
@@ -187,7 +189,7 @@ namespace dbc::studio
                 }
                 if (ImGui::TreeNodeEx("Media", ImGuiTreeNodeFlags_SpanAvailWidth))
                 {
-                    ImGui::TextDisabled("%s", AssetRoot_.string().c_str());
+                    ImGui::TextDisabled("%s", dbc::PathToUtf8(AssetRoot_).c_str());
                     ImGui::TreePop();
                 }
                 if (ImGui::TreeNodeEx("Other files", ImGuiTreeNodeFlags_SpanAvailWidth))
