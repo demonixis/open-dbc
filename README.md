@@ -60,7 +60,10 @@ ctest --preset default
 | Native plugins (Classic DLLs) | [docs/plugins.md](docs/plugins.md) |
 | Example programs | [examples/README.md](examples/README.md) |
 | Logos, social headers, wallpapers | [docs/branding.md](docs/branding.md) |
-| Contributing | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
+| Questions about content and the name | [docs/faq.md](docs/faq.md) |
+| Contributing, code of conduct | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md), [docs/CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md) |
+| Security and reporting vulnerabilities | [docs/SECURITY.md](docs/SECURITY.md) |
+| Changes per version | [CHANGELOG.md](CHANGELOG.md) |
 | Remaining work | [docs/roadmap.md](docs/roadmap.md) |
 
 ## Licence

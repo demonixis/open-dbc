@@ -29,8 +29,6 @@ Robustness:
 
 Repository files:
 
-- [ ] `CHANGELOG.md` at the root; `docs/SECURITY.md` (running a `.dba` is running a
-  native program) and `docs/CODE_OF_CONDUCT.md` beside `docs/CONTRIBUTING.md`.
 - [ ] Issue and PR templates, `CODEOWNERS`, Dependabot. No CI workflow for now: it
   took too many iterations to get working.
 - [ ] README screenshots.
@@ -38,7 +36,6 @@ Repository files:
 Publication:
 
 - [ ] Signed tag `v0.4.0`, release with `SHA256SUMS` and an SBOM.
-- [ ] FAQ: no DarkBASIC content provided; unrelated to comma.ai `opendbc`.
 
 ## Code quality
 
