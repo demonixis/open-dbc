@@ -40,6 +40,8 @@ namespace dbc::interpreter
         std::optional<std::string> CommandLineOverride{};
         ExecutionOptions Execution{};
         std::string LogLevel{};
+        // Where open-dbc.log goes; empty for the source's directory.
+        std::filesystem::path LogDirectory{};
         std::string ExportTarget{};
         std::filesystem::path ExportOutput{};
         bool ExportSign = true;

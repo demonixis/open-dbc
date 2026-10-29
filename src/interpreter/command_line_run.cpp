@@ -72,6 +72,7 @@ namespace dbc::interpreter
             "  --log-output <path>\n"
             "  --builtin-coverage-output <path>\n"
             "  --log-level <trace|debug|info|warn|error>\n"
+            "  --log-directory <path> (where open-dbc.log goes; default: the source's directory)\n"
             "  --max-frames <count>\n"
             "  --instruction-budget <count>\n"
             "  --debug-overlay\n"
@@ -122,9 +123,10 @@ namespace dbc::interpreter
         bool IsRunOption(std::string_view Value)
         {
             return Value == "--asset-root" || Value == "--command-line" || Value == "--log-output" ||
-                   Value == "--builtin-coverage-output" || Value == "--log-level" || Value == "--max-frames" ||
-                   Value == "--instruction-budget" || Value == "--debug-overlay" || Value == "--headless" ||
-                   Value == "--benchmark" || Value == "--benchmark-output" || Value == "--capture-output";
+                   Value == "--builtin-coverage-output" || Value == "--log-level" || Value == "--log-directory" ||
+                   Value == "--max-frames" || Value == "--instruction-budget" || Value == "--debug-overlay" ||
+                   Value == "--headless" || Value == "--benchmark" || Value == "--benchmark-output" ||
+                   Value == "--capture-output";
         }
 
         std::string JsonEscape(std::string_view Text)
@@ -485,7 +487,8 @@ namespace dbc::interpreter
             return Exit(Code);
         };
 
-        std::filesystem::path LogDirectory = Loaded.Request->RootLogicalPath.parent_path();
+        std::filesystem::path LogDirectory =
+            Command.LogDirectory.empty() ? Loaded.Request->RootLogicalPath.parent_path() : Command.LogDirectory;
 #if defined(DBC_MOBILE)
         if (char* PreferencePath = SDL_GetPrefPath("OpenDBC", "OpenDBC"))
         {
@@ -556,15 +559,21 @@ namespace dbc::interpreter
             Kernel.Debug().SetOverlayEnabled(true);
 
         Interrupted.store(false, std::memory_order_relaxed);
-        const auto PreviousHandler = std::signal(SIGINT, InterruptHandler);
-        struct RestoreSignal
+        // The Studio stops the programs it runs with SIGTERM; both signals end the run as cancelled.
+        const auto PreviousInterrupt = std::signal(SIGINT, InterruptHandler);
+        const auto PreviousTerminate = std::signal(SIGTERM, InterruptHandler);
+
+        struct RestoreSignals
         {
-            decltype(PreviousHandler) Previous;
-            ~RestoreSignal()
+            decltype(PreviousInterrupt) Interrupt;
+            decltype(PreviousTerminate) Terminate;
+
+            ~RestoreSignals()
             {
-                std::signal(SIGINT, Previous);
+                std::signal(SIGINT, Interrupt);
+                std::signal(SIGTERM, Terminate);
             }
-        } RestoreSignalGuard{PreviousHandler};
+        } RestoreSignalsGuard{PreviousInterrupt, PreviousTerminate};
         while (!Service.Result().Finished())
         {
             if (Interrupted.load(std::memory_order_relaxed))
@@ -794,7 +803,7 @@ namespace dbc::interpreter
             const bool TakesValue = Argument == "--asset-root" || Argument == "--command-line" ||
                                     Argument == "--log-output" || Argument == "--builtin-coverage-output" ||
                                     Argument == "--benchmark-output" || Argument == "--capture-output" ||
-                                    Argument == "--log-level" ||
+                                    Argument == "--log-level" || Argument == "--log-directory" ||
                                     Argument == "--max-frames" || Argument == "--instruction-budget" ||
                                     Argument == "--dialect" || Argument == "--target" || Argument == "--output";
             if (TakesValue)
@@ -826,6 +835,8 @@ namespace dbc::interpreter
                     Command.CaptureOutput = dbc::PathFromUtf8(Value);
                 else if (Argument == "--log-level")
                     Command.LogLevel = Value;
+                else if (Argument == "--log-directory")
+                    Command.LogDirectory = Value;
                 else if (Argument == "--dialect")
                 {
                     Command.RequestedProfile = language::ParseProfile(Value);

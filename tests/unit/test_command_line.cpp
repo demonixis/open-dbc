@@ -78,10 +78,12 @@ TEST_CASE("command line selects Studio without initializing a runtime")
 
 TEST_CASE("command line parses run options and rejects invalid combinations")
 {
-    const std::array<std::string_view, 14> Run{"run",
+    const std::array<std::string_view, 16> Run{"run",
                                                "program.dbpro",
                                                "--asset-root",
                                                "assets",
+                                               "--log-directory",
+                                               "logs",
                                                "--max-frames",
                                                "5",
                                                "--benchmark",
@@ -96,6 +98,7 @@ TEST_CASE("command line parses run options and rejects invalid combinations")
     REQUIRE(Parsed);
     CHECK(Parsed.Command->Action == dbc::interpreter::CommandLineAction::Run);
     CHECK(Parsed.Command->Execution.AssetRoot == "assets");
+    CHECK(Parsed.Command->LogDirectory == "logs");
     CHECK(Parsed.Command->Execution.MaxFrames == 5);
     CHECK(Parsed.Command->Execution.Benchmark);
     CHECK(Parsed.Command->DebugOverlay);

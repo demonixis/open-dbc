@@ -32,6 +32,7 @@ without a path it runs `program.obc` from its own resources.
 | `--headless` | Hidden window, offscreen rendering, silent audio (also `OPENDBC_HEADLESS=1`) |
 | `--capture-output F.bmp` | With `--headless`, save the last frame |
 | `--log-level LEVEL` | `trace`, `debug`, `info`, `warn` (default), `error`; log file `open-dbc.log` |
+| `--log-directory DIR` | Where `open-dbc.log` goes (default: the source's directory) |
 | `--debug-overlay` | Start with the overlay shown (**F3** toggles it) |
 | `--command-line TEXT` | Value returned by `CL$()` |
 | `--builtin-coverage-output F` | Write the calls made per overload |
