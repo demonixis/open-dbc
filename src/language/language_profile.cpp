@@ -13,6 +13,7 @@ namespace
         return Value;
     }
 } // namespace
+
 namespace dbc::language
 {
     std::string_view ProfileName(LanguageProfile Profile)

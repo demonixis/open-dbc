@@ -3,11 +3,11 @@
 #include "core/snippet_library.hpp"
 #include "language/frontend.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
-#include <algorithm>
 #include <memory>
 #include <string>
 

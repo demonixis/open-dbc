@@ -127,8 +127,7 @@ namespace dbc
         // On mobile, pass 0x0 so SDL uses the device's native surface dimensions.
         Window_ = SDL_CreateWindow("OpenDBC Artifact", 0, 0, 0);
 #else
-        Window_ = SDL_CreateWindow("OpenDBC Runtime", WindowWidth_, WindowHeight_,
-                                   Headless_ ? SDL_WINDOW_HIDDEN : 0);
+        Window_ = SDL_CreateWindow("OpenDBC Runtime", WindowWidth_, WindowHeight_, Headless_ ? SDL_WINDOW_HIDDEN : 0);
 #endif
         if (!Window_)
         {
@@ -631,28 +630,34 @@ namespace dbc
     {
         return ScreenDepth_;
     }
+
     int CoreSystem::ScreenType() const
     {
         return Kernel_.Gpu().GpuDevice() ? 1 : 0;
     }
+
     int CoreSystem::ConsumeScreenInvalid()
     {
         const int Result = ScreenInvalid_ ? 1 : 0;
         ScreenInvalid_ = false;
         return Result;
     }
+
     void CoreSystem::MarkScreenInvalid()
     {
         ScreenInvalid_ = true;
     }
+
     int CoreSystem::DisplayVSync() const
     {
         return DisplayVsync_;
     }
+
     int CoreSystem::DisplayMultisampling() const
     {
         return DisplayMultisampling_;
     }
+
     int CoreSystem::DisplayMultimonitor() const
     {
         return DisplayMultimonitor_;
@@ -829,62 +834,77 @@ namespace dbc
     {
         return Window_;
     }
+
     int& CoreSystem::WindowWidth()
     {
         return WindowWidth_;
     }
+
     int& CoreSystem::WindowHeight()
     {
         return WindowHeight_;
     }
+
     bool& CoreSystem::Initialized()
     {
         return Initialized_;
     }
+
     bool& CoreSystem::Running()
     {
         return Running_;
     }
+
     bool& CoreSystem::EscapeDisabled()
     {
         return EscapeDisabled_;
     }
+
     bool& CoreSystem::SyncOn()
     {
         return SyncOn_;
     }
+
     float CoreSystem::DeltaTime() const
     {
         return DeltaTime_;
     }
+
     int& CoreSystem::Fps()
     {
         return Fps_;
     }
+
     int& CoreSystem::FramesThisSecond()
     {
         return FramesThisSecond_;
     }
+
     Uint64& CoreSystem::FpsWindowStart()
     {
         return FpsWindowStart_;
     }
+
     Uint64& CoreSystem::LastRenderTicks()
     {
         return LastRenderTicks_;
     }
+
     float& CoreSystem::CameraAspect()
     {
         return CameraAspect_;
     }
+
     std::mt19937& CoreSystem::Rng()
     {
         return Rng_;
     }
+
     bool CoreSystem::Suspended() const
     {
         return Suspended_;
     }
+
     void CoreSystem::SetSuspended(bool Suspended)
     {
         if (Suspended && !Suspended_)
@@ -897,10 +917,12 @@ namespace dbc
         }
         Suspended_ = Suspended;
     }
+
     bool CoreSystem::AlwaysActive() const
     {
         return AlwaysActive_;
     }
+
     bool CoreSystem::Headless() const
     {
         return Headless_;

@@ -18,7 +18,11 @@ namespace
     struct SdlBuffer
     {
         void* Value = nullptr;
-        ~SdlBuffer() { SDL_free(Value); }
+
+        ~SdlBuffer()
+        {
+            SDL_free(Value);
+        }
     };
 
     bool ReadText(const std::filesystem::path& Path, std::string& Text)

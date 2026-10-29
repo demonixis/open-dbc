@@ -53,7 +53,8 @@ namespace dbc::studio
                 {
                     SDL_IOStream* Io = SDL_IOFromConstMem(Texture.pcData, Texture.mWidth);
                     SDL_Surface* Loaded = Io != nullptr ? IMG_Load_IO(Io, true) : nullptr;
-                    SDL_Surface* Pixels = Loaded != nullptr ? SDL_ConvertSurface(Loaded, SDL_PIXELFORMAT_RGBA32) : nullptr;
+                    SDL_Surface* Pixels =
+                        Loaded != nullptr ? SDL_ConvertSurface(Loaded, SDL_PIXELFORMAT_RGBA32) : nullptr;
                     if (Loaded != nullptr)
                         SDL_DestroySurface(Loaded);
                     if (Pixels == nullptr)
@@ -94,9 +95,8 @@ namespace dbc::studio
                 if (Material.Get(AI_MATKEY_COLOR_DIFFUSE, Diffuse) == aiReturn_SUCCESS)
                     Part.Color = glm::vec4(Diffuse.r, Diffuse.g, Diffuse.b, Diffuse.a);
                 static constexpr aiTextureType KSearchOrder[] = {
-                    aiTextureType_DIFFUSE, aiTextureType_BASE_COLOR, aiTextureType_EMISSIVE,
-                    aiTextureType_NORMALS, aiTextureType_HEIGHT,     aiTextureType_SPECULAR,
-                    aiTextureType_AMBIENT, aiTextureType_UNKNOWN,
+                    aiTextureType_DIFFUSE, aiTextureType_BASE_COLOR, aiTextureType_EMISSIVE, aiTextureType_NORMALS,
+                    aiTextureType_HEIGHT,  aiTextureType_SPECULAR,   aiTextureType_AMBIENT,  aiTextureType_UNKNOWN,
                 };
                 for (aiTextureType Type : KSearchOrder)
                 {
@@ -178,8 +178,7 @@ namespace dbc::studio
                 const std::vector<float>& Heights = MatrixHeights(Node);
                 const auto Point = [&](int X, int Z)
                 {
-                    const float Height =
-                        Heights.empty() ? 0.0f : Heights[static_cast<std::size_t>(Z) * (Xs + 1) + X];
+                    const float Height = Heights.empty() ? 0.0f : Heights[static_cast<std::size_t>(Z) * (Xs + 1) + X];
                     return glm::vec3(X * Sx, Height, Z * Sz);
                 };
                 // Every tile shows the FILL MATRIX tile of the PREPARE MATRIX TEXTURE grid.
@@ -286,9 +285,8 @@ namespace dbc::studio
                                          ? Animation.mTicksPerSecond
                                          : 25.0;
             Out.Name = Animation.mName.C_Str();
-            Out.LastFrame = static_cast<int>(
-                std::lround(std::clamp(Ticks * 25.0 / PerSecond, 0.0,
-                                       static_cast<double>(std::numeric_limits<int>::max()))));
+            Out.LastFrame = static_cast<int>(std::lround(
+                std::clamp(Ticks * 25.0 / PerSecond, 0.0, static_cast<double>(std::numeric_limits<int>::max()))));
             Out.Count = Scene.mNumAnimations;
             return true;
         }
@@ -434,8 +432,8 @@ namespace dbc::studio
         glm::vec3 LightDirection(const glm::vec3& Degrees)
         {
             const float Yaw = Radians(Degrees.y), Pitch = Radians(Degrees.x);
-            return glm::normalize(glm::vec3(std::sin(Yaw) * std::cos(Pitch), -std::sin(Pitch),
-                                            std::cos(Yaw) * std::cos(Pitch)));
+            return glm::normalize(
+                glm::vec3(std::sin(Yaw) * std::cos(Pitch), -std::sin(Pitch), std::cos(Yaw) * std::cos(Pitch)));
         }
 
         glm::mat4 NodeWorld(const SceneNode& Node)

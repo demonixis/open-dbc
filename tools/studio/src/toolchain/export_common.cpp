@@ -119,121 +119,121 @@ namespace dbc::studio
 
         namespace
         {
-        class Sha256
-        {
-          public:
-            void Update(const unsigned char* Bytes, std::size_t Size)
+            class Sha256
             {
-                TotalBytes_ += Size;
-                while (Size > 0)
+              public:
+                void Update(const unsigned char* Bytes, std::size_t Size)
                 {
-                    const std::size_t Count = std::min(Size, Buffer_.size() - BufferSize_);
-                    std::copy_n(Bytes, Count, Buffer_.begin() + static_cast<std::ptrdiff_t>(BufferSize_));
-                    BufferSize_ += Count;
-                    Bytes += Count;
-                    Size -= Count;
-                    if (BufferSize_ == Buffer_.size())
+                    TotalBytes_ += Size;
+                    while (Size > 0)
                     {
+                        const std::size_t Count = std::min(Size, Buffer_.size() - BufferSize_);
+                        std::copy_n(Bytes, Count, Buffer_.begin() + static_cast<std::ptrdiff_t>(BufferSize_));
+                        BufferSize_ += Count;
+                        Bytes += Count;
+                        Size -= Count;
+                        if (BufferSize_ == Buffer_.size())
+                        {
+                            Transform(Buffer_.data());
+                            BufferSize_ = 0;
+                        }
+                    }
+                }
+
+                std::string Final()
+                {
+                    const std::uint64_t BitLength = TotalBytes_ * 8;
+                    Buffer_[BufferSize_++] = 0x80;
+                    if (BufferSize_ > 56)
+                    {
+                        std::fill(Buffer_.begin() + static_cast<std::ptrdiff_t>(BufferSize_), Buffer_.end(), 0);
                         Transform(Buffer_.data());
                         BufferSize_ = 0;
                     }
-                }
-            }
-
-            std::string Final()
-            {
-                const std::uint64_t BitLength = TotalBytes_ * 8;
-                Buffer_[BufferSize_++] = 0x80;
-                if (BufferSize_ > 56)
-                {
-                    std::fill(Buffer_.begin() + static_cast<std::ptrdiff_t>(BufferSize_), Buffer_.end(), 0);
+                    std::fill(Buffer_.begin() + static_cast<std::ptrdiff_t>(BufferSize_), Buffer_.begin() + 56, 0);
+                    for (int Index = 0; Index < 8; ++Index)
+                        Buffer_[56 + Index] = static_cast<unsigned char>(BitLength >> (56 - Index * 8));
                     Transform(Buffer_.data());
-                    BufferSize_ = 0;
+
+                    std::ostringstream Output;
+                    Output << std::hex << std::setfill('0');
+                    for (const std::uint32_t Value : State_)
+                        Output << std::setw(8) << Value;
+                    return Output.str();
                 }
-                std::fill(Buffer_.begin() + static_cast<std::ptrdiff_t>(BufferSize_), Buffer_.begin() + 56, 0);
-                for (int Index = 0; Index < 8; ++Index)
-                    Buffer_[56 + Index] = static_cast<unsigned char>(BitLength >> (56 - Index * 8));
-                Transform(Buffer_.data());
 
-                std::ostringstream Output;
-                Output << std::hex << std::setfill('0');
-                for (const std::uint32_t Value : State_)
-                    Output << std::setw(8) << Value;
-                return Output.str();
-            }
+              private:
+                static constexpr std::array<std::uint32_t, 64> Constants_ = {
+                    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+                    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+                    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+                    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+                    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+                    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+                    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+                    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
-          private:
-            static constexpr std::array<std::uint32_t, 64> Constants_ = {
-                0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-                0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-                0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-                0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-                0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-                0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-                0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-                0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
-
-            void Transform(const unsigned char* Block)
-            {
-                std::array<std::uint32_t, 64> Words{};
-                for (std::size_t Index = 0; Index < 16; ++Index)
+                void Transform(const unsigned char* Block)
                 {
-                    const std::size_t Offset = Index * 4;
-                    Words[Index] = (static_cast<std::uint32_t>(Block[Offset]) << 24) |
-                                   (static_cast<std::uint32_t>(Block[Offset + 1]) << 16) |
-                                   (static_cast<std::uint32_t>(Block[Offset + 2]) << 8) |
-                                   static_cast<std::uint32_t>(Block[Offset + 3]);
-                }
-                for (std::size_t Index = 16; Index < Words.size(); ++Index)
-                {
-                    const std::uint32_t S0 =
-                        std::rotr(Words[Index - 15], 7) ^ std::rotr(Words[Index - 15], 18) ^ (Words[Index - 15] >> 3);
-                    const std::uint32_t S1 =
-                        std::rotr(Words[Index - 2], 17) ^ std::rotr(Words[Index - 2], 19) ^ (Words[Index - 2] >> 10);
-                    Words[Index] = Words[Index - 16] + S0 + Words[Index - 7] + S1;
+                    std::array<std::uint32_t, 64> Words{};
+                    for (std::size_t Index = 0; Index < 16; ++Index)
+                    {
+                        const std::size_t Offset = Index * 4;
+                        Words[Index] = (static_cast<std::uint32_t>(Block[Offset]) << 24) |
+                                       (static_cast<std::uint32_t>(Block[Offset + 1]) << 16) |
+                                       (static_cast<std::uint32_t>(Block[Offset + 2]) << 8) |
+                                       static_cast<std::uint32_t>(Block[Offset + 3]);
+                    }
+                    for (std::size_t Index = 16; Index < Words.size(); ++Index)
+                    {
+                        const std::uint32_t S0 = std::rotr(Words[Index - 15], 7) ^ std::rotr(Words[Index - 15], 18) ^
+                                                 (Words[Index - 15] >> 3);
+                        const std::uint32_t S1 = std::rotr(Words[Index - 2], 17) ^ std::rotr(Words[Index - 2], 19) ^
+                                                 (Words[Index - 2] >> 10);
+                        Words[Index] = Words[Index - 16] + S0 + Words[Index - 7] + S1;
+                    }
+
+                    std::uint32_t A = State_[0];
+                    std::uint32_t B = State_[1];
+                    std::uint32_t C = State_[2];
+                    std::uint32_t D = State_[3];
+                    std::uint32_t E = State_[4];
+                    std::uint32_t F = State_[5];
+                    std::uint32_t G = State_[6];
+                    std::uint32_t H = State_[7];
+                    for (std::size_t Index = 0; Index < Words.size(); ++Index)
+                    {
+                        const std::uint32_t Sum1 = std::rotr(E, 6) ^ std::rotr(E, 11) ^ std::rotr(E, 25);
+                        const std::uint32_t Choice = (E & F) ^ (~E & G);
+                        const std::uint32_t Temporary1 = H + Sum1 + Choice + Constants_[Index] + Words[Index];
+                        const std::uint32_t Sum0 = std::rotr(A, 2) ^ std::rotr(A, 13) ^ std::rotr(A, 22);
+                        const std::uint32_t Majority = (A & B) ^ (A & C) ^ (B & C);
+                        const std::uint32_t Temporary2 = Sum0 + Majority;
+                        H = G;
+                        G = F;
+                        F = E;
+                        E = D + Temporary1;
+                        D = C;
+                        C = B;
+                        B = A;
+                        A = Temporary1 + Temporary2;
+                    }
+                    State_[0] += A;
+                    State_[1] += B;
+                    State_[2] += C;
+                    State_[3] += D;
+                    State_[4] += E;
+                    State_[5] += F;
+                    State_[6] += G;
+                    State_[7] += H;
                 }
 
-                std::uint32_t A = State_[0];
-                std::uint32_t B = State_[1];
-                std::uint32_t C = State_[2];
-                std::uint32_t D = State_[3];
-                std::uint32_t E = State_[4];
-                std::uint32_t F = State_[5];
-                std::uint32_t G = State_[6];
-                std::uint32_t H = State_[7];
-                for (std::size_t Index = 0; Index < Words.size(); ++Index)
-                {
-                    const std::uint32_t Sum1 = std::rotr(E, 6) ^ std::rotr(E, 11) ^ std::rotr(E, 25);
-                    const std::uint32_t Choice = (E & F) ^ (~E & G);
-                    const std::uint32_t Temporary1 = H + Sum1 + Choice + Constants_[Index] + Words[Index];
-                    const std::uint32_t Sum0 = std::rotr(A, 2) ^ std::rotr(A, 13) ^ std::rotr(A, 22);
-                    const std::uint32_t Majority = (A & B) ^ (A & C) ^ (B & C);
-                    const std::uint32_t Temporary2 = Sum0 + Majority;
-                    H = G;
-                    G = F;
-                    F = E;
-                    E = D + Temporary1;
-                    D = C;
-                    C = B;
-                    B = A;
-                    A = Temporary1 + Temporary2;
-                }
-                State_[0] += A;
-                State_[1] += B;
-                State_[2] += C;
-                State_[3] += D;
-                State_[4] += E;
-                State_[5] += F;
-                State_[6] += G;
-                State_[7] += H;
-            }
-
-            std::array<std::uint32_t, 8> State_ = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-                                                   0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
-            std::array<unsigned char, 64> Buffer_{};
-            std::size_t BufferSize_ = 0;
-            std::uint64_t TotalBytes_ = 0;
-        };
+                std::array<std::uint32_t, 8> State_ = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+                                                       0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+                std::array<unsigned char, 64> Buffer_{};
+                std::size_t BufferSize_ = 0;
+                std::uint64_t TotalBytes_ = 0;
+            };
         } // namespace
 
         std::optional<std::string> Sha256File(const fs::path& Path)
@@ -677,9 +677,8 @@ namespace dbc::studio
             if (!Build.Bytecode)
             {
                 const auto First = std::find_if(Build.Diagnostics.begin(), Build.Diagnostics.end(),
-                                                [](const dbc::interpreter::ExecutionDiagnostic& Value) {
-                                                    return Value.Severity == dbc::language::DiagnosticSeverity::Error;
-                                                });
+                                                [](const dbc::interpreter::ExecutionDiagnostic& Value)
+                                                { return Value.Severity == dbc::language::DiagnosticSeverity::Error; });
                 Error = First == Build.Diagnostics.end() ? "BASIC artifact compilation failed"
                                                          : First->Code + ": " + First->Message;
                 return false;
@@ -1273,8 +1272,9 @@ namespace dbc::studio
                                              const std::filesystem::path& ProductShaderRoot, std::string& Error)
         {
             for (const std::string_view Name :
-                 {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
-                  "vr_transfer.vert.spv", "vr_transfer.frag.spv", "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
+                 {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl",
+                  "dbclassic_tri.frag.msl", "vr_transfer.vert.spv", "vr_transfer.frag.spv", "vr_transfer.vert.msl",
+                  "vr_transfer.frag.msl"})
             {
                 const std::optional<std::string> HostHash = internal::Sha256File(HostShaderRoot / Name);
                 const std::optional<std::string> ProductHash = internal::Sha256File(ProductShaderRoot / Name);

@@ -47,9 +47,7 @@ namespace dbc::studio
         class OutlineBuilder
         {
           public:
-            explicit OutlineBuilder(const lang::SourceDocument& Source) : Source_(Source)
-            {
-            }
+            explicit OutlineBuilder(const lang::SourceDocument& Source) : Source_(Source) {}
 
             void Collect(const lang::Program& Program)
             {

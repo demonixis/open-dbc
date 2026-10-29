@@ -1240,6 +1240,7 @@ namespace dbc
                 if (Error_.empty())
                     Error_ = std::move(Message);
             }
+
             std::string Error_;
 
             std::vector<uint8_t> Data_;
@@ -1357,6 +1358,7 @@ namespace dbc
                 if (Error_.empty())
                     Error_ = std::move(Message);
             }
+
             std::string Error_;
 
             bool Require(std::size_t Size)
@@ -1735,6 +1737,7 @@ namespace dbc
                 aiMatrix4x4 Parent;
                 aiMatrix4x4 World;
             };
+
             // A file controls its frame depth. Keep traversal state on the heap, preserving depth-first order.
             std::vector<PendingFrame> Pending;
             Pending.push_back({Reader, Parent, Parent});
@@ -1887,6 +1890,7 @@ namespace dbc
                     return;
                 Data_.push_back(Value);
             }
+
             void U32(uint32_t Value)
             {
                 if (!Require(4))
@@ -1894,10 +1898,12 @@ namespace dbc
                 for (unsigned Shift = 0; Shift < 32; Shift += 8)
                     Data_.push_back(static_cast<uint8_t>((Value >> Shift) & 0xFFu));
             }
+
             void I32(int32_t Value)
             {
                 U32(static_cast<uint32_t>(Value));
             }
+
             void Float(float Value)
             {
                 if (!std::isfinite(Value))
@@ -1907,6 +1913,7 @@ namespace dbc
                 }
                 U32(std::bit_cast<uint32_t>(Value));
             }
+
             void Bytes(const void* Source, std::size_t Size)
             {
                 if (!Require(Size))
@@ -1914,6 +1921,7 @@ namespace dbc
                 const auto* First = static_cast<const uint8_t*>(Source);
                 Data_.insert(Data_.end(), First, First + Size);
             }
+
             void String(const std::string& Value)
             {
                 if (Value.size() > PortableStringLimit)
@@ -1924,6 +1932,7 @@ namespace dbc
                 U32(static_cast<uint32_t>(Value.size()));
                 Bytes(Value.data(), Value.size());
             }
+
             [[nodiscard]] const std::vector<uint8_t>& Data() const
             {
                 return Data_;
@@ -1944,6 +1953,7 @@ namespace dbc
                 if (Error_.empty())
                     Error_ = std::move(Message);
             }
+
             std::string Error_;
 
             bool Require(std::size_t Size)
@@ -1957,6 +1967,7 @@ namespace dbc
                 }
                 return true;
             }
+
             std::vector<uint8_t> Data_;
         };
 
@@ -1967,12 +1978,14 @@ namespace dbc
                 : Data_(Data), Command_(std::move(Command))
             {
             }
+
             uint8_t U8()
             {
                 if (!Require(1))
                     return {};
                 return Data_[Position_++];
             }
+
             uint32_t U32()
             {
                 if (!Require(4))
@@ -1982,10 +1995,12 @@ namespace dbc
                     Value |= static_cast<uint32_t>(Data_[Position_++]) << Shift;
                 return Value;
             }
+
             int32_t I32()
             {
                 return static_cast<int32_t>(U32());
             }
+
             float Float()
             {
                 const float Value = std::bit_cast<float>(U32());
@@ -1996,6 +2011,7 @@ namespace dbc
                 }
                 return Value;
             }
+
             std::string String()
             {
                 const uint32_t Size = U32();
@@ -2010,6 +2026,7 @@ namespace dbc
                 Position_ += Size;
                 return Value;
             }
+
             void Expect(const std::array<char, 8>& Magic)
             {
                 if (!Require(Magic.size()))
@@ -2021,6 +2038,7 @@ namespace dbc
                 }
                 Position_ += Magic.size();
             }
+
             [[nodiscard]] bool AtEnd() const
             {
                 return Status() && Position_ == Data_.size();
@@ -2041,6 +2059,7 @@ namespace dbc
                 if (Error_.empty())
                     Error_ = std::move(Message);
             }
+
             std::string Error_;
 
             bool Require(std::size_t Size)
@@ -2055,6 +2074,7 @@ namespace dbc
                 }
                 return true;
             }
+
             const std::vector<uint8_t>& Data_;
             std::string Command_;
             std::size_t Position_ = 0;
@@ -2434,20 +2454,24 @@ namespace dbc
                 for (unsigned Shift = 0; Shift < 32; Shift += 8)
                     Byte(static_cast<uint8_t>((Value >> Shift) & 0xFFu));
             }
+
             void I32(int32_t Value)
             {
                 U32(static_cast<uint32_t>(Value));
             }
+
             void Float(float Value)
             {
                 U32(std::bit_cast<uint32_t>(Value));
             }
+
             void String(std::string_view Value)
             {
                 U32(static_cast<uint32_t>(Value.size()));
                 for (const char Character : Value)
                     Byte(static_cast<uint8_t>(Character));
             }
+
             [[nodiscard]] std::string Finish() const
             {
                 return std::to_string(First_) + ":" + std::to_string(Second_) + ":" + std::to_string(Size_);
@@ -2461,6 +2485,7 @@ namespace dbc
                 Second_ += Value + 0x9e3779b97f4a7c15ull + (Second_ << 6u) + (Second_ >> 2u);
                 ++Size_;
             }
+
             uint64_t First_ = 1469598103934665603ull;
             uint64_t Second_ = 0x6a09e667f3bcc909ull;
             uint64_t Size_ = 0;
@@ -2832,6 +2857,7 @@ namespace dbc
         const auto It = Meshes_.find(MeshId);
         return It != Meshes_.end() ? &It->second : nullptr;
     }
+
     bool ObjectManager::AnyObjectDirty() const
     {
         for (const auto& [Id, Object] : Objects_)
@@ -3101,30 +3127,37 @@ namespace dbc
     {
         return *SpatialHash_;
     }
+
     std::vector<AABB>& ObjectManager::StaticBoxes()
     {
         return StaticBoxes_;
     }
+
     float& ObjectManager::CollisionSlideX()
     {
         return CollisionSlideX_;
     }
+
     float& ObjectManager::CollisionSlideY()
     {
         return CollisionSlideY_;
     }
+
     float& ObjectManager::CollisionSlideZ()
     {
         return CollisionSlideZ_;
     }
+
     float& ObjectManager::StaticHitX()
     {
         return StaticHitX_;
     }
+
     float& ObjectManager::StaticHitY()
     {
         return StaticHitY_;
     }
+
     float& ObjectManager::StaticHitZ()
     {
         return StaticHitZ_;
@@ -4686,12 +4719,14 @@ namespace dbc
         const auto Feedback = CollisionFeedback_.find(Requested);
         return Feedback != CollisionFeedback_.end() ? Feedback->second.X : 0.0f;
     }
+
     float ObjectManager::GetObjectCollisionY(int ObjectId)
     {
         const int Requested = ObjectId > 0 ? ObjectId : LastCollisionObject_;
         const auto Feedback = CollisionFeedback_.find(Requested);
         return Feedback != CollisionFeedback_.end() ? Feedback->second.Y : 0.0f;
     }
+
     float ObjectManager::GetObjectCollisionZ(int ObjectId)
     {
         const int Requested = ObjectId > 0 ? ObjectId : LastCollisionObject_;
@@ -4990,10 +5025,12 @@ namespace dbc
     {
         return StaticHitX_;
     }
+
     float ObjectManager::StaticLineOfSightY() const
     {
         return StaticHitY_;
     }
+
     float ObjectManager::StaticLineOfSightZ() const
     {
         return StaticHitZ_;
@@ -5535,10 +5572,12 @@ namespace dbc
     {
         return StaticHitX_;
     }
+
     float ObjectManager::GetStaticCollisionY()
     {
         return StaticHitY_;
     }
+
     float ObjectManager::GetStaticCollisionZ()
     {
         return StaticHitZ_;
@@ -6116,24 +6155,28 @@ namespace dbc
             return false;
         return true;
     }
+
     bool ObjectManager::SetObject(int Oid, int W, int T, int C, int F, std::string* Error)
     {
         if (!SetObjectFlags(Oid, W, T, C, F, 1, 1, 1, Error))
             return false;
         return true;
     }
+
     bool ObjectManager::SetObject(int Oid, int W, int T, int C, int F, int L, std::string* Error)
     {
         if (!SetObjectFlags(Oid, W, T, C, F, L, 1, 1, Error))
             return false;
         return true;
     }
+
     bool ObjectManager::SetObject(int Oid, int W, int T, int C, int F, int L, int Fo, std::string* Error)
     {
         if (!SetObjectFlags(Oid, W, T, C, F, L, Fo, 1, Error))
             return false;
         return true;
     }
+
     bool ObjectManager::SetObject(int Oid, int W, int T, int C, int F, int L, int Fo, int A, std::string* Error)
     {
         if (!SetObjectFlags(Oid, W, T, C, F, L, Fo, A, Error))

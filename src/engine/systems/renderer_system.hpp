@@ -63,10 +63,12 @@ namespace dbc
                                 const PreparedViewGeometry& Geometry, SDL_GPUCommandBuffer* Commands,
                                 RenderFrameState& Frame);
         void FinalizeFrame(RenderFrameState& Frame);
+
         [[nodiscard]] const RenderView* ActiveView() const
         {
             return ActiveView_;
         }
+
         void SetActiveView(const RenderView* View)
         {
             if (View && (!CachedView_ || !(*CachedView_ == *View)))
@@ -85,21 +87,26 @@ namespace dbc
         [[nodiscard]] SDL_Surface* ReadLastHeadlessFrame();
 
         void SetGamma(int Red, int Green, int Blue);
+
         [[nodiscard]] std::array<int, 3> GammaLevels() const
         {
             return GammaLevels_;
         }
+
         [[nodiscard]] bool HasFinalColorTransform() const;
         [[nodiscard]] std::array<float, 3> FinalColorScale() const;
         bool SetMipmapMode(int Mode, std::string* Error = nullptr);
+
         [[nodiscard]] bool HasMipmapModeOverride() const
         {
             return MipmapModeOverride_;
         }
+
         [[nodiscard]] int MipmapMode() const
         {
             return MipmapMode_;
         }
+
         [[nodiscard]] int ResolveMipmapMode(int SurfaceMode) const;
         void ResetRuntimeCompatibilityState();
 
@@ -122,21 +129,26 @@ namespace dbc
         Vec3 WorldToViewDirection(float Dx, float Dy, float Dz);
         void SetReflectionView(const Vec3& Point, const Vec3& Normal);
         void ClearReflectionView();
+
         [[nodiscard]] bool ReflectionViewEnabled() const
         {
             return ReflectionViewEnabled_;
         }
+
         [[nodiscard]] Vec3 ReflectWorldPoint(const Vec3& Point) const;
         [[nodiscard]] Vec3 ReflectWorldDirection(const Vec3& Direction) const;
         void SetShadowPosition(int Mode, float X, float Y, float Z);
+
         [[nodiscard]] int ShadowPositionMode() const
         {
             return ShadowPositionMode_;
         }
+
         [[nodiscard]] Vec3 ShadowPosition() const
         {
             return ShadowPosition_;
         }
+
         float FogFactor(float Z);
         void AppendClippedViewTriangle(const ViewVertex& V0, const ViewVertex& V1, const ViewVertex& V2,
                                        SDL_Texture* Texture, SDL_GPUTexture* GpuTexture, bool Transparent,
@@ -169,22 +181,27 @@ namespace dbc
         {
             return HasCachedTris_;
         }
+
         void InvalidateTriCache()
         {
             HasCachedTris_ = false;
         }
+
         const std::vector<Triangle>& CachedWorldTris() const
         {
             return CachedWorldTris_;
         }
+
         const std::vector<Triangle>& CachedReflectedTris() const
         {
             return CachedReflectedTris_;
         }
+
         const std::vector<Triangle>& CachedOverlayTris() const
         {
             return CachedOverlayTris_;
         }
+
         void CacheTris(const std::vector<Triangle>& World, const std::vector<Triangle>& Reflected,
                        const std::vector<Triangle>& Overlay)
         {
@@ -193,6 +210,7 @@ namespace dbc
             CachedOverlayTris_ = Overlay;
             HasCachedTris_ = true;
         }
+
         void CacheTris(const std::vector<Triangle>& World, const std::vector<Triangle>& Overlay)
         {
             CacheTris(World, {}, Overlay);
@@ -200,6 +218,7 @@ namespace dbc
 
         // Terrains drawn from static GPU buffers rather than per-frame CPU triangles.
         [[nodiscard]] bool DrawsTerrainOnGpu(const Matrix& Terrain) const;
+
         // Triangles of static terrain in the last built view.
         [[nodiscard]] std::size_t LastStaticTerrainTriangles() const
         {
@@ -211,29 +230,35 @@ namespace dbc
         {
             return LastFramePolygons_;
         }
+
         void RecordFramePolygons(int Count)
         {
             LastFramePolygons_ = Count;
         }
+
         // True when the last presented frame contained 3D world geometry.
         [[nodiscard]] bool LastFrameShowedWorld() const
         {
             return LastFrameShowedWorld_;
         }
+
         // STATISTIC(5): draw calls submitted by the last presented frame.
         [[nodiscard]] int LastFrameDrawCalls() const
         {
             return LastFrameDrawCalls_;
         }
+
         void RecordFrameDrawCalls(int Count)
         {
             LastFrameDrawCalls_ = Count;
         }
+
         void SetNormalizeNormals(bool Enabled)
         {
             NormalizeNormals_ = Enabled;
             InvalidateTriCache();
         }
+
         [[nodiscard]] bool NormalizeNormals() const
         {
             return NormalizeNormals_;

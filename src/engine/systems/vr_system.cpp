@@ -34,6 +34,7 @@ namespace dbc
                     return XR_REFERENCE_SPACE_TYPE_LOCAL;
             }
         }
+
         glm::mat4 TrackingMatrix(const XrPosef& Pose)
         {
             return VrTracking::ConvertPose(
@@ -44,6 +45,7 @@ namespace dbc
     } // namespace
 
     VrSystem::VrSystem(EngineKernel& Kernel) : Impl_(std::make_unique<Impl>(Kernel)) {}
+
     VrSystem::~VrSystem()
     {
         DetachDevice();
@@ -63,22 +65,27 @@ namespace dbc
         Impl_->WarnedSpace = -1;
         return true;
     }
+
     bool VrSystem::Capable() const
     {
         return Impl_->Capable;
     }
+
     bool VrSystem::Supported() const
     {
         return Impl_->Supported;
     }
+
     bool VrSystem::Enabled() const
     {
         return Impl_->Enabled;
     }
+
     bool VrSystem::Pacing() const
     {
         return Impl_->Enabled && Impl_->Running;
     }
+
     float VrSystem::CameraHeight() const
     {
         return Impl_->Tracking.Height;
@@ -88,10 +95,12 @@ namespace dbc
     {
         return glm::inverse(Kernel.Renderer().CameraView(1, 1).WorldToView);
     }
+
     VrPose VrSystem::HeadPose() const
     {
         return Impl_->Tracking.Compose(0, Impl_->Player());
     }
+
     bool VrSystem::ControllerPose(int Hand, VrPose& Pose, std::string* Error) const
     {
         if (Hand < 0 || Hand > 1)
@@ -99,6 +108,7 @@ namespace dbc
         Pose = Impl_->Tracking.Compose(static_cast<std::size_t>(Hand + 1), Impl_->Player());
         return true;
     }
+
     bool VrSystem::SetCameraHeight(float Height, std::string* Error)
     {
         if (!std::isfinite(Height))
@@ -106,6 +116,7 @@ namespace dbc
         Impl_->Tracking.Height = Height;
         return true;
     }
+
     bool VrSystem::SetPreviewMode(int Mode, std::string* Error)
     {
         if (Mode < 0 || Mode > 2)
@@ -113,6 +124,7 @@ namespace dbc
         Impl_->Preview = static_cast<VrPreviewMode>(Mode);
         return true;
     }
+
     void VrSystem::RecenterCamera()
     {
         const bool Recentered = Impl_->Tracking.RecenterHead();
@@ -120,6 +132,7 @@ namespace dbc
             DBC_LOG_WARN("VR recenter requires a tracked head pose");
         Impl_->WarnedRecenter = !Recentered;
     }
+
     bool VrSystem::SetTrackingSpace(int Mode, std::string* Error)
     {
         if (Mode < 0 || Mode > 2)
@@ -828,6 +841,7 @@ namespace dbc
         return false;
 #endif
     }
+
     SDL_Surface* VrSystem::CapturePreview()
     {
         return Impl_->Presenter.Capture();

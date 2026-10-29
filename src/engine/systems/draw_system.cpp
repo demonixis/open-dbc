@@ -425,6 +425,7 @@ namespace dbc
     {
         return BackdropColor_;
     }
+
     int DrawSystem::BackdropColor() const
     {
         return BackdropColor_;
@@ -434,6 +435,7 @@ namespace dbc
     {
         return FogColor_;
     }
+
     int DrawSystem::FogColor() const
     {
         return FogColor_;
@@ -443,6 +445,7 @@ namespace dbc
     {
         return FogDistance_;
     }
+
     float DrawSystem::FogDistance() const
     {
         return FogDistance_;
@@ -452,6 +455,7 @@ namespace dbc
     {
         return FogStartDistance_;
     }
+
     float DrawSystem::FogStartDistance() const
     {
         return FogStartDistance_;
@@ -461,6 +465,7 @@ namespace dbc
     {
         return FogOn_;
     }
+
     bool DrawSystem::FogOn() const
     {
         return FogOn_;
@@ -470,6 +475,7 @@ namespace dbc
     {
         return BackdropOn_;
     }
+
     bool DrawSystem::BackdropOn() const
     {
         return BackdropOn_;
@@ -479,6 +485,7 @@ namespace dbc
     {
         return BackdropImageId_;
     }
+
     int DrawSystem::BackdropImageId() const
     {
         return BackdropImageId_;
@@ -488,6 +495,7 @@ namespace dbc
     {
         return BackdropScrollX_;
     }
+
     float DrawSystem::BackdropScrollX() const
     {
         return BackdropScrollX_;
@@ -497,6 +505,7 @@ namespace dbc
     {
         return BackdropScrollY_;
     }
+
     float DrawSystem::BackdropScrollY() const
     {
         return BackdropScrollY_;
@@ -506,6 +515,7 @@ namespace dbc
     {
         DrawToFront_ = true;
     }
+
     void DrawSystem::SetDrawToBack()
     {
         DrawToFront_ = false;

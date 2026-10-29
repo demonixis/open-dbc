@@ -57,8 +57,7 @@ namespace dbc
             // Rejects counts that cannot fit in the remaining bytes before anything is allocated.
             [[nodiscard]] bool CanHold(int64_t Count, std::size_t MinimumRecordBytes) const
             {
-                return Count >= 0 &&
-                       static_cast<uint64_t>(Count) <= (Bytes_.size() - Offset_) / MinimumRecordBytes;
+                return Count >= 0 && static_cast<uint64_t>(Count) <= (Bytes_.size() - Offset_) / MinimumRecordBytes;
             }
 
           private:
@@ -261,16 +260,16 @@ namespace dbc
     {
         switch (Format)
         {
-        case BspFileFormat::Quake1:
-            return "Quake 1";
-        case BspFileFormat::HalfLife:
-            return "Half-Life";
-        case BspFileFormat::Quake2:
-            return "Quake 2";
-        case BspFileFormat::Quake3:
-            return "Quake 3";
-        case BspFileFormat::Unknown:
-            break;
+            case BspFileFormat::Quake1:
+                return "Quake 1";
+            case BspFileFormat::HalfLife:
+                return "Half-Life";
+            case BspFileFormat::Quake2:
+                return "Quake 2";
+            case BspFileFormat::Quake3:
+                return "Quake 3";
+            case BspFileFormat::Unknown:
+                break;
         }
         return "unknown";
     }
@@ -539,8 +538,8 @@ namespace dbc
         return true;
     }
 
-    bool BspWorldSystem::SetCollisionRadius(int Index, bool Object, int Entity, const Vec3& Radii,
-                                            const char* Command, std::string* Error)
+    bool BspWorldSystem::SetCollisionRadius(int Index, bool Object, int Entity, const Vec3& Radii, const char* Command,
+                                            std::string* Error)
     {
         if (!AcceptsSetup(Index, Command, Error))
             return false;

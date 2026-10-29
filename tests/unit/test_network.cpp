@@ -114,7 +114,10 @@ namespace
             }
         }
 
-        dbc::EngineKernel& Kernel() { return Kernel_; }
+        dbc::EngineKernel& Kernel()
+        {
+            return Kernel_;
+        }
 
         std::string Error;
 

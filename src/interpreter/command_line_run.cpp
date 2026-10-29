@@ -514,9 +514,11 @@ namespace dbc::interpreter
             Write(Environment.StandardError, stderr, "Failed to create the engine kernel\n");
             return Finish(CommandLineExitCode::Runtime, "engine-initialization-failed");
         }
+
         struct Shutdown
         {
             EngineKernel& Kernel;
+
             ~Shutdown()
             {
                 Kernel.Shutdown();
@@ -574,6 +576,7 @@ namespace dbc::interpreter
                 std::signal(SIGTERM, Terminate);
             }
         } RestoreSignalsGuard{PreviousInterrupt, PreviousTerminate};
+
         while (!Service.Result().Finished())
         {
             if (Interrupted.load(std::memory_order_relaxed))
@@ -902,8 +905,8 @@ namespace dbc::interpreter
         {
             for (const std::string_view Option :
                  {"--asset-root", "--command-line", "--log-output", "--builtin-coverage-output", "--benchmark-output",
-                  "--log-level", "--max-frames", "--instruction-budget", "--debug-overlay", "--headless",
-                  "--benchmark", "--capture-output"})
+                  "--log-level", "--max-frames", "--instruction-budget", "--debug-overlay", "--headless", "--benchmark",
+                  "--capture-output"})
             {
                 if (std::find(Arguments.begin(), Arguments.end(), Option) != Arguments.end() && IsRunOption(Option))
                 {

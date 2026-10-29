@@ -57,18 +57,18 @@ namespace dbc::studio
 
         bool SceneRenderer::CreatePipelines(std::string& Error)
         {
-            SDL_GPUShader* MeshVertexShader = CreateShader(K_scene_mesh_vert_spv, sizeof(K_scene_mesh_vert_spv),
-                                                     K_scene_mesh_vert_msl, sizeof(K_scene_mesh_vert_msl),
-                                                     SDL_GPU_SHADERSTAGE_VERTEX, 0);
-            SDL_GPUShader* MeshFragment = CreateShader(K_scene_mesh_frag_spv, sizeof(K_scene_mesh_frag_spv),
-                                                       K_scene_mesh_frag_msl, sizeof(K_scene_mesh_frag_msl),
-                                                       SDL_GPU_SHADERSTAGE_FRAGMENT, 1);
-            SDL_GPUShader* LineVertexShader = CreateShader(K_scene_line_vert_spv, sizeof(K_scene_line_vert_spv),
-                                                           K_scene_line_vert_msl, sizeof(K_scene_line_vert_msl),
-                                                           SDL_GPU_SHADERSTAGE_VERTEX, 0);
-            SDL_GPUShader* LineFragment = CreateShader(K_scene_line_frag_spv, sizeof(K_scene_line_frag_spv),
-                                                       K_scene_line_frag_msl, sizeof(K_scene_line_frag_msl),
-                                                       SDL_GPU_SHADERSTAGE_FRAGMENT, 0);
+            SDL_GPUShader* MeshVertexShader =
+                CreateShader(K_scene_mesh_vert_spv, sizeof(K_scene_mesh_vert_spv), K_scene_mesh_vert_msl,
+                             sizeof(K_scene_mesh_vert_msl), SDL_GPU_SHADERSTAGE_VERTEX, 0);
+            SDL_GPUShader* MeshFragment =
+                CreateShader(K_scene_mesh_frag_spv, sizeof(K_scene_mesh_frag_spv), K_scene_mesh_frag_msl,
+                             sizeof(K_scene_mesh_frag_msl), SDL_GPU_SHADERSTAGE_FRAGMENT, 1);
+            SDL_GPUShader* LineVertexShader =
+                CreateShader(K_scene_line_vert_spv, sizeof(K_scene_line_vert_spv), K_scene_line_vert_msl,
+                             sizeof(K_scene_line_vert_msl), SDL_GPU_SHADERSTAGE_VERTEX, 0);
+            SDL_GPUShader* LineFragment =
+                CreateShader(K_scene_line_frag_spv, sizeof(K_scene_line_frag_spv), K_scene_line_frag_msl,
+                             sizeof(K_scene_line_frag_msl), SDL_GPU_SHADERSTAGE_FRAGMENT, 0);
             const auto Release = [&]()
             {
                 for (SDL_GPUShader* Shader : {MeshVertexShader, MeshFragment, LineVertexShader, LineFragment})
@@ -419,9 +419,8 @@ namespace dbc::studio
                     for (std::size_t Index = 0; Index < Entry.Images.size(); ++Index)
                     {
                         ModelImage& Source = Entry.Mesh.Images[Index];
-                        SDL_Surface* Surface = SDL_CreateSurfaceFrom(Source.Width, Source.Height,
-                                                                     SDL_PIXELFORMAT_RGBA32, Source.Rgba.data(),
-                                                                     Source.Width * 4);
+                        SDL_Surface* Surface = SDL_CreateSurfaceFrom(
+                            Source.Width, Source.Height, SDL_PIXELFORMAT_RGBA32, Source.Rgba.data(), Source.Width * 4);
                         std::string Error;
                         if (Surface == nullptr || !core::UploadGpuImage(Gpu_, Surface, Entry.Images[Index], Error))
                             Errors_.push_back("Scene preview: cannot upload a model's embedded texture: " +
@@ -459,8 +458,8 @@ namespace dbc::studio
             Entry.Images.clear();
         }
 
-        bool SceneRenderer::RenderThumbnail(const std::filesystem::path& AssetRoot, const std::string& Model,
-                                            int Size, Rgb Backdrop, core::GpuImage& Out, std::string& Error)
+        bool SceneRenderer::RenderThumbnail(const std::filesystem::path& AssetRoot, const std::string& Model, int Size,
+                                            Rgb Backdrop, core::GpuImage& Out, std::string& Error)
         {
             Out = {};
             if (Target(Size, Size) == nullptr)
@@ -578,8 +577,8 @@ namespace dbc::studio
                                        1.0f);
             Shared.Camera = glm::vec4(View.Eye, 1.0f);
             if (Env.Fog)
-                Shared.Fog = glm::vec4(ColorOf(Env.FogColor.value_or(0x000000)),
-                                       Env.FogDistance.value_or(KDefaultFogDistance));
+                Shared.Fog =
+                    glm::vec4(ColorOf(Env.FogColor.value_or(0x000000)), Env.FogDistance.value_or(KDefaultFogDistance));
             int Count = 0;
             const auto AddLight = [&](int Type, const glm::vec3& Position, const glm::vec3& Direction, float Range,
                                       Rgb Color, float Inner, float Outer)
@@ -590,8 +589,8 @@ namespace dbc::studio
                 Shared.LightDirection[Count] = glm::vec4(Direction, Range);
                 Shared.LightColor[Count] = glm::vec4(ColorOf(Color), 1.0f);
                 // Spot angles are the full cones.
-                Shared.LightCone[Count] = glm::vec4(std::cos(glm::radians(Inner * 0.5f)),
-                                                    std::cos(glm::radians(Outer * 0.5f)), 0.0f, 0.0f);
+                Shared.LightCone[Count] =
+                    glm::vec4(std::cos(glm::radians(Inner * 0.5f)), std::cos(glm::radians(Outer * 0.5f)), 0.0f, 0.0f);
                 ++Count;
             };
             if (!Env.DefaultLightHidden)
@@ -750,16 +749,16 @@ namespace dbc::studio
                 if (Entry.Uploaded || Entry.Mesh.Vertices.empty())
                     continue;
                 Uint32 Capacity = 0;
-                Entry.Uploaded = Upload(Copy, Entry.Buffer, Capacity, Entry.Mesh.Vertices.data(),
-                                        static_cast<Uint32>(Entry.Mesh.Vertices.size() * sizeof(MeshVertex)),
-                                        Transfers);
+                Entry.Uploaded =
+                    Upload(Copy, Entry.Buffer, Capacity, Entry.Mesh.Vertices.data(),
+                           static_cast<Uint32>(Entry.Mesh.Vertices.size() * sizeof(MeshVertex)), Transfers);
             }
-            const bool HasLines = !Lines_.empty() &&
-                                  Upload(Copy, LineBuffer_, LineCapacity_, Lines_.data(),
-                                         static_cast<Uint32>(Lines_.size() * sizeof(LineVertex)), Transfers);
-            const bool HasShadows = !Shadows_.empty() &&
-                                    Upload(Copy, ShadowBuffer_, ShadowCapacity_, Shadows_.data(),
-                                           static_cast<Uint32>(Shadows_.size() * sizeof(LineVertex)), Transfers);
+            const bool HasLines =
+                !Lines_.empty() && Upload(Copy, LineBuffer_, LineCapacity_, Lines_.data(),
+                                          static_cast<Uint32>(Lines_.size() * sizeof(LineVertex)), Transfers);
+            const bool HasShadows =
+                !Shadows_.empty() && Upload(Copy, ShadowBuffer_, ShadowCapacity_, Shadows_.data(),
+                                            static_cast<Uint32>(Shadows_.size() * sizeof(LineVertex)), Transfers);
             SDL_EndGPUCopyPass(Copy);
             // Released now, freed once the copy has run.
             for (SDL_GPUTransferBuffer* Transfer : Transfers)
@@ -787,8 +786,9 @@ namespace dbc::studio
             {
                 if (!Item.Mesh->Uploaded)
                     continue;
-                SDL_GPUGraphicsPipeline* Pipeline =
-                    Item.Wireframe ? WirePipeline_ : Item.Blend ? BlendPipeline_ : MeshPipeline_;
+                SDL_GPUGraphicsPipeline* Pipeline = Item.Wireframe ? WirePipeline_
+                                                    : Item.Blend   ? BlendPipeline_
+                                                                   : MeshPipeline_;
                 if (Pipeline != Bound)
                 {
                     SDL_BindGPUGraphicsPipeline(Pass, Pipeline);

@@ -18,11 +18,13 @@ namespace
 {
     int Submissions = 0;
     int Cancellations = 0;
+
     bool SDLCALL Submit(SDL_GPUCommandBuffer*)
     {
         ++Submissions;
         return true;
     }
+
     bool SDLCALL Cancel(SDL_GPUCommandBuffer*)
     {
         ++Cancellations;
@@ -151,15 +153,18 @@ TEST_CASE("Two borrowed GPU views advance simulation once and finalize once")
     TransferInfo.size = 512;
     auto* Transfer = SDL_CreateGPUTransferBuffer(Device, &TransferInfo);
     REQUIRE(Transfer != nullptr);
+
     struct TransferCleanup
     {
         SDL_GPUDevice* Device;
         SDL_GPUTransferBuffer* Transfer;
+
         ~TransferCleanup()
         {
             SDL_ReleaseGPUTransferBuffer(Device, Transfer);
         }
     } Cleanup{Device, Transfer};
+
     auto* RawCommands = SDL_AcquireGPUCommandBuffer(Device);
     REQUIRE(RawCommands != nullptr);
     dbc::GpuCommandBuffer Commands(RawCommands);
@@ -235,7 +240,7 @@ TEST_CASE("Every DBPro camera draws its viewport and screen 2D stays in screen c
     REQUIRE_MESSAGE(Kernel.Draw().DrawBox(64, 4, 72, 10, &Error), Error);
 
     const std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> Frame(Kernel.Renderer().CaptureScreen(),
-                                                                             SDL_DestroySurface);
+                                                                            SDL_DestroySurface);
     REQUIRE(Frame != nullptr);
     const int Scale = Frame->w / 80;
     REQUIRE(Scale >= 1);
@@ -296,19 +301,24 @@ TEST_CASE("GPU initialization failure releases partial state and permits retry")
 {
     const char* Previous = SDL_GetHint(SDL_HINT_GPU_DRIVER);
     const std::optional<std::string> PreviousDriver = Previous ? std::optional<std::string>(Previous) : std::nullopt;
+
     struct HintCleanup
     {
         std::optional<std::string> Driver;
+
         void Restore() const
         {
             SDL_SetHintWithPriority(SDL_HINT_GPU_DRIVER, Driver ? Driver->c_str() : nullptr, SDL_HINT_OVERRIDE);
         }
+
         ~HintCleanup()
         {
             Restore();
         }
     } Hint{PreviousDriver};
+
     REQUIRE(SDL_InitSubSystem(SDL_INIT_VIDEO));
+
     struct VideoCleanup
     {
         ~VideoCleanup()
@@ -316,6 +326,7 @@ TEST_CASE("GPU initialization failure releases partial state and permits retry")
             SDL_QuitSubSystem(SDL_INIT_VIDEO);
         }
     } Video;
+
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("initialization", 80, 60));
     REQUIRE(SDL_SetHintWithPriority(SDL_HINT_GPU_DRIVER, "opendbc-missing-driver", SDL_HINT_OVERRIDE));

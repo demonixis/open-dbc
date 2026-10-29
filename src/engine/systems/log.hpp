@@ -31,6 +31,7 @@ namespace dbc::log
         {
           public:
             explicit RingBufferSink(DebugSystem* Debug) : Debug_(Debug) {}
+
             DebugSystem* Target() const
             {
                 return Debug_;
@@ -38,6 +39,7 @@ namespace dbc::log
 
           protected:
             void sink_it_(const spdlog::details::log_msg& Msg) override;
+
             void flush_() override {}
 
           private:

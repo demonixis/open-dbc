@@ -143,6 +143,7 @@ namespace dbc
     {
         return *Vr_;
     }
+
     const VrSystem& EngineKernel::Vr() const
     {
         return *Vr_;

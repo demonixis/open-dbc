@@ -15,8 +15,8 @@ namespace dbc::studio
         namespace
         {
             constexpr std::array<scene::NodeKind, 7> KPrimitives = {
-                scene::NodeKind::Cube,     scene::NodeKind::Box,   scene::NodeKind::Sphere,  scene::NodeKind::Cylinder,
-                scene::NodeKind::Cone,     scene::NodeKind::Plain, scene::NodeKind::Triangle};
+                scene::NodeKind::Cube, scene::NodeKind::Box,   scene::NodeKind::Sphere,  scene::NodeKind::Cylinder,
+                scene::NodeKind::Cone, scene::NodeKind::Plain, scene::NodeKind::Triangle};
 
             // Menus list at most this many asset files; the Assets panel shows the rest.
             constexpr std::size_t KMenuAssetLimit = 40;
@@ -277,8 +277,8 @@ namespace dbc::studio
 
         bool SceneEditor::IsSelected(const scene::SceneNode& Node) const
         {
-            return std::find(Selection_.begin(), Selection_.end(),
-                             Selection{scene::IdSpaceOf(Node.Kind), Node.Id}) != Selection_.end();
+            return std::find(Selection_.begin(), Selection_.end(), Selection{scene::IdSpaceOf(Node.Kind), Node.Id}) !=
+                   Selection_.end();
         }
 
         void SceneEditor::Select(const scene::SceneNode* Node)
@@ -302,8 +302,8 @@ namespace dbc::studio
 
         void SceneEditor::PruneSelection()
         {
-            std::erase_if(Selection_, [&](const Selection& Entry)
-                          { return Document_.Find(Entry.Space, Entry.Id) == nullptr; });
+            std::erase_if(Selection_,
+                          [&](const Selection& Entry) { return Document_.Find(Entry.Space, Entry.Id) == nullptr; });
         }
 
         void SceneEditor::Commit()
@@ -540,8 +540,8 @@ namespace dbc::studio
                 for (const scene::SceneNode& Node : Document_.Nodes)
                     Selection_.push_back(Selection{scene::IdSpaceOf(Node.Kind), Node.Id});
             }
-            else if (!Command && (ImGui::IsKeyPressed(ImGuiKey_Delete, false) ||
-                                  ImGui::IsKeyPressed(ImGuiKey_Backspace, false)))
+            else if (!Command &&
+                     (ImGui::IsKeyPressed(ImGuiKey_Delete, false) || ImGui::IsKeyPressed(ImGuiKey_Backspace, false)))
                 DeleteSelected();
         }
 
@@ -660,9 +660,9 @@ namespace dbc::studio
             }
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsAnyItemHovered())
                 Select(nullptr);
-            if (Editable() && ImGui::BeginPopupContextWindow("##hierarchy-context",
-                                                             ImGuiPopupFlags_MouseButtonRight |
-                                                                 ImGuiPopupFlags_NoOpenOverItems))
+            if (Editable() &&
+                ImGui::BeginPopupContextWindow("##hierarchy-context",
+                                               ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
             {
                 DrawCreateItems();
                 ImGui::EndPopup();

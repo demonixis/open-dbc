@@ -16,18 +16,22 @@ namespace dbc
     {
         return K.ImageStoreRef().LoadImageFile(Path, ImageId, 0, 0, Error);
     }
+
     inline bool DeleteImage(EngineKernel& K, int ImageId, std::string* Error = nullptr)
     {
         return K.ImageStoreRef().DeleteImage(ImageId, Error);
     }
+
     inline int ImageExist(EngineKernel& K, int ImageId)
     {
         return K.ImageStoreRef().ImageExist(ImageId);
     }
+
     inline bool PasteImage(EngineKernel& K, int ImageId, int X, int Y, std::string* Error = nullptr)
     {
         return K.ImageStoreRef().PasteImage(ImageId, X, Y, false, Error);
     }
+
     inline bool GetImage(EngineKernel& K, int ImageId, int Left, int Top, int Right, int Bottom,
                          std::string* Error = nullptr)
     {
@@ -130,23 +134,28 @@ namespace dbc
     {
         return K.Sprites().CloneSprite(Id, DestinationId, Error);
     }
+
     inline bool CreateAnimatedSprite(EngineKernel& K, int Id, const std::string& Path, int Across, int Down,
                                      int ImageId, std::string* Error = nullptr)
     {
         return K.Sprites().CreateAnimatedSprite(Id, Path, Across, Down, ImageId, Error);
     }
+
     inline bool PlaySprite(EngineKernel& K, int Id, int Start, int End, int Delay, std::string* Error = nullptr)
     {
         return K.Sprites().PlaySprite(Id, Start, End, Delay, Error);
     }
+
     inline bool SetSpriteFrame(EngineKernel& K, int Id, int Frame, std::string* Error = nullptr)
     {
         return K.Sprites().SetSpriteFrame(Id, Frame, Error);
     }
+
     inline bool SetSpriteImage(EngineKernel& K, int Id, int ImageId, std::string* Error = nullptr)
     {
         return K.Sprites().SetSpriteImage(Id, ImageId, Error);
     }
+
     inline bool SetSpriteTextureCoord(EngineKernel& K, int Id, int Vertex, float U, float V,
                                       std::string* Error = nullptr)
     {

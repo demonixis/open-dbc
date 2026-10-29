@@ -45,6 +45,7 @@ namespace dbc::studio
             std::string Sha1;
             std::string Name;
         };
+
         // Parses `security find-identity -v -p codesigning`.
         std::vector<SigningIdentity> ParseSigningIdentities(std::string_view Output);
         // The valid code signing identities of the user's keychains; empty outside macOS.

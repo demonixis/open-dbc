@@ -20,24 +20,28 @@ namespace dbc
             return false;
         return true;
     }
+
     inline bool XrotateCamera(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().XrotateCamera(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool YrotateCamera(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().YrotateCamera(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool ZrotateCamera(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().ZrotateCamera(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool RotateCamera(EngineKernel& K, float XDegrees, float YDegrees, float ZDegrees,
                              std::string* Error = nullptr)
     {
@@ -45,100 +49,119 @@ namespace dbc
             return false;
         return true;
     }
+
     inline bool PointCamera(EngineKernel& K, float X, float Y, float Z, std::string* Error = nullptr)
     {
         if (!K.Camera().PointCamera(X, Y, Z, Error))
             return false;
         return true;
     }
+
     inline bool SetCameraFov(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().SetCameraFov(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool SetCameraRange(EngineKernel& K, float NearPlane, float FarPlane, std::string* Error = nullptr)
     {
         if (!K.Camera().SetCameraRange(NearPlane, FarPlane, Error))
             return false;
         return true;
     }
+
     inline bool SetCameraAspect(EngineKernel& K, float Aspect, std::string* Error = nullptr)
     {
         if (!K.Camera().SetCameraAspect(Aspect, Error))
             return false;
         return true;
     }
+
     inline bool MoveCamera(EngineKernel& K, float Step, std::string* Error = nullptr)
     {
         if (!K.Camera().MoveCamera(Step, Error))
             return false;
         return true;
     }
+
     inline void MoveCameraUp(EngineKernel& K, float Step)
     {
         K.Camera().MoveCameraUp(Step);
     }
+
     inline void MoveCameraDown(EngineKernel& K, float Step)
     {
         K.Camera().MoveCameraDown(Step);
     }
+
     inline bool TurnCameraLeft(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().TurnCameraLeft(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool TurnCameraRight(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().TurnCameraRight(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool PitchCameraUp(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().PitchCameraUp(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool PitchCameraDown(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().PitchCameraDown(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool RollCameraLeft(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().RollCameraLeft(Degrees, Error))
             return false;
         return true;
     }
+
     inline bool RollCameraRight(EngineKernel& K, float Degrees, std::string* Error = nullptr)
     {
         if (!K.Camera().RollCameraRight(Degrees, Error))
             return false;
         return true;
     }
+
     inline float CameraPositionX(EngineKernel& K)
     {
         return K.Camera().PositionX();
     }
+
     inline float CameraPositionY(EngineKernel& K)
     {
         return K.Camera().PositionY();
     }
+
     inline float CameraPositionZ(EngineKernel& K)
     {
         return K.Camera().PositionZ();
     }
+
     inline float CameraAngleX(EngineKernel& K)
     {
         return K.Camera().AngleX();
     }
+
     inline float CameraAngleY(EngineKernel& K)
     {
         return K.Camera().AngleY();
     }
+
     inline float CameraAngleZ(EngineKernel& K)
     {
         return K.Camera().AngleZ();
@@ -165,12 +188,14 @@ namespace dbc
             return false;
         return true;
     }
+
     inline bool SetCameraRotationZyx(EngineKernel& K, std::string* Error = nullptr)
     {
         if (!K.Camera().SetRotationZyx(Error))
             return false;
         return true;
     }
+
     inline bool SetCameraToObjectOrientation(EngineKernel& K, int ObjectId, std::string* Error = nullptr)
     {
         if (!K.Camera().SetCameraToObjectOrientation(ObjectId, Error))

@@ -92,6 +92,7 @@ namespace dbc
         // --- Draw order ---
         void SetDrawToFront();
         void SetDrawToBack();
+
         bool IsDrawToFront() const
         {
             return DrawToFront_;

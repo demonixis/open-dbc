@@ -57,10 +57,10 @@ namespace
     {
         // An ELF header followed by one PT_LOAD program header with the given alignment.
         std::string Header(64 + 56, '\0');
-        Header[32] = 64;  // e_phoff
-        Header[54] = 56;  // e_phentsize
-        Header[56] = 1;   // e_phnum
-        Header[64] = 1;   // PT_LOAD
+        Header[32] = 64; // e_phoff
+        Header[54] = 56; // e_phentsize
+        Header[56] = 1;  // e_phnum
+        Header[64] = 1;  // PT_LOAD
         for (int Index = 0; Index < 8; ++Index)
             Header[64 + 48 + Index] = static_cast<char>((Alignment >> (8 * Index)) & 0xff);
         Header[0] = static_cast<char>(0x7f);
@@ -282,7 +282,8 @@ TEST_CASE("desktop artifact export ships the runner, the program image and asset
     CHECK(Manifest.find("media/music.mp3") != std::string::npos);
 
     const fs::path DataRoot = Directory.Root / "data";
-    const dbc::interpreter::EmbeddedArtifactResult Embedded = dbc::interpreter::FindEmbeddedArtifact(Resources, DataRoot);
+    const dbc::interpreter::EmbeddedArtifactResult Embedded =
+        dbc::interpreter::FindEmbeddedArtifact(Resources, DataRoot);
     INFO(Embedded.Error);
     REQUIRE(Embedded.Artifact.has_value());
     CHECK(Embedded.Artifact->ProgramPath.parent_path() == Embedded.Artifact->AssetRoot);
@@ -356,7 +357,8 @@ TEST_CASE("Windows and Linux exports stage a folder around the renamed runner")
 TEST_CASE("Windows signing names the certificate by thumbprint and timestamps with SHA-256")
 {
     toolchain::ExportToolchain Toolchain;
-    Toolchain.WindowsCertificate = "\xe2\x80\x8e" "0a 1b 2c 3d 4e 5f 6a 7b 8c 9d 0a 1b 2c 3d 4e 5f 6a 7b 8c 9d";
+    Toolchain.WindowsCertificate = "\xe2\x80\x8e"
+                                   "0a 1b 2c 3d 4e 5f 6a 7b 8c 9d 0a 1b 2c 3d 4e 5f 6a 7b 8c 9d";
     Toolchain.WindowsTimestampUrl = "http://timestamp.example";
     CHECK(toolchain::internal::WindowsSignArguments("signtool.exe", Toolchain, "Game.exe") ==
           std::vector<std::string>{"signtool.exe", "sign", "/fd", "SHA256", "/td", "SHA256", "/tr",
@@ -489,9 +491,9 @@ TEST_CASE("Studio and CLI export requests start from opendbc-runner with the pro
     core::ProjectSettings Explicit;
     Explicit.AppName = "Settings Name";
     Explicit.VersionName = "3.0.0";
-    const toolchain::ArtifactExportRequest Configured = toolchain::MakeArtifactExportRequest(
-        Project, Explicit, toolchain::ArtifactTarget::AndroidApk, "/exports", false, toolchain::ExportToolchain{},
-        toolchain::ExportSecrets{});
+    const toolchain::ArtifactExportRequest Configured =
+        toolchain::MakeArtifactExportRequest(Project, Explicit, toolchain::ArtifactTarget::AndroidApk, "/exports",
+                                             false, toolchain::ExportToolchain{}, toolchain::ExportSecrets{});
     CHECK(Configured.Settings.AppName == "Settings Name");
     CHECK(Configured.Settings.VersionName == "3.0.0");
     CHECK_FALSE(Configured.Sign);
@@ -1066,7 +1068,8 @@ TEST_CASE("artifact host shader validation rejects missing or changed shaders")
                   fs::copy_options::overwrite_existing);
     Write(Host / "vr_transfer.frag.spv", "changed");
     CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
-    fs::copy_file(Product / "vr_transfer.frag.spv", Host / "vr_transfer.frag.spv", fs::copy_options::overwrite_existing);
+    fs::copy_file(Product / "vr_transfer.frag.spv", Host / "vr_transfer.frag.spv",
+                  fs::copy_options::overwrite_existing);
     Write(Host / "dbclassic_tri.frag.spv", "changed");
     CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
 }

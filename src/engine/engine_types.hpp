@@ -522,6 +522,7 @@ namespace dbc
         float ShadowRange = 2000.0f;
         bool ShadowVolume = false;
         bool ShadowOverlay = false;
+
         bool operator==(const SurfaceStyle& Other) const
         {
             return Wireframe == Other.Wireframe && Fog == Other.Fog && BlackFog == Other.BlackFog &&
@@ -645,12 +646,14 @@ namespace dbc
         float PointLights[24][4]{};
         float SpotLights[18][4]{};
     };
+
     static_assert(sizeof(GpuFragmentUniforms) == 768, "UBO size mismatch");
 
     struct GpuTextureStageUniforms
     {
         int32_t Stages[8][4]{};
     };
+
     static_assert(sizeof(GpuTextureStageUniforms) == 128, "texture-stage UBO size mismatch");
 
 } // namespace dbc

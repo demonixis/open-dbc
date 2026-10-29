@@ -100,8 +100,8 @@ namespace dbc::studio
             }
 
             // Writes one VERSIONINFO node: its header and key; Body writes the value and the children.
-            template <typename Writer> void Node(std::u16string_view Key, std::uint16_t ValueLength, bool IsText,
-                                                 Writer&& Body)
+            template <typename Writer>
+            void Node(std::u16string_view Key, std::uint16_t ValueLength, bool IsText, Writer&& Body)
             {
                 Align();
                 const std::size_t Start = Bytes.size();
@@ -263,8 +263,8 @@ namespace dbc::studio
             const WORD Language = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
             bool Updated = true;
             for (const WORD Id : OldIcons)
-                Updated = Updated && UpdateResourceW(Update, MAKEINTRESOURCEW(3), MAKEINTRESOURCEW(Id), Language,
-                                                     nullptr, 0);
+                Updated =
+                    Updated && UpdateResourceW(Update, MAKEINTRESOURCEW(3), MAKEINTRESOURCEW(Id), Language, nullptr, 0);
             WORD Id = FirstIconId;
             for (const WindowsIconImage& Image : Icons)
             {

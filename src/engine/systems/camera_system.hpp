@@ -20,10 +20,12 @@ namespace dbc
         bool DeleteCamera(int CameraId, std::string* Error = nullptr);
         bool SetCurrentCamera(int CameraId, std::string* Error = nullptr);
         int CameraExist(int CameraId) const;
+
         int CurrentCameraId() const
         {
             return CurrentCameraId_;
         }
+
         // Every camera draws to the screen at SYNC, camera zero first and the others by number.
         [[nodiscard]] std::vector<int> ScreenCameraIds() const;
         // Lets the renderer read an existing camera through the current-camera accessors without
@@ -42,10 +44,12 @@ namespace dbc
 
         void SetAutoCamOn();
         void SetAutoCamOff();
+
         bool AutoCamEnabled() const
         {
             return AutoCamEnabled_;
         }
+
         void AutoPosition(float X, float Y, float Z, float Radius);
 
         // Position
@@ -124,35 +128,43 @@ namespace dbc
         bool SetCameraView(int CameraId, int Left, int Top, int Right, int Bottom, std::string* Error = nullptr);
         bool ClearCameraView(int Color, std::string* Error = nullptr);
         bool ClearCameraView(int CameraId, int Color, std::string* Error = nullptr);
+
         bool ClearRequested() const
         {
             return Current().ClearRequested;
         }
+
         int ClearColor() const
         {
             return Current().ClearColor;
         }
+
         void ConsumeClearRequests()
         {
             for (auto& [Id, Camera] : Cameras_)
                 Camera.ClearRequested = false;
         }
+
         bool HasCameraView() const
         {
             return Current().HasView;
         }
+
         int ViewLeft() const
         {
             return Current().ViewLeft;
         }
+
         int ViewTop() const
         {
             return Current().ViewTop;
         }
+
         int ViewRight() const
         {
             return Current().ViewRight;
         }
+
         int ViewBottom() const
         {
             return Current().ViewBottom;
@@ -163,6 +175,7 @@ namespace dbc
         bool SetRotationXyz(int CameraId, std::string* Error = nullptr);
         bool SetRotationZyx(std::string* Error = nullptr);
         bool SetRotationZyx(int CameraId, std::string* Error = nullptr);
+
         [[nodiscard]] bool IsZyxRotation() const
         {
             return Current().UseZyxRotation;
@@ -178,6 +191,7 @@ namespace dbc
         {
             return Current().Dirty;
         }
+
         void ClearDirty()
         {
             Current().Dirty = false;

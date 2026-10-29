@@ -211,10 +211,10 @@ namespace dbc::studio
                     const glm::mat4 World = scene::NodeWorld(*Node);
                     for (int Index = 0; Index < 8; ++Index)
                     {
-                        const glm::vec3 Corner = glm::vec3(World * glm::vec4((Index & 1) ? Mesh->Max.x : Mesh->Min.x,
-                                                                             (Index & 2) ? Mesh->Max.y : Mesh->Min.y,
-                                                                             (Index & 4) ? Mesh->Max.z : Mesh->Min.z,
-                                                                             1.0f));
+                        const glm::vec3 Corner =
+                            glm::vec3(World * glm::vec4((Index & 1) ? Mesh->Max.x : Mesh->Min.x,
+                                                        (Index & 2) ? Mesh->Max.y : Mesh->Min.y,
+                                                        (Index & 4) ? Mesh->Max.z : Mesh->Min.z, 1.0f));
                         Min = glm::min(Min, Corner);
                         Max = glm::max(Max, Corner);
                     }
@@ -338,8 +338,8 @@ namespace dbc::studio
                     const float R = KIconRadius;
                     Draw->AddRectFilled(ImVec2(At.x - R, At.y - R * 0.4f), ImVec2(At.x - R * 0.35f, At.y + R * 0.4f),
                                         Fill);
-                    Draw->AddTriangleFilled(ImVec2(At.x - R * 0.35f, At.y - R * 0.4f), ImVec2(At.x + R * 0.3f, At.y - R),
-                                            ImVec2(At.x + R * 0.3f, At.y + R), Fill);
+                    Draw->AddTriangleFilled(ImVec2(At.x - R * 0.35f, At.y - R * 0.4f),
+                                            ImVec2(At.x + R * 0.3f, At.y - R), ImVec2(At.x + R * 0.3f, At.y + R), Fill);
                     for (const float Wave : {0.6f, 1.1f})
                     {
                         Draw->PathArcTo(ImVec2(At.x + R * 0.3f, At.y), R * Wave, -0.9f, 0.9f);
@@ -429,8 +429,8 @@ namespace dbc::studio
                 const ImGuizmo::OPERATION Operation = Tool_ == Tool::Rotate  ? ImGuizmo::ROTATE
                                                       : Tool_ == Tool::Scale ? ImGuizmo::SCALE
                                                                              : ImGuizmo::TRANSLATE;
-                DrawGroupGizmo(Operation, LocalGizmo_ || Operation == ImGuizmo::SCALE ? ImGuizmo::LOCAL
-                                                                                       : ImGuizmo::WORLD);
+                DrawGroupGizmo(Operation,
+                               LocalGizmo_ || Operation == ImGuizmo::SCALE ? ImGuizmo::LOCAL : ImGuizmo::WORLD);
                 return;
             }
             scene::SceneNode* Node = CameraSelected_ ? nullptr : Selected();
@@ -456,8 +456,7 @@ namespace dbc::studio
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
             ImGuizmo::SetRect(ViewportMin_.x, ViewportMin_.y, ViewportSize_.x, ViewportSize_.y);
-            const ImGuizmo::MODE Mode =
-                LocalGizmo_ || Operation == ImGuizmo::SCALE ? ImGuizmo::LOCAL : ImGuizmo::WORLD;
+            const ImGuizmo::MODE Mode = LocalGizmo_ || Operation == ImGuizmo::SCALE ? ImGuizmo::LOCAL : ImGuizmo::WORLD;
             // ImGuizmo snaps turns and local moves by steps from where the drag began;
             // world moves and scales are snapped below to whole multiples instead.
             const bool LocalMove = Operation == ImGuizmo::TRANSLATE && Mode == ImGuizmo::LOCAL;
@@ -523,8 +522,8 @@ namespace dbc::studio
                 for (const scene::SceneNode* Node : Nodes)
                     Pivot += Node->Position / static_cast<float>(Nodes.size());
                 const scene::SceneNode& Active = *Nodes.back();
-                const bool Turns = scene::IdSpaceOf(Active.Kind) == scene::IdSpace::Object ||
-                                   Active.Kind == scene::NodeKind::Light;
+                const bool Turns =
+                    scene::IdSpaceOf(Active.Kind) == scene::IdSpace::Object || Active.Kind == scene::NodeKind::Light;
                 GroupGizmo_ = glm::translate(glm::mat4(1.0f), Pivot);
                 if (Mode == ImGuizmo::LOCAL && Turns)
                     GroupGizmo_ *= glm::mat4(scene::RotationMatrix(Active.Rotation));
@@ -695,10 +694,9 @@ namespace dbc::studio
             ViewportMin_ = Start;
             ViewportSize_ = ImVec2(std::max(Available.x, 1.0f), std::max(Available.y, 1.0f));
             const ImVec2 Scale = ImGui::GetIO().DisplayFramebufferScale;
-            SDL_GPUTexture* Texture =
-                RendererReady_ ? Renderer_.Target(static_cast<int>(ViewportSize_.x * Scale.x),
-                                                  static_cast<int>(ViewportSize_.y * Scale.y))
-                               : nullptr;
+            SDL_GPUTexture* Texture = RendererReady_ ? Renderer_.Target(static_cast<int>(ViewportSize_.x * Scale.x),
+                                                                        static_cast<int>(ViewportSize_.y * Scale.y))
+                                                     : nullptr;
             View_ = ComputeView(ViewportSize_.x / ViewportSize_.y);
             if (Texture == nullptr)
             {

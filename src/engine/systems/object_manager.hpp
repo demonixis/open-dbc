@@ -56,6 +56,7 @@ namespace dbc
 
         [[nodiscard]] ParticleEmitter* GetParticles(int ParticleId);
         [[nodiscard]] const ParticleEmitter* GetParticles(int ParticleId) const;
+
         template <typename Fn> void ForEachParticles(Fn&& FnValue)
         {
             for (auto& [Id, Particles] : Particles_)
@@ -67,6 +68,7 @@ namespace dbc
             for (const auto& [Id, Particles] : Particles_)
                 FnValue(Id, Particles);
         }
+
         void UpdateParticles();
 
         // Collision subsystem (transitional mutable access)

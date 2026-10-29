@@ -15,8 +15,7 @@ namespace dbc::interpreter::detail
     inline ExecutionDiagnostic InputDiagnostic(std::string Code, std::string Message,
                                                const std::filesystem::path& Path = {})
     {
-        return {DiagnosticStage::Input, language::DiagnosticSeverity::Error, std::move(Code), std::move(Message),
-                Path};
+        return {DiagnosticStage::Input, language::DiagnosticSeverity::Error, std::move(Code), std::move(Message), Path};
     }
 
     inline ExecutionDiagnostic ConvertDiagnostic(const language::Diagnostic& Value, DiagnosticStage Stage)

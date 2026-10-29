@@ -49,6 +49,7 @@ namespace dbc
     struct VrSystem::Impl
     {
         explicit Impl(EngineKernel& Value) : Kernel(Value), Presenter(Value) {}
+
         EngineKernel& Kernel;
         VrPresenter Presenter;
         VrTracking Tracking;
@@ -75,6 +76,7 @@ namespace dbc
             decltype(&SDL_CreateGPUXRSwapchain) CreateSwapchain = SDL_CreateGPUXRSwapchain;
             decltype(&SDL_DestroyGPUXRSwapchain) DestroySwapchain = SDL_DestroyGPUXRSwapchain;
         } Calls;
+
         XrInstance Instance = XR_NULL_HANDLE;
         XrSystemId System = XR_NULL_SYSTEM_ID;
         XrSession Session = XR_NULL_HANDLE;

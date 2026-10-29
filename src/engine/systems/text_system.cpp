@@ -751,18 +751,22 @@ namespace dbc
     {
         return TtfInitialized_;
     }
+
     bool& TextSystem::FontResolverScanned()
     {
         return FontResolverScanned_;
     }
+
     TTF_Font*& TextSystem::ActiveTextFont()
     {
         return ActiveTextFont_;
     }
+
     BasicTextState& TextSystem::State()
     {
         return State_;
     }
+
     const BasicTextState& TextSystem::State() const
     {
         return State_;
@@ -802,10 +806,12 @@ namespace dbc
     {
         DebugTextLines_.clear();
     }
+
     void TextSystem::ClearOverlayTextLines()
     {
         OverlayTextLines_.clear();
     }
+
     size_t TextSystem::OverlayTextLineCount() const
     {
         return OverlayTextLines_.size();
@@ -815,10 +821,12 @@ namespace dbc
     {
         return InkForeColor_;
     }
+
     bool& TextSystem::ClsRequested()
     {
         return ClsRequested_;
     }
+
     int& TextSystem::ClsColor()
     {
         return ClsColor_;

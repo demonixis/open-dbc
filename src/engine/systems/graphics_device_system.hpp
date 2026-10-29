@@ -60,6 +60,7 @@ namespace dbc
         [[nodiscard]] bool ApplyFinalColorScale(float Red, float Green, float Blue);
         [[nodiscard]] bool EnsureGpuVertexCapacity(Uint32 VertexCount);
         void DestroyGpuBackend();
+
         SDL_GPUTextureFormat GpuColorFormat() const
         {
             return GpuColorFormat_;
@@ -104,36 +105,44 @@ namespace dbc
         [[nodiscard]] SDL_GPUGraphicsPipeline* SurfacePipeline(bool Transparent, bool AlphaDepthWrite, bool Additive,
                                                                bool Wireframe, bool DepthTest, bool DepthWrite,
                                                                bool StencilTest = false) const;
+
         // Opaque, back-face culled pipeline for static world-space terrain buffers.
         [[nodiscard]] SDL_GPUGraphicsPipeline* TerrainPipeline(bool Wireframe) const
         {
             return GpuTerrainPipelines_[Wireframe ? 1 : 0];
         }
+
         // Depth-only variant for the shadow depth pass.
         [[nodiscard]] SDL_GPUGraphicsPipeline* TerrainDepthPipeline() const
         {
             return GpuTerrainPipelines_[2];
         }
+
         [[nodiscard]] SDL_GPUGraphicsPipeline* ReflectionMaskPipeline() const
         {
             return GpuReflectionMaskPipeline_;
         }
+
         [[nodiscard]] SDL_GPUGraphicsPipeline* ShadowDepthPipeline() const
         {
             return GpuShadowDepthPipeline_;
         }
+
         [[nodiscard]] SDL_GPUGraphicsPipeline* ShadowVolumePipeline() const
         {
             return GpuShadowVolumePipeline_;
         }
+
         [[nodiscard]] SDL_GPUGraphicsPipeline* ShadowOverlayPipeline() const
         {
             return GpuShadowOverlayPipeline_;
         }
+
         [[nodiscard]] bool SupportsStencil() const
         {
             return GpuStencilSupported_;
         }
+
         [[nodiscard]] bool EnsureStencilPipelines();
         [[nodiscard]] SDL_GPUSampler* SurfaceSampler(int AddressMode, bool Filter, int MipMode) const;
 
@@ -160,26 +169,32 @@ namespace dbc
         SDL_GPUBuffer*& GpuVertexBuffer();
         SDL_GPUTransferBuffer*& GpuTransferBuffer();
         SDL_GPUTexture*& GpuDepthTexture(int Index = 0);
+
         [[nodiscard]] SDL_GPUTexture* GpuCaptureTexture() const
         {
             return GpuCaptureTexture_;
         }
+
         [[nodiscard]] SDL_GPUTexture* GpuFinalColorTexture() const
         {
             return GpuFinalColorTexture_;
         }
+
         [[nodiscard]] Uint32 GpuCaptureWidth() const
         {
             return GpuCaptureWidth_;
         }
+
         [[nodiscard]] Uint32 GpuCaptureHeight() const
         {
             return GpuCaptureHeight_;
         }
+
         [[nodiscard]] SDL_GPUTextureFormat GpuCaptureFormat() const
         {
             return GpuCaptureFormat_;
         }
+
         SDL_GPUTextureFormat& GpuDepthFormat();
         Uint32& GpuDepthWidth(int Index = 0);
         Uint32& GpuDepthHeight(int Index = 0);
@@ -190,6 +205,7 @@ namespace dbc
 
       private:
         friend class VrPresenter;
+
         struct EffectParameter
         {
             std::string Name;

@@ -18,9 +18,9 @@ namespace
     {
         TemporaryLocation()
         {
-            Root = std::filesystem::temp_directory_path() /
-                   ("opendbc-new-project-" +
-                    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+            Root =
+                std::filesystem::temp_directory_path() /
+                ("opendbc-new-project-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
             std::filesystem::create_directories(Root);
         }
 
@@ -60,8 +60,8 @@ TEST_CASE("project names must be valid folder names on every desktop host")
     CHECK(core::ValidateProjectName("My Game 2").empty());
     CHECK(core::ValidateProjectName("Space.Invaders").empty());
     CHECK(core::ValidateProjectName("Console").empty());
-    for (const char* Name : {"", " Game", "Game ", "Game.", ".", "..", "a/b", "a\\b", "Say \"hi\"", "a:b", "a*b",
-                             "con", "NUL.txt", "com1", "LPT9"})
+    for (const char* Name : {"", " Game", "Game ", "Game.", ".", "..", "a/b", "a\\b", "Say \"hi\"", "a:b", "a*b", "con",
+                             "NUL.txt", "com1", "LPT9"})
         CHECK_MESSAGE(!core::ValidateProjectName(Name).empty(), Name);
     CHECK(!core::ValidateProjectName(std::string(65, 'a')).empty());
 }
@@ -81,8 +81,8 @@ TEST_CASE("project templates compile under both profiles")
 TEST_CASE("a new DBC project resolves through its project configuration")
 {
     TemporaryLocation Location;
-    const core::NewProjectResult Created = core::CreateProject(
-        {Location.Root, "Classic Game", LanguageProfile::Dbc, core::ProjectTemplate::BasicScene});
+    const core::NewProjectResult Created =
+        core::CreateProject({Location.Root, "Classic Game", LanguageProfile::Dbc, core::ProjectTemplate::BasicScene});
     REQUIRE_MESSAGE(Created, Created.Error);
     CHECK(Created.Root == Location.Root / "Classic Game");
     CHECK(Created.MainSource == Created.Root / "main.dba");

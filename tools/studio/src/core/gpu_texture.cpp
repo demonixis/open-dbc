@@ -126,9 +126,9 @@ namespace dbc::studio
             if (MaxSize > 0 && (Loaded->w > MaxSize || Loaded->h > MaxSize))
             {
                 const float Scale = static_cast<float>(MaxSize) / static_cast<float>(std::max(Loaded->w, Loaded->h));
-                SDL_Surface* Small = SDL_ScaleSurface(Loaded, std::max(1, static_cast<int>(Loaded->w * Scale)),
-                                                      std::max(1, static_cast<int>(Loaded->h * Scale)),
-                                                      SDL_SCALEMODE_LINEAR);
+                SDL_Surface* Small =
+                    SDL_ScaleSurface(Loaded, std::max(1, static_cast<int>(Loaded->w * Scale)),
+                                     std::max(1, static_cast<int>(Loaded->h * Scale)), SDL_SCALEMODE_LINEAR);
                 if (Small != nullptr)
                 {
                     SDL_DestroySurface(Loaded);

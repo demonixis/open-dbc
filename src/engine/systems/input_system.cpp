@@ -1482,10 +1482,12 @@ namespace dbc
     {
         return JoystickAxis(0);
     }
+
     int InputSystem::ControlDeviceY()
     {
         return JoystickAxis(1);
     }
+
     int InputSystem::ControlDeviceZ()
     {
         return JoystickAxis(2);

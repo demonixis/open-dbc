@@ -164,8 +164,7 @@ namespace dbc
         CallContext Context{Kernel_.Memblocks(), {}};
         const OpenDbcHost Host{OPENDBC_PLUGIN_ABI_VERSION, &Context, &ResolveAddress, &ReportFailure};
         OpenDbcValue Returned{};
-        const std::int32_t Status =
-            Entry(Raw.data(), static_cast<std::int32_t>(Raw.size()), &Returned, &Host);
+        const std::int32_t Status = Entry(Raw.data(), static_cast<std::int32_t>(Raw.size()), &Returned, &Host);
         if (Status != 0)
             return Fail(Error, "CALL DLL '" + Function + "' failed" +
                                    (Context.Failure.empty() ? " with status " + std::to_string(Status)

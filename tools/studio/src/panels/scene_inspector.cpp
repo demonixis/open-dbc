@@ -193,8 +193,8 @@ namespace dbc::studio
                 ImGui::EndDisabled();
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                     ImGui::SetTooltip("%s", Available ? "MAKE STATIC OBJECT, then DELETE OBJECT: fixed scenery for the "
-                                                       "static collision commands; its number is free at run time"
-                                                     : "MAKE STATIC OBJECT is not implemented in the Pro profile");
+                                                        "static collision commands; its number is free at run time"
+                                                      : "MAKE STATIC OBJECT is not implemented in the Pro profile");
             }
 
             Heading("Transform");
@@ -615,8 +615,8 @@ namespace dbc::studio
                 DrawCameraSettings();
 
                 Heading("Numbers");
-                static const char* const Labels[] = {"First object", "First image", "First matrix", "First terrain",
-                                                     "First light",  "First sound"};
+                static const char* const Labels[] = {"First object",  "First image", "First matrix",
+                                                     "First terrain", "First light", "First sound"};
                 for (std::size_t Space = 0; Space < scene::KIdSpaceCount; ++Space)
                 {
                     int Base = Document_.IdBase[Space];

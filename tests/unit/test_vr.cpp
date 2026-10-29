@@ -30,6 +30,7 @@ namespace dbc
         }
     };
 } // namespace dbc
+
 namespace
 {
     using namespace dbc;
@@ -55,6 +56,7 @@ namespace
             return static_cast<T>(Value);
     }
     template <typename T> struct Succeed;
+
     template <typename... Args> struct Succeed<XrResult(XRAPI_PTR*)(Args...)>
     {
         static XrResult XRAPI_CALL Call(Args...)
@@ -297,11 +299,13 @@ namespace
                 return XR_SUCCESS;
             };
         }
+
         ~FakeXr()
         {
             Kernel.Shutdown();
             Active = nullptr;
         }
+
         void Enable(bool Gpu = false)
         {
             if (Gpu)
@@ -673,9 +677,11 @@ TEST_CASE("Missing XR loader recreates the ordinary device before graphics resou
 {
     const char* Hint = SDL_GetHint(SDL_HINT_OPENXR_LIBRARY);
     const std::optional<std::string> Previous = Hint ? std::optional<std::string>(Hint) : std::nullopt;
+
     struct HintScope
     {
         const std::optional<std::string>& Previous;
+
         ~HintScope()
         {
             if (Previous)

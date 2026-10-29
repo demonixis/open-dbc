@@ -74,8 +74,15 @@ namespace
             return Output;
         }
 
-        dbc::EngineKernel& Kernel() { return Kernel_; }
-        BuiltinContext& Context() { return Context_; }
+        dbc::EngineKernel& Kernel()
+        {
+            return Kernel_;
+        }
+
+        BuiltinContext& Context()
+        {
+            return Context_;
+        }
 
         std::string Error;
 
@@ -105,11 +112,10 @@ TEST_CASE("Classic DLL commands load OpenDBC plugins and call them with typed va
     CHECK(Basic.Value(SymbolId::Function_DllCallExist, {Integer(1), Text("missing")}) == 0.0);
     CHECK(Basic.Value(SymbolId::Function_DllCallExist, {Integer(3), Text("add_integers")}) == 0.0);
 
-    CHECK(Basic.Value(SymbolId::Function_CallDll, {Integer(1), Text("add_integers"), Integer(40), Integer(2)}) ==
-          42.0);
+    CHECK(Basic.Value(SymbolId::Function_CallDll, {Integer(1), Text("add_integers"), Integer(40), Integer(2)}) == 42.0);
     double Unused = 0.0;
-    CHECK_FALSE(Basic.Function(SymbolId::Function_CallDll,
-                               {Integer(1), Text("add_integers"), Real(40.0), Integer(2)}, Unused));
+    CHECK_FALSE(
+        Basic.Function(SymbolId::Function_CallDll, {Integer(1), Text("add_integers"), Real(40.0), Integer(2)}, Unused));
     CHECK(Basic.Error == "CALL DLL 'add_integers' failed: add_integers takes two integers");
     CHECK(Basic.Value(SymbolId::Function_CallDll, {Integer(1), Text("half"), Real(5.0)}) == 2.5);
     Basic.Require(SymbolId::Command_CallDll, {Integer(1), Text("greet"), Text("Bill")});
@@ -146,7 +152,8 @@ TEST_CASE("Classic DLL commands load OpenDBC plugins and call them with typed va
     // Addresses above 2^31 keep their bits on the way to the plugin.
     const double High = Basic.Value(SymbolId::Function_GetMemblockPtr, {Integer(200)});
     CHECK(High == 200.0 * 16777216.0);
-    Basic.Require(SymbolId::Command_CallDll, {Integer(1), Text("fill_memblock"), Integer(High), Integer(4), Integer(9)});
+    Basic.Require(SymbolId::Command_CallDll,
+                  {Integer(1), Text("fill_memblock"), Integer(High), Integer(4), Integer(9)});
     CHECK(Byte(200, 3) == 9);
     CHECK_FALSE(Basic.Function(SymbolId::Function_GetMemblockPtr, {Integer(5)}, Unused));
     CHECK(Basic.Error == "Memblock 5 does not exist");

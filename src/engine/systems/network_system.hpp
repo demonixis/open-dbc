@@ -97,8 +97,13 @@ namespace dbc
 
         bool GameExists() const;
         bool GameLost() const;
+
         // The host never changes until host migration is implemented, so this application is never newly made host.
-        bool TakeNowHosting() const { return false; }
+        bool TakeNowHosting() const
+        {
+            return false;
+        }
+
         // Each call returns the next player another application added or removed, or 0.
         int TakeCreatedPlayer();
         int TakeDestroyedPlayer();

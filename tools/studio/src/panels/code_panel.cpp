@@ -65,7 +65,8 @@ namespace dbc::studio
             for (const dba::OutlineEntry& Entry : Entries)
                 Order.push_back(&Entry);
             if (SortByName_)
-                std::stable_sort(Order.begin(), Order.end(), [](const dba::OutlineEntry* Left, const dba::OutlineEntry* Right)
+                std::stable_sort(Order.begin(), Order.end(),
+                                 [](const dba::OutlineEntry* Left, const dba::OutlineEntry* Right)
                                  { return LessNoCase(Left->Name, Right->Name); });
 
             if (ImGui::BeginTable(Id, CountTooltip ? 3 : 2, ImGuiTableFlags_SizingFixedFit))

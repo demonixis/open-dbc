@@ -39,6 +39,7 @@ namespace
         REQUIRE(dbc::detail::MakeForceAngleHapticParameters(Magnitude, Angle, Duration, Result, &Error));
         return Result;
     }
+
     dbc::detail::ForceWaterHapticParameters ReadForceWaterHapticParameters(int Magnitude, int Duration)
     {
         dbc::detail::ForceWaterHapticParameters Result;
@@ -46,6 +47,7 @@ namespace
         REQUIRE(dbc::detail::MakeForceWaterHapticParameters(Magnitude, Duration, Result, &Error));
         return Result;
     }
+
     dbc::detail::ForcePeriodicHapticParameters ReadForcePeriodicHapticParameters(const char* Command, int Magnitude,
                                                                                  int Duration)
     {

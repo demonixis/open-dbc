@@ -578,6 +578,7 @@ namespace dbc
     {
         SpritesDrawFirst_ = true;
     }
+
     void SpriteSystem::DrawSpritesLast()
     {
         SpritesDrawFirst_ = false;
@@ -1303,6 +1304,7 @@ namespace dbc
             Contacts.erase(Id);
         return true;
     }
+
     bool SpriteSystem::ShowBob(int Id, std::string* Error)
     {
         auto* CheckedSprite = FindBobForCommand(Id, "SHOW BOB", Error);
@@ -1358,6 +1360,7 @@ namespace dbc
     {
         return (Bobs_.count(Id) > 0) ? 1 : 0;
     }
+
     bool SpriteSystem::BobX(int& Output, int Id, std::string* Error) const
     {
         const SpriteData* Value = FindBob(Id);
@@ -1375,6 +1378,7 @@ namespace dbc
         }
         return true;
     }
+
     bool SpriteSystem::BobY(int& Output, int Id, std::string* Error) const
     {
         const SpriteData* Value = FindBob(Id);
@@ -1436,16 +1440,19 @@ namespace dbc
         const SpriteData* Value = FindBob(Id);
         return Value ? Value->ImageId : 0;
     }
+
     int SpriteSystem::BobMirrored(int Id) const
     {
         const SpriteData* Value = FindBob(Id);
         return Value && Value->Mirrored ? 1 : 0;
     }
+
     int SpriteSystem::BobFlipped(int Id) const
     {
         const SpriteData* Value = FindBob(Id);
         return Value && Value->Flipped ? 1 : 0;
     }
+
     bool SpriteSystem::BobScaleX(int& Output, int Id, std::string* Error) const
     {
         const SpriteData* Value = FindBob(Id);
@@ -1463,6 +1470,7 @@ namespace dbc
         }
         return true;
     }
+
     bool SpriteSystem::BobScaleY(int& Output, int Id, std::string* Error) const
     {
         const SpriteData* Value = FindBob(Id);
@@ -1480,16 +1488,19 @@ namespace dbc
         }
         return true;
     }
+
     int SpriteSystem::BobOffsetX(int Id) const
     {
         const SpriteData* Value = FindBob(Id);
         return Value ? Value->OffsetX : 0;
     }
+
     int SpriteSystem::BobOffsetY(int Id) const
     {
         const SpriteData* Value = FindBob(Id);
         return Value ? Value->OffsetY : 0;
     }
+
     float SpriteSystem::BobAngle(int Id) const
     {
         const SpriteData* Value = FindBob(Id);

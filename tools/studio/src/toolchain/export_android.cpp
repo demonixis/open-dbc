@@ -27,9 +27,8 @@ namespace dbc::studio
             std::array<unsigned char, 64> Header{};
             std::ifstream Input(Path, std::ios::binary);
             Input.read(reinterpret_cast<char*>(Header.data()), static_cast<std::streamsize>(Header.size()));
-            if (Input.gcount() < 20 || Header[0] != 0x7f || Header[1] != 'E' || Header[2] != 'L' ||
-                Header[3] != 'F' || Header[4] != 2 || Header[5] != 1 || Header[6] != 1 || Header[18] != 0xb7 ||
-                Header[19] != 0)
+            if (Input.gcount() < 20 || Header[0] != 0x7f || Header[1] != 'E' || Header[2] != 'L' || Header[3] != 'F' ||
+                Header[4] != 2 || Header[5] != 1 || Header[6] != 1 || Header[18] != 0xb7 || Header[19] != 0)
             {
                 Error = "The installed Android export host libmain.so is not ELF64 little-endian AArch64";
                 return false;

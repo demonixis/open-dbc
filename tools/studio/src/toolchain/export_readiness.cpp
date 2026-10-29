@@ -96,9 +96,9 @@ namespace dbc::studio
             const std::string& Wanted = Request.Toolchain.MacSigningIdentity;
             const std::vector<toolchain::SigningIdentity> Identities = toolchain::ListSigningIdentities();
             const bool Installed =
-                !Wanted.empty() && std::any_of(Identities.begin(), Identities.end(),
-                                               [&Wanted](const toolchain::SigningIdentity& Identity)
-                                               { return Identity.Name == Wanted || Identity.Sha1 == Wanted; });
+                !Wanted.empty() &&
+                std::any_of(Identities.begin(), Identities.end(), [&Wanted](const toolchain::SigningIdentity& Identity)
+                            { return Identity.Name == Wanted || Identity.Sha1 == Wanted; });
             Checks.push_back(
                 {"Developer ID identity", Installed, true,
                  Installed ? std::string{}
@@ -121,8 +121,8 @@ namespace dbc::studio
         {
             if (!Request.Sign)
                 return;
-            const bool Certificate = toolchain::NormalizeCertificateThumbprint(Request.Toolchain.WindowsCertificate)
-                                         .has_value();
+            const bool Certificate =
+                toolchain::NormalizeCertificateThumbprint(Request.Toolchain.WindowsCertificate).has_value();
             Checks.push_back({"Code signing certificate", Certificate, true,
                               Certificate ? std::string{}
                                           : "Enter the SHA-1 thumbprint of a code signing certificate from your "
@@ -143,12 +143,12 @@ namespace dbc::studio
                          "OPENDBC_IOS_RUNTIME_LIBRARY and OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY.");
             // Signing happens in Xcode, where the team can also be chosen.
             const bool HasTeam = !Request.Settings.IosTeamId.empty();
-            Checks.push_back({"Apple development team", HasTeam, false,
-                              HasTeam ? std::string{}
-                                      : "Set the team ID in Project Settings > iOS, or choose the team in Xcode."});
+            Checks.push_back(
+                {"Apple development team", HasTeam, false,
+                 HasTeam ? std::string{} : "Set the team ID in Project Settings > iOS, or choose the team in Xcode."});
             std::error_code FileError;
-            const bool Xcode = fs::is_directory("/Applications/Xcode.app", FileError) ||
-                               std::getenv("DEVELOPER_DIR") != nullptr;
+            const bool Xcode =
+                fs::is_directory("/Applications/Xcode.app", FileError) || std::getenv("DEVELOPER_DIR") != nullptr;
             Checks.push_back({"Xcode", Xcode, false,
                               Xcode ? std::string{} : "Install Xcode to build, sign and upload the exported project."});
         }

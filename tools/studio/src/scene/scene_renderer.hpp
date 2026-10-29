@@ -69,7 +69,7 @@ namespace dbc::studio
             struct Geometry
             {
                 CpuMesh Mesh;
-                std::filesystem::path Folder; // where a model's material textures are looked up first
+                std::filesystem::path Folder;       // where a model's material textures are looked up first
                 std::vector<core::GpuImage> Images; // Mesh.Images once uploaded
                 SDL_GPUBuffer* Buffer = nullptr;
                 bool Uploaded = false;
@@ -122,8 +122,8 @@ namespace dbc::studio
             SDL_GPUTexture* PartTexture(Geometry& Entry, const MeshPart& Part, const std::filesystem::path& AssetRoot);
             void Release(Geometry& Entry);
             void ReleaseTargets();
-            bool Upload(SDL_GPUCopyPass* Pass, SDL_GPUBuffer*& Buffer, Uint32& Capacity, const void* Data,
-                        Uint32 Size, std::vector<SDL_GPUTransferBuffer*>& Transfers);
+            bool Upload(SDL_GPUCopyPass* Pass, SDL_GPUBuffer*& Buffer, Uint32& Capacity, const void* Data, Uint32 Size,
+                        std::vector<SDL_GPUTransferBuffer*>& Transfers);
 
             SDL_GPUDevice* Gpu_ = nullptr;
             SDL_GPUGraphicsPipeline* MeshPipeline_ = nullptr;

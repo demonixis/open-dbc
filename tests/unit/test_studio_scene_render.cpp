@@ -211,8 +211,8 @@ TEST_CASE("Scene primitives keep the engine's sizes and tessellation")
     Node.Kind = scene::NodeKind::Cube;
     Node.Size = 10.0f;
     Node.Position = glm::vec3(0.0f, 20.0f, 0.0f);
-    const std::optional<float> Hit = scene::Intersect(Down, scene::BuildMesh(Node, LanguageProfile::Dbc),
-                                                      scene::NodeWorld(Node));
+    const std::optional<float> Hit =
+        scene::Intersect(Down, scene::BuildMesh(Node, LanguageProfile::Dbc), scene::NodeWorld(Node));
     REQUIRE(Hit.has_value());
     CHECK(*Hit == doctest::Approx(75.0f));
 }

@@ -65,6 +65,7 @@ namespace dbc::studio
 
             // Saves pending changes before a different project replaces this one.
             void SetProject(std::optional<SceneProject> Project);
+
             const std::optional<SceneProject>& Project() const
             {
                 return Project_;

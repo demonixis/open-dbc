@@ -222,7 +222,8 @@ TEST_CASE("Mesh and object file commands resolve through the execution asset roo
 
 TEST_CASE("Historical text X frame matrices accept only the missing final terminator")
 {
-    const std::filesystem::path SkyPath = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/dome.x";
+    const std::filesystem::path SkyPath =
+        std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/dome.x";
 
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("iced-sky-x", 16, 16));
@@ -462,10 +463,10 @@ TEST_CASE("Loaded screen bitmaps persist and object defaults are isolated by exe
             std::array<Uint8, 4> Following{};
             std::array<Uint8, 4> Expected{};
             REQUIRE(SDL_ReadSurfacePixel(LoadingFrame, X, Y, &Loading[0], &Loading[1], &Loading[2], &Loading[3]));
-            REQUIRE(SDL_ReadSurfacePixel(FollowingFrame, X, Y, &Following[0], &Following[1], &Following[2],
-                                         &Following[3]));
-            REQUIRE(SDL_ReadSurfacePixel(ExpectedLoading, X, Y, &Expected[0], &Expected[1], &Expected[2],
-                                         &Expected[3]));
+            REQUIRE(
+                SDL_ReadSurfacePixel(FollowingFrame, X, Y, &Following[0], &Following[1], &Following[2], &Following[3]));
+            REQUIRE(
+                SDL_ReadSurfacePixel(ExpectedLoading, X, Y, &Expected[0], &Expected[1], &Expected[2], &Expected[3]));
             for (std::size_t Channel = 0; Channel < 3; ++Channel)
             {
                 LoadingAbsoluteError += static_cast<std::uint64_t>(
@@ -663,11 +664,11 @@ TEST_CASE("Classic animations validate numbers, files, bitmaps and areas")
     using dbc::language::SymbolId;
 
     BuiltinValue Unused;
-    CHECK_FALSE(InvokeFunction(Context, SymbolId::Function_AnimationExist, {BuiltinValue::FromNumber(33)}, Unused,
-                               Error));
-    CHECK(Error == "Animation number must be between 1 and 32");
     CHECK_FALSE(
-        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("missing.mp4"), BuiltinValue::FromNumber(2)}));
+        InvokeFunction(Context, SymbolId::Function_AnimationExist, {BuiltinValue::FromNumber(33)}, Unused, Error));
+    CHECK(Error == "Animation number must be between 1 and 32");
+    CHECK_FALSE(Command(SymbolId::Command_LoadAnimation,
+                        {BuiltinValue::FromString("missing.mp4"), BuiltinValue::FromNumber(2)}));
     CHECK(Error.find("LOAD ANIMATION cannot find") != std::string::npos);
     CHECK(Number(SymbolId::Function_AnimationExist, 2) == 0);
 
@@ -748,9 +749,7 @@ TEST_CASE("Classic animations play decoded video into their bitmap")
     std::string Error;
     using dbc::language::SymbolId;
     const auto Command = [&](SymbolId Symbol, std::vector<BuiltinValue> Arguments)
-    {
-        REQUIRE_MESSAGE(InvokeCommand(Context, Symbol, Arguments, Error), Error);
-    };
+    { REQUIRE_MESSAGE(InvokeCommand(Context, Symbol, Arguments, Error), Error); };
     const auto Number = [&](SymbolId Symbol)
     {
         BuiltinValue Result;
@@ -760,8 +759,8 @@ TEST_CASE("Classic animations play decoded video into their bitmap")
     const auto Pixel = [&](int X, int Y)
     {
         std::array<Uint8, 4> Value{};
-        REQUIRE(SDL_ReadSurfacePixel(Kernel.ImageStoreRef().GetBitmapSurface(1), X, Y, &Value[0], &Value[1],
-                                     &Value[2], &Value[3]));
+        REQUIRE(SDL_ReadSurfacePixel(Kernel.ImageStoreRef().GetBitmapSurface(1), X, Y, &Value[0], &Value[1], &Value[2],
+                                     &Value[3]));
         return Value;
     };
     // AVPlayer advances on the main run loop, which SDL pumps in the runtime.
@@ -1365,6 +1364,7 @@ TEST_CASE("Historical DDS and TGA assets decode to stable RGBA pixels")
         int Height;
         uint64_t Fnv1a;
     };
+
     const std::array<AssetExpectation, 5> Assets = {
         AssetExpectation{"examples/dbpro/tutorials/bitmap/2DFiles/logo.dds", 320, 240, UINT64_C(0x0e8c93894e3b976f)},
         AssetExpectation{"examples/dbpro/tutorials/basic3d/edge.dds", 128, 1, UINT64_C(0xbe78bcdbd952dd25)},
@@ -1754,14 +1754,14 @@ TEST_CASE("Screen drawing lasts one frame once a 3D scene is shown")
     REQUIRE(Grabbed != nullptr);
     REQUIRE(Grabbed->Surface != nullptr);
     std::array<Uint8, 4> Centre{};
-    REQUIRE(SDL_ReadSurfacePixel(Grabbed->Surface, Width / 2, Height / 2, &Centre[0], &Centre[1], &Centre[2],
-                                 &Centre[3]));
+    REQUIRE(
+        SDL_ReadSurfacePixel(Grabbed->Surface, Width / 2, Height / 2, &Centre[0], &Centre[1], &Centre[2], &Centre[3]));
     CHECK(Centre[3] == 255);
     CHECK(Centre[0] > 200);
     CHECK(Centre[2] < 64);
     std::array<Uint8, 4> Corner{};
-    REQUIRE(SDL_ReadSurfacePixel(Grabbed->Surface, Width - 2, Height - 2, &Corner[0], &Corner[1], &Corner[2],
-                                 &Corner[3]));
+    REQUIRE(
+        SDL_ReadSurfacePixel(Grabbed->Surface, Width - 2, Height - 2, &Corner[0], &Corner[1], &Corner[2], &Corner[3]));
     CHECK(Corner[1] == 255);
     CHECK(Corner[0] == 0);
 }
@@ -2197,12 +2197,12 @@ TEST_CASE("DBPro BSP worlds load, draw the leaves their camera sees and delete")
     CHECK(Inside > 0);
 
     // A BSP camera that does not exist culls from the origin, which is in the same open leaf.
-    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetBspCamera, {BuiltinValue::FromNumber(5)},
-                          Error));
+    REQUIRE(
+        InvokeCommand(Context, dbc::language::SymbolId::Command_SetBspCamera, {BuiltinValue::FromNumber(5)}, Error));
     CHECK(Kernel.BspWorld().CullingCamera() == 5);
     CHECK(WorldTriangles() == Inside);
-    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetBspCamera, {BuiltinValue::FromNumber(0)},
-                          Error));
+    REQUIRE(
+        InvokeCommand(Context, dbc::language::SymbolId::Command_SetBspCamera, {BuiltinValue::FromNumber(0)}, Error));
     // From solid space under the floor nothing is drawn.
     REQUIRE(Kernel.Camera().PositionCamera(2.0f, -40.0f, 2.0f));
     CHECK(WorldTriangles() == 0);
@@ -3107,9 +3107,9 @@ TEST_CASE("DBPro LOD terrain preserves heightmap identity query and render contr
     dbc::TerrainMesh Mesh;
     dbc::BuildTerrainMesh(*Terrain, Mesh);
     REQUIRE_FALSE(Mesh.Vertices.empty());
-    CHECK(std::all_of(Mesh.Vertices.begin(), Mesh.Vertices.end(), [](const dbc::TerrainVertex& Vertex)
-                      { return Vertex.Uv[0] >= 0.0f && Vertex.Uv[0] <= 1.0f && Vertex.Uv[1] >= 0.0f &&
-                               Vertex.Uv[1] <= 1.0f; }));
+    CHECK(std::all_of(
+        Mesh.Vertices.begin(), Mesh.Vertices.end(), [](const dbc::TerrainVertex& Vertex)
+        { return Vertex.Uv[0] >= 0.0f && Vertex.Uv[0] <= 1.0f && Vertex.Uv[1] >= 0.0f && Vertex.Uv[1] <= 1.0f; }));
 
     REQUIRE_FALSE(Command(dbc::language::SymbolId::Command_MakeTerrain,
                           {BuiltinValue::FromNumber(2), BuiltinValue::FromString(Heightmap.string() + ".missing")}));
@@ -3141,7 +3141,8 @@ TEST_CASE("Matrices skip blocks outside the view and terrains coarsen far from t
     // A small matrix in full view keeps every cell at full resolution.
     RequireEngineStatus([&](std::string& Error)
                         { return Kernel.Matrices().MakeMatrix(1, 40.0f, 40.0f, 4, 4, true, &Error); });
-    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(20.0f, 60.0f, -20.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Camera().PositionCamera(20.0f, 60.0f, -20.0f, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PointCamera(20.0f, 0.0f, 20.0f, &Error); });
     CHECK(RenderedTriangles() == 32);
     RequireEngineStatus([&](std::string& Error) { return Kernel.Matrices().DeleteMatrix(1, &Error); });
@@ -3149,7 +3150,8 @@ TEST_CASE("Matrices skip blocks outside the view and terrains coarsen far from t
     // A wide matrix seen from its centre only builds the blocks inside the view frustum.
     RequireEngineStatus([&](std::string& Error)
                         { return Kernel.Matrices().MakeMatrix(1, 6400.0f, 6400.0f, 128, 128, true, &Error); });
-    RequireEngineStatus([&](std::string& Error) { return Kernel.Matrices().PositionMatrix(1, -3200.0f, 0.0f, -3200.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Matrices().PositionMatrix(1, -3200.0f, 0.0f, -3200.0f, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 10.0f, 0.0f, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().SetCameraFov(20.0f, &Error); });
@@ -3173,7 +3175,8 @@ TEST_CASE("Matrices skip blocks outside the view and terrains coarsen far from t
     REQUIRE(Kernel.Matrices().MakeTerrain(1, Heightmap.string(), &Error));
     std::error_code Ignored;
     std::filesystem::remove(Heightmap, Ignored);
-    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(128.0f, 200.0f, 128.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Camera().PositionCamera(128.0f, 200.0f, 128.0f, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(90.0f, 0.0f, 0.0f, &Error); });
     const std::size_t TerrainTriangles = RenderedTriangles();
     CHECK(TerrainTriangles > 0);
@@ -3216,19 +3219,22 @@ TEST_CASE("Static GPU terrains draw their upper side, follow the view and rebuil
         SDL_DestroySurface(Capture);
         return Red < 32 && Green < 32 && Blue > 200;
     };
-    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(16.0f, 40.0f, 16.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Camera().PositionCamera(16.0f, 40.0f, 16.0f, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(90.0f, 0.0f, 0.0f, &Error); });
     CHECK_FALSE(CenterIsBackdrop());
     CHECK(Kernel.Renderer().LastStaticTerrainTriangles() > 0);
     CHECK(Kernel.Renderer().CachedWorldTris().empty());
 
     // From below, the culled underside leaves the backdrop, as on the CPU path.
-    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(16.0f, -40.0f, 16.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Camera().PositionCamera(16.0f, -40.0f, 16.0f, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(-90.0f, 0.0f, 0.0f, &Error); });
     CHECK(CenterIsBackdrop());
 
     // Moving the terrain out of the view rebuilds its buffer: nothing is drawn from above any more.
-    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(16.0f, 40.0f, 16.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Camera().PositionCamera(16.0f, 40.0f, 16.0f, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(90.0f, 0.0f, 0.0f, &Error); });
     REQUIRE(Kernel.Matrices().PositionTerrain(1, 500.0f, 0.0f, 500.0f, &Error));
     CHECK(CenterIsBackdrop());
@@ -5329,8 +5335,8 @@ TEST_CASE("DBPro vertex diffuse takes DWORD colours and keeps opaque objects opa
     Context.Profile = dbc::language::LanguageProfile::DbPro;
     EngineBuiltinHost Host(Context);
     REQUIRE(Kernel.Objects().LockVertexdataForLimb(1, 0));
-    const int Vertices = ReadEngineNumber<int>(
-        [&](std::string& ReadError, int& Output) { return Kernel.Objects().VertexdataVertexCount(Output, &ReadError); });
+    const int Vertices = ReadEngineNumber<int>([&](std::string& ReadError, int& Output)
+                                               { return Kernel.Objects().VertexdataVertexCount(Output, &ReadError); });
     REQUIRE(Vertices > 0);
     const auto SetDiffuse = [&](int Vertex, dbc::vm::Value Colour)
     {
@@ -5352,7 +5358,7 @@ TEST_CASE("DBPro vertex diffuse takes DWORD colours and keeps opaque objects opa
     Kernel.Objects().UnlockVertexdata();
 
     const std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> Frame(Kernel.Renderer().CaptureScreen(),
-                                                                             SDL_DestroySurface);
+                                                                            SDL_DestroySurface);
     REQUIRE(Frame != nullptr);
     std::array<Uint8, 4> Pixel{};
     REQUIRE(SDL_ReadSurfacePixel(Frame.get(), Frame->w / 2, Frame->h / 2, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
@@ -6376,11 +6382,11 @@ TEST_CASE("Classic registry commands persist values in the user's registry file"
     const auto Read = [&](std::string_view Folder, std::string_view Key)
     {
         BuiltinValue Result;
-        REQUIRE_MESSAGE(InvokeFunction(Context, SymbolId::Function_GetRegistry,
-                                       {BuiltinValue::FromString(std::string(Folder)),
-                                        BuiltinValue::FromString(std::string(Key))},
-                                       Result, Error),
-                        Error);
+        REQUIRE_MESSAGE(
+            InvokeFunction(Context, SymbolId::Function_GetRegistry,
+                           {BuiltinValue::FromString(std::string(Folder)), BuiltinValue::FromString(std::string(Key))},
+                           Result, Error),
+            Error);
         return Result.AsNumber();
     };
 
@@ -8729,8 +8735,7 @@ TEST_CASE("Classic authored object keyframes round-trip through the portable ani
 
 TEST_CASE("Cloned imported objects keep their animation after the source is deleted")
 {
-    const std::filesystem::path Model =
-        std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/walk.x";
+    const std::filesystem::path Model = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/walk.x";
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("cloned-imported-animation", 32, 32));
     Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
@@ -8755,8 +8760,7 @@ TEST_CASE("Classic imported object animation saves every moving frame and append
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-imported-animation-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directory(Root));
-    const std::filesystem::path Model =
-        std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/walk.x";
+    const std::filesystem::path Model = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models/walk.x";
     REQUIRE(std::filesystem::is_regular_file(Model));
 
     dbc::EngineKernel Kernel;

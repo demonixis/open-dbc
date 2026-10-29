@@ -32,6 +32,7 @@ namespace dbc::studio
                 std::string Name;
                 bool Permanent = false;
             };
+
             std::vector<CompatibilityStubUse> CompatibilityStubsUsed;
 
             struct UnknownLine
@@ -39,6 +40,7 @@ namespace dbc::studio
                 int Line = 0;
                 std::string Text;
             };
+
             std::vector<UnknownLine> Unrecognised;
         };
 

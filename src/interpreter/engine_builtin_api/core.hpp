@@ -16,10 +16,12 @@ namespace dbc
     {
         return K.Core().Init();
     }
+
     inline void Shutdown(EngineKernel& K)
     {
         K.Core().Shutdown();
     }
+
     inline bool Running(EngineKernel& K)
     {
         return K.Core().IsRunning();
@@ -31,10 +33,12 @@ namespace dbc
     {
         return K.Core().SetDisplayMode(Width, Height, Bpp, 1, 0, 0, Error);
     }
+
     inline void HideMouse(EngineKernel& K)
     {
         K.Core().HideCursor();
     }
+
     inline void ShowMouse(EngineKernel& K)
     {
         K.Core().ShowCursor();
@@ -46,30 +50,37 @@ namespace dbc
     {
         K.Core().DoSyncOn();
     }
+
     inline void SyncOff(EngineKernel& K)
     {
         K.Core().DoSyncOff();
     }
+
     inline void SyncRate(EngineKernel& K, int Rate)
     {
         K.Core().DoSyncRate(Rate);
     }
+
     inline void Sync(EngineKernel& K)
     {
         K.Core().Sync();
     }
+
     inline float DeltaTime(EngineKernel& K)
     {
         return K.Core().DeltaTime();
     }
+
     inline int Timer(EngineKernel& K)
     {
         return K.Core().Timer();
     }
+
     inline std::string GetDate(EngineKernel& K)
     {
         return K.Core().GetDate();
     }
+
     inline std::string GetTime(EngineKernel& K)
     {
         return K.Core().GetTime();
@@ -81,6 +92,7 @@ namespace dbc
     {
         K.Core().WriteToClipboard(Text);
     }
+
     inline std::string GetClipboard(EngineKernel& K)
     {
         return K.Core().GetClipboard();

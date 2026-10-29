@@ -10,9 +10,7 @@ namespace dbc
     {
     };
 
-    VideoDecoder::VideoDecoder(std::unique_ptr<Impl> Value) : Impl_(std::move(Value))
-    {
-    }
+    VideoDecoder::VideoDecoder(std::unique_ptr<Impl> Value) : Impl_(std::move(Value)) {}
 
     VideoDecoder::~VideoDecoder() = default;
 
@@ -37,13 +35,9 @@ namespace dbc
         return false;
     }
 
-    void VideoDecoder::Pause()
-    {
-    }
+    void VideoDecoder::Pause() {}
 
-    void VideoDecoder::Resume()
-    {
-    }
+    void VideoDecoder::Resume() {}
 
     bool VideoDecoder::Finished() const
     {

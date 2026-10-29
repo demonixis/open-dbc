@@ -132,7 +132,9 @@ namespace dbc::language
         {
             return Value != Invalid;
         }
+
         bool operator==(const OverloadId&) const = default;
+
         bool operator<(const OverloadId& Other) const
         {
             return Value < Other.Value;

@@ -17,11 +17,14 @@ namespace dbc
         };
 
         explicit GpuCommandBuffer(SDL_GPUCommandBuffer* Handle) : Handle_(Handle) {}
+
         GpuCommandBuffer(SDL_GPUCommandBuffer* Handle, Operations Calls) : Handle_(Handle), Calls_(Calls) {}
+
         ~GpuCommandBuffer()
         {
             Abandon();
         }
+
         GpuCommandBuffer(const GpuCommandBuffer&) = delete;
         GpuCommandBuffer& operator=(const GpuCommandBuffer&) = delete;
 
@@ -29,11 +32,13 @@ namespace dbc
         {
             return Handle_;
         }
+
         void Reset(SDL_GPUCommandBuffer* Handle)
         {
             Abandon();
             Handle_ = Handle;
         }
+
         void SetSwapchainAcquired()
         {
             SwapchainAcquired_ = true;

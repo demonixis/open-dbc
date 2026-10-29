@@ -39,10 +39,9 @@ namespace dbc::studio
             }
             for (const auto& [Slice, Manifest] : IosSlices)
             {
-                if (!detail::ValidateArtifactHostIdentity(Root / Manifest,
-                                                          Root / "OpenDBCRuntime.xcframework" / Slice /
-                                                              "libOpenDBCRuntime.a",
-                                                          Request.HostResources / "opendbc-runtime.json", Error))
+                if (!detail::ValidateArtifactHostIdentity(
+                        Root / Manifest, Root / "OpenDBCRuntime.xcframework" / Slice / "libOpenDBCRuntime.a",
+                        Request.HostResources / "opendbc-runtime.json", Error))
                     return false;
             }
             return true;
@@ -199,8 +198,7 @@ namespace dbc::studio
             const fs::path Project = Stage / "project";
             std::vector<dbc::interpreter::detail::ArtifactFile> Files;
             if (!CopyTree(Host / "template", Project, Result.Error) ||
-                !CopyTree(Host / "OpenDBCRuntime.xcframework", Project / "OpenDBCRuntime.xcframework",
-                          Result.Error) ||
+                !CopyTree(Host / "OpenDBCRuntime.xcframework", Project / "OpenDBCRuntime.xcframework", Result.Error) ||
                 !CopyArtifactFile(Host / "OpenDBCRuntime.xcconfig", Project / "OpenDBCRuntime.xcconfig",
                                   Result.Error) ||
                 !CopyTree(Request.HostResources / "shaders", Project / "shaders", Result.Error) ||

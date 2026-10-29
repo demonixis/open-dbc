@@ -22,8 +22,8 @@ namespace dbc::studio
             std::string Result;
             for (const char Character : Value)
             {
-                if (Character == ',' || Character == '+' || Character == '"' || Character == '\\' ||
-                    Character == '<' || Character == '>' || Character == ';' || Character == '=')
+                if (Character == ',' || Character == '+' || Character == '"' || Character == '\\' || Character == '<' ||
+                    Character == '>' || Character == ';' || Character == '=')
                     Result += '\\';
                 Result += Character;
             }
@@ -90,15 +90,14 @@ namespace dbc::studio
             else if (Request.Password.size() < MinimumPasswordLength)
                 Error = "The keystore password needs at least 6 characters";
             else if (!Request.Country.empty() &&
-                     (Request.Country.size() != 2 || !std::all_of(Request.Country.begin(), Request.Country.end(),
-                                                                  [](unsigned char Character)
-                                                                  { return std::isalpha(Character); })))
+                     (Request.Country.size() != 2 ||
+                      !std::all_of(Request.Country.begin(), Request.Country.end(),
+                                   [](unsigned char Character) { return std::isalpha(Character); })))
                 Error = "The country is a two-letter code, such as FR";
             if (!Error.empty())
                 return false;
-            ProcessRequest Keytool{AndroidKeystoreArguments(JavaHome, Request),
-                                   {{std::string(PasswordVariable), Request.Password}},
-                                   {}};
+            ProcessRequest Keytool{
+                AndroidKeystoreArguments(JavaHome, Request), {{std::string(PasswordVariable), Request.Password}}, {}};
             ProcessResult Result = RunProcess(Keytool, {}, nullptr, false);
             if (!Result)
             {

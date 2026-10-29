@@ -56,16 +56,14 @@ namespace dbc::studio
             std::string Color(Rgb Value)
             {
                 return "RGB(" + Integer(static_cast<int>((Value >> 16) & 0xFF)) + ", " +
-                       Integer(static_cast<int>((Value >> 8) & 0xFF)) + ", " +
-                       Integer(static_cast<int>(Value & 0xFF)) + ")";
+                       Integer(static_cast<int>((Value >> 8) & 0xFF)) + ", " + Integer(static_cast<int>(Value & 0xFF)) +
+                       ")";
             }
 
             class Emitter
             {
               public:
-                explicit Emitter(lang::LanguageProfile Profile) : Profile_(Profile)
-                {
-                }
+                explicit Emitter(lang::LanguageProfile Profile) : Profile_(Profile) {}
 
                 void Line(const std::string& Text)
                 {
@@ -96,6 +94,7 @@ namespace dbc::studio
                 {
                     ++Indent_;
                 }
+
                 void Pop()
                 {
                     --Indent_;
@@ -155,9 +154,8 @@ namespace dbc::studio
                         break;
                     case NodeKind::Sphere:
                         if (Node.Detail && Profile == lang::LanguageProfile::DbPro)
-                            Out.Command(SymbolId::Command_MakeObjectSphere, {Id, Number(Node.Size),
-                                                                            Integer(Node.Detail->x),
-                                                                            Integer(Node.Detail->y)});
+                            Out.Command(SymbolId::Command_MakeObjectSphere,
+                                        {Id, Number(Node.Size), Integer(Node.Detail->x), Integer(Node.Detail->y)});
                         else
                             Out.Command(SymbolId::Command_MakeObjectSphere, {Id, Number(Node.Size)});
                         break;
@@ -169,9 +167,9 @@ namespace dbc::studio
                         break;
                     case NodeKind::Plain:
                         if (Node.PlainOrientation && Profile == lang::LanguageProfile::DbPro)
-                            Out.Command(SymbolId::Command_MakeObjectPlain, {Id, Number(Node.Extent.x),
-                                                                           Number(Node.Extent.y),
-                                                                           Integer(*Node.PlainOrientation)});
+                            Out.Command(
+                                SymbolId::Command_MakeObjectPlain,
+                                {Id, Number(Node.Extent.x), Number(Node.Extent.y), Integer(*Node.PlainOrientation)});
                         else
                             Out.Command(SymbolId::Command_MakeObjectPlain,
                                         {Id, Number(Node.Extent.x), Number(Node.Extent.y)});
@@ -180,9 +178,8 @@ namespace dbc::studio
                     {
                         const auto& C = Node.Corners;
                         Out.Command(SymbolId::Command_MakeObjectTriangle,
-                                    {Id, Number(C[0].x), Number(C[0].y), Number(C[0].z), Number(C[1].x),
-                                     Number(C[1].y), Number(C[1].z), Number(C[2].x), Number(C[2].y),
-                                     Number(C[2].z)});
+                                    {Id, Number(C[0].x), Number(C[0].y), Number(C[0].z), Number(C[1].x), Number(C[1].y),
+                                     Number(C[1].z), Number(C[2].x), Number(C[2].y), Number(C[2].z)});
                         break;
                     }
                     case NodeKind::Model:
@@ -295,7 +292,7 @@ namespace dbc::studio
                 {
                     case NodeKind::Matrix:
                         Out.Command(SymbolId::Command_MakeMatrix, {Id, Number(Node.Width), Number(Node.Depth),
-                                                                  Integer(Node.XSegments), Integer(Node.ZSegments)});
+                                                                   Integer(Node.XSegments), Integer(Node.ZSegments)});
                         if (!Node.Mat.Texture.empty())
                             Out.Command(SymbolId::Command_PrepareMatrixTexture,
                                         {Id, Integer(Images.at(Node.Mat.Texture)), Integer(Node.TilesAcross),
@@ -408,9 +405,12 @@ namespace dbc::studio
             bool EqualsIgnoreCase(std::string_view Left, std::string_view Right)
             {
                 return Left.size() == Right.size() &&
-                       std::equal(Left.begin(), Left.end(), Right.begin(), [](char A, char B)
-                                  { return std::toupper(static_cast<unsigned char>(A)) ==
-                                           std::toupper(static_cast<unsigned char>(B)); });
+                       std::equal(Left.begin(), Left.end(), Right.begin(),
+                                  [](char A, char B)
+                                  {
+                                      return std::toupper(static_cast<unsigned char>(A)) ==
+                                             std::toupper(static_cast<unsigned char>(B));
+                                  });
             }
 
             std::optional<double> LiteralNumber(const lang::Expression& Value)
@@ -579,12 +579,9 @@ namespace dbc::studio
               private:
                 void ReadBases(std::uint32_t Line, const std::string& Rest)
                 {
-                    static const std::pair<const char*, IdSpace> Keys[] = {{"objects", IdSpace::Object},
-                                                                           {"images", IdSpace::Image},
-                                                                           {"matrices", IdSpace::Matrix},
-                                                                           {"terrains", IdSpace::Terrain},
-                                                                           {"lights", IdSpace::Light},
-                                                                           {"sounds", IdSpace::Sound}};
+                    static const std::pair<const char*, IdSpace> Keys[] = {
+                        {"objects", IdSpace::Object},   {"images", IdSpace::Image}, {"matrices", IdSpace::Matrix},
+                        {"terrains", IdSpace::Terrain}, {"lights", IdSpace::Light}, {"sounds", IdSpace::Sound}};
                     std::istringstream Stream(Rest);
                     std::string Pair;
                     while (Stream >> Pair)
@@ -613,14 +610,17 @@ namespace dbc::studio
                 {
                     return static_cast<float>(Args[Index].Value);
                 }
+
                 int I(const std::vector<Argument>& Args, std::size_t Index) const
                 {
                     return static_cast<int>(std::lround(Args[Index].Value));
                 }
+
                 glm::vec3 V(const std::vector<Argument>& Args, std::size_t First) const
                 {
                     return {F(Args, First), F(Args, First + 1), F(Args, First + 2)};
                 }
+
                 bool S(const std::vector<Argument>& Args, std::size_t Index, std::string& Out)
                 {
                     if (Args[Index].Type != Argument::Kind::String)
@@ -631,6 +631,7 @@ namespace dbc::studio
                     Out = Args[Index].Text;
                     return true;
                 }
+
                 bool Numbers(const std::vector<Argument>& Args, std::size_t From = 0)
                 {
                     for (std::size_t Index = From; Index < Args.size(); ++Index)
@@ -810,7 +811,7 @@ namespace dbc::studio
                                 break;
                             }
                             if (SceneNode* Node = Object(I(A, 0)))
-                                Node->Mat.Flags = ObjectFlags{I(A, 1) == 0, I(A, 2),     I(A, 3) != 0, I(A, 4) != 0,
+                                Node->Mat.Flags = ObjectFlags{I(A, 1) == 0, I(A, 2),      I(A, 3) != 0, I(A, 4) != 0,
                                                               I(A, 5) != 0, I(A, 6) != 0, I(A, 7) != 0};
                             break;
                         case SymbolId::Command_SetObjectDiffuse:
@@ -1118,12 +1119,10 @@ namespace dbc::studio
             const lang::LanguageProfile Profile = Document.Profile;
             Emitter Out(Profile);
             Out.Line("REM OpenDBC level. Edited by the Studio Scene view.");
-            Out.Line("REM @level objects=" + Integer(Document.Base(IdSpace::Object)) +
-                     " images=" + Integer(Document.Base(IdSpace::Image)) +
-                     " matrices=" + Integer(Document.Base(IdSpace::Matrix)) +
-                     " terrains=" + Integer(Document.Base(IdSpace::Terrain)) +
-                     " lights=" + Integer(Document.Base(IdSpace::Light)) +
-                     " sounds=" + Integer(Document.Base(IdSpace::Sound)));
+            Out.Line("REM @level objects=" + Integer(Document.Base(IdSpace::Object)) + " images=" +
+                     Integer(Document.Base(IdSpace::Image)) + " matrices=" + Integer(Document.Base(IdSpace::Matrix)) +
+                     " terrains=" + Integer(Document.Base(IdSpace::Terrain)) + " lights=" +
+                     Integer(Document.Base(IdSpace::Light)) + " sounds=" + Integer(Document.Base(IdSpace::Sound)));
             Out.Line("FUNCTION " + LevelFunctionName(Document) + "()");
             Out.Push();
 

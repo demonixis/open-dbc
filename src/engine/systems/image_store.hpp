@@ -24,7 +24,7 @@ namespace dbc
 
         // Image operations
         bool LoadImageFile(const std::string& Path, int ImageId, int TextureFlag = 0, int DivideTextureSize = 0,
-                       std::string* Error = nullptr);
+                           std::string* Error = nullptr);
         bool DeleteImage(int ImageId, std::string* Error = nullptr);
         int ImageExist(int ImageId) const;
         int ImageFileExist(const std::string& Path) const;

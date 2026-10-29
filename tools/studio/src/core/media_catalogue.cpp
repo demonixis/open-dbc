@@ -37,6 +37,7 @@ namespace dbc::studio
                 std::string_view Name;
                 MediaKind Kind;
             };
+
             // The formats DBC/DBPro programs load, plus the engine's own effect outputs.
             static constexpr Extension KExtensions[] = {
                 {".png", MediaKind::Image},  {".jpg", MediaKind::Image},   {".jpeg", MediaKind::Image},

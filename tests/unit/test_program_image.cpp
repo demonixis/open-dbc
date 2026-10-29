@@ -101,16 +101,14 @@ TEST_CASE("program images round-trip deterministically with relative source span
 
     const auto HasLine = [&](std::uint32_t Line)
     {
-        return std::any_of(Loaded.Functions.begin(), Loaded.Functions.end(),
-                           [&](const dbc::vm::Function& Function)
-                           {
-                               return std::any_of(Function.Code.begin(), Function.Code.end(),
-                                                  [&](const dbc::vm::Instruction& Instruction)
-                                                  {
-                                                      return Instruction.Span.Begin.Line == Line &&
-                                                             Instruction.Span.LogicalPath == "main.dba";
-                                                  });
-                           });
+        return std::any_of(
+            Loaded.Functions.begin(), Loaded.Functions.end(),
+            [&](const dbc::vm::Function& Function)
+            {
+                return std::any_of(
+                    Function.Code.begin(), Function.Code.end(), [&](const dbc::vm::Instruction& Instruction)
+                    { return Instruction.Span.Begin.Line == Line && Instruction.Span.LogicalPath == "main.dba"; });
+            });
     };
     CHECK(HasLine(6));
     CHECK(HasLine(12));

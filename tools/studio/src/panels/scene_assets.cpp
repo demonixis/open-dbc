@@ -48,10 +48,10 @@ namespace dbc::studio
             if (!*ThumbnailRendererReady_)
                 return false;
             // The tile's own colour around the model, as a 0xRRGGBB value.
-            const scene::Rgb Backdrop = ((Theme::Panel & 0xFF) << 16) | (Theme::Panel & 0xFF00) |
-                                        ((Theme::Panel >> 16) & 0xFF);
-            return ThumbnailRenderer_.RenderThumbnail(Project_->AssetRoot, File.RelativeName, KThumbnailSize,
-                                                      Backdrop, Out, Error);
+            const scene::Rgb Backdrop =
+                ((Theme::Panel & 0xFF) << 16) | (Theme::Panel & 0xFF00) | ((Theme::Panel >> 16) & 0xFF);
+            return ThumbnailRenderer_.RenderThumbnail(Project_->AssetRoot, File.RelativeName, KThumbnailSize, Backdrop,
+                                                      Out, Error);
         }
 
         void SceneEditor::RefreshAssets()

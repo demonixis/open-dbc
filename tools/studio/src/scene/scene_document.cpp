@@ -203,7 +203,8 @@ namespace dbc::studio
 
         int MatrixTile(const SceneNode& Node)
         {
-            const int Tiles = Node.Mat.Texture.empty() ? 1 : std::max(1, Node.TilesAcross) * std::max(1, Node.TilesDown);
+            const int Tiles =
+                Node.Mat.Texture.empty() ? 1 : std::max(1, Node.TilesAcross) * std::max(1, Node.TilesDown);
             return std::clamp(Node.Tile, 1, Tiles);
         }
 

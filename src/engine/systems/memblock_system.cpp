@@ -1245,8 +1245,7 @@ namespace dbc
                ReplaceMemblock(MemblockNum, std::move(Encoded), Error);
     }
 
-    bool MemblockSystem::EncodeMesh(std::vector<uint8_t>& Output, int MeshId, const char* Command,
-                                    std::string* Error)
+    bool MemblockSystem::EncodeMesh(std::vector<uint8_t>& Output, int MeshId, const char* Command, std::string* Error)
     {
         const std::vector<Mesh>* Meshes = Kernel_.Objects().GetMeshes(MeshId);
         if (!Meshes || Meshes->empty())
@@ -1387,8 +1386,7 @@ namespace dbc
                ReplaceMemblock(MemblockNum, std::move(Encoded), Error);
     }
 
-    bool MemblockSystem::EncodeImage(std::vector<uint8_t>& Output, int ImageId, const char* Command,
-                                     std::string* Error)
+    bool MemblockSystem::EncodeImage(std::vector<uint8_t>& Output, int ImageId, const char* Command, std::string* Error)
     {
         const Image* Img = Kernel_.ImageStoreRef().GetImage(ImageId);
         if (!Img || !Img->Surface)

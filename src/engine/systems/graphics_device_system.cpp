@@ -2261,46 +2261,57 @@ namespace dbc
     {
         return Renderer_;
     }
+
     SDL_GPUDevice*& GraphicsDeviceSystem::GpuDevice()
     {
         return GpuDevice_;
     }
+
     SDL_GPUGraphicsPipeline*& GraphicsDeviceSystem::GpuPipeline()
     {
         return GpuPipeline_;
     }
+
     SDL_GPUGraphicsPipeline*& GraphicsDeviceSystem::GpuPipelineAlphaWrite()
     {
         return GpuPipelineAlphaWrite_;
     }
+
     SDL_GPUGraphicsPipeline*& GraphicsDeviceSystem::GpuPipelineTransparent()
     {
         return GpuPipelineTransparent_;
     }
+
     SDL_GPUGraphicsPipeline*& GraphicsDeviceSystem::GpuPipelineAdditive()
     {
         return GpuPipelineAdditive_;
     }
+
     SDL_GPUGraphicsPipeline*& GraphicsDeviceSystem::GpuPipelineWireframe()
     {
         return GpuPipelineWireframe_;
     }
+
     SDL_GPUGraphicsPipeline*& GraphicsDeviceSystem::GpuPipelineAlphaWriteWireframe()
     {
         return GpuPipelineAlphaWriteWireframe_;
     }
+
     SDL_GPUGraphicsPipeline*& GraphicsDeviceSystem::GpuPipelineTransparentWireframe()
     {
         return GpuPipelineTransparentWireframe_;
     }
+
     SDL_GPUGraphicsPipeline*& GraphicsDeviceSystem::GpuPipelineAdditiveWireframe()
     {
         return GpuPipelineAdditiveWireframe_;
     }
+
     SDL_GPUSampler*& GraphicsDeviceSystem::GpuSampler()
     {
         return GpuSampler_;
     }
+
     SDL_GPUSampler*& GraphicsDeviceSystem::GpuSamplerNearest()
     {
         return GpuSamplerNearest_;
@@ -2345,38 +2356,47 @@ namespace dbc
     {
         return GpuVertexBuffer_;
     }
+
     SDL_GPUTransferBuffer*& GraphicsDeviceSystem::GpuTransferBuffer()
     {
         return GpuTransferBuffer_;
     }
+
     SDL_GPUTexture*& GraphicsDeviceSystem::GpuDepthTexture(int Index)
     {
         return GpuDepthTexture_[Index];
     }
+
     SDL_GPUTextureFormat& GraphicsDeviceSystem::GpuDepthFormat()
     {
         return GpuDepthFormat_;
     }
+
     Uint32& GraphicsDeviceSystem::GpuDepthWidth(int Index)
     {
         return GpuDepthWidth_[Index];
     }
+
     Uint32& GraphicsDeviceSystem::GpuDepthHeight(int Index)
     {
         return GpuDepthHeight_[Index];
     }
+
     Uint32& GraphicsDeviceSystem::GpuVertexCapacity()
     {
         return GpuVertexCapacity_;
     }
+
     SDL_Texture*& GraphicsDeviceSystem::WhiteTexture()
     {
         return WhiteTexture_;
     }
+
     SDL_GPUTexture*& GraphicsDeviceSystem::WhiteGpuTexture()
     {
         return WhiteGpuTexture_;
     }
+
     SDL_GPUTexture*& GraphicsDeviceSystem::WhiteCubeGpuTexture()
     {
         return WhiteCubeGpuTexture_;

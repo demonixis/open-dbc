@@ -142,6 +142,7 @@ TEST_CASE("Extension evidence retains command function and same-arity type overl
     REQUIRE(Calls[1]->Parameters.size() == 2);
     CHECK(Calls[0]->Parameters[1].ValueType != Calls[1]->Parameters[1].ValueType);
 }
+
 TEST_CASE("DBPro math value creation and deletion retain command and integer function forms")
 {
     for (const std::string_view Name : {"MAKE VECTOR2", "MAKE VECTOR3", "MAKE VECTOR4", "MAKE MATRIX4",
@@ -606,6 +607,7 @@ TEST_CASE("Every implemented profile overload has an observable behavior witness
 TEST_CASE("Shared VR forms have exact signatures without widening other Classic vector operations")
 {
     using namespace dbc::language;
+
     struct Expected
     {
         SymbolId Id;
@@ -614,6 +616,7 @@ TEST_CASE("Shared VR forms have exact signatures without widening other Classic 
         int Count;
         BuiltinValueType Result;
     };
+
     const Expected Forms[]{
         {SymbolId::Command_SetVrEnabled, "SET VR ENABLED", SymbolKind::Command, 1, BuiltinValueType::Void},
         {SymbolId::Command_SetTrackingSpace, "SET TRACKING SPACE", SymbolKind::Command, 1, BuiltinValueType::Void},

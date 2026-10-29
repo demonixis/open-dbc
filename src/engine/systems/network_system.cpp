@@ -65,37 +65,55 @@ namespace dbc
         class PacketWriter
         {
           public:
-            explicit PacketWriter(Packet Kind) { U8(static_cast<std::uint8_t>(Kind)); }
+            explicit PacketWriter(Packet Kind)
+            {
+                U8(static_cast<std::uint8_t>(Kind));
+            }
 
-            void U8(std::uint8_t Value) { Bytes_.push_back(Value); }
+            void U8(std::uint8_t Value)
+            {
+                Bytes_.push_back(Value);
+            }
+
             void U16(std::uint16_t Value)
             {
                 for (int Shift = 0; Shift < 16; Shift += 8)
                     Bytes_.push_back(static_cast<std::uint8_t>(Value >> Shift));
             }
+
             void U32(std::uint32_t Value)
             {
                 for (int Shift = 0; Shift < 32; Shift += 8)
                     Bytes_.push_back(static_cast<std::uint8_t>(Value >> Shift));
             }
+
             void U64(std::uint64_t Value)
             {
                 U32(static_cast<std::uint32_t>(Value));
                 U32(static_cast<std::uint32_t>(Value >> 32));
             }
-            void I32(std::int32_t Value) { U32(static_cast<std::uint32_t>(Value)); }
+
+            void I32(std::int32_t Value)
+            {
+                U32(static_cast<std::uint32_t>(Value));
+            }
+
             void String(std::string_view Value)
             {
                 U32(static_cast<std::uint32_t>(Value.size()));
                 Bytes_.insert(Bytes_.end(), Value.begin(), Value.end());
             }
+
             void Raw(const void* Data, std::size_t Size)
             {
                 const auto* Begin = static_cast<const std::uint8_t*>(Data);
                 Bytes_.insert(Bytes_.end(), Begin, Begin + Size);
             }
 
-            const std::vector<std::uint8_t>& Bytes() const { return Bytes_; }
+            const std::vector<std::uint8_t>& Bytes() const
+            {
+                return Bytes_;
+            }
 
           private:
             std::vector<std::uint8_t> Bytes_;
@@ -106,7 +124,11 @@ namespace dbc
           public:
             PacketReader(const std::uint8_t* Data, std::size_t Size) : Data_(Data), Size_(Size) {}
 
-            bool U8(std::uint8_t& Value) { return Read(&Value, 1); }
+            bool U8(std::uint8_t& Value)
+            {
+                return Read(&Value, 1);
+            }
+
             bool U16(std::uint16_t& Value)
             {
                 std::uint8_t Bytes[2];
@@ -115,6 +137,7 @@ namespace dbc
                 Value = static_cast<std::uint16_t>(Bytes[0] | (Bytes[1] << 8));
                 return true;
             }
+
             bool U32(std::uint32_t& Value)
             {
                 std::uint8_t Bytes[4];
@@ -124,6 +147,7 @@ namespace dbc
                         (static_cast<std::uint32_t>(Bytes[2]) << 16) | (static_cast<std::uint32_t>(Bytes[3]) << 24);
                 return true;
             }
+
             bool U64(std::uint64_t& Value)
             {
                 std::uint32_t Low = 0;
@@ -133,6 +157,7 @@ namespace dbc
                 Value = Low | (static_cast<std::uint64_t>(High) << 32);
                 return true;
             }
+
             bool I32(std::int32_t& Value)
             {
                 std::uint32_t Bits = 0;
@@ -141,6 +166,7 @@ namespace dbc
                 Value = static_cast<std::int32_t>(Bits);
                 return true;
             }
+
             bool String(std::string& Value, std::size_t Limit)
             {
                 std::uint32_t Size = 0;
@@ -150,6 +176,7 @@ namespace dbc
                 Offset_ += Size;
                 return true;
             }
+
             bool Read(void* Output, std::size_t Size)
             {
                 if (Size > Size_ - Offset_)
@@ -158,7 +185,11 @@ namespace dbc
                 Offset_ += Size;
                 return true;
             }
-            bool AtEnd() const { return Offset_ == Size_; }
+
+            bool AtEnd() const
+            {
+                return Offset_ == Size_;
+            }
 
           private:
             const std::uint8_t* Data_;
@@ -341,8 +372,7 @@ namespace dbc
             std::uint64_t Token = 0;
         };
 
-        static std::unique_ptr<Worker> StartHost(std::shared_ptr<Shared> State, ENetHost* Host,
-                                                 HostSettings Settings)
+        static std::unique_ptr<Worker> StartHost(std::shared_ptr<Shared> State, ENetHost* Host, HostSettings Settings)
         {
             std::unique_ptr<Worker> Result(new Worker(std::move(State), Host));
             Result->Hosting_ = true;
@@ -937,8 +967,8 @@ namespace dbc
     bool NetworkSystem::SetConnection(int Connection, std::string_view Address, std::string* Error)
     {
         if (Connection != 1)
-            return Fail(Error, "Net connection " + std::to_string(Connection) +
-                                   " does not exist; connection 1 is TCP/IP");
+            return Fail(Error,
+                        "Net connection " + std::to_string(Connection) + " does not exist; connection 1 is TCP/IP");
         while (!Address.empty() && Address.front() == ' ')
             Address.remove_prefix(1);
         while (!Address.empty() && Address.back() == ' ')
@@ -1024,8 +1054,8 @@ namespace dbc
         std::array<std::uint8_t, 8192> Reply{};
         for (;;)
         {
-            const auto Remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
-                Deadline - std::chrono::steady_clock::now());
+            const auto Remaining =
+                std::chrono::duration_cast<std::chrono::milliseconds>(Deadline - std::chrono::steady_clock::now());
             if (Remaining.count() <= 0)
                 break;
             enet_uint32 Condition = ENET_SOCKET_WAIT_RECEIVE;
@@ -1182,9 +1212,9 @@ namespace dbc
         if (!GameExists())
             return true;
         const std::lock_guard Lock(Shared_->Mutex);
-        const bool Extra = std::any_of(Shared_->Players.begin(), Shared_->Players.end(),
-                                       [&](const Player& Value)
-                                       { return Value.Id == PlayerId && Value.Local && Value.Id != Shared_->LocalPlayer; });
+        const bool Extra =
+            std::any_of(Shared_->Players.begin(), Shared_->Players.end(), [&](const Player& Value)
+                        { return Value.Id == PlayerId && Value.Local && Value.Id != Shared_->LocalPlayer; });
         if (!Extra)
             return Fail(Error, "FREE NET PLAYER " + std::to_string(PlayerId) +
                                    " is not a player CREATE NET PLAYER added in this application");

@@ -165,13 +165,13 @@ namespace dbc::studio
             if (ImGui::Button("Browse..."))
                 Result = Action::BrowseOutput;
 
-            const bool Android = Target_ == toolchain::ArtifactTarget::AndroidApk ||
-                                 Target_ == toolchain::ArtifactTarget::AndroidBundle;
+            const bool Android =
+                Target_ == toolchain::ArtifactTarget::AndroidApk || Target_ == toolchain::ArtifactTarget::AndroidBundle;
             if (Distribution_ && Android)
             {
                 ImGui::SeparatorText("Signing");
-                ImGui::Text("Keystore: %s", Project.AndroidKeystorePath.empty() ? "(none)"
-                                                                                : Project.AndroidKeystorePath.c_str());
+                ImGui::Text("Keystore: %s",
+                            Project.AndroidKeystorePath.empty() ? "(none)" : Project.AndroidKeystorePath.c_str());
                 ImGui::SameLine();
                 if (ImGui::SmallButton("Create keystore..."))
                     ImGui::OpenPopup("Create keystore");

@@ -196,14 +196,17 @@ namespace dbc
         void ClearBobTrails();
         bool MaterializePresentedBobTrails(std::string* Error = nullptr);
         bool CommitPresentedBobs(std::string* Error = nullptr);
+
         bool SpritesDrawFirst() const
         {
             return SpritesDrawFirst_;
         }
+
         float SpriteGlobalOffsetX() const
         {
             return ResizeOffsetX_;
         }
+
         float SpriteGlobalScaleX() const
         {
             return ResizeScaleX_;

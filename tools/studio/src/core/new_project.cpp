@@ -144,9 +144,8 @@ namespace dbc::studio
                 Main, ProjectTemplateSource(Request.Template, Request.Name), &Result.Error);
             if (Written && Request.Profile == dbc::language::LanguageProfile::DbPro)
             {
-                Written = dbc::interpreter::AtomicWriteText(Root / (Request.Name + ".dbpro"),
-                                                            DbProDescriptor(Request.Name, Request.Template),
-                                                            &Result.Error);
+                Written = dbc::interpreter::AtomicWriteText(
+                    Root / (Request.Name + ".dbpro"), DbProDescriptor(Request.Name, Request.Template), &Result.Error);
             }
             else if (Written)
             {

@@ -141,6 +141,7 @@ namespace dbc::studio
                 const Command* Entry;
                 int Points;
             };
+
             std::vector<Scored> Matches;
             for (const Command& Entry : Commands_)
             {

@@ -23,9 +23,8 @@ namespace dbc::studio
             Font,
         };
 
-        inline constexpr std::array<MediaKind, 6> KMediaKinds = {MediaKind::Image,  MediaKind::Audio,
-                                                                 MediaKind::Model,  MediaKind::Effect,
-                                                                 MediaKind::Video,  MediaKind::Font};
+        inline constexpr std::array<MediaKind, 6> KMediaKinds = {MediaKind::Image,  MediaKind::Audio, MediaKind::Model,
+                                                                 MediaKind::Effect, MediaKind::Video, MediaKind::Font};
 
         // Plural label for the Media panel filter ("Images", "Audio", ...).
         std::string_view MediaKindLabel(MediaKind Kind);

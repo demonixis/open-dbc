@@ -74,8 +74,8 @@ namespace dbc::studio
             {
                 while (!Line.empty() && (Line.front() == ' ' || Line.front() == '\t'))
                     Line.remove_prefix(1);
-                while (!Line.empty() && (Line.back() == '\r' || Line.back() == '\n' || Line.back() == ' ' ||
-                                         Line.back() == '\t'))
+                while (!Line.empty() &&
+                       (Line.back() == '\r' || Line.back() == '\n' || Line.back() == ' ' || Line.back() == '\t'))
                     Line.remove_suffix(1);
                 return Line;
             }
@@ -100,11 +100,11 @@ namespace dbc::studio
             // #include lines, then the first line of code.
             struct Header
             {
-                std::size_t Top = 0;        // after the leading comments and the blank line ending them
-                std::size_t Includes = 0;   // after the last #include of the include block
+                std::size_t Top = 0;      // after the leading comments and the blank line ending them
+                std::size_t Includes = 0; // after the last #include of the include block
                 bool HasIncludes = false;
-                std::size_t Code = 0;       // the first line after the include block and its blank lines
-                bool CodeIsBlank = false;   // true when nothing but blank lines follows
+                std::size_t Code = 0;     // the first line after the include block and its blank lines
+                bool CodeIsBlank = false; // true when nothing but blank lines follows
             };
 
             Header ReadHeader(const std::string& Text)

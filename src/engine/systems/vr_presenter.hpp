@@ -8,10 +8,12 @@ namespace dbc
 {
     class EngineKernel;
     class GpuCommandBuffer;
+
     class VrPresenter
     {
       public:
         explicit VrPresenter(EngineKernel& Kernel) : Kernel_(Kernel) {}
+
         ~VrPresenter();
         void Reset();
         bool Targets(const std::array<SDL_GPUTexture*, 2>& Images, SDL_GPUTextureFormat Format, bool CopySource,
@@ -30,6 +32,7 @@ namespace dbc
             Uint32 Height = 0;
             SDL_GPUTextureFormat Format = SDL_GPU_TEXTUREFORMAT_INVALID;
         };
+
         bool Ensure(Texture& Target, Uint32 Width, Uint32 Height, SDL_GPUTextureFormat Format, bool Depth = false);
         bool Transfer(SDL_GPUCommandBuffer* Commands, SDL_GPUTexture* Source, SDL_GPUTextureFormat SourceFormat,
                       const Texture& Destination, const glm::vec4& Rect, const std::array<float, 3>& Scale, bool Clear);

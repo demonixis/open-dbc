@@ -301,8 +301,8 @@ namespace dbc::studio
         SDL_SetWindowPosition(Window_, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
         // No DXIL: the Scene view ships SPIR-V and MSL only, so Windows uses Vulkan.
-        Gpu_ = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_METALLIB,
-                                   false, nullptr);
+        Gpu_ = SDL_CreateGPUDevice(
+            SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_METALLIB, false, nullptr);
         if (Gpu_ == nullptr)
         {
             DBC_LOG_ERROR("SDL_CreateGPUDevice: {}", SDL_GetError());
@@ -638,8 +638,8 @@ namespace dbc::studio
                 const std::size_t Last = Editor->GetLineCount() - 1;
                 // The index is in glyphs: count the UTF-8 lead bytes of the last line.
                 const std::string LastText = Editor->GetLineText(Last);
-                const std::size_t Glyphs = static_cast<std::size_t>(std::count_if(
-                    LastText.begin(), LastText.end(), [](char Byte) { return (Byte & 0xC0) != 0x80; }));
+                const std::size_t Glyphs = static_cast<std::size_t>(
+                    std::count_if(LastText.begin(), LastText.end(), [](char Byte) { return (Byte & 0xC0) != 0x80; }));
                 const TextEditor::DocPos At = Plan.Where == core::SnippetInsertion::Place::Line
                                                   ? TextEditor::DocPos(Plan.Line, 0)
                                                   : TextEditor::DocPos(Last, Glyphs);
@@ -1488,8 +1488,7 @@ namespace dbc::studio
             if (ImGui::MenuItem("Save Selection as Snippet...", nullptr, false,
                                 Target != nullptr && Target->AnyCursorHasSelection()))
             {
-                Snippets_.OpenSave(Target->GetSectionText(Target->GetMainCursorSelection()),
-                                   Editor_.CurrentProfile());
+                Snippets_.OpenSave(Target->GetSectionText(Target->GetMainCursorSelection()), Editor_.CurrentProfile());
             }
             ImGui::EndMenu();
         }
@@ -1688,8 +1687,8 @@ namespace dbc::studio
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(Theme::Panel));
-        ImGui::BeginChild("##Toolbar", ImVec2(0.0f, BarHeight()),
-                          ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::BeginChild("##Toolbar", ImVec2(0.0f, BarHeight()), ImGuiChildFlags_None,
+                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         ImGui::SetCursorPos(ImVec2(Style.ItemSpacing.x, Style.FramePadding.y));
 
         if (ToolbarButton("##new", ToolIcon::New, true, "New (Ctrl+N)"))

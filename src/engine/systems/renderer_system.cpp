@@ -1442,11 +1442,13 @@ namespace dbc
         const int BlocksX = (SegX + MatrixBlockCells - 1) / MatrixBlockCells;
         const int BlocksZ = (SegZ + MatrixBlockCells - 1) / MatrixBlockCells;
         const bool Lod = MatrixValue.IsTerrain && SegX % MatrixBlockCells == 0 && SegZ % MatrixBlockCells == 0;
+
         struct Block
         {
             bool Visible = false;
             int Step = 1;
         };
+
         std::vector<Block> Blocks(static_cast<size_t>(BlocksX) * static_cast<size_t>(BlocksZ));
         for (int Bz = 0; Bz < BlocksZ; ++Bz)
         {
@@ -1501,6 +1503,7 @@ namespace dbc
             Vec3 View;
             Vec3 Normal;
         };
+
         std::array<GridVertex, (MatrixBlockCells + 1) * (MatrixBlockCells + 1)> Grid;
         for (int Bz = 0; Bz < BlocksZ; ++Bz)
         {
@@ -2289,8 +2292,8 @@ namespace dbc
                                              std::clamp(Object.Alpha, 0.0f, 1.0f)};
                         // As in DBPro's fixed pipeline, vertex alpha only matters to objects that blend or
                         // alpha-test. An opaque object stays opaque when RGB() leaves the alpha byte at zero.
-                        const bool UsesVertexAlpha = Object.Ghosted || Object.Alpha < 0.999f ||
-                                                     Object.AlphaMapping || Object.TransparentBlack;
+                        const bool UsesVertexAlpha =
+                            Object.Ghosted || Object.Alpha < 0.999f || Object.AlphaMapping || Object.TransparentBlack;
                         const auto VertexColor = [&](uint32_t Index)
                         {
                             const uint32_t Packed =
@@ -3133,15 +3136,18 @@ namespace dbc
             return false;
         const RenderView* PreviousView = ActiveView();
         SetActiveView(&View);
+
         struct ViewScope
         {
             RendererSystem& Renderer;
             const RenderView* Previous;
+
             ~ViewScope()
             {
                 Renderer.SetActiveView(Previous);
             }
         } Scope{*this, PreviousView};
+
         // When fog is on and backdrop is off, DarkBASIC Classic uses the fog colour as the clear colour
         // so the horizon blends seamlessly into the sky.
         const int BaseClearColorInt =
@@ -3689,15 +3695,18 @@ namespace dbc
         }
         const RenderView* PreviousView = ActiveView();
         SetActiveView(&View);
+
         struct ViewScope
         {
             RendererSystem& Renderer;
             const RenderView* Previous;
+
             ~ViewScope()
             {
                 Renderer.SetActiveView(Previous);
             }
         } Scope{*this, PreviousView};
+
         const auto& Vertices = Geometry.Vertices;
         const auto& Batches = Geometry.Batches;
         const auto ClearColor = Geometry.ClearColor;
@@ -4045,8 +4054,8 @@ namespace dbc
             // Screen 2D keeps screen coordinates whatever the camera viewport.
             const auto DrawScreen2d = [&]()
             {
-                const SDL_GPUViewport Screen{0.0f, 0.0f, static_cast<float>(Target.Width),
-                                             static_cast<float>(Target.Height), 0.0f, 1.0f};
+                const SDL_GPUViewport Screen{
+                    0.0f, 0.0f, static_cast<float>(Target.Width), static_cast<float>(Target.Height), 0.0f, 1.0f};
                 const SDL_Rect ScreenScissor{0, 0, static_cast<int>(Target.Width), static_cast<int>(Target.Height)};
                 SDL_SetGPUViewport(Pass, &Screen);
                 SDL_SetGPUScissor(Pass, &ScreenScissor);
@@ -4948,11 +4957,10 @@ namespace dbc
                         const int Step = Steps[static_cast<std::size_t>(Bz) * Mesh.BlocksX + Bx];
                         if (Step < 0)
                             continue;
-                        AppendTerrainBlockIndices(Mesh, Mesh.Blocks[static_cast<std::size_t>(Bz) * Mesh.BlocksX + Bx],
-                                                  Step,
-                                                  {StepOf(Bx, Bz - 1), StepOf(Bx, Bz + 1), StepOf(Bx - 1, Bz),
-                                                   StepOf(Bx + 1, Bz)},
-                                                  Geometry.TerrainIndices);
+                        AppendTerrainBlockIndices(
+                            Mesh, Mesh.Blocks[static_cast<std::size_t>(Bz) * Mesh.BlocksX + Bx], Step,
+                            {StepOf(Bx, Bz - 1), StepOf(Bx, Bz + 1), StepOf(Bx - 1, Bz), StepOf(Bx + 1, Bz)},
+                            Geometry.TerrainIndices);
                     }
                 }
                 const auto IndexCount = static_cast<Uint32>(Geometry.TerrainIndices.size()) - FirstIndex;
@@ -5031,17 +5039,16 @@ namespace dbc
         }
         const bool Ready =
             TerrainInstanceBuffer_ &&
-            (IndexBytes == 0 ||
-             Recreate(
-                 TerrainIndexBuffer_, TerrainIndexCapacity_, static_cast<Uint32>(IndexBytes),
-                 [&](Uint32 Size)
-                 {
-                     SDL_GPUBufferCreateInfo Info{};
-                     Info.usage = SDL_GPU_BUFFERUSAGE_INDEX;
-                     Info.size = Size;
-                     return SDL_CreateGPUBuffer(Device, &Info);
-                 },
-                 [&](SDL_GPUBuffer* Buffer) { SDL_ReleaseGPUBuffer(Device, Buffer); })) &&
+            (IndexBytes == 0 || Recreate(
+                                    TerrainIndexBuffer_, TerrainIndexCapacity_, static_cast<Uint32>(IndexBytes),
+                                    [&](Uint32 Size)
+                                    {
+                                        SDL_GPUBufferCreateInfo Info{};
+                                        Info.usage = SDL_GPU_BUFFERUSAGE_INDEX;
+                                        Info.size = Size;
+                                        return SDL_CreateGPUBuffer(Device, &Info);
+                                    },
+                                    [&](SDL_GPUBuffer* Buffer) { SDL_ReleaseGPUBuffer(Device, Buffer); })) &&
             Recreate(
                 TerrainTransfer_, TerrainTransferCapacity_, static_cast<Uint32>(TotalBytes),
                 [&](Uint32 Size)
@@ -5243,8 +5250,8 @@ namespace dbc
             return nullptr;
         GpuCommandBuffer Commands(Cmd);
         bool Submitted = false;
-        return dbc::DownloadCapture(Kernel_, Commands, Texture, nullptr, Gpu.GpuCaptureWidth(),
-                                    Gpu.GpuCaptureHeight(), Submitted);
+        return dbc::DownloadCapture(Kernel_, Commands, Texture, nullptr, Gpu.GpuCaptureWidth(), Gpu.GpuCaptureHeight(),
+                                    Submitted);
     }
 
     void RendererSystem::SetGamma(int Red, int Green, int Blue)

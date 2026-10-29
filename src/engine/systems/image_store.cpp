@@ -256,7 +256,7 @@ namespace dbc
     // === Image operations ===
 
     bool ImageStore::LoadImageFile(const std::string& Path, int ImageId, int TextureFlag, int DivideTextureSize,
-                               std::string* Error)
+                                   std::string* Error)
     {
         if (!ValidateImageId(ImageId, Error))
             return false;
@@ -523,6 +523,7 @@ namespace dbc
                 }
             }
         };
+
         std::unique_ptr<SDL_Surface, SurfaceDeleter> Captured;
 
         SDL_Surface* Source = nullptr;
@@ -1295,6 +1296,7 @@ namespace dbc
     {
         if (!ValidateBitmapId(BitmapId, Error))
             return false;
+
         struct SurfaceDeleter
         {
             void operator()(SDL_Surface* Surface) const
@@ -1305,6 +1307,7 @@ namespace dbc
                 }
             }
         };
+
         std::unique_ptr<SDL_Surface, SurfaceDeleter> Captured;
 
         SDL_Surface* Source = nullptr;

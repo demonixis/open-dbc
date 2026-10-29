@@ -102,6 +102,7 @@ namespace dbc
         {
             return AnyKeyPressed_;
         }
+
         bool AnyKeyPressed() const
         {
             return AnyKeyPressed_;
@@ -171,11 +172,13 @@ namespace dbc
             TryOpenAccelerometer();
             return AccelX_;
         }
+
         float GetAccelerometerY()
         {
             TryOpenAccelerometer();
             return AccelY_;
         }
+
         float GetAccelerometerZ()
         {
             TryOpenAccelerometer();

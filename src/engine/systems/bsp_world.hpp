@@ -94,22 +94,27 @@ namespace dbc
         // MapPaths are tried in order (the name as given, then inside the pk3's folder), as DBPro did.
         bool Load(const std::string& Pk3Path, const std::vector<std::string>& MapPaths, std::string* Error = nullptr);
         void Delete();
+
         [[nodiscard]] bool HasWorld() const
         {
             return Loaded_;
         }
+
         [[nodiscard]] const BspMap& Map() const
         {
             return Map_;
         }
+
         // Internal image id of a texture slot, or 0 when its file could not be loaded.
         [[nodiscard]] int TextureImage(int TextureIndex) const;
 
         void SetCullingCamera(int CameraId);
+
         [[nodiscard]] int CullingCamera() const
         {
             return CullingCamera_;
         }
+
         // Position whose leaf selects the visible set: the BSP camera, or the origin when that camera
         // does not exist (DBPro's camera readers return 0 for a missing camera).
         [[nodiscard]] Vec3 CullingPosition() const;

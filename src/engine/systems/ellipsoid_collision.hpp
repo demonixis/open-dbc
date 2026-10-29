@@ -110,8 +110,8 @@ namespace dbc
 
         // Swept unit sphere from Base along Velocity against a scaled triangle: keeps the earliest
         // contact time in Time (a fraction of Velocity) and its point.
-        inline bool SweepUnitSphere(const Vec3& Base, const Vec3& Velocity, const Vec3& A, const Vec3& B,
-                                    const Vec3& C, float& Time, Vec3& Contact)
+        inline bool SweepUnitSphere(const Vec3& Base, const Vec3& Velocity, const Vec3& A, const Vec3& B, const Vec3& C,
+                                    float& Time, Vec3& Contact)
         {
             const Vec3 Cross = Vec3Cross(Vec3Sub(B, A), Vec3Sub(C, A));
             const float CrossLength = SlideLength(Cross);
@@ -181,8 +181,7 @@ namespace dbc
                 if (!LowestRoot(AlongSquared * -VelocitySquared + AlongDotVelocity * AlongDotVelocity,
                                 AlongSquared * 2.0f * Vec3Dot(Velocity, BaseToStart) -
                                     2.0f * AlongDotVelocity * AlongDotBase,
-                                AlongSquared * (1.0f - Vec3Dot(BaseToStart, BaseToStart)) +
-                                    AlongDotBase * AlongDotBase,
+                                AlongSquared * (1.0f - Vec3Dot(BaseToStart, BaseToStart)) + AlongDotBase * AlongDotBase,
                                 Time, Root))
                     continue;
                 const float Fraction = (AlongDotVelocity * Root - AlongDotBase) / AlongSquared;
@@ -197,8 +196,8 @@ namespace dbc
         }
     } // namespace detail
 
-    [[nodiscard]] inline EllipsoidSlideResult SlideEllipsoid(std::span<const SlideTriangle> Triangles,
-                                                             const Vec3& From, const Vec3& To, Vec3 Radii,
+    [[nodiscard]] inline EllipsoidSlideResult SlideEllipsoid(std::span<const SlideTriangle> Triangles, const Vec3& From,
+                                                             const Vec3& To, Vec3 Radii,
                                                              const EllipsoidSlideSettings& Settings = {})
     {
         using namespace detail;
@@ -231,8 +230,7 @@ namespace dbc
                 if (!AabbIntersect(Swept, Bounds))
                     continue;
                 Found |= SweepUnitSphere(Position, Velocity, SlideDivide(Triangle.A, Radii),
-                                         SlideDivide(Triangle.B, Radii), SlideDivide(Triangle.C, Radii), Time,
-                                         Contact);
+                                         SlideDivide(Triangle.B, Radii), SlideDivide(Triangle.C, Radii), Time, Contact);
             }
             if (!Found)
             {

@@ -116,9 +116,9 @@ namespace dbc::studio
             glm::vec3 Rotation{0.0f}; // degrees, applied X then Y then Z
             glm::vec3 Scale{100.0f};  // percent
 
-            float Size = 10.0f;                 // cube edge, sphere diameter, cylinder and cone size
-            glm::vec3 Extent{10.0f};            // box width/height/depth, plain width/height
-            std::optional<glm::ivec2> Detail;   // sphere rings and segments (Pro form)
+            float Size = 10.0f;                  // cube edge, sphere diameter, cylinder and cone size
+            glm::vec3 Extent{10.0f};             // box width/height/depth, plain width/height
+            std::optional<glm::ivec2> Detail;    // sphere rings and segments (Pro form)
             std::optional<int> PlainOrientation; // Pro form
             std::array<glm::vec3, 3> Corners{glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(10.0f, -10.0f, 0.0f),
                                              glm::vec3(-10.0f, -10.0f, 0.0f)};
@@ -218,6 +218,7 @@ namespace dbc::studio
             {
                 return IdBase[static_cast<std::size_t>(Space)];
             }
+
             int Base(IdSpace Space) const
             {
                 return IdBase[static_cast<std::size_t>(Space)];

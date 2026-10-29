@@ -28,6 +28,7 @@ namespace dbc
         int LightExist(int LightId) const;
         int LightVisible(int LightId) const;
         int LightType(int LightId) const;
+
         int MaximumLights() const
         {
             return 19;

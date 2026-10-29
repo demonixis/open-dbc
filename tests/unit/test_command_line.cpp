@@ -393,7 +393,8 @@ TEST_CASE("source analysis normalizes historical include separators before confi
 
 TEST_CASE("a headless run saves its last frame with --capture-output")
 {
-    const std::array<std::string_view, 5> WithoutHeadless{"run", "program.dba", "--max-frames", "1", "--capture-output"};
+    const std::array<std::string_view, 5> WithoutHeadless{"run", "program.dba", "--max-frames", "1",
+                                                          "--capture-output"};
     CHECK_FALSE(dbc::interpreter::ParseCommandLine(WithoutHeadless));
     const std::array<std::string_view, 4> Windowed{"run", "program.dba", "--capture-output", "frame.bmp"};
     const dbc::interpreter::CommandLineParseResult Rejected = dbc::interpreter::ParseCommandLine(Windowed);
@@ -404,8 +405,8 @@ TEST_CASE("a headless run saves its last frame with --capture-output")
     const std::filesystem::path Capture = Source.Path.string() + ".bmp";
     const std::string SourcePath = Source.Path.string();
     const std::string CapturePath = Capture.string();
-    const std::array<std::string_view, 9> Run{
-        "run", SourcePath, "--dialect", "dbc", "--headless", "--max-frames", "3", "--capture-output", CapturePath};
+    const std::array<std::string_view, 9> Run{"run",          SourcePath, "--dialect",        "dbc",      "--headless",
+                                              "--max-frames", "3",        "--capture-output", CapturePath};
     dbc::interpreter::CommandLineEnvironment Environment;
     REQUIRE(dbc::interpreter::DispatchCommandLine(Run, Environment) ==
             static_cast<int>(dbc::interpreter::CommandLineExitCode::Success));

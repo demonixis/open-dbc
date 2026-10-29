@@ -716,8 +716,8 @@ namespace dbc::language::detail
                     std::vector<Token> Tokens{Keyword};
                     Tokens.insert(Tokens.end(), Value.Tokens.begin() + static_cast<std::ptrdiff_t>(Begin),
                                   Value.Tokens.begin() + static_cast<std::ptrdiff_t>(Index));
-                    const SourceSpan Span = Merge(Begin == 1 ? Keyword.Span : Value.Tokens[Begin].Span,
-                                                  Value.Tokens[Index].Span);
+                    const SourceSpan Span =
+                        Merge(Begin == 1 ? Keyword.Span : Value.Tokens[Begin].Span, Value.Tokens[Index].Span);
                     Result.push_back({std::move(Tokens), Span, false, Begin == 1 && Value.StartsLine});
                     Begin = Index + 1;
                 }

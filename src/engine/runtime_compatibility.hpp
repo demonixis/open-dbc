@@ -182,8 +182,8 @@ namespace dbc
               LoadImageTextureModeUsesClassicHints_(Values.LoadImageTextureModeUsesClassicHints),
               SetObjectZeroUsesTransparentBlack_(Values.SetObjectZeroUsesTransparentBlack),
               NeutralOutOfRangeMemblockReads_(Values.NeutralOutOfRangeMemblockReads),
-              ImageMemblockAlpha_(Values.ImageMemblockAlpha),
-              MeshMemblocks_(Values.MeshMemblocks), SoundMemblocks_(Values.SoundMemblocks)
+              ImageMemblockAlpha_(Values.ImageMemblockAlpha), MeshMemblocks_(Values.MeshMemblocks),
+              SoundMemblocks_(Values.SoundMemblocks)
         {
         }
 

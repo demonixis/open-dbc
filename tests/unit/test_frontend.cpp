@@ -456,8 +456,8 @@ TEST_CASE("DBPro GLOBAL and LOCAL declare every name of a comma list")
     CHECK(Listed.Statements[2].Name == "C#");
     CHECK(Listed.Statements[2].Expressions.size() == 1);
 
-    const dbc::language::Program Empty = dbc::language::Compile(
-        Source("global a,\n", dbc::language::LanguageProfile::DbPro, "global-empty-item.dba"));
+    const dbc::language::Program Empty =
+        dbc::language::Compile(Source("global a,\n", dbc::language::LanguageProfile::DbPro, "global-empty-item.dba"));
     CHECK(HasCode(Empty, "DBC1209"));
 }
 
@@ -946,11 +946,8 @@ TEST_CASE("Nesting past the limit reports one diagnostic and parses what follows
 TEST_CASE("Numeric literals must fit 64-bit integers and finite doubles")
 {
     const std::vector<std::string> Rejected = {
-        "x = 9223372036854775808\n",
-        "x = 0x8000000000000000\n",
-        "x = 0x10000000000000000\n",
-        "x = %1" + Repeat("0", 63) + "\n",
-        "x# = 1.0e999\n",
+        "x = 9223372036854775808\n",       "x = 0x8000000000000000\n", "x = 0x10000000000000000\n",
+        "x = %1" + Repeat("0", 63) + "\n", "x# = 1.0e999\n",
     };
     for (const std::string& Text : Rejected)
     {

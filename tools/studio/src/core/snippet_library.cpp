@@ -98,10 +98,9 @@ namespace dbc::studio
             const dbc::language::Program Existing = Parse(Document, Profile);
             for (const dbc::language::FunctionDeclaration& Function : Parsed.Functions)
             {
-                const bool Declared =
-                    std::any_of(Existing.Functions.begin(), Existing.Functions.end(),
-                                [&](const dbc::language::FunctionDeclaration& Other)
-                                { return Lower(Other.Name) == Lower(Function.Name); });
+                const bool Declared = std::any_of(Existing.Functions.begin(), Existing.Functions.end(),
+                                                  [&](const dbc::language::FunctionDeclaration& Other)
+                                                  { return Lower(Other.Name) == Lower(Function.Name); });
                 if (Declared)
                 {
                     // The parser upper-cases names; quote the snippet's own spelling.
@@ -237,8 +236,7 @@ namespace dbc::studio
             return Result;
         }
 
-        std::filesystem::path SaveSnippet(const std::filesystem::path& Folder, const Snippet& Value,
-                                          std::string& Error)
+        std::filesystem::path SaveSnippet(const std::filesystem::path& Folder, const Snippet& Value, std::string& Error)
         {
             const std::string Stem = FileStem(Value.Name);
             if (Stem.empty())

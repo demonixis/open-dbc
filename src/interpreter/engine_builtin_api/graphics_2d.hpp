@@ -90,54 +90,67 @@ namespace dbc
     {
         return K.Sprites().CreateBob(Id, X, Y, Image, Error);
     }
+
     inline bool DeleteBob(EngineKernel& K, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().DeleteBob(Id, Error);
     }
+
     inline bool FlipBob(EngineKernel& K, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().FlipBob(Id, Error);
     }
+
     inline bool MirrorBob(EngineKernel& K, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().MirrorBob(Id, Error);
     }
+
     inline bool OffsetBob(EngineKernel& K, int Id, int Ox, int Oy, std::string* Error = nullptr)
     {
         return K.Sprites().OffsetBob(Id, Ox, Oy, Error);
     }
+
     inline bool PasteBob(EngineKernel& K, int Id, int X, int Y, std::string* Error = nullptr)
     {
         return K.Sprites().PasteBob(Id, X, Y, Error);
     }
+
     inline bool ScaleBob(EngineKernel& K, int Id, int Scale, std::string* Error = nullptr)
     {
         return K.Sprites().ScaleBob(Id, Scale, Error);
     }
+
     inline bool SetBob(EngineKernel& K, int Id, int Backsave = 1, int Transparency = 1, std::string* Error = nullptr)
     {
         return K.Sprites().SetBob(Id, Backsave, Transparency, Error);
     }
+
     inline bool StretchBob(EngineKernel& K, int Id, int Sx, int Sy, std::string* Error = nullptr)
     {
         return K.Sprites().StretchBob(Id, Sx, Sy, Error);
     }
+
     inline bool HideBob(EngineKernel& K, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().HideBob(Id, Error);
     }
+
     inline bool ShowBob(EngineKernel& K, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().ShowBob(Id, Error);
     }
+
     inline bool PositionBob(EngineKernel& K, int Id, int X, int Y, std::string* Error = nullptr)
     {
         return K.Sprites().PositionBob(Id, X, Y, Error);
     }
+
     inline bool RotateBob(EngineKernel& K, int Id, float Angle, std::string* Error = nullptr)
     {
         return K.Sprites().RotateBob(Id, Angle, Error);
     }
+
     inline bool MoveBob(EngineKernel& K, int Id, float Distance, std::string* Error = nullptr)
     {
         return K.Sprites().MoveBob(Id, Distance, Error);
@@ -148,58 +161,72 @@ namespace dbc
     {
         return K.Sprites().BobCollision(Output, Id, Target, Error);
     }
+
     inline int BobExist(EngineKernel& K, int Id)
     {
         return K.Sprites().BobExist(Id);
     }
+
     inline int BobFlipped(EngineKernel& K, int Id)
     {
         return K.Sprites().BobFlipped(Id);
     }
+
     inline bool BobHeight(EngineKernel& K, int& Output, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().BobHeight(Output, Id, Error);
     }
+
     inline bool BobHit(EngineKernel& K, int& Output, int Id, int Target = 0, std::string* Error = nullptr)
     {
         return K.Sprites().BobHit(Output, Id, Target, Error);
     }
+
     inline int BobImage(EngineKernel& K, int Id)
     {
         return K.Sprites().BobImage(Id);
     }
+
     inline int BobMirrored(EngineKernel& K, int Id)
     {
         return K.Sprites().BobMirrored(Id);
     }
+
     inline int BobOffsetX(EngineKernel& K, int Id)
     {
         return K.Sprites().BobOffsetX(Id);
     }
+
     inline int BobOffsetY(EngineKernel& K, int Id)
     {
         return K.Sprites().BobOffsetY(Id);
     }
+
     inline bool BobScaleX(EngineKernel& K, int& Output, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().BobScaleX(Output, Id, Error);
     }
+
     inline bool BobScaleY(EngineKernel& K, int& Output, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().BobScaleY(Output, Id, Error);
     }
+
     inline bool BobWidth(EngineKernel& K, int& Output, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().BobWidth(Output, Id, Error);
     }
+
     inline bool BobX(EngineKernel& K, int& Output, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().BobX(Output, Id, Error);
     }
+
     inline bool BobY(EngineKernel& K, int& Output, int Id, std::string* Error = nullptr)
     {
         return K.Sprites().BobY(Output, Id, Error);
     }
+
     inline float BobAngle(EngineKernel& K, int Id)
     {
         return K.Sprites().BobAngle(Id);

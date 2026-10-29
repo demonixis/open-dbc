@@ -70,8 +70,8 @@ namespace dbc::studio
 
         std::optional<fs::path> ResolveArtifactIcon(const ArtifactExportRequest& Request, bool Required,
                                                     std::string& Error);
-        bool WriteScaledPng(const ExportContext& Context, const fs::path& Source, const fs::path& Destination,
-                            int Size, bool Opaque, std::string& Error);
+        bool WriteScaledPng(const ExportContext& Context, const fs::path& Source, const fs::path& Destination, int Size,
+                            bool Opaque, std::string& Error);
 
 #if defined(__APPLE__)
         // Development builds: an ad hoc signature runs on this Mac only.

@@ -32,6 +32,7 @@ namespace dbc
         {
             return Mixer_;
         }
+
         MIX_Mixer* Mixer() const
         {
             return Mixer_;
@@ -93,26 +94,32 @@ namespace dbc
         bool PositionListener(float X, float Y, float Z, std::string* Error = nullptr);
         bool RotateListener(float XDegrees, float YDegrees, float ZDegrees, std::string* Error = nullptr);
         bool ScaleListener(float Scale, std::string* Error = nullptr);
+
         float ListenerPositionX() const
         {
             return ListenerX_;
         }
+
         float ListenerPositionY() const
         {
             return ListenerY_;
         }
+
         float ListenerPositionZ() const
         {
             return ListenerZ_;
         }
+
         float ListenerAngleX() const
         {
             return ListenerRotX_;
         }
+
         float ListenerAngleY() const
         {
             return ListenerRotY_;
         }
+
         float ListenerAngleZ() const
         {
             return ListenerRotZ_;

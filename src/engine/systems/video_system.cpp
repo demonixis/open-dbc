@@ -18,9 +18,7 @@ namespace dbc
         constexpr int KMaximumAnimationNumber = 32;
     } // namespace
 
-    VideoSystem::VideoSystem(EngineKernel& Kernel) : Kernel_(Kernel)
-    {
-    }
+    VideoSystem::VideoSystem(EngineKernel& Kernel) : Kernel_(Kernel) {}
 
     VideoSystem::~VideoSystem() = default;
 

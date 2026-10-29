@@ -225,9 +225,9 @@ namespace dbc::studio
                 if (Sha1.size() != 40)
                     continue;
                 SigningIdentity Identity{std::string(Sha1), std::string(Line.substr(Quote + 1, Close - Quote - 1))};
-                const bool Duplicate = std::any_of(Identities.begin(), Identities.end(),
-                                                   [&Identity](const SigningIdentity& Known)
-                                                   { return Known.Sha1 == Identity.Sha1; });
+                const bool Duplicate =
+                    std::any_of(Identities.begin(), Identities.end(),
+                                [&Identity](const SigningIdentity& Known) { return Known.Sha1 == Identity.Sha1; });
                 if (!Duplicate)
                     Identities.push_back(std::move(Identity));
             }
@@ -237,8 +237,8 @@ namespace dbc::studio
         std::vector<SigningIdentity> ListSigningIdentities()
         {
 #if defined(__APPLE__)
-            const ProcessResult Result =
-                RunProcess({{"/usr/bin/security", "find-identity", "-v", "-p", "codesigning"}, {}, {}}, {}, nullptr, true);
+            const ProcessResult Result = RunProcess(
+                {{"/usr/bin/security", "find-identity", "-v", "-p", "codesigning"}, {}, {}}, {}, nullptr, true);
             return Result ? ParseSigningIdentities(Result.Output) : std::vector<SigningIdentity>{};
 #else
             return {};

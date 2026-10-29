@@ -21,10 +21,12 @@ namespace dbc
     {
         return K.Text().DrawText(X, Y, Value, Error);
     }
+
     inline int TextWidthPx(EngineKernel& K, const std::string& Value)
     {
         return K.Text().TextWidthPx(Value);
     }
+
     inline int TextHeightPx(EngineKernel& K, const std::string& Value)
     {
         return K.Text().TextHeightPx(Value);

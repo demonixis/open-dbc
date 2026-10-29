@@ -42,9 +42,8 @@ TEST_CASE("process runner streams each output line without its line ending")
 
 TEST_CASE("process runner passes secrets through the environment, not the arguments")
 {
-    const toolchain::ProcessResult Result =
-        RunShell("printf '%s' \"$OPENDBC_TEST_SECRET\"", nullptr, {{"OPENDBC_TEST_SECRET", "s3cr3t value"}}, nullptr,
-                 true);
+    const toolchain::ProcessResult Result = RunShell("printf '%s' \"$OPENDBC_TEST_SECRET\"", nullptr,
+                                                     {{"OPENDBC_TEST_SECRET", "s3cr3t value"}}, nullptr, true);
     INFO(Result.Error);
     REQUIRE(Result);
     CHECK(Result.Output == "s3cr3t value");

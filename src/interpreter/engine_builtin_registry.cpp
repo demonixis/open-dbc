@@ -2587,8 +2587,8 @@ namespace dbc::interpreter::detail
                                       const std::string Path = ResolveAssetPath(Ctx, Args[0].AsString());
                                       const int TextureFlag = Args.size() >= 3 ? IntegerArgument0 : 0;
                                       const int DivideTextureSize = Args.size() >= 4 ? IntegerArgument1 : 0;
-                                      return Ctx.Kernel->ImageStoreRef().LoadImageFile(Path, IntegerArgument2, TextureFlag,
-                                                                                   DivideTextureSize, &Error);
+                                      return Ctx.Kernel->ImageStoreRef().LoadImageFile(
+                                          Path, IntegerArgument2, TextureFlag, DivideTextureSize, &Error);
                                   }}},
                                 {"LOAD OBJECT",
                                  {2, 4,
@@ -3609,7 +3609,7 @@ namespace dbc::interpreter::detail
                                       }
                                       return true;
                                   }}},
-                };
+                            };
                 return Table;
             }();
             return KCommands;
@@ -4020,7 +4020,7 @@ namespace dbc::interpreter::detail
                             // --- DBPro: Video ---
 
                             // --- DBPro: FTP ---
-                };
+                        };
                 return Table;
             }();
             return KFunctions;

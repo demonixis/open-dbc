@@ -77,6 +77,7 @@ namespace dbc::studio
             int LastFrame = 0;      // TOTAL OBJECT FRAMES
             unsigned int Count = 0; // animations in the file, 0 for a still model
         };
+
         bool ReadModelAnimation(const std::filesystem::path& Path, ModelAnimation& Out, std::string& Error);
 
         // Rotation in degrees, applied X, then Y, then Z, as ROTATE OBJECT does.
@@ -105,6 +106,7 @@ namespace dbc::studio
             glm::mat3 Axes{1.0f};
             glm::vec3 Factor{1.0f};
         };
+
         // Sets `Node` from its state `Start` at the beginning of the drag. Only
         // objects and lights turn, only objects scale; the rest just move.
         void ApplyGroupChange(const GroupChange& Change, const SceneNode& Start, SceneNode& Node);
@@ -125,6 +127,7 @@ namespace dbc::studio
             glm::vec3 Origin{0.0f};
             glm::vec3 Direction{0.0f, 0.0f, 1.0f};
         };
+
         // Distance along the ray to the nearest triangle, both sides counted.
         std::optional<float> Intersect(const Ray& Value, const CpuMesh& Mesh, const glm::mat4& World);
     } // namespace scene
