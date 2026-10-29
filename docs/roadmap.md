@@ -80,9 +80,8 @@ Decisions:
 
 Work, in order:
 
-- [ ] Shared mesh resources: `INSTANCE OBJECT` shares instead of copying, vertex
-  edits copy on write, and a revision drives the GPU upload.
-- [ ] GPU-resident meshes: object-space buffers; the object matrix and material per
+- [ ] GPU-resident meshes: an object-space buffer per shared `MeshGeometry`,
+  uploaded again when its revision changes; the object matrix and material per
   draw; stage coordinates, built-in effects and fading in the vertex shader; vertex
   formats sized to the stages a mesh uses.
 - [ ] GPU instancing.
