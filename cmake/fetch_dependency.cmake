@@ -18,8 +18,8 @@ function(opendbc_run_git)
 endfunction()
 
 # opendbc_fetch_dependency(<name> <repository> <commit> [FetchContent_Declare options...])
-# Declares <name> with SOURCE_DIR set to the cached checkout; further options such as
-# PATCH_COMMAND and SOURCE_SUBDIR are passed through.
+# Declares <name> with SOURCE_DIR set to the cached checkout, also returned in <name>_CACHE_DIR;
+# further options such as PATCH_COMMAND and SOURCE_SUBDIR are passed through.
 function(opendbc_fetch_dependency Name Repository Commit)
     if(NOT Commit MATCHES "^[0-9a-f]+$")
         message(FATAL_ERROR "${Name}: pin a commit hash, not '${Commit}'")
@@ -48,4 +48,5 @@ function(opendbc_fetch_dependency Name Repository Commit)
         endif()
     endif()
     FetchContent_Declare(${Name} SOURCE_DIR "${OPENDBC_SOURCE}" ${ARGN})
+    set(${Name}_CACHE_DIR "${OPENDBC_SOURCE}" PARENT_SCOPE)
 endfunction()

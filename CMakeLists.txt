@@ -423,6 +423,13 @@ if(APPLE OR (NOT ANDROID AND NOT IOS))
     PATCH_COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=<SOURCE_DIR>
         -P ${CMAKE_SOURCE_DIR}/cmake/patch_shadercross_static_dxc.cmake
     )
+    # DXC caches paths into its own sources; drop those left by an earlier checkout.
+    foreach(OPENDBC_DXC_PATH DXC_EXTERNAL_ROOT_DIR DXC_SPIRV_HEADERS_DIR DXC_SPIRV_TOOLS_DIR)
+        string(FIND "${${OPENDBC_DXC_PATH}}" "${SDL3_shadercross_CACHE_DIR}/" OPENDBC_DXC_PATH_POSITION)
+        if(DEFINED CACHE{${OPENDBC_DXC_PATH}} AND NOT OPENDBC_DXC_PATH_POSITION EQUAL 0)
+            unset(${OPENDBC_DXC_PATH} CACHE)
+        endif()
+    endforeach()
     FetchContent_MakeAvailable(SDL3_shadercross)
     if(SDLSHADERCROSS_DXC)
         # DxcOptimizer references both archives. Declaring the ScalarOpts cycle lets
