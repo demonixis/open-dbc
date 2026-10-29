@@ -33,9 +33,10 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    shadow volumes are extruded on the CPU from the casters' triangles.
 3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
    triangles that share textures, blending, depth state and `SurfaceStyle` merge
-   into one `GpuBatch`. GPU meshes take the place of the objects' opaque triangles:
-   after the very early phase and lower render priorities, before particles,
-   bounds and transparency. The 2D layer follows: bitmap 0 as one quad when it
+   into one `GpuBatch`. Static terrains and GPU meshes take the place of their CPU
+   triangles: terrains at render priority −1 (1 when drawn after the objects),
+   meshes at 0, each after the very early phase and lower priorities, before
+   higher ones (particles, bounds) and transparency. The 2D layer follows: bitmap 0 as one quad when it
    shows anything, text, primitives, pasted images and sprites.
 4. `UploadPreparedViews` copies the vertices of all views into one vertex buffer,
    each view's GPU mesh instance records after its vertices.

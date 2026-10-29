@@ -3718,22 +3718,31 @@ namespace dbc
             if (!(Frame.HudLast || K.Draw().IsDrawToFront()) && Geometry.Hud)
                 AppendOverlay(Vertices, Batches);
 
-            // GPU meshes take the place of the objects' opaque triangles, at render priority 0: after the very
-            // early phase and the lower priorities, before the higher ones (particles, bounds) and transparency.
-            bool MeshesAppended = false;
+            // Static terrain and GPU meshes take the place of their CPU triangles among the opaque ones, at their
+            // render priority: terrain at -1, or 1 after the objects, and meshes at 0 with the objects. Each goes
+            // after the very early phase and the lower priorities, before the higher ones (particles, bounds) and
+            // transparency.
+            PrepareStaticTerrains(Geometry);
+            constexpr std::array<int, 3> InsertionPriorities{-1, 0, 1};
+            std::size_t Inserted = 0;
+            const auto InsertNext = [&]
+            {
+                if (InsertionPriorities[Inserted] == 0)
+                    AppendGpuMeshes(Scene, Geometry);
+                else
+                    AppendStaticTerrains(View, Geometry, InsertionPriorities[Inserted] > 0);
+                ++Inserted;
+            };
             for (const uint32_t Index : Scene.World.Order)
             {
                 const Triangle& Tri = Scene.World.Triangles[Index];
-                if (!MeshesAppended && !Tri.VeryEarly && (Tri.Transparent || Tri.Additive || Tri.RenderPriority >= 0))
-                {
-                    AppendGpuMeshes(Scene, Geometry);
-                    MeshesAppended = true;
-                }
+                while (Inserted < InsertionPriorities.size() && !Tri.VeryEarly &&
+                       (Tri.Transparent || Tri.Additive || Tri.RenderPriority >= InsertionPriorities[Inserted]))
+                    InsertNext();
                 AppendTriangle(Tri, Vertices, Batches);
             }
-            if (!MeshesAppended)
-                AppendGpuMeshes(Scene, Geometry);
-            AppendStaticTerrains(View, Geometry);
+            while (Inserted < InsertionPriorities.size())
+                InsertNext();
             AppendOrdered(Scene.Reflected, Vertices, Batches);
 
             for (const Triangle& Tri : ShadowTris)
@@ -5297,7 +5306,7 @@ namespace dbc
                Kernel_.Gpu().TerrainPipeline(false) != nullptr;
     }
 
-    void RendererSystem::AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry)
+    void RendererSystem::PrepareStaticTerrains(PreparedViewGeometry& Geometry)
     {
         EngineKernel& K = Kernel_;
         Geometry.TerrainIndices.clear();
@@ -5319,13 +5328,20 @@ namespace dbc
                 SDL_ReleaseGPUBuffer(Device, It->second.Vertices);
             It = StaticTerrains_.erase(It);
         }
+    }
 
+    void RendererSystem::AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry, bool AfterObjects)
+    {
+        EngineKernel& K = Kernel_;
+        SDL_GPUDevice* Device = K.Gpu().GpuDevice();
+        if (!Device)
+            return;
         const glm::vec3 Camera = View.CameraPosition;
         std::vector<int> Steps;
         K.Matrices().ForEachTerrain(
             [&](int TerrainId, const Matrix& Terrain)
             {
-                if (!DrawsTerrainOnGpu(Terrain))
+                if (!DrawsTerrainOnGpu(Terrain) || Terrain.RenderAfterObjects != AfterObjects)
                     return;
                 StaticTerrain& Entry = StaticTerrains_[TerrainId];
                 if (!Entry.Vertices || Entry.Revision != Terrain.Revision)

@@ -368,7 +368,10 @@ namespace dbc
 
         // An empty scene to rebuild into: the cached one, cleared, when no view still holds it.
         std::shared_ptr<SceneTriangles> SceneForRebuild();
-        void AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry);
+        // Clears the view's terrain indices and drops the buffers of terrains deleted or back on the CPU path.
+        void PrepareStaticTerrains(PreparedViewGeometry& Geometry);
+        // The terrains drawn before the objects, or those drawn after them, as their CPU triangles would be.
+        void AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry, bool AfterObjects);
         bool UploadStaticTerrains(std::span<PreparedViewGeometry> Geometry, SDL_GPUCommandBuffer* Commands);
         void ReleaseStaticTerrains();
 

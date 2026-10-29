@@ -94,9 +94,6 @@ Work, in order:
   sized to the stages a mesh uses; glued and locked objects; reflection passes;
   scenes with order-dependent opaque objects; transparent objects once a
   per-object order is qualified.
-- [ ] Static terrain draws after particles and object bounds, whereas its CPU
-  triangles come before the objects (render priority −1): give it its priority's
-  place among the batches.
 - [ ] Commands that change how an object draws without moving it, such as
   `GHOST OBJECT ON`, leave a still scene's cache in place: mark the object for
   rebuilding.

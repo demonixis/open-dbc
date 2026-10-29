@@ -3864,6 +3864,51 @@ TEST_CASE("Static GPU terrains draw their upper side, follow the view and rebuil
     CHECK(CenterIsBackdrop());
 }
 
+TEST_CASE("Static GPU terrain keeps its render priority's place among the opaque batches")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("terrain-order", 64, 64));
+    Kernel.Camera().SetAutoCamOff();
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::filesystem::path Heightmap =
+        std::filesystem::temp_directory_path() / ("opendbc-terrain-order-" + std::to_string(Suffix) + ".bmp");
+    SDL_Surface* Surface = SDL_CreateSurface(33, 33, SDL_PIXELFORMAT_RGBA32);
+    REQUIRE(Surface != nullptr);
+    REQUIRE(SDL_FillSurfaceRect(Surface, nullptr, SDL_MapSurfaceRGBA(Surface, 0, 0, 0, 255)));
+    REQUIRE(SDL_SaveBMP(Surface, Heightmap.string().c_str()));
+    SDL_DestroySurface(Surface);
+    std::string Error;
+    REQUIRE(Kernel.Matrices().MakeTerrain(1, Heightmap.string(), &Error));
+    std::error_code Ignored;
+    std::filesystem::remove(Heightmap, Ignored);
+    // A GPU mesh above the terrain, its bounds drawn without depth writes at render priority 2.
+    Kernel.Objects().MakeObjectCube(1, 4.0f);
+    Kernel.Objects().PositionObject(1, 16.0f, 4.0f, 16.0f);
+    REQUIRE(Kernel.Objects().ShowObjectBounds(1));
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Camera().PositionCamera(16.0f, 40.0f, 16.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(90.0f, 0.0f, 0.0f, &Error); });
+
+    const dbc::RenderView View = Kernel.Renderer().CameraView(64, 64);
+    dbc::PreparedViewGeometry Geometry;
+    dbc::RenderFrameState Frame;
+    REQUIRE(Kernel.Renderer().BuildPreparedView(View, Geometry, Frame));
+    const auto FirstBatch = [&](auto&& Matches)
+    {
+        const auto Found = std::find_if(Geometry.Batches.begin(), Geometry.Batches.end(), Matches);
+        REQUIRE(Found != Geometry.Batches.end());
+        return Found - Geometry.Batches.begin();
+    };
+    const auto Terrain = FirstBatch([](const dbc::GpuBatch& Batch) { return Batch.StaticVertices && !Batch.MeshDraw; });
+    const auto Mesh = FirstBatch([](const dbc::GpuBatch& Batch) { return Batch.MeshDraw != nullptr; });
+    const auto Bounds =
+        FirstBatch([](const dbc::GpuBatch& Batch) { return !Batch.StaticVertices && Batch.Style.Wireframe; });
+    // As their CPU triangles: terrain at priority -1, objects at 0, bounds at 2.
+    CHECK(Terrain < Mesh);
+    CHECK(Mesh < Bounds);
+}
+
 TEST_CASE("Classic sound memblocks use the documented 12-byte header and accept a zero sample count")
 {
     std::string MemblockError;
