@@ -66,7 +66,7 @@ does for effects; the engine loads whichever the GPU device accepts and never
 transpiles at run time. After `cmake --preset shader-verify`, the
 `shader-verify` build preset checks the tracked files byte for byte and
 `shader-update` regenerates them. Classic animations decode with the platform's
-media framework ([video.md](video.md)); there is no FFmpeg.
+media framework ([video.md](video.md)); OpenDBC bundles no codecs.
 
 Most 3D geometry is transformed on the CPU into view-space triangles, rebuilt
 only when the camera or an object changes. At each `SYNC` every DBPro camera

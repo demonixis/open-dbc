@@ -142,11 +142,12 @@ namespace dbc
         return Impl_->Height;
     }
 
-    void VideoDecoder::Start()
+    bool VideoDecoder::Start()
     {
         Impl_->Ended->store(false);
         [Impl_->Player seekToTime:kCMTimeZero toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
         [Impl_->Player play];
+        return true;
     }
 
     void VideoDecoder::Pause()

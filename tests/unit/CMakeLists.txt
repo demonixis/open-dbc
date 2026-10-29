@@ -123,6 +123,23 @@ target_compile_definitions(test_engine_builtins PRIVATE TEST_SOURCE_DIR="${CMAKE
 target_link_libraries(test_engine_builtins PRIVATE doctest_with_main dbc_interpreter)
 doctest_discover_tests(test_engine_builtins PROPERTIES LABELS "unit")
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(test_engine_builtins PRIVATE PkgConfig::GSTREAMER)
+    add_executable(test_video_decoder test_video_decoder.cpp
+                   ${CMAKE_SOURCE_DIR}/src/engine/systems/video_decoder_gstreamer.cpp)
+    target_include_directories(test_video_decoder PRIVATE ${ENGINE_SRC_DIR})
+    target_compile_definitions(test_video_decoder PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+    target_link_libraries(test_video_decoder PRIVATE doctest_with_main SDL3::SDL3
+                          spdlog::spdlog_header_only PkgConfig::GSTREAMER)
+    dbc_enable_warnings(test_video_decoder)
+    doctest_discover_tests(test_video_decoder PROPERTIES LABELS "unit-video"
+                          ENVIRONMENT "OPENDBC_HEADLESS=1")
+    add_test(NAME video_decoder_without_plugins COMMAND test_video_decoder
+             "--test-case=GStreamer reports missing playback plugins" --no-skip)
+    set_tests_properties(video_decoder_without_plugins PROPERTIES LABELS "unit-video"
+        ENVIRONMENT "OPENDBC_HEADLESS=1;GST_PLUGIN_SYSTEM_PATH_1_0=;GST_PLUGIN_PATH_1_0=;GST_REGISTRY_1_0=${CMAKE_CURRENT_BINARY_DIR}/video-empty-registry.bin")
+endif()
+
 add_executable(test_network test_network.cpp)
 target_link_libraries(test_network PRIVATE doctest_with_main dbc_interpreter)
 target_compile_definitions(test_network PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")

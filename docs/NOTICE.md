@@ -25,6 +25,9 @@ time and carry their own licences; none of their source is vendored here. Deskto
 builds ship the OpenXR loader with its OpenXR-SDK and jsoncpp notices. MoltenVK and
 the headset runtime are installed separately.
 
+Linux builds also use the system GStreamer libraries (LGPL); OpenDBC does not
+bundle them or their codec plugins. See [video.md](video.md) for runtime dependencies.
+
 OpenDBC binaries use FreeType, Timidity, dr_mp3 and stb_image through the
 statically linked SDL libraries. This software is based in part on the work of
 the FreeType Team. Their notices are shipped with every installed product and

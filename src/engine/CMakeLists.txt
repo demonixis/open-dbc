@@ -55,6 +55,12 @@ if(APPLE)
     set_source_files_properties(systems/video_decoder_avfoundation.mm PROPERTIES COMPILE_OPTIONS -fobjc-arc)
     target_link_libraries(dbc_engine PUBLIC "-framework Foundation" "-framework AVFoundation"
                           "-framework CoreMedia" "-framework CoreVideo")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET GLOBAL
+        gstreamer-1.0>=1.16 gstreamer-app-1.0>=1.16 gstreamer-video-1.0>=1.16)
+    target_sources(dbc_engine PRIVATE systems/video_decoder_gstreamer.cpp)
+    target_link_libraries(dbc_engine PRIVATE PkgConfig::GSTREAMER)
 else()
     target_sources(dbc_engine PRIVATE systems/video_decoder_unavailable.cpp)
 endif()

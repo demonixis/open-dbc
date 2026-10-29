@@ -52,6 +52,8 @@
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
+#elif defined(__linux__) && !defined(__ANDROID__)
+#include "gstreamer_video_fixture.hpp"
 #endif
 
 using namespace dbc::interpreter::detail;
@@ -579,11 +581,11 @@ TEST_CASE("Classic inert animation dimensions create a selectable bitmap")
     BuiltinContext Context;
     Context.Kernel = &Kernel;
     Context.Profile = dbc::language::LanguageProfile::Dbc;
-    Context.AssetRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/video";
+    Context.AssetRoot = TEST_SOURCE_DIR;
     EngineBuiltinHost Host(Context);
 
-    // No platform decodes Cinepak, like most period AVI files: the animation loads without a size.
-    const std::vector<dbc::vm::Value> AnimationArguments{dbc::vm::Value::String("cinepak.avi"),
+    // A text file stays inert regardless of which codec plugins the system has installed.
+    const std::vector<dbc::vm::Value> AnimationArguments{dbc::vm::Value::String("README.md"),
                                                          dbc::vm::Value::Integer(1)};
     REQUIRE(Host.Invoke({1,
                          dbc::language::SymbolId::Command_LoadAnimation,
@@ -643,7 +645,7 @@ TEST_CASE("Classic animations validate numbers, files, bitmaps and areas")
     BuiltinContext Context;
     Context.Kernel = &Kernel;
     Context.Profile = dbc::language::LanguageProfile::Dbc;
-    Context.AssetRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/video";
+    Context.AssetRoot = TEST_SOURCE_DIR;
     std::string Error;
     const auto Command = [&](dbc::language::SymbolId Symbol, std::vector<BuiltinValue> Arguments)
     {
@@ -670,10 +672,10 @@ TEST_CASE("Classic animations validate numbers, files, bitmaps and areas")
     CHECK(Number(SymbolId::Function_AnimationExist, 2) == 0);
 
     REQUIRE(
-        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("cinepak.avi"), BuiltinValue::FromNumber(2)}));
+        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("README.md"), BuiltinValue::FromNumber(2)}));
     CHECK(Number(SymbolId::Function_AnimationExist, 2) == 1);
     CHECK_FALSE(
-        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("cinepak.avi"), BuiltinValue::FromNumber(2)}));
+        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("README.md"), BuiltinValue::FromNumber(2)}));
     CHECK(Error == "LOAD ANIMATION cannot replace existing animation 2");
 
     // An inert animation accepts every command but never plays.
@@ -728,15 +730,21 @@ TEST_CASE("Classic animations validate numbers, files, bitmaps and areas")
     CHECK(Number(SymbolId::Function_AnimationExist, 2) == 0);
 }
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || (defined(__linux__) && !defined(__ANDROID__))
 TEST_CASE("Classic animations play decoded video into their bitmap")
 {
+#if defined(__linux__)
+    const dbc::tests::GStreamerVideoFixture Fixture;
+#endif
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("classic-animation-playback", 64, 64));
     BuiltinContext Context;
     Context.Kernel = &Kernel;
     Context.Profile = dbc::language::LanguageProfile::Dbc;
     Context.AssetRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/video";
+#if defined(__linux__)
+    Context.AssetRoot = Fixture.Root;
+#endif
     std::string Error;
     using dbc::language::SymbolId;
     const auto Command = [&](SymbolId Symbol, std::vector<BuiltinValue> Arguments)
@@ -762,7 +770,11 @@ TEST_CASE("Classic animations play decoded video into their bitmap")
         const auto Deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
         while (!Reached() && std::chrono::steady_clock::now() < Deadline)
         {
+#if defined(__APPLE__)
             CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.02, false);
+#else
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+#endif
             Kernel.Video().PaintFrames();
         }
         return Reached();
@@ -773,8 +785,15 @@ TEST_CASE("Classic animations play decoded video into their bitmap")
     // The fixture shows red for one second, then blue for one second.
     REQUIRE(Kernel.ImageStoreRef().CreateBitmap(1, 64, 48, &Error));
     const auto Outside = Pixel(40, 30);
-    Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("red_blue.mp4"), BuiltinValue::FromNumber(1)});
-    CHECK(Number(SymbolId::Function_AnimationWidth) == 64);
+#if defined(__APPLE__)
+    const char* Video = "red_blue.mp4";
+    constexpr int Width = 64;
+#else
+    const char* Video = "red_blue.avi";
+    constexpr int Width = 65;
+#endif
+    Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString(Video), BuiltinValue::FromNumber(1)});
+    CHECK(Number(SymbolId::Function_AnimationWidth) == Width);
     CHECK(Number(SymbolId::Function_AnimationHeight) == 48);
     Command(SymbolId::Command_PlayAnimation,
             {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0),

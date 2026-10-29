@@ -144,9 +144,7 @@ namespace dbc
         }
         Value->Looping = Loop;
         Value->Paused = false;
-        Value->Playing = Value->Decoder != nullptr;
-        if (Value->Decoder)
-            Value->Decoder->Start();
+        Value->Playing = Value->Decoder && Value->Decoder->Start();
         return true;
     }
 
@@ -301,7 +299,7 @@ namespace dbc
             if (!Value.Paused && Value.Decoder->Finished())
             {
                 if (Value.Looping)
-                    Value.Decoder->Start();
+                    Value.Playing = Value.Decoder->Start();
                 else
                     Value.Playing = false;
             }

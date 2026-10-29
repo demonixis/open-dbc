@@ -32,11 +32,11 @@ namespace dbc
         int Width() const;
         int Height() const;
 
-        // Starts playback from the first frame.
-        void Start();
+        // Starts playback from the first frame; false if playback cannot restart.
+        bool Start();
         void Pause();
         void Resume();
-        // True once playback reached the last frame since the latest Start.
+        // True once playback ended or failed since the latest Start.
         bool Finished() const;
         // Fetches the picture due at the current playback time.
         VideoFrame CurrentFrame();

@@ -32,8 +32,9 @@ namespace dbc
         return 0;
     }
 
-    void VideoDecoder::Start()
+    bool VideoDecoder::Start()
     {
+        return false;
     }
 
     void VideoDecoder::Pause()
