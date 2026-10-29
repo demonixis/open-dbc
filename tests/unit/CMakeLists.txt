@@ -41,9 +41,11 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/reference.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/editor_panel.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/text_encoding.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/recovery.cpp
     )
     target_include_directories(test_studio_editor PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
-    target_link_libraries(test_studio_editor PRIVATE doctest_with_main dbc_language imgui_texteditor)
+    target_link_libraries(test_studio_editor PRIVATE doctest_with_main dbc_language imgui_texteditor
+        nlohmann_json::nlohmann_json)
     doctest_discover_tests(test_studio_editor PROPERTIES LABELS "unit-studio")
 
     add_executable(test_studio_scene

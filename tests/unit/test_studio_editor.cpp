@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include "core/recovery.hpp"
 #include "core/text_encoding.hpp"
 #include "dba/command_database.hpp"
 #include "dba/reference.hpp"
@@ -202,4 +203,63 @@ TEST_CASE("Studio editor saves a file in the format it was opened in")
     CHECK(Read() == "print \"\xE2\x86\x92\"\r\nend");
     CHECK(Editor.TakeNotices().size() == 1);
     CHECK(Editor.TakeNotices().empty());
+}
+
+TEST_CASE("Recovery copies follow the unsaved tabs and survive for the next Studio")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-recovery";
+    std::error_code Error;
+    std::filesystem::remove_all(Root, Error);
+    std::filesystem::create_directories(Root / "project", Error);
+    REQUIRE_FALSE(Error);
+    std::ofstream(Root / "project" / "main.dba", std::ios::binary) << "print 1\n";
+    const std::filesystem::path Copies = Root / "recovery";
+    const auto CountCopies = [&]
+    {
+        std::error_code ListError;
+        return std::distance(std::filesystem::directory_iterator(Copies, ListError),
+                             std::filesystem::directory_iterator());
+    };
+
+    panels::EditorPanel Editor;
+    Editor.Initialize(nullptr);
+    REQUIRE(Editor.Open(Root / "project" / "main.dba"));
+    CHECK(Editor.UnsavedTexts().empty());
+    REQUIRE(Editor.ReplaceText(Root / "project" / "main.dba", "print \"caf\xC3\xA9\"\n", false));
+    Editor.NewFile();
+    Editor.CurrentEditor()->ReplaceTextInCurrentCursor("x = 1\n");
+    const std::vector<core::UnsavedText> Unsaved = Editor.UnsavedTexts();
+    REQUIRE(Unsaved.size() == 2);
+
+    core::Recovery Writer(Copies);
+    std::string WriteError;
+    REQUIRE(Writer.Update(Unsaved, WriteError));
+    CHECK(CountCopies() == 2);
+    CHECK(Writer.Pending().empty());
+
+    // A Studio started after a crash finds both copies.
+    const std::vector<core::RecoveryCopy> Found = core::Recovery(Copies).Pending();
+    REQUIRE(Found.size() == 2);
+    const auto Saved =
+        std::find_if(Found.begin(), Found.end(), [](const auto& Copy) { return !Copy.Content.Path.empty(); });
+    REQUIRE(Saved != Found.end());
+    CHECK(Saved->Content.Path == Unsaved.front().Path);
+    CHECK(Saved->Content.Text == "print \"caf\xC3\xA9\"\n");
+
+    panels::EditorPanel Restored;
+    Restored.Initialize(nullptr);
+    for (const core::RecoveryCopy& Copy : Found)
+        Restored.OpenRecovered(Copy.Content);
+    const std::vector<core::UnsavedText> Reopened = Restored.UnsavedTexts();
+    REQUIRE(Reopened.size() == 2);
+    CHECK(std::any_of(Reopened.begin(), Reopened.end(), [&](const auto& Value)
+                      { return Value.Path == Unsaved.front().Path && Value.Text == Unsaved.front().Text; }));
+    CHECK(std::any_of(Reopened.begin(), Reopened.end(),
+                      [&](const auto& Value) { return Value.Path.empty() && Value.Text == Unsaved.back().Text; }));
+
+    // Saved or closed tabs lose their copy, and a normal quit removes the rest.
+    REQUIRE(Writer.Update({Unsaved.front()}, WriteError));
+    CHECK(CountCopies() == 1);
+    Writer.Clear();
+    CHECK(CountCopies() == 0);
 }

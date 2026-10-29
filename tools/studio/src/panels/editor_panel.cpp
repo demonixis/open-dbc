@@ -259,17 +259,46 @@ namespace dbc::studio
             Document* Doc = Find(Path);
             if (Doc == nullptr)
                 return false;
-            if (Doc->Editor->GetText() != Text)
-            {
-                // SetText would reset the undo history and with it the dirty test.
-                const TextEditor::DocPos Cursor = Doc->Editor->GetMainCursorPosition();
-                Doc->Editor->SelectAll();
-                Doc->Editor->ReplaceTextInCurrentCursor(Text);
-                Doc->Editor->SetCursor(Cursor);
-            }
+            SetBufferText(*Doc, Text);
             if (Saved)
                 Doc->SavedUndoIndex = Doc->Editor->GetUndoIndex();
             return true;
+        }
+
+        void EditorPanel::SetBufferText(Document& Doc, const std::string& Text)
+        {
+            if (Doc.Editor->GetText() == Text)
+                return;
+            // SetText would reset the undo history and with it the dirty test.
+            const TextEditor::DocPos Cursor = Doc.Editor->GetMainCursorPosition();
+            Doc.Editor->SelectAll();
+            Doc.Editor->ReplaceTextInCurrentCursor(Text);
+            Doc.Editor->SetCursor(Cursor);
+        }
+
+        std::vector<core::UnsavedText> EditorPanel::UnsavedTexts() const
+        {
+            std::vector<core::UnsavedText> Result;
+            for (const std::unique_ptr<Document>& Doc : Documents_)
+            {
+                if (IsDirty(*Doc))
+                    Result.push_back({Doc->Path, Doc->Title, Doc->Editor->GetText()});
+            }
+            return Result;
+        }
+
+        void EditorPanel::OpenRecovered(const core::UnsavedText& Value)
+        {
+            Document* Doc = nullptr;
+            std::error_code FileError;
+            if (!Value.Path.empty() && std::filesystem::is_regular_file(Value.Path, FileError) && Open(Value.Path))
+                Doc = Find(Value.Path);
+            if (Doc == nullptr)
+            {
+                NewFile();
+                Doc = Documents_.back().get();
+            }
+            SetBufferText(*Doc, Value.Text);
         }
 
         void EditorPanel::NewFile()

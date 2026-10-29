@@ -58,6 +58,14 @@ A standalone source finds its media beside itself; a DBPro project uses its
 descriptor's media root and source order. The Output panel shows the source and
 asset root of each run, and diagnostics are marked in the matching tab.
 
+Saving keeps a file's encoding, line endings and byte order mark. A file that is
+not valid UTF-8 is read as Windows-1252, DarkBASIC's code page, and saved back
+in it; if it gains a character Windows-1252 cannot store, it is saved as UTF-8
+and the Output panel says so. Before each run and every 30 seconds, the Studio
+copies the unsaved tabs, untitled ones included, to the `recovery` folder of its
+preferences directory; it never writes your files until you save. After a crash
+it offers to restore those tabs, and a normal quit deletes the copies.
+
 **File → New Project…** (Ctrl+Shift+N) creates a folder holding `main.dba`,
 from an empty main loop or a basic 1280×720 scene. A DBPro project also gets a
 historical `.dbpro` descriptor; a DBC project gets an `.opendbc-project.json`

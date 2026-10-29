@@ -173,6 +173,8 @@ set(STUDIO_SOURCES
     src/core/paths.hpp
     src/core/project_settings.cpp
     src/core/project_settings.hpp
+    src/core/recovery.cpp
+    src/core/recovery.hpp
     src/core/platform.hpp
     src/core/settings.cpp
     src/core/settings.hpp

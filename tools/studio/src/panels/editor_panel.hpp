@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "core/recovery.hpp"
 #include "core/text_encoding.hpp"
 #include "language/language_profile.hpp"
 #include <TextEditor.h>
@@ -78,6 +79,12 @@ namespace dbc::studio
             // Warnings from saving since the last call, for the Output panel.
             std::vector<std::string> TakeNotices();
 
+            // Every tab with unsaved changes, untitled ones included, for recovery copies.
+            std::vector<core::UnsavedText> UnsavedTexts() const;
+            // Reopens a recovered tab: the file when it still exists, else an untitled tab, holding the
+            // recovered text as an unsaved change.
+            void OpenRecovered(const core::UnsavedText& Value);
+
             void OpenFindReplace();
             void FormatCurrent();
 
@@ -104,6 +111,8 @@ namespace dbc::studio
                              const std::string& Text, const core::TextFormat& Format = {});
             // The document's text in its file format, or UTF-8 when the code page cannot hold it.
             static std::string EncodedText(const Document& Doc, bool& Lossless);
+            // Replaces the whole text as one undoable edit, which leaves the tab dirty.
+            static void SetBufferText(Document& Doc, const std::string& Text);
             void ConfigureEditor(TextEditor& Editor, dbc::language::LanguageProfile Profile) const;
             void ConfigureEffectEditor(TextEditor& Editor) const;
             bool WriteDocument(Document& Doc, const std::filesystem::path& Path);

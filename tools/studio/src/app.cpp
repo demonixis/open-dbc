@@ -272,6 +272,10 @@ namespace dbc::studio
             }
         }
 
+        Recovery_.SetDirectory(core::paths::PrefDir() / "recovery");
+        RecoveryCopies_ = Recovery_.Pending();
+        RecoveryPopupRequested_ = !RecoveryCopies_.empty();
+
         SDL_ShowWindow(Window_);
         Running_ = true;
         return true;
@@ -399,6 +403,11 @@ namespace dbc::studio
             PollExport();
             for (const std::string& Notice : Editor_.TakeNotices())
                 Output_.Append(Notice, panels::OutputPanel::Severity::Notice);
+            if (SDL_GetTicks() >= NextRecovery_)
+            {
+                UpdateRecovery();
+                NextRecovery_ = SDL_GetTicks() + core::Recovery::KRecoveryInterval;
+            }
 
             if (SDL_GetWindowFlags(Window_) & SDL_WINDOW_MINIMIZED)
             {
@@ -410,6 +419,62 @@ namespace dbc::studio
             DrawFrame();
             RenderFrame();
         }
+        // Quitting normally means every change was saved or deliberately discarded.
+        Recovery_.Clear();
+    }
+
+    void App::UpdateRecovery()
+    {
+        std::string Error;
+        if (Recovery_.Update(Editor_.UnsavedTexts(), Error))
+        {
+            RecoveryError_.clear();
+            return;
+        }
+        // Reported once per distinct failure, not at every refresh.
+        if (Error != RecoveryError_)
+            Output_.Append("Cannot write a recovery copy: " + Error, panels::OutputPanel::Severity::Error);
+        RecoveryError_ = Error;
+    }
+
+    void App::DrawRecovery()
+    {
+        constexpr const char* Popup = "Recover unsaved changes";
+        if (RecoveryPopupRequested_)
+        {
+            ImGui::OpenPopup(Popup);
+            RecoveryPopupRequested_ = false;
+        }
+        if (!ImGui::BeginPopupModal(Popup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+            return;
+
+        ImGui::TextUnformatted("OpenDBC did not quit normally. These tabs had unsaved changes:");
+        ImGui::Spacing();
+        for (const core::RecoveryCopy& Copy : RecoveryCopies_)
+            ImGui::BulletText("%s", Copy.Content.Path.empty() ? Copy.Content.Title.c_str()
+                                                              : Copy.Content.Path.string().c_str());
+        ImGui::Spacing();
+        if (ImGui::Button("Restore"))
+        {
+            for (const core::RecoveryCopy& Copy : RecoveryCopies_)
+            {
+                Editor_.OpenRecovered(Copy.Content);
+                Recovery_.Remove(Copy.File);
+            }
+            RecoveryCopies_.clear();
+            // The restored tabs get fresh copies before anything else can fail.
+            UpdateRecovery();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Discard"))
+        {
+            for (const core::RecoveryCopy& Copy : RecoveryCopies_)
+                Recovery_.Remove(Copy.File);
+            RecoveryCopies_.clear();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 
     void App::PollEvents()
@@ -860,6 +925,7 @@ namespace dbc::studio
         }
 
         DrawQuitConfirm();
+        DrawRecovery();
         DrawProjectResolution();
         DrawNewProject();
         if (std::optional<core::Snippet> Picked = Snippets_.Draw())
@@ -1795,6 +1861,8 @@ namespace dbc::studio
                        panels::OutputPanel::Severity::Notice);
 
         ExecutionTarget_ = Target;
+        // A program that brings the Studio down must not take the unsaved tabs with it.
+        UpdateRecovery();
         const bool Started = Execution_.Run(std::move(Document), RunOptions);
 
         if (Started)

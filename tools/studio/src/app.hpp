@@ -12,13 +12,14 @@
 #include "core/new_project.hpp"
 #include "core/platform.hpp"
 #include "core/project_settings.hpp"
+#include "core/recovery.hpp"
 #include "core/settings.hpp"
 #include "core/workspace.hpp"
 #include "toolchain/android_keystore.hpp"
 #include "toolchain/artifact_export_service.hpp"
+#include "toolchain/execution_adapter.hpp"
 #include "toolchain/export_job.hpp"
 #include "toolchain/export_readiness.hpp"
-#include "toolchain/execution_adapter.hpp"
 #include "toolchain/icon_generator.hpp"
 #if !defined(DBC_STUDIO_SANDBOXED)
 #include "toolchain/shader_compiler.hpp"
@@ -61,6 +62,8 @@ namespace dbc::studio
         void DrawStatusBar();
         void DrawAbout();
         void DrawQuitConfirm();
+        void DrawRecovery();
+        void UpdateRecovery();
         void DrawProjectResolution();
         void DrawNewProject();
         void DrawPanels();
@@ -140,6 +143,12 @@ namespace dbc::studio
         bool ShowAbout_ = false;
         bool QuitRequested_ = false;
         bool QuitSaveInProgress_ = false;
+
+        core::Recovery Recovery_;
+        std::vector<core::RecoveryCopy> RecoveryCopies_;
+        bool RecoveryPopupRequested_ = false;
+        std::uint64_t NextRecovery_ = 0;
+        std::string RecoveryError_;
 
         panels::ProjectPanel Project_;
         panels::EditorPanel Editor_;
