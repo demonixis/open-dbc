@@ -396,7 +396,7 @@ namespace dbc::studio
             };
             CameraSelected_ = false;
             for (const scene::SceneNode& Node : Document_.Nodes)
-                if (scene::IsMarker(Node.Kind) && Near(Node.Position))
+                if (scene::IsMarker(Node.Kind) && !Node.Hidden && Near(Node.Position))
                 {
                     Pick(&Node);
                     return;
@@ -414,7 +414,7 @@ namespace dbc::studio
             float Nearest = 0.0f;
             for (const scene::SceneNode& Node : Document_.Nodes)
             {
-                const scene::CpuMesh* Mesh = scene::IsMarker(Node.Kind) ? nullptr : Renderer_.Mesh(Node);
+                const scene::CpuMesh* Mesh = scene::IsMarker(Node.Kind) || Node.Hidden ? nullptr : Renderer_.Mesh(Node);
                 if (Mesh == nullptr)
                     continue;
                 const std::optional<float> Distance = scene::Intersect(Ray, *Mesh, scene::NodeWorld(Node));

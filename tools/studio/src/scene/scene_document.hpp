@@ -141,6 +141,9 @@ namespace dbc::studio
             // FILL MATRIX tile. Empty heights leave the matrix flat at 0.
             std::vector<float> Heights;
             int Tile = 1;
+            // Matrix read from a running program: the tile of each cell, XSegments per row from Z = 0.
+            // Empty for levels, whose cells all show the FILL MATRIX tile.
+            std::vector<int> Tiles;
 
             // Light
             LightKind Light = LightKind::Point;
@@ -163,6 +166,8 @@ namespace dbc::studio
             // Object: placed by the paint tool. The Hierarchy folds these together, and Pro writes
             // them with INSTANCE OBJECT of the first object that looks the same.
             bool Painted = false;
+            // Read from a running program that hides this node or locks it to the screen: listed, not drawn.
+            bool Hidden = false;
 
             Material Mat;
 

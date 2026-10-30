@@ -43,9 +43,9 @@ namespace dbc::interpreter
         {
             static const std::vector<bool> Table = []
             {
-                constexpr std::array<std::string_view, 14> Words{"OBJECT",   "LIMB",    "MESH",    "MATRIX",    "LIGHT",
-                                                                 "TERRAIN",  "CAMERA",  "AUTOCAM", "PARTICLES", "FOG",
-                                                                 "BACKDROP", "3DSOUND", "SOUND",   "SHADOW"};
+                constexpr std::array<std::string_view, 16> Words{
+                    "OBJECT",    "LIMB", "MESH",     "MATRIX",  "LIGHT", "TERRAIN", "CAMERA", "AUTOCAM",
+                    "PARTICLES", "FOG",  "BACKDROP", "3DSOUND", "SOUND", "SHADOW",  "BSP",    "VERTEXDATA"};
                 std::vector<bool> Result(static_cast<std::size_t>(language::SymbolId::Count), false);
                 for (const language::SymbolDescriptor& Descriptor : language::Symbols())
                 {

@@ -520,14 +520,35 @@ namespace dbc::studio
             class LevelReader
             {
               public:
-                LevelReader(LevelReadResult& Result, lang::LanguageProfile Profile) : Result_(Result), Profile_(Profile)
+                LevelReader(LevelReadResult& Result, lang::LanguageProfile Profile,
+                            std::set<std::string>* Skipped = nullptr)
+                    : Result_(Result), Profile_(Profile), Skipped_(Skipped)
                 {
                     Result_.Document.Profile = Profile;
                 }
 
                 void Error(std::uint32_t Line, std::string Message)
                 {
-                    Result_.Errors.push_back({Line, std::move(Message)});
+                    if (Skipped_ == nullptr)
+                        Result_.Errors.push_back({Line, std::move(Message)});
+                }
+
+                // A call a program made, which is valid by definition; its overload still bounds Apply's arguments.
+                void Call(const ReplayCall& Value)
+                {
+                    const std::string Name(lang::Symbol(Value.Symbol).CanonicalName);
+                    if (lang::FindOverload(Value.Symbol, Profile_, static_cast<int>(Value.Arguments.size())) == nullptr)
+                    {
+                        Skipped_->insert(Name);
+                        return;
+                    }
+                    std::vector<Argument> Args;
+                    Args.reserve(Value.Arguments.size());
+                    for (const ReplayArgument& Item : Value.Arguments)
+                        Args.push_back(
+                            {Item.IsText ? Argument::Kind::String : Argument::Kind::Number, Item.Number, Item.Text});
+                    Name_ = &Name;
+                    Apply(Value.Symbol, Args);
                 }
 
                 void Statement(const lang::Statement& Value)
@@ -671,7 +692,8 @@ namespace dbc::studio
                 SceneNode* Create(NodeKind Kind, int Id)
                 {
                     const IdSpace Space = IdSpaceOf(Kind);
-                    if (Id <= 0 || Indexed(Space, Id) != nullptr)
+                    SceneNode* Used = Indexed(Space, Id);
+                    if (Id <= 0 || (Used != nullptr && Skipped_ == nullptr))
                     {
                         Error(Line_, "Number " + Integer(Id) + " is already used or invalid");
                         return nullptr;
@@ -683,6 +705,12 @@ namespace dbc::studio
                     Node.Mat.Flags = DefaultObjectFlags(Profile_);
                     // A sound plays only when PLAY SOUND or LOOP SOUND follows.
                     Node.PlayOnLoad = Kind != NodeKind::Sound;
+                    // A running program may have deleted the number's previous owner.
+                    if (Used != nullptr)
+                    {
+                        *Used = std::move(Node);
+                        return Used;
+                    }
                     Index_[{Space, Id}] = Result_.Document.Nodes.size();
                     Result_.Document.Nodes.push_back(std::move(Node));
                     return &Result_.Document.Nodes.back();
@@ -716,6 +744,16 @@ namespace dbc::studio
                 void Apply(SymbolId Id, const std::vector<Argument>& A)
                 {
                     Environment& Env = Result_.Document.Env;
+                    if (Skipped_ != nullptr)
+                    {
+                        if (Id == SymbolId::Command_CloneObject)
+                            Id = SymbolId::Command_InstanceObject;
+                        else if (Id == SymbolId::Command_FogOff)
+                        {
+                            Env.Fog = false;
+                            return;
+                        }
+                    }
                     switch (Id)
                     {
                         case SymbolId::Command_LoadImage:
@@ -724,7 +762,10 @@ namespace dbc::studio
                             if (A.size() != 2 || !S(A, 0, Path) || !Numbers(A, 1))
                                 return;
                             if (!Images_.emplace(I(A, 1), Path).second)
+                            {
                                 Error(Line_, "Image " + Integer(I(A, 1)) + " is loaded twice");
+                                Images_[I(A, 1)] = Path;
+                            }
                             return;
                         }
                         case SymbolId::Command_LoadObject:
@@ -848,14 +889,24 @@ namespace dbc::studio
                             }
                             break;
                         case SymbolId::Command_SetObject:
-                            if (A.size() != 8)
+                            if (A.size() != 8 && Skipped_ == nullptr)
                             {
                                 Error(Line_, "SET OBJECT is written with all seven flags");
                                 break;
                             }
                             if (SceneNode* Node = Object(I(A, 0)))
-                                Node->Mat.Flags = ObjectFlags{I(A, 1) == 0, I(A, 2),      I(A, 3) != 0, I(A, 4) != 0,
-                                                              I(A, 5) != 0, I(A, 6) != 0, I(A, 7) != 0};
+                            {
+                                // A program may give only the first flags; the others keep their value.
+                                ObjectFlags& Flags = Node->Mat.Flags;
+                                const std::size_t Count = A.size();
+                                Flags.Wireframe = Count > 1 ? I(A, 1) == 0 : Flags.Wireframe;
+                                Flags.Transparency = Count > 2 ? I(A, 2) : Flags.Transparency;
+                                Flags.Cull = Count > 3 ? I(A, 3) != 0 : Flags.Cull;
+                                Flags.Filter = Count > 4 ? I(A, 4) != 0 : Flags.Filter;
+                                Flags.Lighting = Count > 5 ? I(A, 5) != 0 : Flags.Lighting;
+                                Flags.Fog = Count > 6 ? I(A, 6) != 0 : Flags.Fog;
+                                Flags.Ambient = Count > 7 ? I(A, 7) != 0 : Flags.Ambient;
+                            }
                             break;
                         case SymbolId::Command_SetObjectDiffuse:
                             if (SceneNode* Node = Object(I(A, 0)))
@@ -1066,7 +1117,7 @@ namespace dbc::studio
                             Env.AmbientColor = static_cast<Rgb>(I(A, 0));
                             break;
                         case SymbolId::Command_ColorBackdrop:
-                            Env.Backdrop = static_cast<Rgb>(I(A, 0));
+                            Env.Backdrop = static_cast<Rgb>(I(A, A.size() - 1));
                             break;
                         case SymbolId::Command_FogOn:
                             Env.Fog = true;
@@ -1100,6 +1151,8 @@ namespace dbc::studio
                             Env.CameraRange = glm::vec2(F(A, 0), F(A, 1));
                             break;
                         default:
+                            if (Skipped_ != nullptr)
+                                Skipped_->insert(*Name_);
                             Error(Line_, "The Scene view does not edit " + *Name_);
                             break;
                     }
@@ -1112,6 +1165,8 @@ namespace dbc::studio
                 // Static objects, by number: where they were made and which were then deleted.
                 std::map<int, std::uint32_t> StaticLines_;
                 std::set<int> Deleted_;
+                // Set when replaying a program: nothing is an error, and this names what is not understood.
+                std::set<std::string>* Skipped_ = nullptr;
                 std::uint32_t Line_ = 0;
                 const std::string* Name_ = nullptr;
             };
@@ -1228,6 +1283,19 @@ namespace dbc::studio
             for (const lang::Statement& Value : Declaration->Body)
                 Reader.Statement(Value);
             Reader.Finish(ScanMetadata(Text));
+            return Result;
+        }
+
+        ReplayResult ReplayCalls(std::span<const ReplayCall> Calls, const std::string& Name,
+                                 lang::LanguageProfile Profile)
+        {
+            LevelReadResult Level;
+            Level.Document.Name = Name;
+            ReplayResult Result;
+            LevelReader Reader(Level, Profile, &Result.Skipped);
+            for (const ReplayCall& Value : Calls)
+                Reader.Call(Value);
+            Result.Document = std::move(Level.Document);
             return Result;
         }
 

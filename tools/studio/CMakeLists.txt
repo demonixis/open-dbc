@@ -240,6 +240,8 @@ set(STUDIO_SOURCES
 
     src/scene/heightmap.cpp
     src/scene/heightmap.hpp
+    src/scene/scene_capture.cpp
+    src/scene/scene_capture.hpp
     src/scene/scene_codegen.cpp
     src/scene/scene_codegen.hpp
     src/scene/scene_document.cpp

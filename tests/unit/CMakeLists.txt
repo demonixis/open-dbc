@@ -62,6 +62,16 @@ if(NOT ANDROID AND NOT IOS)
     target_link_libraries(test_studio_scene PRIVATE doctest_with_main dbc_language glm::glm)
     doctest_discover_tests(test_studio_scene PROPERTIES LABELS "unit-studio")
 
+    add_executable(test_studio_scene_capture
+        test_studio_scene_capture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_capture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
+    )
+    target_include_directories(test_studio_scene_capture PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
+    target_link_libraries(test_studio_scene_capture PRIVATE doctest_with_main dbc_interpreter glm::glm)
+    doctest_discover_tests(test_studio_scene_capture PROPERTIES LABELS "unit-studio")
+
     add_executable(test_studio_scene_render
         test_studio_scene_render.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/gpu_texture.cpp
@@ -88,6 +98,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_paint.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_viewport.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/heightmap.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_capture.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_geometry.cpp

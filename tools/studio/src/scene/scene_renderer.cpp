@@ -328,6 +328,8 @@ namespace dbc::studio
                         std::memcpy(&Bits, &Height, sizeof(Bits));
                         Hash = (Hash ^ Bits) * 1099511628211ull;
                     }
+                    for (const int Tile : Node.Tiles)
+                        Hash = (Hash ^ static_cast<std::uint32_t>(Tile)) * 1099511628211ull;
                     return "matrix:" + F(Node.Width) + "," + F(Node.Depth) + "," + std::to_string(Node.XSegments) +
                            "," + std::to_string(Node.ZSegments) + "," + std::to_string(Node.TilesAcross) + "," +
                            std::to_string(Node.TilesDown) + "," + std::to_string(MatrixTile(Node)) + "," +
@@ -595,7 +597,7 @@ namespace dbc::studio
                          0.0f, Env.DefaultLightColor.value_or(0xFFFFFF), 0.0f, 0.0f);
             for (const SceneNode& Node : Document.Nodes)
             {
-                if (Node.Kind != NodeKind::Light)
+                if (Node.Kind != NodeKind::Light || Node.Hidden)
                     continue;
                 const int Type = Node.Light == LightKind::Directional ? 0 : Node.Light == LightKind::Point ? 1 : 2;
                 AddLight(Type, Node.Position, LightDirection(Node.Rotation), Node.Range.value_or(KDefaultLightRange),
@@ -669,7 +671,7 @@ namespace dbc::studio
             std::vector<Look> Looks;
             for (const SceneNode& Node : Document.Nodes)
             {
-                if (IsMarker(Node.Kind))
+                if (IsMarker(Node.Kind) || Node.Hidden)
                     continue;
                 // SameLook only speaks for objects: a matrix differs by more than it compares.
                 auto Known = Looks.end();
@@ -704,7 +706,7 @@ namespace dbc::studio
                 std::vector<glm::vec3> Volume;
                 for (const SceneNode& Node : Document.Nodes)
                 {
-                    if (!Node.Mat.CastShadow || IdSpaceOf(Node.Kind) != IdSpace::Object)
+                    if (!Node.Mat.CastShadow || Node.Hidden || IdSpaceOf(Node.Kind) != IdSpace::Object)
                         continue;
                     if (const CpuMesh* Caster = Mesh(Node))
                         AppendShadowVolume(*Caster, NodeWorld(Node), Light, KShadowRange, Volume);
