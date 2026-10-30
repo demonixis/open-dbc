@@ -429,10 +429,11 @@ namespace dbc
         std::unordered_map<uint64_t, ShadowTopologyEntry> ShadowTopologies_;
 
         // A caster's volume in world space, which the camera does not change, and what it was extruded from. All of
-        // them share one pair of GPU buffers, drawn in one call.
+        // them share one pair of GPU buffers, with every near cap at the start of the indices.
         struct ShadowCaster
         {
             std::vector<Vec3> Vertices;
+            std::vector<uint32_t> NearCapIndices;
             std::vector<uint32_t> Indices;
             std::vector<uint64_t> Revisions;
             uint64_t LastWalk = 0;
@@ -443,6 +444,7 @@ namespace dbc
         Vec3 ShadowCasterLight_{};
         bool ShadowVolumesStale_ = false;
         std::size_t ShadowVolumeVertexCount_ = 0;
+        std::size_t ShadowNearCapIndexCount_ = 0;
         std::size_t ShadowVolumeIndexCount_ = 0;
         SDL_GPUBuffer* ShadowVertexBuffer_ = nullptr;
         SDL_GPUBuffer* ShadowIndexBuffer_ = nullptr;

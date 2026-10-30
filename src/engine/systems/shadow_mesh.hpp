@@ -38,11 +38,12 @@ namespace dbc
     [[nodiscard]] ShadowTopology BuildShadowTopology(const MeshGeometry& Geometry);
 
     // Appends the stencil volume a mesh casts from Light out to Range, given its vertices in the space of Light: its
-    // lit faces as the near cap, their copy pushed away as the far cap, and the sides. Sides between two lit faces
-    // would cancel out in the stencil, so an edge has only as many as the faces around it leave unmatched. That
-    // gives the same stencil on any mesh, open or not, however many faces share an edge and whichever way they turn.
-    // Each point takes two vertices; Lit is scratch space.
+    // lit faces as the near cap, in NearCapIndices since they lie on the mesh's own surface, and in VolumeIndices
+    // their copy pushed away as the far cap, and the sides. Sides between two lit faces would cancel out in the
+    // stencil, so an edge has only as many as the faces around it leave unmatched. That gives the same stencil on
+    // any mesh, open or not, however many faces share an edge and whichever way they turn. Each point takes two
+    // vertices; Lit is scratch space.
     void ExtrudeShadowMesh(const ShadowTopology& Topology, std::span<const Vec3> Vertices, const Vec3& Light,
                            float Range, std::vector<uint8_t>& Lit, std::vector<Vec3>& VolumeVertices,
-                           std::vector<uint32_t>& VolumeIndices);
+                           std::vector<uint32_t>& NearCapIndices, std::vector<uint32_t>& VolumeIndices);
 } // namespace dbc

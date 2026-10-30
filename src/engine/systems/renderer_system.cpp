@@ -1077,16 +1077,22 @@ namespace dbc
                         true);
                 }
 
-                if (SDL_GPUGraphicsPipeline* VolumePipeline = K.Gpu().ShadowVolumePipeline())
+                SDL_GPUGraphicsPipeline* NearCapPipeline = K.Gpu().ShadowNearCapPipeline();
+                SDL_GPUGraphicsPipeline* VolumePipeline = K.Gpu().ShadowVolumePipeline();
+                if (NearCapPipeline && VolumePipeline)
                 {
-                    SDL_BindGPUGraphicsPipeline(Pass, VolumePipeline);
+                    const auto NearCapIndices = static_cast<Uint32>(ShadowNearCapIndexCount_);
+                    SDL_BindGPUGraphicsPipeline(Pass, NearCapPipeline);
                     SDL_PushGPUVertexUniformData(Cmd, 0, &PerspUbo, sizeof(GpuVertexUniforms));
                     SDL_PushGPUVertexUniformData(Cmd, 1, &View.WorldToView[0][0], sizeof(glm::mat4));
                     const SDL_GPUBufferBinding VolumeVertices{ShadowVertexBuffer_, 0};
                     SDL_BindGPUVertexBuffers(Pass, 0, &VolumeVertices, 1);
                     const SDL_GPUBufferBinding VolumeIndices{ShadowIndexBuffer_, 0};
                     SDL_BindGPUIndexBuffer(Pass, &VolumeIndices, SDL_GPU_INDEXELEMENTSIZE_32BIT);
-                    SDL_DrawGPUIndexedPrimitives(Pass, static_cast<Uint32>(ShadowVolumeIndexCount_), 1, 0, 0, 0);
+                    SDL_DrawGPUIndexedPrimitives(Pass, NearCapIndices, 1, 0, 0, 0);
+                    SDL_BindGPUGraphicsPipeline(Pass, VolumePipeline);
+                    SDL_DrawGPUIndexedPrimitives(Pass, static_cast<Uint32>(ShadowVolumeIndexCount_) - NearCapIndices, 1,
+                                                 NearCapIndices, 0, 0);
                     SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
                     BindSharedVertices(Pass);
                 }
@@ -1116,7 +1122,7 @@ namespace dbc
             uint64_t{Vertices.size()} + Geometry.TerrainIndices.size() + Geometry.MeshIndices + ShadowVolumeIndexCount_;
         Frame.Vertices = static_cast<int>(
             std::min<uint64_t>(static_cast<uint64_t>(Frame.Vertices) + ViewVertices, std::numeric_limits<int>::max()));
-        Frame.Batches += static_cast<int>(Batches.size()) + (ShadowVolumeIndexCount_ != 0 ? 1 : 0);
+        Frame.Batches += static_cast<int>(Batches.size()) + (ShadowVolumeIndexCount_ != 0 ? 2 : 0);
         ++Frame.Views;
         return true;
     }
