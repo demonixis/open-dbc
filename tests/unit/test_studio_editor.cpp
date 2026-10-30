@@ -234,6 +234,24 @@ namespace
             return Window != nullptr && Window->Active ? Window : nullptr;
         }
 
+        const ImGuiWindow* Hint() const
+        {
+            const ImGuiWindow* Window = ImGui::FindWindowByName("##parameter-hint");
+            return Window != nullptr && Window->Active ? Window : nullptr;
+        }
+
+        void PressHintTrigger()
+        {
+            ImGui::GetIO().AddKeyEvent(ImGuiMod_Ctrl, true);
+            ImGui::GetIO().AddKeyEvent(ImGuiMod_Shift, true);
+            ImGui::GetIO().AddKeyEvent(ImGuiKey_Space, true);
+            Frame();
+            ImGui::GetIO().AddKeyEvent(ImGuiKey_Space, false);
+            ImGui::GetIO().AddKeyEvent(ImGuiMod_Shift, false);
+            ImGui::GetIO().AddKeyEvent(ImGuiMod_Ctrl, false);
+            Frame();
+        }
+
       private:
         dba::Reference Reference_;
         dba::CommandDatabase Commands_;
@@ -667,6 +685,167 @@ TEST_CASE("Studio find bar takes the keyboard: Enter goes to the next match inst
     }
     ImGui::DestroyContext();
     std::filesystem::remove_all(Root, Error);
+}
+
+TEST_CASE("Studio parameter hint sits above the call without taking the keyboard")
+{
+    CompletionHarness Harness;
+    CHECK(Harness.Hint() == nullptr);
+    Harness.Type("sync");
+    Harness.Press(ImGuiKey_Escape);
+    Harness.Press(ImGuiKey_Enter);
+    Harness.Type("  position object 1, ");
+    Harness.Frame();
+    const ImGuiWindow* Hint = Harness.Hint();
+    REQUIRE(Hint != nullptr);
+
+    // Its bottom left corner touches the name, on the line above the text.
+    TextEditor& Widget = Harness.Widget();
+    const ImVec2 Below(Hint->Pos.x + Widget.GetGlyphWidth() * 0.5f,
+                       Hint->Pos.y + Hint->Size.y + Widget.GetLineHeight() * 0.5f);
+    CHECK(Widget.GetWordAtMousePos(Below) == "position");
+    CHECK(ImGui::GetCurrentContext()->NavWindow != Hint);
+
+    // The arrows and Enter still belong to the editor, and leaving the line closes it.
+    const size_t Line = Widget.GetMainCursorPosition().line;
+    Harness.Press(ImGuiKey_UpArrow);
+    CHECK(Widget.GetMainCursorPosition().line == Line - 1);
+    CHECK(Harness.Hint() == nullptr);
+    Harness.Press(ImGuiKey_DownArrow);
+    CHECK(Widget.GetMainCursorPosition().line == Line);
+    CHECK(Harness.Hint() == nullptr);
+
+    // Asking brings it back on a line left alone.
+    Widget.SetCursor(TextEditor::DocPos(Line, 20));
+    Harness.Frame();
+    Harness.PressHintTrigger();
+    CHECK(Harness.Hint() != nullptr);
+    CHECK(Harness.Text() == "sync\n  position object 1, ");
+    Harness.Press(ImGuiKey_Enter);
+    CHECK(Harness.Hint() == nullptr);
+}
+
+TEST_CASE("Studio parameter hint follows its call")
+{
+    CompletionHarness Harness;
+    Harness.Type("x = rgb(1");
+    CHECK(Harness.Hint() != nullptr);
+
+    // Moving inside the call keeps it; moving out of the name closes it for good.
+    Harness.Press(ImGuiKey_LeftArrow);
+    CHECK(Harness.Hint() != nullptr);
+    Harness.Press(ImGuiKey_LeftArrow);
+    CHECK(Harness.Hint() == nullptr);
+    Harness.Press(ImGuiKey_RightArrow);
+    CHECK(Harness.Hint() == nullptr);
+
+    // Closing the parenthesis ends the call.
+    Harness.Press(ImGuiKey_End);
+    Harness.Type("x");
+    CHECK(Harness.Hint() == nullptr);
+}
+
+TEST_CASE("Studio parameter hint shares Escape with the list")
+{
+    CompletionHarness Harness;
+    Harness.Type("position object 1, s");
+    REQUIRE(Harness.Popup() != nullptr);
+    REQUIRE(Harness.Hint() != nullptr);
+
+    // The list goes first, then the hint, and the focus stays.
+    Harness.Press(ImGuiKey_Escape);
+    CHECK(Harness.Popup() == nullptr);
+    CHECK(Harness.Hint() != nullptr);
+    Harness.Press(ImGuiKey_Escape);
+    CHECK(Harness.Hint() == nullptr);
+
+    // Typing does not bring it back until the next argument.
+    Harness.Type("1");
+    CHECK(Harness.Hint() == nullptr);
+    Harness.Type(",");
+    CHECK(Harness.Hint() != nullptr);
+    CHECK(Harness.Text() == "position object 1, s1,");
+}
+
+TEST_CASE("Studio parameter hint and list share the space around the line")
+{
+    CompletionHarness Harness;
+    TextEditor& Widget = Harness.Widget();
+
+    // Four overloads do not fit above the first line: the list wins while it is open,
+    // and the hint then takes its place under the line.
+    Harness.Type("play animation 1, s");
+    REQUIRE(Harness.Popup() != nullptr);
+    CHECK(Harness.Hint() == nullptr);
+    Harness.Press(ImGuiKey_Escape);
+    const ImGuiWindow* Below = Harness.Hint();
+    REQUIRE(Below != nullptr);
+    const ImVec2 Over(Below->Pos.x + Widget.GetGlyphWidth() * 0.5f, Below->Pos.y - Widget.GetLineHeight() * 0.5f);
+    CHECK(Widget.GetWordAtMousePos(Over) == "play");
+
+    // Far down the window the list flips above the line, and the hint above the list.
+    const float Lines = ImGui::GetIO().DisplaySize.y / Widget.GetLineHeight();
+    Widget.SetText(std::string(static_cast<size_t>(Lines * 0.7f), '\n'));
+    Widget.SetCursor(TextEditor::DocPos(Widget.GetLineCount() - 1, 0));
+    Harness.Frame();
+    Harness.Frame();
+    Harness.Type("position object 1, s");
+    const ImGuiWindow* List = Harness.Popup();
+    const ImGuiWindow* Above = Harness.Hint();
+    REQUIRE(List != nullptr);
+    REQUIRE(Above != nullptr);
+    CHECK(Above->Pos.y + Above->Size.y <= List->Pos.y);
+    CHECK(List->Pos.y + List->Size.y < ImGui::GetIO().DisplaySize.y);
+}
+
+TEST_CASE("Studio parameter hint counts glyphs, not bytes, before the name")
+{
+    CompletionHarness Harness;
+    Harness.Type("s$ = \"caf");
+    ImGui::GetIO().AddInputCharactersUTF8("\xC3\xA9");
+    Harness.Frame();
+    Harness.Type("\" : set window title ");
+    Harness.Frame();
+    const ImGuiWindow* Hint = Harness.Hint();
+    REQUIRE(Hint != nullptr);
+    TextEditor& Widget = Harness.Widget();
+    const ImVec2 Below(Hint->Pos.x + Widget.GetGlyphWidth() * 0.5f,
+                       Hint->Pos.y + Hint->Size.y + Widget.GetLineHeight() * 0.5f);
+    CHECK(Widget.GetWordAtMousePos(Below) == "set");
+}
+
+TEST_CASE("Studio parameter hint stays out of comments and effect tabs")
+{
+    SUBCASE("Comment")
+    {
+        CompletionHarness Harness;
+        Harness.Type("rem position object 1, ");
+        CHECK(Harness.Hint() == nullptr);
+    }
+    SUBCASE("Block comment")
+    {
+        CompletionHarness Harness;
+        Harness.Type("remstart");
+        Harness.Press(ImGuiKey_Enter);
+        Harness.Type("position object 1, ");
+        CHECK(Harness.Hint() == nullptr);
+    }
+    SUBCASE("Effect")
+    {
+        const std::filesystem::path Root =
+            std::filesystem::temp_directory_path() / "opendbc-test-studio-parameter-hint";
+        std::error_code Error;
+        std::filesystem::remove_all(Root, Error);
+        std::filesystem::create_directories(Root, Error);
+        REQUIRE_FALSE(Error);
+        std::ofstream{Root / "main.fx"};
+        {
+            CompletionHarness Harness(Root / "main.fx");
+            Harness.Type("position object 1, ");
+            CHECK(Harness.Hint() == nullptr);
+        }
+        std::filesystem::remove_all(Root, Error);
+    }
 }
 
 TEST_CASE("Studio text codec keeps Windows-1252, CRLF and BOM files byte for byte")

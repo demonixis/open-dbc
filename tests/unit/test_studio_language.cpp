@@ -148,6 +148,86 @@ TEST_CASE("Studio completion describes a name from the catalogue, per profile")
     CHECK(Describe("NOT A COMMAND").Signatures.empty());
 }
 
+TEST_CASE("Studio parameter hints find the builtin call around the cursor")
+{
+    dba::Reference Reference;
+    dba::CommandDatabase Commands;
+    Commands.Build(Reference);
+    const auto Find = [&](std::string_view Line, bool InBlockComment = false)
+    { return dba::FindParameterHint(Commands, LanguageProfile::DbPro, Line, InBlockComment); };
+    // The first overload's text, the argument and the name's offset.
+    const auto Check = [&](std::string_view Line, std::string_view Text, size_t Argument, size_t NameStart)
+    {
+        CAPTURE(Line);
+        const std::optional<dba::ParameterHint> Hint = Find(Line);
+        REQUIRE(Hint.has_value());
+        REQUIRE_FALSE(Hint->Overloads.empty());
+        CHECK(Hint->Overloads[0].Text() == Text);
+        CHECK(Hint->Argument == Argument);
+        CHECK(Hint->NameStart == NameStart);
+    };
+
+    // Statements.
+    Check("set window title ", "SET WINDOW TITLE string", 0, 0);
+    Check("  set window title \"a", "SET WINDOW TITLE string", 0, 2);
+    Check("position object 1, 2, ", "POSITION OBJECT number, number, number, number", 2, 0);
+    Check("POSITION OBJECT 1,", "POSITION OBJECT number, number, number, number", 1, 0);
+    Check("sync : set window title ", "SET WINDOW TITLE string", 0, 7);
+    Check("if x then set window title ", "SET WINDOW TITLE string", 0, 10);
+    Check("if x then sync else set window title ", "SET WINDOW TITLE string", 0, 20);
+
+    // Calls, and what sits between them.
+    Check("x = rgb(", "RGB(number, number, number) -> integer", 0, 4);
+    Check("x = rgb(255, ", "RGB(number, number, number) -> integer", 1, 4);
+    Check("x = object position x(", "OBJECT POSITION X(number) -> real", 0, 4);
+    Check("x = timer(", "TIMER() -> integer", 0, 4);
+    Check("print rgb(1, 2", "RGB(number, number, number) -> integer", 1, 6);
+    Check("position object 1, rgb(1, ", "RGB(number, number, number) -> integer", 1, 19);
+    Check("position object 1, rgb(1, 2, 3), ", "POSITION OBJECT number, number, number, number", 2, 0);
+    Check("position object 1, (2 + ", "POSITION OBJECT number, number, number, number", 1, 0);
+    Check("position object grid(1, 2), ", "POSITION OBJECT number, number, number, number", 1, 0);
+    Check("position object Twice(1, ", "POSITION OBJECT number, number, number, number", 0, 0);
+    Check("position object(1, ", "POSITION OBJECT number, number, number, number", 1, 0);
+
+    // Commas in strings separate nothing.
+    Check("load image \"a,b\", ", "LOAD IMAGE string, number, [number], [number]", 1, 0);
+    Check("load image \"a,b", "LOAD IMAGE string, number, [number], [number]", 0, 0);
+
+    // A name shared by a command and a function follows the form used.
+    Check("make vector3 ", "MAKE VECTOR3 number", 0, 0);
+    Check("x = make vector3(", "MAKE VECTOR3(number) -> integer", 0, 4);
+
+    // Which parameter each overload gives the argument.
+    const std::optional<dba::ParameterHint> Box = Find("box 1, 2, 3, 4, ");
+    REQUIRE(Box.has_value());
+    REQUIRE(Box->Overloads.size() == 2);
+    CHECK(Box->Overloads[0].ParameterFor(Box->Argument) == dba::Signature::NoParameter);
+    CHECK(Box->Overloads[1].ParameterFor(Box->Argument) == 4);
+    const std::optional<dba::ParameterHint> Print = Find("print 1, 2, 3");
+    REQUIRE(Print.has_value());
+    CHECK(Print->Argument == 2);
+    CHECK(Print->Overloads[0].ParameterFor(2) == 0);
+    CHECK(Print->Overloads[0].Text() == "PRINT any...");
+
+    // Nothing while the name is typed, for what takes no argument, or in a comment.
+    CHECK_FALSE(Find("").has_value());
+    CHECK_FALSE(Find("   ").has_value());
+    CHECK_FALSE(Find("set window title").has_value());
+    CHECK_FALSE(Find("set window ").has_value());
+    CHECK_FALSE(Find("set window off ").has_value());
+    CHECK_FALSE(Find("sync(").has_value());
+    CHECK_FALSE(Find("x = 1, ").has_value());
+    CHECK_FALSE(Find("grid(1, ").has_value());
+    CHECK_FALSE(Find("player.rgb(").has_value());
+    CHECK_FALSE(Find("x = rgb(1, 2, 3)").has_value());
+    CHECK_FALSE(Find("rem position object 1, ").has_value());
+    CHECK_FALSE(Find("position object 1 ` 2, ").has_value());
+    CHECK_FALSE(Find("position object 1, ", true).has_value());
+    CHECK(Find("remend : position object 1, ", true).has_value());
+    CHECK_FALSE(Find("remstart position object 1, ").has_value());
+    CHECK_FALSE(dba::FindParameterHint(Commands, LanguageProfile::Dbc, "add vector4 1, ", false).has_value());
+}
+
 TEST_CASE("Studio completion spells names the way they are typed")
 {
     CHECK(dba::ApplyTypedCase("SET WINDOW TITLE", "set window ti") == "set window title");

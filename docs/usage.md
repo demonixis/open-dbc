@@ -112,6 +112,11 @@ name; only Tab accepts a single letter or a loose match, which may be a variable
 Up, Down, Page Up and Page Down move in the list, Escape closes it and Ctrl+Space
 opens it, listing everything when nothing matches.
 
+Typing the arguments of a builtin, as a statement (`position object 1, `) or a call
+(`rgb(255, `), shows its overloads above the line with the current parameter
+highlighted and optional ones in brackets; an overload that takes fewer arguments dims.
+Escape hides the hint until the next comma or parenthesis, and Ctrl+Shift+Space shows it.
+
 **Build → Compile HLSL Effect…** compiles a `.fx` or `.hlsl` file with `VSMain`
 and `PSMain` entry points into SPIR-V and MSL stages (`<name>.vert.spv`,
 `<name>.vert.msl`, `<name>.frag.spv`, `<name>.frag.msl`) and `<name>.effect.json`,

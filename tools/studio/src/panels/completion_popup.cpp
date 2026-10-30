@@ -13,6 +13,8 @@ namespace dbc::studio
     namespace
     {
         constexpr const char* KWindowName = "##completion";
+        constexpr const char* KHintWindowName = "##parameter-hint";
+        constexpr float KHintGlyphs = 72.0f;
         constexpr int KVisibleRows = 10;
         constexpr size_t KMinListGlyphs = 24;
         constexpr size_t KMaxListGlyphs = 56;
@@ -53,6 +55,80 @@ namespace dbc::studio
                           static_cast<size_t>(std::log10(static_cast<float>(Editor.GetLineCount() + 1)) + 1.0f);
             }
             return static_cast<float>(Glyphs) * Editor.GetGlyphWidth();
+        }
+
+        // DocPos counts glyphs, the text bytes.
+        size_t GlyphCount(std::string_view Utf8)
+        {
+            return static_cast<size_t>(std::count_if(Utf8.begin(), Utf8.end(), [](char Byte)
+                                                     { return (static_cast<unsigned char>(Byte) & 0xC0) != 0x80; }));
+        }
+
+        // Screen position of the top left of a glyph.
+        ImVec2 GlyphPosition(const TextEditor& Editor, const ImGuiWindow& EditorWindow, TextEditor::DocPos Position)
+        {
+            const TextEditor::VisPos Visual = Editor.DocPos2VisPos(Position);
+            const ImVec2 Origin = EditorWindow.DC.CursorStartPos;
+            return ImVec2(Origin.x + TextLeftOffset(Editor) +
+                              static_cast<float>(Visual.column) * Editor.GetGlyphWidth(),
+                          Origin.y + static_cast<float>(Visual.row) * Editor.GetLineHeight());
+        }
+
+        // A popup detached from its line would act on text out of sight.
+        bool LineIsVisible(const TextEditor& Editor, const ImGuiWindow& EditorWindow, float LineTop)
+        {
+            return LineTop + Editor.GetLineHeight() >= EditorWindow.Pos.y &&
+                   LineTop <= EditorWindow.Pos.y + EditorWindow.Size.y;
+        }
+
+        // Writes an overload piece by piece, the parameter being typed standing out.
+        void DrawSignature(const dba::Signature& Signature, size_t Argument, float MaxWidth)
+        {
+            const size_t Active = Signature.ParameterFor(Argument);
+            // An overload that takes fewer arguments than typed is no longer a candidate.
+            const ImU32 Base = Active != dba::Signature::NoParameter || (Signature.Parameters.empty() && Argument == 0)
+                                   ? Theme::Text
+                                   : Theme::TextDim;
+            const float Start = ImGui::GetCursorPosX();
+            bool First = true;
+            const auto Emit = [&](std::string_view Text, ImU32 Color)
+            {
+                if (Text.empty())
+                {
+                    return;
+                }
+                const char* Begin = Text.data();
+                const char* End = Begin + Text.size();
+                if (!First)
+                {
+                    ImGui::SameLine(0.0f, 0.0f);
+                    if (ImGui::GetCursorPosX() - Start + ImGui::CalcTextSize(Begin, End).x > MaxWidth)
+                    {
+                        ImGui::NewLine();
+                    }
+                }
+                First = false;
+                ImGui::PushStyleColor(ImGuiCol_Text, Color);
+                ImGui::TextUnformatted(Begin, End);
+                ImGui::PopStyleColor();
+            };
+
+            Emit(Signature.Prefix, Base);
+            for (size_t Index = 0; Index < Signature.Parameters.size(); ++Index)
+            {
+                if (Index > 0)
+                {
+                    Emit(", ", Base);
+                }
+                Emit(Signature.Parameters[Index], Index == Active ? Theme::Identifier : Base);
+                if (Index == Active)
+                {
+                    const ImVec2 Min = ImGui::GetItemRectMin();
+                    const ImVec2 Max = ImGui::GetItemRectMax();
+                    ImGui::GetWindowDrawList()->AddLine(ImVec2(Min.x, Max.y), Max, Theme::Identifier);
+                }
+            }
+            Emit(Signature.Suffix, Base);
         }
 
         // Highlights the letters of the name that the typed text walks through.
@@ -103,9 +179,9 @@ namespace dbc::studio
 
         void CompletionPopup::BeforeEditor(TextEditor& Editor, ImGuiID EditorId)
         {
-            if (Open_ && Owner_ != &Editor)
+            if (IsOpen() && Owner_ != &Editor)
             {
-                Close();
+                CloseAll();
             }
 
             const ImGuiIO& Io = ImGui::GetIO();
@@ -194,25 +270,16 @@ namespace dbc::studio
             Help_ = {};
         }
 
-        void CompletionPopup::Refresh(TextEditor& Editor, dbc::language::LanguageProfile Profile, bool Manual)
+        void CompletionPopup::CloseAll()
+        {
+            Close();
+            Hint_.reset();
+        }
+
+        void CompletionPopup::Refresh(TextEditor& Editor, dbc::language::LanguageProfile Profile,
+                                      const std::string& Before, bool InBlockComment, bool Manual)
         {
             const TextEditor::DocPos Cursor = Editor.GetMainCursorPosition();
-            LastCursor_ = Cursor;
-            LastUndoIndex_ = Editor.GetUndoIndex();
-
-            if (Commands_ == nullptr || Editor.IsReadOnlyEnabled() || Editor.GetNumberOfCursors() > 1 ||
-                Editor.AnyCursorHasSelection())
-            {
-                Close();
-                return;
-            }
-
-            const std::string Before = Editor.GetSectionText(TextEditor::DocPos(Cursor.line, 0), Cursor);
-            bool InBlockComment = false;
-            for (size_t Line = 0; Line < Cursor.line; ++Line)
-            {
-                dba::EndsInCommentOrString(Editor.GetLineText(Line), InBlockComment);
-            }
             if (dba::EndsInCommentOrString(Before, InBlockComment))
             {
                 Close();
@@ -226,8 +293,8 @@ namespace dbc::studio
                 return;
             }
 
-            // Only ASCII is ever replaced, so bytes count glyphs here.
-            ReplaceStart_ = TextEditor::DocPos(Cursor.line, Cursor.index - (Before.size() - Completion_.ReplaceStart));
+            ReplaceStart_ = TextEditor::DocPos(
+                Cursor.line, GlyphCount(std::string_view(Before).substr(0, Completion_.ReplaceStart)));
             LongestName_ = 0;
             for (const dba::Command* Entry : Completion_.Items)
             {
@@ -242,54 +309,121 @@ namespace dbc::studio
             Open_ = true;
         }
 
+        void CompletionPopup::RefreshHint(TextEditor& Editor, dbc::language::LanguageProfile Profile,
+                                          const std::string& Before, bool InBlockComment, bool Follow, bool Reopen)
+        {
+            std::optional<dba::ParameterHint> Found =
+                dba::FindParameterHint(*Commands_, Profile, Before, InBlockComment);
+            if (!Found)
+            {
+                Hint_.reset();
+                HintDismissed_.reset();
+                return;
+            }
+
+            const TextEditor::DocPos Start(Editor.GetMainCursorPosition().line,
+                                           GlyphCount(std::string_view(Before).substr(0, Found->NameStart)));
+            if (Follow)
+            {
+                // Moving through code never opens a hint, and one follows only its own call.
+                if (!Hint_ || Start != HintStart_)
+                {
+                    Hint_.reset();
+                    return;
+                }
+            }
+            else if (HintDismissed_ == Start && !Reopen)
+            {
+                return;
+            }
+            else
+            {
+                HintDismissed_.reset();
+            }
+            Hint_ = std::move(Found);
+            HintStart_ = Start;
+            Owner_ = &Editor;
+        }
+
         void CompletionPopup::AfterEditor(TextEditor& Editor, dbc::language::LanguageProfile Profile, ImGuiID EditorId)
         {
-            static const ImGuiKeyChord KManualTrigger = TextEditor::AutoCompleteConfig{}.triggerShortcut;
+            static const ImGuiKeyChord KListTrigger = TextEditor::AutoCompleteConfig{}.triggerShortcut;
+            static const ImGuiKeyChord KHintTrigger = KListTrigger | ImGuiMod_Shift;
 
             const bool Focused = EditorHasFocus(EditorId);
             const TextEditor::DocPos Cursor = Editor.GetMainCursorPosition();
+            const size_t UndoIndex = Editor.GetUndoIndex();
+            const bool Changed = Cursor != LastCursor_ || UndoIndex != LastUndoIndex_;
+            LastCursor_ = Cursor;
+            LastUndoIndex_ = UndoIndex;
 
-            if (Focused && ImGui::IsKeyChordPressed(KManualTrigger))
+            const bool AskedList = Focused && ImGui::IsKeyChordPressed(KListTrigger);
+            const bool AskedHint = Focused && ImGui::IsKeyChordPressed(KHintTrigger);
+            const bool Typed = TypedCharacter_ != 0 && Cursor != CursorBefore_;
+
+            if (AskedList || AskedHint || Typed || (IsOpen() && Changed))
             {
-                Refresh(Editor, Profile, true);
-            }
-            else if (TypedCharacter_ != 0 && Cursor != CursorBefore_)
-            {
-                Refresh(Editor, Profile, false);
-            }
-            else if (Open_ && (Cursor != LastCursor_ || Editor.GetUndoIndex() != LastUndoIndex_))
-            {
-                // Moving or deleting keeps the list only while it completes the same words.
-                const TextEditor::DocPos Previous = ReplaceStart_;
-                Refresh(Editor, Profile, false);
-                if (Open_ && ReplaceStart_ != Previous)
+                if (Commands_ == nullptr || Editor.IsReadOnlyEnabled() || Editor.GetNumberOfCursors() > 1 ||
+                    Editor.AnyCursorHasSelection())
                 {
-                    Close();
+                    CloseAll();
+                    return;
                 }
+
+                const std::string Before = Editor.GetSectionText(TextEditor::DocPos(Cursor.line, 0), Cursor);
+                bool InBlockComment = false;
+                for (size_t Line = 0; Line < Cursor.line; ++Line)
+                {
+                    dba::EndsInCommentOrString(Editor.GetLineText(Line), InBlockComment);
+                }
+
+                if (AskedList || Typed)
+                {
+                    Refresh(Editor, Profile, Before, InBlockComment, AskedList);
+                }
+                else if (Open_ && Changed)
+                {
+                    // Moving or deleting keeps the list only while it completes the same words.
+                    const TextEditor::DocPos Previous = ReplaceStart_;
+                    Refresh(Editor, Profile, Before, InBlockComment, false);
+                    if (Open_ && ReplaceStart_ != Previous)
+                    {
+                        Close();
+                    }
+                }
+                RefreshHint(Editor, Profile, Before, InBlockComment, !AskedHint && !Typed,
+                            AskedHint || TypedCharacter_ == ',' || TypedCharacter_ == '(');
             }
 
-            if (!Open_)
+            if (!IsOpen())
             {
                 return;
             }
             if (!Focused && !PopupHasFocus())
             {
-                Close();
+                CloseAll();
                 return;
             }
             // The editor does not route Escape by itself, and keyboard navigation would
             // use it to leave the editor. Routing it takes effect on the next frame, so
-            // this must run from the frame the list opens.
+            // this must run from the frame anything opens.
             if (ImGui::Shortcut(ImGuiKey_Escape))
             {
-                Close();
-                return;
+                if (Open_)
+                {
+                    Close();
+                }
+                else
+                {
+                    HintDismissed_ = HintStart_;
+                    Hint_.reset();
+                }
+                if (!IsOpen())
+                {
+                    return;
+                }
             }
-            Draw(Editor, EditorId);
-        }
 
-        void CompletionPopup::Draw(TextEditor& Editor, ImGuiID EditorId)
-        {
             const ImGuiWindow* EditorWindow = nullptr;
             for (const ImGuiWindow* Child : ImGui::GetCurrentWindow()->DC.ChildWindows)
             {
@@ -300,19 +434,90 @@ namespace dbc::studio
             }
             if (EditorWindow == nullptr)
             {
-                Close();
+                CloseAll();
+                return;
+            }
+            if (Open_)
+            {
+                DrawList(Editor, *EditorWindow);
+            }
+            if (Hint_)
+            {
+                DrawHint(Editor, *EditorWindow);
+            }
+        }
+
+        void CompletionPopup::DrawHint(const TextEditor& Editor, const ImGuiWindow& EditorWindow)
+        {
+            const ImVec2 Anchor = GlyphPosition(Editor, EditorWindow, HintStart_);
+            if (!LineIsVisible(Editor, EditorWindow, Anchor.y))
+            {
+                Hint_.reset();
                 return;
             }
 
+            const ImGuiStyle& Style = ImGui::GetStyle();
+            const ImGuiViewport* Viewport = ImGui::GetWindowViewport();
+            const float MaxWidth =
+                std::min(KHintGlyphs * Editor.GetGlyphWidth(), Viewport->WorkSize.x - Style.FramePadding.x * 2.0f);
+
+            float Width = 0.0f;
+            for (const dba::Signature& Value : Hint_->Overloads)
+            {
+                Width = std::max(Width, ImGui::CalcTextSize(Value.Text().c_str()).x);
+            }
+            const float WindowWidth = std::min(Width, MaxWidth) + Style.FramePadding.x * 2.0f;
+            const float WindowHeight =
+                static_cast<float>(Hint_->Overloads.size()) * ImGui::GetTextLineHeightWithSpacing() +
+                Style.FramePadding.y * 2.0f;
+
+            // Above the line, as the list takes the space below it, or above the list when
+            // that flipped too. A first line leaves no room, and there the list has priority.
+            const float Bottom = Open_ ? std::min(Anchor.y, ListTop_) : Anchor.y;
+            const bool Above = Bottom - WindowHeight >= Viewport->WorkPos.y;
+            if (!Above && Open_)
+            {
+                return;
+            }
+            const float X = std::max(std::min(Anchor.x, Viewport->WorkPos.x + Viewport->WorkSize.x - WindowWidth),
+                                     Viewport->WorkPos.x);
+            ImGui::SetNextWindowPos(Above ? ImVec2(X, Bottom) : ImVec2(X, Anchor.y + Editor.GetLineHeight()),
+                                    ImGuiCond_Always, ImVec2(0.0f, Above ? 1.0f : 0.0f));
+
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(1.0f, 1.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, Style.FramePadding);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 2.0f));
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, Theme::PanelAlt);
+
+            constexpr ImGuiWindowFlags KHintFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs |
+                                                    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+                                                    ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav |
+                                                    ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize;
+
+            if (ImGui::Begin(KHintWindowName, nullptr, KHintFlags))
+            {
+                ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
+                for (const dba::Signature& Value : Hint_->Overloads)
+                {
+                    DrawSignature(Value, Hint_->Argument, MaxWidth);
+                }
+            }
+            ImGui::End();
+
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar(4);
+        }
+
+        void CompletionPopup::DrawList(TextEditor& Editor, const ImGuiWindow& EditorWindow)
+        {
             const float GlyphWidth = Editor.GetGlyphWidth();
             const float LineHeight = Editor.GetLineHeight();
-            const TextEditor::VisPos Anchor = Editor.DocPos2VisPos(ReplaceStart_);
-            const ImVec2 Origin = EditorWindow->DC.CursorStartPos;
-            const float X = Origin.x + TextLeftOffset(Editor) + static_cast<float>(Anchor.column) * GlyphWidth;
-            const float LineTop = Origin.y + static_cast<float>(Anchor.row) * LineHeight;
+            const ImVec2 Anchor = GlyphPosition(Editor, EditorWindow, ReplaceStart_);
+            const float X = Anchor.x;
+            const float LineTop = Anchor.y;
 
-            // A list detached from its line would capture keys for text out of sight.
-            if (LineTop + LineHeight < EditorWindow->Pos.y || LineTop > EditorWindow->Pos.y + EditorWindow->Size.y)
+            if (!LineIsVisible(Editor, EditorWindow, LineTop))
             {
                 Close();
                 return;
@@ -340,6 +545,7 @@ namespace dbc::studio
             {
                 Position.y = LineTop - Size.y;
             }
+            ListTop_ = Position.y;
 
             ImGui::SetNextWindowPos(Position);
             ImGui::SetNextWindowSize(Size);

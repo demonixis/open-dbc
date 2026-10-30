@@ -3,6 +3,7 @@
 #include "language/language_profile.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -43,6 +44,43 @@ namespace dbc::studio
 
         // The end of the word the cursor is inside, which accepting also replaces.
         size_t CompletionWordEnd(std::string_view Line, size_t Cursor);
+
+        // One overload of a name, split so that the parameter being typed can stand out.
+        struct Signature
+        {
+            static constexpr size_t NoParameter = static_cast<size_t>(-1);
+
+            // "SET WINDOW TITLE " or "RGB(".
+            std::string Prefix;
+            // "number", "string output", "[number]" when it may be left out, "any...".
+            std::vector<std::string> Parameters;
+            // Nothing, or ") -> integer".
+            std::string Suffix;
+            // The last parameter takes any number of arguments.
+            bool Repeats = false;
+
+            // The parameter a 0-based argument fills, NoParameter when this overload stops earlier.
+            size_t ParameterFor(size_t Argument) const;
+            std::string Text() const;
+        };
+
+        // The builtin call around the cursor.
+        struct ParameterHint
+        {
+            std::vector<Signature> Overloads;
+            // The 0-based argument the cursor is in.
+            size_t Argument = 0;
+            // Byte offset in the line of the name.
+            size_t NameStart = 0;
+        };
+
+        // Looks for the innermost builtin whose arguments hold the end of the line:
+        // "rgb(1, " in an expression, "position object 1, " as a statement. Nothing when
+        // the name is still being typed, takes no argument, or the line ends in a comment.
+        // `InBlockComment` is the state left by the lines above.
+        std::optional<ParameterHint> FindParameterHint(const CommandDatabase& Commands,
+                                                       dbc::language::LanguageProfile Profile,
+                                                       std::string_view LineBeforeCursor, bool InBlockComment);
 
         // What the Studio shows about a name, for one profile.
         struct CommandHelp
