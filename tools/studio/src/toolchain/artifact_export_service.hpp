@@ -105,7 +105,13 @@ namespace dbc::studio
 
         namespace detail
         {
-            bool ClaimArtifactStageDirectory(const std::filesystem::path& Path, std::string& Error);
+            enum class ArtifactStageClaim
+            {
+                Claimed,
+                AlreadyExists,
+                Failed, // Error says why.
+            };
+            ArtifactStageClaim ClaimArtifactStageDirectory(const std::filesystem::path& Path, std::string& Error);
             bool WriteArtifactIconPng(const std::filesystem::path& Source, const std::filesystem::path& Destination,
                                       int Size, bool Opaque, std::string& Error);
             std::optional<std::string> ArtifactSha256File(const std::filesystem::path& Path);
