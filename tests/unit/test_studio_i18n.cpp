@@ -271,6 +271,17 @@ TEST_CASE("The French catalogue covers the File menu and the Scene mode")
     core::ActivateInterfaceLanguage("en");
 }
 
+TEST_CASE("The French catalogue covers the menus and the application's messages")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Label : {"Edit", "Build", "View", "Help", "Find and Replace", "Reset Layout", "Stopped"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    CHECK(std::string_view(TrC("dialect origin|detected")) == "détecté");
+    CHECK(TrFmt("Run failed (exit {0})", {"3"}) == "Échec de l’exécution (code 3)");
+    core::ActivateInterfaceLanguage("en");
+    CHECK(std::string_view(TrC("dialect origin|detected")) == "detected");
+}
+
 TEST_CASE("French translations keep the placeholders of their source text")
 {
     std::ifstream File(std::filesystem::path(TEST_SOURCE_DIR) / "tools/studio/locales/fr.json", std::ios::binary);

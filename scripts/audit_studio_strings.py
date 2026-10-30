@@ -94,8 +94,6 @@ NO_INTERFACE_TEXT = {
 
 # Zones still to wrap. Each must be emptied, not extended.
 PENDING = {
-    "app.cpp",
-    "app.hpp",
     "core/gpu_texture.cpp",
     "core/new_project.cpp",
     "core/project_settings.cpp",
@@ -256,7 +254,7 @@ def ReadsAsSentence(Text: str) -> bool:
     Visible = re.sub(r"^(?:\[[A-Z]+\]\s*|[>(]\s*)", "", Visible)
     if not Visible or not Visible[0].isupper():
         return False
-    if re.search(r"[/\\_=;<>{}]|\.[a-z]+$|^[A-Z0-9_ ]+$", Visible):
+    if re.search(r"[/\\_=;<>{}+]|\.[a-z]+$|^[A-Z0-9_ ]+$", Visible):
         return False
     return len(WORD.findall(Visible)) >= 2
 
@@ -327,6 +325,7 @@ def Audit(Files: dict[str, str], Catalogue: set[str], Verbatim: set[str], Pendin
             if End - Begin == 1 and Tokens[Begin].Text in Named:
                 Displayed.append(Named[Tokens[Begin].Text])
             for Value in Displayed:
+                Skipped.add(id(Value))
                 if HasText(Value.Text) and Value.Text not in Verbatim:
                     Report(Result.Unwrapped, Name, Value)
 

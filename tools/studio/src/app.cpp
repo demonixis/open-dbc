@@ -139,6 +139,24 @@ namespace dbc::studio
             return Pressed && Enabled && !Active;
         }
 
+        const char* DialectOriginLabel(dbc::interpreter::DialectOrigin Value)
+        {
+            switch (Value)
+            {
+                case dbc::interpreter::DialectOrigin::Forced:
+                    return TrC("dialect origin|forced");
+                case dbc::interpreter::DialectOrigin::Configuration:
+                    return TrC("dialect origin|configuration");
+                case dbc::interpreter::DialectOrigin::Project:
+                    return TrC("dialect origin|project");
+                case dbc::interpreter::DialectOrigin::Detected:
+                    return TrC("dialect origin|detected");
+                case dbc::interpreter::DialectOrigin::Interactive:
+                    return TrC("dialect origin|interactive");
+            }
+            return "";
+        }
+
         constexpr const char* KDbaFilter = "dba;dbpro";
         constexpr const char* KHlslFilter = "fx;hlsl";
         constexpr const char* KOpenFilter = "dba;dbpro;fx;hlsl";
@@ -229,7 +247,7 @@ namespace dbc::studio
             {
                 if (panels::AssetPreview::KindOf(Path) == panels::AssetPreview::Kind::None &&
                     !panels::EditorPanel::CanOpen(Path))
-                    Status_ = "No preview for " + dbc::PathToUtf8(Path.filename());
+                    Status_ = TrFmt("No preview for {0}", {dbc::PathToUtf8(Path.filename())});
                 else
                     OpenFile(Path);
             });
@@ -237,6 +255,7 @@ namespace dbc::studio
         Settings_ = core::Settings::Load();
         SettingsLoaded_ = true;
         ApplyLanguage();
+        Status_ = Tr("Ready");
 
         Workspace_.Initialize();
 
@@ -262,11 +281,11 @@ namespace dbc::studio
                 return;
             }
             if (ExitCode == 0)
-                Status_ = "Run finished";
+                Status_ = Tr("Run finished");
             else if (ExitCode == 130)
-                Status_ = "Stopped";
+                Status_ = Tr("Stopped");
             else
-                Status_ = "Run failed (exit " + std::to_string(ExitCode) + ")";
+                Status_ = TrFmt("Run failed (exit {0})", {std::to_string(ExitCode)});
             Output_.Append(Status_, ExitCode == 0 || ExitCode == 130 ? panels::OutputPanel::Severity::Notice
                                                                      : panels::OutputPanel::Severity::Error);
         };
@@ -472,13 +491,13 @@ namespace dbc::studio
         }
         // Reported once per distinct failure, not at every refresh.
         if (Error != RecoveryError_)
-            Output_.Append("Cannot write a recovery copy: " + Error, panels::OutputPanel::Severity::Error);
+            Output_.Append(TrFmt("Cannot write a recovery copy: {0}", {Error}), panels::OutputPanel::Severity::Error);
         RecoveryError_ = Error;
     }
 
     void App::DrawRecovery()
     {
-        constexpr const char* Popup = "Recover unsaved changes";
+        const char* Popup = TrId("Recover unsaved changes");
         if (RecoveryPopupRequested_)
         {
             ImGui::OpenPopup(Popup);
@@ -487,13 +506,13 @@ namespace dbc::studio
         if (!ImGui::BeginPopupModal(Popup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             return;
 
-        ImGui::TextUnformatted("OpenDBC did not quit normally. These tabs had unsaved changes:");
+        ImGui::TextUnformatted(Tr("OpenDBC did not quit normally. These tabs had unsaved changes:"));
         ImGui::Spacing();
         for (const core::RecoveryCopy& Copy : RecoveryCopies_)
             ImGui::BulletText("%s", Copy.Content.Path.empty() ? Copy.Content.Title.c_str()
                                                               : dbc::PathToUtf8(Copy.Content.Path).c_str());
         ImGui::Spacing();
-        if (ImGui::Button("Restore"))
+        if (ImGui::Button(TrId("Restore")))
         {
             for (const core::RecoveryCopy& Copy : RecoveryCopies_)
             {
@@ -506,7 +525,7 @@ namespace dbc::studio
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Discard"))
+        if (ImGui::Button(TrId("Discard")))
         {
             for (const core::RecoveryCopy& Copy : RecoveryCopies_)
                 Recovery_.Remove(Copy.File);
@@ -603,7 +622,8 @@ namespace dbc::studio
         {
             if (!Preview_.Open(File))
             {
-                Output_.Append("[ERROR] Cannot preview " + dbc::PathToUtf8(File), panels::OutputPanel::Severity::Error);
+                Output_.Append("[ERROR] " + TrFmt("Cannot preview {0}", {dbc::PathToUtf8(File)}),
+                               panels::OutputPanel::Severity::Error);
             }
             Status_ = dbc::PathToUtf8(File.filename());
             return;
@@ -614,8 +634,9 @@ namespace dbc::studio
 
         if (!Editor_.Open(File))
         {
-            Output_.Append("[ERROR] Cannot open " + dbc::PathToUtf8(File), panels::OutputPanel::Severity::Error);
-            Status_ = "Cannot open " + dbc::PathToUtf8(File.filename());
+            Output_.Append("[ERROR] " + TrFmt("Cannot open {0}", {dbc::PathToUtf8(File)}),
+                           panels::OutputPanel::Severity::Error);
+            Status_ = TrFmt("Cannot open {0}", {dbc::PathToUtf8(File.filename())});
             return;
         }
 
@@ -629,7 +650,7 @@ namespace dbc::studio
     void App::ShowOpenFileDialog()
     {
         const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
-        Dialog_.OpenFile(Window_, Start, "DBA source or HLSL effect", KOpenFilter,
+        Dialog_.OpenFile(Window_, Start, Tr("DBA source or HLSL effect"), KOpenFilter,
                          [this](const std::string& Path)
                          {
                              if (!Path.empty())
@@ -677,7 +698,7 @@ namespace dbc::studio
                                                   : TextEditor::DocPos(Last, Glyphs);
                 Editor->ReplaceSectionText(At, At, Plan.Text);
                 Editor->ScrollToLine(At.line, TextEditor::Scroll::alignTop);
-                Status_ = "Added " + Value.Name + " to the Snippets region at the end of the file";
+                Status_ = TrFmt("Added {0} to the Snippets region at the end of the file", {Tr(Value.Name.c_str())});
                 break;
             }
         }
@@ -703,7 +724,7 @@ namespace dbc::studio
         const std::filesystem::path Location = dbc::PathFromUtf8(NewProjectLocation_);
         if (!Workspace_.IsWritable(Location))
         {
-            NewProjectError_ = "The location is read-only.";
+            NewProjectError_ = Tr("The location is read-only.");
             return;
         }
         const core::NewProjectResult Created =
@@ -715,7 +736,7 @@ namespace dbc::studio
         }
         NewProjectError_.clear();
         ImGui::CloseCurrentPopup();
-        Output_.Append("Created project " + dbc::PathToUtf8(Created.Root));
+        Output_.Append(TrFmt("Created project {0}", {dbc::PathToUtf8(Created.Root)}));
         OpenFolder(Created.Root);
         if (ResolvedProject_)
             OpenFile(Created.MainSource);
@@ -756,8 +777,8 @@ namespace dbc::studio
             Launcher_.SetProject(*ResolvedProject_);
         else
             Launcher_.SetFolder(ResolvedProject_->ProjectRoot, ResolvedProject_->Profile);
-        Status_ = "Opened " + dbc::PathToUtf8(ResolvedProject_->ProjectRoot) + " as " +
-                  std::string(dbc::language::ProfileName(ResolvedProject_->Profile));
+        Status_ = TrFmt("Opened {0} as {1}", {dbc::PathToUtf8(ResolvedProject_->ProjectRoot),
+                                              dbc::language::ProfileName(ResolvedProject_->Profile)});
         for (const std::string& Warning : ResolvedProject_->Warnings)
             Output_.Append(Warning, panels::OutputPanel::Severity::Notice);
         UpdateSceneProject();
@@ -867,7 +888,7 @@ namespace dbc::studio
     {
         if (ExecutionBusy_)
         {
-            Status_ = "Stop the running program first";
+            Status_ = Tr("Stop the running program first");
             return;
         }
         // Before the program runs, so that it sees what is being edited.
@@ -878,7 +899,7 @@ namespace dbc::studio
         {
             // The language popup is open or about to be: the answer brings us back here.
             PendingSceneProgram_ = Path;
-            Status_ = "Select the project's language to read this program's scene";
+            Status_ = Tr("Select the project's language to read this program's scene");
             return;
         }
         CaptureProgram(Path, 1);
@@ -891,8 +912,8 @@ namespace dbc::studio
         const std::string Blocker = SceneBlocker();
         if (!Blocker.empty())
         {
-            Status_ = Blocker;
-            Output_.Append(Blocker, panels::OutputPanel::Severity::Error);
+            Status_ = Tr(Blocker.c_str());
+            Output_.Append(Status_, panels::OutputPanel::Severity::Error);
             return;
         }
 
@@ -903,7 +924,7 @@ namespace dbc::studio
         toolchain::ActiveRunPlan Plan = toolchain::PlanActiveRun(Target, ResolvedProject_, std::move(Sources));
         if (!Plan || !Plan.Blockers.empty())
         {
-            Status_ = "Cannot run " + dbc::PathToUtf8(Target.filename());
+            Status_ = TrFmt("Cannot run {0}", {dbc::PathToUtf8(Target.filename())});
             Output_.Append(Plan.Blockers.empty() ? Plan.Error : Plan.Blockers.front(),
                            panels::OutputPanel::Severity::Error);
             return;
@@ -917,7 +938,7 @@ namespace dbc::studio
         const std::filesystem::path Temporary = std::filesystem::temp_directory_path(Error);
         if (Error)
         {
-            Output_.Append("Cannot find a temporary folder for the scene: " + Error.message(),
+            Output_.Append(TrFmt("Cannot find a temporary folder for the scene: {0}", {Error.message()}),
                            panels::OutputPanel::Severity::Error);
             return;
         }
@@ -938,8 +959,9 @@ namespace dbc::studio
         Options.CaptureFrames = SetupFrames;
 
         ShowProblems({});
-        Output_.Append("> Reading the scene of " + dbc::PathToUtf8(Target), panels::OutputPanel::Severity::Notice);
-        Status_ = "Reading the scene of " + dbc::PathToUtf8(Source.filename());
+        Output_.Append("> " + TrFmt("Reading the scene of {0}", {dbc::PathToUtf8(Target)}),
+                       panels::OutputPanel::Severity::Notice);
+        Status_ = TrFmt("Reading the scene of {0}", {dbc::PathToUtf8(Source.filename())});
         ExecutionTarget_ = Target;
         SceneCapture_ = std::move(Run);
         UpdateRecovery();
@@ -972,7 +994,7 @@ namespace dbc::studio
         Images += ".images";
         if (Text.empty())
         {
-            Status_ = "Cannot read the scene of " + Name + ": it did not start";
+            Status_ = TrFmt("Cannot read the scene of {0}: it did not start", {Name});
             Output_.Append(Status_, panels::OutputPanel::Severity::Error);
             return;
         }
@@ -981,21 +1003,22 @@ namespace dbc::studio
         std::string Error;
         if (Project == nullptr || !scene::ParseSceneCapture(Text, Run.SourceRoot, Project->AssetRoot, Capture, Error))
         {
-            Status_ = "Cannot read the scene of " + Name;
-            Output_.Append(Status_ + ": " + Error, panels::OutputPanel::Severity::Error);
+            Status_ = TrFmt("Cannot read the scene of {0}", {Name});
+            Output_.Append(TrFmt("Cannot read the scene of {0}: {1}", {Name, Error}),
+                           panels::OutputPanel::Severity::Error);
             return;
         }
         if (Capture.Status == "cancelled")
-            Output_.Append(Name + " did not reach its frame in time: the scene shows what it had built.",
+            Output_.Append(TrFmt("{0} did not reach its frame in time: the scene shows what it had built.", {Name}),
                            panels::OutputPanel::Severity::Notice);
         else if (Capture.Status != "completed")
-            Output_.Append(Name + " stopped with an error: the scene shows what it had built.",
+            Output_.Append(TrFmt("{0} stopped with an error: the scene shows what it had built.", {Name}),
                            panels::OutputPanel::Severity::Error);
         Scene_.OpenCapture(Run.Source, Capture, Run.SetupFrames, Run.OnlyFile);
         std::filesystem::remove_all(SceneCaptureImages_, Ignored);
         SceneCaptureImages_ = std::move(Images);
         SetMode(Mode::Scene);
-        Status_ = "Scene of " + Name;
+        Status_ = TrFmt("Scene of {0}", {Name});
     }
 
     void App::SetProjectDialect(dbc::language::LanguageProfile Profile)
@@ -1014,7 +1037,7 @@ namespace dbc::studio
             ProjectSettings_.LanguageEntry =
                 dbc::GenericPathToUtf8(ResolvedProject_->EntrySource.lexically_relative(Project_.Root()));
         if (!ProjectSettings_.Save(Project_.Root()))
-            Output_.Append("Cannot save the project dialect", panels::OutputPanel::Severity::Error);
+            Output_.Append(Tr("Cannot save the project dialect"), panels::OutputPanel::Severity::Error);
     }
 
     void App::SaveCurrent()
@@ -1026,7 +1049,7 @@ namespace dbc::studio
 
         if (Editor_.SaveCurrent())
         {
-            Status_ = "Saved " + dbc::PathToUtf8(Editor_.CurrentPath().filename());
+            Status_ = TrFmt("Saved {0}", {dbc::PathToUtf8(Editor_.CurrentPath().filename())});
             CheckCurrentDocument();
         }
         else
@@ -1044,18 +1067,18 @@ namespace dbc::studio
 
         const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
         const bool Basic = Editor_.CurrentIsBasic();
-        Dialog_.SaveFile(Window_, Start, Basic ? "DBA source" : "HLSL effect", Basic ? KDbaFilter : KHlslFilter,
+        Dialog_.SaveFile(Window_, Start, Tr(Basic ? "DBA source" : "HLSL effect"), Basic ? KDbaFilter : KHlslFilter,
                          [this](const std::string& Path)
                          {
                              if (Path.empty())
                              {
                                  QuitSaveInProgress_ = false;
-                                 Status_ = "Quit cancelled";
+                                 Status_ = Tr("Quit cancelled");
                                  return;
                              }
                              if (Editor_.SaveCurrentAs(dbc::PathFromUtf8(Path)))
                              {
-                                 Status_ = "Saved " + dbc::PathToUtf8(dbc::PathFromUtf8(Path).filename());
+                                 Status_ = TrFmt("Saved {0}", {dbc::PathToUtf8(dbc::PathFromUtf8(Path).filename())});
                                  Project_.Refresh();
                                  if (QuitSaveInProgress_)
                                  {
@@ -1065,7 +1088,8 @@ namespace dbc::studio
                              else
                              {
                                  QuitSaveInProgress_ = false;
-                                 Output_.Append("[ERROR] Cannot write " + Path, panels::OutputPanel::Severity::Error);
+                                 Output_.Append("[ERROR] " + TrFmt("Cannot write {0}", {Path}),
+                                                panels::OutputPanel::Severity::Error);
                              }
                          });
     }
@@ -1076,15 +1100,15 @@ namespace dbc::studio
         if (Scene_.Dirty() && !Scene_.Save())
         {
             QuitSaveInProgress_ = false;
-            Status_ = "Could not save the level";
+            Status_ = Tr("Could not save the level");
             return;
         }
         Editor_.SaveAll();
         if (Editor_.AnyDirtyWithPath())
         {
             QuitSaveInProgress_ = false;
-            Status_ = "Could not save every modified document";
-            Output_.Append("[ERROR] Could not save every modified document", panels::OutputPanel::Severity::Error);
+            Status_ = Tr("Could not save every modified document");
+            Output_.Append("[ERROR] " + Status_, panels::OutputPanel::Severity::Error);
             return;
         }
         if (Editor_.SelectFirstDirtyWithoutPath())
@@ -1151,7 +1175,7 @@ namespace dbc::studio
 
     void App::DrawProjectResolution()
     {
-        constexpr const char* Popup = "Select OpenDBC project language";
+        const char* Popup = TrId("Select OpenDBC project language");
         if (ResolutionPopupRequested_)
         {
             ImGui::OpenPopup(Popup);
@@ -1164,9 +1188,9 @@ namespace dbc::studio
         {
             std::array<char, 2048> Path{};
             SDL_strlcpy(Path.data(), PendingLocalPath_.c_str(), Path.size());
-            if (ImGui::InputText("Local replacement", Path.data(), Path.size()))
+            if (ImGui::InputText(TrId("Local replacement"), Path.data(), Path.size()))
                 PendingLocalPath_ = Path.data();
-            if (ImGui::Button("Grant local remapping") && !PendingLocalPath_.empty())
+            if (ImGui::Button(TrId("Grant local remapping")) && !PendingLocalPath_.empty())
             {
                 std::filesystem::path Descriptor = PendingResolveTarget_;
                 if (PendingResolution_.PendingDescriptor)
@@ -1193,7 +1217,7 @@ namespace dbc::studio
                 }
             }
             ImGui::Separator();
-            if (ImGui::Button("Open folder as DBC"))
+            if (ImGui::Button(TrId("Open folder as DBC")))
             {
                 SetProjectDialect(dbc::language::LanguageProfile::Dbc);
                 ImGui::CloseCurrentPopup();
@@ -1214,14 +1238,14 @@ namespace dbc::studio
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel"))
+        if (ImGui::Button(TrId("Cancel")))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
 
     void App::DrawNewProject()
     {
-        constexpr const char* Popup = "New Project";
+        const char* Popup = TrId("New Project");
         if (NewProjectRequested_)
         {
             ImGui::OpenPopup(Popup);
@@ -1232,16 +1256,16 @@ namespace dbc::studio
 
         if (ImGui::IsWindowAppearing())
             ImGui::SetKeyboardFocusHere();
-        const bool Entered = ImGui::InputText("Name", NewProjectName_.data(), NewProjectName_.size(),
+        const bool Entered = ImGui::InputText(TrId("Name"), NewProjectName_.data(), NewProjectName_.size(),
                                               ImGuiInputTextFlags_EnterReturnsTrue);
         if constexpr (core::platform::HasFreeformFileSystem())
         {
             std::array<char, 2048> Location{};
             SDL_strlcpy(Location.data(), NewProjectLocation_.c_str(), Location.size());
-            if (ImGui::InputText("Location", Location.data(), Location.size()))
+            if (ImGui::InputText(TrId("Location"), Location.data(), Location.size()))
                 NewProjectLocation_ = Location.data();
             ImGui::SameLine();
-            if (ImGui::Button("Browse..."))
+            if (ImGui::Button(TrId("Browse...")))
             {
                 Dialog_.OpenFolder(Window_, NewProjectLocation_,
                                    [this](const std::string& Path)
@@ -1253,26 +1277,26 @@ namespace dbc::studio
         }
         else
         {
-            ImGui::TextDisabled("Location: %s", NewProjectLocation_.c_str());
+            ImGui::TextDisabled("%s", TrFmt("Location: {0}", {NewProjectLocation_}).c_str());
         }
 
         ImGui::Spacing();
-        ImGui::TextUnformatted("Language");
+        ImGui::TextUnformatted(Tr("Language"));
         if (ImGui::RadioButton("DarkBASIC Classic", NewProjectProfile_ == dbc::language::LanguageProfile::Dbc))
             NewProjectProfile_ = dbc::language::LanguageProfile::Dbc;
         ImGui::SameLine();
         if (ImGui::RadioButton("DarkBASIC Professional", NewProjectProfile_ == dbc::language::LanguageProfile::DbPro))
             NewProjectProfile_ = dbc::language::LanguageProfile::DbPro;
-        ImGui::TextUnformatted("Template");
-        if (ImGui::RadioButton("Basic Scene", NewProjectTemplate_ == core::ProjectTemplate::BasicScene))
+        ImGui::TextUnformatted(Tr("Template"));
+        if (ImGui::RadioButton(TrId("Basic Scene"), NewProjectTemplate_ == core::ProjectTemplate::BasicScene))
             NewProjectTemplate_ = core::ProjectTemplate::BasicScene;
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("A 1280x720 window, sync at 60 FPS and a spinning cube");
+            ImGui::SetTooltip("%s", Tr("A 1280x720 window, sync at 60 FPS and a spinning cube"));
         ImGui::SameLine();
-        if (ImGui::RadioButton("Empty", NewProjectTemplate_ == core::ProjectTemplate::Empty))
+        if (ImGui::RadioButton(TrId("Empty"), NewProjectTemplate_ == core::ProjectTemplate::Empty))
             NewProjectTemplate_ = core::ProjectTemplate::Empty;
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("A main loop and nothing else");
+            ImGui::SetTooltip("%s", Tr("A main loop and nothing else"));
 
         ImGui::Spacing();
         const std::string NameError = core::ValidateProjectName(NewProjectName_.data());
@@ -1287,22 +1311,23 @@ namespace dbc::studio
                 dbc::PathFromUtf8(NewProjectLocation_) / dbc::PathFromUtf8(NewProjectName_.data());
             const char* Descriptor =
                 NewProjectProfile_ == dbc::language::LanguageProfile::DbPro ? ".dbpro" : ".opendbc-project.json";
-            ImGui::TextDisabled("Creates %s with main.dba and %s", dbc::PathToUtf8(Root).c_str(), Descriptor);
+            ImGui::TextDisabled(
+                "%s", TrFmt("Creates {0} with main.dba and {1}", {dbc::PathToUtf8(Root), Descriptor}).c_str());
         }
 
         ImGui::BeginDisabled(!Ready || Dialog_.IsOpen());
-        if (ImGui::Button("Create") || (Entered && Ready && !Dialog_.IsOpen()))
+        if (ImGui::Button(TrId("Create")) || (Entered && Ready && !Dialog_.IsOpen()))
             CreateNewProject();
         ImGui::EndDisabled();
         ImGui::SameLine();
-        if (ImGui::Button("Cancel"))
+        if (ImGui::Button(TrId("Cancel")))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
 
     void App::DrawQuitConfirm()
     {
-        constexpr const char* Popup = "Quit with unsaved changes";
+        const char* Popup = TrId("Quit with unsaved changes");
         if (QuitRequested_)
         {
             ImGui::OpenPopup(Popup);
@@ -1314,28 +1339,28 @@ namespace dbc::studio
             return;
         }
 
-        ImGui::TextUnformatted("One or more documents have unsaved changes.");
+        ImGui::TextUnformatted(Tr("One or more documents have unsaved changes."));
         if (Editor_.AnyDirtyWithoutPath())
         {
-            ImGui::TextWrapped("Save All will ask for a destination for each untitled document.");
+            ImGui::TextWrapped("%s", Tr("Save All will ask for a destination for each untitled document."));
         }
         ImGui::Spacing();
 
-        if (ImGui::Button("Save All and Quit"))
+        if (ImGui::Button(TrId("Save All and Quit")))
         {
             QuitSaveInProgress_ = true;
             ImGui::CloseCurrentPopup();
             ContinueQuitSave();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Discard and Quit"))
+        if (ImGui::Button(TrId("Discard and Quit")))
         {
             QuitSaveInProgress_ = false;
             Running_ = false;
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel"))
+        if (ImGui::Button(TrId("Cancel")))
         {
             QuitSaveInProgress_ = false;
             ImGui::CloseCurrentPopup();
@@ -1483,7 +1508,7 @@ namespace dbc::studio
         if (SettingsWindow_.Draw(ProjectSettings_))
         {
             RefreshExportChecks();
-            Status_ = "Project settings saved";
+            Status_ = Tr("Project settings saved");
             const std::filesystem::path Target = ResolvedProject_ && ResolvedProject_->DescriptorPath
                                                      ? *ResolvedProject_->DescriptorPath
                                                      : Project_.Root();
@@ -1682,38 +1707,38 @@ namespace dbc::studio
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Edit"))
+        if (ImGui::BeginMenu(TrId("Edit")))
         {
             TextEditor* Editor = Editor_.CurrentEditor();
-            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, Editor != nullptr && Editor->CanUndo()))
+            if (ImGui::MenuItem(TrId("Undo"), "Ctrl+Z", false, Editor != nullptr && Editor->CanUndo()))
             {
                 Editor->Undo();
             }
-            if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, Editor != nullptr && Editor->CanRedo()))
+            if (ImGui::MenuItem(TrId("Redo"), "Ctrl+Shift+Z", false, Editor != nullptr && Editor->CanRedo()))
             {
                 Editor->Redo();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Find", "Ctrl+R", false, Editor != nullptr))
+            if (ImGui::MenuItem(TrId("Find"), "Ctrl+R", false, Editor != nullptr))
             {
                 Editor_.OpenFind(false);
             }
-            if (ImGui::MenuItem("Find and Replace", "Ctrl+Shift+R", false, Editor != nullptr))
+            if (ImGui::MenuItem(TrId("Find and Replace"), "Ctrl+Shift+R", false, Editor != nullptr))
             {
                 Editor_.OpenFind(true);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Trim Trailing Whitespace", nullptr, false, Editor != nullptr))
+            if (ImGui::MenuItem(TrId("Trim Trailing Whitespace"), nullptr, false, Editor != nullptr))
             {
                 Editor_.FormatCurrent();
             }
             ImGui::Separator();
             TextEditor* Target = SnippetTarget();
-            if (ImGui::MenuItem("Insert Snippet...", "Ctrl+J", false, Target != nullptr))
+            if (ImGui::MenuItem(TrId("Insert Snippet..."), "Ctrl+J", false, Target != nullptr))
             {
                 Snippets_.OpenInsert(Editor_.CurrentProfile());
             }
-            if (ImGui::MenuItem("Save Selection as Snippet...", nullptr, false,
+            if (ImGui::MenuItem(TrId("Save Selection as Snippet..."), nullptr, false,
                                 Target != nullptr && Target->AnyCursorHasSelection()))
             {
                 Snippets_.OpenSave(Target->GetSectionText(Target->GetMainCursorSelection()), Editor_.CurrentProfile());
@@ -1724,21 +1749,21 @@ namespace dbc::studio
         if (Mode_ == Mode::Scene)
             Scene_.DrawMenus();
 
-        if (ImGui::BeginMenu("Build"))
+        if (ImGui::BeginMenu(TrId("Build")))
         {
-            if (ImGui::MenuItem("Run", "F5", false, !ExecutionBusy_))
+            if (ImGui::MenuItem(TrId("Run"), "F5", false, !ExecutionBusy_))
             {
                 if (Mode_ == Mode::Scene)
                     RunScene();
                 else
                     RunActiveDocument();
             }
-            if (ImGui::MenuItem("Stop", "Shift+F5", false, ExecutionBusy_))
+            if (ImGui::MenuItem(TrId("Stop"), "Shift+F5", false, ExecutionBusy_))
             {
                 StopRun();
             }
             ImGui::Separator();
-            if (ImGui::BeginMenu("Log Level"))
+            if (ImGui::BeginMenu(TrId("Log Level")))
             {
                 for (const char* Level : KLogLevels)
                 {
@@ -1751,90 +1776,90 @@ namespace dbc::studio
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("Debug Overlay on Launch", "F3", &RunOptions_.DebugOverlay))
+            if (ImGui::MenuItem(TrId("Debug Overlay on Launch"), "F3", &RunOptions_.DebugOverlay))
             {
                 Settings_.DebugOverlay = RunOptions_.DebugOverlay;
                 Settings_.Save();
             }
 #if defined(DBC_STUDIO_SANDBOXED)
             // A desktop program runs in its own process and window, where F4 writes the dumps.
-            if (ImGui::MenuItem("Dump Scene and Renderer", "F4", false, Execution_.CanDumpDiagnostics()))
+            if (ImGui::MenuItem(TrId("Dump Scene and Renderer"), "F4", false, Execution_.CanDumpDiagnostics()))
             {
                 Execution_.DumpDiagnostics();
             }
 #endif
 #if !defined(DBC_STUDIO_SANDBOXED)
-            if (ImGui::MenuItem("Compile HLSL Effect...", nullptr, false, !ExecutionBusy_))
+            if (ImGui::MenuItem(TrId("Compile HLSL Effect..."), nullptr, false, !ExecutionBusy_))
             {
                 const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
-                Dialog_.OpenFile(Window_, Start, "HLSL effect", KHlslFilter,
-                                 [this](const std::string& Path)
-                                 {
-                                     if (Path.empty())
-                                         return;
-                                     const toolchain::ShaderCompileResult Result =
-                                         ShaderCompiler_.CompileHlslEffect(dbc::PathFromUtf8(Path));
-                                     if (!Result.Success)
-                                     {
-                                         Output_.Append("[ERROR] " + Result.Error,
-                                                        panels::OutputPanel::Severity::Error);
-                                         Status_ = "HLSL effect compilation failed";
-                                         return;
-                                     }
-                                     Output_.Append("> Compiled " + dbc::PathToUtf8(Result.ManifestPath.filename()),
-                                                    panels::OutputPanel::Severity::Notice);
-                                     Output_.Append("  " + dbc::PathToUtf8(Result.VertexPath));
-                                     Output_.Append("  " + dbc::PathToUtf8(Result.FragmentPath));
-                                     Status_ = "Compiled " + dbc::PathToUtf8(Result.ManifestPath.filename());
-                                 });
+                Dialog_.OpenFile(
+                    Window_, Start, Tr("HLSL effect"), KHlslFilter,
+                    [this](const std::string& Path)
+                    {
+                        if (Path.empty())
+                            return;
+                        const toolchain::ShaderCompileResult Result =
+                            ShaderCompiler_.CompileHlslEffect(dbc::PathFromUtf8(Path));
+                        if (!Result.Success)
+                        {
+                            Output_.Append("[ERROR] " + Result.Error, panels::OutputPanel::Severity::Error);
+                            Status_ = Tr("HLSL effect compilation failed");
+                            return;
+                        }
+                        Output_.Append("> " + TrFmt("Compiled {0}", {dbc::PathToUtf8(Result.ManifestPath.filename())}),
+                                       panels::OutputPanel::Severity::Notice);
+                        Output_.Append("  " + dbc::PathToUtf8(Result.VertexPath));
+                        Output_.Append("  " + dbc::PathToUtf8(Result.FragmentPath));
+                        Status_ = TrFmt("Compiled {0}", {dbc::PathToUtf8(Result.ManifestPath.filename())});
+                    });
             }
 #endif
             ImGui::Separator();
             const bool CanExport = core::platform::CanExportArtifacts() && !ExecutionBusy_ && !ExportJob_.Running() &&
                                    ResolvedProject_.has_value() && ResolvedProject_->ExportBlockers.empty() &&
                                    !ResolvedProject_->EntrySource.empty();
-            if (ImGui::MenuItem("Build...", nullptr, false, CanExport))
+            if (ImGui::MenuItem(TrId("Build..."), nullptr, false, CanExport))
                 OpenBuildWindow();
-            if (ExportJob_.Running() && ImGui::MenuItem("Cancel Export"))
+            if (ExportJob_.Running() && ImGui::MenuItem(TrId("Cancel Export")))
                 ExportJob_.Cancel();
-            if (!LastExport_.empty() && ImGui::MenuItem("Reveal Last Export"))
+            if (!LastExport_.empty() && ImGui::MenuItem(TrId("Reveal Last Export")))
                 RevealInFileManager(LastExport_);
             ImGui::Separator();
-            if (ImGui::MenuItem("Project Settings...", "Ctrl+,", false, !Project_.Root().empty()))
+            if (ImGui::MenuItem(TrId("Project Settings..."), "Ctrl+,", false, !Project_.Root().empty()))
             {
                 SettingsWindow_.Open(Project_.Root(), ProjectSettings_,
                                      ResolvedProject_ ? ResolvedProject_->DescriptorPath : std::nullopt);
             }
-            if (ImGui::MenuItem("Generate Icons", nullptr, false,
+            if (ImGui::MenuItem(TrId("Generate Icons"), nullptr, false,
                                 !Project_.Root().empty() && !ProjectSettings_.IconSource.empty()))
             {
                 IconGenerator_.Generate(Project_.Root(), ProjectSettings_.IconSource);
             }
-            if (ImGui::MenuItem("Clear Local Path Remappings", nullptr, false,
+            if (ImGui::MenuItem(TrId("Clear Local Path Remappings"), nullptr, false,
                                 !Settings_.ProjectPathRemappings.empty()))
             {
                 Settings_.ClearProjectPathRemappings();
                 Settings_.Save();
-                Status_ = "Local DBPro path remappings cleared";
+                Status_ = Tr("Local DBPro path remappings cleared");
             }
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("View"))
+        if (ImGui::BeginMenu(TrId("View")))
         {
-            if (ImGui::MenuItem("Launcher..."))
+            if (ImGui::MenuItem(TrId("Launcher...")))
             {
                 Launcher_.Open();
             }
             ImGui::Separator();
             const std::string Blocker = SceneBlocker();
             // The mode items share labels with panel toggles below, so they need distinct IDs.
-            if (ImGui::MenuItem("Code##Mode", "Ctrl+1", Mode_ == Mode::Code))
+            if (ImGui::MenuItem(TrId("Code##Mode"), "Ctrl+1", Mode_ == Mode::Code))
                 SetMode(Mode::Code);
-            if (ImGui::MenuItem("Scene##Mode", "Ctrl+2", Mode_ == Mode::Scene, Blocker.empty()))
+            if (ImGui::MenuItem(TrId("Scene##Mode"), "Ctrl+2", Mode_ == Mode::Scene, Blocker.empty()))
                 SetMode(Mode::Scene);
             if (!Blocker.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", Blocker.c_str());
+                ImGui::SetTooltip("%s", Tr(Blocker.c_str()));
             ImGui::Separator();
             ImGui::MenuItem(TrId(KPanelProject), nullptr, &ShowProject_);
             ImGui::MenuItem(TrId(KPanelCode), nullptr, &ShowCode_);
@@ -1842,7 +1867,7 @@ namespace dbc::studio
             ImGui::MenuItem(TrId(KPanelOutput), nullptr, &ShowOutput_);
             ImGui::MenuItem(TrId(KPanelProblems), nullptr, &ShowProblems_);
             ImGui::Separator();
-            if (ImGui::MenuItem("Reset Layout"))
+            if (ImGui::MenuItem(TrId("Reset Layout")))
             {
                 if (Mode_ == Mode::Scene)
                     Scene_.BuildDefaultLayout(ImGui::GetID(KSceneDockSpaceName), KPanelSceneOutput);
@@ -1872,10 +1897,10 @@ namespace dbc::studio
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Help"))
+        if (ImGui::BeginMenu(TrId("Help")))
         {
-            ImGui::MenuItem("DBA Reference", nullptr, false, false);
-            ImGui::MenuItem("About", nullptr, &ShowAbout_);
+            ImGui::MenuItem(TrId("DBA Reference"), nullptr, false, false);
+            ImGui::MenuItem(TrId("About"), nullptr, &ShowAbout_);
             ImGui::EndMenu();
         }
 
@@ -1897,31 +1922,33 @@ namespace dbc::studio
             ImGui::Spacing();
 
             ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x);
-            ImGui::TextUnformatted("OpenDBC is an independent open-source implementation compatible with the "
-                                   "DarkBASIC Classic and DarkBASIC Professional programming languages. OpenDBC is "
-                                   "not affiliated with, endorsed by, or sponsored by Dark Basic Software Limited.");
+            ImGui::TextUnformatted(
+                Tr("OpenDBC is an independent open-source implementation compatible with the "
+                   "DarkBASIC Classic and DarkBASIC Professional programming languages. OpenDBC is "
+                   "not affiliated with, endorsed by, or sponsored by Dark Basic Software Limited."));
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
 
-            ImGui::TextUnformatted("Trademarks");
+            ImGui::TextUnformatted(Tr("Trademarks"));
             ImGui::Spacing();
-            ImGui::TextUnformatted("DarkBASIC and DarkBASIC Professional are names and trademarks belonging to their "
-                                   "respective rights holders. They are referenced solely to describe OpenDBC's "
-                                   "language compatibility. OpenDBC is an independent project and is not affiliated "
-                                   "with or endorsed by Dark Basic Software Limited.");
+            ImGui::TextUnformatted(
+                Tr("DarkBASIC and DarkBASIC Professional are names and trademarks belonging to their "
+                   "respective rights holders. They are referenced solely to describe OpenDBC's "
+                   "language compatibility. OpenDBC is an independent project and is not affiliated "
+                   "with or endorsed by Dark Basic Software Limited."));
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
 
-            ImGui::TextUnformatted("Licence");
+            ImGui::TextUnformatted(Tr("Licence"));
             ImGui::Spacing();
-            ImGui::TextUnformatted("OpenDBC is released under the MIT Licence, Copyright (c) 2026 Yannick Comte. "
-                                   "Third-party content and its licences are listed in NOTICE.md.");
+            ImGui::TextUnformatted(Tr("OpenDBC is released under the MIT Licence, Copyright (c) 2026 Yannick Comte. "
+                                      "Third-party content and its licences are listed in NOTICE.md."));
             ImGui::PopTextWrapPos();
 
             ImGui::Spacing();
-            if (ImGui::Button("Close"))
+            if (ImGui::Button(TrId("Close")))
             {
                 ShowAbout_ = false;
             }
@@ -1985,8 +2012,8 @@ namespace dbc::studio
         if (ResolvedProject_)
         {
             ImGui::SameLine();
-            ImGui::TextDisabled("Dialect (%s):",
-                                dbc::interpreter::DialectOriginName(ResolvedProject_->ProfileOrigin).data());
+            ImGui::TextDisabled("%s",
+                                TrFmt("Dialect ({0}):", {DialectOriginLabel(ResolvedProject_->ProfileOrigin)}).c_str());
             ImGui::SameLine();
             ImGui::BeginDisabled(ExecutionBusy_ || DialectLocked_);
             const char* Selected = ResolvedProject_->Profile == dbc::language::LanguageProfile::Dbc ? "DBC" : "DBPro";
@@ -2082,7 +2109,7 @@ namespace dbc::studio
         std::error_code Error;
         if (Editor_.CurrentPath().empty() || !std::filesystem::equivalent(Editor_.CurrentPath(), Path, Error) || Error)
         {
-            Output_.Append("The Launcher could not activate the selected .dba document.",
+            Output_.Append(Tr("The Launcher could not activate the selected .dba document."),
                            panels::OutputPanel::Severity::Error);
             return;
         }
@@ -2147,7 +2174,7 @@ namespace dbc::studio
             return;
         if (!Editor_.HasDocument())
         {
-            Output_.Append("Nothing to run: open a .dba document.", panels::OutputPanel::Severity::Error);
+            Output_.Append(Tr("Nothing to run: open a .dba document."), panels::OutputPanel::Severity::Error);
             return;
         }
 
@@ -2173,7 +2200,7 @@ namespace dbc::studio
         if (Started)
         {
             ExecutionBusy_ = true;
-            Status_ = "Running " + dbc::PathToUtf8(Target.filename());
+            Status_ = TrFmt("Running {0}", {dbc::PathToUtf8(Target.filename())});
         }
         else if (!ExecutionBusy_)
         {
@@ -2188,8 +2215,8 @@ namespace dbc::studio
             return;
         }
         Execution_.Stop();
-        Status_ = "Stopping...";
-        Output_.Append("Stopping...", panels::OutputPanel::Severity::Notice);
+        Status_ = Tr("Stopping...");
+        Output_.Append(Status_, panels::OutputPanel::Severity::Notice);
     }
 
     void App::OpenBuildWindow()
@@ -2244,7 +2271,7 @@ namespace dbc::studio
                 const std::filesystem::path Suggested =
                     ResolvedProject_ ? ResolvedProject_->ProjectRoot.parent_path() / "release.keystore"
                                      : dbc::PathFromUtf8("release.keystore");
-                Dialog_.SaveFile(Window_, dbc::PathToUtf8(Suggested), "Keystore", "keystore",
+                Dialog_.SaveFile(Window_, dbc::PathToUtf8(Suggested), Tr("Keystore"), "keystore",
                                  [this](const std::string& Path)
                                  {
                                      if (!Path.empty())
@@ -2260,7 +2287,7 @@ namespace dbc::studio
                 break;
             case panels::BuildWindow::Action::Cancel:
                 ExportJob_.Cancel();
-                Status_ = "Cancelling export...";
+                Status_ = Tr("Cancelling export...");
                 break;
         }
     }
@@ -2281,24 +2308,25 @@ namespace dbc::studio
         std::string Error;
         if (!toolchain::CreateAndroidKeystore(Toolchain.JavaHome, Request, Error))
         {
-            Status_ = "Keystore not created";
-            Output_.Append("Cannot create the keystore: " + Error, panels::OutputPanel::Severity::Error);
+            Status_ = Tr("Keystore not created");
+            Output_.Append(TrFmt("Cannot create the keystore: {0}", {Error}), panels::OutputPanel::Severity::Error);
             return;
         }
         ProjectSettings_.AndroidKeystorePath = dbc::PathToUtf8(Request.Path);
         ProjectSettings_.AndroidKeyAlias = Request.Alias;
         if (ResolvedProject_ && !ProjectSettings_.Save(ResolvedProject_->ProjectRoot))
-            Output_.Append("Cannot save the keystore in the project settings.", panels::OutputPanel::Severity::Error);
+            Output_.Append(Tr("Cannot save the keystore in the project settings."),
+                           panels::OutputPanel::Severity::Error);
         // A PKCS12 keystore protects the key with the keystore password.
         ExportSecrets_.AndroidKeystorePassword = Request.Password;
         ExportSecrets_.AndroidKeyPassword = Request.Password;
         Form.Password.clear();
         Form.Confirm.clear();
-        Status_ = "Keystore created";
-        Output_.Append("Created " + dbc::PathToUtf8(Request.Path) +
-                           ". Back it up with its password: every Google Play "
-                           "update must be signed with it.",
-                       panels::OutputPanel::Severity::Notice);
+        Status_ = Tr("Keystore created");
+        Output_.Append(
+            TrFmt("Created {0}. Back it up with its password: every Google Play update must be signed with it.",
+                  {dbc::PathToUtf8(Request.Path)}),
+            panels::OutputPanel::Severity::Notice);
         RefreshExportChecks();
     }
 
@@ -2308,8 +2336,9 @@ namespace dbc::studio
             return;
         if (!Editor_.SaveAll())
         {
-            Status_ = "Export failed";
-            Output_.Append("Save every modified BASIC source before exporting.", panels::OutputPanel::Severity::Error);
+            Status_ = Tr("Export failed");
+            Output_.Append(Tr("Save every modified BASIC source before exporting."),
+                           panels::OutputPanel::Severity::Error);
             return;
         }
         RefreshExportChecks();
@@ -2320,8 +2349,8 @@ namespace dbc::studio
         std::filesystem::create_directories(Folder, FileError);
         if (FileError)
         {
-            Status_ = "Export failed";
-            Output_.Append("Cannot create the export folder: " + FileError.message(),
+            Status_ = Tr("Export failed");
+            Output_.Append(TrFmt("Cannot create the export folder: {0}", {FileError.message()}),
                            panels::OutputPanel::Severity::Error);
             return;
         }
@@ -2329,14 +2358,14 @@ namespace dbc::studio
         Settings_.Save();
         if (!ExportJob_.Start(MakeBuildRequest()))
         {
-            Output_.Append("An export is already running.", panels::OutputPanel::Severity::Error);
+            Output_.Append(Tr("An export is already running."), panels::OutputPanel::Severity::Error);
             return;
         }
         const bool Android = BuildWindow_.Target() == toolchain::ArtifactTarget::AndroidApk ||
                              BuildWindow_.Target() == toolchain::ArtifactTarget::AndroidBundle;
         IncrementVersionAfterExport_ = Android && BuildWindow_.Distribution() && BuildWindow_.IncrementVersionCode();
-        Status_ = "Exporting...";
-        Output_.Append("Exporting " + dbc::PathToUtf8(ResolvedProject_->EntrySource.filename()) + "...",
+        Status_ = Tr("Exporting...");
+        Output_.Append(TrFmt("Exporting {0}...", {dbc::PathToUtf8(ResolvedProject_->EntrySource.filename())}),
                        panels::OutputPanel::Severity::Notice);
     }
 
@@ -2352,18 +2381,19 @@ namespace dbc::studio
         if (!*Result)
         {
             IncrementVersionAfterExport_ = false;
-            Status_ = "Export failed";
+            Status_ = Tr("Export failed");
             Output_.Append(Result->Error, panels::OutputPanel::Severity::Error);
             return;
         }
         LastExport_ = Result->OutputPath;
-        Status_ = "Exported " + dbc::PathToUtf8(Result->OutputPath.filename());
+        Status_ = TrFmt("Exported {0}", {dbc::PathToUtf8(Result->OutputPath.filename())});
         if (std::exchange(IncrementVersionAfterExport_, false) && ResolvedProject_)
         {
             ++ProjectSettings_.VersionCode;
             if (ProjectSettings_.Save(ResolvedProject_->ProjectRoot))
-                Output_.Append("The next build uses version code " + std::to_string(ProjectSettings_.VersionCode),
-                               panels::OutputPanel::Severity::Notice);
+                Output_.Append(
+                    TrFmt("The next build uses version code {0}", {std::to_string(ProjectSettings_.VersionCode)}),
+                    panels::OutputPanel::Severity::Notice);
         }
     }
 
