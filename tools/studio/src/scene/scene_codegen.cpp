@@ -679,7 +679,7 @@ namespace dbc::studio
                     SceneNode Node;
                     Node.Kind = Kind;
                     Node.Id = Id;
-                    Node.Name = std::string(NodeKindLabel(Kind)) + " " + Integer(Id);
+                    Node.Name = DefaultNodeName(Kind, Id);
                     Node.Mat.Flags = DefaultObjectFlags(Profile_);
                     // A sound plays only when PLAY SOUND or LOOP SOUND follows.
                     Node.PlayOnLoad = Kind != NodeKind::Sound;

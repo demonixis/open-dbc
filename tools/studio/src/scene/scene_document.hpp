@@ -57,7 +57,12 @@ namespace dbc::studio
         IdSpace IdSpaceOf(NodeKind Kind);
         // Lights and sounds: no geometry, drawn and picked as viewport icons.
         bool IsMarker(NodeKind Kind);
+        // Stable English name: default node names reach saved levels through REM @, so it is never translated.
+        const char* NodeKindName(NodeKind Kind);
+        // The kind as shown in the interface.
         const char* NodeKindLabel(NodeKind Kind);
+        // "Cube 12": the name of a new or unnamed node, whatever the interface language.
+        std::string DefaultNodeName(NodeKind Kind, int Id);
         // False for kinds whose commands the profile cannot run (terrains in Classic).
         bool KindAvailable(NodeKind Kind, dbc::language::LanguageProfile Profile);
         // MAKE STATIC OBJECT, which only the Classic profile implements.

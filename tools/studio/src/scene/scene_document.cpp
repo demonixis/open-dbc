@@ -33,7 +33,7 @@ namespace dbc::studio
             return Kind == NodeKind::Light || Kind == NodeKind::Sound;
         }
 
-        const char* NodeKindLabel(NodeKind Kind)
+        const char* NodeKindName(NodeKind Kind)
         {
             switch (Kind)
             {
@@ -63,6 +63,16 @@ namespace dbc::studio
                     return "3D Sound";
             }
             return "Node";
+        }
+
+        const char* NodeKindLabel(NodeKind Kind)
+        {
+            return NodeKindName(Kind);
+        }
+
+        std::string DefaultNodeName(NodeKind Kind, int Id)
+        {
+            return std::string(NodeKindName(Kind)) + " " + std::to_string(Id);
         }
 
         namespace
@@ -202,7 +212,7 @@ namespace dbc::studio
             SceneNode Node;
             Node.Kind = Kind;
             Node.Id = NextId(IdSpaceOf(Kind));
-            Node.Name = std::string(NodeKindLabel(Kind)) + " " + std::to_string(Node.Id);
+            Node.Name = DefaultNodeName(Kind, Node.Id);
             Node.Mat.Flags = DefaultObjectFlags(Profile);
             if (Kind == NodeKind::Light)
                 Node.Position = glm::vec3(0.0f, 50.0f, 0.0f);

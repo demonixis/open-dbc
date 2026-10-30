@@ -343,8 +343,8 @@ namespace dbc::studio
                 default:
                     break;
             }
-            std::string Key = std::string(NodeKindLabel(Node.Kind)) + ":" + F(Node.Size) + "," + F(Node.Extent.x) +
-                              "," + F(Node.Extent.y) + "," + F(Node.Extent.z);
+            std::string Key = std::string(NodeKindName(Node.Kind)) + ":" + F(Node.Size) + "," + F(Node.Extent.x) + "," +
+                              F(Node.Extent.y) + "," + F(Node.Extent.z);
             if (Node.Detail)
                 Key += "," + std::to_string(Node.Detail->x) + "," + std::to_string(Node.Detail->y);
             if (Node.Kind == NodeKind::Plain)
