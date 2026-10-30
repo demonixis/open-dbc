@@ -1,0 +1,21 @@
+rem Renderer stress scene: 400 shadow casters over a floor, one of them turning, under a circling camera.
+rem Motion advances a fixed step per frame, so every run draws the same frames.
+sync on
+autocam off
+make object plain 1, 400, 400
+xrotate object 1, 270
+position object 1, 0, -2, 0
+for i = 2 to 401
+   make object sphere i, 6, 16, 16
+   position object i, ((i - 2) mod 20) * 16 - 152, 4, ((i - 2) / 20) * 16 - 152
+   set shadow shading on i
+next i
+set point light 0, 0, 150, 0
+angle# = 0.0
+do
+   angle# = angle# + 0.5
+   yrotate object 2, angle#
+   position camera sin(angle#) * 200, 80, cos(angle#) * 200
+   point camera 0, 0, 0
+   sync
+loop

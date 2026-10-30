@@ -4,6 +4,7 @@ distinct_meshes	tests/benchmarks/distinct_meshes.dba	dbpro	300	read-only
 transparency	tests/benchmarks/transparency.dba	dbpro	300	read-only
 skinned	tests/benchmarks/skinned.dba	dbc	300	read-only
 two_views	tests/benchmarks/two_views.dba	dbpro	300	read-only
+shadow_casters	tests/benchmarks/shadow_casters.dba	dbpro	300	read-only
 cavern_dash	examples/dbc/demos/cavern_dash/cavern_dash.dba	dbc	300	copy-tree
 dune_armour	examples/dbc/demos/dune_armour/dune_armour.dba	dbc	300	copy-tree
 flooded_vault	examples/dbc/demos/flooded_vault/flooded_vault.dba	dbc	300	copy-tree

@@ -146,8 +146,8 @@ times slower in Debug.
 
 `scripts/benchmark_renderer.py run` measures every program of
 `tests/benchmarks/benchmarks.tsv`, the demos and the stress scenes beside it (one
-shared mesh, many distinct meshes, transparency, skinned characters, two views),
-and keeps each one's last frame; `compare` puts two builds side by side, pixels
+shared mesh, many distinct meshes, transparency, skinned characters, two views,
+shadow casters), and keeps each one's last frame; `compare` puts two builds side by side, pixels
 included. The stress scenes advance a fixed step per frame, so they draw the same
 frames on every run.
 

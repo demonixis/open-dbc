@@ -793,7 +793,7 @@ if(BUILD_TESTS)
         NAME benchmark_scenes
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/benchmark_renderer.py run
             --opendbc $<TARGET_FILE:opendbc> --output ${CMAKE_CURRENT_BINARY_DIR}/benchmark-scenes
-            --runs 1 --frames 3 --only shared_mesh distinct_meshes transparency skinned two_views
+            --runs 1 --frames 3 --only shared_mesh distinct_meshes transparency skinned two_views shadow_casters
     )
     set_tests_properties(benchmark_scenes PROPERTIES
         TIMEOUT 300
