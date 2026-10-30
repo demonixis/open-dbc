@@ -54,9 +54,12 @@ if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_i18n
         test_studio_i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/locales.cpp
     )
-    target_include_directories(test_studio_i18n PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
-    target_link_libraries(test_studio_i18n PRIVATE doctest_with_main imgui)
+    add_dependencies(test_studio_i18n opendbc_studio_locales)
+    target_include_directories(test_studio_i18n PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
+                               ${CMAKE_BINARY_DIR}/tools/studio/generated)
+    target_link_libraries(test_studio_i18n PRIVATE doctest_with_main dbc_engine imgui nlohmann_json::nlohmann_json)
     doctest_discover_tests(test_studio_i18n PROPERTIES LABELS "unit-studio")
 
     add_executable(test_studio_scene

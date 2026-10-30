@@ -1,12 +1,15 @@
 #include <doctest/doctest.h>
 
 #include "core/i18n.hpp"
+#include "core/locales.hpp"
 
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <algorithm>
 #include <string>
 #include <string_view>
+#include <vector>
 
 using namespace dbc::studio;
 
@@ -103,4 +106,75 @@ TEST_CASE("Formatted strings leave anything but a valid placeholder alone")
     CHECK(TrFmt("trailing {", {"a"}) == "trailing {");
     CHECK(TrFmt("{99999999999999999999}", {"a"}) == "{99999999999999999999}");
     CHECK(TrFmt("", {"a"}).empty());
+}
+
+TEST_CASE("A catalogue is a flat object with its own name")
+{
+    std::string Error;
+    const auto Catalogue = core::ParseTranslationCatalogue(R"({"@name":"Français","Save":"Enregistrer"})", Error);
+    CHECK(Error.empty());
+    REQUIRE(Catalogue.has_value());
+    CHECK(Catalogue->Name == "Français");
+    CHECK(Catalogue->Entries.size() == 1);
+    CHECK(Catalogue->Entries.at("Save") == "Enregistrer");
+}
+
+TEST_CASE("Invalid catalogues are refused without throwing")
+{
+    std::string Error;
+    CHECK_FALSE(core::ParseTranslationCatalogue("{", Error).has_value());
+    CHECK_FALSE(Error.empty());
+    CHECK_FALSE(core::ParseTranslationCatalogue("[]", Error).has_value());
+    CHECK_FALSE(Error.empty());
+    CHECK_FALSE(core::ParseTranslationCatalogue(R"({"Save":"Enregistrer"})", Error).has_value());
+    CHECK_FALSE(Error.empty());
+}
+
+TEST_CASE("A catalogue entry that is not a string is reported and ignored")
+{
+    std::string Error;
+    const auto Catalogue = core::ParseTranslationCatalogue(R"({"@name":"Français","Save":1,"Open":"Ouvrir"})", Error);
+    CHECK_FALSE(Error.empty());
+    REQUIRE(Catalogue.has_value());
+    CHECK(Catalogue->Entries.size() == 1);
+    CHECK(Catalogue->Entries.contains("Open"));
+}
+
+TEST_CASE("The system's locales choose the language unless the setting names one")
+{
+    const auto Resolve = [](std::string_view Setting, const std::vector<std::string>& Locales)
+    { return core::ResolveInterfaceLanguage(Setting, Locales); };
+
+    CHECK(Resolve("auto", {"fr"}) == "fr");
+    CHECK(Resolve("auto", {"fr-CA"}) == "fr");
+    CHECK(Resolve("auto", {"fr_FR"}) == "fr");
+    CHECK(Resolve("auto", {"FR"}) == "fr");
+    CHECK(Resolve("auto", {"xx", "fr", "en"}) == "fr");
+    CHECK(Resolve("auto", {"en-GB", "fr"}) == "en");
+    CHECK(Resolve("auto", {"xx"}) == "en");
+    CHECK(Resolve("auto", {}) == "en");
+    CHECK(Resolve("fr", {"en"}) == "fr");
+    CHECK(Resolve("en", {"fr"}) == "en");
+    CHECK(Resolve("xx", {"fr"}) == "fr");
+    CHECK(Resolve("", {}) == "en");
+}
+
+TEST_CASE("Every embedded catalogue is listed after English and can be activated")
+{
+    const std::vector<core::InterfaceLanguage>& Languages = core::InterfaceLanguages();
+    REQUIRE(Languages.size() >= 2);
+    CHECK(Languages.front().Code == "en");
+    CHECK(Languages.front().Name == "English");
+    const auto French = std::find_if(Languages.begin(), Languages.end(),
+                                     [](const core::InterfaceLanguage& Language) { return Language.Code == "fr"; });
+    REQUIRE(French != Languages.end());
+    CHECK(French->Name == "Français");
+
+    core::ActivateInterfaceLanguage("fr");
+    CHECK(std::string_view(Tr("Language")) == "Langue");
+    core::ActivateInterfaceLanguage("en");
+    CHECK(std::string_view(Tr("Language")) == "Language");
+    core::ActivateInterfaceLanguage("fr");
+    core::ActivateInterfaceLanguage("xx");
+    CHECK(std::string_view(Tr("Language")) == "Language");
 }

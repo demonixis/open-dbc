@@ -16,6 +16,8 @@ namespace dbc::studio
             std::string ProjectFolder;
             std::string LastFile;
             std::string LogLevel = "debug";
+            // "auto" follows the system; anything else is a language code.
+            std::string Language = "auto";
             bool DebugOverlay = false;
             std::map<std::string, std::string> ProjectPathRemappings;
 

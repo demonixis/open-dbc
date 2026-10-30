@@ -12,6 +12,8 @@
 #include <iterator>
 #include <limits>
 
+#include "core/i18n.hpp"
+#include "core/locales.hpp"
 #include "core/paths.hpp"
 #include "interpreter/atomic_file.hpp"
 #include "scene/scene_capture.hpp"
@@ -231,6 +233,7 @@ namespace dbc::studio
 
         Settings_ = core::Settings::Load();
         SettingsLoaded_ = true;
+        ApplyLanguage();
 
         Workspace_.Initialize();
 
@@ -1089,8 +1092,31 @@ namespace dbc::studio
         QuitSaveInProgress_ = false;
     }
 
+    void App::ApplyLanguage()
+    {
+        std::vector<std::string> SystemLocales;
+        int Count = 0;
+        if (SDL_Locale** Locales = SDL_GetPreferredLocales(&Count))
+        {
+            for (int Index = 0; Index < Count; ++Index)
+                SystemLocales.emplace_back(Locales[Index]->language);
+            SDL_free(Locales);
+        }
+        else
+        {
+            DBC_LOG_WARN("Cannot read the system languages: {}", SDL_GetError());
+        }
+        core::ActivateInterfaceLanguage(core::ResolveInterfaceLanguage(Settings_.Language, SystemLocales));
+    }
+
     void App::DrawFrame()
     {
+        if (LanguageChanged_)
+        {
+            LanguageChanged_ = false;
+            ApplyLanguage();
+        }
+
         ImGui_ImplSDLGPU3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
@@ -1802,6 +1828,26 @@ namespace dbc::studio
                     Scene_.BuildDefaultLayout(ImGui::GetID(KSceneDockSpaceName), KPanelSceneOutput);
                 else
                     BuildDefaultLayout(ImGui::GetID(KDockSpaceName));
+            }
+            ImGui::Separator();
+            if (ImGui::BeginMenu(TrId("Language")))
+            {
+                const auto Choose = [this](const std::string& Code)
+                {
+                    Settings_.Language = Code;
+                    Settings_.Save();
+                    LanguageChanged_ = true;
+                };
+                if (ImGui::MenuItem(TrId("Automatic"), nullptr, Settings_.Language == "auto"))
+                    Choose("auto");
+                ImGui::Separator();
+                // Each language under its own name, so a reader can always find theirs.
+                for (const core::InterfaceLanguage& Language : core::InterfaceLanguages())
+                {
+                    if (ImGui::MenuItem(Language.Name.c_str(), nullptr, Settings_.Language == Language.Code))
+                        Choose(Language.Code);
+                }
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }
