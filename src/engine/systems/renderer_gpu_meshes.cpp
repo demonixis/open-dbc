@@ -167,7 +167,7 @@ namespace dbc
                 Batch.StaticIndices = Entry->Indices;
                 Batch.IndexCount = Entry->IndexCount;
                 Geometry.Batches.push_back(Batch);
-                Geometry.MeshIndices += Batch.IndexCount * Batch.InstanceCount;
+                Geometry.MeshIndices += uint64_t{Batch.IndexCount} * Batch.InstanceCount;
             }
             First = End;
         }

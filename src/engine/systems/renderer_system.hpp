@@ -62,7 +62,7 @@ namespace dbc
         // indices their draws cover.
         Uint32 MeshInstances = 0;
         Uint32 MeshInstanceOffset = 0;
-        Uint32 MeshIndices = 0;
+        uint64_t MeshIndices = 0;
         std::vector<Triangle> ShadowSources, Shadows;
         SDL_FColor ClearColor{};
         Uint32 VertexOffset = 0;

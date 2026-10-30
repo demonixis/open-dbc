@@ -1130,7 +1130,10 @@ namespace dbc
         Frame.WorldRendered |=
             (Geometry.Scene && (!Geometry.Scene->World.Triangles.empty() || !Geometry.Scene->MeshDraws.empty())) ||
             !Geometry.TerrainIndices.empty();
-        Frame.Vertices += static_cast<int>(Vertices.size() + Geometry.TerrainIndices.size() + Geometry.MeshIndices);
+        // Instancing can multiply past the range of the statistics.
+        const uint64_t ViewVertices = uint64_t{Vertices.size()} + Geometry.TerrainIndices.size() + Geometry.MeshIndices;
+        Frame.Vertices = static_cast<int>(
+            std::min<uint64_t>(static_cast<uint64_t>(Frame.Vertices) + ViewVertices, std::numeric_limits<int>::max()));
         Frame.Batches += static_cast<int>(Batches.size());
         ++Frame.Views;
         return true;
