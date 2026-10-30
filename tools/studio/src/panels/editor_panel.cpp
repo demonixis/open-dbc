@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <utility>
@@ -459,12 +460,205 @@ namespace dbc::studio
             return std::exchange(Notices_, {});
         }
 
-        void EditorPanel::OpenFindReplace()
+        void EditorPanel::OpenFind(bool Replace)
+        {
+            TextEditor* Editor = CurrentEditor();
+            if (Editor == nullptr)
+                return;
+            TextEditor::DocSelection Term = Editor->GetMainCursorSelection();
+            if (Term.start == Term.end)
+                Term = {Editor->FindWordStart(Term.start, true), Editor->FindWordEnd(Term.start, true)};
+            if (Term.start != Term.end && Term.start.line == Term.end.line)
+                std::snprintf(FindText_, sizeof(FindText_), "%s", Editor->GetSectionText(Term).c_str());
+            FindVisible_ = true;
+            FindReplacing_ = Replace;
+            FindFocus_ = true;
+            FindFailed_ = false;
+            FindAnchor_ = Editor->GetMainCursorSelection().start;
+        }
+
+        void EditorPanel::CloseFind()
+        {
+            FindVisible_ = false;
+            FindFailed_ = false;
+            if (TextEditor* Editor = CurrentEditor())
+                Editor->SetFocus();
+        }
+
+        void EditorPanel::SetFindText(const std::string& Text)
+        {
+            std::snprintf(FindText_, sizeof(FindText_), "%s", Text.c_str());
+            SearchFromAnchor();
+        }
+
+        void EditorPanel::SetReplaceText(const std::string& Text)
+        {
+            std::snprintf(ReplaceText_, sizeof(ReplaceText_), "%s", Text.c_str());
+        }
+
+        void EditorPanel::SearchFromAnchor()
         {
             if (TextEditor* Editor = CurrentEditor())
             {
-                Editor->OpenFindReplaceWindow();
+                Editor->SetCursor(FindAnchor_);
+                FindNext();
             }
+        }
+
+        bool EditorPanel::FindNext()
+        {
+            TextEditor* Editor = CurrentEditor();
+            FindFailed_ = false;
+            if (Editor == nullptr || FindText_[0] == '\0')
+                return false;
+            // The widget leaves the cursor as it is without a match, so one with no selection tells.
+            Editor->SetCursor(Editor->GetMainCursorSelection().end);
+            Editor->SelectNextOccurrenceOf(FindText_, FindCaseSensitive_, FindWholeWord_);
+            FindFailed_ = !Editor->MainCursorHasSelection();
+            return !FindFailed_;
+        }
+
+        void EditorPanel::ReplaceCurrent()
+        {
+            TextEditor* Editor = CurrentEditor();
+            if (Editor == nullptr)
+                return;
+            // From its start, a selection that is a match is found again.
+            const TextEditor::DocSelection Selected = Editor->GetMainCursorSelection();
+            Editor->SetCursor(Selected.start);
+            if (!FindNext())
+                return;
+            const TextEditor::DocSelection Found = Editor->GetMainCursorSelection();
+            if (Found.start == Selected.start && Found.end == Selected.end)
+            {
+                Editor->ReplaceTextInCurrentCursor(ReplaceText_);
+                FindNext();
+            }
+        }
+
+        void EditorPanel::ReplaceAll()
+        {
+            TextEditor* Editor = CurrentEditor();
+            FindFailed_ = false;
+            if (Editor == nullptr || FindText_[0] == '\0')
+                return;
+            // Without a match the selection would stay, and be what gets replaced.
+            Editor->SetCursor(Editor->GetMainCursorSelection().start);
+            Editor->SelectAllOccurrencesOf(FindText_, FindCaseSensitive_, FindWholeWord_);
+            FindFailed_ = !Editor->AnyCursorHasSelection();
+            if (!FindFailed_)
+                Editor->ReplaceTextInAllCursors(ReplaceText_);
+        }
+
+        void EditorPanel::HandleFindShortcuts()
+        {
+            // Claimed over the widget, whose Ctrl+F and Ctrl+G work on its own find window.
+            constexpr ImGuiInputFlags KOverWidget = ImGuiInputFlags_RouteGlobal | ImGuiInputFlags_RouteOverFocused;
+            ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_F, KOverWidget);
+            ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_G, KOverWidget);
+
+            const ImGuiIO& Io = ImGui::GetIO();
+            if (!Io.KeyCtrl && !Io.KeySuper)
+                return;
+            if (ImGui::IsKeyPressed(ImGuiKey_R, false))
+                OpenFind(Io.KeyShift);
+            else if (ImGui::IsKeyPressed(ImGuiKey_F, false) && !Io.KeyShift)
+                OpenFind(false);
+            else if (ImGui::IsKeyPressed(ImGuiKey_G, true))
+                FindNext();
+        }
+
+        void EditorPanel::DrawFindBar(TextEditor& Editor)
+        {
+            const float FieldWidth = ImGui::GetFontSize() * 18.0f;
+            // With the completion popup open, Escape is for the popup.
+            const bool Escape = !Completion_.IsOpen() && ImGui::IsKeyPressed(ImGuiKey_Escape, false) &&
+                                ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows);
+
+            if (FindFocus_)
+            {
+                ImGui::SetKeyboardFocusHere();
+                FindFocus_ = false;
+            }
+            ImGui::SetNextItemWidth(FieldWidth);
+            if (FindFailed_)
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, Theme::ErrorLine);
+            const bool Entered = ImGui::InputTextWithHint("##find", "Find", FindText_, sizeof(FindText_),
+                                                          ImGuiInputTextFlags_EnterReturnsTrue);
+            if (FindFailed_)
+                ImGui::PopStyleColor();
+            if (ImGui::IsItemActivated())
+                FindAnchor_ = Editor.GetMainCursorSelection().start;
+            // Escape puts the text back, which is no search.
+            if (ImGui::IsItemEdited() && !Escape)
+                SearchFromAnchor();
+            if (Entered)
+            {
+                FindNext();
+                // Enter leaves the field; staying in it makes the next one go on to the next match.
+                ImGui::SetKeyboardFocusHere(-1);
+            }
+
+            ImGui::BeginDisabled(FindText_[0] == '\0');
+            ImGui::SameLine();
+            if (ImGui::Button("Next"))
+            {
+                FindNext();
+                FindFocus_ = true;
+            }
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                ImGui::SetTooltip("Select the next match (Enter, Ctrl+G)");
+            ImGui::SameLine();
+            if (ImGui::Button("All"))
+            {
+                Editor.SetCursor(Editor.GetMainCursorSelection().start);
+                Editor.SelectAllOccurrencesOf(FindText_, FindCaseSensitive_, FindWholeWord_);
+                FindFailed_ = !Editor.AnyCursorHasSelection();
+                Editor.SetFocus();
+            }
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                ImGui::SetTooltip("Select every match, with a cursor on each");
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            const bool CaseChanged = ImGui::Checkbox("Aa", &FindCaseSensitive_);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Match case");
+            ImGui::SameLine();
+            const bool WordChanged = ImGui::Checkbox("Word", &FindWholeWord_);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Match whole words only");
+            if (CaseChanged || WordChanged)
+                SearchFromAnchor();
+            ImGui::SameLine();
+            if (ImGui::Button("x"))
+                CloseFind();
+            if (FindFailed_)
+            {
+                ImGui::SameLine();
+                ImGui::TextColored(ImColor(Theme::Error), "No results");
+            }
+
+            if (FindReplacing_ && !Editor.IsReadOnlyEnabled())
+            {
+                ImGui::SetNextItemWidth(FieldWidth);
+                if (ImGui::InputTextWithHint("##replace", "Replace with", ReplaceText_, sizeof(ReplaceText_),
+                                             ImGuiInputTextFlags_EnterReturnsTrue))
+                {
+                    ReplaceCurrent();
+                    ImGui::SetKeyboardFocusHere(-1);
+                }
+                ImGui::BeginDisabled(FindText_[0] == '\0');
+                ImGui::SameLine();
+                if (ImGui::Button("Replace"))
+                    ReplaceCurrent();
+                ImGui::SameLine();
+                if (ImGui::Button("Replace All"))
+                    ReplaceAll();
+                ImGui::EndDisabled();
+            }
+
+            if (Escape)
+                CloseFind();
         }
 
         void EditorPanel::FormatCurrent()
@@ -607,6 +801,8 @@ namespace dbc::studio
                 return;
             }
 
+            HandleFindShortcuts();
+
             if (ImGui::BeginTabBar("##documents", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs |
                                                       ImGuiTabBarFlags_FittingPolicyScroll))
             {
@@ -640,6 +836,8 @@ namespace dbc::studio
                             ImGui::SetTooltip("%s", dbc::PathToUtf8(Doc.Path).c_str());
                         }
 
+                        if (FindVisible_)
+                            DrawFindBar(*Doc.Editor);
                         const ImGuiID EditorId = ImGui::GetID("##editor");
                         if (Doc.Basic)
                         {

@@ -90,6 +90,10 @@ the `snippets` folder of the Studio's preferences directory. A snippet is a
 and `rem Description:` lines name it, restrict it to profiles and describe it;
 the dialog only lists those the current tab's profile accepts.
 
+**Edit → Find** (Ctrl+R or Ctrl+F) opens a bar above the code. Typing selects the
+first match; Enter or Ctrl+G goes on to the next and Escape closes the bar. **Edit →
+Find and Replace** (Ctrl+Shift+R) adds a replace row.
+
 The toolbar holds New, Open, Save, Run and Stop. Beside the Project panel, the
 **Code** panel outlines the active tab: functions with their call counts, labels
 with their GOTO/GOSUB jumps, types and main-program variables; selecting one

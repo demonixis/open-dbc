@@ -86,7 +86,32 @@ namespace dbc::studio
             // recovered text as an unsaved change.
             void OpenRecovered(const core::UnsavedText& Value);
 
-            void OpenFindReplace();
+            // Opens the bar above the current tab, on the selection or the word at the cursor if any.
+            void OpenFind(bool Replace);
+            void CloseFind();
+            bool FindVisible() const
+            {
+                return FindVisible_;
+            }
+            bool FindReplacing() const
+            {
+                return FindVisible_ && FindReplacing_;
+            }
+            // The last search had no match.
+            bool FindFailed() const
+            {
+                return FindFailed_;
+            }
+            // Searches for Text from where the last search began, as typing into the bar does.
+            void SetFindText(const std::string& Text);
+            void SetReplaceText(const std::string& Text);
+            // Selects the next match after the cursor, past the end back to the start. False without a match.
+            bool FindNext();
+            // Replaces the selected match and selects the next. Any other selection stays and only
+            // moves on to the next match.
+            void ReplaceCurrent();
+            void ReplaceAll();
+
             void FormatCurrent();
 
             // Execution diagnostics, keyed by 1-based line number.
@@ -120,6 +145,9 @@ namespace dbc::studio
             Document* Find(const std::filesystem::path& Path) const;
             static bool IsDirty(const Document& Doc);
             void DrawCloseConfirm();
+            void HandleFindShortcuts();
+            void DrawFindBar(TextEditor& Editor);
+            void SearchFromAnchor();
 
             std::vector<std::unique_ptr<Document>> Documents_;
             int Current_ = -1;
@@ -129,6 +157,19 @@ namespace dbc::studio
             int UntitledCount_ = 0;
             int PendingClose_ = -1;
             std::vector<std::string> Notices_;
+
+            // The widget's own find window has a replace row and gives Enter back to the text,
+            // where it would replace the match with a line break, so the panel has a bar of its own.
+            bool FindVisible_ = false;
+            bool FindReplacing_ = false;
+            bool FindFocus_ = false;
+            bool FindFailed_ = false;
+            bool FindCaseSensitive_ = false;
+            bool FindWholeWord_ = false;
+            char FindText_[256] = {};
+            char ReplaceText_[256] = {};
+            // Where typing searches from, so that each new letter can still match where the last did.
+            TextEditor::DocPos FindAnchor_;
 
             const dba::CommandDatabase* Commands_ = nullptr;
             CompletionPopup Completion_;

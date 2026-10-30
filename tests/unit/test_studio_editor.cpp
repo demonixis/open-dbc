@@ -478,6 +478,197 @@ TEST_CASE("Studio completion follows the cursor and opens on demand")
     }
 }
 
+TEST_CASE("Studio editor finds and replaces without touching what does not match")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-find";
+    std::error_code Error;
+    std::filesystem::remove_all(Root, Error);
+    std::filesystem::create_directories(Root, Error);
+    REQUIRE_FALSE(Error);
+    const std::filesystem::path Path = Root / "main.dba";
+    std::ofstream(Path) << "alpha beta\nAlpha gamma\n";
+
+    dba::Reference Reference;
+    dba::CommandDatabase Commands;
+    Commands.Build(Reference);
+    panels::EditorPanel Editor;
+    Editor.Initialize(&Commands);
+    REQUIRE(Editor.Open(Path));
+    TextEditor& Text = *Editor.CurrentEditor();
+    const auto Selected = [&] { return Text.GetSectionText(Text.GetMainCursorSelection()); };
+    const auto Line = [&] { return Text.GetMainCursorSelection().start.line; };
+
+    // Each letter still matches where the last did, and the search goes round past the end.
+    Editor.SetFindText("al");
+    CHECK(Selected() == "al");
+    Editor.SetFindText("alpha");
+    CHECK(Selected() == "alpha");
+    CHECK(Line() == 0);
+    CHECK(Editor.FindNext());
+    CHECK(Selected() == "Alpha");
+    CHECK(Line() == 1);
+    CHECK(Editor.FindNext());
+    CHECK(Line() == 0);
+
+    // A word in the text is taken up, not one that goes past the cursor's line.
+    Text.SetCursor(TextEditor::DocPos(1, 8));
+    Editor.OpenFind(false);
+    Editor.FindNext();
+    CHECK(Selected() == "gamma");
+    Text.SelectAll();
+    Editor.OpenFind(false);
+    Text.SetCursor(TextEditor::DocPos(0, 0));
+    CHECK(Editor.FindNext());
+    CHECK(Selected() == "gamma");
+
+    // No match leaves no selection for a replacement to take.
+    Text.SelectAll();
+    Editor.SetFindText("missing");
+    CHECK(Editor.FindFailed());
+    CHECK_FALSE(Text.MainCursorHasSelection());
+    Text.SelectAll();
+    Editor.SetReplaceText("oops");
+    Editor.ReplaceAll();
+    CHECK(Editor.FindFailed());
+    CHECK(Editor.OpenText(Path) == "alpha beta\nAlpha gamma\n");
+    Text.SelectAll();
+    Editor.ReplaceCurrent();
+    CHECK(Editor.OpenText(Path) == "alpha beta\nAlpha gamma\n");
+
+    // A selection other than a match is kept: Replace first goes to a match.
+    Editor.SetFindText("alpha");
+    Text.SetCursor(TextEditor::DocPos(0, 6));
+    Editor.SetReplaceText("delta");
+    Editor.ReplaceCurrent();
+    CHECK(Editor.OpenText(Path) == "alpha beta\nAlpha gamma\n");
+    CHECK(Line() == 1);
+    Editor.ReplaceCurrent();
+    CHECK(Editor.OpenText(Path) == "alpha beta\ndelta gamma\n");
+    CHECK(Line() == 0);
+    CHECK(Selected() == "alpha");
+    Text.Undo();
+    CHECK(Editor.OpenText(Path) == "alpha beta\nAlpha gamma\n");
+
+    // One undo step, and an empty replacement deletes.
+    Editor.SetReplaceText("");
+    Editor.ReplaceAll();
+    CHECK(Editor.OpenText(Path) == " beta\n gamma\n");
+    Text.Undo();
+    CHECK(Editor.OpenText(Path) == "alpha beta\nAlpha gamma\n");
+
+    std::filesystem::remove_all(Root, Error);
+}
+
+TEST_CASE("Studio find bar takes the keyboard: Enter goes to the next match instead of typing a line break")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-find-bar";
+    std::error_code Error;
+    std::filesystem::remove_all(Root, Error);
+    std::filesystem::create_directories(Root, Error);
+    REQUIRE_FALSE(Error);
+    const std::filesystem::path Path = Root / "main.dba";
+    const std::string Source = "alpha beta\nAlpha gamma\n";
+    std::ofstream(Path) << Source;
+
+    ImGui::CreateContext();
+    ImGuiIO& Io = ImGui::GetIO();
+    Io.DisplaySize = ImVec2(800.0f, 600.0f);
+    Io.IniFilename = nullptr;
+    Io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+    Io.ConfigMacOSXBehaviors = false;
+    // As in the Studio: it competes for Enter and Escape.
+    Io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    {
+        dba::Reference Reference;
+        dba::CommandDatabase Commands;
+        Commands.Build(Reference);
+        panels::EditorPanel Editor;
+        Editor.Initialize(&Commands);
+        REQUIRE(Editor.Open(Path));
+        TextEditor& Text = *Editor.CurrentEditor();
+
+        const auto Frames = [&](int Count)
+        {
+            for (int Index = 0; Index < Count; ++Index)
+            {
+                ImGui::NewFrame();
+                ImGui::Begin("Editor");
+                Editor.Draw();
+                ImGui::End();
+                ImGui::Render();
+            }
+        };
+        const auto Press = [&](ImGuiKey Key, bool Control = false, bool Shift = false)
+        {
+            Io.AddKeyEvent(ImGuiMod_Ctrl, Control);
+            Io.AddKeyEvent(ImGuiMod_Shift, Shift);
+            Frames(1);
+            Io.AddKeyEvent(Key, true);
+            Frames(1);
+            Io.AddKeyEvent(Key, false);
+            Io.AddKeyEvent(ImGuiMod_Ctrl, false);
+            Io.AddKeyEvent(ImGuiMod_Shift, false);
+            Frames(2);
+        };
+        const auto Type = [&](const char* Characters)
+        {
+            Io.AddInputCharactersUTF8(Characters);
+            Frames(2);
+        };
+        const auto Selected = [&] { return Text.GetSectionText(Text.GetMainCursorSelection()); };
+        const auto Line = [&] { return Text.GetMainCursorSelection().start.line; };
+
+        Text.SetFocus();
+        Frames(4);
+
+        // The bar opens with the keyboard in its field, not in the text.
+        Press(ImGuiKey_R, true);
+        CHECK(Editor.FindVisible());
+        CHECK_FALSE(Editor.FindReplacing());
+        Type("alp");
+        CHECK(Selected() == "alp");
+        Type("ha");
+        CHECK(Selected() == "alpha");
+        CHECK(Line() == 0);
+        CHECK(Editor.OpenText(Path) == Source);
+
+        Press(ImGuiKey_Enter);
+        CHECK(Editor.OpenText(Path) == Source);
+        CHECK(Selected() == "Alpha");
+        CHECK(Line() == 1);
+        Press(ImGuiKey_Enter);
+        CHECK(Editor.OpenText(Path) == Source);
+        CHECK(Line() == 0);
+
+        // Enter leaves the keyboard in the field, whose text is selected.
+        Type("missing");
+        CHECK(Editor.FindFailed());
+        CHECK(Editor.OpenText(Path) == Source);
+        Press(ImGuiKey_Enter);
+        CHECK(Editor.FindFailed());
+        CHECK(Editor.OpenText(Path) == Source);
+
+        Press(ImGuiKey_Escape);
+        CHECK_FALSE(Editor.FindVisible());
+        CHECK_FALSE(Editor.FindFailed());
+
+        Press(ImGuiKey_R, true, true);
+        CHECK(Editor.FindReplacing());
+        Press(ImGuiKey_Escape);
+        Frames(2);
+
+        // Ctrl+F opens this bar as well, and the widget's own find window stays shut.
+        Text.SetCursor(TextEditor::DocPos(0, 7));
+        Frames(2);
+        Press(ImGuiKey_F, true);
+        CHECK(Editor.FindVisible());
+        CHECK_FALSE(Editor.FindReplacing());
+        CHECK_FALSE(Text.HasFindString());
+    }
+    ImGui::DestroyContext();
+    std::filesystem::remove_all(Root, Error);
+}
+
 TEST_CASE("Studio text codec keeps Windows-1252, CRLF and BOM files byte for byte")
 {
     std::string Every;

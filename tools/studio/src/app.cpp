@@ -1465,9 +1465,13 @@ namespace dbc::studio
                 Editor->Redo();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Find/Replace", "Ctrl+F", false, Editor != nullptr))
+            if (ImGui::MenuItem("Find", "Ctrl+R", false, Editor != nullptr))
             {
-                Editor_.OpenFindReplace();
+                Editor_.OpenFind(false);
+            }
+            if (ImGui::MenuItem("Find and Replace", "Ctrl+Shift+R", false, Editor != nullptr))
+            {
+                Editor_.OpenFind(true);
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Trim Trailing Whitespace", nullptr, false, Editor != nullptr))
