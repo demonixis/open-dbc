@@ -1,0 +1,2 @@
+# Literals that read like interface text and must stay as they are, one per
+# line, escaped as in C++. See docs/localization.md for what stays in English.
