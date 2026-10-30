@@ -1,10 +1,10 @@
 #include "media_panel.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cctype>
-#include <cstdio>
 #include <string>
 
 #include <imgui.h>
@@ -23,18 +23,6 @@ namespace dbc::studio
                 Haystack.begin(), Haystack.end(), Wanted.begin(), Wanted.end(), [](char A, char B)
                 { return std::tolower(static_cast<unsigned char>(A)) == std::tolower(static_cast<unsigned char>(B)); });
             return It != Haystack.end();
-        }
-
-        std::string FormatSize(std::uintmax_t Bytes)
-        {
-            char Text[32];
-            if (Bytes < 1024)
-                std::snprintf(Text, sizeof(Text), "%ju B", Bytes);
-            else if (Bytes < 1024 * 1024)
-                std::snprintf(Text, sizeof(Text), "%.1f KB", static_cast<double>(Bytes) / 1024.0);
-            else
-                std::snprintf(Text, sizeof(Text), "%.1f MB", static_cast<double>(Bytes) / (1024.0 * 1024.0));
-            return Text;
         }
     } // namespace
 
@@ -57,7 +45,7 @@ namespace dbc::studio
         {
             if (Root_.empty())
             {
-                ImGui::TextDisabled("No folder opened.");
+                ImGui::TextDisabled("%s", Tr("No folder opened."));
                 return;
             }
 
@@ -68,12 +56,12 @@ namespace dbc::studio
             const auto Label = [&](std::optional<core::MediaKind> Kind)
             {
                 if (!Kind)
-                    return "All (" + std::to_string(Scan_.Files.size()) + ")";
-                return std::string(core::MediaKindLabel(*Kind)) + " (" +
+                    return std::string(Tr("All")) + " (" + std::to_string(Scan_.Files.size()) + ")";
+                return std::string(Tr(core::MediaKindLabel(*Kind))) + " (" +
                        std::to_string(Counts[static_cast<std::size_t>(*Kind)]) + ")";
             };
 
-            const float RefreshWidth = ImGui::CalcTextSize("Refresh").x + ImGui::GetStyle().FramePadding.x * 2.0f;
+            const float RefreshWidth = ImGui::CalcTextSize(Tr("Refresh")).x + ImGui::GetStyle().FramePadding.x * 2.0f;
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - RefreshWidth - ImGui::GetStyle().ItemSpacing.x);
             if (ImGui::BeginCombo("##media-kind", Label(Filter_).c_str()))
             {
@@ -87,19 +75,19 @@ namespace dbc::studio
                 ImGui::EndCombo();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Refresh"))
+            if (ImGui::Button(TrId("Refresh")))
                 Refresh();
             ImGui::SetNextItemWidth(-1.0f);
-            ImGui::InputTextWithHint("##media-search", "Filter by name", Search_, sizeof(Search_));
+            ImGui::InputTextWithHint("##media-search", Tr("Filter by name"), Search_, sizeof(Search_));
             if (Scan_.Truncated)
-                ImGui::TextDisabled("Showing the first %zu files.", KMediaLimit);
+                ImGui::TextDisabled("%s", TrFmt("Showing the first {0} files.", {std::to_string(KMediaLimit)}).c_str());
             ImGui::Separator();
 
             if (!ImGui::BeginTable("##media", 2, ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit))
                 return;
             ImGui::TableSetupScrollFreeze(0, 0);
-            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn("Size");
+            ImGui::TableSetupColumn(Tr("Name"), ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn(Tr("Size"));
             for (const core::MediaFile& File : Scan_.Files)
             {
                 if ((Filter_ && File.Kind != *Filter_) || !ContainsNoCase(File.RelativeName, Search_))
@@ -113,12 +101,12 @@ namespace dbc::studio
                 {
                     if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && OnActivate_)
                         OnActivate_(File.Path);
-                    ImGui::SetTooltip("%s\n%s", std::string(core::MediaKindLabel(File.Kind)).c_str(),
+                    ImGui::SetTooltip("%s\n%s", Tr(core::MediaKindLabel(File.Kind)),
                                       dbc::PathToUtf8(File.Path).c_str());
                 }
                 ImGui::PopID();
                 ImGui::TableNextColumn();
-                ImGui::TextDisabled("%s", FormatSize(File.Size).c_str());
+                ImGui::TextDisabled("%s", core::FormatFileSize(File.Size).c_str());
             }
             ImGui::EndTable();
         }

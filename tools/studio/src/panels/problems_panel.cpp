@@ -5,6 +5,7 @@
 
 #include <imgui.h>
 
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 #include "theme.hpp"
 
@@ -26,7 +27,7 @@ namespace dbc::studio
         {
             if (Problems_.empty())
             {
-                ImGui::TextDisabled("No problems in the last run or check.");
+                ImGui::TextDisabled("%s", Tr("No problems in the last run or check."));
                 return;
             }
             constexpr ImGuiTableFlags Flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV |
@@ -34,10 +35,10 @@ namespace dbc::studio
             if (!ImGui::BeginTable("Problems", 4, Flags))
                 return;
             ImGui::TableSetupScrollFreeze(0, 1);
-            ImGui::TableSetupColumn("File", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 12.0f);
-            ImGui::TableSetupColumn("Line", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 4.0f);
-            ImGui::TableSetupColumn("Code", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 5.0f);
-            ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn(Tr("File"), ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 12.0f);
+            ImGui::TableSetupColumn(Tr("Line"), ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 4.0f);
+            ImGui::TableSetupColumn(Tr("Code"), ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 5.0f);
+            ImGui::TableSetupColumn(Tr("Message"), ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableHeadersRow();
             for (std::size_t Index = 0; Index < Problems_.size(); ++Index)
             {

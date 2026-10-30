@@ -293,6 +293,18 @@ TEST_CASE("The French catalogue covers the launcher, the build window and the pr
     core::ActivateInterfaceLanguage("en");
 }
 
+TEST_CASE("The French catalogue covers the code, media, output and snippet panels")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Label : {"Filter by name", "Sort by name", "Auto-scroll", "No problems in the last run or check.",
+                              "Replace All", "Not supported by OpenDBC: using it is a compile error.", "Insert Snippet",
+                              "Lighting", "Save and Load", "Two edits touch the same text.", "Models"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    CHECK(TrFmt("{0} call(s)", {"3"}) == "3 appel(s)");
+    CHECK(TrFmt("Saved in {0}", {"x"}) == "Enregistré dans x");
+    core::ActivateInterfaceLanguage("en");
+}
+
 TEST_CASE("French translations keep the placeholders of their source text")
 {
     std::ifstream File(std::filesystem::path(TEST_SOURCE_DIR) / "tools/studio/locales/fr.json", std::ios::binary);

@@ -1,4 +1,5 @@
 #include "code_panel.hpp"
+#include "core/i18n.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -56,7 +57,7 @@ namespace dbc::studio
                                     const char* CountTooltip)
         {
             const std::string Header =
-                std::string(Title) + " (" + std::to_string(Entries.size()) + ")###" + std::string(Id);
+                std::string(Tr(Title)) + " (" + std::to_string(Entries.size()) + ")###" + std::string(Id);
             if (!ImGui::TreeNodeEx(Header.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
                 return;
 
@@ -71,10 +72,10 @@ namespace dbc::studio
 
             if (ImGui::BeginTable(Id, CountTooltip ? 3 : 2, ImGuiTableFlags_SizingFixedFit))
             {
-                ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetupColumn(Tr("Name"), ImGuiTableColumnFlags_WidthStretch);
                 if (CountTooltip)
-                    ImGui::TableSetupColumn("Count");
-                ImGui::TableSetupColumn("Line");
+                    ImGui::TableSetupColumn(Tr("Count"));
+                ImGui::TableSetupColumn(Tr("Line"));
                 for (const dba::OutlineEntry* Entry : Order)
                 {
                     ImGui::TableNextRow();
@@ -84,7 +85,7 @@ namespace dbc::studio
                     if (ImGui::Selectable(Label.c_str(), false, ImGuiSelectableFlags_SpanAllColumns) && OnSelect_)
                         OnSelect_(Entry->Line);
                     if (CountTooltip && ImGui::IsItemHovered())
-                        ImGui::SetTooltip("%d %s", Entry->Count, CountTooltip);
+                        ImGui::SetTooltip("%s", TrFmt(CountTooltip, {std::to_string(Entry->Count)}).c_str());
                     ImGui::PopID();
                     if (CountTooltip)
                     {
@@ -103,15 +104,15 @@ namespace dbc::studio
         {
             if (Editor_ == nullptr)
             {
-                ImGui::TextDisabled("No source open.");
+                ImGui::TextDisabled("%s", Tr("No source open."));
                 return;
             }
 
-            ImGui::Checkbox("Sort by name", &SortByName_);
+            ImGui::Checkbox(TrId("Sort by name"), &SortByName_);
             ImGui::Separator();
-            DrawSection("Functions", "functions", Outline_.Functions, "call(s)");
-            DrawSection("Labels", "labels", Outline_.Labels, "GOTO/GOSUB jump(s)");
-            DrawSection("Types", "types", Outline_.Types, "field(s)");
+            DrawSection("Functions", "functions", Outline_.Functions, "{0} call(s)");
+            DrawSection("Labels", "labels", Outline_.Labels, "{0} GOTO/GOSUB jump(s)");
+            DrawSection("Types", "types", Outline_.Types, "{0} field(s)");
             DrawSection("Variables", "variables", Outline_.Variables, nullptr);
         }
     } // namespace panels

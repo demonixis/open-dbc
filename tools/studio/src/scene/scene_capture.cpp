@@ -1,4 +1,5 @@
 #include "scene/scene_capture.hpp"
+#include "core/i18n.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -265,7 +266,7 @@ namespace dbc::studio
                 // A turn set before it would end up in the shape, where the number no longer shows it.
                 if (Part == TransformPart::Rotation && Tracked.PivotFixed)
                 {
-                    Origin.Reason = "FIX OBJECT PIVOT folds its turns into the shape.";
+                    Origin.Reason = Tr("FIX OBJECT PIVOT folds its turns into the shape.");
                     return Origin;
                 }
                 const float Default = Part == TransformPart::Scale ? 100.0f : 0.0f;
@@ -281,28 +282,28 @@ namespace dbc::studio
                     const float Written = static_cast<float>(Capture.Commands[Index].Arguments[Origin.Argument].Number);
                     const int Count = Runs.at(KeyOf(Capture, Index));
                     if (Count > 1)
-                        Origin.Reason = "Its statement runs " + std::to_string(Count) + " times.";
+                        Origin.Reason = TrFmt("Its statement runs {0} times.", {std::to_string(Count)});
                     else if (Capture.Sites[Index].Frame >= Options.SetupFrames)
-                        Origin.Reason = "The game loop sets it.";
+                        Origin.Reason = Tr("The game loop sets it.");
                     else if (State && !SameTransformValue(Part, StateAxis(*State, Part, Axis), Written))
-                        Origin.Reason = KChangedAtRun;
+                        Origin.Reason = Tr(KChangedAtRun);
                     else
                         Origin.Access = AxisAccess::Replace;
                     return Origin;
                 }
                 if (Tracked.Creator < 0)
                 {
-                    Origin.Reason = "No statement of the program sets it.";
+                    Origin.Reason = Tr("No statement of the program sets it.");
                     return Origin;
                 }
                 const auto Created = static_cast<std::size_t>(Tracked.Creator);
                 const int Count = Runs.at(KeyOf(Capture, Created));
                 if (Count > 1)
-                    Origin.Reason = "Its creation runs " + std::to_string(Count) + " times.";
+                    Origin.Reason = TrFmt("Its creation runs {0} times.", {std::to_string(Count)});
                 else if (Capture.Sites[Created].Frame >= Options.SetupFrames)
-                    Origin.Reason = "The game loop creates it.";
+                    Origin.Reason = Tr("The game loop creates it.");
                 else if (State && !SameTransformValue(Part, StateAxis(*State, Part, Axis), Default))
-                    Origin.Reason = KChangedAtRun;
+                    Origin.Reason = Tr(KChangedAtRun);
                 else
                     Origin.Access = AxisAccess::Insert;
                 return Origin;
@@ -356,14 +357,14 @@ namespace dbc::studio
             if (Root.is_discarded() || !Root.is_object() || TextOf(Field(Root, "schema")) != "opendbc-scene-capture" ||
                 IntField(Root, "version") != 1)
             {
-                Error = "The scene capture is not readable";
+                Error = Tr("The scene capture is not readable");
                 return false;
             }
             const std::string Profile = TextOf(Field(Root, "profile"));
             const std::optional<lang::LanguageProfile> Parsed = lang::ParseProfile(Profile);
             if (!Parsed)
             {
-                Error = "The scene capture names an unknown dialect: " + Profile;
+                Error = TrFmt("The scene capture names an unknown dialect: {0}", {Profile});
                 return false;
             }
             Out = {};
@@ -556,7 +557,7 @@ namespace dbc::studio
                 {
                     AxisOrigin& Roll = Origin.Axes[static_cast<std::size_t>(TransformPart::Rotation)][2];
                     Roll = {};
-                    Roll.Reason = "A light's direction has no roll.";
+                    Roll.Reason = Tr("A light's direction has no roll.");
                 }
                 return Origin;
             };
@@ -687,18 +688,19 @@ namespace dbc::studio
 
             if (Capture.Truncated)
                 Result.Notes.push_back(
-                    "The program runs more scene commands than a capture keeps: the last ones are missing.");
+                    Tr("The program runs more scene commands than a capture keeps: the last ones are missing."));
             if (Stand > 0)
-                Result.Notes.push_back(std::to_string(Stand) + " objects have their own geometry and appear as boxes.");
+                Result.Notes.push_back(
+                    TrFmt("{0} objects have their own geometry and appear as boxes.", {std::to_string(Stand)}));
             if (Generated > 0)
-                Result.Notes.push_back(std::to_string(Generated) +
-                                       " textures could not be read from the program: they are not shown.");
+                Result.Notes.push_back(TrFmt("{0} textures could not be read from the program: they are not shown.",
+                                             {std::to_string(Generated)}));
             std::string NotShown;
             for (const std::string& Command : Replay.Skipped)
                 if (IsNotShown(Command))
                     NotShown += (NotShown.empty() ? "" : ", ") + Command;
             if (!NotShown.empty())
-                Result.Notes.push_back("Not shown: " + NotShown + ".");
+                Result.Notes.push_back(TrFmt("Not shown: {0}.", {NotShown}));
             return Result;
         }
     } // namespace scene

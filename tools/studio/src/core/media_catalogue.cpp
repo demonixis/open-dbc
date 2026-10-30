@@ -23,7 +23,7 @@ namespace dbc::studio
             return TrFmt(Kilobytes ? "{0} KB" : "{0} MB", {Number});
         }
 
-        std::string_view MediaKindLabel(MediaKind Kind)
+        const char* MediaKindLabel(MediaKind Kind)
         {
             switch (Kind)
             {

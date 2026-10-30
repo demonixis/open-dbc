@@ -1,4 +1,5 @@
 #include "scene/scene_renderer.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -77,7 +78,7 @@ namespace dbc::studio
             };
             if (!MeshVertexShader || !MeshFragment || !LineVertexShader || !LineFragment)
             {
-                Error = std::string("Scene shaders: ") + SDL_GetError();
+                Error = TrFmt("Scene shaders: {0}", {SDL_GetError()});
                 Release();
                 return false;
             }
@@ -180,7 +181,7 @@ namespace dbc::studio
             if (!MeshPipeline_ || !WirePipeline_ || !BlendPipeline_ || !LinePipeline_ ||
                 (Stencil_ && (!VolumePipeline_ || !ShadePipeline_)))
             {
-                Error = std::string("Scene pipelines: ") + SDL_GetError();
+                Error = TrFmt("Scene pipelines: {0}", {SDL_GetError()});
                 return false;
             }
             return true;
@@ -224,7 +225,7 @@ namespace dbc::studio
             }
             if (Sampler_ == nullptr || White_.Texture == nullptr)
             {
-                Error = std::string("Scene sampler: ") + SDL_GetError();
+                Error = TrFmt("Scene sampler: {0}", {SDL_GetError()});
                 return false;
             }
             return true;
@@ -381,7 +382,7 @@ namespace dbc::studio
                 {
                     // A box stands in, so the node can still be seen and picked.
                     if (!Node.Asset.empty() && Failed_.emplace(Key, true).second)
-                        Errors_.push_back("Scene preview: cannot load " + dbc::PathToUtf8(Path) + ": " + Error);
+                        Errors_.push_back(TrFmt("Scene preview: cannot load {0}: {1}", {dbc::PathToUtf8(Path), Error}));
                     SceneNode Placeholder;
                     Placeholder.Kind = NodeKind::Cube;
                     Entry.Mesh = BuildMesh(Placeholder, Document.Profile);
@@ -410,7 +411,7 @@ namespace dbc::studio
             if (!core::LoadGpuImage(Gpu_, Path, Image, Error))
             {
                 Failed_.emplace(Key, true);
-                Errors_.push_back("Scene preview: " + dbc::PathToUtf8(Path) + ": " + Error);
+                Errors_.push_back(TrFmt("Scene preview: {0}: {1}", {dbc::PathToUtf8(Path), Error}));
                 return nullptr;
             }
             return Textures_.emplace(Key, Image).first->second.Texture;
@@ -431,8 +432,8 @@ namespace dbc::studio
                             Source.Width, Source.Height, SDL_PIXELFORMAT_RGBA32, Source.Rgba.data(), Source.Width * 4);
                         std::string Error;
                         if (Surface == nullptr || !core::UploadGpuImage(Gpu_, Surface, Entry.Images[Index], Error))
-                            Errors_.push_back("Scene preview: cannot upload a model's embedded texture: " +
-                                              (Surface == nullptr ? std::string(SDL_GetError()) : Error));
+                            Errors_.push_back(TrFmt("Scene preview: cannot upload a model's embedded texture: {0}",
+                                                    {Surface == nullptr ? std::string(SDL_GetError()) : Error}));
                         if (Surface != nullptr)
                             SDL_DestroySurface(Surface);
                         // The GPU copy is all the preview needs from now on.
@@ -472,7 +473,7 @@ namespace dbc::studio
             Out = {};
             if (Target(Size, Size) == nullptr)
             {
-                Error = std::string("Cannot create the thumbnail target: ") + SDL_GetError();
+                Error = TrFmt("Cannot create the thumbnail target: {0}", {SDL_GetError()});
                 return false;
             }
             SceneDocument Document;
@@ -486,7 +487,7 @@ namespace dbc::studio
             if (Loaded == nullptr || Loaded->Parts.empty())
             {
                 // A model that failed to load is drawn as a stand-in cube, without parts.
-                Error = Errors.empty() ? "The model cannot be drawn" : Errors.front();
+                Error = Errors.empty() ? Tr("The model cannot be drawn") : Errors.front();
                 return false;
             }
             const glm::vec3 Center = (Loaded->Min + Loaded->Max) * 0.5f;
@@ -517,7 +518,7 @@ namespace dbc::studio
             SDL_GPUCommandBuffer* Commands = Texture != nullptr ? SDL_AcquireGPUCommandBuffer(Gpu_) : nullptr;
             if (Commands == nullptr)
             {
-                Error = std::string("Cannot start the thumbnail: ") + SDL_GetError();
+                Error = TrFmt("Cannot start the thumbnail: {0}", {SDL_GetError()});
                 if (Texture != nullptr)
                     SDL_ReleaseGPUTexture(Gpu_, Texture);
                 return false;
@@ -539,7 +540,7 @@ namespace dbc::studio
                 SDL_ReleaseGPUFence(Gpu_, Fence);
             if (!Done)
             {
-                Error = std::string("Cannot draw the thumbnail: ") + SDL_GetError();
+                Error = TrFmt("Cannot draw the thumbnail: {0}", {SDL_GetError()});
                 SDL_ReleaseGPUTexture(Gpu_, Texture);
                 return false;
             }

@@ -1,4 +1,5 @@
 #include "scene/scene_geometry.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -281,7 +282,7 @@ namespace dbc::studio
             {
                 Error = Imported.ImporterValue && *Imported.ImporterValue->GetErrorString()
                             ? Imported.ImporterValue->GetErrorString()
-                            : "unsupported or unreadable model";
+                            : Tr("unsupported or unreadable model");
                 return false;
             }
             Out = {};
@@ -315,7 +316,7 @@ namespace dbc::studio
             {
                 Error = Imported.ImporterValue && *Imported.ImporterValue->GetErrorString()
                             ? Imported.ImporterValue->GetErrorString()
-                            : "unsupported or unreadable model";
+                            : Tr("unsupported or unreadable model");
                 return false;
             }
             Out = {};
@@ -352,7 +353,7 @@ namespace dbc::studio
             ComputeBounds(Out);
             if (Out.Vertices.empty())
             {
-                Error = "The model has no triangles";
+                Error = Tr("The model has no triangles");
                 return false;
             }
             return true;
@@ -377,7 +378,7 @@ namespace dbc::studio
             if (Size < 2 || Pixels->h != Size)
             {
                 SDL_DestroySurface(Pixels);
-                Error = "A terrain heightmap must be square and at least 2x2";
+                Error = Tr("A terrain heightmap must be square and at least 2x2");
                 return false;
             }
             const auto Height = [&](int X, int Z)

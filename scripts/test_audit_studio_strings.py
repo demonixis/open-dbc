@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Check what the Studio strings audit reports on small sources."""
 
+import tempfile
 import unittest
+from pathlib import Path
 
 import audit_studio_strings as Audit
 
 
 def Run(Source: str, Catalogue: tuple[str, ...] = (), Verbatim: tuple[str, ...] = ()) -> Audit.Findings:
-    return Audit.Audit({"panel.cpp": Source}, set(Catalogue), set(Verbatim), set())
+    return Audit.Audit({"panel.cpp": Source}, set(Catalogue), set(Verbatim), set(), {})
 
 
 class StudioStringsAuditTests(unittest.TestCase):
@@ -62,6 +64,16 @@ class StudioStringsAuditTests(unittest.TestCase):
         Result = Run('ImGui::Button(TrId("Save##Toolbar"));', ("Open",))
         self.assertEqual(Result.Missing, ["panel.cpp:1: 'Save'"])
         self.assertEqual(Result.Stale, ["'Open'"])
+
+    def test_text_read_at_run_time_must_be_in_the_catalogue(self) -> None:
+        Result = Audit.Audit({}, {"Fog"}, set(), set(), {"Fog": "fog.dba", "Lighting": "lighting.dba"})
+        self.assertEqual(Result.Missing, ["lighting.dba: 'Lighting'"])
+        self.assertEqual(Result.Stale, [])
+
+    def test_snippet_headers_give_their_name_and_description(self) -> None:
+        with tempfile.TemporaryDirectory() as Folder:
+            (Path(Folder) / "fog.dba").write_text("rem Snippet: Fog\nrem Description: Some fog.\nfog on\n", encoding="utf-8")
+            self.assertEqual(sorted(Audit.ReadSnippetTexts(Path(Folder))), ["Fog", "Some fog."])
 
     def test_adjacent_literals_and_escapes_form_one_key(self) -> None:
         Result = Run('ImGui::SetTooltip("%s", Tr("First line\\n" "second line"));', ("First line\nsecond line",))

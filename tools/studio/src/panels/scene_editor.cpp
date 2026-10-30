@@ -66,7 +66,7 @@ namespace dbc::studio
             {
                 // Switching projects would otherwise drop the level silently.
                 if (Save())
-                    Host_.Log("Saved level " + Document_.Name + " before switching projects", false);
+                    Host_.Log(TrFmt("Saved level {0} before switching projects", {Document_.Name}), false);
             }
             Project_ = std::move(Project);
             ReleaseThumbnails();
@@ -132,7 +132,7 @@ namespace dbc::studio
             const std::optional<std::string> Text = Host_.ReadSource(LevelPath(Name));
             if (!Text)
             {
-                Host_.Log("Cannot read level " + dbc::PathToUtf8(LevelPath(Name)), true);
+                Host_.Log(TrFmt("Cannot read level {0}", {dbc::PathToUtf8(LevelPath(Name))}), true);
                 return;
             }
             Program_.reset();
@@ -155,10 +155,10 @@ namespace dbc::studio
                 if (const std::optional<std::string> World = Host_.ReadSource(WorldPath(Name)))
                     Report(scene::ReadWorld(*World, Read.Document), WorldPath(Name));
                 else
-                    Report({{0, "Cannot read the file"}}, WorldPath(Name));
+                    Report({{0, Tr("Cannot read the file")}}, WorldPath(Name));
             }
             if (!ReadErrors_.empty())
-                Host_.Log("The level stays read-only until these lines are fixed in the code editor", true);
+                Host_.Log(Tr("The level stays read-only until these lines are fixed in the code editor"), true);
             Document_ = std::move(Read.Document);
             Saved_ = Document_;
             History_.Reset(Document_);
@@ -239,24 +239,24 @@ namespace dbc::studio
                 return SaveProgramEdits();
             if (!ReadErrors_.empty())
             {
-                Host_.Log("The level is read-only: fix the lines reported when it was opened", true);
+                Host_.Log(Tr("The level is read-only: fix the lines reported when it was opened"), true);
                 return false;
             }
             for (const scene::SceneNode& Node : Document_.Nodes)
                 if (NeedsAsset(Node.Kind) && Node.Asset.empty())
                 {
-                    Host_.Log(Node.Name + " needs a file before the level can be saved", true);
+                    Host_.Log(TrFmt("{0} needs a file before the level can be saved", {Node.Name}), true);
                     return false;
                 }
 
             if (!Host_.WriteSource(LevelPath(Document_.Name), scene::WriteLevel(Document_), true))
             {
-                Host_.Log("Cannot write " + dbc::PathToUtf8(LevelPath(Document_.Name)), true);
+                Host_.Log(TrFmt("Cannot write {0}", {dbc::PathToUtf8(LevelPath(Document_.Name))}), true);
                 return false;
             }
             if (!Host_.WriteSource(WorldPath(Document_.Name), scene::WriteWorld(Document_), true))
             {
-                Host_.Log("Cannot write " + dbc::PathToUtf8(WorldPath(Document_.Name)), true);
+                Host_.Log(TrFmt("Cannot write {0}", {dbc::PathToUtf8(WorldPath(Document_.Name))}), true);
                 return false;
             }
             Saved_ = Document_;
@@ -290,13 +290,13 @@ namespace dbc::studio
                     std::filesystem::weakly_canonical(Path, Error).lexically_relative(Root);
                 if (Relative.empty() || *Relative.begin() == "..")
                 {
-                    Host_.Log("Cannot change " + File + ": it is outside the project", true);
+                    Host_.Log(TrFmt("Cannot change {0}: it is outside the project", {File}), true);
                     return false;
                 }
                 const std::optional<std::string> Text = Host_.ReadSource(Path);
                 if (!Text)
                 {
-                    Host_.Log("Cannot read " + File, true);
+                    Host_.Log(TrFmt("Cannot read {0}", {File}), true);
                     return false;
                 }
                 scene::PatchResult Result = scene::PatchSource(*Text, File, Document_.Profile, Edits);
@@ -314,14 +314,14 @@ namespace dbc::studio
                     Host_.OpenSource(File.Path);
                 if (!Host_.WriteSource(File.Path, File.Result.Text, false))
                 {
-                    Host_.Log("Cannot update " + Name, true);
+                    Host_.Log(TrFmt("Cannot update {0}", {Name}), true);
                     return false;
                 }
-                Host_.Log("Applied " + std::to_string(File.Count) + " edit(s) to " + Name +
-                              ": save the file to keep them",
-                          false);
+                Host_.Log(
+                    TrFmt("Applied {0} edit(s) to {1}: save the file to keep them", {std::to_string(File.Count), Name}),
+                    false);
                 for (const std::string& Replaced : File.Result.Replaced)
-                    Host_.Log(Name + ":" + Replaced + " became a number", false);
+                    Host_.Log(TrFmt("{0}:{1} became a number", {Name, Replaced}), false);
             }
             Saved_ = Document_;
             PendingChecks_ = std::move(Plan.Axes);
@@ -335,7 +335,7 @@ namespace dbc::studio
             // Reading the program again is the way out when the source no longer takes the edits.
             if (!Save())
             {
-                Host_.Log("Dropped the edits the source refused", false);
+                Host_.Log(Tr("Dropped the edits the source refused"), false);
                 Document_ = Saved_;
             }
             if (Host_.CaptureProgram)
@@ -360,7 +360,7 @@ namespace dbc::studio
             const std::optional<std::string> Text = Host_.ReadSource(Main);
             if (!Text)
             {
-                Host_.Log("Cannot read the main source " + dbc::PathToUtf8(Main), true);
+                Host_.Log(TrFmt("Cannot read the main source {0}", {dbc::PathToUtf8(Main)}), true);
                 return false;
             }
             const auto Relative = [&](const std::filesystem::path& Path)
@@ -373,10 +373,12 @@ namespace dbc::studio
             if (Imports.OtherLevel && !Imports.Level)
             {
                 if (UnlinkedLevel_ != Document_.Name)
-                    Host_.Log("Level " + Document_.Name + " stays out of " + dbc::PathToUtf8(Main.filename()) +
-                                  ", which already imports a level: call " + scene::WorldFunctionName(Document_) +
-                                  "() and " + scene::LevelFunctionName(Document_) + "() where the game loads it",
-                              false);
+                    Host_.Log(
+                        TrFmt("Level {0} stays out of {1}, which already imports a level: call {2}() and {3}() where "
+                              "the game loads it",
+                              {Document_.Name, dbc::PathToUtf8(Main.filename()), scene::WorldFunctionName(Document_),
+                               scene::LevelFunctionName(Document_)}),
+                        false);
                 UnlinkedLevel_ = Document_.Name;
                 return true;
             }
@@ -388,10 +390,10 @@ namespace dbc::studio
                 return true;
             if (!Host_.WriteSource(Main, Linked.Text, false))
             {
-                Host_.Log("Cannot update the main source " + dbc::PathToUtf8(Main), true);
+                Host_.Log(TrFmt("Cannot update the main source {0}", {dbc::PathToUtf8(Main)}), true);
                 return false;
             }
-            Host_.Log("Added the level's #include and call to " + dbc::PathToUtf8(Main.filename()), false);
+            Host_.Log(TrFmt("Added the level's #include and call to {0}", {dbc::PathToUtf8(Main.filename())}), false);
             return true;
         }
 
@@ -421,20 +423,21 @@ namespace dbc::studio
                     Move = std::make_error_code(std::errc::file_exists);
                 if (Move)
                 {
-                    Host_.Log("Cannot move " + dbc::PathToUtf8(Path) + " to its folder: " + Move.message(), true);
+                    Host_.Log(TrFmt("Cannot move {0} to its folder: {1}", {dbc::PathToUtf8(Path), Move.message()}),
+                              true);
                     continue;
                 }
-                Host_.Log("Moved " + dbc::PathToUtf8(Path.filename()) + " to " + Relative(Target), false);
+                Host_.Log(TrFmt("Moved {0} to {1}", {dbc::PathToUtf8(Path.filename()), Relative(Target)}), false);
                 if (Before)
                     Text = scene::MoveInclude(Text, Project_->Profile, Relative(Path), Relative(Target));
             }
             if (Before && Text != *Before && !Host_.WriteSource(Main, Text, false))
-                Host_.Log("Cannot update the main source " + dbc::PathToUtf8(Main), true);
+                Host_.Log(TrFmt("Cannot update the main source {0}", {dbc::PathToUtf8(Main)}), true);
             if (Host_.FilesMoved)
                 Host_.FilesMoved();
             if (std::filesystem::exists(Project_->Root / "opendbc_game.dba", Error))
-                Host_.Log("opendbc_game.dba stays as it is and its SetupGame() still runs, but the Scene view no "
-                          "longer edits it: each level's world settings hold the display now",
+                Host_.Log(Tr("opendbc_game.dba stays as it is and its SetupGame() still runs, but the Scene view no "
+                             "longer edits it: each level's world settings hold the display now"),
                           false);
         }
 

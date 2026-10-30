@@ -10,3 +10,8 @@ OpenDBC
 iOS
 Android
 Developer ID Application:
+# The match-case toggle shows sample letters, a BASIC command and the default
+# title written to a project's generated code.
+Aa
+SYNC ON
+My Game

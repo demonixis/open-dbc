@@ -1,4 +1,5 @@
 #include "scene/scene_patch.hpp"
+#include "core/i18n.hpp"
 
 #include <algorithm>
 #include <array>
@@ -279,9 +280,9 @@ namespace dbc::studio
 
             const char* PartName(TransformPart Part)
             {
-                return Part == TransformPart::Position   ? "position"
-                       : Part == TransformPart::Rotation ? "rotation"
-                                                         : "scale";
+                return TrC(Part == TransformPart::Position   ? "transform part|position"
+                           : Part == TransformPart::Rotation ? "transform part|rotation"
+                                                             : "transform part|scale");
             }
         } // namespace
 
@@ -386,11 +387,11 @@ namespace dbc::studio
             Expected.Add(Parsed);
             for (const SourceEdit& Edit : Edits)
             {
-                const std::string Where = "line " + std::to_string(Edit.Line) + ": ";
+                const std::string Where = TrFmt("line {0}: ", {std::to_string(Edit.Line)});
                 const lang::Statement* Value = FindStatement(Parsed, Edit);
                 if (Value == nullptr)
                 {
-                    Result.Error = Where + "the statement is no longer there. Refresh the scene and try again.";
+                    Result.Error = Where + Tr("the statement is no longer there. Refresh the scene and try again.");
                     return Result;
                 }
                 if (Edit.Argument >= 0)
@@ -399,14 +400,14 @@ namespace dbc::studio
                     if (Argument >= Value->Expressions.size() || Value->Expressions[Argument] == nullptr ||
                         Edit.Values.empty())
                     {
-                        Result.Error = Where + "the statement no longer has this argument.";
+                        Result.Error = Where + Tr("the statement no longer has this argument.");
                         return Result;
                     }
                     const lang::Expression& Old = *Value->Expressions[Argument];
                     const std::optional<TextRange> Range = WholeExpression(Text, Old);
                     if (!Range)
                     {
-                        Result.Error = Where + "the argument's parentheses could not be told apart.";
+                        Result.Error = Where + Tr("the argument's parentheses could not be told apart.");
                         return Result;
                     }
                     if (!IsNumber(Old))
@@ -419,21 +420,23 @@ namespace dbc::studio
                 const auto IdArgument = static_cast<std::size_t>(Edit.IdArgument);
                 if (IdArgument >= Value->Expressions.size() || Value->Expressions[IdArgument] == nullptr)
                 {
-                    Result.Error = Where + "the statement no longer names its number.";
+                    Result.Error = Where + Tr("the statement no longer names its number.");
                     return Result;
                 }
                 const lang::Expression& Id = *Value->Expressions[IdArgument];
                 const std::optional<TextRange> IdRange = WholeExpression(Text, Id);
                 if (!IdRange)
                 {
-                    Result.Error = Where + "the number's parentheses could not be told apart.";
+                    Result.Error = Where + Tr("the number's parentheses could not be told apart.");
                     return Result;
                 }
                 const std::string IdText = Text.substr(IdRange->Begin, IdRange->End - IdRange->Begin);
                 if (!ReadsTheSameTwice(Id, Parsed, Profile))
                 {
-                    Result.Error = Where + "a statement cannot follow it, because " + IdText +
-                                   " may give another number when read again.";
+                    Result.Error =
+                        Where +
+                        TrFmt("a statement cannot follow it, because {0} may give another number when read again.",
+                              {IdText});
                     return Result;
                 }
                 std::string Added = SpelledLike(lang::Symbol(Edit.Added).CanonicalName,
@@ -456,7 +459,7 @@ namespace dbc::studio
                 const Change& Value = Changes[Index - 1];
                 if (Index < Changes.size() && Value.End > Changes[Index].Begin)
                 {
-                    Result.Error = "Two edits touch the same text.";
+                    Result.Error = Tr("Two edits touch the same text.");
                     return Result;
                 }
                 Result.Text.replace(Value.Begin, Value.End - Value.Begin, Value.Text);
@@ -467,7 +470,7 @@ namespace dbc::studio
             Found.Add(Edited);
             if (ErrorCount(Edited) > ErrorCount(Parsed) || Found.Known != Expected.Known ||
                 Found.Unknown != Expected.Unknown || Found.Arguments != Expected.Arguments)
-                Result.Error = "The edited source would not parse, so it was left as it is.";
+                Result.Error = Tr("The edited source would not parse, so it was left as it is.");
             return Result;
         }
 
@@ -480,8 +483,9 @@ namespace dbc::studio
                 if (Node == nullptr ||
                     SameTransformValue(Edit.Part, TransformValue(*Node, Edit.Part)[Edit.Axis], Edit.Value))
                     continue;
-                std::string Message = Node->Name + ": the program does not keep the new " + AxisName(Edit.Axis) + " " +
-                                      PartName(Edit.Part) + " " + NumberLiteral(Edit.Value);
+                std::string Message =
+                    TrFmt("{0}: the program does not keep the new {1} {2} {3}",
+                          {Node->Name, AxisName(Edit.Axis), PartName(Edit.Part), NumberLiteral(Edit.Value)});
                 const auto Found = Read.Origins.find(Edit.Node);
                 if (Found != Read.Origins.end())
                 {
@@ -490,8 +494,9 @@ namespace dbc::studio
                     if (!Origin.Reason.empty())
                         Message += ". " + Origin.Reason;
                     if (Origin.Argument >= 0)
-                        Message += " See line " + std::to_string(Origin.Writer.Line) + " of " +
-                                   dbc::PathToUtf8(dbc::PathFromUtf8(Origin.Writer.File).filename()) + ".";
+                        Message += " " + TrFmt("See line {0} of {1}.",
+                                               {std::to_string(Origin.Writer.Line),
+                                                dbc::PathToUtf8(dbc::PathFromUtf8(Origin.Writer.File).filename())});
                 }
                 Messages.push_back(std::move(Message));
             }

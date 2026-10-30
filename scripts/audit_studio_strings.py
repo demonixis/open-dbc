@@ -8,8 +8,8 @@ Reports, for the C++ sources of tools/studio/src:
   scripts/data/studio_verbatim_strings.txt, wherever it is: messages travel
   through variables on their way to the screen;
 - a printf-style format that is translated, which a translation could break;
-- a Tr* key absent from tools/studio/locales/fr.json, and a catalogue key that
-  no source mentions any more.
+- a Tr* key or built-in snippet name or description absent from
+  tools/studio/locales/fr.json, and a catalogue key that nothing mentions any more.
 
 Without --check this is a report; with it, any finding fails.
 """
@@ -24,6 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "tools/studio/src"
+SNIPPETS = ROOT / "tools/studio/snippets"
 CATALOGUE = ROOT / "tools/studio/locales/fr.json"
 VERBATIM = ROOT / "scripts/data/studio_verbatim_strings.txt"
 
@@ -99,31 +100,6 @@ NO_INTERFACE_TEXT = {
 
 # Zones still to wrap. Each must be emptied, not extended.
 PENDING = {
-    "core/gpu_texture.cpp",
-    "core/recovery.cpp",
-    "core/snippet_library.cpp",
-    "dba/code_outline.cpp",
-    "dba/completion.cpp",
-    "dba/program_info.cpp",
-    "panels/asset_preview.cpp",
-    "panels/code_panel.cpp",
-    "panels/completion_popup.cpp",
-    "panels/editor_panel.cpp",
-    "panels/media_panel.cpp",
-    "panels/output_panel.cpp",
-    "panels/problems_panel.cpp",
-    "panels/project_panel.cpp",
-    "panels/scene_editor.cpp",
-    "panels/scene_inspector.cpp",
-    "panels/scene_paint.cpp",
-    "panels/scene_viewport.cpp",
-    "panels/snippet_window.cpp",
-    "scene/heightmap.cpp",
-    "scene/scene_capture.cpp",
-    "scene/scene_geometry.cpp",
-    "scene/scene_integration.cpp",
-    "scene/scene_patch.cpp",
-    "scene/scene_renderer.cpp",
     "toolchain/active_run_planner.cpp",
     "toolchain/android_keystore.cpp",
     "toolchain/artifact_export_service.cpp",
@@ -156,6 +132,7 @@ PLACEHOLDER = re.compile(r"\{[0-9]+\}")
 ESCAPE = re.compile(r"\\(x[0-9a-fA-F]+|[0-7]{1,3}|.)", re.DOTALL)
 SIMPLE_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", "0": "\0", "a": "\a", "b": "\b", "f": "\f", "v": "\v"}
 WORD = re.compile(r"[A-Za-z]{2,}")
+SNIPPET_HEADER = re.compile(r"^rem (?:Snippet|Description):\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE)
 
 
 @dataclass
@@ -298,10 +275,13 @@ class Findings:
         return sum(len(Items) for Items in vars(self).values())
 
 
-def Audit(Files: dict[str, str], Catalogue: set[str], Verbatim: set[str], Pending: set[str]) -> Findings:
+def Audit(
+    Files: dict[str, str], Catalogue: set[str], Verbatim: set[str], Pending: set[str], Required: dict[str, str]
+) -> Findings:
+    """Required maps text the sources only read at run time to where it comes from."""
     Result = Findings([], [], [], [], [])
-    Keys: dict[str, str] = {}
-    Literals: set[str] = set()
+    Keys: dict[str, str] = dict(Required)
+    Literals: set[str] = set(Required)
 
     def Report(Items: list[str], Name: str, Value: Token) -> None:
         Items.append(f"{Name}:{Value.Line}: {Value.Text!r}")
@@ -407,6 +387,14 @@ def ReadVerbatim(Path_: Path) -> set[str]:
     return {Unescape(Line) for Line in Lines if Line and not Line.startswith("#")}
 
 
+def ReadSnippetTexts(Folder: Path) -> dict[str, str]:
+    return {
+        Text: Path_.name
+        for Path_ in sorted(Folder.glob("*.dba"))
+        for Text in SNIPPET_HEADER.findall(Path_.read_text(encoding="utf-8"))
+    }
+
+
 def ReadCatalogue(Path_: Path) -> set[str]:
     Entries = json.loads(Path_.read_text(encoding="utf-8"))
     return {Key for Key in Entries if not Key.startswith("@")}
@@ -422,7 +410,7 @@ def main() -> None:
         for Path_ in SOURCES.rglob("*")
         if Path_.suffix in (".cpp", ".hpp")
     }
-    Result = Audit(Files, ReadCatalogue(CATALOGUE), ReadVerbatim(VERBATIM), PENDING)
+    Result = Audit(Files, ReadCatalogue(CATALOGUE), ReadVerbatim(VERBATIM), PENDING, ReadSnippetTexts(SNIPPETS))
 
     Sections = (
         ("Interface text outside Tr*", Result.Unwrapped),

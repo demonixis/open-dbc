@@ -25,6 +25,7 @@ doctest_discover_tests(test_vm PROPERTIES LABELS "unit-language-vm")
 if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_language
         test_studio_language.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/code_outline.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/command_database.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/completion.cpp
@@ -37,6 +38,7 @@ if(NOT ANDROID AND NOT IOS)
 
     add_executable(test_studio_editor
         test_studio_editor.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/command_database.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/completion.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/language.cpp
@@ -77,6 +79,7 @@ if(NOT ANDROID AND NOT IOS)
 
     add_executable(test_studio_scene_capture
         test_studio_scene_capture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_capture.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
@@ -88,6 +91,7 @@ if(NOT ANDROID AND NOT IOS)
 
     add_executable(test_studio_scene_render
         test_studio_scene_render.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/gpu_texture.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/heightmap.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
@@ -317,6 +321,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
 
     add_executable(test_studio_snippets
         test_studio_snippets.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/builtin_snippets.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/snippet_library.cpp
     )

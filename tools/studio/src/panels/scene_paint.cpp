@@ -53,7 +53,7 @@ namespace dbc::studio
             }
             else
             {
-                Host_.Log("Cannot paint " + Relative + ": " + Error, true);
+                Host_.Log(TrFmt("Cannot paint {0}: {1}", {Relative, Error}), true);
                 PaintObject_.reset();
             }
         }
