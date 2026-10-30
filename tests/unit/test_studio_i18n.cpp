@@ -2,6 +2,7 @@
 
 #include "core/i18n.hpp"
 #include "core/locales.hpp"
+#include "theme.hpp"
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -177,4 +178,23 @@ TEST_CASE("Every embedded catalogue is listed after English and can be activated
     core::ActivateInterfaceLanguage("fr");
     core::ActivateInterfaceLanguage("xx");
     CHECK(std::string_view(Tr("Language")) == "Language");
+}
+
+TEST_CASE("The interface font keeps ImGui's default and covers French typography")
+{
+    ImGui::CreateContext();
+    ImGuiIO& Io = ImGui::GetIO();
+    Io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+    Io.DisplaySize = ImVec2(800.0f, 600.0f);
+    Theme::AddFonts();
+    ImGui::NewFrame();
+
+    ImFont* Font = ImGui::GetFont();
+    REQUIRE(Font->Sources.Size == 2);
+    CHECK(std::string_view(Font->Sources[0]->Name).starts_with("Proggy"));
+    for (const unsigned int Glyph : {0xE9u, 0xE7u, 0xC9u, 0x153u, 0x2019u, 0x2026u, 0x2014u, 0xA0u, 0x202Fu})
+        CHECK(Font->IsGlyphInFont(static_cast<ImWchar>(Glyph)));
+
+    ImGui::Render();
+    ImGui::DestroyContext();
 }

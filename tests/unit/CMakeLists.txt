@@ -55,6 +55,7 @@ if(NOT ANDROID AND NOT IOS)
         test_studio_i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/locales.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/theme.cpp
     )
     add_dependencies(test_studio_i18n opendbc_studio_locales)
     target_include_directories(test_studio_i18n PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src

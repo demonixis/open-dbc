@@ -1,4 +1,5 @@
 #include "theme.hpp"
+#include "engine/fallback_font.hpp"
 
 namespace dbc::studio
 {
@@ -19,6 +20,21 @@ namespace dbc::studio
 
     namespace Theme
     {
+        void AddFonts()
+        {
+            // ImGui's default font stops at Latin-1. Noto Sans behind it supplies what that lacks, such
+            // as the French œ, ’ and …, without changing how the rest of the text looks.
+            ImGuiIO& Io = ImGui::GetIO();
+            Io.Fonts->AddFontDefault();
+            ImFontConfig Fallback;
+            Fallback.MergeMode = true;
+            Fallback.FontDataOwnedByAtlas = false;
+            const std::span<const unsigned char> FontData = dbc::FallbackFontData();
+            // Not owned by the atlas, so ImGui neither frees nor writes it.
+            Io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(FontData.data()),
+                                           static_cast<int>(FontData.size()), 0.0f, &Fallback);
+        }
+
         void Apply(float Scale)
         {
             ImGui::StyleColorsDark();

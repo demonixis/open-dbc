@@ -13,6 +13,7 @@ add_library(dbc_engine STATIC
   systems/triangle_order.cpp
   systems/bsp_world.cpp
   systems/light_manager.cpp
+  fallback_font.cpp
   systems/image_store.cpp
   systems/object_manager.cpp
   systems/physics_system.cpp

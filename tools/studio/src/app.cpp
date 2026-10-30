@@ -361,6 +361,7 @@ namespace dbc::studio
 
             Theme::Apply(Scale_ * core::platform::UiScaleHint());
             ImGui::GetStyle().FontScaleDpi = Scale_ * core::platform::UiScaleHint();
+            Theme::AddFonts();
         }
 
         if (!ImGui_ImplSDL3_InitForSDLGPU(Window_))
