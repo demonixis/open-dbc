@@ -150,6 +150,51 @@ namespace
     };
 } // namespace
 
+TEST_CASE("Companded WAV files load")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("companded-wave", 16, 16));
+    const auto Stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    for (const std::uint16_t Format : {std::uint16_t{6}, std::uint16_t{7}})
+    {
+        // Enough samples to fill SDL_mixer's decode buffer, which used to overflow on the stack.
+        const std::uint32_t Samples = 8192;
+        std::vector<std::uint8_t> Wave;
+        const auto Text = [&](std::string_view Value) { Wave.insert(Wave.end(), Value.begin(), Value.end()); };
+        const auto Number = [&](std::uint32_t Value, int Size)
+        {
+            for (int Index = 0; Index < Size; ++Index)
+                Wave.push_back(static_cast<std::uint8_t>(Value >> (Index * 8)));
+        };
+        Text("RIFF");
+        Number(36 + Samples, 4);
+        Text("WAVEfmt ");
+        Number(16, 4);
+        Number(Format, 2);
+        Number(1, 2);
+        Number(8000, 4);
+        Number(8000, 4);
+        Number(1, 2);
+        Number(8, 2);
+        Text("data");
+        Number(Samples, 4);
+        Wave.resize(Wave.size() + Samples, 0x55);
+
+        const std::filesystem::path Path =
+            std::filesystem::temp_directory_path() /
+            ("opendbc-companded-" + std::to_string(Stamp) + "-" + std::to_string(Format) + ".wav");
+        {
+            std::ofstream Output(Path, std::ios::binary);
+            Output.write(reinterpret_cast<const char*>(Wave.data()), static_cast<std::streamsize>(Wave.size()));
+        }
+        std::string Error;
+        CHECK(Kernel.Audio().LoadSound(Path.string(), 1, false, false, &Error));
+        CHECK(Error.empty());
+        CHECK(Kernel.Audio().DeleteSound(1, &Error));
+        std::filesystem::remove(Path);
+    }
+}
+
 TEST_CASE("Primitive meshes use outward winding and enable culling by default")
 {
     dbc::EngineKernel Kernel;

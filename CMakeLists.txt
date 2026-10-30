@@ -305,6 +305,11 @@ set(SDLMIXER_WAVPACK OFF CACHE BOOL "" FORCE)
 opendbc_fetch_dependency(SDL3_mixer
   https://github.com/libsdl-org/SDL_mixer.git
   da02588817a565fccfa60fa2f0bb661a3c77b8f0
+  PATCH_COMMAND ${CMAKE_COMMAND}
+                -DOPENDBC_GIT_EXECUTABLE=${GIT_EXECUTABLE}
+                -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
+                -DOPENDBC_PATCH_FILE=${CMAKE_SOURCE_DIR}/cmake/patches/sdl-mixer-wav-xlaw.patch
+                -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
 )
 FetchContent_MakeAvailable(SDL3_mixer)
 
