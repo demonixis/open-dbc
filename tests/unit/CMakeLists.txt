@@ -82,6 +82,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_assets.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_editor.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_inspector.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_paint.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_viewport.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/heightmap.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp

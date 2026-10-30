@@ -234,6 +234,104 @@ TEST_CASE("Vertex snapping finds the visible vertex nearest the mouse on screen"
     CHECK(!Behind.has_value());
 }
 
+TEST_CASE("Scattering spreads points over the whole disc")
+{
+    std::mt19937 Random(1234);
+    const glm::vec2 Center(100.0f, -50.0f);
+    const std::vector<glm::vec2> Points = scene::ScatterInDisc(Center, 40.0f, 2000, Random);
+    REQUIRE(Points.size() == 2000);
+    int Outer = 0;
+    for (const glm::vec2& Point : Points)
+    {
+        const float Distance = glm::length(Point - Center);
+        CHECK(Distance <= 40.0001f);
+        Outer += Distance > 40.0f * std::sqrt(0.5f) ? 1 : 0;
+    }
+    // Half of a disc's area lies outside this circle, so half of the points do.
+    CHECK(Outer > 850);
+    CHECK(Outer < 1150);
+    CHECK(scene::ScatterInDisc(Center, 40.0f, 0, Random).empty());
+}
+
+TEST_CASE("Painting to a density fills a disc once and keeps objects apart")
+{
+    std::mt19937 Random(99);
+    const glm::vec2 Center(0.0f);
+    constexpr float KRadius = 200.0f;
+    constexpr float KDensity = 5.0f;
+    // 5 per 100 x 100 over 125 664 square units.
+    constexpr int KWanted = 63;
+
+    std::vector<glm::vec2> Placed = scene::ScatterToDensity(Center, KRadius, KDensity, {}, Random);
+    CHECK(static_cast<int>(Placed.size()) == KWanted);
+    const float Spacing = 0.7f * std::sqrt(10000.0f / KDensity);
+    for (std::size_t First = 0; First < Placed.size(); ++First)
+    {
+        CHECK(glm::length(Placed[First] - Center) <= KRadius + 0.001f);
+        for (std::size_t Second = First + 1; Second < Placed.size(); ++Second)
+            CHECK(glm::length(Placed[First] - Placed[Second]) >= Spacing);
+    }
+
+    // Painting over the same spot adds nothing.
+    CHECK(scene::ScatterToDensity(Center, KRadius, KDensity, Placed, Random).empty());
+
+    // A half-filled disc is only topped up, clear of what is there.
+    const std::vector<glm::vec2> Half(Placed.begin(), Placed.begin() + KWanted / 2);
+    const std::vector<glm::vec2> More = scene::ScatterToDensity(Center, KRadius, KDensity, Half, Random);
+    CHECK(More.size() <= static_cast<std::size_t>(KWanted - KWanted / 2));
+    CHECK(!More.empty());
+    for (const glm::vec2& Point : More)
+        for (const glm::vec2& Other : Half)
+            CHECK(glm::length(Point - Other) >= Spacing);
+
+    // A stamp stops at its limit, and nothing comes of an empty brush.
+    CHECK(scene::ScatterToDensity(Center, 2000.0f, 500.0f, {}, Random).size() <=
+          static_cast<std::size_t>(scene::KMaxScatter));
+    CHECK(scene::ScatterToDensity(Center, 0.0f, KDensity, {}, Random).empty());
+    CHECK(scene::ScatterToDensity(Center, KRadius, 0.0f, {}, Random).empty());
+}
+
+TEST_CASE("An object rests on a surface by its lowest corner")
+{
+    const glm::vec3 Min(-5.0f, -2.0f, -5.0f);
+    const glm::vec3 Max(5.0f, 8.0f, 5.0f);
+    CHECK(scene::RestingHeight(Min, Max, glm::vec3(0.0f), glm::vec3(100.0f)) == doctest::Approx(2.0f));
+    CHECK(scene::RestingHeight(Min, Max, glm::vec3(0.0f), glm::vec3(300.0f)) == doctest::Approx(6.0f));
+    // A turn about Y leaves the height alone.
+    CHECK(scene::RestingHeight(Min, Max, glm::vec3(0.0f, 77.0f, 0.0f), glm::vec3(100.0f)) == doctest::Approx(2.0f));
+    // Laid over by 90 degrees about X, Z is what reaches down.
+    CHECK(scene::RestingHeight(Min, Max, glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(100.0f)) == doctest::Approx(5.0f));
+}
+
+TEST_CASE("Rays hit meshes through their bounds, flat ones included")
+{
+    scene::SceneNode Box;
+    Box.Kind = scene::NodeKind::Cube;
+    Box.Size = 10.0f;
+    const scene::CpuMesh Cube = scene::BuildMesh(Box, dbc::language::LanguageProfile::Dbc);
+    const glm::mat4 Moved = glm::translate(glm::mat4(1.0f), glm::vec3(100.0f, 0.0f, 0.0f));
+    const scene::Ray Along{glm::vec3(100.0f, 0.0f, -50.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
+    const std::optional<float> Hit = scene::Intersect(Along, Cube, Moved);
+    REQUIRE(Hit.has_value());
+    CHECK(*Hit == doctest::Approx(45.0f));
+    CHECK_FALSE(scene::Intersect(Along, Cube, glm::mat4(1.0f)).has_value());
+    // Pointing away from it.
+    CHECK_FALSE(scene::Intersect(scene::Ray{Along.Origin, glm::vec3(0.0f, 0.0f, -1.0f)}, Cube, Moved).has_value());
+
+    // A plain has no thickness along one axis, whichever way it faces.
+    scene::SceneNode Flat;
+    Flat.Kind = scene::NodeKind::Plain;
+    Flat.Extent = glm::vec3(20.0f, 20.0f, 0.0f);
+    const scene::CpuMesh Plain = scene::BuildMesh(Flat, dbc::language::LanguageProfile::Dbc);
+    const scene::Ray Head{glm::vec3(1.0f, 1.0f, -30.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
+    REQUIRE(scene::Intersect(Head, Plain, glm::mat4(1.0f)).has_value());
+    CHECK(*scene::Intersect(Head, Plain, glm::mat4(1.0f)) == doctest::Approx(30.0f));
+
+    // A collapsed scale has no inverse, and the ray still gets its answer from the triangles.
+    const glm::mat4 Collapsed = glm::scale(glm::mat4(1.0f), glm::vec3(0.0f));
+    CHECK_FALSE(scene::Intersect(Along, Cube, Collapsed).has_value());
+}
+
 TEST_CASE("Uniform scale keeps the proportions of the starting scale")
 {
     const glm::vec3 Scaled =

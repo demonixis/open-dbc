@@ -25,10 +25,12 @@ namespace
     // Cmd on macOS, where ImGui turns the Ctrl key's clicks into right clicks.
     constexpr ImGuiKey KCommandKey = ImGuiMod_Super;
 
-    scene::SceneDocument LevelOfCubes(const std::vector<glm::vec3>& Positions, float Size = KCubeSize)
+    scene::SceneDocument LevelOfCubes(const std::vector<glm::vec3>& Positions, float Size = KCubeSize,
+                                      dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc)
     {
         scene::SceneDocument Level;
         Level.Name = "Level";
+        Level.Profile = Profile;
         for (const glm::vec3& Position : Positions)
         {
             scene::SceneNode& Node = Level.Add(scene::NodeKind::Cube);
@@ -36,6 +38,14 @@ namespace
             Node.Position = Position;
         }
         return Level;
+    }
+
+    std::size_t CountOf(const std::string& Text, const std::string& Part)
+    {
+        std::size_t Count = 0;
+        for (std::size_t At = Text.find(Part); At != std::string::npos; At = Text.find(Part, At + Part.size()))
+            ++Count;
+        return Count;
     }
 
     bool IsMultipleOf(float Value, float Step)
@@ -47,7 +57,7 @@ namespace
     {
       public:
         SceneViewDriver(const std::string& Name, const scene::SceneDocument& Level)
-            : Root_(std::filesystem::path(TEST_OUTPUT_DIR) / "scene_view" / Name)
+            : Root_(std::filesystem::path(TEST_OUTPUT_DIR) / "scene_view" / Name), Profile_(Level.Profile)
         {
             REQUIRE(SDL_Init(SDL_INIT_VIDEO));
             Gpu_ = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL, false, nullptr);
@@ -134,8 +144,9 @@ namespace
         {
             const ImGuiWindow* Window = ImGui::FindWindowByName(panels::SceneEditor::KPanelViewport);
             const float Spacing = ImGui::GetStyle().ItemSpacing.y;
+            const float Row = ImGui::GetFrameHeight() + Spacing;
             const glm::vec2 Min(Window->DC.CursorStartPos.x,
-                                Window->DC.CursorStartPos.y + Spacing + ImGui::GetFrameHeight() + Spacing);
+                                Window->DC.CursorStartPos.y + Spacing + Row * static_cast<float>(BarRows_));
             const glm::vec2 Size = glm::vec2(Window->WorkRect.Max.x, Window->WorkRect.Max.y) - Min;
 
             const glm::vec3 Eye(0.0f, 80.0f, -180.0f);
@@ -169,6 +180,11 @@ namespace
         {
             Key(Value, true);
             Key(Value, false);
+            // The paint tool's settings take a second row above the viewport.
+            if (Value == ImGuiKey_B)
+                BarRows_ = 2;
+            else if (Value == ImGuiKey_Q || Value == ImGuiKey_W || Value == ImGuiKey_E || Value == ImGuiKey_R)
+                BarRows_ = 1;
         }
 
         void Click(const glm::vec3& Point)
@@ -197,21 +213,49 @@ namespace
             Button(false);
         }
 
-        // The level as a save writes it.
-        std::vector<glm::vec3> SavedPositions()
+        std::string SavedText()
         {
             REQUIRE(Editor_.Save());
             std::ifstream File(Root_ / scene::LevelRelativePath("Level"), std::ios::binary);
             std::ostringstream Text;
             Text << File.rdbuf();
-            const scene::LevelReadResult Read =
-                scene::ReadLevel(Text.str(), "Level", dbc::language::LanguageProfile::Dbc);
+            return Text.str();
+        }
+
+        // The level as a save writes it.
+        std::vector<scene::SceneNode> SavedNodes()
+        {
+            const scene::LevelReadResult Read = scene::ReadLevel(SavedText(), "Level", Profile_);
             for (const scene::ReadError& Error : Read.Errors)
                 FAIL_CHECK(Error.Line << ": " << Error.Message);
+            return Read.Document.Nodes;
+        }
+
+        std::vector<glm::vec3> SavedPositions()
+        {
             std::vector<glm::vec3> Positions;
-            for (const scene::SceneNode& Node : Read.Document.Nodes)
+            for (const scene::SceneNode& Node : SavedNodes())
                 Positions.push_back(Node.Position);
             return Positions;
+        }
+
+        // Clicks a row of the Hierarchy, counted from the first under the level's name.
+        void ClickHierarchyRow(int Row)
+        {
+            const ImGuiWindow* Window = ImGui::FindWindowByName(panels::SceneEditor::KPanelHierarchy);
+            const float Line = ImGui::GetTextLineHeightWithSpacing();
+            MoveMouse(glm::vec2(Window->WorkRect.Min.x + 70.0f, Window->DC.CursorStartPos.y +
+                                                                    Line * static_cast<float>(Row + 1) +
+                                                                    ImGui::GetTextLineHeight() * 0.5f));
+            Button(true);
+            Button(false);
+        }
+
+        void Undo()
+        {
+            Key(KCommandKey, true);
+            Tap(ImGuiKey_Z);
+            Key(KCommandKey, false);
         }
 
       private:
@@ -223,9 +267,11 @@ namespace
         }
 
         std::filesystem::path Root_;
+        dbc::language::LanguageProfile Profile_;
         SDL_GPUDevice* Gpu_ = nullptr;
         panels::SceneEditor Editor_;
         bool LayoutBuilt_ = false;
+        int BarRows_ = 1;
     };
 } // namespace
 
@@ -360,4 +406,189 @@ TEST_CASE("A vertex drag is one undo step, however many vertices it lands on")
     const glm::vec3 Undone = Driver.SavedPositions().at(0);
     CHECK(Undone.x == doctest::Approx(Moving.x));
     CHECK(Undone.y == doctest::Approx(Moving.y));
+}
+
+TEST_CASE("The paint tool places one object on the grid, resting on the ground")
+{
+    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
+    const glm::vec3 Source(0.0f, 15.0f, 0.0f);
+    SceneViewDriver Driver("paint_one", LevelOfCubes({Source}, KCubeSize, Pro));
+    Driver.Click(Source);
+    Driver.Tap(ImGuiKey_B);
+
+    Driver.Click(glm::vec3(63.0f, 0.0f, 41.0f));
+    std::vector<scene::SceneNode> Nodes = Driver.SavedNodes();
+    REQUIRE(Nodes.size() == 2);
+    CHECK(Nodes[0].Position.y == doctest::Approx(Source.y));
+    CHECK_FALSE(Nodes[0].Painted);
+    CHECK(Nodes[1].Painted);
+    CHECK(Nodes[1].Position.x == doctest::Approx(60.0f));
+    CHECK(Nodes[1].Position.z == doctest::Approx(40.0f));
+    // A 20-unit cube's centre, 10 above the ground.
+    CHECK(Nodes[1].Position.y == doctest::Approx(10.0f));
+    CHECK(Nodes[1].Name == "Cube 1000_1001");
+    const std::string Text = Driver.SavedText();
+    CHECK(CountOf(Text, "MAKE OBJECT CUBE") == 1);
+    CHECK(Text.find("INSTANCE OBJECT 1001, 1000") != std::string::npos);
+
+    // Painted objects are not surfaces: the next one lands on the ground beside the first.
+    Driver.Click(glm::vec3(63.0f, 0.0f, 41.0f));
+    Nodes = Driver.SavedNodes();
+    REQUIRE(Nodes.size() == 3);
+    CHECK(Nodes[2].Position.y == doctest::Approx(10.0f));
+
+    // The command key leaves the grid, and each click is one undo step.
+    Driver.Key(KCommandKey, true);
+    Driver.Click(glm::vec3(-37.0f, 0.0f, 23.0f));
+    Driver.Key(KCommandKey, false);
+    Nodes = Driver.SavedNodes();
+    REQUIRE(Nodes.size() == 4);
+    CHECK(Nodes[3].Position.x == doctest::Approx(-37.0f).epsilon(0.02));
+    CHECK(!IsMultipleOf(Nodes[3].Position.x, 10.0f));
+    Driver.Undo();
+    CHECK(Driver.SavedNodes().size() == 3);
+    Driver.Undo();
+    Driver.Undo();
+    CHECK(Driver.SavedNodes().size() == 1);
+
+    // Other tools come back: the gizmo moves the selection again, and no click paints.
+    Driver.Tap(ImGuiKey_W);
+    Driver.DragGizmoX(Source, 60.0f);
+    Nodes = Driver.SavedNodes();
+    CHECK(Nodes.size() == 1);
+    CHECK(Nodes[0].Position.x > 0.0f);
+}
+
+TEST_CASE("Several scatters its count over the radius with one click")
+{
+    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
+    const glm::vec3 Source(-150.0f, 15.0f, 0.0f);
+    SceneViewDriver Driver("paint_several", LevelOfCubes({Source}, KCubeSize, Pro));
+    Driver.Click(Source);
+    Driver.Tap(ImGuiKey_B);
+    Driver.Tap(ImGuiKey_2);
+
+    const glm::vec3 Center(40.0f, 0.0f, 30.0f);
+    Driver.Click(Center);
+    const std::vector<scene::SceneNode> Nodes = Driver.SavedNodes();
+    // The defaults: 5 objects over a radius of 50.
+    REQUIRE(Nodes.size() == 6);
+    for (std::size_t Index = 1; Index < Nodes.size(); ++Index)
+    {
+        CHECK(glm::length(glm::vec2(Nodes[Index].Position.x - Center.x, Nodes[Index].Position.z - Center.z)) <= 51.0f);
+        CHECK(Nodes[Index].Position.y == doctest::Approx(10.0f));
+        CHECK(Nodes[Index].Painted);
+    }
+    CHECK(CountOf(Driver.SavedText(), "INSTANCE OBJECT") == 5);
+}
+
+TEST_CASE("The brush fills up to its density, and Shift erases its copies")
+{
+    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
+    const glm::vec3 Source(-150.0f, 15.0f, 0.0f);
+    const glm::vec3 Other(40.0f, 15.0f, 30.0f);
+    SceneViewDriver Driver("paint_brush", LevelOfCubes({Source, Other}, KCubeSize, Pro));
+    Driver.Click(Source);
+    Driver.Tap(ImGuiKey_B);
+    Driver.Tap(ImGuiKey_3);
+
+    // The defaults: 10 per 100 x 100 over a radius of 50 make 8. The other cube looks the same as the
+    // source, so it counts towards them.
+    const glm::vec3 Spot(40.0f, 0.0f, 30.0f);
+    Driver.Click(Spot);
+    const std::size_t Once = Driver.SavedNodes().size();
+    CHECK(Once == 9);
+
+    // Over the same spot, a second click adds nothing.
+    Driver.Click(Spot);
+    CHECK(Driver.SavedNodes().size() == Once);
+
+    // A drag paints along the way, as one undo step.
+    Driver.MoveMouse(Driver.ScreenOf(glm::vec3(-60.0f, 0.0f, 0.0f)));
+    Driver.Button(true);
+    for (const float X : {-90.0f, -120.0f, -150.0f, -180.0f, -210.0f})
+        Driver.MoveMouse(Driver.ScreenOf(glm::vec3(X, 0.0f, 0.0f)));
+    Driver.Button(false);
+    const std::size_t Dragged = Driver.SavedNodes().size();
+    CHECK(Dragged > Once + 8);
+    Driver.Undo();
+    CHECK(Driver.SavedNodes().size() == Once);
+
+    // Shift erases painted copies within the radius, and never what was not painted.
+    Driver.Key(ImGuiMod_Shift, true);
+    Driver.Click(Spot);
+    Driver.Key(ImGuiMod_Shift, false);
+    const std::vector<scene::SceneNode> Left = Driver.SavedNodes();
+    CHECK(Left.size() == 2);
+    CHECK_FALSE(Left[0].Painted);
+    CHECK_FALSE(Left[1].Painted);
+    Driver.Undo();
+    CHECK(Driver.SavedNodes().size() == Once);
+}
+
+TEST_CASE("The paint tool lands on what lies under the mouse, and stops at its edge")
+{
+    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
+    const glm::vec3 Source(-130.0f, 5.0f, 0.0f);
+    scene::SceneDocument Level = LevelOfCubes({Source}, 10.0f, Pro);
+    // A wide table, its top at Y = 60.
+    scene::SceneNode& Table = Level.Add(scene::NodeKind::Box);
+    Table.Extent = glm::vec3(100.0f, 20.0f, 100.0f);
+    Table.Position = glm::vec3(0.0f, 50.0f, 0.0f);
+    SceneViewDriver Driver("paint_surface", Level);
+    Driver.Click(Source);
+    Driver.Tap(ImGuiKey_B);
+
+    Driver.Click(glm::vec3(0.0f, 60.0f, 0.0f));
+    std::vector<scene::SceneNode> Nodes = Driver.SavedNodes();
+    REQUIRE(Nodes.size() == 3);
+    CHECK(Nodes[2].Position.x == doctest::Approx(0.0f));
+    // A 10-unit cube's centre, 5 above the table.
+    CHECK(Nodes[2].Position.y == doctest::Approx(65.0f));
+
+    // Scattered from the table's corner, some of them fall past its edge and are left out.
+    Driver.Tap(ImGuiKey_2);
+    Driver.Click(glm::vec3(45.0f, 60.0f, -45.0f));
+    Nodes = Driver.SavedNodes();
+    CHECK(Nodes.size() <= 8);
+    for (std::size_t Index = 3; Index < Nodes.size(); ++Index)
+        CHECK(Nodes[Index].Position.y == doctest::Approx(65.0f));
+}
+
+TEST_CASE("Classic paints plain copies, without INSTANCE OBJECT")
+{
+    const glm::vec3 Source(0.0f, 15.0f, 0.0f);
+    SceneViewDriver Driver("paint_classic", LevelOfCubes({Source}));
+    Driver.Click(Source);
+    Driver.Tap(ImGuiKey_B);
+    Driver.Click(glm::vec3(60.0f, 0.0f, 40.0f));
+    Driver.Click(glm::vec3(-60.0f, 0.0f, 40.0f));
+
+    const std::string Text = Driver.SavedText();
+    CHECK(CountOf(Text, "INSTANCE OBJECT") == 0);
+    CHECK(CountOf(Text, "MAKE OBJECT CUBE") == 3);
+    const std::vector<scene::SceneNode> Nodes = Driver.SavedNodes();
+    REQUIRE(Nodes.size() == 3);
+    CHECK(Nodes[1].Painted);
+    CHECK(Nodes[2].Painted);
+}
+
+TEST_CASE("Painted objects fold into one Hierarchy row, whose click selects them all")
+{
+    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
+    const glm::vec3 Source(-150.0f, 15.0f, 0.0f);
+    SceneViewDriver Driver("paint_hierarchy", LevelOfCubes({Source}, KCubeSize, Pro));
+    Driver.Click(Source);
+    Driver.Tap(ImGuiKey_B);
+    Driver.Click(glm::vec3(0.0f, 0.0f, 0.0f));
+    Driver.Click(glm::vec3(30.0f, 0.0f, 0.0f));
+    Driver.Click(glm::vec3(60.0f, 0.0f, 0.0f));
+    CHECK(Driver.SavedNodes().size() == 4);
+
+    // Row 0 is the source, row 1 the three copies together.
+    Driver.ClickHierarchyRow(1);
+    Driver.Tap(ImGuiKey_Delete);
+    const std::vector<scene::SceneNode> Left = Driver.SavedNodes();
+    REQUIRE(Left.size() == 1);
+    CHECK_FALSE(Left[0].Painted);
 }

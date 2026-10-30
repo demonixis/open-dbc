@@ -98,6 +98,20 @@ namespace dbc::studio
                 }
                 return lang::SymbolId::Command_MakeObjectCube;
             }
+
+            // The number after the last '_', or nullopt when that suffix is not all digits.
+            std::optional<int> NumberSuffix(const std::string& Text, std::size_t Underscore)
+            {
+                if (Underscore == std::string::npos || Underscore + 1 == Text.size() || Text.size() - Underscore > 10)
+                    return std::nullopt;
+                for (std::size_t Index = Underscore + 1; Index < Text.size(); ++Index)
+                    if (Text[Index] < '0' || Text[Index] > '9')
+                        return std::nullopt;
+                return std::stoi(Text.substr(Underscore + 1));
+            }
+
+            // About 200 MB of nodes, while a small level keeps hundreds of undo steps.
+            constexpr std::size_t KMaxHistoryNodes = 500000;
         } // namespace
 
         bool KindAvailable(NodeKind Kind, lang::LanguageProfile Profile)
@@ -134,6 +148,25 @@ namespace dbc::studio
             }
         }
 
+        std::vector<int> SceneDocument::NextIds(IdSpace Space, std::size_t Count) const
+        {
+            std::vector<int> Used;
+            for (const SceneNode& Node : Nodes)
+                if (IdSpaceOf(Node.Kind) == Space)
+                    Used.push_back(Node.Id);
+            std::sort(Used.begin(), Used.end());
+            std::vector<int> Free;
+            Free.reserve(Count);
+            auto Taken = Used.begin();
+            for (int Candidate = Base(Space); Free.size() < Count; ++Candidate)
+            {
+                Taken = std::lower_bound(Taken, Used.end(), Candidate);
+                if (Taken == Used.end() || *Taken != Candidate)
+                    Free.push_back(Candidate);
+            }
+            return Free;
+        }
+
         SceneNode* SceneDocument::Find(IdSpace Space, int Id)
         {
             for (SceneNode& Node : Nodes)
@@ -152,25 +185,13 @@ namespace dbc::studio
 
         std::string SceneDocument::CopyName(const std::string& OriginalName) const
         {
-            // The number after the last '_', or nullopt when that suffix is not all digits.
-            const auto Suffix = [](const std::string& Text, std::size_t Underscore) -> std::optional<int>
-            {
-                if (Underscore == std::string::npos || Underscore + 1 == Text.size() || Text.size() - Underscore > 10)
-                    return std::nullopt;
-                for (std::size_t Index = Underscore + 1; Index < Text.size(); ++Index)
-                    if (Text[Index] < '0' || Text[Index] > '9')
-                        return std::nullopt;
-                return std::stoi(Text.substr(Underscore + 1));
-            };
-            const std::size_t Underscore = OriginalName.rfind('_');
-            const std::string Stem =
-                Suffix(OriginalName, Underscore) ? OriginalName.substr(0, Underscore) : OriginalName;
+            const std::string Stem = PaintedStem(OriginalName);
             int Highest = 0;
             for (const SceneNode& Node : Nodes)
             {
                 const std::size_t At = Node.Name.rfind('_');
                 if (At == Stem.size() && Node.Name.compare(0, At, Stem) == 0)
-                    if (const std::optional<int> Count = Suffix(Node.Name, At))
+                    if (const std::optional<int> Count = NumberSuffix(Node.Name, At))
                         Highest = std::max(Highest, *Count);
             }
             return Stem + "_" + std::to_string(Highest + 1);
@@ -208,6 +229,25 @@ namespace dbc::studio
             return std::clamp(Node.Tile, 1, Tiles);
         }
 
+        bool SameLook(const SceneNode& First, const SceneNode& Second)
+        {
+            return First.Kind == Second.Kind && First.Size == Second.Size && First.Extent == Second.Extent &&
+                   First.Detail == Second.Detail && First.PlainOrientation == Second.PlainOrientation &&
+                   First.Corners == Second.Corners && First.Asset == Second.Asset && First.Static == Second.Static &&
+                   First.Mat == Second.Mat;
+        }
+
+        std::string PaintedStem(const std::string& Name)
+        {
+            const std::size_t Underscore = Name.rfind('_');
+            return NumberSuffix(Name, Underscore) ? Name.substr(0, Underscore) : Name;
+        }
+
+        std::string PaintedName(const std::string& Name, int Id)
+        {
+            return PaintedStem(Name) + "_" + std::to_string(Id);
+        }
+
         std::string SanitizeLevelName(const std::string& Name)
         {
             std::string Result;
@@ -243,6 +283,13 @@ namespace dbc::studio
                 return;
             States_.resize(States_.empty() ? 0 : Current_ + 1);
             States_.push_back(Document);
+            std::size_t Nodes = 0;
+            for (const SceneDocument& State : States_)
+                Nodes += State.Nodes.size();
+            std::size_t Dropped = 0;
+            while (Dropped + 1 < States_.size() && Nodes > KMaxHistoryNodes)
+                Nodes -= States_[Dropped++].Nodes.size();
+            States_.erase(States_.begin(), States_.begin() + static_cast<std::ptrdiff_t>(Dropped));
             Current_ = States_.size() - 1;
         }
 

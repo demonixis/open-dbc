@@ -145,7 +145,7 @@ namespace dbc::studio
             int Height_ = 0;
 
             std::unordered_map<std::string, Geometry> Geometry_;
-            std::unordered_map<std::string, std::string> NodeKeys_;
+            std::unordered_map<std::uint64_t, const Geometry*> NodeGeometry_;
             std::unordered_map<std::string, core::GpuImage> Textures_;
             std::unordered_map<std::string, bool> Failed_;
             std::vector<std::string> Errors_;

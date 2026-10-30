@@ -29,9 +29,9 @@ namespace dbc::studio
                        255.0f;
             }
 
-            std::string NodeId(const SceneNode& Node)
+            std::uint64_t NodeId(const SceneNode& Node)
             {
-                return std::to_string(static_cast<int>(IdSpaceOf(Node.Kind))) + ":" + std::to_string(Node.Id);
+                return (static_cast<std::uint64_t>(IdSpaceOf(Node.Kind)) << 32) | static_cast<std::uint32_t>(Node.Id);
             }
 
             constexpr float KDefaultAmbient = 0.25f;
@@ -356,7 +356,6 @@ namespace dbc::studio
                                                              const std::filesystem::path& AssetRoot)
         {
             const std::string Key = GeometryKey(Node, Document, AssetRoot);
-            NodeKeys_[NodeId(Node)] = Key;
             auto Found = Geometry_.find(Key);
             if (Found != Geometry_.end())
             {
@@ -543,11 +542,8 @@ namespace dbc::studio
 
         const CpuMesh* SceneRenderer::Mesh(const SceneNode& Node) const
         {
-            const auto Key = NodeKeys_.find(NodeId(Node));
-            if (Key == NodeKeys_.end())
-                return nullptr;
-            const auto Found = Geometry_.find(Key->second);
-            return Found == Geometry_.end() ? nullptr : &Found->second.Mesh;
+            const auto Found = NodeGeometry_.find(NodeId(Node));
+            return Found == NodeGeometry_.end() ? nullptr : &Found->second->Mesh;
         }
 
         std::vector<std::string> SceneRenderer::TakeErrors()
@@ -564,7 +560,7 @@ namespace dbc::studio
                 return;
             for (auto& [Key, Entry] : Geometry_)
                 Entry.Used = false;
-            NodeKeys_.clear();
+            NodeGeometry_.clear();
 
             const Environment& Env = Document.Env;
             const bool Pro = Document.Profile == dbc::language::LanguageProfile::DbPro;
@@ -607,18 +603,26 @@ namespace dbc::studio
             }
             Shared.Flags.w = static_cast<float>(Count);
 
-            for (const SceneNode& Node : Document.Nodes)
+            // What copies of one object share: all but their transforms. A painted level holds thousands,
+            // and finding a geometry or a texture by its path each frame would cost more than the draws.
+            struct Look
             {
-                if (IsMarker(Node.Kind))
-                    continue;
+                const SceneNode* Node = nullptr;
+                const Geometry* Entry = nullptr;
+                std::vector<DrawItem> Pieces;
+            };
+
+            const auto MakeLook = [&](const SceneNode& Node)
+            {
+                Look Made;
+                Made.Node = &Node;
                 DrawItem Item;
                 Geometry& Entry = FindGeometry(Node, Document, AssetRoot);
+                Made.Entry = &Entry;
                 Item.Mesh = &Entry;
                 if (Entry.Mesh.Vertices.empty())
-                    continue;
+                    return Made;
                 Item.Vertex.ViewProj = ViewProj_;
-                Item.Vertex.World = NodeWorld(Node);
-                Item.Vertex.NormalWorld = glm::mat4(glm::inverseTranspose(glm::mat3(Item.Vertex.World)));
 
                 const Material& Mat = Node.Mat;
                 Item.Fragment = Shared;
@@ -642,8 +646,8 @@ namespace dbc::studio
                 Item.Count = static_cast<Uint32>(Entry.Mesh.Vertices.size());
                 if (Entry.Mesh.Parts.empty())
                 {
-                    Items_.push_back(Item);
-                    continue;
+                    Made.Pieces.push_back(Item);
+                    return Made;
                 }
                 // A model draws mesh by mesh with its own textures, unless TEXTURE OBJECT
                 // replaces them all; an untextured mesh keeps its diffuse colour.
@@ -657,6 +661,35 @@ namespace dbc::studio
                     Piece.Fragment.Flags.x = Piece.Texture != nullptr ? 1.0f : 0.0f;
                     if (Piece.Texture == nullptr)
                         Piece.Fragment.BaseColor *= glm::vec4(glm::vec3(Part.Color), 1.0f);
+                    Made.Pieces.push_back(Piece);
+                }
+                return Made;
+            };
+
+            std::vector<Look> Looks;
+            for (const SceneNode& Node : Document.Nodes)
+            {
+                if (IsMarker(Node.Kind))
+                    continue;
+                // SameLook only speaks for objects: a matrix differs by more than it compares.
+                auto Known = Looks.end();
+                if (IdSpaceOf(Node.Kind) == IdSpace::Object)
+                    Known = std::find_if(Looks.begin(), Looks.end(),
+                                         [&](const Look& Other) { return SameLook(*Other.Node, Node); });
+                if (Known == Looks.end())
+                {
+                    Looks.push_back(MakeLook(Node));
+                    Known = std::prev(Looks.end());
+                }
+                NodeGeometry_[NodeId(Node)] = Known->Entry;
+                if (Known->Pieces.empty())
+                    continue;
+                const glm::mat4 World = NodeWorld(Node);
+                const glm::mat4 NormalWorld(glm::inverseTranspose(glm::mat3(World)));
+                for (DrawItem Piece : Known->Pieces)
+                {
+                    Piece.Vertex.World = World;
+                    Piece.Vertex.NormalWorld = NormalWorld;
                     Items_.push_back(Piece);
                 }
             }

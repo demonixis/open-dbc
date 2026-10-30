@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <optional>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -159,6 +160,18 @@ namespace dbc::studio
 
         // Distance along the ray to the nearest triangle, both sides counted.
         std::optional<float> Intersect(const Ray& Value, const CpuMesh& Mesh, const glm::mat4& World);
+
+        // `Count` points spread evenly over a disc.
+        std::vector<glm::vec2> ScatterInDisc(const glm::vec2& Center, float Radius, int Count, std::mt19937& Random);
+        // What a stamp of the paint brush places at most, whatever its radius and density.
+        inline constexpr int KMaxScatter = 2000;
+        // Points that bring a disc up to `Density` objects per 100 x 100 units, apart from one
+        // another and from `Existing`, so that painting over an area does not pile objects up.
+        std::vector<glm::vec2> ScatterToDensity(const glm::vec2& Center, float Radius, float Density,
+                                                const std::vector<glm::vec2>& Existing, std::mt19937& Random);
+        // How far above a surface an object's origin sits for its bounds to rest on it.
+        float RestingHeight(const glm::vec3& Min, const glm::vec3& Max, const glm::vec3& Rotation,
+                            const glm::vec3& Scale);
 
         // Where the viewport shows the world, for measuring on screen.
         struct ScreenView

@@ -448,7 +448,8 @@ namespace dbc::studio
         {
             const ImGuiIO& Io = ImGui::GetIO();
             const bool Held = ImGui::IsKeyDown(ImGuiKey_V) && !Io.WantTextInput && ImGui::IsWindowFocused() &&
-                              !Navigating_ && !GizmoActive_ && Editable() && !CameraSelected_ && Tool_ != Tool::View;
+                              !Navigating_ && !GizmoActive_ && Editable() && !CameraSelected_ && Tool_ != Tool::View &&
+                              Tool_ != Tool::Paint;
             if (VertexDragging_ && (!Held || !ImGui::IsMouseDown(ImGuiMouseButton_Left)))
             {
                 VertexDragging_ = false;
@@ -505,16 +506,17 @@ namespace dbc::studio
             const std::optional<scene::ScreenVertex> Target = Nearest(false);
             if (Target && Target->Pixels <= KVertexReach)
                 VertexMove_ = Target->World - VertexGrab_;
-            for (const scene::SceneNode& Start : GroupStart_)
-                if (scene::SceneNode* Node = Document_.Find(scene::IdSpaceOf(Start.Kind), Start.Id))
-                    Node->Position = Start.Position + VertexMove_;
+            // The selection cannot change during the drag, so it lines up with the starts.
+            const std::vector<scene::SceneNode*> Nodes = SelectedNodes();
+            for (std::size_t Index = 0; Index < Nodes.size() && Index < GroupStart_.size(); ++Index)
+                Nodes[Index]->Position = GroupStart_[Index].Position + VertexMove_;
             DrawVertex(VertexGrab_ + VertexMove_);
             return true;
         }
 
         void SceneEditor::DrawGizmo()
         {
-            if (!Editable() || Tool_ == Tool::View)
+            if (!Editable() || Tool_ == Tool::View || Tool_ == Tool::Paint)
                 return;
             if (!CameraSelected_ && Selection_.size() > 1)
             {
@@ -676,9 +678,9 @@ namespace dbc::studio
                     Percent = scene::ProportionalScale(glm::vec3(100.0f), Percent);
                 Change.Factor = glm::max(Percent / 100.0f, glm::vec3(1e-4f));
             }
-            for (const scene::SceneNode& Start : GroupStart_)
-                if (scene::SceneNode* Node = Document_.Find(scene::IdSpaceOf(Start.Kind), Start.Id))
-                    scene::ApplyGroupChange(Change, Start, *Node);
+            // The selection cannot change during the drag, so it lines up with the starts.
+            for (std::size_t Index = 0; Index < Nodes.size() && Index < GroupStart_.size(); ++Index)
+                scene::ApplyGroupChange(Change, GroupStart_[Index], *Nodes[Index]);
         }
 
         void SceneEditor::AcceptAssetDrop()
@@ -719,7 +721,11 @@ namespace dbc::studio
             {
                 ImGui::PushStyleColor(ImGuiCol_Button, Tool_ == Value ? Theme::Selection : 0);
                 if (ImGui::Button(Label))
+                {
                     Tool_ = Value;
+                    if (Value == Tool::Paint)
+                        EnterPaintTool();
+                }
                 ImGui::PopStyleColor();
                 if (ImGui::IsItemHovered())
                     ImGui::SetTooltip("%s", Tip);
@@ -732,6 +738,7 @@ namespace dbc::studio
             ToolButton("Move", Tool::Move, "Move (W)");
             ToolButton("Rotate", Tool::Rotate, "Rotate (E)");
             ToolButton("Scale", Tool::Scale, "Scale (R)");
+            ToolButton("Paint", Tool::Paint, "Paint objects over the level (B)");
             ImGui::Checkbox("Local", &LocalGizmo_);
             ImGui::SameLine();
             ImGui::Checkbox("Snap", &Snap_);
@@ -770,6 +777,8 @@ namespace dbc::studio
                                                                 : "Enable the level camera in Level Settings");
             if (!Document_.Env.UseCamera)
                 LookThroughCamera_ = false;
+            if (Tool_ == Tool::Paint)
+                DrawPaintBar();
         }
 
         void SceneEditor::DrawViewport()
@@ -816,11 +825,12 @@ namespace dbc::studio
             UpdateCamera(Hovered);
             ImDrawList* Draw = ImGui::GetWindowDrawList();
             DrawIcons(Draw);
+            const bool Painting = UpdatePaint(Hovered, Draw);
             const bool VertexSnap = UpdateVertexSnap(Hovered, Draw);
             if (!VertexSnap)
                 DrawGizmo();
 
-            if (Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt && !VertexSnap &&
+            if (Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt && !VertexSnap && !Painting &&
                 !ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
                 PickAt(ImGui::GetMousePos(), Io.KeyCtrl || Io.KeySuper || Io.KeyShift);
 
@@ -835,6 +845,17 @@ namespace dbc::studio
                     Tool_ = Tool::Rotate;
                 else if (ImGui::IsKeyPressed(ImGuiKey_R, false))
                     Tool_ = Tool::Scale;
+                else if (ImGui::IsKeyPressed(ImGuiKey_B, false))
+                {
+                    Tool_ = Tool::Paint;
+                    EnterPaintTool();
+                }
+                else if (Tool_ == Tool::Paint && ImGui::IsKeyPressed(ImGuiKey_1, false))
+                    PaintMode_ = PaintMode::One;
+                else if (Tool_ == Tool::Paint && ImGui::IsKeyPressed(ImGuiKey_2, false))
+                    PaintMode_ = PaintMode::Several;
+                else if (Tool_ == Tool::Paint && ImGui::IsKeyPressed(ImGuiKey_3, false))
+                    PaintMode_ = PaintMode::Brush;
                 else if (ImGui::IsKeyPressed(ImGuiKey_F, false))
                     FrameSelection();
                 else if (ImGui::IsKeyPressed(ImGuiKey_G, false))

@@ -18,7 +18,9 @@
 #include "engine/systems/renderer_system.hpp"
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
+#include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/matrix.hpp>
 
 namespace dbc::studio
 {
@@ -619,8 +621,109 @@ namespace dbc::studio
             }
         }
 
+        std::vector<glm::vec2> ScatterInDisc(const glm::vec2& Center, float Radius, int Count, std::mt19937& Random)
+        {
+            std::uniform_real_distribution<float> Unit(0.0f, 1.0f);
+            std::vector<glm::vec2> Points;
+            Points.reserve(static_cast<std::size_t>(std::max(Count, 0)));
+            for (int Index = 0; Index < Count; ++Index)
+            {
+                // The root keeps them even: half of a disc's area lies beyond 0.7 of its radius.
+                const float Distance = Radius * std::sqrt(Unit(Random));
+                const float Angle = glm::two_pi<float>() * Unit(Random);
+                Points.push_back(Center + glm::vec2(std::cos(Angle), std::sin(Angle)) * Distance);
+            }
+            return Points;
+        }
+
+        std::vector<glm::vec2> ScatterToDensity(const glm::vec2& Center, float Radius, float Density,
+                                                const std::vector<glm::vec2>& Existing, std::mt19937& Random)
+        {
+            std::vector<glm::vec2> Points;
+            if (Radius <= 0.0f || Density <= 0.0f)
+                return Points;
+            constexpr float KCellArea = 100.0f * 100.0f;
+            // Random points this far apart settle near the density, as they cannot pack like a lattice.
+            const float Spacing = 0.7f * std::sqrt(KCellArea / Density);
+            const auto Cell = [](std::int64_t X, std::int64_t Y) { return (X << 32) ^ (Y & 0xFFFFFFFF); };
+            const auto CellAt = [&](float Along) { return static_cast<std::int64_t>(std::floor(Along / Spacing)); };
+            std::unordered_map<std::int64_t, std::vector<glm::vec2>> Grid;
+            std::size_t Inside = 0;
+            for (const glm::vec2& Point : Existing)
+            {
+                const float Distance = glm::length(Point - Center);
+                Inside += Distance <= Radius ? 1 : 0;
+                if (Distance <= Radius + Spacing)
+                    Grid[Cell(CellAt(Point.x), CellAt(Point.y))].push_back(Point);
+            }
+
+            const float Area = glm::pi<float>() * Radius * Radius;
+            const auto Wanted = static_cast<std::size_t>(std::lround(Density * Area / KCellArea));
+            if (Wanted <= Inside)
+                return Points;
+            const std::size_t Missing = std::min(Wanted - Inside, static_cast<std::size_t>(KMaxScatter));
+            const auto Tries = static_cast<int>(Missing * 8 + 8);
+            for (const glm::vec2& Point : ScatterInDisc(Center, Radius, Tries, Random))
+            {
+                const std::int64_t X = CellAt(Point.x);
+                const std::int64_t Y = CellAt(Point.y);
+                bool Clear = true;
+                for (std::int64_t Near = X - 1; Clear && Near <= X + 1; ++Near)
+                    for (std::int64_t Far = Y - 1; Clear && Far <= Y + 1; ++Far)
+                        if (const auto Found = Grid.find(Cell(Near, Far)); Found != Grid.end())
+                            Clear = std::none_of(Found->second.begin(), Found->second.end(), [&](const glm::vec2& Other)
+                                                 { return glm::length(Other - Point) < Spacing; });
+                if (!Clear)
+                    continue;
+                Grid[Cell(X, Y)].push_back(Point);
+                Points.push_back(Point);
+                if (Points.size() == Missing)
+                    break;
+            }
+            return Points;
+        }
+
+        float RestingHeight(const glm::vec3& Min, const glm::vec3& Max, const glm::vec3& Rotation,
+                            const glm::vec3& Scale)
+        {
+            const glm::mat3 Turn = RotationMatrix(Rotation);
+            float Lowest = std::numeric_limits<float>::max();
+            for (int Index = 0; Index < 8; ++Index)
+            {
+                const glm::vec3 Corner((Index & 1) ? Max.x : Min.x, (Index & 2) ? Max.y : Min.y,
+                                       (Index & 4) ? Max.z : Min.z);
+                Lowest = std::min(Lowest, (Turn * (Corner * Scale / 100.0f)).y);
+            }
+            return -Lowest;
+        }
+
         std::optional<float> Intersect(const Ray& Value, const CpuMesh& Mesh, const glm::mat4& World)
         {
+            // Painted levels hold thousands of meshes, and most rays miss each one's bounds.
+            if (glm::determinant(glm::mat3(World)) != 0.0f)
+            {
+                const glm::mat4 Inverse = glm::inverse(World);
+                const glm::vec3 Origin(Inverse * glm::vec4(Value.Origin, 1.0f));
+                const glm::vec3 Direction(Inverse * glm::vec4(Value.Direction, 0.0f));
+                float Near = 0.0f;
+                float Far = std::numeric_limits<float>::max();
+                for (int Axis = 0; Axis < 3; ++Axis)
+                {
+                    if (std::abs(Direction[Axis]) < 1e-12f)
+                    {
+                        if (Origin[Axis] < Mesh.Min[Axis] || Origin[Axis] > Mesh.Max[Axis])
+                            return std::nullopt;
+                        continue;
+                    }
+                    const float A = (Mesh.Min[Axis] - Origin[Axis]) / Direction[Axis];
+                    const float B = (Mesh.Max[Axis] - Origin[Axis]) / Direction[Axis];
+                    Near = std::max(Near, std::min(A, B));
+                    Far = std::min(Far, std::max(A, B));
+                }
+                // With a margin: a flat mesh's bounds have no thickness.
+                if (Near > Far + 1e-3f * std::max(1.0f, std::abs(Far)))
+                    return std::nullopt;
+            }
             std::optional<float> Nearest;
             for (std::size_t Index = 0; Index + 2 < Mesh.Vertices.size(); Index += 3)
             {

@@ -155,6 +155,9 @@ namespace dbc::studio
             std::optional<int> Speed;
             // Object: MAKE STATIC OBJECT then DELETE OBJECT, so it becomes fixed scenery.
             bool Static = false;
+            // Object: placed by the paint tool. The Hierarchy folds these together, and Pro writes
+            // them with INSTANCE OBJECT of the first object that looks the same.
+            bool Painted = false;
 
             Material Mat;
 
@@ -226,6 +229,8 @@ namespace dbc::studio
 
             // Smallest number at or above the space's base that no node uses.
             int NextId(IdSpace Space) const;
+            // The `Count` smallest such numbers, ascending.
+            std::vector<int> NextIds(IdSpace Space, std::size_t Count) const;
             SceneNode* Find(IdSpace Space, int Id);
             const SceneNode* Find(IdSpace Space, int Id) const;
             // A node of `Kind` with the next free number and engine-like defaults.
@@ -236,6 +241,14 @@ namespace dbc::studio
 
             bool operator==(const SceneDocument&) const = default;
         };
+
+        // Whether two objects differ only in what each copy of an object sets for itself: its
+        // number, name, transform and animation. INSTANCE OBJECT copies everything else.
+        bool SameLook(const SceneNode& First, const SceneNode& Second);
+        // A painted copy's name: "tree" or "tree_2" -> "tree_<Id>".
+        std::string PaintedName(const std::string& Name, int Id);
+        // "tree_12" -> "tree".
+        std::string PaintedStem(const std::string& Name);
 
         // Heights a matrix of this node's size holds; MatrixHeights() is empty when
         // `Heights` does not match it, as after a segment count change.
@@ -254,7 +267,8 @@ namespace dbc::studio
         std::string SanitizeLevelName(const std::string& Name);
         std::string LevelFunctionName(const SceneDocument& Document);
 
-        // Snapshot undo: levels are small, so whole copies keep it simple and exact.
+        // Snapshot undo: whole copies keep it simple and exact. Painting makes levels large, so the
+        // oldest states go when all of them together hold too many nodes.
         class SceneHistory
         {
           public:

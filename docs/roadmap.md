@@ -197,8 +197,6 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 ## Studio Scene view
 
-- [ ] Paint mode: place one object, several, or a radius with a density (trees,
-  grass). The generated code uses `INSTANCE OBJECT`, not one `LOAD OBJECT` per node.
 - [ ] Preview `.dbo` models (Assimp cannot read them; a box stands in) and
   `.dds` textures and thumbnails (SDL_image cannot read them).
 - [ ] Interactive UI coverage: `test_studio_scene_view` drives gizmo moves and

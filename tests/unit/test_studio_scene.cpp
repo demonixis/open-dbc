@@ -167,6 +167,198 @@ TEST_CASE("Scene levels round-trip through the generated BASIC in both profiles"
     }
 }
 
+namespace
+{
+    // A model, then painted copies of it: `Copies` of them, each 10 units further along X.
+    scene::SceneDocument PaintedLevel(LanguageProfile Profile, int Copies)
+    {
+        scene::SceneDocument Document;
+        Document.Name = "Painted";
+        Document.Profile = Profile;
+        scene::SceneNode& Tree = Document.Add(scene::NodeKind::Model);
+        Tree.Name = "tree";
+        Tree.Asset = "models/tree.x";
+        Tree.Mat.Texture = "media/bark.png";
+        Tree.Mat.Color = 0x80FF80;
+        Tree.Position = {5.0f, 1.0f, 0.0f};
+        Tree.Scale = {200.0f, 200.0f, 200.0f};
+        for (int Index = 1; Index <= Copies; ++Index)
+        {
+            scene::SceneNode Copy = Document.Nodes.front();
+            Copy.Id = Document.NextId(scene::IdSpace::Object);
+            Copy.Name = scene::PaintedName("tree", Copy.Id);
+            Copy.Painted = true;
+            Copy.Position.x += 10.0f * static_cast<float>(Index);
+            Copy.Rotation.y = 30.0f * static_cast<float>(Index);
+            Document.Nodes.push_back(std::move(Copy));
+        }
+        return Document;
+    }
+
+    std::size_t CountOf(const std::string& Text, const std::string& Part)
+    {
+        std::size_t Count = 0;
+        for (std::size_t At = Text.find(Part); At != std::string::npos; At = Text.find(Part, At + Part.size()))
+            ++Count;
+        return Count;
+    }
+} // namespace
+
+TEST_CASE("Pro writes painted objects as instances of the first that looks the same")
+{
+    const scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 3);
+    const std::string Text = scene::WriteLevel(Document);
+    CHECK(BindErrors(Text, LanguageProfile::DbPro).empty());
+    CHECK(CountOf(Text, "LOAD OBJECT") == 1);
+    CHECK(CountOf(Text, "INSTANCE OBJECT") == 3);
+    CHECK(Text.find("INSTANCE OBJECT 1001, 1000") != std::string::npos);
+    CHECK(Text.find("REM @object 1001 \"tree_1001\" painted") != std::string::npos);
+    // The copy starts as the original: only what differs is written.
+    CHECK(Text.find("POSITION OBJECT 1001, 15, 1, 0") != std::string::npos);
+    CHECK(Text.find("ROTATE OBJECT 1001, 0, 30, 0") != std::string::npos);
+    CHECK(Text.find("SCALE OBJECT 1001") == std::string::npos);
+    CHECK(Text.find("TEXTURE OBJECT 1001") == std::string::npos);
+    CHECK(CountOf(Text, "LOAD IMAGE") == 1);
+
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    for (const scene::ReadError& Error : Read.Errors)
+        FAIL_CHECK(Error.Line << ": " << Error.Message);
+    CHECK(Read.Document == Document);
+    CHECK(scene::WriteLevel(Read.Document) == Text);
+}
+
+TEST_CASE("Classic has no INSTANCE OBJECT, so painted objects are written in full")
+{
+    const scene::SceneDocument Document = PaintedLevel(LanguageProfile::Dbc, 2);
+    const std::string Text = scene::WriteLevel(Document);
+    CHECK(BindErrors(Text, LanguageProfile::Dbc).empty());
+    CHECK(CountOf(Text, "INSTANCE OBJECT") == 0);
+    CHECK(CountOf(Text, "LOAD OBJECT") == 3);
+    CHECK(CountOf(Text, "TEXTURE OBJECT") == 3);
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::Dbc);
+    for (const scene::ReadError& Error : Read.Errors)
+        FAIL_CHECK(Error.Line << ": " << Error.Message);
+    CHECK(Read.Document == Document);
+
+    // A Pro level's instances stop a Classic project from editing it, as any Pro command does.
+    const std::string Pro = scene::WriteLevel(PaintedLevel(LanguageProfile::DbPro, 1));
+    CHECK_FALSE(scene::ReadLevel(Pro, Document.Name, LanguageProfile::Dbc).Ok());
+}
+
+TEST_CASE("A painted object is written in full once nothing earlier looks the same")
+{
+    scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 3);
+
+    // Without the original, the first copy takes its place.
+    Document.Nodes.erase(Document.Nodes.begin());
+    std::string Text = scene::WriteLevel(Document);
+    CHECK(CountOf(Text, "LOAD OBJECT") == 1);
+    CHECK(Text.find("LOAD OBJECT \"models/tree.x\", 1001") != std::string::npos);
+    CHECK(Text.find("INSTANCE OBJECT 1002, 1001") != std::string::npos);
+    scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    CHECK(Read.Ok());
+    CHECK(Read.Document == Document);
+
+    // Retextured, a copy no longer looks the same, and it needs its own image.
+    Document.Nodes[2].Mat.Texture = "media/birch.png";
+    Text = scene::WriteLevel(Document);
+    CHECK(CountOf(Text, "LOAD OBJECT") == 2);
+    CHECK(CountOf(Text, "INSTANCE OBJECT") == 1);
+    CHECK(CountOf(Text, "LOAD IMAGE") == 2);
+    Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    CHECK(Read.Ok());
+    CHECK(Read.Document == Document);
+}
+
+TEST_CASE("A painted copy keeps its own animation, which INSTANCE OBJECT does not start")
+{
+    scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 1);
+    Document.Nodes[0].Frames = glm::ivec2(1, 20);
+    Document.Nodes[0].Speed = 40;
+    Document.Nodes[1].Frames = glm::ivec2(5, 10);
+    Document.Nodes[1].Loop = false;
+    const std::string Text = scene::WriteLevel(Document);
+    CHECK(CountOf(Text, "INSTANCE OBJECT") == 1);
+    CHECK(Text.find("PLAY OBJECT 1001, 5, 10") != std::string::npos);
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    for (const scene::ReadError& Error : Read.Errors)
+        FAIL_CHECK(Error.Line << ": " << Error.Message);
+    CHECK(Read.Document == Document);
+}
+
+TEST_CASE("A level of painted objects reads every instance back")
+{
+    const scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 3000);
+    const std::string Text = scene::WriteLevel(Document);
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    CHECK(Read.Ok());
+    REQUIRE(Read.Document.Nodes.size() == 3001);
+    CHECK(Read.Document == Document);
+}
+
+TEST_CASE("Free numbers skip those in use, and painted names keep their stem")
+{
+    scene::SceneDocument Document;
+    Document.Add(scene::NodeKind::Cube);
+    Document.Add(scene::NodeKind::Cube).Id = 1002;
+    Document.Add(scene::NodeKind::Sphere).Id = 1004;
+    CHECK(Document.NextIds(scene::IdSpace::Object, 3) == std::vector<int>{1001, 1003, 1005});
+    CHECK(Document.NextIds(scene::IdSpace::Light, 2) == std::vector<int>{1, 2});
+    CHECK(Document.NextIds(scene::IdSpace::Object, 0).empty());
+
+    CHECK(scene::PaintedName("tree", 12) == "tree_12");
+    CHECK(scene::PaintedName("tree_3", 12) == "tree_12");
+    CHECK(scene::PaintedName("tree_big", 12) == "tree_big_12");
+    CHECK(scene::PaintedStem("tree_12") == "tree");
+    CHECK(scene::PaintedStem("tree") == "tree");
+    // CopyName shares the suffix rule.
+    Document.Nodes[0].Name = "tree_7";
+    CHECK(Document.CopyName("tree") == "tree_8");
+}
+
+TEST_CASE("Two objects look the same whatever each sets for itself")
+{
+    const scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 1);
+    scene::SceneNode Copy = Document.Nodes[1];
+    Copy.Frames = glm::ivec2(1, 2);
+    Copy.Speed = 3;
+    Copy.Loop = false;
+    CHECK(scene::SameLook(Document.Nodes[0], Copy));
+    Copy.Mat.Color = 0x123456;
+    CHECK_FALSE(scene::SameLook(Document.Nodes[0], Copy));
+    Copy = Document.Nodes[1];
+    Copy.Asset = "models/rock.x";
+    CHECK_FALSE(scene::SameLook(Document.Nodes[0], Copy));
+}
+
+TEST_CASE("Scene history forgets its oldest states when they hold too many nodes")
+{
+    // 1000 nodes a state, against a budget of 500 000: the first states go, undo still works.
+    scene::SceneDocument Document = PaintedLevel(LanguageProfile::Dbc, 999);
+    scene::SceneHistory History;
+    History.Reset(Document);
+    constexpr int KStates = 600;
+    for (int Index = 0; Index < KStates; ++Index)
+    {
+        Document.Nodes[0].Position.x = static_cast<float>(Index);
+        History.Commit(Document);
+    }
+    int Steps = 0;
+    while (History.CanUndo())
+    {
+        History.Undo();
+        ++Steps;
+    }
+    CHECK(Steps == 499);
+    CHECK(History.CanRedo());
+
+    // A single huge state is never dropped.
+    scene::SceneHistory Huge;
+    scene::SceneDocument Big = PaintedLevel(LanguageProfile::Dbc, 2000);
+    Huge.Reset(Big);
+    CHECK_FALSE(Huge.CanUndo());
+}
+
 TEST_CASE("The BASIC goldens run the generator's exact output")
 {
     const std::filesystem::path Root = std::filesystem::path(TEST_SOURCE_DIR) / "tests/dba/scene";

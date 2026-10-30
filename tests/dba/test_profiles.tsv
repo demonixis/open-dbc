@@ -76,3 +76,4 @@ test_suspend_for_mouse.dba	dbc
 test_vector.dba	dbpro
 test_wait.dba	dbc
 test_wait_key.dba	dbc
+test_painted_objects.dba	dbpro

@@ -220,6 +220,7 @@ set(STUDIO_SOURCES
     src/panels/scene_editor.cpp
     src/panels/scene_editor.hpp
     src/panels/scene_inspector.cpp
+    src/panels/scene_paint.cpp
     src/panels/scene_viewport.cpp
     src/panels/snippet_window.cpp
     src/panels/snippet_window.hpp

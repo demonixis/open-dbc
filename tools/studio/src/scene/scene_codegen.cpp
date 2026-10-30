@@ -25,6 +25,8 @@ namespace dbc::studio
         namespace
         {
             constexpr float KPi = 3.14159265358979323846f;
+            // Follows the name in an object's REM annotation.
+            constexpr const char* KPaintedTag = "painted";
 
             // --- Writing ---------------------------------------------------
 
@@ -236,6 +238,18 @@ namespace dbc::studio
                     Out.Command(SymbolId::Command_SetShadowShadingOn, {Id});
             }
 
+            // A copy starts with the original's transform and everything SameLook compares.
+            void WriteInstance(Emitter& Out, const SceneNode& Node, const SceneNode& Original)
+            {
+                Out.Command(SymbolId::Command_InstanceObject, {Integer(Node.Id), Integer(Original.Id)});
+                if (Node.Position != Original.Position)
+                    Out.Vector(SymbolId::Command_PositionObject, Node.Id, Node.Position);
+                if (Node.Rotation != Original.Rotation)
+                    Out.Vector(SymbolId::Command_RotateObject, Node.Id, Node.Rotation);
+                if (Node.Scale != Original.Scale)
+                    Out.Vector(SymbolId::Command_ScaleObject, Node.Id, Node.Scale);
+            }
+
             // FILL MATRIX with the most common height, then each height that differs.
             void WriteMatrixHeights(Emitter& Out, const SceneNode& Node)
             {
@@ -266,15 +280,18 @@ namespace dbc::studio
                 Out.Command(SymbolId::Command_UpdateMatrix, {Id});
             }
 
-            void WriteNode(Emitter& Out, const SceneNode& Node, const std::map<std::string, int>& Images,
-                           lang::LanguageProfile Profile)
+            void WriteNode(Emitter& Out, const SceneNode& Node, const SceneNode* Original,
+                           const std::map<std::string, int>& Images, lang::LanguageProfile Profile)
             {
                 Out.Line(std::string("REM @") + MetadataTag(Node.Kind) + " " + Integer(Node.Id) + " " +
-                         Quoted(Node.Name));
+                         Quoted(Node.Name) + (Node.Painted ? " " + std::string(KPaintedTag) : std::string()));
                 const std::string Id = Integer(Node.Id);
                 if (IsObject(Node.Kind))
                 {
-                    WriteObject(Out, Node, Images, Profile);
+                    if (Original != nullptr)
+                        WriteInstance(Out, Node, *Original);
+                    else
+                        WriteObject(Out, Node, Images, Profile);
                     if (Node.Speed)
                         Out.Command(SymbolId::Command_SetObjectSpeed, {Id, Integer(*Node.Speed)});
                     if (Node.Frames)
@@ -566,13 +583,14 @@ namespace dbc::studio
                         const auto Parsed = std::from_chars(Rest.data(), Rest.data() + Rest.size(), Id);
                         const std::size_t Open = Rest.find('"');
                         const std::size_t Close = Rest.rfind('"');
-                        SceneNode* Node = Result_.Document.Find(*Space, Id);
+                        SceneNode* Node = Indexed(*Space, Id);
                         if (Parsed.ec != std::errc() || Node == nullptr || Open == std::string::npos || Close <= Open)
                         {
                             Error(Line, "Unmatched editor annotation: @" + Tag + " " + Rest);
                             continue;
                         }
                         Node->Name = Rest.substr(Open + 1, Close - Open - 1);
+                        Node->Painted = Rest.substr(Close + 1) == " " + std::string(KPaintedTag);
                     }
                 }
 
@@ -643,10 +661,17 @@ namespace dbc::studio
                     return true;
                 }
 
+                // Painted levels hold thousands of nodes, each named by several statements.
+                SceneNode* Indexed(IdSpace Space, int Id)
+                {
+                    const auto Found = Index_.find({Space, Id});
+                    return Found == Index_.end() ? nullptr : &Result_.Document.Nodes[Found->second];
+                }
+
                 SceneNode* Create(NodeKind Kind, int Id)
                 {
                     const IdSpace Space = IdSpaceOf(Kind);
-                    if (Id <= 0 || Result_.Document.Find(Space, Id) != nullptr)
+                    if (Id <= 0 || Indexed(Space, Id) != nullptr)
                     {
                         Error(Line_, "Number " + Integer(Id) + " is already used or invalid");
                         return nullptr;
@@ -658,13 +683,14 @@ namespace dbc::studio
                     Node.Mat.Flags = DefaultObjectFlags(Profile_);
                     // A sound plays only when PLAY SOUND or LOOP SOUND follows.
                     Node.PlayOnLoad = Kind != NodeKind::Sound;
+                    Index_[{Space, Id}] = Result_.Document.Nodes.size();
                     Result_.Document.Nodes.push_back(std::move(Node));
                     return &Result_.Document.Nodes.back();
                 }
 
                 SceneNode* Existing(IdSpace Space, int Id)
                 {
-                    SceneNode* Node = Result_.Document.Find(Space, Id);
+                    SceneNode* Node = Indexed(Space, Id);
                     if (Node == nullptr)
                         Error(Line_, *Name_ + " refers to " + Integer(Id) + ", which this level does not create");
                     return Node;
@@ -775,6 +801,23 @@ namespace dbc::studio
                         case SymbolId::Command_MakeObjectTriangle:
                             if (SceneNode* Node = Create(NodeKind::Triangle, I(A, 0)))
                                 Node->Corners = {V(A, 1), V(A, 4), V(A, 7)};
+                            break;
+                        case SymbolId::Command_InstanceObject:
+                            // Copied first: adding the node moves the original.
+                            if (const SceneNode* Original = Object(I(A, 1)))
+                            {
+                                SceneNode Copy = *Original;
+                                if (SceneNode* Node = Create(Copy.Kind, I(A, 0)))
+                                {
+                                    // Animation is each object's own, as it is in WriteNode.
+                                    Copy.Frames.reset();
+                                    Copy.Speed.reset();
+                                    Copy.Loop = true;
+                                    Copy.Id = Node->Id;
+                                    Copy.Name = Node->Name;
+                                    *Node = std::move(Copy);
+                                }
+                            }
                             break;
                         case SymbolId::Command_PositionObject:
                             if (SceneNode* Node = Object(I(A, 0)))
@@ -1064,6 +1107,7 @@ namespace dbc::studio
 
                 LevelReadResult& Result_;
                 lang::LanguageProfile Profile_;
+                std::map<std::pair<IdSpace, int>, std::size_t> Index_;
                 std::map<int, std::string> Images_;
                 // Static objects, by number: where they were made and which were then deleted.
                 std::map<int, std::uint32_t> StaticLines_;
@@ -1145,8 +1189,22 @@ namespace dbc::studio
             }
 
             // The Scene view never creates a kind the profile cannot run, and ReadLevel rejects one.
+            // Painted objects copy the first object that looks the same, in the profile that can.
+            std::vector<const SceneNode*> Originals;
             for (const SceneNode& Node : Document.Nodes)
-                WriteNode(Out, Node, Images, Profile);
+            {
+                const SceneNode* Original = nullptr;
+                if (IsObject(Node.Kind))
+                {
+                    const auto Found = std::find_if(Originals.begin(), Originals.end(),
+                                                    [&](const SceneNode* Other) { return SameLook(*Other, Node); });
+                    if (Found == Originals.end())
+                        Originals.push_back(&Node);
+                    else if (Node.Painted && Profile == lang::LanguageProfile::DbPro)
+                        Original = *Found;
+                }
+                WriteNode(Out, Node, Original, Images, Profile);
+            }
 
             if (Env.UseCamera)
                 WriteCamera(Out, Env);

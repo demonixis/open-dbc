@@ -1,0 +1,25 @@
+rem What the Scene view writes for painted objects: a copy starts as the original, then sets what differs.
+make object cube 1000, 20
+position object 1000, 5, 1, 0
+scale object 1000, 200, 200, 200
+
+instance object 1001, 1000
+position object 1001, 15, 1, 2
+
+instance object 1002, 1000
+rotate object 1002, 0, 30, 0
+
+print "MOVED_X="; object position x(1001)
+print "MOVED_Z="; object position z(1001)
+print "TURNED_KEEPS_X="; object position x(1002)
+print "TURNED_ANGLE="; object angle y(1002)
+print "ORIGINAL_ANGLE="; object angle y(1000)
+print "ORIGINAL_X="; object position x(1000)
+print "SAME_SIZE="; object size x(1001) = object size x(1000)
+
+rem A copy outlives its original.
+copy_size# = object size x(1001)
+delete object 1000
+print "ORIGINAL_EXISTS="; object exist(1000)
+print "COPY_EXISTS="; object exist(1001)
+print "COPY_SIZE_KEPT="; object size x(1001) = copy_size#

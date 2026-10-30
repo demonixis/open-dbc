@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <imgui_internal.h>
 
 #include "scene/scene_geometry.hpp"
@@ -269,16 +270,26 @@ namespace dbc::studio
         std::vector<scene::SceneNode*> SceneEditor::SelectedNodes()
         {
             std::vector<scene::SceneNode*> Nodes;
-            for (const Selection& Entry : Selection_)
-                if (scene::SceneNode* Node = Document_.Find(Entry.Space, Entry.Id))
+            Nodes.reserve(Selection_.size());
+            if (Selection_.size() == 1)
+            {
+                if (scene::SceneNode* Node = Selected())
                     Nodes.push_back(Node);
+                return Nodes;
+            }
+            std::unordered_map<std::uint64_t, scene::SceneNode*> ByKey;
+            ByKey.reserve(Document_.Nodes.size());
+            for (scene::SceneNode& Node : Document_.Nodes)
+                ByKey[Selection{scene::IdSpaceOf(Node.Kind), Node.Id}.Key()] = &Node;
+            for (const Selection& Entry : Selection_)
+                if (const auto Found = ByKey.find(Entry.Key()); Found != ByKey.end())
+                    Nodes.push_back(Found->second);
             return Nodes;
         }
 
         bool SceneEditor::IsSelected(const scene::SceneNode& Node) const
         {
-            return std::find(Selection_.begin(), Selection_.end(), Selection{scene::IdSpaceOf(Node.Kind), Node.Id}) !=
-                   Selection_.end();
+            return Selection_.contains(Selection{scene::IdSpaceOf(Node.Kind), Node.Id});
         }
 
         void SceneEditor::Select(const scene::SceneNode* Node)
@@ -293,17 +304,18 @@ namespace dbc::studio
         {
             CameraSelected_ = false;
             const Selection Entry{scene::IdSpaceOf(Node.Kind), Node.Id};
-            const auto Found = std::find(Selection_.begin(), Selection_.end(), Entry);
-            if (Found != Selection_.end())
-                Selection_.erase(Found);
+            if (Selection_.contains(Entry))
+                Selection_.erase(Entry);
             else
                 Selection_.push_back(Entry);
         }
 
         void SceneEditor::PruneSelection()
         {
-            std::erase_if(Selection_,
-                          [&](const Selection& Entry) { return Document_.Find(Entry.Space, Entry.Id) == nullptr; });
+            const std::vector<scene::SceneNode*> Nodes = SelectedNodes();
+            Selection_.clear();
+            for (const scene::SceneNode* Node : Nodes)
+                Selection_.push_back(Selection{scene::IdSpaceOf(Node->Kind), Node->Id});
         }
 
         void SceneEditor::Commit()
@@ -378,13 +390,26 @@ namespace dbc::studio
                 return;
             // Copied first: adding nodes moves them. The copies become the selection.
             std::vector<scene::SceneNode> Copies;
+            std::array<std::size_t, scene::KIdSpaceCount> Counts{};
             for (const scene::SceneNode* Source : SelectedNodes())
+            {
                 Copies.push_back(*Source);
+                ++Counts[static_cast<std::size_t>(scene::IdSpaceOf(Source->Kind))];
+            }
+            std::array<std::vector<int>, scene::KIdSpaceCount> Free;
+            for (std::size_t Space = 0; Space < Free.size(); ++Space)
+                Free[Space] = Document_.NextIds(static_cast<scene::IdSpace>(Space), Counts[Space]);
             Selection_.clear();
+            for (std::size_t Index = Copies.size(); Index-- > 0;)
+            {
+                scene::SceneNode& Copy = Copies[Index];
+                std::vector<int>& Ids = Free[static_cast<std::size_t>(scene::IdSpaceOf(Copy.Kind))];
+                Copy.Id = Ids.back();
+                Ids.pop_back();
+            }
             for (scene::SceneNode& Copy : Copies)
             {
-                Copy.Id = Document_.NextId(scene::IdSpaceOf(Copy.Kind));
-                Copy.Name = Document_.CopyName(Copy.Name);
+                Copy.Name = Copy.Painted ? scene::PaintedName(Copy.Name, Copy.Id) : Document_.CopyName(Copy.Name);
                 Selection_.push_back(Selection{scene::IdSpaceOf(Copy.Kind), Copy.Id});
                 Document_.Nodes.push_back(std::move(Copy));
             }
@@ -618,7 +643,7 @@ namespace dbc::studio
                 return;
             ImGui::TextDisabled("%s%s", Document_.Name.c_str(), Dirty() ? " *" : "");
             DrawReadErrors();
-            for (const scene::SceneNode& Node : Document_.Nodes)
+            const auto DrawRow = [&](const scene::SceneNode& Node)
             {
                 ImGui::PushID(static_cast<int>(scene::IdSpaceOf(Node.Kind)));
                 ImGui::PushID(Node.Id);
@@ -650,6 +675,61 @@ namespace dbc::studio
                 }
                 if (ImGui::IsItemHovered())
                     ImGui::SetTooltip("%s %d", scene::NodeKindLabel(Node.Kind), Node.Id);
+                ImGui::PopID();
+                ImGui::PopID();
+            };
+
+            // Painted objects fold into one row per look, where the first of them sits.
+            std::vector<std::vector<const scene::SceneNode*>> Groups;
+            for (const scene::SceneNode& Node : Document_.Nodes)
+            {
+                if (!Node.Painted)
+                    continue;
+                const auto Found = std::find_if(Groups.begin(), Groups.end(), [&](const auto& Group)
+                                                { return scene::SameLook(*Group.front(), Node); });
+                if (Found != Groups.end())
+                    Found->push_back(&Node);
+                else
+                    Groups.push_back({&Node});
+            }
+            for (const scene::SceneNode& Node : Document_.Nodes)
+            {
+                if (!Node.Painted)
+                {
+                    DrawRow(Node);
+                    continue;
+                }
+                const auto Group = std::find_if(Groups.begin(), Groups.end(),
+                                                [&](const auto& Other) { return Other.front() == &Node; });
+                if (Group == Groups.end())
+                    continue;
+                const bool AllSelected = std::all_of(Group->begin(), Group->end(), [&](const scene::SceneNode* Member)
+                                                     { return IsSelected(*Member); });
+                ImGui::PushID("painted");
+                ImGui::PushID(Node.Id);
+                const bool Open = ImGui::TreeNodeEx("##group",
+                                                    ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth |
+                                                        (AllSelected ? ImGuiTreeNodeFlags_Selected : 0),
+                                                    "%s (%zu)", scene::PaintedStem(Node.Name).c_str(), Group->size());
+                // A click selects the whole group, to move, edit or delete it together.
+                if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+                {
+                    const ImGuiIO& Io = ImGui::GetIO();
+                    if (!Io.KeyCtrl && !Io.KeySuper)
+                        Select(nullptr);
+                    CameraSelected_ = false;
+                    for (const scene::SceneNode* Member : *Group)
+                        Selection_.push_back(Selection{scene::IdSpaceOf(Member->Kind), Member->Id});
+                }
+                if (Open)
+                {
+                    ImGuiListClipper Clipper;
+                    Clipper.Begin(static_cast<int>(Group->size()));
+                    while (Clipper.Step())
+                        for (int Index = Clipper.DisplayStart; Index < Clipper.DisplayEnd; ++Index)
+                            DrawRow(*(*Group)[static_cast<std::size_t>(Index)]);
+                    ImGui::TreePop();
+                }
                 ImGui::PopID();
                 ImGui::PopID();
             }

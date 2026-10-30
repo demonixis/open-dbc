@@ -29,7 +29,7 @@ source.
 
 The Studio reads a level back with the language frontend. It accepts only the
 statements it writes, with literal arguments and `RGB()` of literal channels;
-`REM @…` lines carry names and number ranges. Any other statement makes the
+`REM @…` lines carry names, number ranges and which objects are painted. Any other statement makes the
 level read-only, and the Hierarchy and Output list the offending lines. A
 level is written with the project's profile, and a Pro-only command makes it
 read-only in a Classic project.
@@ -119,6 +119,8 @@ sets only X. Names and numbers stay per node.
 | - and = | Smaller or larger grid step: 1, 2.5, 5, 10, 25... |
 | Hold Ctrl/Cmd during a drag | Invert snapping |
 | Hold V and drag | Move the selection by its vertex nearest the mouse onto another node's vertex |
+| B, then 1 2 3 | The paint tool, then its One, Several and Brush modes |
+| Shift + left click or drag, with the paint tool | Erase the painted copies within the radius |
 | Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y, Ctrl+D, Delete | Undo, redo, duplicate, delete |
 
 Matrices, terrains and sounds only move, lights and the camera move and turn,
@@ -139,6 +141,38 @@ into a right click. **Grid** shows or hides the grid.
 
 A vertex drag reaches 40 pixels around the mouse, and the selection waits on its
 last vertex in between. It works on the Move, Rotate and Scale tools.
+
+## Paint
+
+**Paint** (**B**) places copies of an object over the level, for trees or grass.
+Entering the tool takes the selected object; the row it adds above the viewport
+also lists the level's objects and the project's model files.
+
+| Mode | What it does |
+| --- | --- |
+| One | A click places one object, on the grid while snapping |
+| Several | A click scatters **Count** objects over the **Radius** |
+| Brush | A drag fills the **Radius** up to the **Density**, in objects per 100 x 100 units |
+
+Objects rest by their lowest point on what lies under them: any level geometry,
+else the ground at Y = 0. Past the edge of a mesh, a scattered object is left out.
+Painted objects are not surfaces themselves, and the brush keeps them apart, so
+painting over an area does not pile them up. A stamp places at most 2000 objects.
+**Random turn** spins each object about Y, and **Scale %** multiplies its scale by
+a value in that range. A click or a drag is one undo step.
+
+A painted object is a node like any other: the gizmo, the Inspector and undo work
+on it. The Hierarchy folds objects painted alike into one row, whose click selects
+them all and whose arrow lists them.
+
+In Pro, a painted object that looks like an earlier one, with the same shape,
+file, material and static state, is written as `INSTANCE OBJECT` of it, then its
+own transform and animation. So editing one out of the group, or deleting the
+original, only changes how the next save writes them. Classic has no such command,
+so its copies are written in full. Either way they draw as instances of one
+geometry, as [rendering](rendering.md) explains. A level file grows by about 100
+bytes per object, and the Studio's preview, which draws them one by one, is meant
+for thousands of them.
 
 Dropping an image on a node textures it. Dropping a
 model or a sound places it on the ground under the cursor. In Assets, a

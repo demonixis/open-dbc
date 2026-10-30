@@ -1,11 +1,13 @@
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <optional>
 #include <random>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <SDL3/SDL_gpu.h>
@@ -90,6 +92,68 @@ namespace dbc::studio
                 scene::IdSpace Space = scene::IdSpace::Object;
                 int Id = 0;
                 bool operator==(const Selection&) const = default;
+
+                std::uint64_t Key() const
+                {
+                    return (static_cast<std::uint64_t>(Space) << 32) | static_cast<std::uint32_t>(Id);
+                }
+            };
+
+            // In selection order, with a lookup: a painted group selects thousands of nodes.
+            class SelectionList
+            {
+              public:
+                void clear()
+                {
+                    Order_.clear();
+                    Keys_.clear();
+                }
+
+                void push_back(const Selection& Entry)
+                {
+                    if (Keys_.insert(Entry.Key()).second)
+                        Order_.push_back(Entry);
+                }
+
+                void erase(const Selection& Entry)
+                {
+                    if (Keys_.erase(Entry.Key()) != 0)
+                        std::erase(Order_, Entry);
+                }
+
+                bool contains(const Selection& Entry) const
+                {
+                    return Keys_.count(Entry.Key()) != 0;
+                }
+
+                bool empty() const
+                {
+                    return Order_.empty();
+                }
+
+                std::size_t size() const
+                {
+                    return Order_.size();
+                }
+
+                const Selection& back() const
+                {
+                    return Order_.back();
+                }
+
+                std::vector<Selection>::const_iterator begin() const
+                {
+                    return Order_.begin();
+                }
+
+                std::vector<Selection>::const_iterator end() const
+                {
+                    return Order_.end();
+                }
+
+              private:
+                std::vector<Selection> Order_;
+                std::unordered_set<std::uint64_t> Keys_;
             };
 
             std::vector<std::string> LevelNames() const;
@@ -129,6 +193,14 @@ namespace dbc::studio
                 Move,
                 Rotate,
                 Scale,
+                Paint,
+            };
+
+            enum class PaintMode
+            {
+                One,     // a click places one object
+                Several, // a click scatters a number of them over the radius
+                Brush,   // a drag fills the radius up to a density
             };
 
             // A Unity-style editor camera: it looks along Yaw/Pitch from Position and
@@ -159,6 +231,16 @@ namespace dbc::studio
             // nearest vertex of another node. Returns whether it replaces the gizmo and picking.
             bool UpdateVertexSnap(bool Hovered, ImDrawList* Draw);
             void AcceptAssetDrop();
+            // Paint tool (scene_paint.cpp)
+            void EnterPaintTool();
+            void DrawPaintBar();
+            void SetPaintObject(const scene::SceneNode& Node);
+            void SetPaintModel(const std::string& Relative);
+            // Returns whether the tool is on, replacing the gizmo and picking.
+            bool UpdatePaint(bool Hovered, ImDrawList* Draw);
+            std::optional<float> PaintSurfaceDistance(const scene::Ray& Ray) const;
+            void PaintStamp(const glm::vec3& Center, bool OnMesh);
+            void PaintErase(const glm::vec3& Center);
             bool ProjectToScreen(const glm::vec3& Point, ImVec2& Screen) const;
             scene::Ray RayAt(const ImVec2& Mouse) const;
 
@@ -203,8 +285,8 @@ namespace dbc::studio
             std::vector<scene::ReadError> GameErrors_;
             bool GameFileExists_ = false;
 
-            // In selection order; the back is the active node.
-            std::vector<Selection> Selection_;
+            // The back is the active node.
+            SelectionList Selection_;
             // The level camera is a setting, not a node, but it is picked and moved like one.
             bool CameraSelected_ = false;
 
@@ -235,6 +317,20 @@ namespace dbc::studio
             bool VertexDragging_ = false;
             glm::vec3 VertexGrab_{0.0f};
             glm::vec3 VertexMove_{0.0f};
+
+            // What the paint tool places: a copy, which undo or a delete cannot take away.
+            std::optional<scene::SceneNode> PaintObject_;
+            glm::vec3 PaintMin_{0.0f};
+            glm::vec3 PaintMax_{0.0f};
+            PaintMode PaintMode_ = PaintMode::One;
+            int PaintCount_ = 5;
+            float PaintRadius_ = 50.0f;
+            float PaintDensity_ = 10.0f; // objects per 100 x 100 units
+            bool PaintTurn_ = true;
+            glm::vec2 PaintScale_{100.0f}; // the range each object's scale is multiplied by, in percent
+            bool Painting_ = false;
+            std::optional<glm::vec3> PaintLast_;
+
             scene::ViewParameters View_;
             ImVec2 ViewportMin_{0.0f, 0.0f};
             ImVec2 ViewportSize_{0.0f, 0.0f};
