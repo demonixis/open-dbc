@@ -281,6 +281,11 @@ namespace dbc::studio
             return "LoadLevel_" + SanitizeLevelName(Document.Name);
         }
 
+        std::string WorldFunctionName(const SceneDocument& Document)
+        {
+            return "SetupWorld_" + SanitizeLevelName(Document.Name);
+        }
+
         void SceneHistory::Reset(const SceneDocument& Document)
         {
             States_.assign(1, Document);

@@ -11,17 +11,17 @@ Otherwise the switch is disabled and its tooltip says why.
 
 ## Files
 
-A level is BASIC, and nothing else is stored:
+A level is BASIC, and nothing else is stored. Each level has its own folder:
 
 | File | Holds |
 | --- | --- |
-| `levels/<name>.dba` | `FUNCTION LoadLevel_<name>()`: images, objects, matrices, Pro terrains, lights, 3D sounds, the environment and the level camera |
-| `opendbc_game.dba` | `FUNCTION SetupGame()`: display mode, Pro vsync, window, `SYNC ON`/`SYNC RATE`, `HIDE MOUSE`; shared by every level |
+| `levels/<name>/<name>.dba` | `FUNCTION LoadLevel_<name>()`: images, objects, matrices, Pro terrains, lights and 3D sounds |
+| `levels/<name>/world_settings.dba` | `FUNCTION SetupWorld_<name>()`: display mode, Pro vsync, window, `SYNC ON`/`SYNC RATE`, `HIDE MOUSE`, the environment and the level camera |
 
 Saving (**Ctrl+S** in the Scene mode, or **Scene → Save Level**) writes both
 files, then completes the main source's header: each missing `#include` joins
 the include block under the leading comment, and each missing call follows that
-block, `SetupGame()` first, then the levels in order. An include or call
+block, `SetupWorld_<name>()` first, then `LoadLevel_<name>()`. An include or call
 already present anywhere is left where it is. When
 the main source is open in a tab, the edit goes to that tab, undoable, and is
 saved with it. **F5** in the Scene mode saves the level, then runs the main
@@ -30,8 +30,8 @@ source.
 The Studio reads a level back with the language frontend. It accepts only the
 statements it writes, with literal arguments and `RGB()` of literal channels;
 `REM @…` lines carry names, number ranges and which objects are painted. Any
-other statement makes the level read-only, and the Hierarchy and Output list the
-offending lines. A level is written with the project's profile, and a Pro-only
+other statement, in either file, makes the level read-only, and the Hierarchy and
+Output list the offending lines. A level is written with the project's profile, and a Pro-only
 command makes it read-only in a Classic project.
 
 Each level starts its numbers at a configurable base per kind: objects and
@@ -119,10 +119,12 @@ Level Settings holds:
 - light 0's visibility, rotation and colour;
 - the Pro shadow source (`SET SHADOW POSITION`);
 - the number bases;
-- the level camera, off by default. When on, it writes `AUTOCAM OFF` first and
-  `POSITION`/`ROTATE CAMERA`, FOV and range last. The viewport can look through it.
+- the level camera, off by default. When on, it writes `AUTOCAM OFF` then
+  `POSITION`/`ROTATE CAMERA`, FOV and range. The viewport can look through it;
+- the display: mode, window, title, sync and mouse.
 
 A checked field writes a statement; an unchecked one leaves the engine default.
+Only the number bases stay in the level file.
 
 With several nodes selected, the Inspector shows the active node (the last one
 selected) and copies each field you change to every selected node that has it:

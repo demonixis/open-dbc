@@ -66,9 +66,9 @@ namespace
             REQUIRE(Gpu_ != nullptr);
 
             std::filesystem::remove_all(Root_);
-            std::filesystem::create_directories(Root_ / scene::KLevelFolder);
             WriteText(Root_ / "main.dba", "SYNC\n");
             WriteText(Root_ / scene::LevelRelativePath(Level.Name), scene::WriteLevel(Level));
+            WriteText(Root_ / scene::WorldRelativePath(Level.Name), scene::WriteWorld(Level));
 
             ImGui::CreateContext();
             ImGuiIO& Io = ImGui::GetIO();

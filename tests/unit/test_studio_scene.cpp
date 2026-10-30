@@ -159,13 +159,18 @@ TEST_CASE("Scene levels round-trip through the generated BASIC in both profiles"
         CAPTURE(dbc::language::ProfileName(Profile));
         const scene::SceneDocument Document = FullLevel(Profile);
         const std::string Text = scene::WriteLevel(Document);
+        const std::string World = scene::WriteWorld(Document);
         CHECK(BindErrors(Text, Profile).empty());
+        CHECK(BindErrors(World, Profile).empty());
 
-        const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, Profile);
+        scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, Profile);
         for (const scene::ReadError& Error : Read.Errors)
+            FAIL_CHECK(Error.Line << ": " << Error.Message);
+        for (const scene::ReadError& Error : scene::ReadWorld(World, Read.Document))
             FAIL_CHECK(Error.Line << ": " << Error.Message);
         CHECK(Read.Document == Document);
         CHECK(scene::WriteLevel(Read.Document) == Text);
+        CHECK(scene::WriteWorld(Read.Document) == World);
     }
 }
 
@@ -384,16 +389,16 @@ TEST_CASE("The BASIC goldens run the generator's exact output")
     for (const auto& [Folder, Profile] : Cases)
     {
         CAPTURE(Folder);
-        const std::string Level = ReadText(Root / Folder / "levels/Golden.dba");
-        const scene::LevelReadResult Read = scene::ReadLevel(Level, "Golden", Profile);
+        const std::string Level = ReadText(Root / Folder / scene::LevelRelativePath("Golden"));
+        scene::LevelReadResult Read = scene::ReadLevel(Level, "Golden", Profile);
         for (const scene::ReadError& Error : Read.Errors)
             FAIL_CHECK(Error.Line << ": " << Error.Message);
         CHECK(scene::WriteLevel(Read.Document) == Level);
 
-        const std::string Game = ReadText(Root / Folder / scene::KGameFileName);
-        const scene::GameReadResult GameRead = scene::ReadGame(Game, Profile);
-        CHECK(GameRead.Ok());
-        CHECK(scene::WriteGame(GameRead.Settings, Profile) == Game);
+        const std::string World = ReadText(Root / Folder / scene::WorldRelativePath("Golden"));
+        for (const scene::ReadError& Error : scene::ReadWorld(World, Read.Document))
+            FAIL_CHECK(Error.Line << ": " << Error.Message);
+        CHECK(scene::WriteWorld(Read.Document) == World);
     }
 }
 
@@ -410,8 +415,10 @@ TEST_CASE("Scene levels share one image per texture and use the reserved numbers
     CHECK(Text.find("COLOR OBJECT 1000, RGB(255, 128, 0)") != std::string::npos);
     // Wireframe is SET OBJECT's "solid" flag at 0; Classic writes 1 for opaque black.
     CHECK(Text.find("SET OBJECT 1000, 0, 1, 1, 1, 1, 1, 1") != std::string::npos);
-    CHECK(Text.find("AUTOCAM OFF") < Text.find("MAKE OBJECT CUBE"));
-    CHECK(Text.find("POSITION CAMERA") > Text.find("MAKE MATRIX"));
+    // The world settings run first, so nothing a level makes moves the camera.
+    CHECK(Text.find("CAMERA") == std::string::npos);
+    const std::string World = scene::WriteWorld(Document);
+    CHECK(World.find("AUTOCAM OFF") < World.find("POSITION CAMERA"));
     // Matrix heights: the most common one fills, the others follow, then the update.
     CHECK(Text.find("FILL MATRIX 1, 5, 3\n") != std::string::npos);
     CHECK(Text.find("SET MATRIX HEIGHT 1, 0, 0, 0\n") != std::string::npos);
@@ -510,7 +517,8 @@ TEST_CASE("Scene numbers fill gaps from each space's base")
     CHECK(Document.CopyName("tree_top") == "tree_top_1");
     CHECK(Document.CopyName("tree_") == "tree__1");
     CHECK(scene::SanitizeLevelName("2 caves: deep!") == "Level2_caves_deep");
-    CHECK(scene::LevelRelativePath("Main Hall").generic_string() == "levels/Main_Hall.dba");
+    CHECK(scene::LevelRelativePath("Main Hall").generic_string() == "levels/Main_Hall/Main_Hall.dba");
+    CHECK(scene::WorldRelativePath("Main Hall").generic_string() == "levels/Main_Hall/world_settings.dba");
 }
 
 TEST_CASE("Scene history undoes and redoes whole snapshots")
@@ -533,9 +541,12 @@ TEST_CASE("Scene history undoes and redoes whole snapshots")
     CHECK_FALSE(History.CanRedo());
 }
 
-TEST_CASE("Game settings round-trip and keep Pro-only forms out of Classic")
+TEST_CASE("World settings round-trip the display and keep Pro-only forms out of Classic")
 {
-    scene::GameSettings Settings;
+    scene::SceneDocument Document;
+    Document.Name = "Test";
+    Document.Profile = LanguageProfile::DbPro;
+    scene::DisplaySettings& Settings = Document.Display;
     Settings.DisplayMode = glm::ivec3(1280, 720, 32);
     Settings.Vsync = 1;
     Settings.Windowed = true;
@@ -545,19 +556,63 @@ TEST_CASE("Game settings round-trip and keep Pro-only forms out of Classic")
     Settings.SyncRate = 60;
     Settings.HideMouse = true;
 
-    const std::string Pro = scene::WriteGame(Settings, LanguageProfile::DbPro);
+    const std::string Pro = scene::WriteWorld(Document);
     CHECK(BindErrors(Pro, LanguageProfile::DbPro).empty());
+    CHECK(Pro.find("FUNCTION SetupWorld_Test()") != std::string::npos);
     CHECK(Pro.find("SET DISPLAY MODE 1280, 720, 32, 1") != std::string::npos);
-    const scene::GameReadResult ProRead = scene::ReadGame(Pro, LanguageProfile::DbPro);
-    CHECK(ProRead.Ok());
-    CHECK(ProRead.Settings == Settings);
+    scene::SceneDocument ProRead;
+    ProRead.Name = "Test";
+    ProRead.Profile = LanguageProfile::DbPro;
+    CHECK(scene::ReadWorld(Pro, ProRead).empty());
+    CHECK(ProRead.Display == Settings);
 
-    const std::string Classic = scene::WriteGame(Settings, LanguageProfile::Dbc);
+    Document.Profile = LanguageProfile::Dbc;
+    const std::string Classic = scene::WriteWorld(Document);
     CHECK(BindErrors(Classic, LanguageProfile::Dbc).empty());
     CHECK(Classic.find("SET DISPLAY MODE 1280, 720, 32\n") != std::string::npos);
-    const scene::GameReadResult ClassicRead = scene::ReadGame(Classic, LanguageProfile::Dbc);
-    CHECK(ClassicRead.Ok());
-    CHECK_FALSE(ClassicRead.Settings.Vsync.has_value());
+    scene::SceneDocument ClassicRead;
+    ClassicRead.Name = "Test";
+    CHECK(scene::ReadWorld(Classic, ClassicRead).empty());
+    CHECK_FALSE(ClassicRead.Display.Vsync.has_value());
+}
+
+TEST_CASE("World settings hold no node, and a level holds no display")
+{
+    const auto WorldErrors = [](const std::string& Body)
+    {
+        scene::SceneDocument Document;
+        Document.Name = "Test";
+        return scene::ReadWorld("FUNCTION SetupWorld_Test()\n" + Body + "ENDFUNCTION\n", Document).size();
+    };
+    CHECK(WorldErrors("") == 0);
+    CHECK(WorldErrors("   FOG ON\n   ROTATE LIGHT 0, 45, 0, 0\n") == 0);
+    CHECK(WorldErrors("   MAKE OBJECT CUBE 1000, 10\n") == 1);
+    CHECK(WorldErrors("   ROTATE LIGHT 1, 45, 0, 0\n") == 1);
+
+    scene::SceneDocument Wrong;
+    Wrong.Name = "Other";
+    CHECK_FALSE(scene::ReadWorld("FUNCTION SetupWorld_Test()\nENDFUNCTION\n", Wrong).empty());
+
+    CHECK_FALSE(
+        scene::ReadLevel("FUNCTION LoadLevel_Test()\n   SYNC ON\nENDFUNCTION\n", "Test", LanguageProfile::Dbc).Ok());
+}
+
+TEST_CASE("An older level's environment moves to the world settings when saved")
+{
+    scene::LevelReadResult Read =
+        scene::ReadLevel("FUNCTION LoadLevel_Test()\n   AUTOCAM OFF\n   FOG ON\n   MAKE OBJECT CUBE 1000, 10\n"
+                         "   POSITION CAMERA 0, 80, -200\nENDFUNCTION\n",
+                         "Test", LanguageProfile::Dbc);
+    REQUIRE(Read.Ok());
+    CHECK(Read.Document.Env.Fog);
+    CHECK(Read.Document.Env.UseCamera);
+
+    const std::string Level = scene::WriteLevel(Read.Document);
+    CHECK(Level.find("FOG ON") == std::string::npos);
+    CHECK(Level.find("CAMERA") == std::string::npos);
+    CHECK(Level.find("MAKE OBJECT CUBE 1000, 10") != std::string::npos);
+    const std::string World = scene::WriteWorld(Read.Document);
+    CHECK(World.find("AUTOCAM OFF\n   FOG ON\n   POSITION CAMERA 0, 80, -200") != std::string::npos);
 }
 
 TEST_CASE("Main sources get their includes on top, then the setup and level calls")

@@ -16,9 +16,8 @@ namespace dbc::studio
 {
     namespace scene
     {
-        inline constexpr const char* KGameFunctionName = "SetupGame";
-        inline constexpr const char* KGameFileName = "opendbc_game.dba";
         inline constexpr const char* KLevelFolder = "levels";
+        inline constexpr const char* KWorldFileName = "world_settings.dba";
 
         struct ReadError
         {
@@ -37,24 +36,18 @@ namespace dbc::studio
             }
         };
 
-        struct GameReadResult
-        {
-            GameSettings Settings;
-            std::vector<ReadError> Errors;
-
-            bool Ok() const
-            {
-                return Errors.empty();
-            }
-        };
-
-        // Image numbers are assigned here, in node order, one per distinct path.
         // A number as BASIC source: fixed notation, no exponent the language could not read.
         std::string NumberLiteral(float Value);
+        // The nodes. Image numbers are assigned here, in node order, one per distinct path.
         std::string WriteLevel(const SceneDocument& Document);
-        // `Name` is the level name (the file stem); it must match the function.
+        // `Name` is the level name (the file stem); it must match the function. The environment is
+        // accepted too, as older levels hold it: the next save moves it to the world settings.
         LevelReadResult ReadLevel(const std::string& Text, const std::string& Name,
                                   dbc::language::LanguageProfile Profile);
+        // The display and the environment.
+        std::string WriteWorld(const SceneDocument& Document);
+        // Applies a world settings file over `Document`, whose name and profile it reads with.
+        std::vector<ReadError> ReadWorld(const std::string& Text, SceneDocument& Document);
 
         // A command a program really ran, with its evaluated arguments.
         struct ReplayArgument
@@ -82,11 +75,10 @@ namespace dbc::studio
         ReplayResult ReplayCalls(std::span<const ReplayCall> Calls, const std::string& Name,
                                  dbc::language::LanguageProfile Profile);
 
-        std::string WriteGame(const GameSettings& Settings, dbc::language::LanguageProfile Profile);
-        GameReadResult ReadGame(const std::string& Text, dbc::language::LanguageProfile Profile);
-
-        // "levels/<name>.dba", relative to the project root.
+        // "levels/<name>/<name>.dba", relative to the project root.
         std::filesystem::path LevelRelativePath(const std::string& Name);
+        // "levels/<name>/world_settings.dba", relative to the project root.
+        std::filesystem::path WorldRelativePath(const std::string& Name);
     } // namespace scene
 
 } // namespace dbc::studio

@@ -1,8 +1,0 @@
-REM OpenDBC game settings. Edited by the Studio Scene view.
-FUNCTION SetupGame()
-   SET DISPLAY MODE 640, 480, 32, 0
-   SET WINDOW ON
-   SET WINDOW TITLE "Scene golden"
-   SYNC ON
-   SYNC RATE 0
-ENDFUNCTION

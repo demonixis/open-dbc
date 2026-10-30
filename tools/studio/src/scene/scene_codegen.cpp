@@ -388,6 +388,32 @@ namespace dbc::studio
                     Out.Vector(SymbolId::Command_SetShadowPosition, *Env.ShadowMode, Env.ShadowPosition);
             }
 
+            void WriteDisplay(Emitter& Out, const DisplaySettings& Settings, lang::LanguageProfile Profile)
+            {
+                if (Settings.DisplayMode)
+                {
+                    const glm::ivec3& M = *Settings.DisplayMode;
+                    if (Settings.Vsync && Profile == lang::LanguageProfile::DbPro)
+                        Out.Command(SymbolId::Command_SetDisplayMode,
+                                    {Integer(M.x), Integer(M.y), Integer(M.z), Integer(*Settings.Vsync)});
+                    else
+                        Out.Command(SymbolId::Command_SetDisplayMode, {Integer(M.x), Integer(M.y), Integer(M.z)});
+                }
+                if (Settings.Windowed)
+                    Out.Command(*Settings.Windowed ? SymbolId::Command_SetWindowOn : SymbolId::Command_SetWindowOff);
+                if (Settings.WindowSize)
+                    Out.Command(SymbolId::Command_SetWindowSize,
+                                {Integer(Settings.WindowSize->x), Integer(Settings.WindowSize->y)});
+                if (Settings.WindowTitle)
+                    Out.Command(SymbolId::Command_SetWindowTitle, {Quoted(*Settings.WindowTitle)});
+                if (Settings.SyncOn)
+                    Out.Command(SymbolId::Command_SyncOn);
+                if (Settings.SyncRate)
+                    Out.Command(SymbolId::Command_SyncRate, {Integer(*Settings.SyncRate)});
+                if (Settings.HideMouse)
+                    Out.Command(SymbolId::Command_HideMouse);
+            }
+
             void WriteCamera(Emitter& Out, const Environment& Env)
             {
                 const glm::vec3& P = Env.CameraPosition;
@@ -519,8 +545,8 @@ namespace dbc::studio
             {
               public:
                 LevelReader(LevelReadResult& Result, lang::LanguageProfile Profile,
-                            std::set<std::string>* Skipped = nullptr)
-                    : Result_(Result), Profile_(Profile), Skipped_(Skipped)
+                            std::set<std::string>* Skipped = nullptr, bool World = false)
+                    : Result_(Result), Profile_(Profile), Skipped_(Skipped), World_(World)
                 {
                     Result_.Document.Profile = Profile;
                 }
@@ -739,8 +765,87 @@ namespace dbc::studio
                     return true;
                 }
 
+                // What a world settings file may hold, beside the display.
+                static bool IsEnvironmentCommand(SymbolId Id)
+                {
+                    switch (Id)
+                    {
+                        case SymbolId::Command_SetAmbientLight:
+                        case SymbolId::Command_ColorAmbientLight:
+                        case SymbolId::Command_ColorBackdrop:
+                        case SymbolId::Command_FogOn:
+                        case SymbolId::Command_FogColor:
+                        case SymbolId::Command_FogDistance:
+                        case SymbolId::Command_RotateLight:
+                        case SymbolId::Command_ColorLight:
+                        case SymbolId::Command_HideLight:
+                        case SymbolId::Command_SetShadowPosition:
+                        case SymbolId::Command_AutocamOff:
+                        case SymbolId::Command_PositionCamera:
+                        case SymbolId::Command_RotateCamera:
+                        case SymbolId::Command_SetCameraFov:
+                        case SymbolId::Command_SetCameraRange:
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+
+                // Returns whether the command belongs to the display.
+                bool ApplyDisplay(SymbolId Id, const std::vector<Argument>& A)
+                {
+                    DisplaySettings& Display = Result_.Document.Display;
+                    switch (Id)
+                    {
+                        case SymbolId::Command_SetDisplayMode:
+                            if (A.size() < 3)
+                            {
+                                Error(Line_, "SET DISPLAY MODE is written with a depth");
+                                return true;
+                            }
+                            Display.DisplayMode = glm::ivec3(I(A, 0), I(A, 1), I(A, 2));
+                            if (A.size() == 4)
+                                Display.Vsync = I(A, 3);
+                            return true;
+                        case SymbolId::Command_SetWindowOn:
+                            Display.Windowed = true;
+                            return true;
+                        case SymbolId::Command_SetWindowOff:
+                            Display.Windowed = false;
+                            return true;
+                        case SymbolId::Command_SetWindowSize:
+                            Display.WindowSize = glm::ivec2(I(A, 0), I(A, 1));
+                            return true;
+                        case SymbolId::Command_SetWindowTitle:
+                            if (A[0].Type == Argument::Kind::String)
+                                Display.WindowTitle = A[0].Text;
+                            return true;
+                        case SymbolId::Command_SyncOn:
+                            Display.SyncOn = true;
+                            return true;
+                        case SymbolId::Command_SyncRate:
+                            Display.SyncRate = I(A, 0);
+                            return true;
+                        case SymbolId::Command_HideMouse:
+                            Display.HideMouse = true;
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+
                 void Apply(SymbolId Id, const std::vector<Argument>& A)
                 {
+                    if (World_)
+                    {
+                        if (ApplyDisplay(Id, A))
+                            return;
+                        if (!IsEnvironmentCommand(Id))
+                        {
+                            Error(Line_, *Name_ + " belongs in the level file, not in the world settings");
+                            return;
+                        }
+                    }
                     Environment& Env = Result_.Document.Env;
                     if (Skipped_ != nullptr)
                     {
@@ -1174,6 +1279,8 @@ namespace dbc::studio
                 std::set<int> Deleted_;
                 // Set when replaying a program: nothing is an error, and this names what is not understood.
                 std::set<std::string>* Skipped_ = nullptr;
+                // Set when reading a world settings file: no nodes, and the display as well.
+                bool World_ = false;
                 std::uint32_t Line_ = 0;
                 const std::string* Name_ = nullptr;
             };
@@ -1241,12 +1348,6 @@ namespace dbc::studio
             Out.Line("FUNCTION " + LevelFunctionName(Document) + "()");
             Out.Push();
 
-            const Environment& Env = Document.Env;
-            // Before any MAKE OBJECT, which would otherwise move the camera.
-            if (Env.UseCamera)
-                Out.Command(SymbolId::Command_AutocamOff);
-            WriteEnvironment(Out, Env, Profile);
-
             std::map<std::string, int> Images;
             int NextImage = Document.Base(IdSpace::Image);
             for (const SceneNode& Node : Document.Nodes)
@@ -1277,8 +1378,6 @@ namespace dbc::studio
                 WriteNode(Out, Node, Original, Images, Profile);
             }
 
-            if (Env.UseCamera)
-                WriteCamera(Out, Env);
             Out.Pop();
             Out.Line("ENDFUNCTION");
             return Out.Take();
@@ -1315,111 +1414,53 @@ namespace dbc::studio
             return Result;
         }
 
-        std::string WriteGame(const GameSettings& Settings, lang::LanguageProfile Profile)
+        std::string WriteWorld(const SceneDocument& Document)
         {
+            const lang::LanguageProfile Profile = Document.Profile;
             Emitter Out(Profile);
-            Out.Line("REM OpenDBC game settings. Edited by the Studio Scene view.");
-            Out.Line(std::string("FUNCTION ") + KGameFunctionName + "()");
+            Out.Line("REM OpenDBC world settings. Edited by the Studio Scene view.");
+            Out.Line("FUNCTION " + WorldFunctionName(Document) + "()");
             Out.Push();
-            if (Settings.DisplayMode)
-            {
-                const glm::ivec3& M = *Settings.DisplayMode;
-                if (Settings.Vsync && Profile == lang::LanguageProfile::DbPro)
-                    Out.Command(SymbolId::Command_SetDisplayMode,
-                                {Integer(M.x), Integer(M.y), Integer(M.z), Integer(*Settings.Vsync)});
-                else
-                    Out.Command(SymbolId::Command_SetDisplayMode, {Integer(M.x), Integer(M.y), Integer(M.z)});
-            }
-            if (Settings.Windowed)
-                Out.Command(*Settings.Windowed ? SymbolId::Command_SetWindowOn : SymbolId::Command_SetWindowOff);
-            if (Settings.WindowSize)
-                Out.Command(SymbolId::Command_SetWindowSize,
-                            {Integer(Settings.WindowSize->x), Integer(Settings.WindowSize->y)});
-            if (Settings.WindowTitle)
-                Out.Command(SymbolId::Command_SetWindowTitle, {Quoted(*Settings.WindowTitle)});
-            if (Settings.SyncOn)
-                Out.Command(SymbolId::Command_SyncOn);
-            if (Settings.SyncRate)
-                Out.Command(SymbolId::Command_SyncRate, {Integer(*Settings.SyncRate)});
-            if (Settings.HideMouse)
-                Out.Command(SymbolId::Command_HideMouse);
+            WriteDisplay(Out, Document.Display, Profile);
+            const Environment& Env = Document.Env;
+            // Before any MAKE OBJECT, which would otherwise move the camera.
+            if (Env.UseCamera)
+                Out.Command(SymbolId::Command_AutocamOff);
+            WriteEnvironment(Out, Env, Profile);
+            if (Env.UseCamera)
+                WriteCamera(Out, Env);
             Out.Pop();
             Out.Line("ENDFUNCTION");
             return Out.Take();
         }
 
-        GameReadResult ReadGame(const std::string& Text, lang::LanguageProfile Profile)
+        std::vector<ReadError> ReadWorld(const std::string& Text, SceneDocument& Document)
         {
-            GameReadResult Result;
-            const lang::Program Program = Parse(Text, KGameFileName, Profile);
-            const lang::FunctionDeclaration* Declaration = SingleFunction(Program, KGameFunctionName, Result.Errors);
+            LevelReadResult Result;
+            const lang::LanguageProfile Profile = Document.Profile;
+            const lang::Program Program = Parse(Text, KWorldFileName, Profile);
+            const lang::FunctionDeclaration* Declaration =
+                SingleFunction(Program, WorldFunctionName(Document), Result.Errors);
             if (Declaration == nullptr)
-                return Result;
+                return std::move(Result.Errors);
 
-            GameSettings& Settings = Result.Settings;
+            Result.Document = std::move(Document);
+            LevelReader Reader(Result, Profile, nullptr, true);
             for (const lang::Statement& Value : Declaration->Body)
-            {
-                const std::uint32_t Line = Value.Span.Begin.Line;
-                std::vector<Argument> Args;
-                bool Literal = Value.Kind == lang::StatementKind::Command && Value.Builtin.has_value();
-                for (const auto& Expression : Value.Expressions)
-                {
-                    const auto Arg = ReadArgument(*Expression);
-                    Literal = Literal && Arg.has_value();
-                    if (Arg)
-                        Args.push_back(*Arg);
-                }
-                if (!Literal || lang::FindOverload(*Value.Builtin, Profile, static_cast<int>(Args.size())) == nullptr)
-                {
-                    Result.Errors.push_back({Line, "The Scene view only reads the statements it writes"});
-                    continue;
-                }
-                const auto Int = [&](std::size_t Index) { return static_cast<int>(std::lround(Args[Index].Value)); };
-                switch (*Value.Builtin)
-                {
-                    case SymbolId::Command_SetDisplayMode:
-                        if (Args.size() < 3)
-                        {
-                            Result.Errors.push_back({Line, "SET DISPLAY MODE is written with a depth"});
-                            break;
-                        }
-                        Settings.DisplayMode = glm::ivec3(Int(0), Int(1), Int(2));
-                        if (Args.size() == 4)
-                            Settings.Vsync = Int(3);
-                        break;
-                    case SymbolId::Command_SetWindowOn:
-                        Settings.Windowed = true;
-                        break;
-                    case SymbolId::Command_SetWindowOff:
-                        Settings.Windowed = false;
-                        break;
-                    case SymbolId::Command_SetWindowSize:
-                        Settings.WindowSize = glm::ivec2(Int(0), Int(1));
-                        break;
-                    case SymbolId::Command_SetWindowTitle:
-                        if (Args[0].Type == Argument::Kind::String)
-                            Settings.WindowTitle = Args[0].Text;
-                        break;
-                    case SymbolId::Command_SyncOn:
-                        Settings.SyncOn = true;
-                        break;
-                    case SymbolId::Command_SyncRate:
-                        Settings.SyncRate = Int(0);
-                        break;
-                    case SymbolId::Command_HideMouse:
-                        Settings.HideMouse = true;
-                        break;
-                    default:
-                        Result.Errors.push_back({Line, "The Scene view does not edit " + Value.Name});
-                        break;
-                }
-            }
-            return Result;
+                Reader.Statement(Value);
+            Document = std::move(Result.Document);
+            return std::move(Result.Errors);
         }
 
         std::filesystem::path LevelRelativePath(const std::string& Name)
         {
-            return dbc::PathFromUtf8(KLevelFolder) / (SanitizeLevelName(Name) + ".dba");
+            const std::string Clean = SanitizeLevelName(Name);
+            return dbc::PathFromUtf8(KLevelFolder) / Clean / (Clean + ".dba");
+        }
+
+        std::filesystem::path WorldRelativePath(const std::string& Name)
+        {
+            return dbc::PathFromUtf8(KLevelFolder) / SanitizeLevelName(Name) / KWorldFileName;
         }
     } // namespace scene
 

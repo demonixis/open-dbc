@@ -631,6 +631,23 @@ namespace dbc::studio
                 ImGui::TextDisabled("%s", dbc::GenericPathToUtf8(scene::LevelRelativePath(Document_.Name)).c_str());
                 ImGui::TextDisabled("Function %s()", scene::LevelFunctionName(Document_).c_str());
 
+                Heading("Numbers");
+                static const char* const Labels[] = {"First object",  "First image", "First matrix",
+                                                     "First terrain", "First light", "First sound"};
+                for (std::size_t Space = 0; Space < scene::KIdSpaceCount; ++Space)
+                {
+                    int Base = Document_.IdBase[Space];
+                    if (ImGui::InputInt(Labels[Space], &Base) && Base > 0)
+                        Document_.IdBase[Space] = Base;
+                }
+                ImGui::TextDisabled("New nodes take free numbers from these, away from the program's own.");
+            }
+
+            if (ImGui::CollapsingHeader("World Settings", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::TextDisabled("%s", dbc::GenericPathToUtf8(scene::WorldRelativePath(Document_.Name)).c_str());
+                ImGui::TextDisabled("Function %s()", scene::WorldFunctionName(Document_).c_str());
+
                 Heading("Light and colour");
                 Optional("Ambient %", Env.AmbientPercent, 25,
                          [](int& Percent) { ImGui::SliderInt("Ambient %", &Percent, 0, 100); });
@@ -695,43 +712,24 @@ namespace dbc::studio
                 Heading("Camera");
                 DrawCameraSettings();
 
-                Heading("Numbers");
-                static const char* const Labels[] = {"First object",  "First image", "First matrix",
-                                                     "First terrain", "First light", "First sound"};
-                for (std::size_t Space = 0; Space < scene::KIdSpaceCount; ++Space)
-                {
-                    int Base = Document_.IdBase[Space];
-                    if (ImGui::InputInt(Labels[Space], &Base) && Base > 0)
-                        Document_.IdBase[Space] = Base;
-                }
-                ImGui::TextDisabled("New nodes take free numbers from these, away from the program's own.");
-            }
-            ImGui::EndDisabled();
-
-            if (ImGui::CollapsingHeader("Game", ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                ImGui::TextDisabled("%s, for every level", scene::KGameFileName);
+                Heading("Display");
                 if (Project_ && Project_->HasDescriptor)
                     ImGui::TextWrapped("These statements run after the .dbpro project's own display settings.");
-                for (const scene::ReadError& Error : GameErrors_)
-                    ImGui::TextColored(ImVec4(1.0f, 0.45f, 0.4f, 1.0f), "Line %u: %s", Error.Line,
-                                       Error.Message.c_str());
-                ImGui::BeginDisabled(!GameErrors_.empty() || !HasLevel_);
-                scene::GameSettings& Game = Game_;
-                Optional("Display mode", Game.DisplayMode, glm::ivec3(800, 600, 32),
+                scene::DisplaySettings& Display = Document_.Display;
+                Optional("Display mode", Display.DisplayMode, glm::ivec3(800, 600, 32),
                          [](glm::ivec3& Mode) { ImGui::InputInt3("Width, height, depth", &Mode.x); });
-                if (Pro(Document_) && Game.DisplayMode)
+                if (Pro(Document_) && Display.DisplayMode)
                 {
-                    bool Vsync = Game.Vsync.value_or(0) != 0;
+                    bool Vsync = Display.Vsync.value_or(0) != 0;
                     if (ImGui::Checkbox("Vertical sync", &Vsync))
-                        Game.Vsync = Vsync ? 1 : 0;
+                        Display.Vsync = Vsync ? 1 : 0;
                 }
-                int Window = Game.Windowed ? (*Game.Windowed ? 1 : 2) : 0;
+                int Window = Display.Windowed ? (*Display.Windowed ? 1 : 2) : 0;
                 if (ImGui::Combo("Window", &Window, "Program default\0Windowed\0Full screen\0"))
-                    Game.Windowed = Window == 0 ? std::nullopt : std::optional<bool>(Window == 1);
-                Optional("Window size", Game.WindowSize, glm::ivec2(800, 600),
+                    Display.Windowed = Window == 0 ? std::nullopt : std::optional<bool>(Window == 1);
+                Optional("Window size", Display.WindowSize, glm::ivec2(800, 600),
                          [](glm::ivec2& Size) { ImGui::InputInt2("Window size", &Size.x); });
-                Optional("Title", Game.WindowTitle, std::string("My Game"),
+                Optional("Title", Display.WindowTitle, std::string("My Game"),
                          [](std::string& Title)
                          {
                              char Buffer[128];
@@ -740,11 +738,11 @@ namespace dbc::studio
                              if (ImGui::InputText("Title", Buffer, sizeof(Buffer)))
                                  Title = Buffer;
                          });
-                ImGui::Checkbox("SYNC ON", &Game.SyncOn);
-                Optional("Sync rate", Game.SyncRate, 60, [](int& Rate) { ImGui::InputInt("Sync rate", &Rate); });
-                ImGui::Checkbox("Hide the mouse", &Game.HideMouse);
-                ImGui::EndDisabled();
+                ImGui::Checkbox("SYNC ON", &Display.SyncOn);
+                Optional("Sync rate", Display.SyncRate, 60, [](int& Rate) { ImGui::InputInt("Sync rate", &Rate); });
+                ImGui::Checkbox("Hide the mouse", &Display.HideMouse);
             }
+            ImGui::EndDisabled();
         }
     } // namespace panels
 

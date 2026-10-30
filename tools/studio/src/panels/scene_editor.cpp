@@ -77,10 +77,6 @@ namespace dbc::studio
             Document_ = {};
             Saved_ = {};
             ReadErrors_.clear();
-            Game_ = {};
-            SavedGame_ = {};
-            GameErrors_.clear();
-            GameFileExists_ = false;
             Selection_.clear();
         }
 
@@ -88,7 +84,6 @@ namespace dbc::studio
         {
             if (!Project_ || HasLevel_)
                 return;
-            LoadGameSettings();
             const std::vector<std::string> Names = LevelNames();
             if (Names.empty())
                 NewLevel("Level1");
@@ -98,7 +93,7 @@ namespace dbc::studio
 
         bool SceneEditor::Dirty() const
         {
-            return HasLevel_ && (Document_ != Saved_ || Game_ != SavedGame_);
+            return HasLevel_ && Document_ != Saved_;
         }
 
         std::vector<std::string> SceneEditor::LevelNames() const
@@ -110,9 +105,9 @@ namespace dbc::studio
             const std::filesystem::path Folder = Project_->Root / scene::KLevelFolder;
             for (const auto& Entry : std::filesystem::directory_iterator(Folder, Error))
             {
-                const std::filesystem::path& Path = Entry.path();
-                if (Entry.is_regular_file(Error) && dbc::language::IsLanguageSource(Path))
-                    Names.push_back(dbc::PathToUtf8(Path.stem()));
+                const std::string Name = dbc::PathToUtf8(Entry.path().filename());
+                if (Entry.is_directory(Error) && std::filesystem::is_regular_file(LevelPath(Name), Error))
+                    Names.push_back(Name);
             }
             std::sort(Names.begin(), Names.end());
             return Names;
@@ -123,9 +118,9 @@ namespace dbc::studio
             return Project_->Root / scene::LevelRelativePath(Name);
         }
 
-        std::filesystem::path SceneEditor::GamePath() const
+        std::filesystem::path SceneEditor::WorldPath(const std::string& Name) const
         {
-            return Project_->Root / scene::KGameFileName;
+            return Project_->Root / scene::WorldRelativePath(Name);
         }
 
         void SceneEditor::OpenLevel(const std::string& Name)
@@ -138,27 +133,43 @@ namespace dbc::studio
             }
             Program_.reset();
             scene::LevelReadResult Read = scene::ReadLevel(*Text, Name, Project_->Profile);
-            for (const scene::ReadError& Error : Read.Errors)
-                Host_.Log(dbc::PathToUtf8(LevelPath(Name)) + ":" + std::to_string(Error.Line) + ": " + Error.Message,
-                          true);
-            if (!Read.Ok())
+            ReadErrors_.clear();
+            const auto Report = [&](const std::vector<scene::ReadError>& Errors, const std::filesystem::path& Path)
+            {
+                for (const scene::ReadError& Error : Errors)
+                {
+                    const std::string Where = ":" + std::to_string(Error.Line) + ": " + Error.Message;
+                    Host_.Log(dbc::PathToUtf8(Path) + Where, true);
+                    ReadErrors_.push_back(dbc::PathToUtf8(Path.filename()) + Where);
+                }
+            };
+            Report(Read.Errors, LevelPath(Name));
+            // A level without world settings runs with the engine's defaults, until a save writes them.
+            std::error_code Missing;
+            if (std::filesystem::exists(WorldPath(Name), Missing))
+            {
+                if (const std::optional<std::string> World = Host_.ReadSource(WorldPath(Name)))
+                    Report(scene::ReadWorld(*World, Read.Document), WorldPath(Name));
+                else
+                    Report({{0, "Cannot read the file"}}, WorldPath(Name));
+            }
+            if (!ReadErrors_.empty())
                 Host_.Log("The level stays read-only until these lines are fixed in the code editor", true);
             Document_ = std::move(Read.Document);
-            ReadErrors_ = std::move(Read.Errors);
             Saved_ = Document_;
             History_.Reset(Document_);
             HasLevel_ = true;
             Selection_.clear();
         }
 
-        void SceneEditor::NewLevel(const std::string& Name)
+        bool SceneEditor::NewLevel(const std::string& Name)
         {
             const std::string Clean = scene::SanitizeLevelName(Name);
             std::error_code Error;
             if (std::filesystem::exists(LevelPath(Clean), Error))
             {
                 OpenLevel(Clean);
-                return;
+                return false;
             }
             Program_.reset();
             Document_ = {};
@@ -169,32 +180,7 @@ namespace dbc::studio
             History_.Reset(Document_);
             HasLevel_ = true;
             Selection_.clear();
-        }
-
-        void SceneEditor::LoadGameSettings()
-        {
-            Game_ = {};
-            GameErrors_.clear();
-            std::error_code Error;
-            GameFileExists_ = std::filesystem::exists(GamePath(), Error);
-            if (GameFileExists_)
-            {
-                const std::optional<std::string> Text = Host_.ReadSource(GamePath());
-                if (!Text)
-                {
-                    GameErrors_.push_back({0, "Cannot read " + dbc::PathToUtf8(GamePath())});
-                }
-                else
-                {
-                    scene::GameReadResult Read = scene::ReadGame(*Text, Project_->Profile);
-                    Game_ = Read.Settings;
-                    GameErrors_ = std::move(Read.Errors);
-                }
-                for (const scene::ReadError& Read : GameErrors_)
-                    Host_.Log(dbc::PathToUtf8(GamePath()) + ":" + std::to_string(Read.Line) + ": " + Read.Message,
-                              true);
-            }
-            SavedGame_ = Game_;
+            return true;
         }
 
         void SceneEditor::OpenCapture(const std::filesystem::path& Source, const scene::SceneCapture& Capture,
@@ -264,18 +250,12 @@ namespace dbc::studio
                 Host_.Log("Cannot write " + dbc::PathToUtf8(LevelPath(Document_.Name)), true);
                 return false;
             }
-            Saved_ = Document_;
-
-            if (GameErrors_.empty() && (GameFileExists_ || Game_ != scene::GameSettings{}))
+            if (!Host_.WriteSource(WorldPath(Document_.Name), scene::WriteWorld(Document_), true))
             {
-                if (!Host_.WriteSource(GamePath(), scene::WriteGame(Game_, Project_->Profile), true))
-                {
-                    Host_.Log("Cannot write " + dbc::PathToUtf8(GamePath()), true);
-                    return false;
-                }
-                GameFileExists_ = true;
-                SavedGame_ = Game_;
+                Host_.Log("Cannot write " + dbc::PathToUtf8(WorldPath(Document_.Name)), true);
+                return false;
             }
+            Saved_ = Document_;
             return LinkMain();
         }
 
@@ -382,10 +362,9 @@ namespace dbc::studio
             const auto Relative = [&](const std::filesystem::path& Path)
             { return dbc::GenericPathToUtf8(Path.lexically_relative(Main.parent_path())); };
 
-            std::vector<scene::MainLink> Links;
-            if (GameFileExists_)
-                Links.push_back({Relative(GamePath()), scene::KGameFunctionName});
-            Links.push_back({Relative(LevelPath(Document_.Name)), scene::LevelFunctionName(Document_)});
+            const std::vector<scene::MainLink> Links = {
+                {Relative(WorldPath(Document_.Name)), scene::WorldFunctionName(Document_)},
+                {Relative(LevelPath(Document_.Name)), scene::LevelFunctionName(Document_)}};
             const scene::LinkResult Linked = scene::LinkIntoMain(*Text, Project_->Profile, Links);
             if (!Linked.Changed)
                 return true;
@@ -826,10 +805,9 @@ namespace dbc::studio
             if (ReadErrors_.empty())
                 return;
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
-            ImGui::TextWrapped("Read-only: %s has lines the Scene view did not write.",
-                               dbc::GenericPathToUtf8(scene::LevelRelativePath(Document_.Name)).c_str());
-            for (const scene::ReadError& Error : ReadErrors_)
-                ImGui::BulletText("Line %u: %s", Error.Line, Error.Message.c_str());
+            ImGui::TextWrapped("Read-only: %s has lines the Scene view did not write.", Document_.Name.c_str());
+            for (const std::string& Error : ReadErrors_)
+                ImGui::BulletText("%s", Error.c_str());
             ImGui::PopStyleColor();
             ImGui::Separator();
         }
