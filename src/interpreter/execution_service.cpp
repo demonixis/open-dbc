@@ -289,13 +289,7 @@ namespace dbc::interpreter
         vm::ExecutionSession Session{};
         ExecutionResult Result{};
         LogFile Log{};
-        std::chrono::steady_clock::time_point Started{};
-        std::chrono::steady_clock::time_point FrameStarted{};
-        double FrameSumMilliseconds = 0.0;
-        double FrameMinimumMilliseconds = 1e18;
-        double FrameMaximumMilliseconds = 0.0;
-        std::vector<double> FrameSamples{};
-        std::size_t FrameCount = 0;
+        FrameMeter Frames{};
         std::atomic_bool StopRequested{false};
 
         void PresentExitPrompt()
@@ -309,29 +303,8 @@ namespace dbc::interpreter
 
         void FinishBenchmark()
         {
-            if (!Request.Options.Benchmark || Started == std::chrono::steady_clock::time_point{})
-                return;
-            Result.Benchmark.TotalMilliseconds =
-                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - Started).count();
-            Result.Benchmark.FrameCount = FrameCount;
-            if (FrameCount > 0)
-            {
-                Result.Benchmark.AverageFrameMilliseconds = FrameSumMilliseconds / static_cast<double>(FrameCount);
-                Result.Benchmark.MinimumFrameMilliseconds = FrameMinimumMilliseconds;
-                Result.Benchmark.MaximumFrameMilliseconds = FrameMaximumMilliseconds;
-                std::vector<double> Sorted = FrameSamples;
-                std::sort(Sorted.begin(), Sorted.end());
-                const auto Percentile = [&](double Fraction)
-                {
-                    const std::size_t Index = std::min(
-                        Sorted.size() - 1,
-                        static_cast<std::size_t>(std::ceil(Fraction * static_cast<double>(Sorted.size()))) - 1);
-                    return Sorted[Index];
-                };
-                Result.Benchmark.P50FrameMilliseconds = Percentile(0.50);
-                Result.Benchmark.P95FrameMilliseconds = Percentile(0.95);
-                Result.Benchmark.P99FrameMilliseconds = Percentile(0.99);
-            }
+            if (Request.Options.Benchmark)
+                Frames.Finish(Result.Benchmark);
         }
 
         void SyncBuiltinCoverage()
@@ -346,23 +319,11 @@ namespace dbc::interpreter
             }
         }
 
-        void RecordFrame()
-        {
-            const auto Now = std::chrono::steady_clock::now();
-            const double Milliseconds = std::chrono::duration<double, std::milli>(Now - FrameStarted).count();
-            FrameSumMilliseconds += Milliseconds;
-            FrameMinimumMilliseconds = std::min(FrameMinimumMilliseconds, Milliseconds);
-            FrameMaximumMilliseconds = std::max(FrameMaximumMilliseconds, Milliseconds);
-            FrameSamples.push_back(Milliseconds);
-            ++FrameCount;
-            FrameStarted = Now;
-        }
-
         void AccountPresentedFrame()
         {
             ++Result.FrameCount;
             if (Request.Options.Benchmark)
-                RecordFrame();
+                Frames.RecordFrame();
             ++Context.SyncCount;
             if (Context.MaxFrames > 0 && Context.SyncCount >= Context.MaxFrames)
                 Context.ShouldExit = true;
@@ -447,13 +408,7 @@ namespace dbc::interpreter
         Impl_->Log.reset();
         Impl_->Host.reset();
         Impl_->Context = {};
-        Impl_->Started = Started;
-        Impl_->FrameStarted = Impl_->Started;
-        Impl_->FrameSumMilliseconds = 0.0;
-        Impl_->FrameMinimumMilliseconds = 1e18;
-        Impl_->FrameMaximumMilliseconds = 0.0;
-        Impl_->FrameSamples.clear();
-        Impl_->FrameCount = 0;
+        Impl_->Frames.Start(Started);
         Impl_->StopRequested.store(false, std::memory_order_release);
 
         // Bytecode is verified here whatever its origin, so no caller can bypass the verifier.
@@ -530,9 +485,8 @@ namespace dbc::interpreter
         }
 
         Impl_->Result.State = ExecutionState::Ready;
-        Impl_->Result.Benchmark.PrepareMilliseconds =
-            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - Impl_->Started).count();
-        Impl_->FrameStarted = std::chrono::steady_clock::now();
+        Impl_->Result.Benchmark.PrepareMilliseconds = Impl_->Frames.MillisecondsSinceStart();
+        Impl_->Frames.RestartFrame();
         return true;
     }
 
@@ -545,7 +499,7 @@ namespace dbc::interpreter
 
     void ExecutionService::StartFrameMeasurements()
     {
-        Impl_->FrameStarted = std::chrono::steady_clock::now();
+        Impl_->Frames.RestartFrame();
     }
 
     ExecutionTick ExecutionService::Tick(std::size_t InstructionBudget)

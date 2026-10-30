@@ -1,5 +1,6 @@
 #pragma once
 
+#include "frame_meter.hpp"
 #include "host_services.hpp"
 #include "language/frontend.hpp"
 
@@ -112,19 +113,6 @@ namespace dbc
         {
             SuspensionReason Reason = SuspensionReason::None;
             std::optional<std::chrono::steady_clock::time_point> ResumeAt{};
-        };
-
-        struct BenchmarkResult
-        {
-            double PrepareMilliseconds = 0.0;
-            double TotalMilliseconds = 0.0;
-            std::size_t FrameCount = 0;
-            double AverageFrameMilliseconds = 0.0;
-            double MinimumFrameMilliseconds = 0.0;
-            double P50FrameMilliseconds = 0.0;
-            double P95FrameMilliseconds = 0.0;
-            double P99FrameMilliseconds = 0.0;
-            double MaximumFrameMilliseconds = 0.0;
         };
 
         struct BuiltinCoverageEntry

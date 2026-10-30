@@ -2703,19 +2703,6 @@ namespace dbc::interpreter::detail
                                                                            IntegerArgument4);
                                       return true;
                                   }}},
-                                {"SYNC",
-                                 {0, 0,
-                                  [](BuiltinContext& Ctx, const std::vector<BuiltinValue>&, int, std::string& Error)
-                                  {
-                                      (void)Error;
-                                      Sync(*Ctx.Kernel);
-                                      ++Ctx.SyncCount;
-                                      if (Ctx.MaxFrames > 0 && Ctx.SyncCount >= Ctx.MaxFrames)
-                                      {
-                                          Ctx.ShouldExit = true;
-                                      }
-                                      return true;
-                                  }}},
                                 {"SET OBJECT",
                                  {4, 8,
                                   [](BuiltinContext& Ctx, const std::vector<BuiltinValue>& Args, int,

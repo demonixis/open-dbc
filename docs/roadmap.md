@@ -53,9 +53,6 @@ Publication:
 ## Code quality
 
 - [ ] Code quality audit.
-- [ ] Gather the run limits and capture hooks (`--headless`, `--max-frames`,
-  `--capture-output`, `--benchmark`) in one class. Release tests and benchmarks use
-  them, so they stay in every build.
 - [ ] Architecture audit.
 
 ## Rendering performance

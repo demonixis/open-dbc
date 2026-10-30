@@ -8,6 +8,8 @@ add_library(dbc_interpreter STATIC
   execution_service.cpp
   execution_service.hpp
   execution_diagnostics.hpp
+  frame_meter.cpp
+  frame_meter.hpp
   program_build.cpp
   program_image.cpp
   program_image.hpp
