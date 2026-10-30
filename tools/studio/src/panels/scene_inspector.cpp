@@ -73,6 +73,14 @@ namespace dbc::studio
                          [&](float& Number) { ImGui::DragFloat(TrId(Label), &Number, Speed, Min, Max, "%.2f"); });
             }
 
+            // These panels can be narrow, and a sentence can be long in any language.
+            void Hint(const char* Text)
+            {
+                ImGui::PushTextWrapPos(0.0f);
+                ImGui::TextDisabled("%s", Text);
+                ImGui::PopTextWrapPos();
+            }
+
             // A path field that also takes a file dragged from the Assets panel.
             bool AssetField(const char* Label, std::string& Value, std::optional<core::MediaKind> Kind)
             {
@@ -133,7 +141,7 @@ namespace dbc::studio
             const scene::NodeOrigin* Origin = OriginOf(Node);
             if (Origin == nullptr || Origin->Creator.File.empty())
             {
-                ImGui::TextDisabled("%s", Tr("No statement of the program creates it by this number."));
+                Hint(Tr("No statement of the program creates it by this number."));
                 return;
             }
             ImGui::TextDisabled("%s:%u", dbc::PathToUtf8(dbc::PathFromUtf8(Origin->Creator.File).filename()).c_str(),
@@ -204,9 +212,7 @@ namespace dbc::studio
             if (Node == nullptr)
             {
                 ImGui::EndDisabled();
-                ImGui::PushTextWrapPos(0.0f);
-                ImGui::TextDisabled("%s", Tr("Select a node in the Hierarchy or the Viewport."));
-                ImGui::PopTextWrapPos();
+                Hint(Tr("Select a node in the Hierarchy or the Viewport."));
                 return;
             }
 
@@ -275,6 +281,8 @@ namespace dbc::studio
                 ImGui::EndDisabled();
                 DrawAxisLocks(*Node, Part);
             };
+            // Three numbers need the width more than these short labels do.
+            ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.65f);
             BeginPart(scene::TransformPart::Position);
             ImGui::DragFloat3(TrId("Position"), &Node->Position.x, 0.5f);
             EndPart(scene::TransformPart::Position);
@@ -297,11 +305,12 @@ namespace dbc::studio
                                       Tr("Scaling one axis scales the others in proportion, here and with the gizmo"));
                 EndPart(scene::TransformPart::Scale);
             }
+            ImGui::PopItemWidth();
             ImGui::BeginDisabled(!Editable());
             if (Node->Kind == scene::NodeKind::Terrain)
-                ImGui::TextDisabled("%s", Tr("A terrain runs from its position toward -Z."));
+                Hint(Tr("A terrain runs from its position toward -Z."));
             if (Node->Kind == scene::NodeKind::Matrix)
-                ImGui::TextDisabled("%s", Tr("A matrix runs from its position toward +X and +Z."));
+                Hint(Tr("A matrix runs from its position toward +X and +Z."));
 
             if (SharedShape)
                 DrawShape(*Node);
@@ -429,16 +438,16 @@ namespace dbc::studio
             Heading("Animation");
             if (Node.Static)
             {
-                ImGui::TextDisabled("%s", Tr("A static object does not animate."));
+                Hint(Tr("A static object does not animate."));
                 return;
             }
             const scene::ModelAnimation* Info = ModelAnimationOf(Node.Asset);
             const bool HasClip = Info != nullptr && Info->Count > 0;
             if (!HasClip && !Node.Frames)
             {
-                ImGui::TextDisabled("%s", Tr(Node.Asset.empty() ? "Pick a model file first."
-                                             : Info == nullptr  ? "The model file cannot be read."
-                                                                : "This model has no animation."));
+                Hint(Tr(Node.Asset.empty() ? "Pick a model file first."
+                        : Info == nullptr  ? "The model file cannot be read."
+                                           : "This model has no animation."));
                 return;
             }
 
@@ -469,7 +478,7 @@ namespace dbc::studio
             Optional("Speed", Node.Speed, 20, [](int& Speed) { ImGui::SliderInt(TrId("Speed"), &Speed, 1, 200); });
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("%s", Tr("SET OBJECT SPEED; 20 plays the file at its own rate"));
-            ImGui::TextDisabled("%s", Tr("The viewport shows the model still."));
+            Hint(Tr("The viewport shows the model still."));
         }
 
         void SceneEditor::DrawMatrixHeights(scene::SceneNode& Node)
@@ -511,7 +520,7 @@ namespace dbc::studio
             }
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("%s", Tr("RANDOMIZE MATRIX: random whole heights below the range"));
-            ImGui::TextDisabled("%s", Tr("The heights are saved in the level, so every run shows this matrix."));
+            Hint(Tr("The heights are saved in the level, so every run shows this matrix."));
         }
 
         void SceneEditor::DrawTerrainHeightmap(scene::SceneNode& Node)
@@ -655,7 +664,7 @@ namespace dbc::studio
                     if (ImGui::InputInt(TrId(Labels[Space]), &Base) && Base > 0)
                         Document_.IdBase[Space] = Base;
                 }
-                ImGui::TextDisabled("%s", Tr("New nodes take free numbers from these, away from the program's own."));
+                Hint(Tr("New nodes take free numbers from these, away from the program's own."));
             }
 
             if (ImGui::CollapsingHeader(TrId("World Settings"), ImGuiTreeNodeFlags_DefaultOpen))

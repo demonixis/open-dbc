@@ -847,12 +847,19 @@ namespace dbc::studio
                 DrawViewport();
             ImGui::End();
 
+            // Fields give way to their labels, which ImGui would otherwise clip in a narrow panel.
+            const auto DrawFields = [](const auto& Draw)
+            {
+                ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.45f);
+                Draw();
+                ImGui::PopItemWidth();
+            };
             if (ImGui::Begin(TrId(KPanelInspector)))
-                DrawInspector();
+                DrawFields([this] { DrawInspector(); });
             ImGui::End();
 
             if (ImGui::Begin(TrId(KPanelSettings)))
-                DrawSettings();
+                DrawFields([this] { DrawSettings(); });
             ImGui::End();
 
             if (ImGui::Begin(TrId(KPanelAssets)))

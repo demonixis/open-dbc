@@ -64,7 +64,7 @@ namespace dbc::studio
             const float FontSize = ImGui::GetFontSize();
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Style.ItemSpacing.x);
 
-            ImGui::SetNextItemWidth(FontSize * 10.0f);
+            ImGui::SetNextItemWidth(FontSize * 12.0f);
             if (ImGui::BeginCombo("##paint-object", PaintObject_ ? PaintObject_->Name.c_str() : Tr("Choose an object")))
             {
                 // Copies of one object appear once.
