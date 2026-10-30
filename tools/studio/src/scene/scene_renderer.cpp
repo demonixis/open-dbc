@@ -120,13 +120,15 @@ namespace dbc::studio
 
             Color.blend_state.enable_blend = true;
             Color.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
-            Color.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+            // Additive, as the engine draws GHOST OBJECT ON: black adds nothing.
+            Color.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
             Color.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
             Color.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
             Color.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
             Color.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
             Info.depth_stencil_state.enable_depth_write = false;
             BlendPipeline_ = SDL_CreateGPUGraphicsPipeline(Gpu_, &Info);
+            Color.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
 
             SDL_GPUVertexBufferDescription LineBuffer = {};
             LineBuffer.slot = 0;
@@ -357,7 +359,9 @@ namespace dbc::studio
         SceneRenderer::Geometry& SceneRenderer::FindGeometry(const SceneNode& Node, const SceneDocument& Document,
                                                              const std::filesystem::path& AssetRoot)
         {
-            const std::string Key = GeometryKey(Node, Document, AssetRoot);
+            std::string Key = GeometryKey(Node, Document, AssetRoot);
+            if (Node.Mat.TextureScale != glm::vec2(1.0f))
+                Key += ":uv" + std::to_string(Node.Mat.TextureScale.x) + "," + std::to_string(Node.Mat.TextureScale.y);
             auto Found = Geometry_.find(Key);
             if (Found != Geometry_.end())
             {
@@ -387,6 +391,9 @@ namespace dbc::studio
             {
                 Entry.Mesh = BuildMesh(Node, Document.Profile);
             }
+            if (Node.Mat.TextureScale != glm::vec2(1.0f))
+                for (MeshVertex& Vertex : Entry.Mesh.Vertices)
+                    Vertex.Uv *= Node.Mat.TextureScale;
             Entry.Used = true;
             return Geometry_.emplace(Key, std::move(Entry)).first->second;
         }

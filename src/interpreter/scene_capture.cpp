@@ -10,6 +10,8 @@
 #include "language/language_catalogue.hpp"
 #include "path_utf8.hpp"
 
+#include <SDL3/SDL_surface.h>
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -117,7 +119,8 @@ namespace dbc::interpreter
 
         Json MatrixState(int Id, const Matrix& Value, std::set<int>& Images)
         {
-            if (Value.ImageId > 0)
+            // Classic matrices keep a private snapshot of their image under a negative number.
+            if (Value.ImageId != 0)
                 Images.insert(Value.ImageId);
             Json Result = Json::object();
             Result["id"] = Id;
@@ -131,7 +134,18 @@ namespace dbc::interpreter
             return Result;
         }
 
-        void AddEngineState(Json& Capture, const EngineKernel& Kernel)
+        // An image with no file of its own (GET IMAGE, a memblock, a bitmap) is saved beside the capture.
+        std::string SaveGeneratedImage(int Id, const Image& Value, const std::filesystem::path& Folder)
+        {
+            std::error_code Ignored;
+            std::filesystem::create_directories(Folder, Ignored);
+            const std::filesystem::path Path = Folder / (std::to_string(Id) + ".bmp");
+            return Value.Surface && SDL_SaveBMP(Value.Surface, dbc::PathToUtf8(Path).c_str())
+                       ? dbc::GenericPathToUtf8(Path)
+                       : std::string();
+        }
+
+        void AddEngineState(Json& Capture, const EngineKernel& Kernel, const std::filesystem::path& ImageFolder)
         {
             std::set<int> Images;
             Json Objects = Json::array();
@@ -174,7 +188,9 @@ namespace dbc::interpreter
             Json ImageTable = Json::array();
             for (const int Id : Images)
                 if (const Image* Value = Kernel.ImageStoreRef().GetImage(Id))
-                    ImageTable.push_back(Json::array({Id, Value->SourcePath}));
+                    ImageTable.push_back(
+                        Json::array({Id, Value->SourcePath.empty() ? SaveGeneratedImage(Id, *Value, ImageFolder)
+                                                                   : Value->SourcePath}));
             Capture["images"] = std::move(ImageTable);
 
             const CameraSystem& Camera = Kernel.Camera();
@@ -228,7 +244,7 @@ namespace dbc::interpreter
         Capture["roots"] = Paths(Roots_);
         Capture["calls"] = Calls_;
         if (Kernel)
-            AddEngineState(Capture, *Kernel);
+            AddEngineState(Capture, *Kernel, dbc::PathFromUtf8(dbc::PathToUtf8(Path) + ".images"));
         // Strings a program passes may be in any encoding; replacing bad bytes keeps dump() from throwing.
         return AtomicWriteText(Path, Capture.dump(-1, ' ', false, Json::error_handler_t::replace), &Error);
     }

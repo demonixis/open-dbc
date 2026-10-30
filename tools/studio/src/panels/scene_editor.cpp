@@ -72,6 +72,7 @@ namespace dbc::studio
             AssetScan_ = {};
             AssetScanRoot_.clear();
             HasLevel_ = false;
+            Program_.reset();
             Document_ = {};
             Saved_ = {};
             ReadErrors_.clear();
@@ -134,6 +135,7 @@ namespace dbc::studio
                 Host_.Log("Cannot read level " + dbc::PathToUtf8(LevelPath(Name)), true);
                 return;
             }
+            Program_.reset();
             scene::LevelReadResult Read = scene::ReadLevel(*Text, Name, Project_->Profile);
             for (const scene::ReadError& Error : Read.Errors)
                 Host_.Log(dbc::PathToUtf8(LevelPath(Name)) + ":" + std::to_string(Error.Line) + ": " + Error.Message,
@@ -157,6 +159,7 @@ namespace dbc::studio
                 OpenLevel(Clean);
                 return;
             }
+            Program_.reset();
             Document_ = {};
             Document_.Name = Clean;
             Document_.Profile = Project_->Profile;
@@ -193,10 +196,53 @@ namespace dbc::studio
             SavedGame_ = Game_;
         }
 
+        void SceneEditor::OpenCapture(const std::filesystem::path& Source, const scene::SceneCapture& Capture,
+                                      int SetupFrames, const std::string& OnlyFile)
+        {
+            if (!Project_)
+                return;
+            if (Dirty())
+                Save();
+            const bool SameProgram = Program_ && Program_->Source == Source;
+            scene::CaptureReadResult Read =
+                scene::ReadCapture(Capture, {dbc::PathToUtf8(Source.filename()), SetupFrames, OnlyFile});
+            Document_ = std::move(Read.Document);
+            Saved_ = Document_;
+            ReadErrors_.clear();
+            History_.Reset(Document_);
+            HasLevel_ = true;
+            Program_ = ProgramView{Source, SetupFrames, OnlyFile, std::move(Read.Origins), std::move(Read.Notes)};
+            PruneSelection();
+            if (SameProgram)
+                return;
+            Selection_.clear();
+            CameraSelected_ = false;
+            // Start where the program looks from.
+            Camera_.Position = Document_.Env.CameraPosition;
+            Camera_.Pitch = Document_.Env.CameraRotation.x;
+            Camera_.Yaw = Document_.Env.CameraRotation.y;
+        }
+
+        const std::filesystem::path* SceneEditor::ProgramSource() const
+        {
+            return Program_ ? &Program_->Source : nullptr;
+        }
+
+        const scene::NodeOrigin* SceneEditor::OriginOf(const scene::SceneNode& Node) const
+        {
+            if (!Program_)
+                return nullptr;
+            const auto Found = Program_->Origins.find({scene::IdSpaceOf(Node.Kind), Node.Id});
+            return Found == Program_->Origins.end() ? nullptr : &Found->second;
+        }
+
         bool SceneEditor::Save()
         {
             if (!Project_ || !HasLevel_)
                 return false;
+            // Nothing of a program's scene can change yet.
+            if (Program_)
+                return true;
             if (!ReadErrors_.empty())
             {
                 Host_.Log("The level is read-only: fix the lines reported when it was opened", true);
@@ -259,7 +305,7 @@ namespace dbc::studio
 
         bool SceneEditor::Editable() const
         {
-            return HasLevel_ && ReadErrors_.empty();
+            return HasLevel_ && ReadErrors_.empty() && !Program_;
         }
 
         scene::SceneNode* SceneEditor::Selected()
@@ -455,6 +501,8 @@ namespace dbc::studio
             }
             if (ImGui::MenuItem("Save Level", "Ctrl+S", false, Editable()))
                 Save();
+            if (ImGui::MenuItem("Refresh Program", nullptr, false, Program_.has_value() && Host_.CaptureProgram))
+                Host_.CaptureProgram(Program_->Source, Program_->SetupFrames);
             ImGui::Separator();
             if (ImGui::MenuItem("Undo", "Ctrl+Z", false, Editable() && History_.CanUndo()))
                 Undo();
@@ -637,17 +685,47 @@ namespace dbc::studio
             ImGui::Separator();
         }
 
+        void SceneEditor::DrawProgramBanner()
+        {
+            if (!Program_)
+                return;
+            ImGui::SetNextItemWidth(ImGui::GetFontSize() * 5.0f);
+            ImGui::InputInt("Setup frames", &Program_->SetupFrames, 0);
+            Program_->SetupFrames = std::max(Program_->SetupFrames, 0);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("How many frames the program runs before the scene counts as built. "
+                                  "What later frames set belongs to the game loop.");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Refresh") && Host_.CaptureProgram)
+                Host_.CaptureProgram(Program_->Source, Program_->SetupFrames);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Runs the program again, without a window or sound, to read its scene");
+            for (const std::string& Note : Program_->Notes)
+                ImGui::TextWrapped("%s", Note.c_str());
+            ImGui::Separator();
+        }
+
         void SceneEditor::DrawHierarchy()
         {
             if (!HasLevel_)
                 return;
             ImGui::TextDisabled("%s%s", Document_.Name.c_str(), Dirty() ? " *" : "");
             DrawReadErrors();
+            DrawProgramBanner();
             const auto DrawRow = [&](const scene::SceneNode& Node)
             {
                 ImGui::PushID(static_cast<int>(scene::IdSpaceOf(Node.Kind)));
                 ImGui::PushID(Node.Id);
-                if (ImGui::Selectable(Node.Name.c_str(), IsSelected(Node)))
+                if (Node.Hidden)
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+                const bool Clicked = ImGui::Selectable(Node.Name.c_str(), IsSelected(Node));
+                if (Node.Hidden)
+                    ImGui::PopStyleColor();
+                const scene::NodeOrigin* Origin = OriginOf(Node);
+                if (Origin != nullptr && !Origin->Creator.File.empty() && ImGui::IsItemHovered() &&
+                    ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && Host_.ShowSource)
+                    Host_.ShowSource(dbc::PathFromUtf8(Origin->Creator.File), Origin->Creator.Line);
+                if (Clicked)
                 {
                     const ImGuiIO& Io = ImGui::GetIO();
                     const scene::SceneNode* Anchor = Selected();
@@ -674,7 +752,15 @@ namespace dbc::studio
                     }
                 }
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("%s %d", scene::NodeKindLabel(Node.Kind), Node.Id);
+                {
+                    if (Origin != nullptr && !Origin->Creator.File.empty())
+                        ImGui::SetTooltip("%s %d%s\n%s:%u", scene::NodeKindLabel(Node.Kind), Node.Id,
+                                          Node.Hidden ? " (hidden)" : "",
+                                          dbc::PathToUtf8(dbc::PathFromUtf8(Origin->Creator.File).filename()).c_str(),
+                                          Origin->Creator.Line);
+                    else
+                        ImGui::SetTooltip("%s %d", scene::NodeKindLabel(Node.Kind), Node.Id);
+                }
                 ImGui::PopID();
                 ImGui::PopID();
             };

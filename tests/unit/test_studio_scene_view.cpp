@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 
 #include "panels/scene_editor.hpp"
+#include "path_utf8.hpp"
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_geometry.hpp"
 
@@ -249,6 +250,16 @@ namespace
                                                                     ImGui::GetTextLineHeight() * 0.5f));
             Button(true);
             Button(false);
+        }
+
+        panels::SceneEditor& Editor()
+        {
+            return Editor_;
+        }
+
+        const std::filesystem::path& Root() const
+        {
+            return Root_;
         }
 
         void Undo()
@@ -591,4 +602,34 @@ TEST_CASE("Painted objects fold into one Hierarchy row, whose click selects them
     const std::vector<scene::SceneNode> Left = Driver.SavedNodes();
     REQUIRE(Left.size() == 1);
     CHECK_FALSE(Left[0].Painted);
+}
+
+TEST_CASE("A program's scene replaces the level until a level is opened again")
+{
+    const glm::vec3 Spot(0.0f, 0.0f, 0.0f);
+    SceneViewDriver Driver("program_view", LevelOfCubes({Spot}));
+    scene::SceneCapture Capture;
+    Capture.Status = "completed";
+    Capture.Files = {dbc::GenericPathToUtf8(Driver.Root() / "main.dba")};
+    Capture.Commands.push_back(
+        {dbc::language::SymbolId::Command_MakeObjectCube, {{false, 1.0, {}}, {false, 30.0, {}}}});
+    Capture.Sites.push_back({0, 1, 1, 0});
+    scene::CapturedObject Object;
+    Object.Id = 1;
+    Capture.Objects.push_back(Object);
+    Capture.HasCamera = true;
+    Capture.CameraPosition = glm::vec3(0.0f, 80.0f, -180.0f);
+    Capture.CameraRotation = glm::vec3(20.0f, 0.0f, 0.0f);
+
+    const std::filesystem::path Source = Driver.Root() / "main.dba";
+    Driver.Editor().OpenCapture(Source, Capture, 1, {});
+    Driver.Frame();
+    REQUIRE(Driver.Editor().ProgramSource() != nullptr);
+    CHECK(*Driver.Editor().ProgramSource() == Source);
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    // Nothing a level would write: the Delete key on the selected object changes nothing.
+    Driver.Click(Spot);
+    Driver.Tap(ImGuiKey_Delete);
+    CHECK_FALSE(Driver.Editor().Dirty());
 }

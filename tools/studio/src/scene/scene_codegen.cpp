@@ -753,6 +753,15 @@ namespace dbc::studio
                             Env.Fog = false;
                             return;
                         }
+                        else if (Id == SymbolId::Command_ScaleObjectTexture)
+                        {
+                            // Other stages have no place in the preview.
+                            SceneNode* Node = Indexed(IdSpace::Object, I(A, 0));
+                            const bool Stage = A.size() == 4 && I(A, 1) != 0;
+                            if (Node != nullptr && !Stage)
+                                Node->Mat.TextureScale *= glm::vec2(F(A, A.size() - 2), F(A, A.size() - 1));
+                            return;
+                        }
                     }
                     switch (Id)
                     {

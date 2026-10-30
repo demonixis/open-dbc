@@ -117,6 +117,12 @@ namespace dbc::studio
         void UpdateSceneProject();
         void SetMode(Mode Value);
         void RunScene();
+        // Reads what a program builds and shows it in the Scene mode. It runs the program, so only on request.
+        void OpenInScene(const std::filesystem::path& Path);
+        void CaptureProgram(const std::filesystem::path& Source, int SetupFrames);
+        void FinishSceneCapture();
+        // The file to run to see `Source`: its own, or the project's main source when that includes it.
+        std::filesystem::path CaptureRunTarget(const std::filesystem::path& Source) const;
         std::optional<std::string> ReadSource(const std::filesystem::path& Path) const;
         bool WriteSource(const std::filesystem::path& Path, const std::string& Text, bool Generated);
 
@@ -200,6 +206,23 @@ namespace dbc::studio
         panels::ProjectSettingsWindow SettingsWindow_;
         bool ExecutionBusy_ = false;
         std::filesystem::path ExecutionTarget_;
+
+        // The run reading a program's scene, which ends with FinishSceneCapture.
+        struct SceneCaptureRun
+        {
+            std::filesystem::path Source;
+            int SetupFrames = 1;
+            std::string OnlyFile;
+            std::filesystem::path Output;
+            std::filesystem::path SourceRoot;
+            Uint64 Deadline = 0;
+        };
+
+        std::optional<SceneCaptureRun> SceneCapture_;
+        // Generated textures of the scene on show, which the viewport keeps loading from here.
+        std::filesystem::path SceneCaptureImages_;
+        // Waits for the project's language to be chosen.
+        std::optional<std::filesystem::path> PendingSceneProgram_;
 
         std::optional<dbc::language::LanguageProfile> InitialProfile_;
         std::optional<dbc::interpreter::ResolvedProject> ResolvedProject_;

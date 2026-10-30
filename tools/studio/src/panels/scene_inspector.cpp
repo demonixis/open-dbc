@@ -125,10 +125,29 @@ namespace dbc::studio
                 Commit();
         }
 
+        void SceneEditor::DrawNodeOrigin(const scene::SceneNode& Node)
+        {
+            if (!Program_)
+                return;
+            const scene::NodeOrigin* Origin = OriginOf(Node);
+            if (Origin == nullptr || Origin->Creator.File.empty())
+            {
+                ImGui::TextDisabled("No statement of the program creates it by this number.");
+                return;
+            }
+            ImGui::TextDisabled("%s:%u", dbc::PathToUtf8(dbc::PathFromUtf8(Origin->Creator.File).filename()).c_str(),
+                                Origin->Creator.Line);
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Show in Code") && Host_.ShowSource)
+                Host_.ShowSource(dbc::PathFromUtf8(Origin->Creator.File), Origin->Creator.Line);
+        }
+
         void SceneEditor::DrawInspector()
         {
             if (!HasLevel_)
                 return;
+            if (const scene::SceneNode* Shown = CameraSelected_ ? nullptr : Selected())
+                DrawNodeOrigin(*Shown);
             ImGui::BeginDisabled(!Editable());
             if (CameraSelected_)
             {

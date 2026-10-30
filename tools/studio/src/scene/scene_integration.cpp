@@ -6,8 +6,10 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string_view>
 
+#include "interpreter/basic_path.hpp"
 #include "language/frontend.hpp"
 
 namespace dbc::studio
@@ -214,6 +216,38 @@ namespace dbc::studio
             }
             Result.Changed = true;
             return Result;
+        }
+
+        bool SourceIncludes(const std::filesystem::path& Root, const std::filesystem::path& Target,
+                            lang::LanguageProfile Profile,
+                            const std::function<std::optional<std::string>(const std::filesystem::path&)>& Read)
+        {
+            const std::filesystem::path Wanted = Target.lexically_normal();
+            std::set<std::filesystem::path> Seen{Root.lexically_normal()};
+            std::vector<std::filesystem::path> Pending{*Seen.begin()};
+            while (!Pending.empty())
+            {
+                const std::filesystem::path Current = std::move(Pending.back());
+                Pending.pop_back();
+                std::optional<std::string> Text = Read(Current);
+                if (!Text)
+                    continue;
+                auto Source = std::make_shared<lang::SourceDocument>();
+                Source->LogicalPath = Current;
+                Source->Text = std::move(*Text);
+                Source->Profile = Profile;
+                for (const lang::IncludeDeclaration& Include : lang::LexAndParse(Source).Includes)
+                {
+                    const std::filesystem::path Normal = interpreter::NormalizeBasicPath(Include.Path);
+                    const std::filesystem::path Path =
+                        Normal.is_absolute() ? Normal : (Current.parent_path() / Normal).lexically_normal();
+                    if (Path == Wanted)
+                        return true;
+                    if (Seen.insert(Path).second)
+                        Pending.push_back(Path);
+                }
+            }
+            return false;
         }
     } // namespace scene
 

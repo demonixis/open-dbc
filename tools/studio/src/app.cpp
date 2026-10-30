@@ -10,9 +10,12 @@
 #include <imgui_impl_sdlgpu3.h>
 #include <imgui_internal.h>
 #include <iterator>
+#include <limits>
 
 #include "core/paths.hpp"
 #include "interpreter/atomic_file.hpp"
+#include "scene/scene_capture.hpp"
+#include "scene/scene_integration.hpp"
 #include "theme.hpp"
 #include "toolchain/active_run_planner.hpp"
 
@@ -194,6 +197,14 @@ namespace dbc::studio
             Output_.Append(Message,
                            Error ? panels::OutputPanel::Severity::Error : panels::OutputPanel::Severity::Notice);
         };
+        SceneHost.CaptureProgram = [this](const std::filesystem::path& Source, int SetupFrames)
+        { CaptureProgram(Source, SetupFrames); };
+        SceneHost.ShowSource = [this](const std::filesystem::path& Path, std::uint32_t Line)
+        {
+            OpenFile(Path);
+            Editor_.GoToLine(Line);
+            SetMode(Mode::Code);
+        };
         Scene_.Initialize(Gpu_, std::move(SceneHost));
         Reference_.Load(core::paths::FindReferenceDoc());
         Commands_.Build(Reference_);
@@ -205,6 +216,8 @@ namespace dbc::studio
                               [this](const std::filesystem::path& Path) { OpenFile(Path); });
 
         Project_.SetOnActivate([this](const std::filesystem::path& Path) { OpenFile(Path); });
+        if (Execution_.CanCaptureScene())
+            Project_.SetOnOpenInScene([this](const std::filesystem::path& Path) { OpenInScene(Path); });
         Code_.SetOnSelect([this](std::uint32_t Line) { Editor_.GoToLine(Line); });
         Media_.SetOnActivate(
             [this](const std::filesystem::path& Path)
@@ -237,6 +250,11 @@ namespace dbc::studio
             ExecutionBusy_ = false;
             ShowProblems(Diagnostics);
             ExecutionTarget_.clear();
+            if (SceneCapture_)
+            {
+                FinishSceneCapture();
+                return;
+            }
             if (ExitCode == 0)
                 Status_ = "Run finished";
             else if (ExitCode == 130)
@@ -408,6 +426,12 @@ namespace dbc::studio
             PollEvents();
             Dialog_.Poll();
             Execution_.Poll();
+            if (SceneCapture_ && SDL_GetTicks() >= SceneCapture_->Deadline)
+            {
+                // A program waiting on something a headless run never gets: what it built so far still counts.
+                SceneCapture_->Deadline = std::numeric_limits<Uint64>::max();
+                Execution_.Stop();
+            }
             PollExport();
             for (const std::string& Notice : Editor_.TakeNotices())
                 Output_.Append(Notice, panels::OutputPanel::Severity::Notice);
@@ -730,6 +754,12 @@ namespace dbc::studio
         for (const std::string& Warning : ResolvedProject_->Warnings)
             Output_.Append(Warning, panels::OutputPanel::Severity::Notice);
         UpdateSceneProject();
+        if (PendingSceneProgram_)
+        {
+            const std::filesystem::path Program = std::move(*PendingSceneProgram_);
+            PendingSceneProgram_.reset();
+            OpenInScene(Program);
+        }
     }
 
     std::string App::SceneBlocker() const
@@ -804,8 +834,158 @@ namespace dbc::studio
             return;
         if (Scene_.Dirty() && !Scene_.Save())
             return;
-        OpenFile(ResolvedProject_->EntrySource);
+        const std::filesystem::path* Program = Scene_.ProgramSource();
+        OpenFile(Program != nullptr ? CaptureRunTarget(*Program) : ResolvedProject_->EntrySource);
         RunActiveDocument();
+    }
+
+    std::filesystem::path App::CaptureRunTarget(const std::filesystem::path& Source) const
+    {
+        const std::filesystem::path Normal = Source.lexically_normal();
+        const std::filesystem::path Entry = ResolvedProject_->EntrySource.lexically_normal();
+        if (Normal == Entry)
+            return Entry;
+        const std::vector<std::filesystem::path>& Ordered = ResolvedProject_->OrderedSources;
+        const bool InProject = ResolvedProject_->DescriptorPath &&
+                               std::any_of(Ordered.begin(), Ordered.end(), [&](const std::filesystem::path& Other)
+                                           { return Other.lexically_normal() == Normal; });
+        return InProject ||
+                       scene::SourceIncludes(Entry, Normal, ResolvedProject_->Profile,
+                                             [this](const std::filesystem::path& Path) { return ReadSource(Path); })
+                   ? Entry
+                   : Normal;
+    }
+
+    void App::OpenInScene(const std::filesystem::path& Path)
+    {
+        if (ExecutionBusy_)
+        {
+            Status_ = "Stop the running program first";
+            return;
+        }
+        OpenFile(Path);
+        if (!ResolvedProject_)
+        {
+            // The language popup is open or about to be: the answer brings us back here.
+            PendingSceneProgram_ = Path;
+            Status_ = "Select the project's language to read this program's scene";
+            return;
+        }
+        CaptureProgram(Path, 1);
+    }
+
+    void App::CaptureProgram(const std::filesystem::path& Source, int SetupFrames)
+    {
+        if (ExecutionBusy_ || !ResolvedProject_ || !Execution_.CanCaptureScene())
+            return;
+        const std::string Blocker = SceneBlocker();
+        if (!Blocker.empty())
+        {
+            Status_ = Blocker;
+            Output_.Append(Blocker, panels::OutputPanel::Severity::Error);
+            return;
+        }
+
+        const std::filesystem::path Target = CaptureRunTarget(Source);
+        std::vector<toolchain::MemorySource> Sources;
+        for (panels::BufferedSource& Buffered : Editor_.DirtySources(ResolvedProject_->Profile))
+            Sources.push_back({std::move(Buffered.LogicalPath), std::move(Buffered.Text)});
+        toolchain::ActiveRunPlan Plan = toolchain::PlanActiveRun(Target, ResolvedProject_, std::move(Sources));
+        if (!Plan || !Plan.Blockers.empty())
+        {
+            Status_ = "Cannot run " + dbc::PathToUtf8(Target.filename());
+            Output_.Append(Plan.Blockers.empty() ? Plan.Error : Plan.Blockers.front(),
+                           panels::OutputPanel::Severity::Error);
+            return;
+        }
+        // A project's sources form one program; the run plan alone narrows it to the active file.
+        if (ResolvedProject_->DescriptorPath)
+            Plan.Document->Project->OrderedSources = ResolvedProject_->OrderedSources;
+        toolchain::RunDocument Document = std::move(*Plan.Document);
+
+        std::error_code Error;
+        const std::filesystem::path Temporary = std::filesystem::temp_directory_path(Error);
+        if (Error)
+        {
+            Output_.Append("Cannot find a temporary folder for the scene: " + Error.message(),
+                           panels::OutputPanel::Severity::Error);
+            return;
+        }
+        SceneCaptureRun Run;
+        Run.Source = Source;
+        Run.SetupFrames = SetupFrames;
+        if (Target != Source.lexically_normal())
+            Run.OnlyFile = dbc::GenericPathToUtf8(Source.lexically_normal());
+        Run.Output = Temporary / ("opendbc-scene-" + std::to_string(SDL_GetTicksNS()) + ".json");
+        Run.SourceRoot = Document.Project->ProjectRoot;
+        constexpr Uint64 KCaptureMilliseconds = 30000;
+        Run.Deadline = SDL_GetTicks() + KCaptureMilliseconds;
+
+        toolchain::RunOptions Options = RunOptions_;
+        Options.AssetRoot = dbc::PathToUtf8(Plan.AssetRoot);
+        Options.DebugOverlay = false;
+        Options.CaptureScene = Run.Output;
+        Options.CaptureFrames = SetupFrames;
+
+        ShowProblems({});
+        Output_.Append("> Reading the scene of " + dbc::PathToUtf8(Target), panels::OutputPanel::Severity::Notice);
+        Status_ = "Reading the scene of " + dbc::PathToUtf8(Source.filename());
+        ExecutionTarget_ = Target;
+        SceneCapture_ = std::move(Run);
+        UpdateRecovery();
+        if (Execution_.Run(std::move(Document), Options))
+        {
+            ExecutionBusy_ = true;
+        }
+        else if (SceneCapture_)
+        {
+            // Run gave up before anything could finish; a failed compile has reported already.
+            SceneCapture_.reset();
+            ExecutionTarget_.clear();
+        }
+    }
+
+    void App::FinishSceneCapture()
+    {
+        const SceneCaptureRun Run = std::move(*SceneCapture_);
+        SceneCapture_.reset();
+        const std::string Name = dbc::PathToUtf8(Run.Source.filename());
+
+        std::string Text;
+        {
+            std::ifstream Stream(Run.Output, std::ios::binary);
+            Text.assign(std::istreambuf_iterator<char>(Stream), {});
+        }
+        std::error_code Ignored;
+        std::filesystem::remove(Run.Output, Ignored);
+        std::filesystem::path Images = Run.Output;
+        Images += ".images";
+        if (Text.empty())
+        {
+            Status_ = "Cannot read the scene of " + Name + ": it did not start";
+            Output_.Append(Status_, panels::OutputPanel::Severity::Error);
+            return;
+        }
+        const panels::SceneProject* Project = Scene_.Project() ? &*Scene_.Project() : nullptr;
+        scene::SceneCapture Capture;
+        std::string Error;
+        if (Project == nullptr || !scene::ParseSceneCapture(Text, Run.SourceRoot, Project->AssetRoot, Capture, Error))
+        {
+            Status_ = "Cannot read the scene of " + Name;
+            Output_.Append(Status_ + ": " + Error, panels::OutputPanel::Severity::Error);
+            return;
+        }
+        if (Capture.Status == "cancelled")
+            Output_.Append(Name + " did not reach its frame in time: the scene shows what it had built.",
+                           panels::OutputPanel::Severity::Notice);
+        else if (Capture.Status != "completed")
+            Output_.Append(Name + " stopped with an error: the scene shows what it had built.",
+                           panels::OutputPanel::Severity::Error);
+        Scene_.OpenCapture(Run.Source, Capture, Run.SetupFrames, Run.OnlyFile);
+        std::filesystem::remove_all(SceneCaptureImages_, Ignored);
+        SceneCaptureImages_ = std::move(Images);
+        SetMode(Mode::Scene);
+        Status_ = "Scene of " + Name;
     }
 
     void App::SetProjectDialect(dbc::language::LanguageProfile Profile)
@@ -1397,6 +1577,11 @@ namespace dbc::studio
                 if (ImGui::MenuItem("Open File...", "Ctrl+O"))
                 {
                     ShowOpenFileDialog();
+                }
+                if (ImGui::MenuItem("Open in Scene View", nullptr, false,
+                                    Execution_.CanCaptureScene() && !ExecutionBusy_ && Editor_.CurrentIsBasic()))
+                {
+                    OpenInScene(Editor_.CurrentPath());
                 }
                 if (ImGui::MenuItem("Open Folder...", "Ctrl+Shift+O"))
                 {
@@ -2129,6 +2314,8 @@ namespace dbc::studio
         if (Gpu_ != nullptr)
             SDL_WaitForGPUIdle(Gpu_);
         Scene_.Shutdown();
+        std::error_code ImagesError;
+        std::filesystem::remove_all(SceneCaptureImages_, ImagesError);
 
         DestroyPresentation();
 

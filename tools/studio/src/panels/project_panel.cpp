@@ -147,6 +147,8 @@ namespace dbc::studio
                             OnActivate_(NodeValue.Path);
                         }
                     }
+                    if (OnOpenInScene_ && ImGui::MenuItem("Open in Scene View"))
+                        OnOpenInScene_(NodeValue.Path);
                     ImGui::EndPopup();
                 }
             }

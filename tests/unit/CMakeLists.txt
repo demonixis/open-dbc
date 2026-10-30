@@ -110,7 +110,8 @@ if(NOT ANDROID AND NOT IOS)
     target_include_directories(test_studio_scene_view PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
                                ${CMAKE_BINARY_DIR}/tools/studio/generated)
     target_compile_definitions(test_studio_scene_view PRIVATE TEST_OUTPUT_DIR="${CMAKE_BINARY_DIR}/tests")
-    target_link_libraries(test_studio_scene_view PRIVATE doctest_with_main dbc_engine dbc_language imguizmo)
+    target_link_libraries(test_studio_scene_view PRIVATE doctest_with_main dbc_engine dbc_language imguizmo
+        nlohmann_json::nlohmann_json)
     doctest_discover_tests(test_studio_scene_view PROPERTIES LABELS "unit-studio")
 
     add_executable(test_studio_media

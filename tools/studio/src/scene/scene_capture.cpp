@@ -322,7 +322,7 @@ namespace dbc::studio
 
             std::string ImageText(const SceneCapture& Capture, int Image, std::size_t& Generated)
             {
-                if (Image <= 0)
+                if (Image == 0)
                     return {};
                 const auto Found = Capture.Images.find(Image);
                 if (Found == Capture.Images.end() || Found->second.empty())
@@ -676,7 +676,7 @@ namespace dbc::studio
                 Result.Notes.push_back(std::to_string(Stand) + " objects have their own geometry and appear as boxes.");
             if (Generated > 0)
                 Result.Notes.push_back(std::to_string(Generated) +
-                                       " textures come from the program, not from a file: they are not shown.");
+                                       " textures could not be read from the program: they are not shown.");
             std::string NotShown;
             for (const std::string& Command : Replay.Skipped)
                 if (IsNotShown(Command))

@@ -94,6 +94,8 @@ namespace dbc::studio
         struct Material
         {
             std::string Texture; // asset-relative path, empty for none
+            // SCALE OBJECT TEXTURE, read from a running program only: levels do not write it.
+            glm::vec2 TextureScale{1.0f};
             std::optional<Rgb> Color;
             bool Ghost = false;
             std::optional<int> GhostMode;

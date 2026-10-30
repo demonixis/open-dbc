@@ -218,6 +218,11 @@ namespace dbc::studio
         }
 
 #if defined(DBC_STUDIO_SANDBOXED)
+        bool ExecutionAdapter::CanCaptureScene() const
+        {
+            return false;
+        }
+
         void ExecutionAdapter::SetRunner(std::filesystem::path) {}
 
         bool ExecutionAdapter::IsRunning() const
@@ -514,6 +519,15 @@ namespace dbc::studio
                                  "--log-directory",       dbc::PathToUtf8(RootLogicalPath_.parent_path())};
             if (Options.DebugOverlay)
                 Process.Arguments.push_back("--debug-overlay");
+            if (!Options.CaptureScene.empty())
+            {
+                // A generous slice keeps a program without SYNC ON from presenting a frame in the middle of its setup.
+                constexpr const char* KCaptureBudget = "2000000";
+                Process.Arguments.insert(Process.Arguments.end(),
+                                         {"--headless", "--max-frames", std::to_string(Options.CaptureFrames + 1),
+                                          "--instruction-budget", KCaptureBudget, "--capture-scene",
+                                          dbc::PathToUtf8(Options.CaptureScene)});
+            }
             Process.WorkingDirectory = AssetRoot;
 
             Cancel_ = false;
@@ -539,6 +553,11 @@ namespace dbc::studio
                         LaunchError_ = Result.Error;
                     Done_ = true;
                 });
+            return true;
+        }
+
+        bool ExecutionAdapter::CanCaptureScene() const
+        {
             return true;
         }
 

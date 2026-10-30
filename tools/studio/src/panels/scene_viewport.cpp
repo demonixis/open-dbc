@@ -1,6 +1,7 @@
 // The Scene view's viewport: editor camera, picking, gizmos and asset drops.
 
 #include "panels/scene_editor.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -869,6 +870,9 @@ namespace dbc::studio
             if (!ReadErrors_.empty())
                 Draw->AddText(ImVec2(Start.x + 8.0f, Start.y + 8.0f), IM_COL32(255, 120, 100, 255),
                               "Read-only level: see the Hierarchy panel");
+            if (Program_)
+                Draw->AddText(ImVec2(Start.x + 8.0f, Start.y + 8.0f), IM_COL32(255, 210, 120, 255),
+                              ("Scene of " + dbc::PathToUtf8(Program_->Source.filename())).c_str());
         }
     } // namespace panels
 
