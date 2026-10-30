@@ -31,6 +31,7 @@ without a path it runs `program.obc` from its own resources.
 | `--max-frames N` | Stop after N presented frames |
 | `--headless` | Hidden window, offscreen rendering, silent audio (also `OPENDBC_HEADLESS=1`) |
 | `--capture-output F.bmp` | With `--headless`, save the last frame |
+| `--capture-scene F.json` | With `--headless`, save the scene commands with their source lines and the final 3D state, also after a failed or stopped run |
 | `--log-level LEVEL` | `trace`, `debug`, `info`, `warn` (default), `error`; log file `open-dbc.log` |
 | `--log-directory DIR` | Where `open-dbc.log` goes (default: the source's directory) |
 | `--debug-overlay` | Start with the overlay shown (**F3** toggles it) |

@@ -3,8 +3,10 @@
 #include "engine/systems/core_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
 #include "interpreter/command_line.hpp"
+#include "language/language_catalogue.hpp"
 
 #include <SDL3/SDL_surface.h>
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <array>
@@ -420,6 +422,68 @@ TEST_CASE("a headless run saves its last frame with --capture-output")
     CHECK(Red > 200);
     CHECK(Green < 50);
     CHECK(Blue < 50);
+}
+
+TEST_CASE("a headless run saves its scene commands and 3D state with --capture-scene")
+{
+    const std::array<std::string_view, 4> Windowed{"run", "program.dba", "--capture-scene", "scene.json"};
+    const dbc::interpreter::CommandLineParseResult Rejected = dbc::interpreter::ParseCommandLine(Windowed);
+    REQUIRE_FALSE(Rejected);
+    CHECK(Rejected.Error == "--capture-scene requires --headless");
+
+    TemporarySource Source("sync on\n"
+                           "for i = 1 to 2\n"
+                           "  make object cube i, 10\n"
+                           "  position object i, i * 5, 0, 0\n"
+                           "next i\n"
+                           "print \"not a scene command\"\n"
+                           "scale object 2, 50, 100, 100\n"
+                           "delete object 1\n"
+                           "do\n"
+                           "  sync\n"
+                           "  yrotate object 2, 45\n"
+                           "loop\n");
+    const std::filesystem::path Capture = Source.Path.string() + ".json";
+    const std::string SourcePath = Source.Path.string();
+    const std::string CapturePath = Capture.string();
+    const std::array<std::string_view, 9> Run{"run",          SourcePath, "--dialect",       "dbc",      "--headless",
+                                              "--max-frames", "2",        "--capture-scene", CapturePath};
+    dbc::interpreter::CommandLineEnvironment Environment;
+    REQUIRE(dbc::interpreter::DispatchCommandLine(Run, Environment) ==
+            static_cast<int>(dbc::interpreter::CommandLineExitCode::Success));
+
+    std::ifstream Input(Capture);
+    REQUIRE(Input.good());
+    const nlohmann::json Json = nlohmann::json::parse(Input, nullptr, false);
+    Input.close();
+    std::error_code Ignored;
+    std::filesystem::remove(Capture, Ignored);
+    REQUIRE_FALSE(Json.is_discarded());
+    CHECK(Json["schema"] == "opendbc-scene-capture");
+    CHECK(Json["status"] == "completed");
+    CHECK_FALSE(Json["truncated"].get<bool>());
+
+    // symbol, file, line, column, frame, root, arguments
+    const nlohmann::json& Calls = Json["calls"];
+    REQUIRE(Calls.size() == 7);
+    CHECK(Calls[0][0] == static_cast<std::uint32_t>(dbc::language::SymbolId::Command_MakeObjectCube));
+    CHECK(Calls[0][2] == 3);
+    CHECK(Calls[0][4] == 0);
+    CHECK(Calls[0][6] == nlohmann::json::array({1, 10}));
+    CHECK(Calls[3][0] == static_cast<std::uint32_t>(dbc::language::SymbolId::Command_PositionObject));
+    CHECK(Calls[3][6][1].get<double>() == doctest::Approx(10.0));
+    CHECK(Calls[6][0] == static_cast<std::uint32_t>(dbc::language::SymbolId::Command_YrotateObject));
+    CHECK(Calls[6][4] == 1);
+    CHECK(Json["files"][Calls[0][1].get<std::size_t>()].get<std::string>().find(
+              Source.Path.filename().generic_string()) != std::string::npos);
+
+    REQUIRE(Json["objects"].size() == 1);
+    const nlohmann::json& Object = Json["objects"][0];
+    CHECK(Object["id"] == 2);
+    CHECK(Object["position"][0].get<double>() == doctest::Approx(10.0));
+    CHECK(Object["rotation"][1].get<double>() == doctest::Approx(45.0));
+    CHECK(Object["scale"][0].get<double>() == doctest::Approx(50.0));
+    CHECK(Object["max"][0].get<double>() == doctest::Approx(5.0));
 }
 
 TEST_CASE("an ambiguous DBA requires a force in non-interactive CLI mode")

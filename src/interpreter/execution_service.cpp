@@ -9,6 +9,7 @@
 #include "engine_builtin_context.hpp"
 #include "engine_builtin_host.hpp"
 #include "execution_diagnostics.hpp"
+#include "scene_capture.hpp"
 #include "vm/compiler.hpp"
 #include "vm/execution_session.hpp"
 #include "vm/verifier.hpp"
@@ -475,6 +476,13 @@ namespace dbc::interpreter
                                                ? Impl_->Request.Options.PresentExitPrompt
                                                : ExitPromptPresenter(PresentExitPromptWithSdl);
         Impl_->Host = std::make_unique<detail::EngineBuiltinHost>(Impl_->Context);
+        vm::BuiltinObserver Observer;
+        if (SceneRecorder* Recorder = Impl_->Request.Options.SceneCalls)
+            Observer = [Recorder, Context = &Impl_->Context](language::SymbolId Symbol,
+                                                             std::span<const vm::Value> Arguments,
+                                                             const language::SourceSpan& Span)
+            { Recorder->Record(Symbol, Arguments, Span, Context->SyncCount, Context->AssetRoot); };
+        Impl_->Session.SetBuiltinObserver(std::move(Observer));
         if (!Impl_->Session.Prepare(std::move(Bytecode), *Impl_->Host,
                                     !Impl_->Request.Options.BuiltinCoverageOutputPath.empty()))
         {

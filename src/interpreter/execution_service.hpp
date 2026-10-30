@@ -35,6 +35,8 @@ namespace dbc
         using MissingSourceLoader = std::function<std::optional<SourceUnit>(
             const std::filesystem::path& LogicalPath, language::LanguageProfile Profile, std::string& Error)>;
 
+        class SceneRecorder;
+
         struct ExecutionOptions
         {
             std::filesystem::path AssetRoot{};
@@ -48,6 +50,8 @@ namespace dbc
             std::function<void(std::string_view Text)> Output{};
             HostFileLauncher LaunchFile{};
             ExitPromptPresenter PresentExitPrompt{};
+            // Not owned; when set, receives the scene commands the program runs.
+            SceneRecorder* SceneCalls = nullptr;
         };
 
         struct ExecutionRequest

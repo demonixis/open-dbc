@@ -6,6 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <span>
 #include <unordered_map>
@@ -109,9 +110,14 @@ namespace dbc::vm
         std::uint64_t Failed = 0;
     };
 
+    // Sees each builtin call once, before the host runs it, with its evaluated arguments.
+    using BuiltinObserver =
+        std::function<void(language::SymbolId, std::span<const Value> Arguments, const language::SourceSpan&)>;
+
     class ExecutionSession
     {
       public:
+        void SetBuiltinObserver(BuiltinObserver Observer);
         bool Prepare(std::shared_ptr<const Module> Bytecode, BuiltinHost& Host, bool TrackBuiltinCoverage = false);
         TickResult Tick(std::size_t InstructionBudget);
         void RequestStop();
@@ -146,6 +152,7 @@ namespace dbc::vm
         std::atomic_bool StopRequested_ = false;
         std::uint64_t NextInvocationId_ = 1;
         std::optional<std::uint64_t> ActiveInvocation_{};
+        BuiltinObserver Observer_{};
         std::vector<std::pair<language::SymbolId, language::OverloadId>> ActiveCoverage_{};
         std::vector<BuiltinCoverageEntry> Coverage_{};
         std::unordered_map<std::uint64_t, std::size_t> CoverageIndices_{};
