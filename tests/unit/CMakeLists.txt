@@ -51,6 +51,14 @@ if(NOT ANDROID AND NOT IOS)
         nlohmann_json::nlohmann_json)
     doctest_discover_tests(test_studio_editor PROPERTIES LABELS "unit-studio")
 
+    add_executable(test_studio_i18n
+        test_studio_i18n.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
+    )
+    target_include_directories(test_studio_i18n PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
+    target_link_libraries(test_studio_i18n PRIVATE doctest_with_main imgui)
+    doctest_discover_tests(test_studio_i18n PROPERTIES LABELS "unit-studio")
+
     add_executable(test_studio_scene
         test_studio_scene.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp

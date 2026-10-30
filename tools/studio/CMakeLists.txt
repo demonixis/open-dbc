@@ -174,6 +174,8 @@ set(STUDIO_SOURCES
     src/core/file_dialog.hpp
     src/core/gpu_texture.cpp
     src/core/gpu_texture.hpp
+    src/core/i18n.cpp
+    src/core/i18n.hpp
     src/core/media_catalogue.cpp
     src/core/media_catalogue.hpp
     src/core/new_project.cpp
