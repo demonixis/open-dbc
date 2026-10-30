@@ -29,6 +29,8 @@ namespace dbc::studio
             constexpr float KCameraNear = 0.1f;
             constexpr float KCameraFar = 5000.0f;
             constexpr float KIconRadius = 7.0f;
+            // How far from the mouse a vertex drag reaches for a vertex to land on, in pixels.
+            constexpr float KVertexReach = 40.0f;
 
             glm::vec3 Forward(float Yaw, float Pitch)
             {
@@ -236,15 +238,20 @@ namespace dbc::studio
             std::vector<scene::LineVertex> Lines;
             const glm::vec4 Minor(0.32f, 0.33f, 0.36f, 1.0f);
             const glm::vec4 Major(0.45f, 0.46f, 0.50f, 1.0f);
-            constexpr int KHalf = 50;
-            constexpr float KStep = 10.0f;
-            for (int Index = -KHalf; ShowGrid_ && Index <= KHalf; ++Index)
+            if (ShowGrid_)
             {
-                const float At = Index * KStep;
-                const float End = KHalf * KStep;
-                const glm::vec4 Color = Index % 10 == 0 ? Major : Minor;
-                AddLine(Lines, {At, 0.0f, -End}, {At, 0.0f, End}, Index == 0 ? glm::vec4(0.3f, 0.45f, 0.9f, 1) : Color);
-                AddLine(Lines, {-End, 0.0f, At}, {End, 0.0f, At}, Index == 0 ? glm::vec4(0.85f, 0.3f, 0.3f, 1) : Color);
+                const bool LevelView = LookThroughCamera_ && Document_.Env.UseCamera;
+                const glm::vec3 Focus = LevelView
+                                            ? Document_.Env.CameraPosition
+                                            : Camera_.Position + Forward(Camera_.Yaw, Camera_.Pitch) * Camera_.Distance;
+                for (const scene::GridLine& Line : scene::BuildGridLines(MoveSnap_, Focus))
+                {
+                    const glm::vec4 Color = Line.Kind == scene::GridLineKind::AxisZ   ? glm::vec4(0.3f, 0.45f, 0.9f, 1)
+                                            : Line.Kind == scene::GridLineKind::AxisX ? glm::vec4(0.85f, 0.3f, 0.3f, 1)
+                                            : Line.Kind == scene::GridLineKind::Major ? Major
+                                                                                      : Minor;
+                    AddLine(Lines, Line.A, Line.B, Color);
+                }
             }
 
             const glm::vec4 Highlight(1.0f, 0.62f, 0.15f, 1.0f);
@@ -420,6 +427,91 @@ namespace dbc::studio
             Pick(Hit);
         }
 
+        bool SceneEditor::SnapActive() const
+        {
+            const ImGuiIO& Io = ImGui::GetIO();
+            return Snap_ != (Io.KeyCtrl || Io.KeySuper);
+        }
+
+        void SceneEditor::AlignSelectionToGrid()
+        {
+            if (!Editable() || (Selection_.empty() && !CameraSelected_))
+                return;
+            if (CameraSelected_)
+                Document_.Env.CameraPosition = scene::SnapToGrid(Document_.Env.CameraPosition, MoveSnap_);
+            for (scene::SceneNode* Node : SelectedNodes())
+                Node->Position = scene::SnapToGrid(Node->Position, MoveSnap_);
+            Commit();
+        }
+
+        bool SceneEditor::UpdateVertexSnap(bool Hovered, ImDrawList* Draw)
+        {
+            const ImGuiIO& Io = ImGui::GetIO();
+            const bool Held = ImGui::IsKeyDown(ImGuiKey_V) && !Io.WantTextInput && ImGui::IsWindowFocused() &&
+                              !Navigating_ && !GizmoActive_ && Editable() && !CameraSelected_ && Tool_ != Tool::View;
+            if (VertexDragging_ && (!Held || !ImGui::IsMouseDown(ImGuiMouseButton_Left)))
+            {
+                VertexDragging_ = false;
+                if (VertexMove_ != glm::vec3(0.0f))
+                    Commit();
+            }
+            if (!Held || Selection_.empty())
+                return false;
+
+            const scene::ScreenView Screen{View_.Projection * View_.View, glm::vec2(ViewportMin_.x, ViewportMin_.y),
+                                           glm::vec2(ViewportSize_.x, ViewportSize_.y)};
+            const glm::vec2 Mouse(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+            const auto Nearest = [&](bool AmongSelected)
+            {
+                std::optional<scene::ScreenVertex> Best;
+                for (const scene::SceneNode& Node : Document_.Nodes)
+                {
+                    if (IsSelected(Node) != AmongSelected)
+                        continue;
+                    const scene::CpuMesh* Mesh = scene::IsMarker(Node.Kind) ? nullptr : Renderer_.Mesh(Node);
+                    if (Mesh != nullptr)
+                        scene::KeepNearestVertex(*Mesh, scene::NodeWorld(Node), Screen, Mouse, Best);
+                    else
+                        scene::KeepNearestPoint(Node.Position, Screen, Mouse, Best);
+                }
+                return Best;
+            };
+            const auto DrawVertex = [&](const glm::vec3& Point)
+            {
+                ImVec2 At;
+                if (ProjectToScreen(Point, At))
+                    Draw->AddCircle(At, KIconRadius, IM_COL32(255, 160, 40, 255), 0, 2.0f);
+            };
+
+            if (!VertexDragging_)
+            {
+                const std::optional<scene::ScreenVertex> Grab = Nearest(true);
+                if (!Grab)
+                    return true;
+                DrawVertex(Grab->World);
+                if (Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt)
+                {
+                    VertexDragging_ = true;
+                    VertexGrab_ = Grab->World;
+                    VertexMove_ = glm::vec3(0.0f);
+                    GroupStart_.clear();
+                    for (const scene::SceneNode* Node : SelectedNodes())
+                        GroupStart_.push_back(*Node);
+                }
+                return true;
+            }
+
+            // Out of reach of any vertex, the selection stays on the last one.
+            const std::optional<scene::ScreenVertex> Target = Nearest(false);
+            if (Target && Target->Pixels <= KVertexReach)
+                VertexMove_ = Target->World - VertexGrab_;
+            for (const scene::SceneNode& Start : GroupStart_)
+                if (scene::SceneNode* Node = Document_.Find(scene::IdSpaceOf(Start.Kind), Start.Id))
+                    Node->Position = Start.Position + VertexMove_;
+            DrawVertex(VertexGrab_ + VertexMove_);
+            return true;
+        }
+
         void SceneEditor::DrawGizmo()
         {
             if (!Editable() || Tool_ == Tool::View)
@@ -461,7 +553,8 @@ namespace dbc::studio
             // world moves and scales are snapped below to whole multiples instead.
             const bool LocalMove = Operation == ImGuizmo::TRANSLATE && Mode == ImGuizmo::LOCAL;
             const glm::vec3 Steps = Operation == ImGuizmo::ROTATE ? glm::vec3(RotateSnap_) : glm::vec3(MoveSnap_);
-            const bool GizmoSnaps = Snap_ && (Operation == ImGuizmo::ROTATE || LocalMove);
+            const bool Snapping = SnapActive();
+            const bool GizmoSnaps = Snapping && (Operation == ImGuizmo::ROTATE || LocalMove);
             if (ImGuizmo::Manipulate(glm::value_ptr(View_.View), glm::value_ptr(View_.Projection), Operation, Mode,
                                      glm::value_ptr(Model), nullptr, GizmoSnaps ? glm::value_ptr(Steps) : nullptr))
             {
@@ -472,7 +565,7 @@ namespace dbc::studio
                 }
                 GizmoActive_ = true;
                 glm::vec3 Position(Model[3]);
-                if (Snap_ && Operation == ImGuizmo::TRANSLATE && !LocalMove)
+                if (Snapping && Operation == ImGuizmo::TRANSLATE && !LocalMove)
                     Position = scene::SnapChangedAxes(Position, GizmoStartPosition_, MoveSnap_);
                 glm::vec3 Scale(glm::length(glm::vec3(Model[0])), glm::length(glm::vec3(Model[1])),
                                 glm::length(glm::vec3(Model[2])));
@@ -494,7 +587,7 @@ namespace dbc::studio
                     if (Operation == ImGuizmo::SCALE)
                     {
                         glm::vec3 Percent = Scale * 100.0f;
-                        if (Snap_)
+                        if (Snapping)
                             Percent = scene::SnapChangedAxes(Percent, GizmoStartScale_, ScaleSnap_);
                         if (UniformScale_)
                             Percent = scene::ProportionalScale(GizmoStartScale_, Percent);
@@ -534,7 +627,8 @@ namespace dbc::studio
             const glm::mat4 Before = GroupGizmo_;
             const bool LocalMove = Operation == ImGuizmo::TRANSLATE && Mode == ImGuizmo::LOCAL;
             const glm::vec3 Steps = Operation == ImGuizmo::ROTATE ? glm::vec3(RotateSnap_) : glm::vec3(MoveSnap_);
-            const bool GizmoSnaps = Snap_ && (Operation == ImGuizmo::ROTATE || LocalMove);
+            const bool Snapping = SnapActive();
+            const bool GizmoSnaps = Snapping && (Operation == ImGuizmo::ROTATE || LocalMove);
             if (!ImGuizmo::Manipulate(glm::value_ptr(View_.View), glm::value_ptr(View_.Projection), Operation, Mode,
                                       glm::value_ptr(GroupGizmo_), nullptr,
                                       GizmoSnaps ? glm::value_ptr(Steps) : nullptr))
@@ -564,10 +658,10 @@ namespace dbc::studio
             Change.Axes = StartAxes;
             if (Operation == ImGuizmo::TRANSLATE)
             {
-                glm::vec3 Pivot(GroupGizmo_[3]);
-                if (Snap_ && !LocalMove)
-                    Pivot = scene::SnapChangedAxes(Pivot, Change.Pivot, MoveSnap_);
-                Change.Move = Pivot - Change.Pivot;
+                Change.Move = glm::vec3(GroupGizmo_[3]) - Change.Pivot;
+                // The active node lands on the grid; the others keep their distance from it.
+                if (Snapping && !LocalMove && !GroupStart_.empty())
+                    Change.Move = scene::SnapAnchoredMove(GroupStart_.back().Position, Change.Move, MoveSnap_);
             }
             else if (Operation == ImGuizmo::ROTATE)
             {
@@ -576,7 +670,7 @@ namespace dbc::studio
             else
             {
                 glm::vec3 Percent = Scale / StartScale * 100.0f;
-                if (Snap_)
+                if (Snapping)
                     Percent = scene::SnapChangedAxes(Percent, glm::vec3(100.0f), ScaleSnap_);
                 if (UniformScale_)
                     Percent = scene::ProportionalScale(glm::vec3(100.0f), Percent);
@@ -642,7 +736,14 @@ namespace dbc::studio
             ImGui::SameLine();
             ImGui::Checkbox("Snap", &Snap_);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Move, rotate and scale by steps");
+                ImGui::SetTooltip("Move, rotate and scale by steps\n"
+                                  "Hold Ctrl/Cmd: invert snapping\n"
+                                  "- and =: smaller or larger grid\n"
+                                  "G: align the selection to the grid\n"
+                                  "Hold V: drag by a vertex onto another node's vertex");
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextDisabled("%g", MoveSnap_);
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             if (ImGui::ArrowButton("##snap-steps", ImGuiDir_Down))
                 ImGui::OpenPopup("Snap steps");
@@ -651,7 +752,7 @@ namespace dbc::studio
             if (ImGui::BeginPopup("Snap steps"))
             {
                 ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
-                ImGui::DragFloat("Move", &MoveSnap_, 0.1f, 0.01f, 10000.0f, "%.2f");
+                ImGui::DragFloat("Move", &MoveSnap_, 0.1f, scene::KMinGridStep, scene::KMaxGridStep, "%.2f");
                 ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
                 ImGui::DragFloat("Rotate (degrees)", &RotateSnap_, 0.5f, 0.1f, 180.0f, "%.1f");
                 ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
@@ -715,10 +816,12 @@ namespace dbc::studio
             UpdateCamera(Hovered);
             ImDrawList* Draw = ImGui::GetWindowDrawList();
             DrawIcons(Draw);
-            DrawGizmo();
+            const bool VertexSnap = UpdateVertexSnap(Hovered, Draw);
+            if (!VertexSnap)
+                DrawGizmo();
 
-            if (Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt && !ImGuizmo::IsOver() &&
-                !ImGuizmo::IsUsing())
+            if (Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt && !VertexSnap &&
+                !ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
                 PickAt(ImGui::GetMousePos(), Io.KeyCtrl || Io.KeySuper || Io.KeyShift);
 
             // Tool keys apply while the viewport has focus and no button is navigating.
@@ -734,6 +837,12 @@ namespace dbc::studio
                     Tool_ = Tool::Scale;
                 else if (ImGui::IsKeyPressed(ImGuiKey_F, false))
                     FrameSelection();
+                else if (ImGui::IsKeyPressed(ImGuiKey_G, false))
+                    AlignSelectionToGrid();
+                else if (ImGui::IsKeyPressed(ImGuiKey_Minus, false))
+                    MoveSnap_ = scene::NextGridStep(MoveSnap_, false);
+                else if (ImGui::IsKeyPressed(ImGuiKey_Equal, false))
+                    MoveSnap_ = scene::NextGridStep(MoveSnap_, true);
             }
 
             if (!ReadErrors_.empty())

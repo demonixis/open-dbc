@@ -152,6 +152,12 @@ namespace dbc::studio
             void DrawGroupGizmo(ImGuizmo::OPERATION Operation, ImGuizmo::MODE Mode);
             void DrawIcons(ImDrawList* Draw);
             void FrameSelection();
+            // The Snap box, inverted while Ctrl or Cmd is held.
+            bool SnapActive() const;
+            void AlignSelectionToGrid();
+            // While V is held: drags the selection by its vertex nearest the mouse onto the
+            // nearest vertex of another node. Returns whether it replaces the gizmo and picking.
+            bool UpdateVertexSnap(bool Hovered, ImDrawList* Draw);
             void AcceptAssetDrop();
             bool ProjectToScreen(const glm::vec3& Point, ImVec2& Screen) const;
             scene::Ray RayAt(const ImVec2& Mouse) const;
@@ -208,9 +214,8 @@ namespace dbc::studio
             Tool Tool_ = Tool::Move;
             bool LocalGizmo_ = false;
             bool ShowGrid_ = true;
-            // Gizmo snapping: world units, degrees and scale percent. The move step
-            // matches a grid cell.
-            bool Snap_ = false;
+            // Snapping: world units, degrees and scale percent. The move step is a grid cell.
+            bool Snap_ = true;
             float MoveSnap_ = 10.0f;
             float RotateSnap_ = 15.0f;
             float ScaleSnap_ = 10.0f;
@@ -226,6 +231,10 @@ namespace dbc::studio
             glm::mat4 GroupGizmo_{1.0f};
             glm::mat4 GroupGizmoStart_{1.0f};
             std::vector<scene::SceneNode> GroupStart_;
+            // A vertex drag: the vertex grabbed where it began, and how far it has jumped.
+            bool VertexDragging_ = false;
+            glm::vec3 VertexGrab_{0.0f};
+            glm::vec3 VertexMove_{0.0f};
             scene::ViewParameters View_;
             ImVec2 ViewportMin_{0.0f, 0.0f};
             ImVec2 ViewportSize_{0.0f, 0.0f};

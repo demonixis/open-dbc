@@ -92,6 +92,35 @@ namespace dbc::studio
         // Puts each axis `Value` moved away from `Start` on the nearest multiple of
         // `Step`; the other axes keep their value. A step of 0 or less snaps nothing.
         glm::vec3 SnapChangedAxes(const glm::vec3& Value, const glm::vec3& Start, float Step);
+        // Puts every axis on the nearest multiple of `Step`. A step of 0 or less snaps nothing.
+        glm::vec3 SnapToGrid(const glm::vec3& Value, float Step);
+        // `Move` adjusted so that `Anchor` lands on the grid on the axes it changes: a
+        // multi-selection follows one node, which its centre rarely matches.
+        glm::vec3 SnapAnchoredMove(const glm::vec3& Anchor, const glm::vec3& Move, float Step);
+
+        inline constexpr float KMinGridStep = 0.01f;
+        inline constexpr float KMaxGridStep = 10000.0f;
+        // The next step up or down the series 1, 2.5, 5, 10, 25..., from any step.
+        float NextGridStep(float Step, bool Up);
+
+        enum class GridLineKind
+        {
+            Minor,
+            Major,
+            AxisX,
+            AxisZ,
+        };
+
+        struct GridLine
+        {
+            glm::vec3 A{0.0f};
+            glm::vec3 B{0.0f};
+            GridLineKind Kind = GridLineKind::Minor;
+        };
+
+        // The ground grid around `Focus`, in cells of `Step` with a major line every 10.
+        // Empty for a step of 0 or less.
+        std::vector<GridLine> BuildGridLines(float Step, const glm::vec3& Focus);
         // Scales all of `Start` by the ratio of the axis `Edited` changed most, keeping
         // its proportions. An axis that starts at 0 has no ratio: `Edited` is kept.
         glm::vec3 ProportionalScale(const glm::vec3& Start, const glm::vec3& Edited);
@@ -130,6 +159,28 @@ namespace dbc::studio
 
         // Distance along the ray to the nearest triangle, both sides counted.
         std::optional<float> Intersect(const Ray& Value, const CpuMesh& Mesh, const glm::mat4& World);
+
+        // Where the viewport shows the world, for measuring on screen.
+        struct ScreenView
+        {
+            glm::mat4 ViewProjection{1.0f};
+            glm::vec2 Min{0.0f};
+            glm::vec2 Size{1.0f};
+        };
+
+        struct ScreenVertex
+        {
+            glm::vec3 World{0.0f};
+            float Pixels = 0.0f;
+            float Depth = 0.0f;
+        };
+
+        // Replaces `Best` when `Point` is visible and nearer `Mouse` on screen. Points within
+        // a pixel of each other, like a box's corners seen head-on, go to the nearer to the eye.
+        void KeepNearestPoint(const glm::vec3& Point, const ScreenView& View, const glm::vec2& Mouse,
+                              std::optional<ScreenVertex>& Best);
+        void KeepNearestVertex(const CpuMesh& Mesh, const glm::mat4& World, const ScreenView& View,
+                               const glm::vec2& Mouse, std::optional<ScreenVertex>& Best);
     } // namespace scene
 
 } // namespace dbc::studio

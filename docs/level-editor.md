@@ -115,17 +115,30 @@ sets only X. Names and numbers stay per node.
 | Ctrl/Cmd+A | Select every node |
 | Q W E R | View, move, rotate, scale tools |
 | F | Frame the selection |
+| G | Align the selection to the grid |
+| - and = | Smaller or larger grid step: 1, 2.5, 5, 10, 25... |
+| Hold Ctrl/Cmd during a drag | Invert snapping |
+| Hold V and drag | Move the selection by its vertex nearest the mouse onto another node's vertex |
 | Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y, Ctrl+D, Delete | Undo, redo, duplicate, delete |
 
 Matrices, terrains and sounds only move, lights and the camera move and turn,
-and objects also scale. **Local** turns the gizmo with the node. **Snap**
-moves world positions and scales to whole multiples of their steps, and moves
-along local axes or turns by steps from where the drag began. With several
+and objects also scale. **Local** turns the gizmo with the node. With several
 nodes, the gizmo sits at their centre (turned like the active node in
-**Local**) and moves, turns and scales them about it; the arrow next
-to it sets the steps (10 units, 15 degrees and 10 % by default). **Grid** shows
-or hides the ground grid, whose cells are 10 units. A duplicate of `tree` or
+**Local**) and moves, turns and scales them about it. A duplicate of `tree` or
 `tree_2` is named `tree_N`, one past the highest `tree_` number in the level.
+
+**Snap** is on by default. It moves world positions and scales to whole
+multiples of their steps, on the axes the drag changes, and moves along local
+axes or turns by steps from where the drag began. A group moves so that its
+active node lands on the grid, and keeps its layout. Models and sounds dropped
+in the scene land on the grid too. The number beside the box is the move step,
+which is also a cell of the grid drawn around the camera's pivot; the arrow sets
+the steps (10 units, 15 degrees and 10 % by default). They last until the Studio
+closes. On macOS the key that inverts snapping is Cmd: ImGui turns Ctrl+click
+into a right click. **Grid** shows or hides the grid.
+
+A vertex drag reaches 40 pixels around the mouse, and the selection waits on its
+last vertex in between. It works on the Move, Rotate and Scale tools.
 
 Dropping an image on a node textures it. Dropping a
 model or a sound places it on the ground under the cursor. In Assets, a

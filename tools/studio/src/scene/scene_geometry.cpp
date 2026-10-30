@@ -2,6 +2,7 @@
 #include "path_utf8.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <limits>
@@ -15,6 +16,7 @@
 #include <utility>
 
 #include "engine/systems/renderer_system.hpp"
+#include <glm/common.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -456,6 +458,93 @@ namespace dbc::studio
                 if (std::abs(Value[Axis] - Start[Axis]) > 1e-4f * std::max(1.0f, std::abs(Start[Axis])))
                     Snapped[Axis] = std::round(Value[Axis] / Step) * Step;
             return Snapped;
+        }
+
+        glm::vec3 SnapToGrid(const glm::vec3& Value, float Step)
+        {
+            return Step > 0.0f ? glm::round(Value / Step) * Step : Value;
+        }
+
+        glm::vec3 SnapAnchoredMove(const glm::vec3& Anchor, const glm::vec3& Move, float Step)
+        {
+            return SnapChangedAxes(Anchor + Move, Anchor, Step) - Anchor;
+        }
+
+        float NextGridStep(float Step, bool Up)
+        {
+            const float Current = std::clamp(Step, KMinGridStep, KMaxGridStep);
+            // The decades around the current one, ascending. Margins absorb the series' float noise.
+            const float Decade = std::floor(std::log10(Current));
+            constexpr std::array<float, 3> Mantissas{1.0f, 2.5f, 5.0f};
+            std::array<float, 9> Series{};
+            for (std::size_t Index = 0; Index < Series.size(); ++Index)
+            {
+                const float Power = std::pow(10.0f, Decade - 1.0f + static_cast<float>(Index / 3));
+                Series[Index] = Mantissas[Index % 3] * Power;
+            }
+            if (Up)
+            {
+                const auto Next =
+                    std::find_if(Series.begin(), Series.end(), [&](float Value) { return Value > Current * 1.001f; });
+                return Next == Series.end() ? Current : std::min(*Next, KMaxGridStep);
+            }
+            const auto Next =
+                std::find_if(Series.rbegin(), Series.rend(), [&](float Value) { return Value < Current * 0.999f; });
+            return Next == Series.rend() ? Current : std::max(*Next, KMinGridStep);
+        }
+
+        std::vector<GridLine> BuildGridLines(float Step, const glm::vec3& Focus)
+        {
+            constexpr long long KHalfCells = 50;
+            constexpr long long KMajorCells = 10;
+            std::vector<GridLine> Lines;
+            if (Step <= 0.0f)
+                return Lines;
+            // Centred on a major line, so that the lines stay put while the focus moves.
+            const auto CenterCell = [&](float Along)
+            { return std::llround(Along / (Step * KMajorCells)) * KMajorCells; };
+            const auto KindOf = [](long long Cell, GridLineKind Axis)
+            {
+                return Cell == 0 ? Axis : Cell % KMajorCells == 0 ? GridLineKind::Major : GridLineKind::Minor;
+            };
+            const auto At = [&](long long Cell) { return static_cast<float>(Cell) * Step; };
+            const long long CenterX = CenterCell(Focus.x);
+            const long long CenterZ = CenterCell(Focus.z);
+            Lines.reserve(2 * (2 * KHalfCells + 1));
+            for (long long Offset = -KHalfCells; Offset <= KHalfCells; ++Offset)
+            {
+                const long long X = CenterX + Offset;
+                const long long Z = CenterZ + Offset;
+                Lines.push_back({{At(X), 0.0f, At(CenterZ - KHalfCells)},
+                                 {At(X), 0.0f, At(CenterZ + KHalfCells)},
+                                 KindOf(X, GridLineKind::AxisZ)});
+                Lines.push_back({{At(CenterX - KHalfCells), 0.0f, At(Z)},
+                                 {At(CenterX + KHalfCells), 0.0f, At(Z)},
+                                 KindOf(Z, GridLineKind::AxisX)});
+            }
+            return Lines;
+        }
+
+        void KeepNearestPoint(const glm::vec3& Point, const ScreenView& View, const glm::vec2& Mouse,
+                              std::optional<ScreenVertex>& Best)
+        {
+            const glm::vec4 Clip = View.ViewProjection * glm::vec4(Point, 1.0f);
+            if (Clip.w <= 0.0001f)
+                return;
+            const glm::vec3 Ndc = glm::vec3(Clip) / Clip.w;
+            if (Ndc.z < 0.0f || Ndc.z > 1.0f)
+                return;
+            const glm::vec2 Screen = View.Min + glm::vec2((Ndc.x + 1.0f) * 0.5f, (1.0f - Ndc.y) * 0.5f) * View.Size;
+            const float Pixels = glm::length(Screen - Mouse);
+            if (!Best || Pixels < Best->Pixels - 1.0f || (Pixels < Best->Pixels + 1.0f && Ndc.z < Best->Depth))
+                Best = ScreenVertex{Point, Pixels, Ndc.z};
+        }
+
+        void KeepNearestVertex(const CpuMesh& Mesh, const glm::mat4& World, const ScreenView& View,
+                               const glm::vec2& Mouse, std::optional<ScreenVertex>& Best)
+        {
+            for (const MeshVertex& Vertex : Mesh.Vertices)
+                KeepNearestPoint(glm::vec3(World * glm::vec4(Vertex.Position, 1.0f)), View, Mouse, Best);
         }
 
         glm::vec3 ProportionalScale(const glm::vec3& Start, const glm::vec3& Edited)

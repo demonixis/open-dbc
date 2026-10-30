@@ -75,6 +75,29 @@ if(NOT ANDROID AND NOT IOS)
     target_link_libraries(test_studio_scene_render PRIVATE doctest_with_main dbc_engine dbc_language)
     doctest_discover_tests(test_studio_scene_render PROPERTIES LABELS "unit-studio")
 
+    add_executable(test_studio_scene_view
+        test_studio_scene_view.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/gpu_texture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_assets.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_editor.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_inspector.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_viewport.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/heightmap.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_geometry.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_integration.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_renderer.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/theme.cpp
+    )
+    add_dependencies(test_studio_scene_view opendbc_scene_shaders)
+    target_include_directories(test_studio_scene_view PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
+                               ${CMAKE_BINARY_DIR}/tools/studio/generated)
+    target_compile_definitions(test_studio_scene_view PRIVATE TEST_OUTPUT_DIR="${CMAKE_BINARY_DIR}/tests")
+    target_link_libraries(test_studio_scene_view PRIVATE doctest_with_main dbc_engine dbc_language imguizmo)
+    doctest_discover_tests(test_studio_scene_view PROPERTIES LABELS "unit-studio")
+
     add_executable(test_studio_media
         test_studio_media.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
@@ -312,7 +335,8 @@ endif()
 
 # The tests are OpenDBC code too.
 foreach(test_target IN ITEMS test_language_profile test_language_catalogue test_frontend test_vm test_studio_language
-        test_studio_run_plan test_studio_editor test_studio_scene test_studio_scene_render test_studio_media
+        test_studio_run_plan test_studio_editor test_studio_scene test_studio_scene_render test_studio_scene_view
+        test_studio_media
         test_engine_math test_collision_math test_bsp_world test_terrain_mesh test_triangle_order test_engine_builtins test_network test_dll test_input_haptics test_command_line
         test_program_image test_project_resolver test_debug_system
         test_shader_compiler test_project_settings test_studio_new_project test_studio_snippets

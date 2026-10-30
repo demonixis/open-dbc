@@ -13,6 +13,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <random>
 #include <string>
 #include <vector>
@@ -111,6 +112,126 @@ TEST_CASE("Scene snapping moves only the dragged axes onto whole steps")
     CHECK(Snapped.z == doctest::Approx(0.0f));
     const glm::vec3 Unsnapped = scene::SnapChangedAxes(glm::vec3(16.4f, -7.5f, -4.9f), Start, 0.0f);
     CHECK(Unsnapped.x == doctest::Approx(16.4f));
+}
+
+TEST_CASE("Aligning to the grid snaps every axis")
+{
+    const glm::vec3 Aligned = scene::SnapToGrid(glm::vec3(16.4f, -7.5f, -4.9f), 2.5f);
+    CHECK(Aligned.x == doctest::Approx(17.5f));
+    CHECK(Aligned.y == doctest::Approx(-7.5f));
+    CHECK(Aligned.z == doctest::Approx(-5.0f));
+    CHECK(scene::SnapToGrid(glm::vec3(16.4f, 0.0f, 0.0f), 0.0f).x == doctest::Approx(16.4f));
+}
+
+TEST_CASE("A snapped group move puts its anchor on the grid, not its centre")
+{
+    // Dragged 8 along X from 3, the anchor lands on 10; Y stays where it was, off the grid.
+    const glm::vec3 Move = scene::SnapAnchoredMove(glm::vec3(3.0f, 4.0f, 0.0f), glm::vec3(8.0f, 0.0f, 0.0f), 10.0f);
+    CHECK(Move.x == doctest::Approx(7.0f));
+    CHECK(Move.y == doctest::Approx(0.0f));
+    CHECK(Move.z == doctest::Approx(0.0f));
+}
+
+TEST_CASE("Grid steps follow the 1, 2.5, 5 series from any value")
+{
+    CHECK(scene::NextGridStep(10.0f, true) == doctest::Approx(25.0f));
+    CHECK(scene::NextGridStep(10.0f, false) == doctest::Approx(5.0f));
+    CHECK(scene::NextGridStep(5.0f, false) == doctest::Approx(2.5f));
+    CHECK(scene::NextGridStep(1.0f, false) == doctest::Approx(0.5f));
+    CHECK(scene::NextGridStep(100.0f, true) == doctest::Approx(250.0f));
+    CHECK(scene::NextGridStep(1000.0f, false) == doctest::Approx(500.0f));
+    CHECK(scene::NextGridStep(7.0f, true) == doctest::Approx(10.0f));
+    CHECK(scene::NextGridStep(7.0f, false) == doctest::Approx(5.0f));
+    CHECK(scene::NextGridStep(scene::KMinGridStep, false) == doctest::Approx(scene::KMinGridStep));
+    CHECK(scene::NextGridStep(scene::KMaxGridStep, true) == doctest::Approx(scene::KMaxGridStep));
+    // Going up then down comes back, step after step.
+    float Step = 0.25f;
+    for (int Index = 0; Index < 6; ++Index)
+    {
+        const float Up = scene::NextGridStep(Step, true);
+        CHECK(Up > Step);
+        CHECK(scene::NextGridStep(Up, false) == doctest::Approx(Step));
+        Step = Up;
+    }
+}
+
+TEST_CASE("The grid's cells follow the step and its lines stay put around the focus")
+{
+    CHECK(scene::BuildGridLines(0.0f, glm::vec3(0.0f)).empty());
+
+    const auto Count = [](const std::vector<scene::GridLine>& Lines, scene::GridLineKind Kind)
+    {
+        return std::count_if(Lines.begin(), Lines.end(),
+                             [&](const scene::GridLine& Line) { return Line.Kind == Kind; });
+    };
+
+    const std::vector<scene::GridLine> AtOrigin = scene::BuildGridLines(2.5f, glm::vec3(0.0f));
+    CHECK(AtOrigin.size() == 202);
+    CHECK(AtOrigin[2].A.x - AtOrigin[0].A.x == doctest::Approx(2.5f));
+    CHECK(AtOrigin[0].A.z == doctest::Approx(-125.0f));
+    CHECK(AtOrigin[0].B.z == doctest::Approx(125.0f));
+    CHECK(Count(AtOrigin, scene::GridLineKind::AxisX) == 1);
+    CHECK(Count(AtOrigin, scene::GridLineKind::AxisZ) == 1);
+    CHECK(Count(AtOrigin, scene::GridLineKind::Major) == 20);
+
+    // Past half a major cell, the grid recentres on the next major line, which keeps every line on a multiple.
+    const std::vector<scene::GridLine> Moved = scene::BuildGridLines(10.0f, glm::vec3(3333.0f, 50.0f, -60.0f));
+    CHECK(Moved[0].A.x == doctest::Approx(3300.0f - 500.0f));
+    CHECK(Moved[1].A.z == doctest::Approx(-100.0f - 500.0f));
+    CHECK(Moved[0].A.y == doctest::Approx(0.0f));
+    // X = 0 is out of reach there, and Z = 0 is not.
+    CHECK(Count(Moved, scene::GridLineKind::AxisZ) == 0);
+    CHECK(Count(Moved, scene::GridLineKind::AxisX) == 1);
+}
+
+TEST_CASE("Vertex snapping finds the visible vertex nearest the mouse on screen")
+{
+    scene::SceneNode Box;
+    Box.Kind = scene::NodeKind::Cube;
+    Box.Size = 10.0f;
+    const scene::CpuMesh Mesh = scene::BuildMesh(Box, dbc::language::LanguageProfile::Dbc);
+    REQUIRE(!Mesh.Vertices.empty());
+
+    // Looking along +Z from 30 units away, so the box's front face is at Z = -5.
+    scene::ScreenView View;
+    View.Min = glm::vec2(100.0f, 50.0f);
+    View.Size = glm::vec2(800.0f, 600.0f);
+    View.ViewProjection = glm::perspective(glm::radians(60.0f), 800.0f / 600.0f, 0.5f, 1000.0f) *
+                          glm::lookAt(glm::vec3(0.0f, 0.0f, -30.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    const glm::vec2 Center = View.Min + View.Size * 0.5f;
+
+    // Perspective shrinks the back face, whose corners sit nearest the middle of the screen.
+    std::optional<scene::ScreenVertex> Middle;
+    scene::KeepNearestVertex(Mesh, glm::mat4(1.0f), View, Center, Middle);
+    REQUIRE(Middle.has_value());
+    CHECK(Middle->World.z == doctest::Approx(5.0f));
+
+    // Up and right of the box, the matching front corner wins, and the node's transform counts.
+    std::optional<scene::ScreenVertex> Corner;
+    scene::KeepNearestVertex(Mesh, glm::mat4(1.0f), View, Center + glm::vec2(300.0f, -300.0f), Corner);
+    REQUIRE(Corner.has_value());
+    CHECK(Corner->World.x == doctest::Approx(5.0f));
+    CHECK(Corner->World.y == doctest::Approx(5.0f));
+    CHECK(Corner->World.z == doctest::Approx(-5.0f));
+    std::optional<scene::ScreenVertex> Moved;
+    scene::KeepNearestVertex(Mesh, glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 2.0f, 3.0f)), View,
+                             Center + glm::vec2(300.0f, -300.0f), Moved);
+    REQUIRE(Moved.has_value());
+    CHECK(Moved->World.x == doctest::Approx(6.0f));
+
+    // A point head-on behind another goes to the nearer one.
+    std::optional<scene::ScreenVertex> Stacked;
+    scene::KeepNearestPoint(glm::vec3(0.0f, 0.0f, 20.0f), View, Center, Stacked);
+    scene::KeepNearestPoint(glm::vec3(0.0f, 0.0f, 5.0f), View, Center, Stacked);
+    REQUIRE(Stacked.has_value());
+    CHECK(Stacked->World.z == doctest::Approx(5.0f));
+    scene::KeepNearestPoint(glm::vec3(0.0f, 0.0f, 50.0f), View, Center, Stacked);
+    CHECK(Stacked->World.z == doctest::Approx(5.0f));
+
+    // Behind the eye is never a candidate.
+    std::optional<scene::ScreenVertex> Behind;
+    scene::KeepNearestPoint(glm::vec3(0.0f, 0.0f, -40.0f), View, Center, Behind);
+    CHECK(!Behind.has_value());
 }
 
 TEST_CASE("Uniform scale keeps the proportions of the starting scale")

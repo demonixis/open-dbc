@@ -366,6 +366,8 @@ namespace dbc::studio
                 const glm::vec3 Ahead = scene::LightDirection(glm::vec3(Camera_.Pitch, Camera_.Yaw, 0.0f));
                 Node.Position = Camera_.Position + Ahead * Camera_.Distance;
             }
+            if (SnapActive())
+                Node.Position = scene::SnapToGrid(Node.Position, MoveSnap_);
             Select(&Node);
             Commit();
         }
@@ -438,6 +440,8 @@ namespace dbc::studio
                 DuplicateSelected();
             if (ImGui::MenuItem("Delete", "Delete", false, Editable() && !Selection_.empty()))
                 DeleteSelected();
+            if (ImGui::MenuItem("Align to Grid", "G", false, Editable() && (!Selection_.empty() || CameraSelected_)))
+                AlignSelectionToGrid();
             ImGui::EndMenu();
         }
 

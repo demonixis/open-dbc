@@ -197,16 +197,13 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 ## Studio Scene view
 
-- [ ] Snapping like ProGrids: a grid that follows the move step, on by default with a
-  key to invert it, keys to change the step, snap when dropping an asset, align the
-  selection to the grid, vertex-to-vertex snap. Today it is off by default and only
-  acts on gizmo drags, over a grid fixed at 10 units.
 - [ ] Paint mode: place one object, several, or a radius with a density (trees,
   grass). The generated code uses `INSTANCE OBJECT`, not one `LOAD OBJECT` per node.
 - [ ] Preview `.dbo` models (Assimp cannot read them; a box stands in) and
   `.dds` textures and thumbnails (SDL_image cannot read them).
-- [ ] Interactive UI coverage: navigation, gizmos, drag and drop and the
-  Inspector are checked by hand only.
+- [ ] Interactive UI coverage: `test_studio_scene_view` drives gizmo moves and
+  snapping with simulated input; navigation, drag and drop, the other gizmos and
+  the Inspector are checked by hand only.
 
 ## Towards 1.0
 
