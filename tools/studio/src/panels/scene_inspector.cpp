@@ -121,7 +121,7 @@ namespace dbc::studio
 
         void SceneEditor::CommitIfIdle()
         {
-            if (Editable() && !GizmoActive_ && !ImGui::IsAnyItemActive())
+            if (Editable() && !GizmoActive_ && !VertexDragging_ && !ImGui::IsAnyItemActive())
                 Commit();
         }
 

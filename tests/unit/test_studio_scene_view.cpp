@@ -124,6 +124,7 @@ namespace
                 }
                 ImGui::DockSpaceOverViewport(Dock, ImGui::GetMainViewport());
                 Editor_.DrawPanels();
+                Editor_.HandleShortcuts();
                 ImGui::Render();
             }
         }
@@ -332,4 +333,31 @@ TEST_CASE("Holding V drags the selection by a vertex onto another node's vertex"
     CHECK(Positions.at(0).y == doctest::Approx(Moving.y));
     CHECK(Positions.at(0).z == doctest::Approx(Moving.z));
     CHECK(Positions.at(1).x == doctest::Approx(Fixed.x));
+}
+
+TEST_CASE("A vertex drag is one undo step, however many vertices it lands on")
+{
+    const glm::vec3 Moving(-40.0f, 15.0f, 0.0f);
+    const glm::vec3 Fixed(40.0f, 15.0f, 0.0f);
+    const glm::vec3 Corner(KCubeSize * 0.5f, KCubeSize * 0.5f, -KCubeSize * 0.5f);
+    const glm::vec3 NearTop(-KCubeSize * 0.5f, KCubeSize * 0.5f, -KCubeSize * 0.5f);
+    const glm::vec3 NearBottom(-KCubeSize * 0.5f, -KCubeSize * 0.5f, -KCubeSize * 0.5f);
+    SceneViewDriver Driver("vertex_undo", LevelOfCubes({Moving, Fixed}));
+    Driver.Click(Moving);
+
+    Driver.Key(ImGuiKey_V, true);
+    Driver.MoveMouse(Driver.ScreenOf(Moving + Corner));
+    Driver.Button(true);
+    Driver.MoveMouse(Driver.ScreenOf(Fixed + NearTop));
+    Driver.MoveMouse(Driver.ScreenOf(Fixed + NearBottom));
+    Driver.Button(false);
+    Driver.Key(ImGuiKey_V, false);
+    CHECK(Driver.SavedPositions().at(0).y == doctest::Approx(Moving.y - KCubeSize));
+
+    Driver.Key(KCommandKey, true);
+    Driver.Tap(ImGuiKey_Z);
+    Driver.Key(KCommandKey, false);
+    const glm::vec3 Undone = Driver.SavedPositions().at(0);
+    CHECK(Undone.x == doctest::Approx(Moving.x));
+    CHECK(Undone.y == doctest::Approx(Moving.y));
 }
