@@ -104,6 +104,7 @@ if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_scene_view
         test_studio_scene_view.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/gpu_texture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_assets.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_editor.cpp

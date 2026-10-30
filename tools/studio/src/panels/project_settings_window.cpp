@@ -1,4 +1,5 @@
 #include "project_settings_window.hpp"
+#include "core/i18n.hpp"
 #include "engine/systems/log.hpp"
 #include "interpreter/atomic_file.hpp"
 #include "path_utf8.hpp"
@@ -119,7 +120,7 @@ namespace dbc::studio
             bool Saved = false;
 
             ImGui::SetNextWindowSize(ImVec2(560.0f, 520.0f), ImGuiCond_FirstUseEver);
-            if (!ImGui::Begin("Project Settings", &Open_))
+            if (!ImGui::Begin(TrId("Project Settings"), &Open_))
             {
                 ImGui::End();
                 return false;

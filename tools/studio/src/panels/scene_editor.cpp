@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <imgui_internal.h>
 
+#include "core/i18n.hpp"
 #include "scene/scene_geometry.hpp"
 #include "scene/scene_integration.hpp"
 
@@ -773,38 +774,38 @@ namespace dbc::studio
             const ImGuiID Left = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Left, 0.20f, nullptr, &Center);
             const ImGuiID Bottom = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Down, 0.28f, nullptr, &Center);
 
-            ImGui::DockBuilderDockWindow(KPanelHierarchy, Left);
-            ImGui::DockBuilderDockWindow(KPanelViewport, Center);
-            ImGui::DockBuilderDockWindow(KPanelSettings, Right);
-            ImGui::DockBuilderDockWindow(KPanelInspector, Right);
-            ImGui::DockBuilderDockWindow(OutputPanel, Bottom);
-            ImGui::DockBuilderDockWindow(KPanelAssets, Bottom);
+            ImGui::DockBuilderDockWindow(TrId(KPanelHierarchy), Left);
+            ImGui::DockBuilderDockWindow(TrId(KPanelViewport), Center);
+            ImGui::DockBuilderDockWindow(TrId(KPanelSettings), Right);
+            ImGui::DockBuilderDockWindow(TrId(KPanelInspector), Right);
+            ImGui::DockBuilderDockWindow(TrId(OutputPanel), Bottom);
+            ImGui::DockBuilderDockWindow(TrId(KPanelAssets), Bottom);
             ImGui::DockBuilderFinish(DockspaceId);
         }
 
         void SceneEditor::DrawPanels()
         {
-            if (ImGui::Begin(KPanelHierarchy))
+            if (ImGui::Begin(TrId(KPanelHierarchy)))
                 DrawHierarchy();
             ImGui::End();
 
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-            const bool ViewportOpen = ImGui::Begin(KPanelViewport, nullptr,
+            const bool ViewportOpen = ImGui::Begin(TrId(KPanelViewport), nullptr,
                                                    ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             ImGui::PopStyleVar();
             if (ViewportOpen)
                 DrawViewport();
             ImGui::End();
 
-            if (ImGui::Begin(KPanelInspector))
+            if (ImGui::Begin(TrId(KPanelInspector)))
                 DrawInspector();
             ImGui::End();
 
-            if (ImGui::Begin(KPanelSettings))
+            if (ImGui::Begin(TrId(KPanelSettings)))
                 DrawSettings();
             ImGui::End();
 
-            if (ImGui::Begin(KPanelAssets))
+            if (ImGui::Begin(TrId(KPanelAssets)))
                 DrawAssets();
             ImGui::End();
 

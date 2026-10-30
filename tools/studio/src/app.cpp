@@ -1467,7 +1467,7 @@ namespace dbc::studio
         if (Mode_ == Mode::Scene)
         {
             Scene_.DrawPanels();
-            if (ImGui::Begin(KPanelSceneOutput))
+            if (ImGui::Begin(TrId(KPanelSceneOutput)))
                 Output_.Draw();
             ImGui::End();
         }
@@ -1495,7 +1495,7 @@ namespace dbc::studio
     {
         if (ShowProject_)
         {
-            ImGui::Begin(KPanelProject, &ShowProject_);
+            ImGui::Begin(TrId(KPanelProject), &ShowProject_);
             ProjectDockId_ = ImGui::GetWindowDockID();
             Project_.Draw();
             ImGui::End();
@@ -1506,7 +1506,7 @@ namespace dbc::studio
             if (ProjectDockId_ != 0)
                 ImGui::SetNextWindowDockID(ProjectDockId_, ImGuiCond_FirstUseEver);
             // Only a visible panel parses: a hidden tab costs nothing while typing.
-            if (ImGui::Begin(KPanelCode, &ShowCode_))
+            if (ImGui::Begin(TrId(KPanelCode), &ShowCode_))
             {
                 Code_.Update(Editor_.CurrentIsBasic() ? Editor_.CurrentEditor() : nullptr, Editor_.CurrentPath(),
                              Editor_.CurrentProfile(), ImGui::GetTime());
@@ -1519,19 +1519,19 @@ namespace dbc::studio
         {
             if (ProjectDockId_ != 0)
                 ImGui::SetNextWindowDockID(ProjectDockId_, ImGuiCond_FirstUseEver);
-            if (ImGui::Begin(KPanelMedia, &ShowMedia_))
+            if (ImGui::Begin(TrId(KPanelMedia), &ShowMedia_))
                 Media_.Draw();
             ImGui::End();
         }
 
-        ImGui::Begin(KPanelEditor, nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::Begin(TrId(KPanelEditor), nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         EditorDockId_ = ImGui::GetWindowDockID();
         Editor_.Draw();
         ImGui::End();
 
         if (ShowOutput_)
         {
-            ImGui::Begin(KPanelOutput, &ShowOutput_);
+            ImGui::Begin(TrId(KPanelOutput), &ShowOutput_);
             OutputDockId_ = ImGui::GetWindowDockID();
             Output_.Draw();
             ImGui::End();
@@ -1541,7 +1541,7 @@ namespace dbc::studio
         {
             if (OutputDockId_ != 0)
                 ImGui::SetNextWindowDockID(OutputDockId_, ImGuiCond_FirstUseEver);
-            if (ImGui::Begin(KPanelProblems, &ShowProblems_))
+            if (ImGui::Begin(TrId(KPanelProblems), &ShowProblems_))
                 Problems_.Draw();
             ImGui::End();
         }
@@ -1554,7 +1554,7 @@ namespace dbc::studio
                 ImGui::SetNextWindowDockID(EditorDockId_, ImGuiCond_FirstUseEver);
             }
             ImGui::SetNextWindowSize(ImVec2(640.0f, 480.0f), ImGuiCond_FirstUseEver);
-            ImGui::Begin(KPanelPreview, &Open);
+            ImGui::Begin(TrId(KPanelPreview), &Open);
             Preview_.Draw();
             ImGui::End();
             if (!Open)
@@ -1574,13 +1574,13 @@ namespace dbc::studio
         const ImGuiID Left = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Left, 0.20f, nullptr, &Center);
         const ImGuiID Bottom = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Down, 0.28f, nullptr, &Center);
 
-        ImGui::DockBuilderDockWindow(KPanelCode, Left);
-        ImGui::DockBuilderDockWindow(KPanelMedia, Left);
-        ImGui::DockBuilderDockWindow(KPanelProject, Left);
-        ImGui::DockBuilderDockWindow(KPanelEditor, Center);
-        ImGui::DockBuilderDockWindow(KPanelPreview, Center);
-        ImGui::DockBuilderDockWindow(KPanelProblems, Bottom);
-        ImGui::DockBuilderDockWindow(KPanelOutput, Bottom);
+        ImGui::DockBuilderDockWindow(TrId(KPanelCode), Left);
+        ImGui::DockBuilderDockWindow(TrId(KPanelMedia), Left);
+        ImGui::DockBuilderDockWindow(TrId(KPanelProject), Left);
+        ImGui::DockBuilderDockWindow(TrId(KPanelEditor), Center);
+        ImGui::DockBuilderDockWindow(TrId(KPanelPreview), Center);
+        ImGui::DockBuilderDockWindow(TrId(KPanelProblems), Bottom);
+        ImGui::DockBuilderDockWindow(TrId(KPanelOutput), Bottom);
 
         ImGui::DockBuilderFinish(DockspaceId);
     }
@@ -1824,11 +1824,11 @@ namespace dbc::studio
             if (!Blocker.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", Blocker.c_str());
             ImGui::Separator();
-            ImGui::MenuItem(KPanelProject, nullptr, &ShowProject_);
-            ImGui::MenuItem(KPanelCode, nullptr, &ShowCode_);
-            ImGui::MenuItem(KPanelMedia, nullptr, &ShowMedia_);
-            ImGui::MenuItem(KPanelOutput, nullptr, &ShowOutput_);
-            ImGui::MenuItem(KPanelProblems, nullptr, &ShowProblems_);
+            ImGui::MenuItem(TrId(KPanelProject), nullptr, &ShowProject_);
+            ImGui::MenuItem(TrId(KPanelCode), nullptr, &ShowCode_);
+            ImGui::MenuItem(TrId(KPanelMedia), nullptr, &ShowMedia_);
+            ImGui::MenuItem(TrId(KPanelOutput), nullptr, &ShowOutput_);
+            ImGui::MenuItem(TrId(KPanelProblems), nullptr, &ShowProblems_);
             ImGui::Separator();
             if (ImGui::MenuItem("Reset Layout"))
             {
@@ -1879,7 +1879,7 @@ namespace dbc::studio
     void App::DrawAbout()
     {
         ImGui::SetNextWindowSize(ImVec2(520, 0), ImGuiCond_Appearing);
-        if (ImGui::Begin("About OpenDBC", &ShowAbout_, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse))
+        if (ImGui::Begin(TrId("About OpenDBC"), &ShowAbout_, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse))
         {
             ImGui::TextUnformatted("OpenDBC " OPENDBC_VERSION_STRING);
             ImGui::Spacing();

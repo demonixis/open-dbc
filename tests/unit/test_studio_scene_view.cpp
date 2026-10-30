@@ -2,6 +2,7 @@
 
 #include <doctest/doctest.h>
 
+#include "core/i18n.hpp"
 #include "panels/scene_editor.hpp"
 #include "path_utf8.hpp"
 #include "scene/scene_codegen.hpp"
@@ -143,7 +144,7 @@ namespace
         // Where the editor camera, which the tests never move, shows a point.
         glm::vec2 ScreenOf(const glm::vec3& Point) const
         {
-            const ImGuiWindow* Window = ImGui::FindWindowByName(panels::SceneEditor::KPanelViewport);
+            const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelViewport));
             const float Spacing = ImGui::GetStyle().ItemSpacing.y;
             const float Row = ImGui::GetFrameHeight() + Spacing;
             const glm::vec2 Min(Window->DC.CursorStartPos.x,
@@ -243,7 +244,7 @@ namespace
         // Clicks a row of the Hierarchy, counted from the first under the level's name.
         void ClickHierarchyRow(int Row)
         {
-            const ImGuiWindow* Window = ImGui::FindWindowByName(panels::SceneEditor::KPanelHierarchy);
+            const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelHierarchy));
             const float Line = ImGui::GetTextLineHeightWithSpacing();
             MoveMouse(glm::vec2(Window->WorkRect.Min.x + 70.0f, Window->DC.CursorStartPos.y +
                                                                     Line * static_cast<float>(Row + 1) +

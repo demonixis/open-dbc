@@ -70,6 +70,8 @@ TEST_CASE("A label keeps its ImGui ID whatever the language")
     CHECK(VisibleText(TrId("Output")) == "Sortie");
     CHECK(ImHashStr(TrId("Output")) == English);
     CHECK(TrId("Output") == TrId("Output"));
+    // Layouts saved before windows had translated titles keep working.
+    CHECK(English == ImHashStr("Output"));
 }
 
 TEST_CASE("Labels translated alike do not collide")
@@ -84,6 +86,7 @@ TEST_CASE("A ## suffix stays out of the translation lookup and in the ID")
     const ActiveFrench French;
     CHECK(VisibleText(TrId("Output##Scene")) == "Sortie");
     CHECK(ImHashStr(TrId("Output##Scene")) != ImHashStr(TrId("Output")));
+    CHECK(ImHashStr(TrId("Output##Scene")) == ImHashStr("Output##Scene"));
 }
 
 TEST_CASE("A label that names its own ID keeps it")
@@ -220,4 +223,15 @@ TEST_CASE("ImGui's own strings follow the language and keep their English wordin
         CHECK(VisibleText(ImGui::LocalizeGetMsg(static_cast<ImGuiLocKey>(Key))) ==
               Defaults[static_cast<std::size_t>(Key)]);
     ImGui::DestroyContext();
+}
+
+TEST_CASE("The French catalogue names every Studio window")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Window :
+         {"Project", "Editor", "Output", "Problems", "Preview", "Media", "Hierarchy", "Viewport", "Inspector",
+          "Level Settings", "Assets", "Launcher", "Build", "Project Settings", "About OpenDBC"})
+        CHECK(std::string_view(Tr(Window)) != Window);
+    CHECK(std::string_view(Tr("Code")) == "Code");
+    core::ActivateInterfaceLanguage("en");
 }
