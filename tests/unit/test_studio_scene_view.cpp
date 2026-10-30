@@ -97,9 +97,9 @@ namespace
                 WriteText(Path, Text);
                 return true;
             };
-            Host.Log = [](const std::string& Message, bool Error)
+            Host.Log = [this](const std::string& Message, bool Error)
             {
-                if (Error)
+                if (Error && !ExpectErrors_)
                     FAIL_CHECK(Message);
             };
             Editor_.Initialize(Gpu_, std::move(Host));
@@ -263,6 +263,11 @@ namespace
             return Root_;
         }
 
+        void ExpectErrors(bool Value)
+        {
+            ExpectErrors_ = Value;
+        }
+
         void Undo()
         {
             Key(KCommandKey, true);
@@ -283,6 +288,7 @@ namespace
         SDL_GPUDevice* Gpu_ = nullptr;
         panels::SceneEditor Editor_;
         bool LayoutBuilt_ = false;
+        bool ExpectErrors_ = false;
         int BarRows_ = 1;
     };
 } // namespace
@@ -694,4 +700,24 @@ TEST_CASE("A gizmo move of a program's node rewrites its statement, and a locked
     CHECK(Patched != Text);
     CHECK(Patched.starts_with("make object cube 1, 30\nposition object 1, "));
     CHECK(Patched.ends_with(", 0, 0\nmake object cube 2, 30\n"));
+
+    // The source moved on: a save refuses and keeps the edit, a refresh is the way out.
+    const std::string Moved = "sync\n" + Patched;
+    {
+        std::ofstream Out(Source, std::ios::binary);
+        Out << Moved;
+    }
+    const std::string_view Before = "make object cube 1, 30\nposition object 1, ";
+    Driver.DragGizmoX(glm::vec3(std::stof(Patched.substr(Before.size())), 0.0f, 0.0f), 120.0f);
+    CHECK(Driver.Editor().Dirty());
+    Driver.ExpectErrors(true);
+    CHECK_FALSE(Driver.Editor().Save());
+    CHECK(Driver.Editor().Dirty());
+    Driver.Editor().RefreshProgram();
+    Driver.ExpectErrors(false);
+    CHECK_FALSE(Driver.Editor().Dirty());
+    std::ifstream Kept(Source, std::ios::binary);
+    std::ostringstream KeptText;
+    KeptText << Kept.rdbuf();
+    CHECK(KeptText.str() == Moved);
 }

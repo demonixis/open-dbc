@@ -346,9 +346,16 @@ namespace dbc::studio
 
         void SceneEditor::RefreshProgram()
         {
-            if (!Program_ || !Host_.CaptureProgram || !Save())
+            if (!Program_)
                 return;
-            Host_.CaptureProgram(Program_->Source, Program_->SetupFrames);
+            // Reading the program again is the way out when the source no longer takes the edits.
+            if (!Save())
+            {
+                Host_.Log("Dropped the edits the source refused", false);
+                Document_ = Saved_;
+            }
+            if (Host_.CaptureProgram)
+                Host_.CaptureProgram(Program_->Source, Program_->SetupFrames);
         }
 
         bool SceneEditor::SaveAndRefresh()
