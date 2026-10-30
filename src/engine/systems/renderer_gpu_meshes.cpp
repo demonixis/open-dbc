@@ -88,8 +88,12 @@ namespace dbc
             {
                 const std::size_t First = Corner - Corner % 3;
                 const Vec3& A = Geometry.Vertices[Indices[First]];
-                Normal = Vec3Normalize(Vec3Cross(Vec3Sub(Geometry.Vertices[Indices[First + 1]], A),
-                                                 Vec3Sub(Geometry.Vertices[Indices[First + 2]], A)));
+                const Vec3 Cross = Vec3Cross(Vec3Sub(Geometry.Vertices[Indices[First + 1]], A),
+                                             Vec3Sub(Geometry.Vertices[Indices[First + 2]], A));
+                // Only the direction counts, however small the triangle: the object's scale may bring it back.
+                const float Largest = std::max({std::abs(Cross.X), std::abs(Cross.Y), std::abs(Cross.Z)});
+                Normal = Largest > 0.0f ? Vec3Normalize(Vec3{Cross.X / Largest, Cross.Y / Largest, Cross.Z / Largest})
+                                        : Vec3Normalize(Cross);
             }
             Out.Position[0] = Position.X;
             Out.Position[1] = Position.Y;

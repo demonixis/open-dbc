@@ -144,7 +144,7 @@ Varyings VSMesh(MeshInput input)
     output.view_pos = view_pos.xyz;
     const float3x3 normal_matrix = float3x3(input.normal0.xyz, input.normal1.xyz, input.normal2.xyz);
     float3 normal = mul((float3x3)ModelView, mul(normal_matrix, input.normal));
-    // As the CPU path: a length too small to normalise gives +Z.
+    // A length too small to normalise gives +Z, here in view space; only extreme scales get here.
     if (input.normal2.w > 0.5)
         normal = dot(normal, normal) > 1e-12 ? normalize(normal) : float3(0.0, 0.0, 1.0);
     output.normal = normal * (input.normal0.w * input.normal1.w);

@@ -2823,6 +2823,22 @@ TEST_CASE("A black-keyed texture is built once, however often the scene is rebui
     CHECK(Kernel.ImageStoreRef().GetImage(1)->GpuColorKeyTexture == First);
 }
 
+TEST_CASE("A tiny mesh without vertex normals, scaled up, lights as on the CPU path")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    Kernel.Objects().MakeObjectBox(1, 0.0005f, 0.0005f, 0.0005f);
+    Kernel.Objects().ScaleObject(1, 800000.0f, 800000.0f, 800000.0f);
+    Kernel.Objects().RotateObject(1, 25.0f, 35.0f, 0.0f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 10.0f);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const GpuMeshComparison Frames = CompareGpuMeshFrames(Kernel);
+    CHECK(Frames.GpuDraws == 1);
+    CHECK(Frames.Covered > 640 * 480 / 40);
+    CHECK(Frames.Different * 200 < Frames.Covered);
+}
+
 TEST_CASE("A still scene never draws with an image texture released since it was built")
 {
     dbc::EngineKernel Kernel;
