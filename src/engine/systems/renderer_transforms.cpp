@@ -13,14 +13,6 @@ namespace dbc
         return Result;
     }
 
-    [[nodiscard]] Vec3 TransformProceduralMeshNormal(const Object3D& Object, const Mesh& MeshValue, const Vec3& Normal)
-    {
-        Vec3 Result = ApplyAiTransformVector(MeshValue.Geometry().BindTransform, Normal);
-        ForEachProceduralLimb(Object, MeshValue,
-                              [&](const Mesh& Limb) { Result = ApplyLimbNormal(MakeLimbSteps(Limb), Result); });
-        return Result;
-    }
-
     [[nodiscard]] Vec3 TransformObjectSpacePoint(EngineKernel& K, const Object3D& Object, const Vec3& Local)
     {
         Vec3 P = ApplyObjectPoint(MakeObjectSteps(Object), Local, Object.GlueMode != 2);
@@ -123,16 +115,6 @@ namespace dbc
         if (ImportedTransform)
             return ApplyAiTransformPoint(*ImportedTransform, Point);
         return TransformProceduralMeshPoint(Object, MeshValue, Point);
-    }
-
-    [[nodiscard]] Vec3 TransformMeshNormalInObject(const Object3D& Object, const Mesh& MeshValue, const Vec3& Normal,
-                                                   const aiMatrix4x4* ImportedTransform, bool ObjectSpace)
-    {
-        if (ObjectSpace)
-            return Normal;
-        if (ImportedTransform)
-            return ApplyAiTransformVector(*ImportedTransform, Normal);
-        return TransformProceduralMeshNormal(Object, MeshValue, Normal);
     }
 
     [[nodiscard]] Vec3 WorldLimbOrigin(EngineKernel& K, const Object3D& Object, int LimbId)
@@ -238,20 +220,6 @@ namespace dbc
         Point = Vec3{SkinnedPoint.X / Total, SkinnedPoint.Y / Total, SkinnedPoint.Z / Total};
         Normal = Vec3Normalize(SkinnedNormal);
         return true;
-    }
-
-    [[nodiscard]] Vec3 TransformObjectPoint(EngineKernel& K, const Object3D& Object, const Mesh& MeshValue,
-                                            const Vec3& Local, const aiMatrix4x4* MeshTransform, bool ObjectSpace)
-    {
-        const Vec3 P = TransformMeshPointInObject(Object, MeshValue, Local, MeshTransform, ObjectSpace);
-        return dbc::TransformObjectSpacePoint(K, Object, P);
-    }
-
-    [[nodiscard]] Vec3 TransformObjectNormal(EngineKernel& K, const Object3D& Object, const Mesh& MeshValue,
-                                             const Vec3& Local, const aiMatrix4x4* MeshTransform, bool ObjectSpace)
-    {
-        const Vec3 N = TransformMeshNormalInObject(Object, MeshValue, Local, MeshTransform, ObjectSpace);
-        return dbc::TransformObjectSpaceVector(K, Object, N);
     }
 
     Mesh* FindLimbMesh([[maybe_unused]] EngineKernel& K, Object3D& Object, int LimbId)

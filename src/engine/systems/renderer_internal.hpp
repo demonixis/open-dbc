@@ -47,12 +47,6 @@ namespace dbc
         const std::unordered_map<const aiNode*, aiMatrix4x4>& NodeGlobals);
     [[nodiscard]] bool SkinMeshVertex(const Mesh& MeshValue, std::size_t VertexIndex,
                                       const std::vector<aiMatrix4x4>& BonePalette, Vec3& Point, Vec3& Normal);
-    [[nodiscard]] Vec3 TransformObjectPoint(EngineKernel& K, const Object3D& Object, const Mesh& MeshValue,
-                                            const Vec3& Local, const aiMatrix4x4* MeshTransform,
-                                            bool ObjectSpace = false);
-    [[nodiscard]] Vec3 TransformObjectNormal(EngineKernel& K, const Object3D& Object, const Mesh& MeshValue,
-                                             const Vec3& Local, const aiMatrix4x4* MeshTransform,
-                                             bool ObjectSpace = false);
     Mesh* FindLimbMesh([[maybe_unused]] EngineKernel& K, Object3D& Object, int LimbId);
     const Mesh* FindLimbMesh([[maybe_unused]] EngineKernel& K, const Object3D& Object, int LimbId);
 

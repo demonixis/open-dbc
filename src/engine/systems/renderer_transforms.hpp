@@ -235,8 +235,8 @@ namespace dbc
         return Rotation * Pivot;
     }
 
-    // Takes one mesh's points and normals to world space as TransformObjectPoint and TransformObjectNormal do,
-    // with the limb chain and every sine and cosine computed once. A glued object follows its glue chain per call.
+    // Takes one mesh's points and normals to world space, with the limb chain and every sine and cosine computed
+    // once. A glued object follows its glue chain per call.
     class MeshWorldTransform
     {
       public:
