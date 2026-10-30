@@ -129,7 +129,8 @@ Generated files are never edited by hand; each has a `--check` gate:
 
 - per-symbol provenance for Classic, DBPro and the DBPro extensions;
 - the digests of removed DarkBASIC files, which must never return;
-- the MIDI fallback list and the DBPro project inventory.
+- the MIDI fallback list and the DBPro project inventory;
+- the [Studio literals](localization.md#audit) that stay untranslated.
 
 The Classic examples are not redistributed. A maintainer who owns them can run
 `scripts/qualify_dbc_examples.py --corpus-root DIR` locally (macOS Debug). A

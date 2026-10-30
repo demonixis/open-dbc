@@ -167,4 +167,3 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 - [ ] Studio: embedded help, installed samples, welcome screen.
 - [ ] Split the largest source files; measure coverage; negative verifier tests.
 - [ ] One policy for missing objects, documented integer semantics, deterministic `RND`.
-- [ ] Translatable interface strings.
