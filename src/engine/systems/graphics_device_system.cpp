@@ -1308,6 +1308,9 @@ namespace dbc
             SDL_GPUGraphicsPipelineCreateInfo ShadowVolumeInfo = PipelineInfo;
             ShadowVolumeInfo.target_info.color_target_descriptions = &MaskTarget;
             ShadowVolumeInfo.depth_stencil_state.enable_depth_write = false;
+            // A volume can reach past the far plane, and a clipped back face goes uncounted, which darkens what it
+            // leaves open. Clamped, its faces stay behind everything drawn.
+            ShadowVolumeInfo.rasterizer_state.enable_depth_clip = false;
             ShadowVolumeInfo.depth_stencil_state.enable_stencil_test = true;
             ShadowVolumeInfo.depth_stencil_state.compare_mask = 0xFF;
             ShadowVolumeInfo.depth_stencil_state.write_mask = 0xFF;

@@ -141,7 +141,7 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
   point light inside it (`SET SHADOW POSITION 1, ...` or the same fixed
   position), casts no visible shadow, and a lighter patch appears where the
   shadow should be when the room's normals face outwards. Check the z-fail
-  volumes against room geometry and the far plane.
+  volumes against room geometry.
 - [ ] Reproducible example meshes: Blender 5.1's Subdivision Surface modifier
   returns its vertices in a different order, with last-bit differences, on
   every evaluation, even in one process with one thread, so `xexport.py` output
