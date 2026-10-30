@@ -291,6 +291,27 @@ TEST_CASE("Painting to a density fills a disc once and keeps objects apart")
     CHECK(scene::ScatterToDensity(Center, KRadius, 0.0f, {}, Random).empty());
 }
 
+TEST_CASE("A randomly scaled object keeps its proportions and stays in the range")
+{
+    std::mt19937 Random(5);
+    const glm::vec3 Base(100.0f, 200.0f, 50.0f);
+    float Lowest = 2.0f, Highest = 0.0f;
+    for (int Index = 0; Index < 500; ++Index)
+    {
+        const glm::vec3 Scale = scene::RandomScale(Base, glm::vec2(75.0f, 125.0f), Random);
+        CHECK(Scale.y == doctest::Approx(Scale.x * 2.0f));
+        CHECK(Scale.z == doctest::Approx(Scale.x * 0.5f));
+        Lowest = std::min(Lowest, Scale.x / Base.x);
+        Highest = std::max(Highest, Scale.x / Base.x);
+    }
+    CHECK(Lowest >= 0.75f);
+    CHECK(Lowest < 0.8f);
+    CHECK(Highest <= 1.25f);
+    CHECK(Highest > 1.2f);
+    // Equal ends make it a fixed scale.
+    CHECK(scene::RandomScale(Base, glm::vec2(50.0f), Random).x == doctest::Approx(50.0f));
+}
+
 TEST_CASE("An object rests on a surface by its lowest corner")
 {
     const glm::vec3 Min(-5.0f, -2.0f, -5.0f);

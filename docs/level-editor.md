@@ -176,8 +176,9 @@ Objects rest by their lowest point on what lies under them: any level geometry,
 else the ground at Y = 0. Past the edge of a mesh, a scattered object is left out.
 Painted objects are not surfaces themselves, and the brush keeps them apart, so
 painting over an area does not pile them up. A stamp places at most 2000 objects.
-**Random turn** spins each object about Y, and **Scale %** multiplies its scale by
-a value in that range. A click or a drag is one undo step.
+**Random turn** spins each object about Y, and **Random scale** multiplies its
+scale by a value in the range it shows, 75 % to 125 % by default. A click or a
+drag is one undo step.
 
 A painted object is a node like any other: the gizmo, the Inspector and undo work
 on it. The Hierarchy folds objects painted alike into one row, whose click selects

@@ -172,6 +172,8 @@ namespace dbc::studio
         // How far above a surface an object's origin sits for its bounds to rest on it.
         float RestingHeight(const glm::vec3& Min, const glm::vec3& Max, const glm::vec3& Rotation,
                             const glm::vec3& Scale);
+        // `Scale` multiplied on all axes alike by a percentage drawn from the range [Percent.x, Percent.y].
+        glm::vec3 RandomScale(const glm::vec3& Scale, const glm::vec2& Percent, std::mt19937& Random);
 
         // Where the viewport shows the world, for measuring on screen.
         struct ScreenView

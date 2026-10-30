@@ -621,6 +621,12 @@ namespace dbc::studio
             }
         }
 
+        glm::vec3 RandomScale(const glm::vec3& Scale, const glm::vec2& Percent, std::mt19937& Random)
+        {
+            std::uniform_real_distribution<float> Drawn(Percent.x, Percent.y);
+            return Scale * (Drawn(Random) / 100.0f);
+        }
+
         std::vector<glm::vec2> ScatterInDisc(const glm::vec2& Center, float Radius, int Count, std::mt19937& Random)
         {
             std::uniform_real_distribution<float> Unit(0.0f, 1.0f);

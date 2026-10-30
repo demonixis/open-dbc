@@ -327,7 +327,8 @@ namespace dbc::studio
             float PaintRadius_ = 50.0f;
             float PaintDensity_ = 10.0f; // objects per 100 x 100 units
             bool PaintTurn_ = true;
-            glm::vec2 PaintScale_{100.0f}; // the range each object's scale is multiplied by, in percent
+            bool PaintRandomScale_ = false;
+            glm::vec2 PaintScale_{75.0f, 125.0f}; // the range each object's scale is multiplied by, in percent
             bool Painting_ = false;
             std::optional<glm::vec3> PaintLast_;
 

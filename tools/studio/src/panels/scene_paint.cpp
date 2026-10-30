@@ -123,11 +123,15 @@ namespace dbc::studio
             }
             ImGui::Checkbox("Random turn", &PaintTurn_);
             ImGui::SameLine();
+            ImGui::Checkbox("Random scale", &PaintRandomScale_);
+            if (!PaintRandomScale_)
+                return;
+            ImGui::SameLine();
             ImGui::SetNextItemWidth(FontSize * 7.0f);
-            if (ImGui::DragFloat2("Scale %", &PaintScale_.x, 0.5f, 1.0f, 1000.0f, "%.0f"))
+            if (ImGui::DragFloat2("##paint-scale", &PaintScale_.x, 0.5f, 1.0f, 1000.0f, "%.0f%%"))
                 PaintScale_.y = std::max(PaintScale_.x, PaintScale_.y);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Each object's scale is multiplied by a value in this range");
+                ImGui::SetTooltip("Each object's scale is multiplied by a value between these two");
         }
 
         std::optional<float> SceneEditor::PaintSurfaceDistance(const scene::Ray& Ray) const
@@ -178,7 +182,6 @@ namespace dbc::studio
 
             const std::vector<int> Ids = Document_.NextIds(scene::IdSpace::Object, Spots.size());
             std::uniform_real_distribution<float> Turn(0.0f, 360.0f);
-            std::uniform_real_distribution<float> Scale(PaintScale_.x, PaintScale_.y);
             for (std::size_t Index = 0; Index < Spots.size(); ++Index)
             {
                 const glm::vec2 Spot = Spots[Index];
@@ -199,7 +202,8 @@ namespace dbc::studio
                 Node.Id = Ids[Index];
                 Node.Name = scene::PaintedName(PaintObject_->Name, Node.Id);
                 Node.Painted = true;
-                Node.Scale = PaintObject_->Scale * (Scale(Random_) / 100.0f);
+                if (PaintRandomScale_)
+                    Node.Scale = scene::RandomScale(PaintObject_->Scale, PaintScale_, Random_);
                 if (PaintTurn_)
                     Node.Rotation.y += Turn(Random_);
                 const float Height = scene::RestingHeight(PaintMin_, PaintMax_, Node.Rotation, Node.Scale);
