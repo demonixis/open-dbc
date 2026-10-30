@@ -47,7 +47,8 @@ namespace dbc
             (Object.TransparencyMode == 4 || Object.TransparencyMode == 6) ? (207.0f / 255.0f) : 0.0f;
         Style.AlphaOverride = Object.AlphaMapping ? Object.AlphaMappingAlpha : -1.0f;
         Style.ReflectionSurface = Object.ReflectionShading;
-        Style.ShadowCaster = Object.ShadowShading && Object.ShadowMeshes.empty();
+        // Others cast from their meshes, whatever the camera sees of them (AppendShadowSources).
+        Style.ShadowCaster = Object.ShadowShading && Object.ShadowMeshes.empty() && Object.LockToScreen;
         Style.ShadowRange = Object.ShadowRange;
         return Style;
     }
@@ -159,6 +160,19 @@ namespace dbc
         // Reflection direction for cube mapping.
         Vec3 Direction{};
     };
+
+    bool NodeHiddenByLimb(const Object3D& Object, const aiNode* Node)
+    {
+        for (; Node != nullptr; Node = Node->mParent)
+        {
+            const auto Limb = Object.LimbIndexByNode.find(Node);
+            if (Limb != Object.LimbIndexByNode.end() && Limb->second >= 0 &&
+                Limb->second < static_cast<int>(Object.LimbTransforms.size()) &&
+                Object.LimbTransforms[static_cast<std::size_t>(Limb->second)].Hidden)
+                return true;
+        }
+        return false;
+    }
 
     // Whether an object draws opaque triangles whose result depends on their place among the other objects' opaque
     // triangles, ordered by depth: drawing meshes from GPU buffers apart from them would change it.
@@ -390,28 +404,9 @@ namespace dbc
                             }
                         }
                     }
-                    if (MeshNode)
+                    if (MeshNode && NodeHiddenByLimb(Object, MeshNode))
                     {
-                        bool HiddenByLimb = false;
-                        for (const aiNode* N = MeshNode; N; N = N->mParent)
-                        {
-                            const auto LiIt = Object.LimbIndexByNode.find(N);
-                            if (LiIt == Object.LimbIndexByNode.end())
-                            {
-                                continue;
-                            }
-                            const int Li = LiIt->second;
-                            if (Li >= 0 && Li < static_cast<int>(Object.LimbTransforms.size()) &&
-                                Object.LimbTransforms[static_cast<size_t>(Li)].Hidden)
-                            {
-                                HiddenByLimb = true;
-                                break;
-                            }
-                        }
-                        if (HiddenByLimb)
-                        {
-                            continue;
-                        }
+                        continue;
                     }
                     const std::vector<aiMatrix4x4> BonePalette = BuildBonePalette(Object, MeshValue, NodeGlobals);
                     const MeshWorldTransform ToWorld(K, Object, MeshValue, MeshTransform);

@@ -57,10 +57,13 @@ namespace dbc
     Mesh* FindLimbMesh(Object3D& Object, int LimbId);
 
     // Stencil shadow volumes: renderer_shadows.cpp.
-    void AppendShadowMeshSources(EngineKernel& K, std::vector<Triangle>& Sources);
+    // Every caster's whole mesh: one out of frame, behind the camera or turned away from it still
+    // shadows what is in frame. The triangles are in view space and unclipped.
+    void AppendShadowSources(EngineKernel& K, std::vector<Triangle>& Sources);
     void BuildShadowVolumes(EngineKernel& K, const std::vector<Triangle>& Sources, std::vector<Triangle>& Volumes);
 
     // Object meshes: renderer_objects.cpp.
+    bool NodeHiddenByLimb(const Object3D& Object, const aiNode* Node);
     [[nodiscard]] bool ObjectsNeedDepthOrder(EngineKernel& K);
     void RenderObjects(EngineKernel& K, std::vector<Triangle>& WorldTris, std::vector<Triangle>& OverlayTris,
                        SceneTriangles* Counts = nullptr, bool GpuMeshes = false);

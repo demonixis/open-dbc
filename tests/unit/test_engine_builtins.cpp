@@ -2177,6 +2177,78 @@ TEST_CASE("DBPro shadow shading casts portable stencil volumes")
     CHECK(CombinedDarkened > 20);
 }
 
+TEST_CASE("A DBPro shadow does not depend on how the camera sees its caster")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 128, 96));
+    Kernel.Camera().SetAutoCamOff();
+    REQUIRE(Kernel.Objects().MakeObjectPlain(1, 400.0f, 400.0f));
+    Kernel.Objects().RotateObject(1, 270.0f, 0.0f, 0.0f);
+    REQUIRE(Kernel.Objects().SetObjectLight(1, 0));
+    Kernel.Objects().ColorObject(1, 0xE0E0E0);
+    // Lit from straight above, only the cube's top faces the light.
+    Kernel.Objects().MakeObjectCube(2, 8.0f);
+    Kernel.Objects().PositionObject(2, 0.0f, 20.0f, 0.0f);
+    REQUIRE(Kernel.Objects().SetObjectLight(2, 0));
+    Kernel.Objects().ColorObject(2, 0xE0E0E0);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE(Kernel.Gpu().SupportsStencil());
+
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](dbc::language::SymbolId Symbol, std::initializer_list<BuiltinValue> Arguments)
+    {
+        Error.clear();
+        return InvokeCommand(Context, Symbol, std::vector<BuiltinValue>(Arguments), Error);
+    };
+    REQUIRE(Command(dbc::language::SymbolId::Command_SetShadowPosition,
+                    {BuiltinValue::FromNumber(-1), BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(100),
+                     BuiltinValue::FromNumber(0)}));
+    const auto RedChannels = [&]()
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        std::vector<int> Reds;
+        Reds.reserve(static_cast<std::size_t>(Capture->w * Capture->h));
+        for (int Y = 0; Y < Capture->h; ++Y)
+            for (int X = 0; X < Capture->w; ++X)
+            {
+                Uint8 Red = 0, Green = 0, Blue = 0, Alpha = 0;
+                if (!SDL_ReadSurfacePixel(Capture, X, Y, &Red, &Green, &Blue, &Alpha))
+                    FAIL("shadow capture pixel read failed");
+                Reds.push_back(Red);
+            }
+        SDL_DestroySurface(Capture);
+        return Reds;
+    };
+    // How many pixels the shadow darkens from there.
+    const auto Darkened = [&](float EyeX, float EyeY, float EyeZ, float AtX, float AtZ)
+    {
+        RequireEngineStatus([&](std::string& Status)
+                            { return Kernel.Camera().PositionCamera(EyeX, EyeY, EyeZ, &Status); });
+        RequireEngineStatus([&](std::string& Status) { return Kernel.Camera().PointCamera(AtX, 0.0f, AtZ, &Status); });
+        REQUIRE(Command(dbc::language::SymbolId::Command_SetShadowShadingOff, {BuiltinValue::FromNumber(2)}));
+        const std::vector<int> Plain = RedChannels();
+        REQUIRE(Command(dbc::language::SymbolId::Command_SetShadowShadingOn, {BuiltinValue::FromNumber(2)}));
+        const std::vector<int> Shadowed = RedChannels();
+        int Count = 0;
+        for (std::size_t Index = 0; Index < Plain.size(); ++Index)
+            Count += Plain[Index] - Shadowed[Index] > 20 ? 1 : 0;
+        return Count;
+    };
+
+    // From above: the cube's top, the face that casts, is in sight.
+    CHECK(Darkened(0.0f, 80.0f, -40.0f, 0.0f, 0.0f) > 100);
+    // From low down the top turns away from the camera, though the cube is still in frame.
+    CHECK(Darkened(-25.0f, 3.0f, -25.0f, 0.0f, 0.0f) > 100);
+    // Close up, with the cube above the frame.
+    CHECK(Darkened(0.0f, 8.0f, -8.0f, 0.0f, 0.0f) > 100);
+    // Under the cube, looking down: all of it is behind the camera's near plane.
+    CHECK(Darkened(0.0f, 10.0f, -0.1f, 0.0f, 0.0f) > 100);
+}
+
 TEST_CASE("Portable object visibility and GPU capability queries preserve DBPro semantics")
 {
     dbc::EngineKernel Kernel;

@@ -30,7 +30,9 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    that each run of triangles that are depth tested and written and not blended
    is grouped by draw-state hash; the others keep their place between the runs.
    Reflection shading gathers the scene again with the mirrored view; stencil
-   shadow volumes are extruded on the CPU from the casters' triangles.
+   shadow volumes are extruded on the CPU from each caster's whole mesh, since a
+   caster out of frame or turned away from the camera still shadows what is in
+   frame.
 3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
    triangles that share textures, blending, depth state and `SurfaceStyle` merge
    into one `GpuBatch`. Static terrains and GPU meshes take the place of their CPU

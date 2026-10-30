@@ -357,7 +357,7 @@ namespace dbc
         ShadowSources.clear();
         std::copy_if(Tris.begin(), Tris.end(), std::back_inserter(ShadowSources),
                      [](const Triangle& TriangleValue) { return TriangleValue.Style.ShadowCaster; });
-        dbc::AppendShadowMeshSources(K, ShadowSources);
+        dbc::AppendShadowSources(K, ShadowSources);
         auto& ShadowTris = Geometry.Shadows;
         ShadowTris.clear();
         ShadowTris.reserve(ShadowSources.size() * 4);

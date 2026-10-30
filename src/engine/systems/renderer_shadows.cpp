@@ -5,65 +5,54 @@
 
 namespace dbc
 {
-    void AppendShadowMeshSources(EngineKernel& K, std::vector<Triangle>& Sources)
+    void AppendShadowSources(EngineKernel& K, std::vector<Triangle>& Sources)
     {
+        std::vector<Vec3> World;
         K.Objects().ForEachObject(
             [&](int /*id*/, const Object3D& Object)
             {
-                if (!Object.Visible || !Object.ShadowShading || Object.ShadowMeshes.empty())
+                if (!Object.Visible || !Object.ShadowShading)
                     return;
-                SurfaceStyle Style{};
-                Style.Fog = false;
-                Style.Ambient = false;
-                Style.ShadowCaster = true;
-                Style.ShadowRange = Object.ShadowRange;
-                for (const Mesh& MeshValue : Object.ShadowMeshes)
+                // A locked object lives on the screen, not in the world: it casts from what it draws.
+                if (Object.LockToScreen && Object.ShadowMeshes.empty())
+                    return;
+                Triangle Source;
+                Source.Style.Fog = false;
+                Source.Style.Ambient = false;
+                Source.Style.ShadowCaster = true;
+                Source.Style.ShadowRange = Object.ShadowRange;
+                for (const Mesh& MeshValue : Object.ShadowMeshes.empty() ? Object.Meshes : Object.ShadowMeshes)
                 {
                     if (!MeshValue.Visible)
                         continue;
-                    const auto VertexAt = [&](uint32_t Index) -> const Vec3*
+                    if (!Object.CachedNodeGlobals.empty() && MeshValue.SourceMeshIndex >= 0)
                     {
-                        return Index < MeshValue.Geometry().Vertices.size() ? &MeshValue.Geometry().Vertices[Index]
-                                                                            : nullptr;
-                    };
-                    const std::size_t TriangleCount = MeshValue.Geometry().Indices.empty()
-                                                          ? MeshValue.Geometry().Vertices.size() / 3
-                                                          : MeshValue.Geometry().Indices.size() / 3;
-                    for (std::size_t TriangleIndex = 0; TriangleIndex < TriangleCount; ++TriangleIndex)
-                    {
-                        const uint32_t I0 = MeshValue.Geometry().Indices.empty()
-                                                ? static_cast<uint32_t>(TriangleIndex * 3)
-                                                : MeshValue.Geometry().Indices[TriangleIndex * 3];
-                        const uint32_t I1 = MeshValue.Geometry().Indices.empty()
-                                                ? static_cast<uint32_t>(TriangleIndex * 3 + 1)
-                                                : MeshValue.Geometry().Indices[TriangleIndex * 3 + 1];
-                        const uint32_t I2 = MeshValue.Geometry().Indices.empty()
-                                                ? static_cast<uint32_t>(TriangleIndex * 3 + 2)
-                                                : MeshValue.Geometry().Indices[TriangleIndex * 3 + 2];
-                        const Vec3* Local0 = VertexAt(I0);
-                        const Vec3* Local1 = VertexAt(I1);
-                        const Vec3* Local2 = VertexAt(I2);
-                        if (!Local0 || !Local1 || !Local2)
+                        const auto Node =
+                            Object.MeshNodeByIndex.find(static_cast<unsigned int>(MeshValue.SourceMeshIndex));
+                        if (Node != Object.MeshNodeByIndex.end() && NodeHiddenByLimb(Object, Node->second))
                             continue;
-                        const Vec3 World0 = K.Renderer().WorldMeshPoint(Object, MeshValue, *Local0);
-                        const Vec3 World1 = K.Renderer().WorldMeshPoint(Object, MeshValue, *Local1);
-                        const Vec3 World2 = K.Renderer().WorldMeshPoint(Object, MeshValue, *Local2);
-                        const Vec3 View0 = dbc::WorldToViewPoint(K, World0.X, World0.Y, World0.Z);
-                        const Vec3 View1 = dbc::WorldToViewPoint(K, World1.X, World1.Y, World1.Z);
-                        const Vec3 View2 = dbc::WorldToViewPoint(K, World2.X, World2.Y, World2.Z);
-                        ViewVertex V0{};
-                        V0.X = View0.X;
-                        V0.Y = View0.Y;
-                        V0.Z = View0.Z;
-                        ViewVertex V1{};
-                        V1.X = View1.X;
-                        V1.Y = View1.Y;
-                        V1.Z = View1.Z;
-                        ViewVertex V2{};
-                        V2.X = View2.X;
-                        V2.Y = View2.Y;
-                        V2.Z = View2.Z;
-                        dbc::AppendClippedViewTriangle(K, V0, V1, V2, nullptr, false, Sources, false, Style);
+                    }
+                    K.Renderer().WorldMeshVertices(Object, MeshValue, World);
+                    const std::vector<uint32_t>& Indices = MeshValue.Geometry().Indices;
+                    const std::size_t CornerCount = Indices.empty() ? World.size() : Indices.size();
+                    for (std::size_t Corner = 0; Corner + 2 < CornerCount; Corner += 3)
+                    {
+                        bool Valid = true;
+                        for (std::size_t Offset = 0; Offset < 3; ++Offset)
+                        {
+                            const std::size_t Index = Indices.empty() ? Corner + Offset : Indices[Corner + Offset];
+                            if (Index >= World.size())
+                            {
+                                Valid = false;
+                                break;
+                            }
+                            const Vec3 View = dbc::WorldToViewPoint(K, World[Index].X, World[Index].Y, World[Index].Z);
+                            Source.Pos[Offset][0] = View.X;
+                            Source.Pos[Offset][1] = View.Y;
+                            Source.Pos[Offset][2] = View.Z;
+                        }
+                        if (Valid)
+                            Sources.push_back(Source);
                     }
                 }
             });
