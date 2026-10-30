@@ -19,6 +19,17 @@
 #include <nlohmann/json.hpp>
 #include <spirv_cross.hpp>
 
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+// DXC is built without AddressSanitizer yet shares libc++'s inline vector code with what is built with it. Only part
+// of its vector updates get annotated, so reads inside a vector's size are reported as overflows.
+extern "C" __attribute__((used, visibility("default"))) const char* __asan_default_options()
+{
+    return "detect_container_overflow=0";
+}
+#endif
+#endif
+
 namespace dbc::studio
 {
     namespace

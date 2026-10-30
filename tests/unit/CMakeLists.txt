@@ -312,9 +312,9 @@ endif()
 
 # The tests are OpenDBC code too.
 foreach(test_target IN ITEMS test_language_profile test_language_catalogue test_frontend test_vm test_studio_language
-        test_studio_run_plan
+        test_studio_run_plan test_studio_editor test_studio_scene test_studio_scene_render test_studio_media
         test_engine_math test_collision_math test_bsp_world test_terrain_mesh test_triangle_order test_engine_builtins test_network test_dll test_input_haptics test_command_line
-        test_project_resolver test_debug_system
+        test_program_image test_project_resolver test_debug_system
         test_shader_compiler test_project_settings test_studio_new_project test_studio_snippets
         test_artifact_export)
     if(TARGET ${test_target})
