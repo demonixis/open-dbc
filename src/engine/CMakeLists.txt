@@ -21,7 +21,18 @@ add_library(dbc_engine STATIC
   systems/draw_system.cpp
   systems/graphics_device_system.cpp
   systems/core_system.cpp
+  systems/renderer_animation.cpp
+  systems/renderer_batches.cpp
+  systems/renderer_gpu_meshes.cpp
+  systems/renderer_model_import.cpp
+  systems/renderer_objects.cpp
+  systems/renderer_primitives.cpp
+  systems/renderer_shadows.cpp
   systems/renderer_system.cpp
+  systems/renderer_terrain.cpp
+  systems/renderer_transforms.cpp
+  systems/renderer_view.cpp
+  systems/renderer_world.cpp
   systems/sprite_system.cpp
   systems/debug_system.cpp
   systems/video_system.cpp
