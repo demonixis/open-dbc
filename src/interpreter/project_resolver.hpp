@@ -100,6 +100,8 @@ namespace dbc::interpreter
         std::vector<std::filesystem::path> ProjectCandidates{};
         std::optional<std::filesystem::path> PendingDescriptor{};
         std::string Error{};
+        // The raw project path a local remapping would fix, when that is what Error reports.
+        std::string RemappablePath{};
 
         explicit operator bool() const
         {

@@ -706,10 +706,6 @@ namespace dbc::studio
             ResolutionPopupRequested_ = true;
             ResolvedProject_.reset();
             UpdateSceneProject();
-            const std::string Marker = "remapping";
-            const std::size_t At = PendingResolution_.Error.find(Marker);
-            const std::size_t Colon = PendingResolution_.Error.find(": ", At == std::string::npos ? 0 : At);
-            PendingRawPath_ = Colon == std::string::npos ? std::string{} : PendingResolution_.Error.substr(Colon + 2);
             return false;
         }
         ApplyResolvedProject(std::move(*PendingResolution_.Project));
@@ -949,7 +945,7 @@ namespace dbc::studio
         if (!ImGui::BeginPopupModal(Popup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             return;
         ImGui::TextWrapped("%s", PendingResolution_.Error.c_str());
-        if (!PendingRawPath_.empty())
+        if (!PendingResolution_.RemappablePath.empty())
         {
             std::array<char, 2048> Path{};
             SDL_strlcpy(Path.data(), PendingLocalPath_.c_str(), Path.size());
@@ -962,7 +958,8 @@ namespace dbc::studio
                     Descriptor = *PendingResolution_.PendingDescriptor;
                 else if (!dbc::language::IsDbProProject(Descriptor) && !PendingResolution_.ProjectCandidates.empty())
                     Descriptor = PendingResolution_.ProjectCandidates.front();
-                Settings_.SetProjectPathRemapping(Descriptor, PendingRawPath_, dbc::PathFromUtf8(PendingLocalPath_));
+                Settings_.SetProjectPathRemapping(Descriptor, PendingResolution_.RemappablePath,
+                                                  dbc::PathFromUtf8(PendingLocalPath_));
                 Settings_.Save();
                 ResolveWorkspace(PendingResolveTarget_, PendingResolveProfile_);
                 ImGui::CloseCurrentPopup();

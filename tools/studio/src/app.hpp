@@ -208,7 +208,6 @@ namespace dbc::studio
         bool DialectLocked_ = false;
         std::filesystem::path PendingResolveTarget_;
         std::optional<dbc::language::LanguageProfile> PendingResolveProfile_;
-        std::string PendingRawPath_;
         std::string PendingLocalPath_;
 
         bool NewProjectRequested_ = false;

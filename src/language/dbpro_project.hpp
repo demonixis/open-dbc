@@ -22,6 +22,8 @@ namespace dbc::language
         ProjectDiagnosticSeverity Severity = ProjectDiagnosticSeverity::Error;
         std::size_t Line = 1;
         std::string Message{};
+        // The raw project path a local remapping would fix, when that is the failure.
+        std::string RemappablePath{};
     };
 
     struct DbProProjectEntry
