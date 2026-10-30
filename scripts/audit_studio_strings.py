@@ -70,13 +70,18 @@ LABELS = {
 # ImGui functions with a printf format: every other argument is displayed too.
 FORMATS = {"BulletText": 0, "SetTooltip": 0, "Text": 0, "TextColored": 1, "TextDisabled": 0, "TextWrapped": 0}
 
-# Studio helpers that translate these arguments themselves. Their literals
-# must be in the catalogue, since no Tr* call around them says so.
-HELPERS = {
+# Studio helpers that display a label as they receive it.
+DISPLAYING_HELPERS = {
     "CheckboxList": (0,),
     "LabelledValue": (0,),
-    "ModeButton": (0, 2, 3),
     "TextField": (0,),
+}
+
+# Studio helpers that translate these arguments themselves. Their literals
+# must be in the catalogue, since no Tr* call around them says so.
+TRANSLATING_HELPERS = {
+    "DrawSection": (0, 3),
+    "ModeButton": (0, 2, 3),
     "ToolbarButton": (3,),
 }
 
@@ -95,25 +100,19 @@ NO_INTERFACE_TEXT = {
 # Zones still to wrap. Each must be emptied, not extended.
 PENDING = {
     "core/gpu_texture.cpp",
-    "core/new_project.cpp",
-    "core/project_settings.cpp",
     "core/recovery.cpp",
     "core/snippet_library.cpp",
-    "core/workspace.cpp",
     "dba/code_outline.cpp",
     "dba/completion.cpp",
     "dba/program_info.cpp",
     "panels/asset_preview.cpp",
-    "panels/build_window.cpp",
     "panels/code_panel.cpp",
     "panels/completion_popup.cpp",
     "panels/editor_panel.cpp",
-    "panels/launcher_window.cpp",
     "panels/media_panel.cpp",
     "panels/output_panel.cpp",
     "panels/problems_panel.cpp",
     "panels/project_panel.cpp",
-    "panels/project_settings_window.cpp",
     "panels/scene_editor.cpp",
     "panels/scene_inspector.cpp",
     "panels/scene_paint.cpp",
@@ -363,9 +362,14 @@ def Audit(Files: dict[str, str], Catalogue: set[str], Verbatim: set[str], Pendin
                     Begin, End = Arguments[Format]
                     if any(Tokens[At].Text in TRANSLATORS for At in range(Begin, End)):
                         Result.TranslatedFormats.append(f"{Name}:{Tokens[Begin].Line}: ImGui::{Value.Text}")
-            elif IsCall and Value.Text in HELPERS and Checked:
+            elif IsCall and Value.Text in DISPLAYING_HELPERS:
                 Arguments = SplitArguments(Tokens, Index + 1)
-                for Position in HELPERS[Value.Text]:
+                for Position in DISPLAYING_HELPERS[Value.Text]:
+                    if Position < len(Arguments):
+                        CheckDisplayed(*Arguments[Position])
+            elif IsCall and Value.Text in TRANSLATING_HELPERS and Checked:
+                Arguments = SplitArguments(Tokens, Index + 1)
+                for Position in TRANSLATING_HELPERS[Value.Text]:
                     if Position < len(Arguments):
                         for Label in Strings(Tokens, *Arguments[Position]):
                             Skipped.add(id(Label))

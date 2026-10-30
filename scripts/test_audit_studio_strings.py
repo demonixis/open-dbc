@@ -51,8 +51,12 @@ class StudioStringsAuditTests(unittest.TestCase):
         self.assertEqual(Run('ImGui::Button("DBPro");', Verbatim=("DBPro",)).Total(), 0)
 
     def test_helper_labels_must_be_in_the_catalogue(self) -> None:
-        Result = Run('TextField("Country code", Value);')
-        self.assertEqual(Result.Missing, ["panel.cpp:1: 'Country code'"])
+        Result = Run('ModeButton("Scene", Active, Enabled, "Scene (Ctrl+2)");', ("Scene",))
+        self.assertEqual(Result.Missing, ["panel.cpp:1: 'Scene (Ctrl+2)'"])
+
+    def test_helper_showing_its_label_as_it_is_needs_it_translated(self) -> None:
+        self.assertEqual(Run('TextField("Country code", Value);').Unwrapped, ["panel.cpp:1: 'Country code'"])
+        self.assertEqual(Run('TextField(TrId("Country code"), Value);', ("Country code",)).Total(), 0)
 
     def test_missing_and_stale_keys(self) -> None:
         Result = Run('ImGui::Button(TrId("Save##Toolbar"));', ("Open",))

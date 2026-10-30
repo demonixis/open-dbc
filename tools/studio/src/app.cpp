@@ -1673,13 +1673,13 @@ namespace dbc::studio
                 {
                     for (const core::Workspace::Location& LocationValue : Workspace_.Locations())
                     {
-                        if (ImGui::MenuItem(LocationValue.Name.c_str()))
+                        if (ImGui::MenuItem(Tr(LocationValue.Name.c_str())))
                         {
                             OpenFolder(LocationValue.Path);
                         }
                         if (!LocationValue.Hint.empty() && ImGui::IsItemHovered())
                         {
-                            ImGui::SetTooltip("%s", LocationValue.Hint.c_str());
+                            ImGui::SetTooltip("%s", Tr(LocationValue.Hint.c_str()));
                         }
                     }
                     ImGui::EndMenu();

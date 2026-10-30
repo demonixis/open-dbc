@@ -6,3 +6,7 @@ DBPro
 DarkBASIC Classic
 DarkBASIC Professional
 OpenDBC 
+# Platform names, and what macOS calls a signing identity.
+iOS
+Android
+Developer ID Application:

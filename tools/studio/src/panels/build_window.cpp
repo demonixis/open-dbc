@@ -38,7 +38,7 @@ namespace dbc::studio
         bool IdentityCombo(const std::vector<toolchain::SigningIdentity>& Identities, std::string& Value)
         {
             bool Changed = false;
-            if (ImGui::BeginCombo("Developer ID identity", Value.empty() ? "(none)" : Value.c_str()))
+            if (ImGui::BeginCombo(TrId("Developer ID identity"), Value.empty() ? Tr("(none)") : Value.c_str()))
             {
                 for (const toolchain::SigningIdentity& Identity : Identities)
                 {
@@ -69,37 +69,37 @@ namespace dbc::studio
         {
             Action Result = Action::None;
             ImGui::SetNextWindowSize(ImVec2(520.0f, 0.0f), ImGuiCond_Appearing);
-            if (!ImGui::BeginPopupModal("Create keystore", nullptr))
+            if (!ImGui::BeginPopupModal(TrId("Create keystore"), nullptr))
                 return Result;
             ImGui::PushTextWrapPos(0.0f);
-            ImGui::TextUnformatted("Google Play ties the app to this key. Keep a copy of the file and its password: "
-                                   "without them, no update can be published.");
+            ImGui::TextUnformatted(Tr("Google Play ties the app to this key. Keep a copy of the file and its password: "
+                                      "without them, no update can be published."));
             ImGui::PopTextWrapPos();
             ImGui::SetNextItemWidth(-90.0f);
             TextField("##keystore", Keystore_.Path);
             ImGui::SameLine();
-            if (ImGui::Button("Choose..."))
+            if (ImGui::Button(TrId("Choose...")))
                 Result = Action::ChooseKeystore;
-            TextField("Key alias", Keystore_.Alias);
-            TextField("Your name", Keystore_.CommonName);
-            TextField("Organization", Keystore_.Organization);
-            TextField("City", Keystore_.Locality);
-            TextField("Country code", Keystore_.Country);
-            TextField("Password", Keystore_.Password, ImGuiInputTextFlags_Password);
-            TextField("Confirm password", Keystore_.Confirm, ImGuiInputTextFlags_Password);
+            TextField(TrId("Key alias"), Keystore_.Alias);
+            TextField(TrId("Your name"), Keystore_.CommonName);
+            TextField(TrId("Organization"), Keystore_.Organization);
+            TextField(TrId("City"), Keystore_.Locality);
+            TextField(TrId("Country code"), Keystore_.Country);
+            TextField(TrId("Password"), Keystore_.Password, ImGuiInputTextFlags_Password);
+            TextField(TrId("Confirm password"), Keystore_.Confirm, ImGuiInputTextFlags_Password);
             const bool PasswordReady = Keystore_.Password.size() >= 6 && Keystore_.Password == Keystore_.Confirm;
             if (!PasswordReady)
-                ImGui::TextDisabled("The passwords must match and have at least 6 characters.");
+                ImGui::TextDisabled("%s", Tr("The passwords must match and have at least 6 characters."));
             ImGui::BeginDisabled(!PasswordReady || Keystore_.Path.empty() || Keystore_.Alias.empty() ||
                                  Keystore_.CommonName.empty());
-            if (ImGui::Button("Create"))
+            if (ImGui::Button(TrId("Create")))
             {
                 Result = Action::CreateKeystore;
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndDisabled();
             ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button(TrId("Cancel")))
                 ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
             return Result;
@@ -128,7 +128,7 @@ namespace dbc::studio
             }
 
             ImGui::BeginDisabled(Busy);
-            ImGui::SeparatorText("Target");
+            ImGui::SeparatorText(Tr("Target"));
             std::vector<TargetChoice> Choices = {{DesktopTargetName(), toolchain::ArtifactTarget::Desktop},
                                                  {"Android APK", toolchain::ArtifactTarget::AndroidApk},
                                                  {"Android App Bundle", toolchain::ArtifactTarget::AndroidBundle}};
@@ -137,7 +137,7 @@ namespace dbc::studio
 #endif
             for (const TargetChoice& Choice : Choices)
             {
-                if (ImGui::RadioButton(Choice.Label, Target_ == Choice.Target) && Target_ != Choice.Target)
+                if (ImGui::RadioButton(TrId(Choice.Label), Target_ == Choice.Target) && Target_ != Choice.Target)
                 {
                     Target_ = Choice.Target;
                     Result = Action::Refresh;
@@ -146,51 +146,54 @@ namespace dbc::studio
             }
             ImGui::NewLine();
 
-            ImGui::SeparatorText("Mode");
-            if (ImGui::RadioButton("Development (unsigned)", !Distribution_) && Distribution_)
+            ImGui::SeparatorText(Tr("Mode"));
+            if (ImGui::RadioButton(TrId("Development (unsigned)"), !Distribution_) && Distribution_)
             {
                 Distribution_ = false;
                 Result = Action::Refresh;
             }
             ImGui::SameLine();
-            if (ImGui::RadioButton("Distribution (signed)", Distribution_) && !Distribution_)
+            if (ImGui::RadioButton(TrId("Distribution (signed)"), Distribution_) && !Distribution_)
             {
                 Distribution_ = true;
                 Result = Action::Refresh;
             }
 
-            ImGui::SeparatorText("Output");
+            ImGui::SeparatorText(Tr("Output"));
             ImGui::SetNextItemWidth(-90.0f);
             TextField("##output", OutputFolder_);
             ImGui::SameLine();
-            if (ImGui::Button("Browse..."))
+            if (ImGui::Button(TrId("Browse...")))
                 Result = Action::BrowseOutput;
 
             const bool Android =
                 Target_ == toolchain::ArtifactTarget::AndroidApk || Target_ == toolchain::ArtifactTarget::AndroidBundle;
             if (Distribution_ && Android)
             {
-                ImGui::SeparatorText("Signing");
-                ImGui::Text("Keystore: %s",
-                            Project.AndroidKeystorePath.empty() ? "(none)" : Project.AndroidKeystorePath.c_str());
+                ImGui::SeparatorText(Tr("Signing"));
+                ImGui::TextUnformatted(
+                    TrFmt("Keystore: {0}", {Project.AndroidKeystorePath.empty() ? std::string_view(Tr("(none)"))
+                                                                                : Project.AndroidKeystorePath})
+                        .c_str());
                 ImGui::SameLine();
-                if (ImGui::SmallButton("Create keystore..."))
-                    ImGui::OpenPopup("Create keystore");
+                if (ImGui::SmallButton(TrId("Create keystore...")))
+                    ImGui::OpenPopup(TrId("Create keystore"));
                 if (const Action Dialog = DrawKeystoreDialog(); Dialog != Action::None)
                     Result = Dialog;
-                ImGui::TextDisabled("Passwords are kept until the Studio closes and are never saved.");
-                if (TextField("Keystore password", Secrets.AndroidKeystorePassword, ImGuiInputTextFlags_Password) ||
-                    TextField("Key password", Secrets.AndroidKeyPassword, ImGuiInputTextFlags_Password))
+                ImGui::TextDisabled("%s", Tr("Passwords are kept until the Studio closes and are never saved."));
+                if (TextField(TrId("Keystore password"), Secrets.AndroidKeystorePassword,
+                              ImGuiInputTextFlags_Password) ||
+                    TextField(TrId("Key password"), Secrets.AndroidKeyPassword, ImGuiInputTextFlags_Password))
                     Result = Action::Refresh;
-                ImGui::Checkbox("Increase the version code after each signed build", &IncrementVersionCode_);
+                ImGui::Checkbox(TrId("Increase the version code after each signed build"), &IncrementVersionCode_);
             }
 
-            ImGui::SeparatorText("Checks");
+            ImGui::SeparatorText(Tr("Checks"));
             for (const toolchain::ExportCheck& Check : Checks)
             {
                 const ImU32 Colour = Check.Passed ? Theme::Run : (Check.Required ? Theme::Error : Theme::Warning);
                 ImGui::PushStyleColor(ImGuiCol_Text, Colour);
-                ImGui::TextUnformatted(Check.Passed ? "OK" : (Check.Required ? "Missing" : "Warning"));
+                ImGui::TextUnformatted(Tr(Check.Passed ? "OK" : (Check.Required ? "Missing" : "Warning")));
                 ImGui::PopStyleColor();
                 ImGui::SameLine(90.0f);
                 ImGui::TextUnformatted(Check.Label.c_str());
@@ -203,21 +206,21 @@ namespace dbc::studio
                     ImGui::Unindent(90.0f);
                 }
             }
-            if (ImGui::SmallButton("Check again"))
+            if (ImGui::SmallButton(TrId("Check again")))
                 Result = Action::Refresh;
 
-            if (ImGui::CollapsingHeader("External tools"))
+            if (ImGui::CollapsingHeader(TrId("External tools")))
             {
-                ImGui::TextDisabled("Saved for this computer; empty paths are detected automatically.");
+                ImGui::TextDisabled("%s", Tr("Saved for this computer; empty paths are detected automatically."));
                 bool Changed = false;
-                Changed |= TextField("JDK folder", Studio.JavaHome);
-                Changed |= TextField("Android SDK folder", Studio.AndroidSdk);
+                Changed |= TextField(TrId("JDK folder"), Studio.JavaHome);
+                Changed |= TextField(TrId("Android SDK folder"), Studio.AndroidSdk);
 #if defined(__APPLE__)
                 Changed |= IdentityCombo(Identities_, Studio.MacSigningIdentity);
-                Changed |= TextField("Notary profile", Studio.NotaryProfile);
+                Changed |= TextField(TrId("Notary profile"), Studio.NotaryProfile);
 #elif defined(_WIN32)
-                Changed |= TextField("Certificate SHA-1", Studio.WindowsCertificate);
-                Changed |= TextField("Timestamp URL", Studio.WindowsTimestampUrl);
+                Changed |= TextField(TrId("Certificate SHA-1"), Studio.WindowsCertificate);
+                Changed |= TextField(TrId("Timestamp URL"), Studio.WindowsTimestampUrl);
 #endif
                 if (Changed)
                     Result = Action::Refresh;
@@ -228,13 +231,13 @@ namespace dbc::studio
             const bool Ready = toolchain::ReadyToExport(Checks) && !OutputFolder_.empty();
             if (Busy)
             {
-                if (ImGui::Button("Cancel"))
+                if (ImGui::Button(TrId("Cancel")))
                     Result = Action::Cancel;
             }
             else
             {
                 ImGui::BeginDisabled(!Ready);
-                if (ImGui::Button("Build"))
+                if (ImGui::Button(TrId("Build")))
                     Result = Action::Build;
                 ImGui::EndDisabled();
             }

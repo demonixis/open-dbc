@@ -1,14 +1,27 @@
 #include "media_catalogue.hpp"
+#include "i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 
 namespace dbc::studio
 {
     namespace core
     {
         namespace fs = std::filesystem;
+
+        std::string FormatFileSize(std::uintmax_t Bytes)
+        {
+            if (Bytes < 1024)
+                return TrFmt("{0} B", {std::to_string(Bytes)});
+            char Number[32];
+            const bool Kilobytes = Bytes < 1024 * 1024;
+            std::snprintf(Number, sizeof(Number), "%.1f",
+                          static_cast<double>(Bytes) / (Kilobytes ? 1024.0 : 1024.0 * 1024.0));
+            return TrFmt(Kilobytes ? "{0} KB" : "{0} MB", {Number});
+        }
 
         std::string_view MediaKindLabel(MediaKind Kind)
         {

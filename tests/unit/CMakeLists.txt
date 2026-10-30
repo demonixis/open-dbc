@@ -133,6 +133,7 @@ if(NOT ANDROID AND NOT IOS)
 
     add_executable(test_studio_media
         test_studio_media.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
     )
     target_include_directories(test_studio_media PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src ${ENGINE_SRC_DIR})
@@ -289,6 +290,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         test_project_settings.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/settings.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/paths.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/project_settings.cpp
     )
     target_include_directories(test_project_settings PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
@@ -302,6 +304,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     add_executable(test_studio_new_project
         test_studio_new_project.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/new_project.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/project_settings.cpp
     )
     target_include_directories(test_studio_new_project PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
@@ -343,6 +346,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/windows_resources.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/settings.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/paths.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/project_settings.cpp
     )
     target_include_directories(test_artifact_export PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)

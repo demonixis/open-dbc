@@ -131,50 +131,50 @@ namespace dbc::studio
 
             if (ImGui::BeginTabBar("##settings"))
             {
-                if (ImGui::BeginTabItem("General"))
+                if (ImGui::BeginTabItem(TrId("General")))
                 {
-                    TextField("App name", Draft_.AppName);
-                    TextField("Bundle / package ID", Draft_.BundleId);
-                    TextField("Version name", Draft_.VersionName, 64);
-                    ImGui::InputInt("Version code", &Draft_.VersionCode);
+                    TextField(TrId("App name"), Draft_.AppName);
+                    TextField(TrId("Bundle / package ID"), Draft_.BundleId);
+                    TextField(TrId("Version name"), Draft_.VersionName, 64);
+                    ImGui::InputInt(TrId("Version code"), &Draft_.VersionCode);
 
-                    ImGui::SeparatorText("Icons");
-                    TextField("Icon source (1024x1024 PNG)", Draft_.IconSource);
+                    ImGui::SeparatorText(Tr("Icons"));
+                    TextField(TrId("Icon source (1024x1024 PNG)"), Draft_.IconSource);
 
                     ImGui::EndTabItem();
                 }
 
                 if (ImGui::BeginTabItem("iOS"))
                 {
-                    TextField("Development team ID", Draft_.IosTeamId, 64);
-                    ImGui::TextWrapped("Device signing reads OPENDBC_IOS_SIGNING_IDENTITY and "
-                                       "OPENDBC_IOS_PROVISIONING_PROFILE from the export environment.");
-                    TextField("Deployment target", Draft_.IosDeploymentTarget, 32);
+                    TextField(TrId("Development team ID"), Draft_.IosTeamId, 64);
+                    ImGui::TextWrapped("%s", Tr("Device signing reads OPENDBC_IOS_SIGNING_IDENTITY and "
+                                                "OPENDBC_IOS_PROVISIONING_PROFILE from the export environment."));
+                    TextField(TrId("Deployment target"), Draft_.IosDeploymentTarget, 32);
 
-                    ImGui::SeparatorText("Orientations");
-                    CheckboxList("Supported", {"LandscapeLeft", "LandscapeRight", "Portrait", "PortraitUpsideDown"},
+                    ImGui::SeparatorText(Tr("Orientations"));
+                    CheckboxList(Tr("Supported"), {"LandscapeLeft", "LandscapeRight", "Portrait", "PortraitUpsideDown"},
                                  Draft_.IosOrientations);
 
-                    ImGui::SeparatorText("Permission descriptions");
-                    ImGui::TextDisabled("Leave empty to omit the key from Info.plist.");
-                    TextField("Camera", Draft_.IosCameraDesc);
-                    TextField("Microphone", Draft_.IosMicrophoneDesc);
-                    TextField("Location", Draft_.IosLocationDesc);
-                    TextField("Photo library", Draft_.IosPhotoDesc);
+                    ImGui::SeparatorText(Tr("Permission descriptions"));
+                    ImGui::TextDisabled("%s", Tr("Leave empty to omit the key from Info.plist."));
+                    TextField(TrId("Camera"), Draft_.IosCameraDesc);
+                    TextField(TrId("Microphone"), Draft_.IosMicrophoneDesc);
+                    TextField(TrId("Location"), Draft_.IosLocationDesc);
+                    TextField(TrId("Photo library"), Draft_.IosPhotoDesc);
 
                     ImGui::EndTabItem();
                 }
 
                 if (ImGui::BeginTabItem("Android"))
                 {
-                    ImGui::InputInt("Min SDK", &Draft_.AndroidMinSdk);
-                    ImGui::InputInt("Target SDK", &Draft_.AndroidTargetSdk);
+                    ImGui::InputInt(TrId("Min SDK"), &Draft_.AndroidMinSdk);
+                    ImGui::InputInt(TrId("Target SDK"), &Draft_.AndroidTargetSdk);
 
                     // Orientations and permissions are Android manifest values, shown verbatim: never translate them.
                     static const std::array<const char*, 5> KOrientations = {
                         "sensorLandscape", "landscape", "sensorPortrait", "portrait", "fullSensor",
                     };
-                    if (ImGui::BeginCombo("Screen orientation", Draft_.AndroidOrientation.c_str()))
+                    if (ImGui::BeginCombo(TrId("Screen orientation"), Draft_.AndroidOrientation.c_str()))
                     {
                         for (const char* Orientation : KOrientations)
                         {
@@ -186,23 +186,23 @@ namespace dbc::studio
                         ImGui::EndCombo();
                     }
 
-                    ImGui::SeparatorText("Permissions");
-                    CheckboxList("Requested",
+                    ImGui::SeparatorText(Tr("Permissions"));
+                    CheckboxList(Tr("Requested"),
                                  {"INTERNET", "CAMERA", "RECORD_AUDIO", "ACCESS_FINE_LOCATION", "READ_EXTERNAL_STORAGE",
                                   "WRITE_EXTERNAL_STORAGE", "VIBRATE"},
                                  Draft_.AndroidPermissions);
 
-                    ImGui::SeparatorText("Release signing");
-                    TextField("Keystore path", Draft_.AndroidKeystorePath);
-                    TextField("Key alias", Draft_.AndroidKeyAlias, 128);
-                    ImGui::TextWrapped("Passwords are never stored in the project. Set "
-                                       "OPENDBC_ANDROID_KEYSTORE_PASSWORD and OPENDBC_ANDROID_KEY_PASSWORD "
-                                       "in the export environment.");
+                    ImGui::SeparatorText(Tr("Release signing"));
+                    TextField(TrId("Keystore path"), Draft_.AndroidKeystorePath);
+                    TextField(TrId("Key alias"), Draft_.AndroidKeyAlias, 128);
+                    ImGui::TextWrapped("%s", Tr("Passwords are never stored in the project. Set "
+                                                "OPENDBC_ANDROID_KEYSTORE_PASSWORD and OPENDBC_ANDROID_KEY_PASSWORD "
+                                                "in the export environment."));
 
                     ImGui::EndTabItem();
                 }
 
-                if (DbproProject_ && ImGui::BeginTabItem("DBPro Sources"))
+                if (DbproProject_ && ImGui::BeginTabItem(TrId("DBPro Sources")))
                 {
                     for (const dbc::language::DbProProjectEntry& Entry : DbproProject_->Entries)
                     {
@@ -219,7 +219,7 @@ namespace dbc::studio
                     ImGui::EndTabItem();
                 }
 
-                if (DbproProject_ && ImGui::BeginTabItem("DBPro Display"))
+                if (DbproProject_ && ImGui::BeginTabItem(TrId("DBPro Display")))
                 {
                     // Keys of the .dbpro file, shown verbatim like those of the other DBPro tabs: never translate them.
                     for (const char* Key : {"app title", "graphics mode", "window resolution", "fullscreen resolution",
@@ -232,7 +232,7 @@ namespace dbc::studio
                     ImGui::EndTabItem();
                 }
 
-                if (DbproProject_ && ImGui::BeginTabItem("DBPro Media"))
+                if (DbproProject_ && ImGui::BeginTabItem(TrId("DBPro Media")))
                 {
                     for (const dbc::language::DbProProjectEntry& Entry : DbproProject_->Entries)
                     {
@@ -250,7 +250,7 @@ namespace dbc::studio
                     ImGui::EndTabItem();
                 }
 
-                if (DbproProject_ && ImGui::BeginTabItem("DBPro Version"))
+                if (DbproProject_ && ImGui::BeginTabItem(TrId("DBPro Version")))
                 {
                     for (const dbc::language::DbProProjectEntry& Entry : DbproProject_->Entries)
                     {
@@ -266,10 +266,11 @@ namespace dbc::studio
                     ImGui::EndTabItem();
                 }
 
-                if (DbproProject_ && ImGui::BeginTabItem("DBPro Advanced"))
+                if (DbproProject_ && ImGui::BeginTabItem(TrId("DBPro Advanced")))
                 {
-                    ImGui::TextWrapped("Unknown keys and legacy options are preserved. Active unsupported options "
-                                       "are rejected by Run or Export with a targeted diagnostic.");
+                    ImGui::TextWrapped("%s",
+                                       Tr("Unknown keys and legacy options are preserved. Active unsupported options "
+                                          "are rejected by Run or Export with a targeted diagnostic."));
                     for (const dbc::language::DbProProjectEntry& Entry : DbproProject_->Entries)
                     {
                         std::string Value = Entry.Value;
@@ -285,7 +286,7 @@ namespace dbc::studio
                     ImGui::EndTabItem();
                 }
 
-                if (DbproProject_ && ImGui::BeginTabItem("DBPro Source"))
+                if (DbproProject_ && ImGui::BeginTabItem(TrId("DBPro Source")))
                 {
                     if (ImGui::InputTextMultiline("##dbpro-raw", RawProject_.data(), RawProject_.size(),
                                                   ImVec2(-1.0f, -80.0f)))
@@ -298,7 +299,9 @@ namespace dbc::studio
                         const ImVec4 Color = Diagnostic.Severity == dbc::language::ProjectDiagnosticSeverity::Error
                                                  ? ImVec4(1.0f, 0.35f, 0.35f, 1.0f)
                                                  : ImVec4(1.0f, 0.75f, 0.3f, 1.0f);
-                        ImGui::TextColored(Color, "Line %zu: %s", Diagnostic.Line, Diagnostic.Message.c_str());
+                        ImGui::TextColored(
+                            Color, "%s",
+                            TrFmt("Line {0}: {1}", {std::to_string(Diagnostic.Line), Diagnostic.Message}).c_str());
                     }
                     ImGui::EndTabItem();
                 }
@@ -309,7 +312,7 @@ namespace dbc::studio
             ImGui::Separator();
 
             ImGui::BeginDisabled(Root_.empty());
-            if (ImGui::Button("Save"))
+            if (ImGui::Button(TrId("Save")))
             {
                 if (Draft_.Save(Root_) && SaveProject())
                 {
@@ -321,7 +324,7 @@ namespace dbc::studio
             ImGui::EndDisabled();
 
             ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button(TrId("Cancel")))
             {
                 Open_ = false;
             }
@@ -329,7 +332,7 @@ namespace dbc::studio
             if (Root_.empty())
             {
                 ImGui::SameLine();
-                ImGui::TextDisabled("Open a folder first.");
+                ImGui::TextDisabled("%s", Tr("Open a folder first."));
             }
 
             ImGui::End();

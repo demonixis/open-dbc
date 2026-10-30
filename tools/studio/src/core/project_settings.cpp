@@ -2,6 +2,7 @@
 #include "path_utf8.hpp"
 #include <algorithm>
 
+#include "core/i18n.hpp"
 #include "engine/systems/log.hpp"
 #include "interpreter/atomic_file.hpp"
 #include <fstream>
@@ -72,13 +73,13 @@ namespace dbc::studio
             std::ifstream In(Path);
             if (!In || FileError)
             {
-                S.LoadError = "Cannot open project settings";
+                S.LoadError = Tr("Cannot open project settings");
             }
             else
             {
                 const std::string Text(std::istreambuf_iterator<char>(In), {});
                 if (In.bad())
-                    S.LoadError = "Cannot read project settings";
+                    S.LoadError = Tr("Cannot read project settings");
                 else
                     S = Parse(Text);
             }
@@ -94,14 +95,14 @@ namespace dbc::studio
 
             if (Root.is_discarded() || !Root.is_object())
             {
-                S.LoadError = "Project settings must be a JSON object";
+                S.LoadError = Tr("Project settings must be a JSON object");
                 return S;
             }
             const auto Check = [&](const char* Pointer, auto Predicate)
             {
                 const json::json_pointer Path(Pointer);
                 if (Root.contains(Path) && !Predicate(Root.at(Path)) && S.LoadError.empty())
-                    S.LoadError = std::string("Invalid project setting type or value: ") + Pointer;
+                    S.LoadError = TrFmt("Invalid project setting type or value: {0}", {Pointer});
             };
             for (const char* Path : {"/general", "/icons", "/ios", "/ios/permissions", "/android", "/language"})
                 Check(Path, [](const json& Value) { return Value.is_object(); });

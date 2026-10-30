@@ -1,6 +1,7 @@
 #include "new_project.hpp"
 #include "path_utf8.hpp"
 
+#include "core/i18n.hpp"
 #include "core/project_settings.hpp"
 #include "interpreter/atomic_file.hpp"
 
@@ -56,18 +57,18 @@ namespace dbc::studio
         std::string ValidateProjectName(std::string_view Name)
         {
             if (Name.empty())
-                return "Enter a project name.";
+                return Tr("Enter a project name.");
             if (Name.size() > 64)
-                return "The project name is longer than 64 characters.";
+                return Tr("The project name is longer than 64 characters.");
             if (Name.front() == ' ' || Name.back() == ' ' || Name.back() == '.')
-                return "The project name cannot start with a space or end with a space or a dot.";
+                return Tr("The project name cannot start with a space or end with a space or a dot.");
             if (Name == "." || Name == "..")
-                return "The project name cannot be . or ..";
+                return Tr("The project name cannot be . or ..");
             constexpr std::string_view Forbidden = "<>:\"/\\|?*";
             for (const char Character : Name)
             {
                 if (static_cast<unsigned char>(Character) < 0x20 || Forbidden.find(Character) != std::string_view::npos)
-                    return "The project name cannot contain < > : \" / \\ | ? * or control characters.";
+                    return Tr("The project name cannot contain < > : \" / \\ | ? * or control characters.");
             }
             // Windows refuses these as folder names whatever the extension.
             const std::string Stem = Upper(Name.substr(0, Name.find('.')));
@@ -75,7 +76,7 @@ namespace dbc::studio
             const bool Numbered = Stem.size() == 4 && (Stem.starts_with("COM") || Stem.starts_with("LPT")) &&
                                   Stem[3] >= '1' && Stem[3] <= '9';
             if (Numbered || std::find(Devices.begin(), Devices.end(), Stem) != Devices.end())
-                return "The project name is reserved by Windows.";
+                return Tr("The project name is reserved by Windows.");
             return {};
         }
 
@@ -123,19 +124,19 @@ namespace dbc::studio
             std::error_code Error;
             if (!std::filesystem::is_directory(Request.Location, Error))
             {
-                Result.Error = "The location is not a folder: " + dbc::PathToUtf8(Request.Location);
+                Result.Error = TrFmt("The location is not a folder: {0}", {dbc::PathToUtf8(Request.Location)});
                 return Result;
             }
             const std::filesystem::path Root = (Request.Location / dbc::PathFromUtf8(Request.Name)).lexically_normal();
             if (std::filesystem::exists(Root, Error) || Error)
             {
-                Result.Error = Error ? "Cannot inspect " + dbc::PathToUtf8(Root) + ": " + Error.message()
-                                     : "A file or folder named " + Request.Name + " already exists there.";
+                Result.Error = Error ? TrFmt("Cannot inspect {0}: {1}", {dbc::PathToUtf8(Root), Error.message()})
+                                     : TrFmt("A file or folder named {0} already exists there.", {Request.Name});
                 return Result;
             }
             if (!std::filesystem::create_directory(Root, Error))
             {
-                Result.Error = "Cannot create " + dbc::PathToUtf8(Root) + ": " + Error.message();
+                Result.Error = TrFmt("Cannot create {0}: {1}", {dbc::PathToUtf8(Root), Error.message()});
                 return Result;
             }
 
@@ -157,14 +158,14 @@ namespace dbc::studio
                 Settings.LanguageEntry = KMainSource;
                 Written = Settings.Save(Root);
                 if (!Written)
-                    Result.Error = "Cannot write " + dbc::PathToUtf8(ProjectSettings::FilePath(Root));
+                    Result.Error = TrFmt("Cannot write {0}", {dbc::PathToUtf8(ProjectSettings::FilePath(Root))});
             }
             if (!Written)
             {
                 // The folder did not exist before, so nothing of the user's is lost.
                 std::filesystem::remove_all(Root, Error);
                 if (Result.Error.empty())
-                    Result.Error = "Cannot write the project files";
+                    Result.Error = Tr("Cannot write the project files");
                 return Result;
             }
             Result.Root = Root;

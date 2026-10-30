@@ -282,6 +282,17 @@ TEST_CASE("The French catalogue covers the menus and the application's messages"
     CHECK(std::string_view(TrC("dialect origin|detected")) == "detected");
 }
 
+TEST_CASE("The French catalogue covers the launcher, the build window and the project settings")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Label : {"Unrecognised statements", "Development (unsigned)", "macOS app", "Windows executable",
+                              "Linux folder", "iOS (Xcode project)", "Missing", "My Projects", "Samples", "File System",
+                              "Open any folder on this machine", "Screen orientation", "DBPro Advanced"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    CHECK(TrFmt("Line {0}: {1}", {"3", "x"}) == "Ligne 3 : x");
+    core::ActivateInterfaceLanguage("en");
+}
+
 TEST_CASE("French translations keep the placeholders of their source text")
 {
     std::ifstream File(std::filesystem::path(TEST_SOURCE_DIR) / "tools/studio/locales/fr.json", std::ios::binary);
