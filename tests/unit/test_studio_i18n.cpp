@@ -305,6 +305,17 @@ TEST_CASE("The French catalogue covers the code, media, output and snippet panel
     core::ActivateInterfaceLanguage("en");
 }
 
+TEST_CASE("The French catalogue covers the export toolchain")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Label : {"Export cancelled", "Export host matches this Studio", "Keystore passwords",
+                              "Save the active document as a .dba file before running.", "Verifying the signature"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    CHECK(TrFmt("Published {0}", {"x"}) == "x publié");
+    CHECK(TrFmt("Command failed ({0}): {1}{2}", {"1", "x", ""}) == "La commande a échoué (1) : x");
+    core::ActivateInterfaceLanguage("en");
+}
+
 TEST_CASE("French translations keep the placeholders of their source text")
 {
     std::ifstream File(std::filesystem::path(TEST_SOURCE_DIR) / "tools/studio/locales/fr.json", std::ios::binary);

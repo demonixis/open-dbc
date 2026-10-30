@@ -147,6 +147,7 @@ if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_run_plan
         test_studio_run_plan.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/toolchain/active_run_planner.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
     )
     target_include_directories(test_studio_run_plan PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
     target_link_libraries(test_studio_run_plan PRIVATE doctest_with_main dbc_interpreter)

@@ -15,3 +15,6 @@ Developer ID Application:
 Aa
 SYNC ON
 My Game
+# The default product name of an exported artifact and an Apple Info.plist key.
+OpenDBC Artifact
+UISupportedInterfaceOrientations~ipad

@@ -98,22 +98,6 @@ NO_INTERFACE_TEXT = {
     "toolchain/shader_compiler.cpp",
 }
 
-# Zones still to wrap. Each must be emptied, not extended.
-PENDING = {
-    "toolchain/active_run_planner.cpp",
-    "toolchain/android_keystore.cpp",
-    "toolchain/artifact_export_service.cpp",
-    "toolchain/execution_adapter.cpp",
-    "toolchain/export_android.cpp",
-    "toolchain/export_common.cpp",
-    "toolchain/export_desktop.cpp",
-    "toolchain/export_ios.cpp",
-    "toolchain/export_readiness.cpp",
-    "toolchain/icon_generator.cpp",
-    "toolchain/process_runner.cpp",
-    "toolchain/windows_resources.cpp",
-}
-
 TOKEN = re.compile(
     r"""
     (?P<comment>//[^\n]*|/\*.*?\*/)
@@ -276,7 +260,7 @@ class Findings:
 
 
 def Audit(
-    Files: dict[str, str], Catalogue: set[str], Verbatim: set[str], Pending: set[str], Required: dict[str, str]
+    Files: dict[str, str], Catalogue: set[str], Verbatim: set[str], Required: dict[str, str]
 ) -> Findings:
     """Required maps text the sources only read at run time to where it comes from."""
     Result = Findings([], [], [], [], [])
@@ -288,7 +272,7 @@ def Audit(
 
     for Name, Text in sorted(Files.items()):
         Tokens = Tokenize(Text)
-        Checked = Name not in Pending and Name not in NO_INTERFACE_TEXT
+        Checked = Name not in NO_INTERFACE_TEXT
         Skipped: set[int] = set()
         # "const char* Popup = "Title";" names a literal shown further down.
         Named = {}
@@ -410,7 +394,7 @@ def main() -> None:
         for Path_ in SOURCES.rglob("*")
         if Path_.suffix in (".cpp", ".hpp")
     }
-    Result = Audit(Files, ReadCatalogue(CATALOGUE), ReadVerbatim(VERBATIM), PENDING, ReadSnippetTexts(SNIPPETS))
+    Result = Audit(Files, ReadCatalogue(CATALOGUE), ReadVerbatim(VERBATIM), ReadSnippetTexts(SNIPPETS))
 
     Sections = (
         ("Interface text outside Tr*", Result.Unwrapped),
@@ -426,7 +410,7 @@ def main() -> None:
             print("\n".join(f"  {Item}" for Item in Items), file=Stream)
     if Arguments.check and Result.Total():
         raise SystemExit(1)
-    print(f"Studio strings: {Result.Total()} finding(s), {len(PENDING)} file(s) still pending")
+    print(f"Studio strings: {Result.Total()} finding(s)")
 
 
 if __name__ == "__main__":

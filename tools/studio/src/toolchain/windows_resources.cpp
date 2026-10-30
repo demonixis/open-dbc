@@ -1,4 +1,5 @@
 #include "windows_resources.hpp"
+#include "core/i18n.hpp"
 
 #include <array>
 #include <charconv>
@@ -257,7 +258,7 @@ namespace dbc::studio
             HANDLE Update = BeginUpdateResourceW(Executable.wstring().c_str(), FALSE);
             if (Update == nullptr)
             {
-                Error = "Cannot open the Windows executable resources";
+                Error = Tr("Cannot open the Windows executable resources");
                 return false;
             }
             const WORD Language = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
@@ -281,7 +282,7 @@ namespace dbc::studio
                                       VersionResource.data(), static_cast<DWORD>(VersionResource.size()));
             if (!EndUpdateResourceW(Update, Updated ? FALSE : TRUE) || !Updated)
             {
-                Error = "Cannot update the Windows executable icon and version";
+                Error = Tr("Cannot update the Windows executable icon and version");
                 return false;
             }
             return true;
@@ -290,7 +291,7 @@ namespace dbc::studio
         bool UpdateWindowsExecutableResources(const std::filesystem::path&, const std::vector<WindowsIconImage>&,
                                               const WindowsVersionInfo&, std::string& Error)
         {
-            Error = "Windows executables can only be customized on Windows";
+            Error = Tr("Windows executables can only be customized on Windows");
             return false;
         }
 #endif

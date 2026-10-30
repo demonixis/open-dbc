@@ -1,4 +1,5 @@
 #include "process_runner.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <SDL3/SDL.h>
@@ -94,7 +95,7 @@ namespace dbc::studio
             ProcessResult Result;
             if (Request.Arguments.empty())
             {
-                Result.Error = "No tool to run";
+                Result.Error = Tr("No tool to run");
                 return Result;
             }
             const std::string& Tool = Request.Arguments.front();
@@ -110,14 +111,14 @@ namespace dbc::studio
                 Environment.reset(SDL_CreateEnvironment(true));
                 if (!Environment)
                 {
-                    Result.Error = "Cannot prepare the environment of '" + Tool + "': " + SDL_GetError();
+                    Result.Error = TrFmt("Cannot prepare the environment of '{0}': {1}", {Tool, SDL_GetError()});
                     return Result;
                 }
                 for (const auto& [Name, Value] : Request.Environment)
                 {
                     if (!SDL_SetEnvironmentVariable(Environment.get(), Name.c_str(), Value.c_str(), true))
                     {
-                        Result.Error = "Cannot set " + Name + " for '" + Tool + "': " + SDL_GetError();
+                        Result.Error = TrFmt("Cannot set {0} for '{1}': {2}", {Name, Tool, SDL_GetError()});
                         return Result;
                     }
                 }
@@ -126,7 +127,7 @@ namespace dbc::studio
             const SDL_PropertiesID Properties = SDL_CreateProperties();
             if (Properties == 0)
             {
-                Result.Error = "Cannot prepare process '" + Tool + "': " + SDL_GetError();
+                Result.Error = TrFmt("Cannot prepare process '{0}': {1}", {Tool, SDL_GetError()});
                 return Result;
             }
             SDL_SetPointerProperty(Properties, SDL_PROP_PROCESS_CREATE_ARGS_POINTER, Values.data());
@@ -143,7 +144,7 @@ namespace dbc::studio
             SDL_DestroyProperties(Properties);
             if (!Process)
             {
-                Result.Error = "Cannot start '" + Tool + "': " + SDL_GetError();
+                Result.Error = TrFmt("Cannot start '{0}': {1}", {Tool, SDL_GetError()});
                 return Result;
             }
 
@@ -189,13 +190,14 @@ namespace dbc::studio
 
             if (!SDL_WaitProcess(Process.get(), true, &Result.ExitCode))
             {
-                Result.Error = "Cannot wait for '" + Tool + "': " + SDL_GetError();
+                Result.Error = TrFmt("Cannot wait for '{0}': {1}", {Tool, SDL_GetError()});
                 return Result;
             }
             if (Result.Cancelled)
-                Result.Error = "Cancelled while running '" + Tool + "'";
+                Result.Error = TrFmt("Cancelled while running '{0}'", {Tool});
             else if (Result.ExitCode != 0)
-                Result.Error = "Command failed (" + std::to_string(Result.ExitCode) + "): " + Tool + Lines.Tail();
+                Result.Error =
+                    TrFmt("Command failed ({0}): {1}{2}", {std::to_string(Result.ExitCode), Tool, Lines.Tail()});
             return Result;
         }
     } // namespace toolchain

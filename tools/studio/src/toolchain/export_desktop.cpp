@@ -1,3 +1,4 @@
+#include "core/i18n.hpp"
 #include "export_internal.hpp"
 #include "path_utf8.hpp"
 #include "toolchain_locator.hpp"
@@ -115,7 +116,7 @@ namespace dbc::studio
                 const std::optional<std::string> Bytes = ReadFile(Png);
                 if (!Bytes)
                 {
-                    Error = "Cannot read the generated Windows icon";
+                    Error = Tr("Cannot read the generated Windows icon");
                     return false;
                 }
                 Icons.push_back({Size, std::vector<std::uint8_t>(Bytes->begin(), Bytes->end())});
@@ -135,15 +136,15 @@ namespace dbc::studio
             const std::optional<fs::path> Signtool = LocateSigntool(ToolchainSearch::Host());
             if (!Signtool)
             {
-                Error = "Signing Windows executables needs signtool from the Windows SDK";
+                Error = Tr("Signing Windows executables needs signtool from the Windows SDK");
                 return false;
             }
             if (!NormalizeCertificateThumbprint(Request.Toolchain.WindowsCertificate))
             {
-                Error = "Signing Windows executables needs the SHA-1 thumbprint of a code signing certificate";
+                Error = Tr("Signing Windows executables needs the SHA-1 thumbprint of a code signing certificate");
                 return false;
             }
-            Context.Note("Signing with certificate " + Request.Toolchain.WindowsCertificate);
+            Context.Note(TrFmt("Signing with certificate {0}", {Request.Toolchain.WindowsCertificate}));
             for (const fs::path& File : {Executable, Stage / "openxr_loader.dll"})
             {
                 if (!Context.Run(WindowsSignArguments(*Signtool, Request.Toolchain, File), Error) ||
@@ -171,7 +172,7 @@ namespace dbc::studio
             Entry.close();
             if (!Entry)
             {
-                Error = "Cannot write the Linux desktop entry";
+                Error = Tr("Cannot write the Linux desktop entry");
                 return false;
             }
             return true;
@@ -202,13 +203,13 @@ namespace dbc::studio
             std::error_code FileError;
             if (fs::exists(Result.OutputPath, FileError))
             {
-                Result.Error = "Export destination already exists: " + dbc::PathToUtf8(Result.OutputPath);
+                Result.Error = TrFmt("Export destination already exists: {0}", {dbc::PathToUtf8(Result.OutputPath)});
                 Result.OutputPath.clear();
                 return Result;
             }
             if (Request.Sign && fs::exists(Archive, FileError))
             {
-                Result.Error = "Export destination already exists: " + dbc::PathToUtf8(Archive);
+                Result.Error = TrFmt("Export destination already exists: {0}", {dbc::PathToUtf8(Archive)});
                 Result.OutputPath.clear();
                 return Result;
             }
@@ -233,7 +234,7 @@ namespace dbc::studio
             const bool Notarize = Request.Sign && !Request.Toolchain.NotaryProfile.empty();
             if (Request.Sign)
             {
-                Context.Note("Signing with " + Request.Toolchain.MacSigningIdentity);
+                Context.Note(TrFmt("Signing with {0}", {Request.Toolchain.MacSigningIdentity}));
                 if (!SignMacDistribution(Context, App, Request.Toolchain.MacSigningIdentity, Result.Error) ||
                     (Notarize && !NotarizeMacApp(Context, App, Request.Toolchain.NotaryProfile, Result.Error)))
                     return Result;
@@ -246,9 +247,9 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) +
-                                      " asset files");
-            Result.Messages.push_back("Published " + dbc::PathToUtf8(Result.OutputPath));
+            Result.Messages.push_back(
+                TrFmt("Exported the program image and {0} asset files", {std::to_string(Files.size())}));
+            Result.Messages.push_back(TrFmt("Published {0}", {dbc::PathToUtf8(Result.OutputPath)}));
             if (Request.Sign)
             {
                 // A zip keeps the signature and the stapled ticket for direct downloads.
@@ -256,10 +257,10 @@ namespace dbc::studio
                                   dbc::PathToUtf8(Archive)},
                                  Result.Error))
                     return Result;
-                Result.Messages.push_back("Published " + dbc::PathToUtf8(Archive));
+                Result.Messages.push_back(TrFmt("Published {0}", {dbc::PathToUtf8(Archive)}));
                 if (!Notarize)
-                    Result.Messages.push_back("Signed but not notarized: other Macs will block it until it is "
-                                              "notarized with a notary profile");
+                    Result.Messages.push_back(Tr("Signed but not notarized: other Macs will block it until it is "
+                                                 "notarized with a notary profile"));
             }
 #else
 #if defined(_WIN32)
@@ -285,14 +286,14 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) +
-                                      " asset files");
-            Result.Messages.push_back("Published " + dbc::PathToUtf8(Result.OutputPath));
+            Result.Messages.push_back(
+                TrFmt("Exported the program image and {0} asset files", {std::to_string(Files.size())}));
+            Result.Messages.push_back(TrFmt("Published {0}", {dbc::PathToUtf8(Result.OutputPath)}));
             if (Request.Sign)
             {
                 if (!Context.Run(DesktopArchiveArguments(Request.OutputDirectory, ProductName, Archive), Result.Error))
                     return Result;
-                Result.Messages.push_back("Published " + dbc::PathToUtf8(Archive));
+                Result.Messages.push_back(TrFmt("Published {0}", {dbc::PathToUtf8(Archive)}));
             }
 #endif
             return Result;

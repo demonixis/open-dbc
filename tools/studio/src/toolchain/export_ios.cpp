@@ -1,3 +1,4 @@
+#include "core/i18n.hpp"
 #include "export_internal.hpp"
 #include "path_utf8.hpp"
 
@@ -34,7 +35,7 @@ namespace dbc::studio
             if (!fs::is_directory(Root / "template", FileError) ||
                 !fs::is_regular_file(Root / "OpenDBCRuntime.xcconfig", FileError))
             {
-                Error = "The installed product does not contain the qualified iOS runtime";
+                Error = Tr("The installed product does not contain the qualified iOS runtime");
                 return false;
             }
             for (const auto& [Slice, Manifest] : IosSlices)
@@ -56,22 +57,22 @@ namespace dbc::studio
                 Request.Settings.BundleId.empty() ? "net.demonixis.opendbc.artifact" : Request.Settings.BundleId;
             if (!IsBundleIdentifier(BundleId))
             {
-                Error = "iOS bundle ID must contain at least two valid identifier segments";
+                Error = Tr("iOS bundle ID must contain at least two valid identifier segments");
                 return false;
             }
             if (!IsAppleVersion(Request.Settings.VersionName) || Request.Settings.VersionCode < 1)
             {
-                Error = "iOS versions require one to three numeric components and a positive build number";
+                Error = Tr("iOS versions require one to three numeric components and a positive build number");
                 return false;
             }
             if (!IsSupportedIosDeployment(Request.Settings.IosDeploymentTarget))
             {
-                Error = "The iOS deployment target must be version 16.0 or newer";
+                Error = Tr("The iOS deployment target must be version 16.0 or newer");
                 return false;
             }
             if (!IsAppleTeamIdentifier(Request.Settings.IosTeamId))
             {
-                Error = "The iOS development team ID must contain 10 uppercase letters or digits";
+                Error = Tr("The iOS development team ID must contain 10 uppercase letters or digits");
                 return false;
             }
             std::ofstream Output(Project / "Game.xcconfig", std::ios::binary | std::ios::trunc);
@@ -94,7 +95,7 @@ namespace dbc::studio
             Output.close();
             if (!Output)
             {
-                Error = "Cannot write the Xcode build settings";
+                Error = Tr("Cannot write the Xcode build settings");
                 return false;
             }
             return true;
@@ -110,14 +111,14 @@ namespace dbc::studio
             {
                 if (!Orientations.contains(Orientation))
                 {
-                    Error = "Unsupported iOS orientation: " + Orientation;
+                    Error = TrFmt("Unsupported iOS orientation: {0}", {Orientation});
                     return false;
                 }
                 Values.push_back("UIInterfaceOrientation" + Orientation);
             }
             if (Values.empty())
             {
-                Error = "At least one iOS orientation is required";
+                Error = Tr("At least one iOS orientation is required");
                 return false;
             }
             const std::string Json = Values.dump();
@@ -161,7 +162,7 @@ namespace dbc::studio
             Json.close();
             if (!Json)
             {
-                Error = "Cannot write the iOS app icon catalogue";
+                Error = Tr("Cannot write the iOS app icon catalogue");
                 return false;
             }
             return true;
@@ -176,7 +177,7 @@ namespace dbc::studio
             (void)Context;
             (void)Request;
             (void)Image;
-            Result.Error = "iOS Xcode projects can only be exported on macOS";
+            Result.Error = Tr("iOS Xcode projects can only be exported on macOS");
             return Result;
 #else
             if (!ValidateIosExportHost(Request, Result.Error))
@@ -186,7 +187,7 @@ namespace dbc::studio
             std::error_code FileError;
             if (fs::exists(Result.OutputPath, FileError))
             {
-                Result.Error = "Export destination already exists: " + dbc::PathToUtf8(Result.OutputPath);
+                Result.Error = TrFmt("Export destination already exists: {0}", {dbc::PathToUtf8(Result.OutputPath)});
                 Result.OutputPath.clear();
                 return Result;
             }
@@ -212,7 +213,7 @@ namespace dbc::studio
             fs::rename(Project / "OpenDBCGame.xcodeproj", Project / (ProductName + ".xcodeproj"), FileError);
             if (FileError)
             {
-                Result.Error = "Cannot name the Xcode project: " + FileError.message();
+                Result.Error = TrFmt("Cannot name the Xcode project: {0}", {FileError.message()});
                 return Result;
             }
             if (!PublishAndRemoveStage(Project, Result.OutputPath, Stage, Result.Error))
@@ -221,12 +222,13 @@ namespace dbc::studio
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) +
-                                      " asset files");
-            Result.Messages.push_back("Published " + dbc::PathToUtf8(Result.OutputPath));
-            Result.Messages.push_back("Open " + ProductName +
-                                      ".xcodeproj in Xcode, choose your team under Signing & Capabilities, then use "
-                                      "Product > Archive to upload to App Store Connect");
+            Result.Messages.push_back(
+                TrFmt("Exported the program image and {0} asset files", {std::to_string(Files.size())}));
+            Result.Messages.push_back(TrFmt("Published {0}", {dbc::PathToUtf8(Result.OutputPath)}));
+            Result.Messages.push_back(
+                TrFmt("Open {0}.xcodeproj in Xcode, choose your team under Signing & Capabilities, "
+                      "then use Product > Archive to upload to App Store Connect",
+                      {ProductName}));
             return Result;
 #endif
         }

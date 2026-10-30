@@ -1,4 +1,5 @@
 #include "icon_generator.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <fstream>
@@ -23,7 +24,7 @@ namespace dbc::studio
 
             if (IconSource.empty())
             {
-                WriteLog("  Error: no icon source configured");
+                WriteLog("  " + std::string(Tr("Error: no icon source configured")));
                 return false;
             }
 
@@ -34,7 +35,7 @@ namespace dbc::studio
             SDL_Surface* Original = IMG_Load(dbc::PathToUtf8(Source).c_str());
             if (Original == nullptr)
             {
-                WriteLog("  Cannot load icon: " + dbc::PathToUtf8(Source));
+                WriteLog("  " + TrFmt("Cannot load icon: {0}", {dbc::PathToUtf8(Source)}));
                 return false;
             }
 
@@ -44,14 +45,14 @@ namespace dbc::studio
             if (Error)
             {
                 SDL_DestroySurface(Original);
-                WriteLog("  Cannot create icon directory: " + dbc::PathToUtf8(IconsDirectory));
+                WriteLog("  " + TrFmt("Cannot create icon directory: {0}", {dbc::PathToUtf8(IconsDirectory)}));
                 return false;
             }
 
             if (!IMG_SavePNG(Original, dbc::PathToUtf8((IconsDirectory / "source.png")).c_str()))
             {
                 SDL_DestroySurface(Original);
-                WriteLog("  Cannot write source icon");
+                WriteLog("  " + std::string(Tr("Cannot write source icon")));
                 return false;
             }
 
@@ -73,7 +74,8 @@ namespace dbc::studio
                 fs::create_directories(Target.parent_path(), Error);
                 if (Error)
                 {
-                    WriteLog("  Cannot create icon directory: " + dbc::PathToUtf8(Target.parent_path()));
+                    WriteLog("  " +
+                             TrFmt("Cannot create icon directory: {0}", {dbc::PathToUtf8(Target.parent_path())}));
                     Success = false;
                     Error.clear();
                     continue;
@@ -82,7 +84,7 @@ namespace dbc::studio
                 SDL_Surface* Scaled = SDL_ScaleSurface(Original, Size, Size, SDL_SCALEMODE_LINEAR);
                 if (Scaled == nullptr)
                 {
-                    WriteLog("  Cannot scale icon to " + std::to_string(Size));
+                    WriteLog("  " + TrFmt("Cannot scale icon to {0}", {std::to_string(Size)}));
                     Success = false;
                     continue;
                 }
@@ -91,7 +93,7 @@ namespace dbc::studio
                     Generated.push_back(RelativePath);
                 else
                 {
-                    WriteLog("  Cannot write " + dbc::PathToUtf8(Target));
+                    WriteLog("  " + TrFmt("Cannot write {0}", {dbc::PathToUtf8(Target)}));
                     Success = false;
                 }
                 SDL_DestroySurface(Scaled);
@@ -104,13 +106,13 @@ namespace dbc::studio
             std::ofstream Manifest(IconsDirectory / "icons.json", std::ios::binary | std::ios::trunc);
             if (!Manifest)
             {
-                WriteLog("  Cannot write icon manifest");
+                WriteLog("  " + std::string(Tr("Cannot write icon manifest")));
                 return false;
             }
             Manifest << Metadata.dump(4) << '\n';
             Success = Manifest.good() && Success;
 
-            WriteLog("> Icons generated in " + dbc::PathToUtf8(IconsDirectory));
+            WriteLog("> " + TrFmt("Icons generated in {0}", {dbc::PathToUtf8(IconsDirectory)}));
             return Success;
         }
     } // namespace toolchain

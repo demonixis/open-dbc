@@ -1,4 +1,5 @@
 #include "android_keystore.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 #include "process_runner.hpp"
 
@@ -80,20 +81,20 @@ namespace dbc::studio
         {
             std::error_code FileError;
             if (JavaHome.empty())
-                Error = "Creating a keystore needs a JDK 17 or newer";
+                Error = Tr("Creating a keystore needs a JDK 17 or newer");
             else if (Request.Path.empty() || fs::exists(Request.Path, FileError))
-                Error = "Choose a keystore file that does not exist yet";
+                Error = Tr("Choose a keystore file that does not exist yet");
             else if (!fs::is_directory(Request.Path.parent_path(), FileError))
-                Error = "The keystore folder does not exist";
+                Error = Tr("The keystore folder does not exist");
             else if (Request.Alias.empty() || Request.CommonName.empty())
-                Error = "A keystore needs a key alias and a name";
+                Error = Tr("A keystore needs a key alias and a name");
             else if (Request.Password.size() < MinimumPasswordLength)
-                Error = "The keystore password needs at least 6 characters";
+                Error = Tr("The keystore password needs at least 6 characters");
             else if (!Request.Country.empty() &&
                      (Request.Country.size() != 2 ||
                       !std::all_of(Request.Country.begin(), Request.Country.end(),
                                    [](unsigned char Character) { return std::isalpha(Character); })))
-                Error = "The country is a two-letter code, such as FR";
+                Error = Tr("The country is a two-letter code, such as FR");
             if (!Error.empty())
                 return false;
             ProcessRequest Keytool{

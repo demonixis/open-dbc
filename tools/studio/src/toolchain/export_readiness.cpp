@@ -1,4 +1,5 @@
 #include "export_readiness.hpp"
+#include "core/i18n.hpp"
 #include "export_internal.hpp"
 #include "path_utf8.hpp"
 
@@ -21,7 +22,7 @@ namespace dbc::studio
         void AddHostCheck(std::vector<toolchain::ExportCheck>& Checks, bool Valid, const std::string& Error,
                           std::string_view Remedy)
         {
-            Checks.push_back({"Export host matches this Studio", Valid, true,
+            Checks.push_back({Tr("Export host matches this Studio"), Valid, true,
                               Valid ? std::string{} : Error + ". " + std::string(Remedy)});
         }
 
@@ -30,17 +31,18 @@ namespace dbc::studio
         {
             std::string Error;
             AddHostCheck(Checks, toolchain::internal::ValidateAndroidHost(Request, Error), Error,
-                         "Build the android-host preset and configure OpenDBC with "
-                         "OPENDBC_ANDROID_EXPORT_HOST_LIBRARY.");
+                         Tr("Build the android-host preset and configure OpenDBC with "
+                            "OPENDBC_ANDROID_EXPORT_HOST_LIBRARY."));
             const bool HasJava = !Request.Toolchain.JavaHome.empty();
-            Checks.push_back({"JDK 17 or newer", HasJava, true,
-                              HasJava ? std::string{}
-                                      : "Install Android Studio or a JDK 17+, or set its folder in External Tools."});
+            Checks.push_back({Tr("JDK 17 or newer"), HasJava, true,
+                              HasJava
+                                  ? std::string{}
+                                  : Tr("Install Android Studio or a JDK 17+, or set its folder in External Tools.")});
             const fs::path& Sdk = Request.Toolchain.AndroidSdk;
-            Checks.push_back({"Android SDK", !Sdk.empty(), true,
+            Checks.push_back({Tr("Android SDK"), !Sdk.empty(), true,
                               !Sdk.empty() ? std::string{}
-                                           : "Install Android Studio or the Android command-line tools, or set the "
-                                             "SDK folder in External Tools."});
+                                           : Tr("Install Android Studio or the Android command-line tools, or set the "
+                                                "SDK folder in External Tools.")});
             if (!Sdk.empty())
             {
                 std::error_code FileError;
@@ -48,11 +50,11 @@ namespace dbc::studio
                     fs::is_directory(Sdk / "platforms" / ("android-" + std::to_string(AndroidCompileSdk)), FileError);
                 const bool HasBuildTools = toolchain::LatestAndroidBuildTools(Sdk).has_value();
                 // Gradle can download missing SDK packages once their licences are accepted, so this only warns.
-                Checks.push_back({"Android platform " + std::to_string(AndroidCompileSdk) + " and build tools",
+                Checks.push_back({TrFmt("Android platform {0} and build tools", {std::to_string(AndroidCompileSdk)}),
                                   HasPlatform && HasBuildTools, false,
                                   HasPlatform && HasBuildTools
                                       ? std::string{}
-                                      : "Run: " + toolchain::AndroidSdkInstallCommand(AndroidCompileSdk)});
+                                      : TrFmt("Run: {0}", {toolchain::AndroidSdkInstallCommand(AndroidCompileSdk)})});
             }
             if (!Request.Sign)
                 return;
@@ -62,16 +64,17 @@ namespace dbc::studio
             std::error_code FileError;
             const bool HasKeystore = !Keystore.empty() && fs::is_regular_file(Keystore, FileError) &&
                                      !Request.Settings.AndroidKeyAlias.empty();
-            Checks.push_back({"Release keystore", HasKeystore, true,
+            Checks.push_back({Tr("Release keystore"), HasKeystore, true,
                               HasKeystore ? std::string{}
-                                          : "Create or choose a keystore and its key alias in Project Settings > "
-                                            "Android."});
+                                          : Tr("Create or choose a keystore and its key alias in Project Settings > "
+                                               "Android.")});
             const bool HasPasswords =
                 !Request.Secrets.AndroidKeystorePassword.empty() && !Request.Secrets.AndroidKeyPassword.empty();
-            Checks.push_back({"Keystore passwords", HasPasswords, true,
-                              HasPasswords ? std::string{}
-                                           : "Enter them in the Build window, or set OPENDBC_ANDROID_KEYSTORE_PASSWORD "
-                                             "and OPENDBC_ANDROID_KEY_PASSWORD."});
+            Checks.push_back({Tr("Keystore passwords"), HasPasswords, true,
+                              HasPasswords
+                                  ? std::string{}
+                                  : Tr("Enter them in the Build window, or set OPENDBC_ANDROID_KEYSTORE_PASSWORD "
+                                       "and OPENDBC_ANDROID_KEY_PASSWORD.")});
         }
 
 #if defined(__APPLE__)
@@ -86,11 +89,12 @@ namespace dbc::studio
             if (Minimum)
                 std::from_chars(Minimum->data(), Minimum->data() + Minimum->size(), Major);
             const bool Reach = Major > 0 && Major <= RecommendedMacMinimum;
-            Checks.push_back({"Runs on macOS " + std::to_string(RecommendedMacMinimum) + " and later", Reach, false,
+            Checks.push_back({TrFmt("Runs on macOS {0} and later", {std::to_string(RecommendedMacMinimum)}), Reach,
+                              false,
                               Reach ? std::string{}
-                                    : "This OpenDBC build needs macOS " + Minimum.value_or("of the build machine") +
-                                          ". Build OpenDBC with its default CMAKE_OSX_DEPLOYMENT_TARGET, 13.3, to "
-                                          "reach older Macs."});
+                                    : TrFmt("This OpenDBC build needs macOS {0}. Build OpenDBC with its default "
+                                            "CMAKE_OSX_DEPLOYMENT_TARGET, 13.3, to reach older Macs.",
+                                            {Minimum ? Minimum->c_str() : Tr("of the build machine")})});
             if (!Request.Sign)
                 return;
             const std::string& Wanted = Request.Toolchain.MacSigningIdentity;
@@ -100,17 +104,18 @@ namespace dbc::studio
                 std::any_of(Identities.begin(), Identities.end(), [&Wanted](const toolchain::SigningIdentity& Identity)
                             { return Identity.Name == Wanted || Identity.Sha1 == Wanted; });
             Checks.push_back(
-                {"Developer ID identity", Installed, true,
+                {Tr("Developer ID identity"), Installed, true,
                  Installed ? std::string{}
                  : Wanted.empty()
-                     ? "Choose a \"Developer ID Application\" identity in External tools. Xcode > Settings > "
-                       "Accounts creates one for a paid Apple Developer account."
-                     : "\"" + Wanted + "\" is not in your keychains."});
+                     ? Tr("Choose a \"Developer ID Application\" identity in External tools. Xcode > Settings > "
+                          "Accounts creates one for a paid Apple Developer account.")
+                     : TrFmt("\"{0}\" is not in your keychains.", {Wanted})});
             const bool Profile = !Request.Toolchain.NotaryProfile.empty();
-            Checks.push_back({"Notarization profile", Profile, false,
-                              Profile ? std::string{}
-                                      : "Without notarization, Gatekeeper blocks the app on other Macs. Run: xcrun "
-                                        "notarytool store-credentials <name>, then enter the name in External tools."});
+            Checks.push_back({Tr("Notarization profile"), Profile, false,
+                              Profile
+                                  ? std::string{}
+                                  : Tr("Without notarization, Gatekeeper blocks the app on other Macs. Run: xcrun "
+                                       "notarytool store-credentials <name>, then enter the name in External tools.")});
         }
 #endif
 
@@ -123,34 +128,35 @@ namespace dbc::studio
                 return;
             const bool Certificate =
                 toolchain::NormalizeCertificateThumbprint(Request.Toolchain.WindowsCertificate).has_value();
-            Checks.push_back({"Code signing certificate", Certificate, true,
+            Checks.push_back({Tr("Code signing certificate"), Certificate, true,
                               Certificate ? std::string{}
-                                          : "Enter the SHA-1 thumbprint of a code signing certificate from your "
-                                            "certificate store in External tools. Import a .pfx file with: certutil "
-                                            "-user -importPFX file.pfx"});
+                                          : Tr("Enter the SHA-1 thumbprint of a code signing certificate from your "
+                                               "certificate store in External tools. Import a .pfx file with: certutil "
+                                               "-user -importPFX file.pfx")});
             const bool Signtool = toolchain::LocateSigntool(Search).has_value();
             Checks.push_back({"signtool", Signtool, true,
                               Signtool ? std::string{}
-                                       : "Install the Windows SDK signing tools, or set OPENDBC_SIGNTOOL to "
-                                         "signtool.exe."});
+                                       : Tr("Install the Windows SDK signing tools, or set OPENDBC_SIGNTOOL to "
+                                            "signtool.exe.")});
         }
 
         void AddIosChecks(const toolchain::ArtifactExportRequest& Request, std::vector<toolchain::ExportCheck>& Checks)
         {
             std::string Error;
             AddHostCheck(Checks, toolchain::internal::ValidateIosExportHost(Request, Error), Error,
-                         "Build the ios-runtime and ios-simulator-runtime presets and configure OpenDBC with "
-                         "OPENDBC_IOS_RUNTIME_LIBRARY and OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY.");
+                         Tr("Build the ios-runtime and ios-simulator-runtime presets and configure OpenDBC with "
+                            "OPENDBC_IOS_RUNTIME_LIBRARY and OPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY."));
             // Signing happens in Xcode, where the team can also be chosen.
             const bool HasTeam = !Request.Settings.IosTeamId.empty();
-            Checks.push_back(
-                {"Apple development team", HasTeam, false,
-                 HasTeam ? std::string{} : "Set the team ID in Project Settings > iOS, or choose the team in Xcode."});
+            Checks.push_back({Tr("Apple development team"), HasTeam, false,
+                              HasTeam ? std::string{}
+                                      : Tr("Set the team ID in Project Settings > iOS, or choose the team in Xcode.")});
             std::error_code FileError;
             const bool Xcode =
                 fs::is_directory("/Applications/Xcode.app", FileError) || std::getenv("DEVELOPER_DIR") != nullptr;
-            Checks.push_back({"Xcode", Xcode, false,
-                              Xcode ? std::string{} : "Install Xcode to build, sign and upload the exported project."});
+            Checks.push_back(
+                {"Xcode", Xcode, false,
+                 Xcode ? std::string{} : Tr("Install Xcode to build, sign and upload the exported project.")});
         }
     } // namespace
 
@@ -164,7 +170,7 @@ namespace dbc::studio
             {
                 case ArtifactTarget::Desktop:
                     AddHostCheck(Checks, internal::ValidateDesktopHost(Request, Error), Error,
-                                 "Rebuild OpenDBC so opendbc-runner matches this Studio.");
+                                 Tr("Rebuild OpenDBC so opendbc-runner matches this Studio."));
 #if defined(__APPLE__)
                     AddMacChecks(Request, Checks);
 #elif defined(_WIN32)

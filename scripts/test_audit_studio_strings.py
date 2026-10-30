@@ -9,7 +9,7 @@ import audit_studio_strings as Audit
 
 
 def Run(Source: str, Catalogue: tuple[str, ...] = (), Verbatim: tuple[str, ...] = ()) -> Audit.Findings:
-    return Audit.Audit({"panel.cpp": Source}, set(Catalogue), set(Verbatim), set(), {})
+    return Audit.Audit({"panel.cpp": Source}, set(Catalogue), set(Verbatim), {})
 
 
 class StudioStringsAuditTests(unittest.TestCase):
@@ -66,7 +66,7 @@ class StudioStringsAuditTests(unittest.TestCase):
         self.assertEqual(Result.Stale, ["'Open'"])
 
     def test_text_read_at_run_time_must_be_in_the_catalogue(self) -> None:
-        Result = Audit.Audit({}, {"Fog"}, set(), set(), {"Fog": "fog.dba", "Lighting": "lighting.dba"})
+        Result = Audit.Audit({}, {"Fog"}, set(), {"Fog": "fog.dba", "Lighting": "lighting.dba"})
         self.assertEqual(Result.Missing, ["lighting.dba: 'Lighting'"])
         self.assertEqual(Result.Stale, [])
 
