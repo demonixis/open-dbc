@@ -126,11 +126,13 @@ namespace
 
         if (Profile == LanguageProfile::DbPro)
         {
-            Cube.Mat.Specular = 0xFFFFFF;
-            Cube.Mat.SpecularPower = 32.0f;
-            Cube.Mat.Diffuse = 0xC0C0C0;
-            Cube.Mat.CastShadow = true;
-            Sphere.Detail = glm::ivec2(24, 32);
+            // Add reallocates the nodes, so the references taken above no longer hold.
+            scene::SceneNode& Crate = Document.Nodes[0];
+            Crate.Mat.Specular = 0xFFFFFF;
+            Crate.Mat.SpecularPower = 32.0f;
+            Crate.Mat.Diffuse = 0xC0C0C0;
+            Crate.Mat.CastShadow = true;
+            Document.Nodes[1].Detail = glm::ivec2(24, 32);
             Env.ShadowMode = -1;
             Env.ShadowPosition = {100.0f, 300.0f, 0.0f};
             scene::SceneNode& Hills = Document.Add(scene::NodeKind::Terrain);
