@@ -1,4 +1,5 @@
 #include "project_settings_window.hpp"
+#include "core/i18n.hpp"
 #include "engine/systems/log.hpp"
 #include "interpreter/atomic_file.hpp"
 #include "path_utf8.hpp"
@@ -119,7 +120,7 @@ namespace dbc::studio
             bool Saved = false;
 
             ImGui::SetNextWindowSize(ImVec2(560.0f, 520.0f), ImGuiCond_FirstUseEver);
-            if (!ImGui::Begin("Project Settings", &Open_))
+            if (!ImGui::Begin(TrId("Project Settings"), &Open_))
             {
                 ImGui::End();
                 return false;
@@ -169,6 +170,7 @@ namespace dbc::studio
                     ImGui::InputInt("Min SDK", &Draft_.AndroidMinSdk);
                     ImGui::InputInt("Target SDK", &Draft_.AndroidTargetSdk);
 
+                    // Orientations and permissions are Android manifest values, shown verbatim: never translate them.
                     static const std::array<const char*, 5> KOrientations = {
                         "sensorLandscape", "landscape", "sensorPortrait", "portrait", "fullSensor",
                     };
@@ -219,6 +221,7 @@ namespace dbc::studio
 
                 if (DbproProject_ && ImGui::BeginTabItem("DBPro Display"))
                 {
+                    // Keys of the .dbpro file, shown verbatim like those of the other DBPro tabs: never translate them.
                     for (const char* Key : {"app title", "graphics mode", "window resolution", "fullscreen resolution",
                                             "commandlinearguments"})
                     {

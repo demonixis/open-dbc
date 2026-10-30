@@ -56,6 +56,7 @@ namespace dbc::studio
       private:
         void PollEvents();
         void DrawFrame();
+        void ApplyLanguage();
         void RenderFrame();
 
         void DrawDockSpace();
@@ -117,6 +118,12 @@ namespace dbc::studio
         void UpdateSceneProject();
         void SetMode(Mode Value);
         void RunScene();
+        // Reads what a program builds and shows it in the Scene mode. It runs the program, so only on request.
+        void OpenInScene(const std::filesystem::path& Path);
+        void CaptureProgram(const std::filesystem::path& Source, int SetupFrames);
+        void FinishSceneCapture();
+        // The file to run to see `Source`: its own, or the project's main source when that includes it.
+        std::filesystem::path CaptureRunTarget(const std::filesystem::path& Source) const;
         std::optional<std::string> ReadSource(const std::filesystem::path& Path) const;
         bool WriteSource(const std::filesystem::path& Path, const std::string& Text, bool Generated);
 
@@ -201,14 +208,32 @@ namespace dbc::studio
         bool ExecutionBusy_ = false;
         std::filesystem::path ExecutionTarget_;
 
+        // The run reading a program's scene, which ends with FinishSceneCapture.
+        struct SceneCaptureRun
+        {
+            std::filesystem::path Source;
+            int SetupFrames = 1;
+            std::string OnlyFile;
+            std::filesystem::path Output;
+            std::filesystem::path SourceRoot;
+            Uint64 Deadline = 0;
+        };
+
+        std::optional<SceneCaptureRun> SceneCapture_;
+        // Generated textures of the scene on show, which the viewport keeps loading from here.
+        std::filesystem::path SceneCaptureImages_;
+        // Waits for the project's language to be chosen.
+        std::optional<std::filesystem::path> PendingSceneProgram_;
+
         std::optional<dbc::language::LanguageProfile> InitialProfile_;
         std::optional<dbc::interpreter::ResolvedProject> ResolvedProject_;
         dbc::interpreter::ProjectResolveResult PendingResolution_;
+        // Applied between frames: what TrId returned must outlive the frame that asked for it.
+        bool LanguageChanged_ = false;
         bool ResolutionPopupRequested_ = false;
         bool DialectLocked_ = false;
         std::filesystem::path PendingResolveTarget_;
         std::optional<dbc::language::LanguageProfile> PendingResolveProfile_;
-        std::string PendingRawPath_;
         std::string PendingLocalPath_;
 
         bool NewProjectRequested_ = false;

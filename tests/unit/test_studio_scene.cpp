@@ -8,7 +8,9 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <map>
 #include <memory>
+#include <optional>
 #include <string>
 
 using dbc::language::LanguageProfile;
@@ -294,6 +296,21 @@ TEST_CASE("A level of painted objects reads every instance back")
     CHECK(Read.Ok());
     REQUIRE(Read.Document.Nodes.size() == 3001);
     CHECK(Read.Document == Document);
+}
+
+TEST_CASE("Default node names do not depend on the interface")
+{
+    CHECK(scene::DefaultNodeName(scene::NodeKind::Cube, 12) == "Cube 12");
+    CHECK(scene::DefaultNodeName(scene::NodeKind::Sound, 3) == "3D Sound 3");
+
+    scene::SceneDocument Document;
+    const scene::SceneNode& Light = Document.Add(scene::NodeKind::Light);
+    CHECK(Light.Name == scene::DefaultNodeName(scene::NodeKind::Light, Light.Id));
+
+    const scene::LevelReadResult Read = scene::ReadLevel(scene::WriteLevel(Document), Document.Name, Document.Profile);
+    REQUIRE(Read.Ok());
+    REQUIRE(Read.Document.Nodes.size() == 1);
+    CHECK(Read.Document.Nodes.front().Name == Light.Name);
 }
 
 TEST_CASE("Free numbers skip those in use, and painted names keep their stem")
@@ -625,4 +642,25 @@ TEST_CASE("Multi-selection edits copy only the changed fields each node has")
     CHECK(Matrix.Scale == MatrixBefore.Scale);
     CHECK(Matrix.Mat.Texture == "bmp/stone.bmp");
     CHECK(Matrix.Mat.Flags == MatrixBefore.Mat.Flags);
+}
+
+TEST_CASE("Includes are followed through the files that hold them")
+{
+    const std::map<std::filesystem::path, std::string> Files = {
+        {"/game/main.dba", "print 1\n#include \"lib\\world.dba\"\n"},
+        {"/game/lib/world.dba", "#include \"props.dba\"\n#include \"../main.dba\"\n"},
+        {"/game/lib/props.dba", "make object cube 1, 10\n"},
+        {"/game/other.dba", "print 2\n"},
+    };
+    const auto Read = [&](const std::filesystem::path& Path) -> std::optional<std::string>
+    {
+        const auto Found = Files.find(Path);
+        return Found == Files.end() ? std::nullopt : std::optional(Found->second);
+    };
+    const auto Includes = [&](const char* Target)
+    { return scene::SourceIncludes("/game/main.dba", Target, LanguageProfile::Dbc, Read); };
+    CHECK(Includes("/game/lib/world.dba"));
+    CHECK(Includes("/game/lib/props.dba"));
+    CHECK_FALSE(Includes("/game/other.dba"));
+    CHECK_FALSE(Includes("/game/lib/missing.dba"));
 }

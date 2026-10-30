@@ -1,4 +1,5 @@
 #include "build_window.hpp"
+#include "core/i18n.hpp"
 #include "theme.hpp"
 
 #include <array>
@@ -120,7 +121,7 @@ namespace dbc::studio
                 return Action::None;
             Action Result = Action::None;
             ImGui::SetNextWindowSize(ImVec2(620.0f, 560.0f), ImGuiCond_FirstUseEver);
-            if (!ImGui::Begin("Build", &Open_))
+            if (!ImGui::Begin(TrId("Build"), &Open_))
             {
                 ImGui::End();
                 return Action::None;

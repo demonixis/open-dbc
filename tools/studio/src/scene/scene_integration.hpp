@@ -1,5 +1,8 @@
 #pragma once
 
+#include <filesystem>
+#include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -29,6 +32,11 @@ namespace dbc::studio
         // `Links`. Keeps the file's line endings.
         LinkResult LinkIntoMain(const std::string& MainText, dbc::language::LanguageProfile Profile,
                                 const std::vector<MainLink>& Links);
+
+        // Whether `Root` reaches `Target` through its #include lines, read with `Read`.
+        bool SourceIncludes(const std::filesystem::path& Root, const std::filesystem::path& Target,
+                            dbc::language::LanguageProfile Profile,
+                            const std::function<std::optional<std::string>(const std::filesystem::path&)>& Read);
     } // namespace scene
 
 } // namespace dbc::studio

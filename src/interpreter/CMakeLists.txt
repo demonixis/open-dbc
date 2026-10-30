@@ -19,6 +19,8 @@ add_library(dbc_interpreter STATIC
   registry_file.hpp
   runtime_startup.cpp
   runtime_startup.hpp
+  scene_capture.cpp
+  scene_capture.hpp
   engine_builtin_registry.cpp
   engine_builtin_handlers.inc
   engine_builtin_host.cpp

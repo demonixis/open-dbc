@@ -998,8 +998,9 @@ TEST_CASE("artifact staging refuses a pre-existing symlink")
         return;
 
     std::string Error;
-    CHECK_FALSE(toolchain::detail::ClaimArtifactStageDirectory(Stage, Error));
-    CHECK(Error == "Artifact staging path already exists");
+    CHECK(toolchain::detail::ClaimArtifactStageDirectory(Stage, Error) ==
+          toolchain::detail::ArtifactStageClaim::AlreadyExists);
+    CHECK(Error.empty());
     CHECK(fs::is_empty(Outside));
 }
 

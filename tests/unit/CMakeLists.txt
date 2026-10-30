@@ -51,6 +51,18 @@ if(NOT ANDROID AND NOT IOS)
         nlohmann_json::nlohmann_json)
     doctest_discover_tests(test_studio_editor PROPERTIES LABELS "unit-studio")
 
+    add_executable(test_studio_i18n
+        test_studio_i18n.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/locales.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/theme.cpp
+    )
+    add_dependencies(test_studio_i18n opendbc_studio_locales)
+    target_include_directories(test_studio_i18n PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
+                               ${CMAKE_BINARY_DIR}/tools/studio/generated)
+    target_link_libraries(test_studio_i18n PRIVATE doctest_with_main dbc_engine imgui nlohmann_json::nlohmann_json)
+    doctest_discover_tests(test_studio_i18n PROPERTIES LABELS "unit-studio")
+
     add_executable(test_studio_scene
         test_studio_scene.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
@@ -61,6 +73,17 @@ if(NOT ANDROID AND NOT IOS)
     target_compile_definitions(test_studio_scene PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     target_link_libraries(test_studio_scene PRIVATE doctest_with_main dbc_language glm::glm)
     doctest_discover_tests(test_studio_scene PROPERTIES LABELS "unit-studio")
+
+    add_executable(test_studio_scene_capture
+        test_studio_scene_capture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_capture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_patch.cpp
+    )
+    target_include_directories(test_studio_scene_capture PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
+    target_link_libraries(test_studio_scene_capture PRIVATE doctest_with_main dbc_interpreter glm::glm)
+    doctest_discover_tests(test_studio_scene_capture PROPERTIES LABELS "unit-studio")
 
     add_executable(test_studio_scene_render
         test_studio_scene_render.cpp
@@ -81,6 +104,7 @@ if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_scene_view
         test_studio_scene_view.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/gpu_texture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_assets.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_editor.cpp
@@ -88,10 +112,12 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_paint.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_viewport.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/heightmap.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_capture.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_geometry.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_integration.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_patch.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_renderer.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/theme.cpp
     )
@@ -99,7 +125,8 @@ if(NOT ANDROID AND NOT IOS)
     target_include_directories(test_studio_scene_view PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
                                ${CMAKE_BINARY_DIR}/tools/studio/generated)
     target_compile_definitions(test_studio_scene_view PRIVATE TEST_OUTPUT_DIR="${CMAKE_BINARY_DIR}/tests")
-    target_link_libraries(test_studio_scene_view PRIVATE doctest_with_main dbc_engine dbc_language imguizmo)
+    target_link_libraries(test_studio_scene_view PRIVATE doctest_with_main dbc_engine dbc_language imguizmo
+        nlohmann_json::nlohmann_json)
     doctest_discover_tests(test_studio_scene_view PROPERTIES LABELS "unit-studio")
 
     add_executable(test_studio_media

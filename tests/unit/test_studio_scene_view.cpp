@@ -2,7 +2,9 @@
 
 #include <doctest/doctest.h>
 
+#include "core/i18n.hpp"
 #include "panels/scene_editor.hpp"
+#include "path_utf8.hpp"
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_geometry.hpp"
 
@@ -95,9 +97,9 @@ namespace
                 WriteText(Path, Text);
                 return true;
             };
-            Host.Log = [](const std::string& Message, bool Error)
+            Host.Log = [this](const std::string& Message, bool Error)
             {
-                if (Error)
+                if (Error && !ExpectErrors_)
                     FAIL_CHECK(Message);
             };
             Editor_.Initialize(Gpu_, std::move(Host));
@@ -142,7 +144,7 @@ namespace
         // Where the editor camera, which the tests never move, shows a point.
         glm::vec2 ScreenOf(const glm::vec3& Point) const
         {
-            const ImGuiWindow* Window = ImGui::FindWindowByName(panels::SceneEditor::KPanelViewport);
+            const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelViewport));
             const float Spacing = ImGui::GetStyle().ItemSpacing.y;
             const float Row = ImGui::GetFrameHeight() + Spacing;
             const glm::vec2 Min(Window->DC.CursorStartPos.x,
@@ -242,13 +244,28 @@ namespace
         // Clicks a row of the Hierarchy, counted from the first under the level's name.
         void ClickHierarchyRow(int Row)
         {
-            const ImGuiWindow* Window = ImGui::FindWindowByName(panels::SceneEditor::KPanelHierarchy);
+            const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelHierarchy));
             const float Line = ImGui::GetTextLineHeightWithSpacing();
             MoveMouse(glm::vec2(Window->WorkRect.Min.x + 70.0f, Window->DC.CursorStartPos.y +
                                                                     Line * static_cast<float>(Row + 1) +
                                                                     ImGui::GetTextLineHeight() * 0.5f));
             Button(true);
             Button(false);
+        }
+
+        panels::SceneEditor& Editor()
+        {
+            return Editor_;
+        }
+
+        const std::filesystem::path& Root() const
+        {
+            return Root_;
+        }
+
+        void ExpectErrors(bool Value)
+        {
+            ExpectErrors_ = Value;
         }
 
         void Undo()
@@ -271,6 +288,7 @@ namespace
         SDL_GPUDevice* Gpu_ = nullptr;
         panels::SceneEditor Editor_;
         bool LayoutBuilt_ = false;
+        bool ExpectErrors_ = false;
         int BarRows_ = 1;
     };
 } // namespace
@@ -591,4 +609,115 @@ TEST_CASE("Painted objects fold into one Hierarchy row, whose click selects them
     const std::vector<scene::SceneNode> Left = Driver.SavedNodes();
     REQUIRE(Left.size() == 1);
     CHECK_FALSE(Left[0].Painted);
+}
+
+TEST_CASE("A program's scene replaces the level until a level is opened again")
+{
+    const glm::vec3 Spot(0.0f, 0.0f, 0.0f);
+    SceneViewDriver Driver("program_view", LevelOfCubes({Spot}));
+    scene::SceneCapture Capture;
+    Capture.Status = "completed";
+    Capture.Files = {dbc::GenericPathToUtf8(Driver.Root() / "main.dba")};
+    Capture.Commands.push_back(
+        {dbc::language::SymbolId::Command_MakeObjectCube, {{false, 1.0, {}}, {false, 30.0, {}}}});
+    Capture.Sites.push_back({0, 1, 1, 0});
+    scene::CapturedObject Object;
+    Object.Id = 1;
+    Capture.Objects.push_back(Object);
+    Capture.HasCamera = true;
+    Capture.CameraPosition = glm::vec3(0.0f, 80.0f, -180.0f);
+    Capture.CameraRotation = glm::vec3(20.0f, 0.0f, 0.0f);
+
+    const std::filesystem::path Source = Driver.Root() / "main.dba";
+    Driver.Editor().OpenCapture(Source, Capture, 1, {});
+    Driver.Frame();
+    REQUIRE(Driver.Editor().ProgramSource() != nullptr);
+    CHECK(*Driver.Editor().ProgramSource() == Source);
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    // Nothing a level would write: the Delete key on the selected object changes nothing.
+    Driver.Click(Spot);
+    Driver.Tap(ImGuiKey_Delete);
+    CHECK_FALSE(Driver.Editor().Dirty());
+}
+
+TEST_CASE("A gizmo move of a program's node rewrites its statement, and a locked axis stays put")
+{
+    const glm::vec3 Spot(0.0f, 0.0f, 0.0f);
+    const glm::vec3 Far(40.0f, 0.0f, 0.0f);
+    SceneViewDriver Driver("program_edit", LevelOfCubes({Spot}));
+    const std::filesystem::path Source = Driver.Root() / "program.dba";
+    const std::string Text = "make object cube 1, 30\n"
+                             "position object 1, 0, 0, 0\n"
+                             "make object cube 2, 30\n";
+    {
+        std::ofstream File(Source, std::ios::binary);
+        File << Text;
+    }
+    scene::SceneCapture Capture;
+    Capture.Status = "completed";
+    Capture.Files = {dbc::GenericPathToUtf8(Source)};
+    using dbc::language::SymbolId;
+    Capture.Commands.push_back({SymbolId::Command_MakeObjectCube, {{false, 1.0, {}}, {false, 30.0, {}}}});
+    Capture.Sites.push_back({0, 1, 1, 0});
+    Capture.Commands.push_back(
+        {SymbolId::Command_PositionObject, {{false, 1.0, {}}, {false, 0.0, {}}, {false, 0.0, {}}, {false, 0.0, {}}}});
+    Capture.Sites.push_back({0, 2, 1, 0});
+    Capture.Commands.push_back({SymbolId::Command_MakeObjectCube, {{false, 2.0, {}}, {false, 30.0, {}}}});
+    Capture.Sites.push_back({0, 3, 1, 0});
+    scene::CapturedObject First;
+    First.Id = 1;
+    Capture.Objects.push_back(First);
+    // Away from where any statement puts it, so something else moved it along X.
+    scene::CapturedObject Second;
+    Second.Id = 2;
+    Second.Position = Far;
+    Capture.Objects.push_back(Second);
+    Capture.HasCamera = true;
+    Capture.CameraPosition = glm::vec3(0.0f, 80.0f, -180.0f);
+    Capture.CameraRotation = glm::vec3(20.0f, 0.0f, 0.0f);
+    Driver.Editor().OpenCapture(Source, Capture, 1, {});
+    Driver.Frame();
+
+    Driver.Click(Far);
+    Driver.DragGizmoX(Far, 120.0f);
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    Driver.Click(Spot);
+    Driver.DragGizmoX(Spot, 120.0f);
+    CHECK(Driver.Editor().Dirty());
+    Driver.Undo();
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    Driver.DragGizmoX(Spot, 120.0f);
+    REQUIRE(Driver.Editor().Save());
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    std::ifstream File(Source, std::ios::binary);
+    std::ostringstream Saved;
+    Saved << File.rdbuf();
+    const std::string Patched = Saved.str();
+    CHECK(Patched != Text);
+    CHECK(Patched.starts_with("make object cube 1, 30\nposition object 1, "));
+    CHECK(Patched.ends_with(", 0, 0\nmake object cube 2, 30\n"));
+
+    // The source moved on: a save refuses and keeps the edit, a refresh is the way out.
+    const std::string Moved = "sync\n" + Patched;
+    {
+        std::ofstream Out(Source, std::ios::binary);
+        Out << Moved;
+    }
+    const std::string_view Before = "make object cube 1, 30\nposition object 1, ";
+    Driver.DragGizmoX(glm::vec3(std::stof(Patched.substr(Before.size())), 0.0f, 0.0f), 120.0f);
+    CHECK(Driver.Editor().Dirty());
+    Driver.ExpectErrors(true);
+    CHECK_FALSE(Driver.Editor().Save());
+    CHECK(Driver.Editor().Dirty());
+    Driver.Editor().RefreshProgram();
+    Driver.ExpectErrors(false);
+    CHECK_FALSE(Driver.Editor().Dirty());
+    std::ifstream Kept(Source, std::ios::binary);
+    std::ostringstream KeptText;
+    KeptText << Kept.rdbuf();
+    CHECK(KeptText.str() == Moved);
 }

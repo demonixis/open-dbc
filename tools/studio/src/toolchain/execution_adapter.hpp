@@ -37,6 +37,10 @@ namespace dbc::studio
             std::string AssetRoot;
             std::string LogLevel = "debug";
             bool DebugOverlay = false;
+            // Set to run headless and write the scene there, stopping one frame after `CaptureFrames`:
+            // that frame shows which statements belong to the game loop.
+            std::filesystem::path CaptureScene;
+            int CaptureFrames = 1;
         };
 
         struct MemorySource
@@ -92,6 +96,8 @@ namespace dbc::studio
             bool IsVrPacing() const;
             // False when the program cannot start; compile errors still reach the finish handler.
             bool Run(RunDocument Document, const RunOptions& Options);
+            // Whether Run honours RunOptions::CaptureScene: an in-process program has no separate process to end.
+            bool CanCaptureScene() const;
             // Compiles Document without running it.
             std::vector<RunDiagnostic> Check(RunDocument Document) const;
             void BeginEventFrame();

@@ -185,16 +185,18 @@ namespace dbc::studio
                     const float Height = Heights.empty() ? 0.0f : Heights[static_cast<std::size_t>(Z) * (Xs + 1) + X];
                     return glm::vec3(X * Sx, Height, Z * Sz);
                 };
-                // Every tile shows the FILL MATRIX tile of the PREPARE MATRIX TEXTURE grid.
+                // A cell shows its tile of the PREPARE MATRIX TEXTURE grid: the FILL MATRIX tile in a level.
                 const int Across = std::max(1, Node.TilesAcross), Down = std::max(1, Node.TilesDown);
-                const int Tile = MatrixTile(Node) - 1;
-                const float U0 = static_cast<float>(Tile % Across) / Across;
-                const float U1 = static_cast<float>(Tile % Across + 1) / Across;
-                const float VTop = static_cast<float>(Tile / Across) / Down;
-                const float VBottom = static_cast<float>(Tile / Across + 1) / Down;
+                const bool PerCell = Node.Tiles.size() == static_cast<std::size_t>(Xs) * Zs;
                 for (int Z = 0; Z < Zs; ++Z)
                     for (int X = 0; X < Xs; ++X)
                     {
+                        const int Tile = std::max(
+                            (PerCell ? Node.Tiles[static_cast<std::size_t>(Z) * Xs + X] : MatrixTile(Node)) - 1, 0);
+                        const float U0 = static_cast<float>(Tile % Across) / Across;
+                        const float U1 = static_cast<float>(Tile % Across + 1) / Across;
+                        const float VTop = static_cast<float>(Tile / Across) / Down;
+                        const float VBottom = static_cast<float>(Tile / Across + 1) / Down;
                         const glm::vec3 P00 = Point(X, Z), P10 = Point(X + 1, Z), P11 = Point(X + 1, Z + 1),
                                         P01 = Point(X, Z + 1);
                         AddTriangle(Mesh, P00, P10, P11, {U0, VBottom}, {U1, VBottom}, {U1, VTop});

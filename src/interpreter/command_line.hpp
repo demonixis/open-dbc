@@ -48,6 +48,7 @@ namespace dbc::interpreter
         bool DebugOverlay = false;
         bool Headless = false;
         std::filesystem::path CaptureOutput{};
+        std::filesystem::path CaptureScene{};
         bool Json = false;
     };
 

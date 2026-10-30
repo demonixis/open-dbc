@@ -144,7 +144,8 @@ namespace dbc::language
 
         std::optional<std::filesystem::path> ResolveProjectPath(const DbProProjectDocument& Document,
                                                                 std::string_view RawPath,
-                                                                const ProjectPathRemapper& Remapper, std::string& Error)
+                                                                const ProjectPathRemapper& Remapper,
+                                                                ProjectDiagnostic& Failure)
         {
             const std::filesystem::path Root = Document.LogicalPath.parent_path();
             const std::filesystem::path Portable = PortablePath(Trim(RawPath));
@@ -154,19 +155,21 @@ namespace dbc::language
             {
                 if (!Remapper)
                 {
-                    Error = "Project path requires an explicit local remapping: " + std::string(RawPath);
+                    Failure.Message = "Project path requires an explicit local remapping: " + std::string(RawPath);
+                    Failure.RemappablePath = RawPath;
                     return std::nullopt;
                 }
                 std::optional<std::filesystem::path> Mapped = Remapper(Document.LogicalPath, RawPath);
                 if (!Mapped)
                 {
-                    Error = "No local remapping was granted for project path: " + std::string(RawPath);
+                    Failure.Message = "No local remapping was granted for project path: " + std::string(RawPath);
+                    Failure.RemappablePath = RawPath;
                     return std::nullopt;
                 }
                 return Mapped->lexically_normal();
             }
 
-            std::optional<std::filesystem::path> Resolved = ResolveCaseInsensitive(Root, Portable, Error);
+            std::optional<std::filesystem::path> Resolved = ResolveCaseInsensitive(Root, Portable, Failure.Message);
             if (!Resolved)
                 return std::nullopt;
             std::error_code CanonicalError;
@@ -177,14 +180,16 @@ namespace dbc::language
             {
                 if (!Remapper)
                 {
-                    Error = "Project path crosses a symlink outside the project and requires consent: " +
-                            std::string(RawPath);
+                    Failure.Message = "Project path crosses a symlink outside the project and requires consent: " +
+                                      std::string(RawPath);
+                    Failure.RemappablePath = RawPath;
                     return std::nullopt;
                 }
                 std::optional<std::filesystem::path> Mapped = Remapper(Document.LogicalPath, RawPath);
                 if (!Mapped)
                 {
-                    Error = "No local remapping was granted for project path: " + std::string(RawPath);
+                    Failure.Message = "No local remapping was granted for project path: " + std::string(RawPath);
+                    Failure.RemappablePath = RawPath;
                     return std::nullopt;
                 }
                 return Mapped->lexically_normal();
@@ -452,11 +457,12 @@ namespace dbc::language
 
         const auto ResolveSource = [&](std::string_view Raw, std::size_t Line) -> std::optional<std::filesystem::path>
         {
-            std::string Error;
-            std::optional<std::filesystem::path> Path = ResolveProjectPath(Document, Raw, Remapper, Error);
+            ProjectDiagnostic Failure;
+            Failure.Line = Line;
+            std::optional<std::filesystem::path> Path = ResolveProjectPath(Document, Raw, Remapper, Failure);
             if (!Path)
             {
-                AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, Line, std::move(Error));
+                Result.Diagnostics.push_back(std::move(Failure));
                 return std::nullopt;
             }
             if (Lower(dbc::PathToUtf8(Path->extension())) != ".dba")
@@ -508,10 +514,10 @@ namespace dbc::language
         if (const std::optional<std::string> MediaRoot = Document.Value("media root path");
             MediaRoot && !Trim(*MediaRoot).empty())
         {
-            std::string Error;
-            std::optional<std::filesystem::path> Path = ResolveProjectPath(Document, *MediaRoot, Remapper, Error);
+            ProjectDiagnostic Failure;
+            std::optional<std::filesystem::path> Path = ResolveProjectPath(Document, *MediaRoot, Remapper, Failure);
             if (!Path)
-                AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, 1, std::move(Error));
+                Result.Diagnostics.push_back(std::move(Failure));
             else if (!std::filesystem::is_directory(*Path))
                 AddDiagnostic(Result.Diagnostics, ProjectDiagnosticSeverity::Error, 1,
                               "Media root is not a directory: " + dbc::PathToUtf8(*Path));

@@ -1,6 +1,7 @@
 // The Scene view's viewport: editor camera, picking, gizmos and asset drops.
 
 #include "panels/scene_editor.hpp"
+#include "path_utf8.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -396,7 +397,7 @@ namespace dbc::studio
             };
             CameraSelected_ = false;
             for (const scene::SceneNode& Node : Document_.Nodes)
-                if (scene::IsMarker(Node.Kind) && Near(Node.Position))
+                if (scene::IsMarker(Node.Kind) && !Node.Hidden && Near(Node.Position))
                 {
                     Pick(&Node);
                     return;
@@ -414,7 +415,7 @@ namespace dbc::studio
             float Nearest = 0.0f;
             for (const scene::SceneNode& Node : Document_.Nodes)
             {
-                const scene::CpuMesh* Mesh = scene::IsMarker(Node.Kind) ? nullptr : Renderer_.Mesh(Node);
+                const scene::CpuMesh* Mesh = scene::IsMarker(Node.Kind) || Node.Hidden ? nullptr : Renderer_.Mesh(Node);
                 if (Mesh == nullptr)
                     continue;
                 const std::optional<float> Distance = scene::Intersect(Ray, *Mesh, scene::NodeWorld(Node));
@@ -435,9 +436,9 @@ namespace dbc::studio
 
         void SceneEditor::AlignSelectionToGrid()
         {
-            if (!Editable() || (Selection_.empty() && !CameraSelected_))
+            if (!TransformEditable() || (Selection_.empty() && !CameraSelected_))
                 return;
-            if (CameraSelected_)
+            if (CameraSelected_ && Editable())
                 Document_.Env.CameraPosition = scene::SnapToGrid(Document_.Env.CameraPosition, MoveSnap_);
             for (scene::SceneNode* Node : SelectedNodes())
                 Node->Position = scene::SnapToGrid(Node->Position, MoveSnap_);
@@ -448,8 +449,8 @@ namespace dbc::studio
         {
             const ImGuiIO& Io = ImGui::GetIO();
             const bool Held = ImGui::IsKeyDown(ImGuiKey_V) && !Io.WantTextInput && ImGui::IsWindowFocused() &&
-                              !Navigating_ && !GizmoActive_ && Editable() && !CameraSelected_ && Tool_ != Tool::View &&
-                              Tool_ != Tool::Paint;
+                              !Navigating_ && !GizmoActive_ && TransformEditable() && !CameraSelected_ &&
+                              Tool_ != Tool::View && Tool_ != Tool::Paint;
             if (VertexDragging_ && (!Held || !ImGui::IsMouseDown(ImGuiMouseButton_Left)))
             {
                 VertexDragging_ = false;
@@ -516,13 +517,20 @@ namespace dbc::studio
 
         void SceneEditor::DrawGizmo()
         {
-            if (!Editable() || Tool_ == Tool::View || Tool_ == Tool::Paint)
+            if (!TransformEditable() || Tool_ == Tool::View || Tool_ == Tool::Paint || (CameraSelected_ && !Editable()))
                 return;
             if (!CameraSelected_ && Selection_.size() > 1)
             {
                 const ImGuizmo::OPERATION Operation = Tool_ == Tool::Rotate  ? ImGuizmo::ROTATE
                                                       : Tool_ == Tool::Scale ? ImGuizmo::SCALE
                                                                              : ImGuizmo::TRANSLATE;
+                const scene::TransformPart Part = Operation == ImGuizmo::ROTATE  ? scene::TransformPart::Rotation
+                                                  : Operation == ImGuizmo::SCALE ? scene::TransformPart::Scale
+                                                                                 : scene::TransformPart::Position;
+                const std::vector<scene::SceneNode*> Nodes = SelectedNodes();
+                if (std::none_of(Nodes.begin(), Nodes.end(),
+                                 [&](const scene::SceneNode* Node) { return PartEditable(*Node, Part); }))
+                    return;
                 DrawGroupGizmo(Operation,
                                LocalGizmo_ || Operation == ImGuizmo::SCALE ? ImGuizmo::LOCAL : ImGuizmo::WORLD);
                 return;
@@ -542,6 +550,11 @@ namespace dbc::studio
             const bool CanScale = Node != nullptr && scene::IdSpaceOf(Node->Kind) == scene::IdSpace::Object;
             if ((Operation == ImGuizmo::ROTATE && !CanTurn) || (Operation == ImGuizmo::SCALE && !CanScale))
                 Operation = ImGuizmo::TRANSLATE;
+            const scene::TransformPart Part = Operation == ImGuizmo::ROTATE  ? scene::TransformPart::Rotation
+                                              : Operation == ImGuizmo::SCALE ? scene::TransformPart::Scale
+                                                                             : scene::TransformPart::Position;
+            if (Node != nullptr && !PartEditable(*Node, Part))
+                return;
 
             scene::Environment& Env = Document_.Env;
             glm::mat4 Model = Node != nullptr ? GizmoMatrix(*Node)
@@ -869,6 +882,9 @@ namespace dbc::studio
             if (!ReadErrors_.empty())
                 Draw->AddText(ImVec2(Start.x + 8.0f, Start.y + 8.0f), IM_COL32(255, 120, 100, 255),
                               "Read-only level: see the Hierarchy panel");
+            if (Program_)
+                Draw->AddText(ImVec2(Start.x + 8.0f, Start.y + 8.0f), IM_COL32(255, 210, 120, 255),
+                              ("Scene of " + dbc::PathToUtf8(Program_->Source.filename())).c_str());
         }
     } // namespace panels
 

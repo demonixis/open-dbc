@@ -121,14 +121,77 @@ namespace dbc::studio
 
         void SceneEditor::CommitIfIdle()
         {
-            if (Editable() && !GizmoActive_ && !VertexDragging_ && !Painting_ && !ImGui::IsAnyItemActive())
+            if (TransformEditable() && !GizmoActive_ && !VertexDragging_ && !Painting_ && !ImGui::IsAnyItemActive())
                 Commit();
+        }
+
+        void SceneEditor::DrawNodeOrigin(const scene::SceneNode& Node)
+        {
+            if (!Program_)
+                return;
+            const scene::NodeOrigin* Origin = OriginOf(Node);
+            if (Origin == nullptr || Origin->Creator.File.empty())
+            {
+                ImGui::TextDisabled("No statement of the program creates it by this number.");
+                return;
+            }
+            ImGui::TextDisabled("%s:%u", dbc::PathToUtf8(dbc::PathFromUtf8(Origin->Creator.File).filename()).c_str(),
+                                Origin->Creator.Line);
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Show in Code") && Host_.ShowSource)
+                Host_.ShowSource(dbc::PathFromUtf8(Origin->Creator.File), Origin->Creator.Line);
+        }
+
+        void SceneEditor::DrawAxisLocks(const scene::SceneNode& Node, scene::TransformPart Part)
+        {
+            const scene::NodeOrigin* Origin = Program_ ? OriginOf(Node) : nullptr;
+            if (Origin == nullptr)
+                return;
+            constexpr std::array<const char*, 3> Names{"X", "Y", "Z"};
+            const auto& Axes = Origin->Axes[static_cast<std::size_t>(Part)];
+
+            struct Group
+            {
+                std::string Labels;
+                const scene::AxisOrigin* Axis = nullptr;
+            };
+
+            std::vector<Group> Groups;
+            for (std::size_t Index = 0; Index < Axes.size(); ++Index)
+            {
+                const scene::AxisOrigin& Axis = Axes[Index];
+                if (Axis.Access != scene::AxisAccess::Locked)
+                    continue;
+                const auto Same =
+                    std::find_if(Groups.begin(), Groups.end(), [&](const Group& Value)
+                                 { return Value.Axis->Reason == Axis.Reason && Value.Axis->Writer == Axis.Writer; });
+                if (Same == Groups.end())
+                    Groups.push_back({Names[Index], &Axis});
+                else
+                    Same->Labels += std::string(", ") + Names[Index];
+            }
+            ImGui::PushID(static_cast<int>(Part));
+            for (const Group& Value : Groups)
+            {
+                ImGui::PushID(Value.Labels.c_str());
+                ImGui::TextDisabled("%s locked: %s", Value.Labels.c_str(), Value.Axis->Reason.c_str());
+                if (Value.Axis->Writer.Line != 0)
+                {
+                    ImGui::SameLine();
+                    if (ImGui::SmallButton("Show") && Host_.ShowSource)
+                        Host_.ShowSource(dbc::PathFromUtf8(Value.Axis->Writer.File), Value.Axis->Writer.Line);
+                }
+                ImGui::PopID();
+            }
+            ImGui::PopID();
         }
 
         void SceneEditor::DrawInspector()
         {
             if (!HasLevel_)
                 return;
+            if (const scene::SceneNode* Shown = CameraSelected_ ? nullptr : Selected())
+                DrawNodeOrigin(*Shown);
             ImGui::BeginDisabled(!Editable());
             if (CameraSelected_)
             {
@@ -198,19 +261,37 @@ namespace dbc::studio
             }
 
             Heading("Transform");
+            // The one section a program's scene edits: each part has its own state, not the Inspector's.
+            ImGui::EndDisabled();
+            const auto BeginPart = [&](scene::TransformPart Part)
+            { ImGui::BeginDisabled(!TransformEditable() || !PartEditable(*Node, Part)); };
+            const auto EndPart = [&](scene::TransformPart Part)
+            {
+                ImGui::EndDisabled();
+                DrawAxisLocks(*Node, Part);
+            };
+            BeginPart(scene::TransformPart::Position);
             ImGui::DragFloat3("Position", &Node->Position.x, 0.5f);
+            EndPart(scene::TransformPart::Position);
             const bool Turns = IsObject || (IsLight && Node->Light != scene::LightKind::Point);
             if (Turns)
+            {
+                BeginPart(scene::TransformPart::Rotation);
                 ImGui::DragFloat3("Rotation", &Node->Rotation.x, 0.5f);
+                EndPart(scene::TransformPart::Rotation);
+            }
             if (IsObject)
             {
+                BeginPart(scene::TransformPart::Scale);
                 const glm::vec3 PreviousScale = Node->Scale;
                 if (ImGui::DragFloat3("Scale %", &Node->Scale.x, 0.5f, 0.0f, 100000.0f) && UniformScale_)
                     Node->Scale = scene::ProportionalScale(PreviousScale, Node->Scale);
                 ImGui::Checkbox("Uniform scale", &UniformScale_);
                 if (ImGui::IsItemHovered())
                     ImGui::SetTooltip("Scaling one axis scales the others in proportion, here and with the gizmo");
+                EndPart(scene::TransformPart::Scale);
             }
+            ImGui::BeginDisabled(!Editable());
             if (Node->Kind == scene::NodeKind::Terrain)
                 ImGui::TextDisabled("A terrain runs from its position toward -Z.");
             if (Node->Kind == scene::NodeKind::Matrix)

@@ -57,7 +57,12 @@ namespace dbc::studio
         IdSpace IdSpaceOf(NodeKind Kind);
         // Lights and sounds: no geometry, drawn and picked as viewport icons.
         bool IsMarker(NodeKind Kind);
+        // Stable English name: default node names reach saved levels through REM @, so it is never translated.
+        const char* NodeKindName(NodeKind Kind);
+        // The kind as shown in the interface.
         const char* NodeKindLabel(NodeKind Kind);
+        // "Cube 12": the name of a new or unnamed node, whatever the interface language.
+        std::string DefaultNodeName(NodeKind Kind, int Id);
         // False for kinds whose commands the profile cannot run (terrains in Classic).
         bool KindAvailable(NodeKind Kind, dbc::language::LanguageProfile Profile);
         // MAKE STATIC OBJECT, which only the Classic profile implements.
@@ -89,6 +94,8 @@ namespace dbc::studio
         struct Material
         {
             std::string Texture; // asset-relative path, empty for none
+            // SCALE OBJECT TEXTURE, read from a running program only: levels do not write it.
+            glm::vec2 TextureScale{1.0f};
             std::optional<Rgb> Color;
             bool Ghost = false;
             std::optional<int> GhostMode;
@@ -136,6 +143,9 @@ namespace dbc::studio
             // FILL MATRIX tile. Empty heights leave the matrix flat at 0.
             std::vector<float> Heights;
             int Tile = 1;
+            // Matrix read from a running program: the tile of each cell, XSegments per row from Z = 0.
+            // Empty for levels, whose cells all show the FILL MATRIX tile.
+            std::vector<int> Tiles;
 
             // Light
             LightKind Light = LightKind::Point;
@@ -158,6 +168,8 @@ namespace dbc::studio
             // Object: placed by the paint tool. The Hierarchy folds these together, and Pro writes
             // them with INSTANCE OBJECT of the first object that looks the same.
             bool Painted = false;
+            // Read from a running program that hides this node or locks it to the screen: listed, not drawn.
+            bool Hidden = false;
 
             Material Mat;
 

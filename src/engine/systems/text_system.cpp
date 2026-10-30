@@ -1,6 +1,6 @@
 #include "text_system.hpp"
 #include "../engine_types.hpp"
-#include "../noto_sans_regular_ttf.hpp"
+#include "../fallback_font.hpp"
 #include "core_system.hpp"
 #include "draw_system.hpp"
 #include "engine_kernel.hpp"
@@ -345,8 +345,8 @@ namespace dbc
         {
             if (UseFallback)
             {
-                SDL_IOStream* Io = SDL_IOFromConstMem(third_party_fonts_NotoSans_Regular_ttf,
-                                                      third_party_fonts_NotoSans_Regular_ttf_len);
+                const std::span<const unsigned char> FontData = FallbackFontData();
+                SDL_IOStream* Io = SDL_IOFromConstMem(FontData.data(), FontData.size());
                 if (!Io)
                 {
                     DBC_LOG_ERROR("fallback font IO creation failed: {}", SDL_GetError());

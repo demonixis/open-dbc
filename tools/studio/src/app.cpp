@@ -10,9 +10,14 @@
 #include <imgui_impl_sdlgpu3.h>
 #include <imgui_internal.h>
 #include <iterator>
+#include <limits>
 
+#include "core/i18n.hpp"
+#include "core/locales.hpp"
 #include "core/paths.hpp"
 #include "interpreter/atomic_file.hpp"
+#include "scene/scene_capture.hpp"
+#include "scene/scene_integration.hpp"
 #include "theme.hpp"
 #include "toolchain/active_run_planner.hpp"
 
@@ -36,6 +41,7 @@ namespace dbc::studio
         // The Scene mode docks its own Output window: a title shared with the Code
         // mode would belong to one dock space only.
         constexpr const char* KPanelSceneOutput = "Output##Scene";
+        // The persisted setting and the --log-level values, shown verbatim: never translate them.
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
 
         enum class ToolIcon
@@ -193,6 +199,16 @@ namespace dbc::studio
             Output_.Append(Message,
                            Error ? panels::OutputPanel::Severity::Error : panels::OutputPanel::Severity::Notice);
         };
+        SceneHost.CaptureProgram = [this](const std::filesystem::path& Source, int SetupFrames)
+        { CaptureProgram(Source, SetupFrames); };
+        SceneHost.ShowSource = [this](const std::filesystem::path& Path, std::uint32_t Line)
+        {
+            OpenFile(Path);
+            Editor_.GoToLine(Line);
+            SetMode(Mode::Code);
+        };
+        SceneHost.OpenSource = [this](const std::filesystem::path& Path) { return Editor_.Open(Path); };
+        SceneHost.CaptureRunning = [this] { return SceneCapture_.has_value(); };
         Scene_.Initialize(Gpu_, std::move(SceneHost));
         Reference_.Load(core::paths::FindReferenceDoc());
         Commands_.Build(Reference_);
@@ -204,6 +220,8 @@ namespace dbc::studio
                               [this](const std::filesystem::path& Path) { OpenFile(Path); });
 
         Project_.SetOnActivate([this](const std::filesystem::path& Path) { OpenFile(Path); });
+        if (Execution_.CanCaptureScene())
+            Project_.SetOnOpenInScene([this](const std::filesystem::path& Path) { OpenInScene(Path); });
         Code_.SetOnSelect([this](std::uint32_t Line) { Editor_.GoToLine(Line); });
         Media_.SetOnActivate(
             [this](const std::filesystem::path& Path)
@@ -217,6 +235,7 @@ namespace dbc::studio
 
         Settings_ = core::Settings::Load();
         SettingsLoaded_ = true;
+        ApplyLanguage();
 
         Workspace_.Initialize();
 
@@ -236,6 +255,11 @@ namespace dbc::studio
             ExecutionBusy_ = false;
             ShowProblems(Diagnostics);
             ExecutionTarget_.clear();
+            if (SceneCapture_)
+            {
+                FinishSceneCapture();
+                return;
+            }
             if (ExitCode == 0)
                 Status_ = "Run finished";
             else if (ExitCode == 130)
@@ -339,6 +363,7 @@ namespace dbc::studio
 
             Theme::Apply(Scale_ * core::platform::UiScaleHint());
             ImGui::GetStyle().FontScaleDpi = Scale_ * core::platform::UiScaleHint();
+            Theme::AddFonts();
         }
 
         if (!ImGui_ImplSDL3_InitForSDLGPU(Window_))
@@ -407,6 +432,12 @@ namespace dbc::studio
             PollEvents();
             Dialog_.Poll();
             Execution_.Poll();
+            if (SceneCapture_ && SDL_GetTicks() >= SceneCapture_->Deadline)
+            {
+                // A program waiting on something a headless run never gets: what it built so far still counts.
+                SceneCapture_->Deadline = std::numeric_limits<Uint64>::max();
+                Execution_.Stop();
+            }
             PollExport();
             for (const std::string& Notice : Editor_.TakeNotices())
                 Output_.Append(Notice, panels::OutputPanel::Severity::Notice);
@@ -705,10 +736,6 @@ namespace dbc::studio
             ResolutionPopupRequested_ = true;
             ResolvedProject_.reset();
             UpdateSceneProject();
-            const std::string Marker = "remapping";
-            const std::size_t At = PendingResolution_.Error.find(Marker);
-            const std::size_t Colon = PendingResolution_.Error.find(": ", At == std::string::npos ? 0 : At);
-            PendingRawPath_ = Colon == std::string::npos ? std::string{} : PendingResolution_.Error.substr(Colon + 2);
             return false;
         }
         ApplyResolvedProject(std::move(*PendingResolution_.Project));
@@ -733,6 +760,12 @@ namespace dbc::studio
         for (const std::string& Warning : ResolvedProject_->Warnings)
             Output_.Append(Warning, panels::OutputPanel::Severity::Notice);
         UpdateSceneProject();
+        if (PendingSceneProgram_)
+        {
+            const std::filesystem::path Program = std::move(*PendingSceneProgram_);
+            PendingSceneProgram_.reset();
+            OpenInScene(Program);
+        }
     }
 
     std::string App::SceneBlocker() const
@@ -807,8 +840,161 @@ namespace dbc::studio
             return;
         if (Scene_.Dirty() && !Scene_.Save())
             return;
-        OpenFile(ResolvedProject_->EntrySource);
+        const std::filesystem::path* Program = Scene_.ProgramSource();
+        OpenFile(Program != nullptr ? CaptureRunTarget(*Program) : ResolvedProject_->EntrySource);
         RunActiveDocument();
+    }
+
+    std::filesystem::path App::CaptureRunTarget(const std::filesystem::path& Source) const
+    {
+        const std::filesystem::path Normal = Source.lexically_normal();
+        const std::filesystem::path Entry = ResolvedProject_->EntrySource.lexically_normal();
+        if (Normal == Entry)
+            return Entry;
+        const std::vector<std::filesystem::path>& Ordered = ResolvedProject_->OrderedSources;
+        const bool InProject = ResolvedProject_->DescriptorPath &&
+                               std::any_of(Ordered.begin(), Ordered.end(), [&](const std::filesystem::path& Other)
+                                           { return Other.lexically_normal() == Normal; });
+        return InProject ||
+                       scene::SourceIncludes(Entry, Normal, ResolvedProject_->Profile,
+                                             [this](const std::filesystem::path& Path) { return ReadSource(Path); })
+                   ? Entry
+                   : Normal;
+    }
+
+    void App::OpenInScene(const std::filesystem::path& Path)
+    {
+        if (ExecutionBusy_)
+        {
+            Status_ = "Stop the running program first";
+            return;
+        }
+        // Before the program runs, so that it sees what is being edited.
+        if (Scene_.Dirty() && !Scene_.Save())
+            return;
+        OpenFile(Path);
+        if (!ResolvedProject_)
+        {
+            // The language popup is open or about to be: the answer brings us back here.
+            PendingSceneProgram_ = Path;
+            Status_ = "Select the project's language to read this program's scene";
+            return;
+        }
+        CaptureProgram(Path, 1);
+    }
+
+    void App::CaptureProgram(const std::filesystem::path& Source, int SetupFrames)
+    {
+        if (ExecutionBusy_ || !ResolvedProject_ || !Execution_.CanCaptureScene())
+            return;
+        const std::string Blocker = SceneBlocker();
+        if (!Blocker.empty())
+        {
+            Status_ = Blocker;
+            Output_.Append(Blocker, panels::OutputPanel::Severity::Error);
+            return;
+        }
+
+        const std::filesystem::path Target = CaptureRunTarget(Source);
+        std::vector<toolchain::MemorySource> Sources;
+        for (panels::BufferedSource& Buffered : Editor_.DirtySources(ResolvedProject_->Profile))
+            Sources.push_back({std::move(Buffered.LogicalPath), std::move(Buffered.Text)});
+        toolchain::ActiveRunPlan Plan = toolchain::PlanActiveRun(Target, ResolvedProject_, std::move(Sources));
+        if (!Plan || !Plan.Blockers.empty())
+        {
+            Status_ = "Cannot run " + dbc::PathToUtf8(Target.filename());
+            Output_.Append(Plan.Blockers.empty() ? Plan.Error : Plan.Blockers.front(),
+                           panels::OutputPanel::Severity::Error);
+            return;
+        }
+        // A project's sources form one program; the run plan alone narrows it to the active file.
+        if (ResolvedProject_->DescriptorPath)
+            Plan.Document->Project->OrderedSources = ResolvedProject_->OrderedSources;
+        toolchain::RunDocument Document = std::move(*Plan.Document);
+
+        std::error_code Error;
+        const std::filesystem::path Temporary = std::filesystem::temp_directory_path(Error);
+        if (Error)
+        {
+            Output_.Append("Cannot find a temporary folder for the scene: " + Error.message(),
+                           panels::OutputPanel::Severity::Error);
+            return;
+        }
+        SceneCaptureRun Run;
+        Run.Source = Source;
+        Run.SetupFrames = SetupFrames;
+        if (Target != Source.lexically_normal())
+            Run.OnlyFile = dbc::GenericPathToUtf8(Source.lexically_normal());
+        Run.Output = Temporary / ("opendbc-scene-" + std::to_string(SDL_GetTicksNS()) + ".json");
+        Run.SourceRoot = Document.Project->ProjectRoot;
+        constexpr Uint64 KCaptureMilliseconds = 30000;
+        Run.Deadline = SDL_GetTicks() + KCaptureMilliseconds;
+
+        toolchain::RunOptions Options = RunOptions_;
+        Options.AssetRoot = dbc::PathToUtf8(Plan.AssetRoot);
+        Options.DebugOverlay = false;
+        Options.CaptureScene = Run.Output;
+        Options.CaptureFrames = SetupFrames;
+
+        ShowProblems({});
+        Output_.Append("> Reading the scene of " + dbc::PathToUtf8(Target), panels::OutputPanel::Severity::Notice);
+        Status_ = "Reading the scene of " + dbc::PathToUtf8(Source.filename());
+        ExecutionTarget_ = Target;
+        SceneCapture_ = std::move(Run);
+        UpdateRecovery();
+        if (Execution_.Run(std::move(Document), Options))
+        {
+            ExecutionBusy_ = true;
+        }
+        else if (SceneCapture_)
+        {
+            // Run gave up before anything could finish; a failed compile has reported already.
+            SceneCapture_.reset();
+            ExecutionTarget_.clear();
+        }
+    }
+
+    void App::FinishSceneCapture()
+    {
+        const SceneCaptureRun Run = std::move(*SceneCapture_);
+        SceneCapture_.reset();
+        const std::string Name = dbc::PathToUtf8(Run.Source.filename());
+
+        std::string Text;
+        {
+            std::ifstream Stream(Run.Output, std::ios::binary);
+            Text.assign(std::istreambuf_iterator<char>(Stream), {});
+        }
+        std::error_code Ignored;
+        std::filesystem::remove(Run.Output, Ignored);
+        std::filesystem::path Images = Run.Output;
+        Images += ".images";
+        if (Text.empty())
+        {
+            Status_ = "Cannot read the scene of " + Name + ": it did not start";
+            Output_.Append(Status_, panels::OutputPanel::Severity::Error);
+            return;
+        }
+        const panels::SceneProject* Project = Scene_.Project() ? &*Scene_.Project() : nullptr;
+        scene::SceneCapture Capture;
+        std::string Error;
+        if (Project == nullptr || !scene::ParseSceneCapture(Text, Run.SourceRoot, Project->AssetRoot, Capture, Error))
+        {
+            Status_ = "Cannot read the scene of " + Name;
+            Output_.Append(Status_ + ": " + Error, panels::OutputPanel::Severity::Error);
+            return;
+        }
+        if (Capture.Status == "cancelled")
+            Output_.Append(Name + " did not reach its frame in time: the scene shows what it had built.",
+                           panels::OutputPanel::Severity::Notice);
+        else if (Capture.Status != "completed")
+            Output_.Append(Name + " stopped with an error: the scene shows what it had built.",
+                           panels::OutputPanel::Severity::Error);
+        Scene_.OpenCapture(Run.Source, Capture, Run.SetupFrames, Run.OnlyFile);
+        std::filesystem::remove_all(SceneCaptureImages_, Ignored);
+        SceneCaptureImages_ = std::move(Images);
+        SetMode(Mode::Scene);
+        Status_ = "Scene of " + Name;
     }
 
     void App::SetProjectDialect(dbc::language::LanguageProfile Profile)
@@ -912,8 +1098,33 @@ namespace dbc::studio
         QuitSaveInProgress_ = false;
     }
 
+    void App::ApplyLanguage()
+    {
+        std::vector<std::string> SystemLocales;
+        int Count = 0;
+        if (SDL_Locale** Locales = SDL_GetPreferredLocales(&Count))
+        {
+            for (int Index = 0; Index < Count; ++Index)
+                SystemLocales.emplace_back(Locales[Index]->language);
+            SDL_free(Locales);
+        }
+        else
+        {
+            DBC_LOG_WARN("Cannot read the system languages: {}", SDL_GetError());
+        }
+        core::ActivateInterfaceLanguage(core::ResolveInterfaceLanguage(Settings_.Language, SystemLocales));
+        if (ImGui::GetCurrentContext() != nullptr)
+            core::TranslateImGuiStrings();
+    }
+
     void App::DrawFrame()
     {
+        if (LanguageChanged_)
+        {
+            LanguageChanged_ = false;
+            ApplyLanguage();
+        }
+
         ImGui_ImplSDLGPU3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
@@ -948,7 +1159,7 @@ namespace dbc::studio
         if (!ImGui::BeginPopupModal(Popup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             return;
         ImGui::TextWrapped("%s", PendingResolution_.Error.c_str());
-        if (!PendingRawPath_.empty())
+        if (!PendingResolution_.RemappablePath.empty())
         {
             std::array<char, 2048> Path{};
             SDL_strlcpy(Path.data(), PendingLocalPath_.c_str(), Path.size());
@@ -961,7 +1172,8 @@ namespace dbc::studio
                     Descriptor = *PendingResolution_.PendingDescriptor;
                 else if (!dbc::language::IsDbProProject(Descriptor) && !PendingResolution_.ProjectCandidates.empty())
                     Descriptor = PendingResolution_.ProjectCandidates.front();
-                Settings_.SetProjectPathRemapping(Descriptor, PendingRawPath_, dbc::PathFromUtf8(PendingLocalPath_));
+                Settings_.SetProjectPathRemapping(Descriptor, PendingResolution_.RemappablePath,
+                                                  dbc::PathFromUtf8(PendingLocalPath_));
                 Settings_.Save();
                 ResolveWorkspace(PendingResolveTarget_, PendingResolveProfile_);
                 ImGui::CloseCurrentPopup();
@@ -1155,8 +1367,8 @@ namespace dbc::studio
         if (Mode_ == Mode::Scene)
         {
             Scene_.HandleShortcuts();
-            if (Command && ImGui::IsKeyPressed(ImGuiKey_S, false) && Scene_.Save())
-                Status_ = "Level saved";
+            if (Command && ImGui::IsKeyPressed(ImGuiKey_S, false) && Scene_.SaveAndRefresh())
+                Status_ = Scene_.ProgramSource() != nullptr ? "Applied to the source" : "Level saved";
             return;
         }
 
@@ -1255,7 +1467,7 @@ namespace dbc::studio
         if (Mode_ == Mode::Scene)
         {
             Scene_.DrawPanels();
-            if (ImGui::Begin(KPanelSceneOutput))
+            if (ImGui::Begin(TrId(KPanelSceneOutput)))
                 Output_.Draw();
             ImGui::End();
         }
@@ -1283,7 +1495,7 @@ namespace dbc::studio
     {
         if (ShowProject_)
         {
-            ImGui::Begin(KPanelProject, &ShowProject_);
+            ImGui::Begin(TrId(KPanelProject), &ShowProject_);
             ProjectDockId_ = ImGui::GetWindowDockID();
             Project_.Draw();
             ImGui::End();
@@ -1294,7 +1506,7 @@ namespace dbc::studio
             if (ProjectDockId_ != 0)
                 ImGui::SetNextWindowDockID(ProjectDockId_, ImGuiCond_FirstUseEver);
             // Only a visible panel parses: a hidden tab costs nothing while typing.
-            if (ImGui::Begin(KPanelCode, &ShowCode_))
+            if (ImGui::Begin(TrId(KPanelCode), &ShowCode_))
             {
                 Code_.Update(Editor_.CurrentIsBasic() ? Editor_.CurrentEditor() : nullptr, Editor_.CurrentPath(),
                              Editor_.CurrentProfile(), ImGui::GetTime());
@@ -1307,19 +1519,19 @@ namespace dbc::studio
         {
             if (ProjectDockId_ != 0)
                 ImGui::SetNextWindowDockID(ProjectDockId_, ImGuiCond_FirstUseEver);
-            if (ImGui::Begin(KPanelMedia, &ShowMedia_))
+            if (ImGui::Begin(TrId(KPanelMedia), &ShowMedia_))
                 Media_.Draw();
             ImGui::End();
         }
 
-        ImGui::Begin(KPanelEditor, nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::Begin(TrId(KPanelEditor), nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         EditorDockId_ = ImGui::GetWindowDockID();
         Editor_.Draw();
         ImGui::End();
 
         if (ShowOutput_)
         {
-            ImGui::Begin(KPanelOutput, &ShowOutput_);
+            ImGui::Begin(TrId(KPanelOutput), &ShowOutput_);
             OutputDockId_ = ImGui::GetWindowDockID();
             Output_.Draw();
             ImGui::End();
@@ -1329,7 +1541,7 @@ namespace dbc::studio
         {
             if (OutputDockId_ != 0)
                 ImGui::SetNextWindowDockID(OutputDockId_, ImGuiCond_FirstUseEver);
-            if (ImGui::Begin(KPanelProblems, &ShowProblems_))
+            if (ImGui::Begin(TrId(KPanelProblems), &ShowProblems_))
                 Problems_.Draw();
             ImGui::End();
         }
@@ -1342,7 +1554,7 @@ namespace dbc::studio
                 ImGui::SetNextWindowDockID(EditorDockId_, ImGuiCond_FirstUseEver);
             }
             ImGui::SetNextWindowSize(ImVec2(640.0f, 480.0f), ImGuiCond_FirstUseEver);
-            ImGui::Begin(KPanelPreview, &Open);
+            ImGui::Begin(TrId(KPanelPreview), &Open);
             Preview_.Draw();
             ImGui::End();
             if (!Open)
@@ -1362,13 +1574,13 @@ namespace dbc::studio
         const ImGuiID Left = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Left, 0.20f, nullptr, &Center);
         const ImGuiID Bottom = ImGui::DockBuilderSplitNode(Center, ImGuiDir_Down, 0.28f, nullptr, &Center);
 
-        ImGui::DockBuilderDockWindow(KPanelCode, Left);
-        ImGui::DockBuilderDockWindow(KPanelMedia, Left);
-        ImGui::DockBuilderDockWindow(KPanelProject, Left);
-        ImGui::DockBuilderDockWindow(KPanelEditor, Center);
-        ImGui::DockBuilderDockWindow(KPanelPreview, Center);
-        ImGui::DockBuilderDockWindow(KPanelProblems, Bottom);
-        ImGui::DockBuilderDockWindow(KPanelOutput, Bottom);
+        ImGui::DockBuilderDockWindow(TrId(KPanelCode), Left);
+        ImGui::DockBuilderDockWindow(TrId(KPanelMedia), Left);
+        ImGui::DockBuilderDockWindow(TrId(KPanelProject), Left);
+        ImGui::DockBuilderDockWindow(TrId(KPanelEditor), Center);
+        ImGui::DockBuilderDockWindow(TrId(KPanelPreview), Center);
+        ImGui::DockBuilderDockWindow(TrId(KPanelProblems), Bottom);
+        ImGui::DockBuilderDockWindow(TrId(KPanelOutput), Bottom);
 
         ImGui::DockBuilderFinish(DockspaceId);
     }
@@ -1399,6 +1611,11 @@ namespace dbc::studio
                 if (ImGui::MenuItem("Open File...", "Ctrl+O"))
                 {
                     ShowOpenFileDialog();
+                }
+                if (ImGui::MenuItem("Open in Scene View", nullptr, false,
+                                    Execution_.CanCaptureScene() && !ExecutionBusy_ && Editor_.CurrentIsBasic()))
+                {
+                    OpenInScene(Editor_.CurrentPath());
                 }
                 if (ImGui::MenuItem("Open Folder...", "Ctrl+Shift+O"))
                 {
@@ -1607,11 +1824,11 @@ namespace dbc::studio
             if (!Blocker.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", Blocker.c_str());
             ImGui::Separator();
-            ImGui::MenuItem(KPanelProject, nullptr, &ShowProject_);
-            ImGui::MenuItem(KPanelCode, nullptr, &ShowCode_);
-            ImGui::MenuItem(KPanelMedia, nullptr, &ShowMedia_);
-            ImGui::MenuItem(KPanelOutput, nullptr, &ShowOutput_);
-            ImGui::MenuItem(KPanelProblems, nullptr, &ShowProblems_);
+            ImGui::MenuItem(TrId(KPanelProject), nullptr, &ShowProject_);
+            ImGui::MenuItem(TrId(KPanelCode), nullptr, &ShowCode_);
+            ImGui::MenuItem(TrId(KPanelMedia), nullptr, &ShowMedia_);
+            ImGui::MenuItem(TrId(KPanelOutput), nullptr, &ShowOutput_);
+            ImGui::MenuItem(TrId(KPanelProblems), nullptr, &ShowProblems_);
             ImGui::Separator();
             if (ImGui::MenuItem("Reset Layout"))
             {
@@ -1619,6 +1836,26 @@ namespace dbc::studio
                     Scene_.BuildDefaultLayout(ImGui::GetID(KSceneDockSpaceName), KPanelSceneOutput);
                 else
                     BuildDefaultLayout(ImGui::GetID(KDockSpaceName));
+            }
+            ImGui::Separator();
+            if (ImGui::BeginMenu(TrId("Language")))
+            {
+                const auto Choose = [this](const std::string& Code)
+                {
+                    Settings_.Language = Code;
+                    Settings_.Save();
+                    LanguageChanged_ = true;
+                };
+                if (ImGui::MenuItem(TrId("Automatic"), nullptr, Settings_.Language == "auto"))
+                    Choose("auto");
+                ImGui::Separator();
+                // Each language under its own name, so a reader can always find theirs.
+                for (const core::InterfaceLanguage& Language : core::InterfaceLanguages())
+                {
+                    if (ImGui::MenuItem(Language.Name.c_str(), nullptr, Settings_.Language == Language.Code))
+                        Choose(Language.Code);
+                }
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }
@@ -1642,7 +1879,7 @@ namespace dbc::studio
     void App::DrawAbout()
     {
         ImGui::SetNextWindowSize(ImVec2(520, 0), ImGuiCond_Appearing);
-        if (ImGui::Begin("About OpenDBC", &ShowAbout_, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse))
+        if (ImGui::Begin(TrId("About OpenDBC"), &ShowAbout_, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse))
         {
             ImGui::TextUnformatted("OpenDBC " OPENDBC_VERSION_STRING);
             ImGui::Spacing();
@@ -2131,6 +2368,8 @@ namespace dbc::studio
         if (Gpu_ != nullptr)
             SDL_WaitForGPUIdle(Gpu_);
         Scene_.Shutdown();
+        std::error_code ImagesError;
+        std::filesystem::remove_all(SceneCaptureImages_, ImagesError);
 
         DestroyPresentation();
 

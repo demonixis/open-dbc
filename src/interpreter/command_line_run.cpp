@@ -13,6 +13,7 @@
 #include "engine/systems/vr_system.hpp"
 #include "program_image.hpp"
 #include "runtime_startup.hpp"
+#include "scene_capture.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -78,6 +79,7 @@ namespace dbc::interpreter
             "  --debug-overlay\n"
             "  --headless (hidden window, offscreen rendering, silent audio)\n"
             "  --capture-output <path.bmp> (requires --headless; saves the last frame)\n"
+            "  --capture-scene <path.json> (requires --headless; saves the scene commands and final 3D state)\n"
             "  --benchmark\n"
             "  --benchmark-output <path> (requires --benchmark)\n";
     } // namespace
@@ -126,7 +128,7 @@ namespace dbc::interpreter
                    Value == "--builtin-coverage-output" || Value == "--log-level" || Value == "--log-directory" ||
                    Value == "--max-frames" || Value == "--instruction-budget" || Value == "--debug-overlay" ||
                    Value == "--headless" || Value == "--benchmark" || Value == "--benchmark-output" ||
-                   Value == "--capture-output";
+                   Value == "--capture-output" || Value == "--capture-scene";
         }
 
         std::string JsonEscape(std::string_view Text)
@@ -482,11 +484,19 @@ namespace dbc::interpreter
         }
         const language::LanguageProfile Profile = Loaded.Request->Profile;
         const std::filesystem::path Entry = Loaded.Request->RootLogicalPath;
+        SceneRecorder SceneCalls;
+        if (!Command.CaptureScene.empty())
+            Loaded.Request->Options.SceneCalls = &SceneCalls;
         const auto Finish = [&](CommandLineExitCode Code, std::string_view Status,
                                 const ExecutionResult* Result = nullptr, const EngineKernel* Kernel = nullptr)
         {
             std::string EvidenceError;
-            if (!WriteRunEvidence(Command, Profile, Entry, Status, Result, Kernel, EvidenceError))
+            bool Written = WriteRunEvidence(Command, Profile, Entry, Status, Result, Kernel, EvidenceError);
+            // A failed or stopped run still has a scene: whatever it built before the failure.
+            if (Written && !Command.CaptureScene.empty())
+                Written = SceneCalls.Write(Command.CaptureScene, Profile, Status, Result ? Result->FrameCount : 0,
+                                           Kernel, EvidenceError);
+            if (!Written)
             {
                 Write(Environment.StandardError, stderr, EvidenceError + "\n");
                 if (Code == CommandLineExitCode::Success)
@@ -811,12 +821,12 @@ namespace dbc::interpreter
                 Command.ExportSign = false;
                 continue;
             }
-            const bool TakesValue = Argument == "--asset-root" || Argument == "--command-line" ||
-                                    Argument == "--log-output" || Argument == "--builtin-coverage-output" ||
-                                    Argument == "--benchmark-output" || Argument == "--capture-output" ||
-                                    Argument == "--log-level" || Argument == "--log-directory" ||
-                                    Argument == "--max-frames" || Argument == "--instruction-budget" ||
-                                    Argument == "--dialect" || Argument == "--target" || Argument == "--output";
+            const bool TakesValue =
+                Argument == "--asset-root" || Argument == "--command-line" || Argument == "--log-output" ||
+                Argument == "--builtin-coverage-output" || Argument == "--benchmark-output" ||
+                Argument == "--capture-output" || Argument == "--capture-scene" || Argument == "--log-level" ||
+                Argument == "--log-directory" || Argument == "--max-frames" || Argument == "--instruction-budget" ||
+                Argument == "--dialect" || Argument == "--target" || Argument == "--output";
             if (TakesValue)
             {
                 if (Index >= Arguments.size())
@@ -826,7 +836,7 @@ namespace dbc::interpreter
                 }
                 const std::string_view Value = Arguments[Index++];
                 if ((Argument == "--builtin-coverage-output" || Argument == "--benchmark-output" ||
-                     Argument == "--capture-output") &&
+                     Argument == "--capture-output" || Argument == "--capture-scene") &&
                     Value.empty())
                 {
                     Result.Error = "Value for " + std::string(Argument) + " must name a file";
@@ -844,6 +854,8 @@ namespace dbc::interpreter
                     Command.Execution.BenchmarkOutputPath = dbc::PathFromUtf8(Value);
                 else if (Argument == "--capture-output")
                     Command.CaptureOutput = dbc::PathFromUtf8(Value);
+                else if (Argument == "--capture-scene")
+                    Command.CaptureScene = dbc::PathFromUtf8(Value);
                 else if (Argument == "--log-level")
                     Command.LogLevel = Value;
                 else if (Argument == "--log-directory")
@@ -914,7 +926,7 @@ namespace dbc::interpreter
             for (const std::string_view Option :
                  {"--asset-root", "--command-line", "--log-output", "--builtin-coverage-output", "--benchmark-output",
                   "--log-level", "--max-frames", "--instruction-budget", "--debug-overlay", "--headless", "--benchmark",
-                  "--capture-output"})
+                  "--capture-output", "--capture-scene"})
             {
                 if (std::find(Arguments.begin(), Arguments.end(), Option) != Arguments.end() && IsRunOption(Option))
                 {
@@ -931,6 +943,11 @@ namespace dbc::interpreter
         if (!Command.CaptureOutput.empty() && !Command.Headless)
         {
             Result.Error = "--capture-output requires --headless";
+            return Result;
+        }
+        if (!Command.CaptureScene.empty() && !Command.Headless)
+        {
+            Result.Error = "--capture-scene requires --headless";
             return Result;
         }
         if (!ValidateRunOutputPaths(Command.Execution, Result.Error))

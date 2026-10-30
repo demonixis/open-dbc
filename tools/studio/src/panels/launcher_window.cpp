@@ -8,6 +8,7 @@
 #include <imgui.h>
 
 #include "core/file_dialog.hpp"
+#include "core/i18n.hpp"
 #include "core/platform.hpp"
 #include "core/workspace.hpp"
 #include "dba/command_database.hpp"
@@ -375,7 +376,7 @@ namespace dbc::studio
             }
 
             ImGui::SetNextWindowSize(ImVec2(900.0f, 560.0f), ImGuiCond_FirstUseEver);
-            if (!ImGui::Begin("Launcher", &Open_))
+            if (!ImGui::Begin(TrId("Launcher"), &Open_))
             {
                 ImGui::End();
                 return;

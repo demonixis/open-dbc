@@ -372,6 +372,11 @@ namespace dbc::vm
         }
     } // namespace
 
+    void ExecutionSession::SetBuiltinObserver(BuiltinObserver Observer)
+    {
+        Observer_ = std::move(Observer);
+    }
+
     bool ExecutionSession::Prepare(std::shared_ptr<const Module> Bytecode, BuiltinHost& Host, bool TrackBuiltinCoverage)
     {
         std::string CancellationError;
@@ -822,7 +827,11 @@ namespace dbc::vm
                 const bool IsRetry = ActiveInvocation_.has_value();
                 const std::uint64_t InvocationId = IsRetry ? *ActiveInvocation_ : NextInvocationId_++;
                 if (!IsRetry)
+                {
                     BeginBuiltinCoverage(static_cast<language::SymbolId>(Instruction.A), {Instruction.E});
+                    if (Observer_)
+                        Observer_(static_cast<language::SymbolId>(Instruction.A), Arguments, Instruction.Span);
+                }
                 BuiltinResult Result =
                     InvokeHost(*Host_, {InvocationId, static_cast<language::SymbolId>(Instruction.A), Arguments,
                                         Instruction.ResultType, IsRetry, Instruction.Integer != 0});

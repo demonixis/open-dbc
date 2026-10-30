@@ -224,6 +224,42 @@ TEST_CASE("a standalone DBA resolves relative assets beside its source")
     CHECK(Result.Project->AssetRoot == Fixture.Root / "collection/tutorial");
 }
 
+TEST_CASE("a DBPro path outside the project reports the raw path to remap")
+{
+    ProjectFixture Fixture;
+    Fixture.Write("outside/main.dba", "print 1\n");
+    Fixture.Write("project/game.dbpro", "version=DBP1.00\nmain=..\\outside\\main.dba\n");
+
+    dbc::interpreter::ProjectResolveRequest Request;
+    Request.Target = Fixture.Root / "project/game.dbpro";
+    const dbc::interpreter::ProjectResolveResult Refused = dbc::interpreter::ResolveProject(Request);
+    CHECK_FALSE(Refused);
+    CHECK(Refused.RemappablePath == "..\\outside\\main.dba");
+
+    Request.RemapPath = [&Fixture](const std::filesystem::path&, std::string_view RawPath)
+    {
+        CHECK(RawPath == "..\\outside\\main.dba");
+        return std::optional<std::filesystem::path>(Fixture.Root / "outside/main.dba");
+    };
+    const dbc::interpreter::ProjectResolveResult Granted = dbc::interpreter::ResolveProject(Request);
+    REQUIRE(Granted);
+    CHECK(Granted.RemappablePath.empty());
+    CHECK(Granted.Project->EntrySource == Fixture.Root / "outside/main.dba");
+}
+
+TEST_CASE("a failure no remapping can fix reports no path to remap")
+{
+    ProjectFixture Fixture;
+    Fixture.Write("game.dbpro", "version=DBP1.00\nmain=missing.dba\n");
+
+    dbc::interpreter::ProjectResolveRequest Request;
+    Request.Target = Fixture.Root / "game.dbpro";
+    const dbc::interpreter::ProjectResolveResult Result = dbc::interpreter::ResolveProject(Request);
+    CHECK_FALSE(Result);
+    CHECK(Result.Error.find(": ") != std::string::npos);
+    CHECK(Result.RemappablePath.empty());
+}
+
 TEST_CASE("configured project paths normalize before enforcing canonical confinement")
 {
     ProjectFixture Fixture;

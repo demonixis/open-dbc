@@ -367,7 +367,13 @@ namespace dbc::interpreter
                     std::find_if(Resolution.Diagnostics.begin(), Resolution.Diagnostics.end(),
                                  [](const language::ProjectDiagnostic& Value)
                                  { return Value.Severity == language::ProjectDiagnosticSeverity::Error; });
-                Result.Error = Failure == Resolution.Diagnostics.end() ? "Invalid DBPro project" : Failure->Message;
+                if (Failure == Resolution.Diagnostics.end())
+                {
+                    Result.Error = "Invalid DBPro project";
+                    return Result;
+                }
+                Result.Error = Failure->Message;
+                Result.RemappablePath = Failure->RemappablePath;
                 return Result;
             }
             ResolvedProject Project;

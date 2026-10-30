@@ -462,11 +462,9 @@ namespace dbc::studio
             for (int Attempt = 0; Attempt < 128; ++Attempt)
             {
                 Stage = OutputDirectory / (std::string(Prefix) + StageSuffix());
-                if (detail::ClaimArtifactStageDirectory(Stage, Error))
-                    return true;
-                if (Error != "Artifact staging path already exists")
-                    return false;
-                Error.clear();
+                const detail::ArtifactStageClaim Claim = detail::ClaimArtifactStageDirectory(Stage, Error);
+                if (Claim != detail::ArtifactStageClaim::AlreadyExists)
+                    return Claim == detail::ArtifactStageClaim::Claimed;
             }
             Error = "Cannot allocate a unique artifact staging directory";
             return false;
@@ -1318,16 +1316,16 @@ namespace dbc::studio
             return internal::WriteScaledPng(internal::ExportContext{}, Source, Destination, Size, Opaque, Error);
         }
 
-        bool detail::ClaimArtifactStageDirectory(const std::filesystem::path& Path, std::string& Error)
+        detail::ArtifactStageClaim detail::ClaimArtifactStageDirectory(const std::filesystem::path& Path,
+                                                                       std::string& Error)
         {
             std::error_code FileError;
             if (std::filesystem::create_directory(Path, FileError))
-                return true;
+                return ArtifactStageClaim::Claimed;
             if (!FileError)
-                Error = "Artifact staging path already exists";
-            else
-                Error = "Cannot create artifact staging directory: " + FileError.message();
-            return false;
+                return ArtifactStageClaim::AlreadyExists;
+            Error = "Cannot create artifact staging directory: " + FileError.message();
+            return ArtifactStageClaim::Failed;
         }
     } // namespace toolchain
 

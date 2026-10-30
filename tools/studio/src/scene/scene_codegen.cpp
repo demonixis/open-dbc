@@ -30,15 +30,6 @@ namespace dbc::studio
 
             // --- Writing ---------------------------------------------------
 
-            std::string Number(float Value)
-            {
-                if (Value == 0.0f || !std::isfinite(Value))
-                    return "0";
-                char Buffer[64];
-                const auto Result = std::to_chars(Buffer, Buffer + sizeof(Buffer), Value, std::chars_format::fixed);
-                return std::string(Buffer, Result.ptr);
-            }
-
             std::string Integer(int Value)
             {
                 return std::to_string(Value);
@@ -89,7 +80,8 @@ namespace dbc::studio
 
                 void Vector(SymbolId Id, int Target, const glm::vec3& Value)
                 {
-                    Command(Id, {Integer(Target), Number(Value.x), Number(Value.y), Number(Value.z)});
+                    Command(Id,
+                            {Integer(Target), NumberLiteral(Value.x), NumberLiteral(Value.y), NumberLiteral(Value.z)});
                 }
 
                 void Push()
@@ -148,40 +140,43 @@ namespace dbc::studio
                 switch (Node.Kind)
                 {
                     case NodeKind::Cube:
-                        Out.Command(SymbolId::Command_MakeObjectCube, {Id, Number(Node.Size)});
+                        Out.Command(SymbolId::Command_MakeObjectCube, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Box:
                         Out.Command(SymbolId::Command_MakeObjectBox,
-                                    {Id, Number(Node.Extent.x), Number(Node.Extent.y), Number(Node.Extent.z)});
+                                    {Id, NumberLiteral(Node.Extent.x), NumberLiteral(Node.Extent.y),
+                                     NumberLiteral(Node.Extent.z)});
                         break;
                     case NodeKind::Sphere:
                         if (Node.Detail && Profile == lang::LanguageProfile::DbPro)
-                            Out.Command(SymbolId::Command_MakeObjectSphere,
-                                        {Id, Number(Node.Size), Integer(Node.Detail->x), Integer(Node.Detail->y)});
+                            Out.Command(
+                                SymbolId::Command_MakeObjectSphere,
+                                {Id, NumberLiteral(Node.Size), Integer(Node.Detail->x), Integer(Node.Detail->y)});
                         else
-                            Out.Command(SymbolId::Command_MakeObjectSphere, {Id, Number(Node.Size)});
+                            Out.Command(SymbolId::Command_MakeObjectSphere, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Cylinder:
-                        Out.Command(SymbolId::Command_MakeObjectCylinder, {Id, Number(Node.Size)});
+                        Out.Command(SymbolId::Command_MakeObjectCylinder, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Cone:
-                        Out.Command(SymbolId::Command_MakeObjectCone, {Id, Number(Node.Size)});
+                        Out.Command(SymbolId::Command_MakeObjectCone, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Plain:
                         if (Node.PlainOrientation && Profile == lang::LanguageProfile::DbPro)
-                            Out.Command(
-                                SymbolId::Command_MakeObjectPlain,
-                                {Id, Number(Node.Extent.x), Number(Node.Extent.y), Integer(*Node.PlainOrientation)});
+                            Out.Command(SymbolId::Command_MakeObjectPlain,
+                                        {Id, NumberLiteral(Node.Extent.x), NumberLiteral(Node.Extent.y),
+                                         Integer(*Node.PlainOrientation)});
                         else
                             Out.Command(SymbolId::Command_MakeObjectPlain,
-                                        {Id, Number(Node.Extent.x), Number(Node.Extent.y)});
+                                        {Id, NumberLiteral(Node.Extent.x), NumberLiteral(Node.Extent.y)});
                         break;
                     case NodeKind::Triangle:
                     {
                         const auto& C = Node.Corners;
                         Out.Command(SymbolId::Command_MakeObjectTriangle,
-                                    {Id, Number(C[0].x), Number(C[0].y), Number(C[0].z), Number(C[1].x), Number(C[1].y),
-                                     Number(C[1].z), Number(C[2].x), Number(C[2].y), Number(C[2].z)});
+                                    {Id, NumberLiteral(C[0].x), NumberLiteral(C[0].y), NumberLiteral(C[0].z),
+                                     NumberLiteral(C[1].x), NumberLiteral(C[1].y), NumberLiteral(C[1].z),
+                                     NumberLiteral(C[2].x), NumberLiteral(C[2].y), NumberLiteral(C[2].z)});
                         break;
                     }
                     case NodeKind::Model:
@@ -233,7 +228,7 @@ namespace dbc::studio
                 if (Mat.Specular)
                     Out.Command(SymbolId::Command_SetObjectSpecular, {Id, Color(*Mat.Specular)});
                 if (Mat.SpecularPower)
-                    Out.Command(SymbolId::Command_SetObjectSpecularPower, {Id, Number(*Mat.SpecularPower)});
+                    Out.Command(SymbolId::Command_SetObjectSpecularPower, {Id, NumberLiteral(*Mat.SpecularPower)});
                 if (Mat.CastShadow)
                     Out.Command(SymbolId::Command_SetShadowShadingOn, {Id});
             }
@@ -270,13 +265,13 @@ namespace dbc::studio
                         }
                 }
                 const std::string Id = Integer(Node.Id);
-                Out.Command(SymbolId::Command_FillMatrix, {Id, Number(Base), Integer(Tile)});
+                Out.Command(SymbolId::Command_FillMatrix, {Id, NumberLiteral(Base), Integer(Tile)});
                 const int Columns = std::max(1, Node.XSegments) + 1;
                 for (std::size_t Index = 0; Index < Heights.size(); ++Index)
                     if (Heights[Index] != Base)
                         Out.Command(SymbolId::Command_SetMatrixHeight,
                                     {Id, Integer(static_cast<int>(Index) % Columns),
-                                     Integer(static_cast<int>(Index) / Columns), Number(Heights[Index])});
+                                     Integer(static_cast<int>(Index) / Columns), NumberLiteral(Heights[Index])});
                 Out.Command(SymbolId::Command_UpdateMatrix, {Id});
             }
 
@@ -308,8 +303,9 @@ namespace dbc::studio
                 switch (Node.Kind)
                 {
                     case NodeKind::Matrix:
-                        Out.Command(SymbolId::Command_MakeMatrix, {Id, Number(Node.Width), Number(Node.Depth),
-                                                                   Integer(Node.XSegments), Integer(Node.ZSegments)});
+                        Out.Command(SymbolId::Command_MakeMatrix,
+                                    {Id, NumberLiteral(Node.Width), NumberLiteral(Node.Depth), Integer(Node.XSegments),
+                                     Integer(Node.ZSegments)});
                         if (!Node.Mat.Texture.empty())
                             Out.Command(SymbolId::Command_PrepareMatrixTexture,
                                         {Id, Integer(Images.at(Node.Mat.Texture)), Integer(Node.TilesAcross),
@@ -335,7 +331,7 @@ namespace dbc::studio
                             case LightKind::Spot:
                                 // SET SPOT LIGHT resets the position and direction, so it comes first.
                                 Out.Command(SymbolId::Command_SetSpotLight,
-                                            {Id, Number(Node.SpotInner), Number(Node.SpotOuter)});
+                                            {Id, NumberLiteral(Node.SpotInner), NumberLiteral(Node.SpotOuter)});
                                 Out.Vector(SymbolId::Command_PositionLight, Node.Id, Node.Position);
                                 Out.Vector(SymbolId::Command_RotateLight, Node.Id, Node.Rotation);
                                 break;
@@ -347,7 +343,7 @@ namespace dbc::studio
                                 break;
                         }
                         if (Node.Range)
-                            Out.Command(SymbolId::Command_SetLightRange, {Id, Number(*Node.Range)});
+                            Out.Command(SymbolId::Command_SetLightRange, {Id, NumberLiteral(*Node.Range)});
                         if (Node.LightColor)
                             Out.Command(SymbolId::Command_ColorLight, {Id, Color(*Node.LightColor)});
                         break;
@@ -380,7 +376,7 @@ namespace dbc::studio
                     if (Env.FogColor)
                         Out.Command(SymbolId::Command_FogColor, {Color(*Env.FogColor)});
                     if (Env.FogDistance)
-                        Out.Command(SymbolId::Command_FogDistance, {Number(*Env.FogDistance)});
+                        Out.Command(SymbolId::Command_FogDistance, {NumberLiteral(*Env.FogDistance)});
                 }
                 if (Env.DefaultLightHidden)
                     Out.Command(SymbolId::Command_HideLight, {"0"});
@@ -396,13 +392,15 @@ namespace dbc::studio
             {
                 const glm::vec3& P = Env.CameraPosition;
                 const glm::vec3& R = Env.CameraRotation;
-                Out.Command(SymbolId::Command_PositionCamera, {Number(P.x), Number(P.y), Number(P.z)});
-                Out.Command(SymbolId::Command_RotateCamera, {Number(R.x), Number(R.y), Number(R.z)});
+                Out.Command(SymbolId::Command_PositionCamera,
+                            {NumberLiteral(P.x), NumberLiteral(P.y), NumberLiteral(P.z)});
+                Out.Command(SymbolId::Command_RotateCamera,
+                            {NumberLiteral(R.x), NumberLiteral(R.y), NumberLiteral(R.z)});
                 if (Env.CameraFov)
-                    Out.Command(SymbolId::Command_SetCameraFov, {Number(*Env.CameraFov)});
+                    Out.Command(SymbolId::Command_SetCameraFov, {NumberLiteral(*Env.CameraFov)});
                 if (Env.CameraRange)
                     Out.Command(SymbolId::Command_SetCameraRange,
-                                {Number(Env.CameraRange->x), Number(Env.CameraRange->y)});
+                                {NumberLiteral(Env.CameraRange->x), NumberLiteral(Env.CameraRange->y)});
             }
 
             // --- Reading ---------------------------------------------------
@@ -520,14 +518,35 @@ namespace dbc::studio
             class LevelReader
             {
               public:
-                LevelReader(LevelReadResult& Result, lang::LanguageProfile Profile) : Result_(Result), Profile_(Profile)
+                LevelReader(LevelReadResult& Result, lang::LanguageProfile Profile,
+                            std::set<std::string>* Skipped = nullptr)
+                    : Result_(Result), Profile_(Profile), Skipped_(Skipped)
                 {
                     Result_.Document.Profile = Profile;
                 }
 
                 void Error(std::uint32_t Line, std::string Message)
                 {
-                    Result_.Errors.push_back({Line, std::move(Message)});
+                    if (Skipped_ == nullptr)
+                        Result_.Errors.push_back({Line, std::move(Message)});
+                }
+
+                // A call a program made, which is valid by definition; its overload still bounds Apply's arguments.
+                void Call(const ReplayCall& Value)
+                {
+                    const std::string Name(lang::Symbol(Value.Symbol).CanonicalName);
+                    if (lang::FindOverload(Value.Symbol, Profile_, static_cast<int>(Value.Arguments.size())) == nullptr)
+                    {
+                        Skipped_->insert(Name);
+                        return;
+                    }
+                    std::vector<Argument> Args;
+                    Args.reserve(Value.Arguments.size());
+                    for (const ReplayArgument& Item : Value.Arguments)
+                        Args.push_back(
+                            {Item.IsText ? Argument::Kind::String : Argument::Kind::Number, Item.Number, Item.Text});
+                    Name_ = &Name;
+                    Apply(Value.Symbol, Args);
                 }
 
                 void Statement(const lang::Statement& Value)
@@ -671,7 +690,8 @@ namespace dbc::studio
                 SceneNode* Create(NodeKind Kind, int Id)
                 {
                     const IdSpace Space = IdSpaceOf(Kind);
-                    if (Id <= 0 || Indexed(Space, Id) != nullptr)
+                    SceneNode* Used = Indexed(Space, Id);
+                    if (Id <= 0 || (Used != nullptr && Skipped_ == nullptr))
                     {
                         Error(Line_, "Number " + Integer(Id) + " is already used or invalid");
                         return nullptr;
@@ -679,10 +699,16 @@ namespace dbc::studio
                     SceneNode Node;
                     Node.Kind = Kind;
                     Node.Id = Id;
-                    Node.Name = std::string(NodeKindLabel(Kind)) + " " + Integer(Id);
+                    Node.Name = DefaultNodeName(Kind, Id);
                     Node.Mat.Flags = DefaultObjectFlags(Profile_);
                     // A sound plays only when PLAY SOUND or LOOP SOUND follows.
                     Node.PlayOnLoad = Kind != NodeKind::Sound;
+                    // A running program may have deleted the number's previous owner.
+                    if (Used != nullptr)
+                    {
+                        *Used = std::move(Node);
+                        return Used;
+                    }
                     Index_[{Space, Id}] = Result_.Document.Nodes.size();
                     Result_.Document.Nodes.push_back(std::move(Node));
                     return &Result_.Document.Nodes.back();
@@ -716,6 +742,25 @@ namespace dbc::studio
                 void Apply(SymbolId Id, const std::vector<Argument>& A)
                 {
                     Environment& Env = Result_.Document.Env;
+                    if (Skipped_ != nullptr)
+                    {
+                        if (Id == SymbolId::Command_CloneObject)
+                            Id = SymbolId::Command_InstanceObject;
+                        else if (Id == SymbolId::Command_FogOff)
+                        {
+                            Env.Fog = false;
+                            return;
+                        }
+                        else if (Id == SymbolId::Command_ScaleObjectTexture)
+                        {
+                            // Other stages have no place in the preview.
+                            SceneNode* Node = Indexed(IdSpace::Object, I(A, 0));
+                            const bool Stage = A.size() == 4 && I(A, 1) != 0;
+                            if (Node != nullptr && !Stage)
+                                Node->Mat.TextureScale *= glm::vec2(F(A, A.size() - 2), F(A, A.size() - 1));
+                            return;
+                        }
+                    }
                     switch (Id)
                     {
                         case SymbolId::Command_LoadImage:
@@ -724,7 +769,10 @@ namespace dbc::studio
                             if (A.size() != 2 || !S(A, 0, Path) || !Numbers(A, 1))
                                 return;
                             if (!Images_.emplace(I(A, 1), Path).second)
+                            {
                                 Error(Line_, "Image " + Integer(I(A, 1)) + " is loaded twice");
+                                Images_[I(A, 1)] = Path;
+                            }
                             return;
                         }
                         case SymbolId::Command_LoadObject:
@@ -848,14 +896,24 @@ namespace dbc::studio
                             }
                             break;
                         case SymbolId::Command_SetObject:
-                            if (A.size() != 8)
+                            if (A.size() != 8 && Skipped_ == nullptr)
                             {
                                 Error(Line_, "SET OBJECT is written with all seven flags");
                                 break;
                             }
                             if (SceneNode* Node = Object(I(A, 0)))
-                                Node->Mat.Flags = ObjectFlags{I(A, 1) == 0, I(A, 2),      I(A, 3) != 0, I(A, 4) != 0,
-                                                              I(A, 5) != 0, I(A, 6) != 0, I(A, 7) != 0};
+                            {
+                                // A program may give only the first flags; the others keep their value.
+                                ObjectFlags& Flags = Node->Mat.Flags;
+                                const std::size_t Count = A.size();
+                                Flags.Wireframe = Count > 1 ? I(A, 1) == 0 : Flags.Wireframe;
+                                Flags.Transparency = Count > 2 ? I(A, 2) : Flags.Transparency;
+                                Flags.Cull = Count > 3 ? I(A, 3) != 0 : Flags.Cull;
+                                Flags.Filter = Count > 4 ? I(A, 4) != 0 : Flags.Filter;
+                                Flags.Lighting = Count > 5 ? I(A, 5) != 0 : Flags.Lighting;
+                                Flags.Fog = Count > 6 ? I(A, 6) != 0 : Flags.Fog;
+                                Flags.Ambient = Count > 7 ? I(A, 7) != 0 : Flags.Ambient;
+                            }
                             break;
                         case SymbolId::Command_SetObjectDiffuse:
                             if (SceneNode* Node = Object(I(A, 0)))
@@ -1066,7 +1124,7 @@ namespace dbc::studio
                             Env.AmbientColor = static_cast<Rgb>(I(A, 0));
                             break;
                         case SymbolId::Command_ColorBackdrop:
-                            Env.Backdrop = static_cast<Rgb>(I(A, 0));
+                            Env.Backdrop = static_cast<Rgb>(I(A, A.size() - 1));
                             break;
                         case SymbolId::Command_FogOn:
                             Env.Fog = true;
@@ -1100,6 +1158,8 @@ namespace dbc::studio
                             Env.CameraRange = glm::vec2(F(A, 0), F(A, 1));
                             break;
                         default:
+                            if (Skipped_ != nullptr)
+                                Skipped_->insert(*Name_);
                             Error(Line_, "The Scene view does not edit " + *Name_);
                             break;
                     }
@@ -1112,6 +1172,8 @@ namespace dbc::studio
                 // Static objects, by number: where they were made and which were then deleted.
                 std::map<int, std::uint32_t> StaticLines_;
                 std::set<int> Deleted_;
+                // Set when replaying a program: nothing is an error, and this names what is not understood.
+                std::set<std::string>* Skipped_ = nullptr;
                 std::uint32_t Line_ = 0;
                 const std::string* Name_ = nullptr;
             };
@@ -1157,6 +1219,15 @@ namespace dbc::studio
                 return lang::LexAndParse(Source);
             }
         } // namespace
+
+        std::string NumberLiteral(float Value)
+        {
+            if (Value == 0.0f || !std::isfinite(Value))
+                return "0";
+            char Buffer[64];
+            const auto Result = std::to_chars(Buffer, Buffer + sizeof(Buffer), Value, std::chars_format::fixed);
+            return std::string(Buffer, Result.ptr);
+        }
 
         std::string WriteLevel(const SceneDocument& Document)
         {
@@ -1228,6 +1299,19 @@ namespace dbc::studio
             for (const lang::Statement& Value : Declaration->Body)
                 Reader.Statement(Value);
             Reader.Finish(ScanMetadata(Text));
+            return Result;
+        }
+
+        ReplayResult ReplayCalls(std::span<const ReplayCall> Calls, const std::string& Name,
+                                 lang::LanguageProfile Profile)
+        {
+            LevelReadResult Level;
+            Level.Document.Name = Name;
+            ReplayResult Result;
+            LevelReader Reader(Level, Profile, &Result.Skipped);
+            for (const ReplayCall& Value : Calls)
+                Reader.Call(Value);
+            Result.Document = std::move(Level.Document);
             return Result;
         }
 

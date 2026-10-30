@@ -120,13 +120,15 @@ namespace dbc::studio
 
             Color.blend_state.enable_blend = true;
             Color.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
-            Color.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+            // Additive, as the engine draws GHOST OBJECT ON: black adds nothing.
+            Color.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
             Color.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
             Color.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
             Color.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
             Color.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
             Info.depth_stencil_state.enable_depth_write = false;
             BlendPipeline_ = SDL_CreateGPUGraphicsPipeline(Gpu_, &Info);
+            Color.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
 
             SDL_GPUVertexBufferDescription LineBuffer = {};
             LineBuffer.slot = 0;
@@ -328,6 +330,8 @@ namespace dbc::studio
                         std::memcpy(&Bits, &Height, sizeof(Bits));
                         Hash = (Hash ^ Bits) * 1099511628211ull;
                     }
+                    for (const int Tile : Node.Tiles)
+                        Hash = (Hash ^ static_cast<std::uint32_t>(Tile)) * 1099511628211ull;
                     return "matrix:" + F(Node.Width) + "," + F(Node.Depth) + "," + std::to_string(Node.XSegments) +
                            "," + std::to_string(Node.ZSegments) + "," + std::to_string(Node.TilesAcross) + "," +
                            std::to_string(Node.TilesDown) + "," + std::to_string(MatrixTile(Node)) + "," +
@@ -343,8 +347,8 @@ namespace dbc::studio
                 default:
                     break;
             }
-            std::string Key = std::string(NodeKindLabel(Node.Kind)) + ":" + F(Node.Size) + "," + F(Node.Extent.x) +
-                              "," + F(Node.Extent.y) + "," + F(Node.Extent.z);
+            std::string Key = std::string(NodeKindName(Node.Kind)) + ":" + F(Node.Size) + "," + F(Node.Extent.x) + "," +
+                              F(Node.Extent.y) + "," + F(Node.Extent.z);
             if (Node.Detail)
                 Key += "," + std::to_string(Node.Detail->x) + "," + std::to_string(Node.Detail->y);
             if (Node.Kind == NodeKind::Plain)
@@ -355,7 +359,9 @@ namespace dbc::studio
         SceneRenderer::Geometry& SceneRenderer::FindGeometry(const SceneNode& Node, const SceneDocument& Document,
                                                              const std::filesystem::path& AssetRoot)
         {
-            const std::string Key = GeometryKey(Node, Document, AssetRoot);
+            std::string Key = GeometryKey(Node, Document, AssetRoot);
+            if (Node.Mat.TextureScale != glm::vec2(1.0f))
+                Key += ":uv" + std::to_string(Node.Mat.TextureScale.x) + "," + std::to_string(Node.Mat.TextureScale.y);
             auto Found = Geometry_.find(Key);
             if (Found != Geometry_.end())
             {
@@ -385,6 +391,9 @@ namespace dbc::studio
             {
                 Entry.Mesh = BuildMesh(Node, Document.Profile);
             }
+            if (Node.Mat.TextureScale != glm::vec2(1.0f))
+                for (MeshVertex& Vertex : Entry.Mesh.Vertices)
+                    Vertex.Uv *= Node.Mat.TextureScale;
             Entry.Used = true;
             return Geometry_.emplace(Key, std::move(Entry)).first->second;
         }
@@ -595,7 +604,7 @@ namespace dbc::studio
                          0.0f, Env.DefaultLightColor.value_or(0xFFFFFF), 0.0f, 0.0f);
             for (const SceneNode& Node : Document.Nodes)
             {
-                if (Node.Kind != NodeKind::Light)
+                if (Node.Kind != NodeKind::Light || Node.Hidden)
                     continue;
                 const int Type = Node.Light == LightKind::Directional ? 0 : Node.Light == LightKind::Point ? 1 : 2;
                 AddLight(Type, Node.Position, LightDirection(Node.Rotation), Node.Range.value_or(KDefaultLightRange),
@@ -669,7 +678,7 @@ namespace dbc::studio
             std::vector<Look> Looks;
             for (const SceneNode& Node : Document.Nodes)
             {
-                if (IsMarker(Node.Kind))
+                if (IsMarker(Node.Kind) || Node.Hidden)
                     continue;
                 // SameLook only speaks for objects: a matrix differs by more than it compares.
                 auto Known = Looks.end();
@@ -704,7 +713,7 @@ namespace dbc::studio
                 std::vector<glm::vec3> Volume;
                 for (const SceneNode& Node : Document.Nodes)
                 {
-                    if (!Node.Mat.CastShadow || IdSpaceOf(Node.Kind) != IdSpace::Object)
+                    if (!Node.Mat.CastShadow || Node.Hidden || IdSpaceOf(Node.Kind) != IdSpace::Object)
                         continue;
                     if (const CpuMesh* Caster = Mesh(Node))
                         AppendShadowVolume(*Caster, NodeWorld(Node), Light, KShadowRange, Volume);

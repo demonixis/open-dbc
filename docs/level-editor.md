@@ -39,6 +39,35 @@ images at 1000, matrices, terrains, lights and sounds at 1. New nodes take the l
 free number from there, and images are numbered in order of first use, one per
 file.
 
+## Any program
+
+**File → Open in Scene View**, or the same item in the Project panel's menu on a
+`.dba` file, shows what any program builds. The Studio runs it headless and
+silent with `--capture-scene`, for 30 seconds at most, and only on this request:
+like any run it executes the program ([security](SECURITY.md)). **Setup frames**
+says how many frames build the scene; what later frames set belongs to the game
+loop. **Refresh** runs it again. An included file is seen through the program
+including it, with only the nodes it creates.
+
+The banner lists what is left out: limbs, meshes, particles, vertex data, BSP
+worlds and `APPEND OBJECT`. Custom geometry shows as a box. Hidden and
+screen-locked objects are dimmed in the Hierarchy and not drawn; a row's tooltip
+gives its source line, and a double-click opens it.
+
+Only transforms change. **Ctrl+S** writes them to the source:
+
+| The axis | What happens |
+| --- | --- |
+| Set by one statement, run once during setup | Its argument is rewritten; Output names an expression a number replaced |
+| Set by nothing | A statement follows the creation, on its own line, or after ` : ` when the line holds more |
+| Anything else: a statement that runs repeatedly, the game loop, another command changing it, `FIX OBJECT PIVOT`, a light's roll | Locked, and the Inspector says why |
+
+The edit goes to the file's tab, undoable, and stays there until that tab is
+saved. The program then runs again, and Output reports any edit it does not
+keep. A source that changed since the scene was read is refused, as is a number
+that may differ when read again, like a function's result; **Refresh** then
+drops the edits.
+
 ## Content
 
 The **Create** menu, shown in the Scene mode's menu bar and on a right-click in

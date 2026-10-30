@@ -27,6 +27,11 @@ namespace dbc::studio
                 OnActivate_ = std::move(Handler);
             }
 
+            void SetOnOpenInScene(FileHandler Handler)
+            {
+                OnOpenInScene_ = std::move(Handler);
+            }
+
             const std::filesystem::path& Root() const
             {
                 return Root_;
@@ -52,6 +57,7 @@ namespace dbc::studio
             std::filesystem::path AssetRoot_;
 
             FileHandler OnActivate_;
+            FileHandler OnOpenInScene_;
         };
     } // namespace panels
 

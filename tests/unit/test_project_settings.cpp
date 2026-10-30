@@ -136,12 +136,18 @@ TEST_CASE("Studio preferences reject wrong JSON types without throwing")
     CHECK(Parsed.ProjectFolder.empty());
     CHECK(Parsed.LastFile.empty());
     CHECK(Parsed.LogLevel == "debug");
+    CHECK(Parsed.Language == "auto");
     CHECK_FALSE(Parsed.DebugOverlay);
     CHECK(Parsed.ProjectPathRemappings.empty());
     const auto Valid = core::Settings::Parse(R"({"debugOverlay":true,"folder":"project"})", Error);
     CHECK(Error.empty());
     CHECK(Valid.DebugOverlay);
     CHECK(Valid.ProjectFolder == "project");
+    CHECK(Valid.Language == "auto");
+    CHECK(core::Settings::Parse(R"({"language":"fr"})", Error).Language == "fr");
+    CHECK(Error.empty());
+    CHECK(core::Settings::Parse(R"({"language":3})", Error).Language == "auto");
+    CHECK_FALSE(Error.empty());
     core::Settings::Parse("[", Error);
     CHECK_FALSE(Error.empty());
     core::Settings::Parse("[]", Error);

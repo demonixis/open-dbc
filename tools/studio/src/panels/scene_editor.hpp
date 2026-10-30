@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <optional>
 #include <random>
 #include <string>
@@ -17,9 +18,11 @@
 
 #include "core/gpu_texture.hpp"
 #include "core/media_catalogue.hpp"
+#include "scene/scene_capture.hpp"
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_document.hpp"
 #include "scene/scene_geometry.hpp"
+#include "scene/scene_patch.hpp"
 #include "scene/scene_renderer.hpp"
 
 namespace dbc::studio
@@ -48,6 +51,12 @@ namespace dbc::studio
             // source goes to its open tab when there is one, so the user saves it.
             std::function<bool(const std::filesystem::path&, const std::string&, bool Generated)> WriteSource;
             std::function<void(const std::string&, bool Error)> Log;
+            // Runs a program to read its scene; OpenCapture follows if it gets that far.
+            std::function<void(const std::filesystem::path& Source, int SetupFrames)> CaptureProgram;
+            std::function<void(const std::filesystem::path& Path, std::uint32_t Line)> ShowSource;
+            // Opens a source in a tab without leaving the Scene view, so a patch of it can be undone.
+            std::function<bool(const std::filesystem::path& Path)> OpenSource;
+            std::function<bool()> CaptureRunning;
         };
 
         // The Scene mode: level files, selection, undo and the docked scene panels.
@@ -76,8 +85,17 @@ namespace dbc::studio
             // Called when the Scene mode is shown: opens a level if none is.
             void Activate();
             bool Dirty() const;
+            // Ctrl+S: a program's scene is read again after its edits, to show what they did.
+            bool SaveAndRefresh();
+            void RefreshProgram();
             // Writes the level and game settings, then links them into the main source.
             bool Save();
+            // Shows what a program builds instead of a level. `Source` is the file asked for, `OnlyFile`
+            // what the capture is limited to when that file is run through the program including it.
+            void OpenCapture(const std::filesystem::path& Source, const scene::SceneCapture& Capture, int SetupFrames,
+                             const std::string& OnlyFile);
+            // The program shown instead of a level; nullptr when a level is open.
+            const std::filesystem::path* ProgramSource() const;
 
             void DrawMenus();
             void DrawPanels();
@@ -185,6 +203,12 @@ namespace dbc::studio
             void DuplicateSelected();
             void DeleteSelected();
             bool Editable() const;
+            // What a program's scene edits: only transforms, written back to its statements.
+            bool TransformEditable() const;
+            bool PartEditable(const scene::SceneNode& Node, scene::TransformPart Part) const;
+            bool SaveProgramEdits();
+            // Puts back the axes no single statement decides, whatever a drag or a typed value did to them.
+            void EnforceCaptureLocks();
 
             // Viewport (scene_viewport.cpp)
             enum class Tool
@@ -268,6 +292,10 @@ namespace dbc::studio
             void DrawMatrixHeights(scene::SceneNode& Node);
             void DrawTerrainHeightmap(scene::SceneNode& Node);
             void DrawReadErrors();
+            void DrawProgramBanner();
+            void DrawNodeOrigin(const scene::SceneNode& Node);
+            void DrawAxisLocks(const scene::SceneNode& Node, scene::TransformPart Part);
+            const scene::NodeOrigin* OriginOf(const scene::SceneNode& Node) const;
 
             SDL_GPUDevice* Gpu_ = nullptr;
             SceneHost Host_;
@@ -279,6 +307,20 @@ namespace dbc::studio
             scene::SceneHistory History_;
             // Errors of a level the Scene view could not read: it stays read-only.
             std::vector<scene::ReadError> ReadErrors_;
+
+            // Set when the document was read from a running program rather than a level file.
+            struct ProgramView
+            {
+                std::filesystem::path Source;
+                int SetupFrames = 1;
+                std::string OnlyFile;
+                std::map<scene::NodeKey, scene::NodeOrigin> Origins;
+                std::vector<std::string> Notes;
+            };
+
+            std::optional<ProgramView> Program_;
+            // What the last save promised, checked against the next capture.
+            std::vector<scene::AxisEdit> PendingChecks_;
 
             scene::GameSettings Game_;
             scene::GameSettings SavedGame_;

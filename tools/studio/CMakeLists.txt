@@ -174,6 +174,10 @@ set(STUDIO_SOURCES
     src/core/file_dialog.hpp
     src/core/gpu_texture.cpp
     src/core/gpu_texture.hpp
+    src/core/i18n.cpp
+    src/core/i18n.hpp
+    src/core/locales.cpp
+    src/core/locales.hpp
     src/core/media_catalogue.cpp
     src/core/media_catalogue.hpp
     src/core/new_project.cpp
@@ -240,6 +244,10 @@ set(STUDIO_SOURCES
 
     src/scene/heightmap.cpp
     src/scene/heightmap.hpp
+    src/scene/scene_capture.cpp
+    src/scene/scene_capture.hpp
+    src/scene/scene_patch.cpp
+    src/scene/scene_patch.hpp
     src/scene/scene_codegen.cpp
     src/scene/scene_codegen.hpp
     src/scene/scene_document.cpp
@@ -327,12 +335,33 @@ set(STUDIO_SNIPPET_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated/studio_snippet
 add_custom_command(
     OUTPUT "${STUDIO_SNIPPET_INCLUDE}"
     COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_SNIPPET_INCLUDE} -DSOURCE_DIR=${STUDIO_SNIPPET_DIR}
-            "-DFILES=${STUDIO_SNIPPET_FILES}" -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_snippets.cmake"
-    DEPENDS ${STUDIO_SNIPPET_INPUTS} "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_snippets.cmake"
+            "-DFILES=${STUDIO_SNIPPET_FILES}" -DARRAY=KBuiltinSnippetFiles
+            -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+    DEPENDS ${STUDIO_SNIPPET_INPUTS} "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
     COMMENT "Embed the Studio snippets"
     VERBATIM)
 add_custom_target(opendbc_studio_snippets DEPENDS "${STUDIO_SNIPPET_INCLUDE}")
 add_dependencies(opendbc opendbc_studio_snippets)
+
+# Interface translations too: a new language only takes a new file in this folder.
+set(STUDIO_LOCALE_DIR "${CMAKE_CURRENT_LIST_DIR}/locales")
+file(GLOB STUDIO_LOCALE_INPUTS CONFIGURE_DEPENDS "${STUDIO_LOCALE_DIR}/*.json")
+set(STUDIO_LOCALE_FILES)
+foreach(STUDIO_LOCALE_INPUT IN LISTS STUDIO_LOCALE_INPUTS)
+    get_filename_component(STUDIO_LOCALE_NAME "${STUDIO_LOCALE_INPUT}" NAME)
+    list(APPEND STUDIO_LOCALE_FILES "${STUDIO_LOCALE_NAME}")
+endforeach()
+set(STUDIO_LOCALE_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated/studio_locales.inc")
+add_custom_command(
+    OUTPUT "${STUDIO_LOCALE_INCLUDE}"
+    COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_LOCALE_INCLUDE} -DSOURCE_DIR=${STUDIO_LOCALE_DIR}
+            "-DFILES=${STUDIO_LOCALE_FILES}" -DARRAY=KTranslationCatalogueFiles
+            -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+    DEPENDS ${STUDIO_LOCALE_INPUTS} "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+    COMMENT "Embed the Studio translations"
+    VERBATIM)
+add_custom_target(opendbc_studio_locales DEPENDS "${STUDIO_LOCALE_INCLUDE}")
+add_dependencies(opendbc opendbc_studio_locales)
 
 target_link_libraries(opendbc PRIVATE
     dbc_interpreter

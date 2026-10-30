@@ -39,6 +39,9 @@ namespace dbc::studio
         // Applies colors, rounding and spacing to the current ImGui style.
         // `scale` is the display content scale used to bake sizes.
         void Apply(float Scale);
+
+        // Call once the style's font scale is set, which decides the size of ImGui's default font.
+        void AddFonts();
     } // namespace Theme
 
 } // namespace dbc::studio
