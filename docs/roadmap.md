@@ -36,8 +36,6 @@ Robustness:
 - [ ] Check on Windows that a Studio run opens no console window beside the program:
   `opendbc-runner` is a console executable and SDL only hides consoles for
   background processes.
-- [ ] One fuzzing session under sanitizers: frontend, DDS, DBO, WAV, memblocks. Each
-  input that crashes stays as a regression test.
 
 Repository files:
 

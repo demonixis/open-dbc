@@ -557,6 +557,10 @@ function(dbc_enable_warnings target)
             target_compile_options(${target} PRIVATE -fsanitize=address,undefined -fno-sanitize=vptr
                                    -fno-omit-frame-pointer)
             target_link_options(${target} PRIVATE -fsanitize=address,undefined -fno-sanitize=vptr)
+            # Guides tests/fuzz. Without its callbacks the sanitizer runtime's own do next to nothing.
+            if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                target_compile_options(${target} PRIVATE -fsanitize-coverage=trace-pc-guard)
+            endif()
         endif()
     endif()
     set_target_properties(${target} PROPERTIES
@@ -564,6 +568,16 @@ function(dbc_enable_warnings target)
         VISIBILITY_INLINES_HIDDEN YES
     )
 endfunction()
+
+# Asset files reach these decoders first. Memory errors only: their undefined behaviour is not ours to fix.
+if(OPENDBC_SANITIZE AND NOT MSVC)
+    foreach(decoder IN ITEMS SDL3_mixer-static SDL3_image-static)
+        target_compile_options(${decoder} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            target_compile_options(${decoder} PRIVATE -fsanitize-coverage=trace-pc-guard)
+        endif()
+    endforeach()
+endif()
 
 # Imported dependency headers are not ours to fix: mark them as system includes.
 function(dbc_mark_system_includes)
@@ -889,6 +903,9 @@ if(BUILD_TESTS)
     FetchContent_MakeAvailable(doctest)
     list(APPEND CMAKE_MODULE_PATH ${doctest_SOURCE_DIR}/scripts/cmake)
     add_subdirectory(tests/unit)
+    if(OPENDBC_SANITIZE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT WIN32 AND NOT ANDROID AND NOT IOS)
+        add_subdirectory(tests/fuzz)
+    endif()
 endif()
 
 if(CMAKE_EXPORT_COMPILE_COMMANDS)

@@ -32,6 +32,14 @@ cmake --build --preset sanitize
 ctest --preset sanitize
 ```
 
+With Clang, that build also fuzzes what OpenDBC reads from files: BASIC, program images, DDS, WAV, DBO and
+memblocks. Each distinct crash lands with its input in `<work>/<format>/crashes`, and becomes a regression test once
+fixed.
+
+```bash
+python3 scripts/fuzz_inputs.py --seconds 300 --work build/fuzz
+```
+
 Dependencies are pinned commits, fetched as shallow clones into
 `build/_deps-cache`, which every build directory shares; `-DOPENDBC_DEPENDENCY_CACHE=<dir>`
 moves it. Warnings in OpenDBC's own sources are errors; `-DOPENDBC_WERROR=OFF`
