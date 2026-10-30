@@ -56,7 +56,6 @@ Publication:
 - [ ] Gather the run limits and capture hooks (`--headless`, `--max-frames`,
   `--capture-output`, `--benchmark`) in one class. Release tests and benchmarks use
   them, so they stay in every build.
-- [ ] Split and audit `renderer_system.cpp`, without changing behaviour.
 - [ ] Architecture audit.
 
 ## Rendering performance
@@ -111,6 +110,8 @@ Work, in order, when a measurement calls for it:
   palette in a vertex storage buffer, positions and normals skinned in the vertex
   shader. Queries, collision and shadow volumes keep skinning on the CPU from the
   same palette.
+- [ ] Reuse each view's buffers: its vertices are reallocated every frame, and a
+  second camera or VR eye allocates a whole scene (about 11 MB reserved).
 - [ ] Update GPU mesh draws per object: one object that moves rebuilds them all, and
   20,000 painted instances would take about 3 ms to walk.
 - [ ] GPU meshes for what still takes the CPU path: ghosted objects, auxiliary stages
