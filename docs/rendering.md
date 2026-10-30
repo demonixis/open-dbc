@@ -45,7 +45,7 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    scene, shadow volumes and their overlay, 2D over the scene. Each batch is one
    draw call that binds nine textures and pushes its texture-stage uniforms; a GPU
    mesh batch also binds its buffers and draws every instance of its group. All
-   shadow volumes make one draw call that binds no texture.
+   shadow volumes make two draw calls that bind no texture, near caps then the rest.
 6. `FinalizeFrame` records `STATISTIC(1)` (triangles) and `STATISTIC(5)`
    (batches), then clears bitmap 0 after a 3D frame.
 
@@ -94,6 +94,12 @@ edited, is animated or is glued to another object, or when the light moves. Any
 change uploads the volumes of all casters again, as positions and indices, and
 `shaders/shadow_volume.hlsl` draws them with no colour, varyings or textures. An
 object locked to the screen casts only from a shadow mesh of its own.
+
+Volumes count in the stencil the faces behind the scene (z-fail), so a near cap that
+passes the depth test darkens the lit face it lies against. It sits barely behind
+that face when the light grazes it, within the rounding of the two transforms, so
+near caps are drawn apart with a depth bias. Sides and far caps have none: where a
+shadow falls does not change.
 
 ## Where frame time goes
 

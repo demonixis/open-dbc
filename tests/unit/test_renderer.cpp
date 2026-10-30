@@ -47,6 +47,7 @@ namespace
     struct ShadowVolumeCounts
     {
         std::size_t Vertices = 0;
+        std::size_t NearCapTriangles = 0;
         std::size_t Triangles = 0;
     };
 
@@ -54,10 +55,12 @@ namespace
     {
         std::vector<uint8_t> Lit;
         std::vector<dbc::Vec3> Vertices;
+        std::vector<uint32_t> NearCapIndices;
         std::vector<uint32_t> Indices;
         dbc::ExtrudeShadowMesh(dbc::BuildShadowTopology(Geometry), Geometry.Vertices, Light, 100.0f, Lit, Vertices,
-                               Indices);
-        return ShadowVolumeCounts{Vertices.size(), Indices.size() / 3};
+                               NearCapIndices, Indices);
+        return ShadowVolumeCounts{Vertices.size(), NearCapIndices.size() / 3,
+                                  (NearCapIndices.size() + Indices.size()) / 3};
     }
 
     int Submissions = 0;
@@ -87,6 +90,7 @@ TEST_CASE("A shadow volume extrudes the lit faces and only the edges they do not
     // From above only the top is lit: its two triangles for each cap, and two for each of the four edges around it.
     const ShadowVolumeCounts Above = ExtrudedCounts(Cube, dbc::Vec3{0.0f, 10.0f, 0.0f});
     CHECK(Above.Vertices == 16);
+    CHECK(Above.NearCapTriangles == 2);
     CHECK(Above.Triangles == 12);
     // From a corner three faces are lit, and the six edges of their outline remain.
     CHECK(ExtrudedCounts(Cube, dbc::Vec3{10.0f, 10.0f, 10.0f}).Triangles == 24);
@@ -101,10 +105,15 @@ TEST_CASE("A shadow volume places its vertices along the light's rays")
     const dbc::ShadowTopology Topology = dbc::BuildShadowTopology(Triangle);
     std::vector<uint8_t> Lit;
     std::vector<dbc::Vec3> Vertices;
+    std::vector<uint32_t> NearCapIndices;
     std::vector<uint32_t> Indices;
-    dbc::ExtrudeShadowMesh(Topology, Triangle.Vertices, dbc::Vec3{0.0f, 10.0f, 0.0f}, 100.0f, Lit, Vertices, Indices);
-    // An open triangle has two caps and three sides of two triangles each.
-    CHECK(Indices.size() == 8 * 3);
+    dbc::ExtrudeShadowMesh(Topology, Triangle.Vertices, dbc::Vec3{0.0f, 10.0f, 0.0f}, 100.0f, Lit, Vertices,
+                           NearCapIndices, Indices);
+    // An open triangle has two caps and three sides of two triangles each. The near cap comes apart, on near vertices.
+    CHECK(NearCapIndices.size() == 3);
+    for (const uint32_t Index : NearCapIndices)
+        CHECK(Index % 2 == 0);
+    CHECK(Indices.size() == 7 * 3);
     REQUIRE(Vertices.size() == 6);
     for (std::size_t Point = 0; Point < Topology.Points.size(); ++Point)
     {
@@ -121,8 +130,10 @@ TEST_CASE("A shadow volume places its vertices along the light's rays")
 
     // A point on the light still extrudes, away from it in some direction.
     Vertices.clear();
+    NearCapIndices.clear();
     Indices.clear();
-    dbc::ExtrudeShadowMesh(Topology, Triangle.Vertices, Triangle.Vertices[0], 100.0f, Lit, Vertices, Indices);
+    dbc::ExtrudeShadowMesh(Topology, Triangle.Vertices, Triangle.Vertices[0], 100.0f, Lit, Vertices, NearCapIndices,
+                           Indices);
     for (const dbc::Vec3& Vertex : Vertices)
         CHECK(std::isfinite(Vertex.X + Vertex.Y + Vertex.Z));
 }

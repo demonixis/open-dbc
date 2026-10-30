@@ -110,7 +110,7 @@ namespace dbc
 
     void ExtrudeShadowMesh(const ShadowTopology& Topology, std::span<const Vec3> Vertices, const Vec3& Light,
                            float Range, std::vector<uint8_t>& Lit, std::vector<Vec3>& VolumeVertices,
-                           std::vector<uint32_t>& VolumeIndices)
+                           std::vector<uint32_t>& NearCapIndices, std::vector<uint32_t>& VolumeIndices)
     {
         const auto First = static_cast<uint32_t>(VolumeVertices.size());
         const auto Near = [First](uint32_t Point) { return First + Point * 2; };
@@ -125,7 +125,9 @@ namespace dbc
             const Vec3 Away = Vec3Sub(Point, Light);
             // A point on the light has no direction away from it: any will do.
             const Vec3 Direction = Vec3Dot(Away, Away) > 0.000001f ? Vec3Normalize(Away) : Vec3{0.0f, -1.0f, 0.0f};
-            // Pushed slightly away so the near cap does not fight with the surface it comes from.
+            // Pushed slightly away so the near cap stays behind the surface it comes from, whatever rounding does to
+            // far-off world positions. A face at a grazing angle to the light barely moves: its near cap's depth bias
+            // covers that.
             const Vec3 NearPoint{Point.X + Direction.X * 0.1f, Point.Y + Direction.Y * 0.1f,
                                  Point.Z + Direction.Z * 0.1f};
             VolumeVertices.push_back(NearPoint);
@@ -148,7 +150,7 @@ namespace dbc
             if (Vec3Dot(Normal, Vec3Sub(Light, Center)) <= 0.000001f)
                 continue;
             Lit[Face] = 1;
-            Add(Near(P0), Near(P1), Near(P2));
+            NearCapIndices.insert(NearCapIndices.end(), {Near(P0), Near(P1), Near(P2)});
             Add(Far(P2), Far(P1), Far(P0));
         }
 

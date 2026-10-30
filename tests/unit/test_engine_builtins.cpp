@@ -2395,6 +2395,68 @@ static std::vector<int> CaptureReds(dbc::EngineKernel& Kernel)
     return Reds;
 }
 
+TEST_CASE("A shadow caster does not darken the faces its light reaches")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 640, 480));
+    Kernel.Camera().SetAutoCamOff();
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    // The two sides of the cube in sight take the light at a grazing angle, so the near cap is barely behind them.
+    REQUIRE(Objects.MakeObjectPlain(1, 300.0f, 300.0f));
+    Objects.PositionObject(1, 0.0f, -50.0f, 0.0f);
+    Objects.RotateObject(1, 270.0f, 0.0f, 0.0f);
+    REQUIRE(Objects.SetObjectLight(1, 0));
+    Objects.ColorObject(1, 0xE0E0E0);
+    Objects.MakeObjectCube(2, 100.0f);
+    REQUIRE(Objects.SetObjectLight(2, 0));
+    Objects.ColorObject(2, 0xC0C0C0);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE(Kernel.Gpu().SupportsStencil());
+    Kernel.Renderer().SetShadowPosition(-1, -100.0f, 500.0f, -100.0f);
+
+    struct Darkened
+    {
+        int OnCube = 0;
+        int Elsewhere = 0;
+    };
+
+    const auto DarkenedFrom = [&](float X, float Y, float Z)
+    {
+        RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(X, Y, Z, &Error); });
+        RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PointCamera(0.0f, 0.0f, 0.0f, &Error); });
+        Objects.HideObject(2);
+        const std::vector<int> Floor = CaptureReds(Kernel);
+        Objects.ShowObject(2);
+        const std::vector<int> Plain = CaptureReds(Kernel);
+        REQUIRE(Objects.SetShadowShadingOn(2));
+        const std::vector<int> Shadowed = CaptureReds(Kernel);
+        REQUIRE(Objects.SetShadowShadingOff(2));
+        Darkened Count;
+        for (std::size_t Index = 0; Index < Plain.size(); ++Index)
+        {
+            if (Shadowed[Index] != Plain[Index])
+                ++(Plain[Index] != Floor[Index] ? Count.OnCube : Count.Elsewhere);
+        }
+        return Count;
+    };
+
+    // Rounding decided the depth test between these faces and the near cap, so these cameras a hundredth apart
+    // darkened from a third of the cube to all of it.
+    for (const dbc::Vec3& Eye :
+         {dbc::Vec3{-200.0f, 0.0f, -200.0f}, dbc::Vec3{-199.99f, 0.0f, -200.0f}, dbc::Vec3{-200.01f, 0.0f, -200.0f},
+          dbc::Vec3{-200.0f, 0.0f, -199.99f}, dbc::Vec3{-200.0f, 0.01f, -200.0f}, dbc::Vec3{-200.0f, 100.0f, -200.0f},
+          dbc::Vec3{-800.0f, 0.0f, -800.0f}})
+    {
+        INFO("camera at ", Eye.X, ", ", Eye.Y, ", ", Eye.Z);
+        CHECK(DarkenedFrom(Eye.X, Eye.Y, Eye.Z).OnCube == 0);
+    }
+
+    // From behind the shadow falls on the floor, and the faces the light does not reach stay dark.
+    const Darkened Behind = DarkenedFrom(300.0f, 120.0f, 300.0f);
+    CHECK(Behind.OnCube > 1000);
+    CHECK(Behind.Elsewhere > 1000);
+}
+
 TEST_CASE("A shadow volume is extruded again only when its caster changes")
 {
     dbc::EngineKernel Kernel;

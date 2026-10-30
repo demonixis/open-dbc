@@ -1339,6 +1339,12 @@ namespace dbc
                 ShadowVolumeInfo.vertex_shader = ShadowVolumeVertex;
                 ShadowVolumeInfo.fragment_shader = ShadowVolumeFragment;
                 GpuShadowVolumePipeline_ = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &ShadowVolumeInfo);
+                // A near cap lies against the lit faces it comes from, and passing the depth test would darken them.
+                // Rounding alone can decide that test, so the cap gets a bias of a few depth steps. Only the cap: the
+                // sides decide where a shadow falls.
+                ShadowVolumeInfo.rasterizer_state.enable_depth_bias = true;
+                ShadowVolumeInfo.rasterizer_state.depth_bias_constant_factor = 16.0f;
+                GpuShadowNearCapPipeline_ = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &ShadowVolumeInfo);
             }
             if (ShadowVolumeVertex)
                 SDL_ReleaseGPUShader(GpuDevice_, ShadowVolumeVertex);
@@ -1581,8 +1587,8 @@ namespace dbc
             !GpuPipelineWireframe_ || !GpuPipelineAlphaWriteWireframe_ || !GpuPipelineTransparentWireframe_ ||
             !GpuPipelineAdditiveWireframe_ ||
             (GpuStencilSupported_ && StencilPipelinesRequested_ &&
-             (!GpuReflectionMaskPipeline_ || !GpuShadowDepthPipeline_ || !GpuShadowVolumePipeline_ ||
-              !GpuShadowOverlayPipeline_)) ||
+             (!GpuReflectionMaskPipeline_ || !GpuShadowDepthPipeline_ || !GpuShadowNearCapPipeline_ ||
+              !GpuShadowVolumePipeline_ || !GpuShadowOverlayPipeline_)) ||
             std::any_of(GpuSurfaceOpaqueNoDepthPipelines_.begin(), GpuSurfaceOpaqueNoDepthPipelines_.end(),
                         [](SDL_GPUGraphicsPipeline* Pipeline) { return Pipeline == nullptr; }) ||
             std::any_of(GpuTerrainPipelines_.begin(), GpuTerrainPipelines_.end(),
@@ -1803,14 +1809,14 @@ namespace dbc
         if (!GpuDevice_ || !GpuStencilSupported_)
             return false;
         if (StencilPipelinesRequested_ && GpuReflectionMaskPipeline_ && GpuShadowDepthPipeline_ &&
-            GpuShadowVolumePipeline_ && GpuShadowOverlayPipeline_)
+            GpuShadowNearCapPipeline_ && GpuShadowVolumePipeline_ && GpuShadowOverlayPipeline_)
             return true;
         if (!SDL_WaitForGPUIdle(GpuDevice_))
             return false;
         StencilPipelinesRequested_ = true;
         ReleaseGpuPipelineResources();
         return CreateGpuPipeline() && GpuStencilSupported_ && GpuReflectionMaskPipeline_ && GpuShadowDepthPipeline_ &&
-               GpuShadowVolumePipeline_ && GpuShadowOverlayPipeline_;
+               GpuShadowNearCapPipeline_ && GpuShadowVolumePipeline_ && GpuShadowOverlayPipeline_;
     }
 
     [[nodiscard]] bool GraphicsDeviceSystem::EnsureGpuCaptureTarget(Uint32 Width, Uint32 Height)
@@ -2283,8 +2289,8 @@ namespace dbc
             SDL_ReleaseGPUGraphicsPipeline(GpuDevice_, GpuReflectionMaskPipeline_);
             GpuReflectionMaskPipeline_ = nullptr;
         }
-        for (SDL_GPUGraphicsPipeline** Pipeline :
-             {&GpuShadowDepthPipeline_, &GpuShadowVolumePipeline_, &GpuShadowOverlayPipeline_})
+        for (SDL_GPUGraphicsPipeline** Pipeline : {&GpuShadowDepthPipeline_, &GpuShadowNearCapPipeline_,
+                                                   &GpuShadowVolumePipeline_, &GpuShadowOverlayPipeline_})
         {
             if (*Pipeline)
             {

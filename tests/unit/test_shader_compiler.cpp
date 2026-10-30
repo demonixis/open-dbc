@@ -173,6 +173,7 @@ float4 PSMain(PixelInput Input) : SV_Target0
     REQUIRE(Kernel.Core().EnsureInitialized());
     REQUIRE(Kernel.Gpu().EnsureStencilPipelines());
     CHECK(Kernel.Gpu().ShadowDepthPipeline() != nullptr);
+    CHECK(Kernel.Gpu().ShadowNearCapPipeline() != nullptr);
     CHECK(Kernel.Gpu().ShadowVolumePipeline() != nullptr);
     CHECK(Kernel.Gpu().ShadowOverlayPipeline() != nullptr);
     CHECK(Kernel.Gpu().EffectPipeline(7, false, false, false, false, true, true, true) != nullptr);

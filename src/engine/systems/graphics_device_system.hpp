@@ -139,6 +139,11 @@ namespace dbc
             return GpuShadowDepthPipeline_;
         }
 
+        [[nodiscard]] SDL_GPUGraphicsPipeline* ShadowNearCapPipeline() const
+        {
+            return GpuShadowNearCapPipeline_;
+        }
+
         [[nodiscard]] SDL_GPUGraphicsPipeline* ShadowVolumePipeline() const
         {
             return GpuShadowVolumePipeline_;
@@ -295,6 +300,7 @@ namespace dbc
         SDL_GPUGraphicsPipeline* GpuPipelineAdditiveWireframe_ = nullptr;
         SDL_GPUGraphicsPipeline* GpuReflectionMaskPipeline_ = nullptr;
         SDL_GPUGraphicsPipeline* GpuShadowDepthPipeline_ = nullptr;
+        SDL_GPUGraphicsPipeline* GpuShadowNearCapPipeline_ = nullptr;
         SDL_GPUGraphicsPipeline* GpuShadowVolumePipeline_ = nullptr;
         SDL_GPUGraphicsPipeline* GpuShadowOverlayPipeline_ = nullptr;
         std::array<SDL_GPUGraphicsPipeline*, 2> GpuSurfaceOpaqueNoDepthPipelines_{};

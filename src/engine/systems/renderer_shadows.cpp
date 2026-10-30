@@ -77,6 +77,7 @@ namespace dbc
                     Object.GluedTargetObject <= 0 && SameRevisions(Caster.Revisions, Meshes))
                     return;
                 Caster.Vertices.clear();
+                Caster.NearCapIndices.clear();
                 Caster.Indices.clear();
                 Caster.Revisions.clear();
                 for (const Mesh& MeshValue : Meshes)
@@ -93,7 +94,7 @@ namespace dbc
                     }
                     WorldMeshVertices(Object, MeshValue, ShadowWorldVertices_);
                     ExtrudeShadowMesh(ShadowTopologyOf(MeshValue), ShadowWorldVertices_, Light, Object.ShadowRange,
-                                      ShadowLitFaces_, Caster.Vertices, Caster.Indices);
+                                      ShadowLitFaces_, Caster.Vertices, Caster.NearCapIndices, Caster.Indices);
                 }
                 ++Current_.ShadowCastersExtruded;
                 Changed = true;
@@ -104,12 +105,14 @@ namespace dbc
             return;
         ShadowVolumesStale_ = true;
         ShadowVolumeVertexCount_ = 0;
+        ShadowNearCapIndexCount_ = 0;
         ShadowVolumeIndexCount_ = 0;
         for (const auto& [Id, Caster] : ShadowCasters_)
         {
             (void)Id;
             ShadowVolumeVertexCount_ += Caster.Vertices.size();
-            ShadowVolumeIndexCount_ += Caster.Indices.size();
+            ShadowNearCapIndexCount_ += Caster.NearCapIndices.size();
+            ShadowVolumeIndexCount_ += Caster.NearCapIndices.size() + Caster.Indices.size();
         }
     }
 
@@ -160,7 +163,8 @@ namespace dbc
         if (!Mapped)
             return false;
         std::byte* VertexOutput = Mapped;
-        auto* IndexOutput = reinterpret_cast<uint32_t*>(Mapped + VertexBytes);
+        auto* NearCapOutput = reinterpret_cast<uint32_t*>(Mapped + VertexBytes);
+        uint32_t* IndexOutput = NearCapOutput + ShadowNearCapIndexCount_;
         uint32_t BaseVertex = 0;
         for (const auto& [Id, Caster] : ShadowCasters_)
         {
@@ -169,6 +173,8 @@ namespace dbc
                 continue;
             SDL_memcpy(VertexOutput, Caster.Vertices.data(), Caster.Vertices.size() * sizeof(Vec3));
             VertexOutput += Caster.Vertices.size() * sizeof(Vec3);
+            for (const uint32_t Index : Caster.NearCapIndices)
+                *NearCapOutput++ = BaseVertex + Index;
             for (const uint32_t Index : Caster.Indices)
                 *IndexOutput++ = BaseVertex + Index;
             BaseVertex += static_cast<uint32_t>(Caster.Vertices.size());
