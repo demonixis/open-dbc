@@ -357,10 +357,9 @@ namespace dbc
         ShadowSources.clear();
         std::copy_if(Tris.begin(), Tris.end(), std::back_inserter(ShadowSources),
                      [](const Triangle& TriangleValue) { return TriangleValue.Style.ShadowCaster; });
-        dbc::AppendShadowSources(K, ShadowSources);
         auto& ShadowTris = Geometry.Shadows;
         ShadowTris.clear();
-        ShadowTris.reserve(ShadowSources.size() * 4);
+        dbc::AppendCasterVolumes(K, ShadowTris);
         dbc::BuildShadowVolumes(K, ShadowSources, ShadowTris);
         const bool HasShadow = !ShadowTris.empty();
         const Uint64 ConvertStart = SDL_GetPerformanceCounter();
@@ -1164,6 +1163,7 @@ namespace dbc
         StepTotals_.RecordMilliseconds += Current_.RecordMilliseconds;
         ++StatFrames_;
         ReleaseUnusedGpuMeshes();
+        ReleaseStaleShadowTopologies();
         if (K.Debug().IsOverlayEnabled())
         {
             FrameStats Stats;

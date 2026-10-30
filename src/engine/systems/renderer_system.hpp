@@ -3,6 +3,7 @@
 #include "../engine_math.hpp"
 #include "../engine_types.hpp"
 #include "render_view.hpp"
+#include "shadow_mesh.hpp"
 #include "terrain_mesh.hpp"
 #include "triangle_order.hpp"
 #include <optional>
@@ -175,6 +176,8 @@ namespace dbc
         // Every vertex of a mesh as WorldMeshVertex gives them, with the bone palette and the object's transform
         // built once for all of them.
         void WorldMeshVertices(const Object3D& Object, const Mesh& MeshValue, std::vector<Vec3>& Vertices);
+        // Kept per geometry, which copies of a mesh share.
+        [[nodiscard]] const ShadowTopology& ShadowTopologyOf(const Mesh& MeshValue);
         bool ProjectPoint(float Wx, float Wy, float Wz, SDL_FPoint& OutPos, float& OutDepth);
         bool ProjectPointLocked(float Wx, float Wy, float Wz, SDL_FPoint& OutPos, float& OutDepth);
 
@@ -355,6 +358,7 @@ namespace dbc
         // Frees the buffers of geometries that changed or that no view drew for a few seconds.
         void ReleaseUnusedGpuMeshes();
         void ReleaseGpuMeshes();
+        void ReleaseStaleShadowTopologies();
 
         // An empty scene to rebuild into: the cached one, cleared, when no view still holds it.
         std::shared_ptr<SceneTriangles> SceneForRebuild();
@@ -405,6 +409,14 @@ namespace dbc
         uint64_t CachedReleasedTextures_ = 0;
         SDL_GPUTransferBuffer* GpuMeshTransfer_ = nullptr;
         Uint32 GpuMeshTransferCapacity_ = 0;
+
+        struct ShadowTopologyEntry
+        {
+            std::weak_ptr<const MeshGeometry> Source;
+            ShadowTopology Topology;
+        };
+
+        std::unordered_map<uint64_t, ShadowTopologyEntry> ShadowTopologies_;
     };
 
 } // namespace dbc

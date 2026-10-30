@@ -8,6 +8,7 @@
 #include "engine/systems/graphics_device_system.hpp"
 #include "engine/systems/object_manager.hpp"
 #include "engine/systems/renderer_system.hpp"
+#include "engine/systems/shadow_mesh.hpp"
 #include "engine/systems/text_system.hpp"
 #include <array>
 #include <glm/gtc/matrix_transform.hpp>
@@ -16,6 +17,49 @@
 
 namespace
 {
+    // A cube the way the MAKE OBJECT primitives build one: four vertices per face, none shared between faces.
+    dbc::MeshGeometry ShadowCube()
+    {
+        dbc::MeshGeometry Geometry;
+        const auto AddFace = [&](const dbc::Vec3& N, const dbc::Vec3& U, const dbc::Vec3& V)
+        {
+            const auto First = static_cast<uint32_t>(Geometry.Vertices.size());
+            for (const auto [SignU, SignV] : {std::pair{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}})
+                Geometry.Vertices.push_back(dbc::Vec3{N.X + U.X * SignU + V.X * SignV, N.Y + U.Y * SignU + V.Y * SignV,
+                                                      N.Z + U.Z * SignU + V.Z * SignV});
+            Geometry.Indices.insert(Geometry.Indices.end(), {First, First + 1, First + 2, First, First + 2, First + 3});
+        };
+        const dbc::Vec3 X{1.0f, 0.0f, 0.0f};
+        const dbc::Vec3 Y{0.0f, 1.0f, 0.0f};
+        const dbc::Vec3 Z{0.0f, 0.0f, 1.0f};
+        const dbc::Vec3 NegX{-1.0f, 0.0f, 0.0f};
+        const dbc::Vec3 NegY{0.0f, -1.0f, 0.0f};
+        const dbc::Vec3 NegZ{0.0f, 0.0f, -1.0f};
+        AddFace(X, Y, Z);
+        AddFace(NegX, Z, Y);
+        AddFace(Y, Z, X);
+        AddFace(NegY, X, Z);
+        AddFace(Z, X, Y);
+        AddFace(NegZ, Y, X);
+        return Geometry;
+    }
+
+    struct ShadowVolumeCounts
+    {
+        std::size_t Vertices = 0;
+        std::size_t Triangles = 0;
+    };
+
+    ShadowVolumeCounts ExtrudedCounts(const dbc::MeshGeometry& Geometry, const dbc::Vec3& Light)
+    {
+        std::vector<uint8_t> Lit;
+        std::vector<dbc::Vec3> Vertices;
+        std::vector<uint32_t> Indices;
+        dbc::ExtrudeShadowMesh(dbc::BuildShadowTopology(Geometry), Geometry.Vertices, Light, 100.0f, Lit, Vertices,
+                               Indices);
+        return ShadowVolumeCounts{Vertices.size(), Indices.size() / 3};
+    }
+
     int Submissions = 0;
     int Cancellations = 0;
 
@@ -31,6 +75,93 @@ namespace
         return true;
     }
 } // namespace
+
+TEST_CASE("A shadow volume extrudes the lit faces and only the edges they do not share")
+{
+    const dbc::MeshGeometry Cube = ShadowCube();
+    const dbc::ShadowTopology Topology = dbc::BuildShadowTopology(Cube);
+    CHECK(Topology.Points.size() == 8);
+    CHECK(Topology.Faces.size() == 36);
+    // The twelve edges of the cube and the diagonal of each face.
+    CHECK(Topology.Edges.size() == 18);
+    // From above only the top is lit: its two triangles for each cap, and two for each of the four edges around it.
+    const ShadowVolumeCounts Above = ExtrudedCounts(Cube, dbc::Vec3{0.0f, 10.0f, 0.0f});
+    CHECK(Above.Vertices == 16);
+    CHECK(Above.Triangles == 12);
+    // From a corner three faces are lit, and the six edges of their outline remain.
+    CHECK(ExtrudedCounts(Cube, dbc::Vec3{10.0f, 10.0f, 10.0f}).Triangles == 24);
+    // From inside, no face is lit.
+    CHECK(ExtrudedCounts(Cube, dbc::Vec3{}).Triangles == 0);
+}
+
+TEST_CASE("A shadow volume places its vertices along the light's rays")
+{
+    dbc::MeshGeometry Triangle;
+    Triangle.Vertices = {dbc::Vec3{0.0f, 0.0f, 0.0f}, dbc::Vec3{0.0f, 0.0f, 1.0f}, dbc::Vec3{1.0f, 0.0f, 0.0f}};
+    const dbc::ShadowTopology Topology = dbc::BuildShadowTopology(Triangle);
+    std::vector<uint8_t> Lit;
+    std::vector<dbc::Vec3> Vertices;
+    std::vector<uint32_t> Indices;
+    dbc::ExtrudeShadowMesh(Topology, Triangle.Vertices, dbc::Vec3{0.0f, 10.0f, 0.0f}, 100.0f, Lit, Vertices, Indices);
+    // An open triangle has two caps and three sides of two triangles each.
+    CHECK(Indices.size() == 8 * 3);
+    REQUIRE(Vertices.size() == 6);
+    for (std::size_t Point = 0; Point < Topology.Points.size(); ++Point)
+    {
+        const dbc::Vec3& Source = Triangle.Vertices[Topology.Points[Point]];
+        const dbc::Vec3& Near = Vertices[Point * 2];
+        const dbc::Vec3& Far = Vertices[Point * 2 + 1];
+        const dbc::Vec3 Pushed = dbc::Vec3Sub(Near, Source);
+        CHECK(std::sqrt(dbc::Vec3Dot(Pushed, Pushed)) == doctest::Approx(0.1f));
+        const dbc::Vec3 Along = dbc::Vec3Sub(Far, Near);
+        CHECK(std::sqrt(dbc::Vec3Dot(Along, Along)) == doctest::Approx(100.0f));
+        const dbc::Vec3 Ray = dbc::Vec3Normalize(dbc::Vec3Sub(Source, dbc::Vec3{0.0f, 10.0f, 0.0f}));
+        CHECK(dbc::Vec3Dot(dbc::Vec3Normalize(Along), Ray) == doctest::Approx(1.0f));
+    }
+
+    // A point on the light still extrudes, away from it in some direction.
+    Vertices.clear();
+    Indices.clear();
+    dbc::ExtrudeShadowMesh(Topology, Triangle.Vertices, Triangle.Vertices[0], 100.0f, Lit, Vertices, Indices);
+    for (const dbc::Vec3& Vertex : Vertices)
+        CHECK(std::isfinite(Vertex.X + Vertex.Y + Vertex.Z));
+}
+
+TEST_CASE("A shadow volume leaves unmatched the edges that faces do not cancel")
+{
+    // Two faces lit from one side, both going around their shared edge the same way: it keeps a side for each, as
+    // two separate triangles would.
+    dbc::MeshGeometry Fold;
+    Fold.Vertices = {dbc::Vec3{0.0f, 0.0f, 0.0f}, dbc::Vec3{1.0f, 0.0f, 0.0f}, dbc::Vec3{0.0f, 0.0f, 1.0f},
+                     dbc::Vec3{0.0f, -1.0f, 1.0f}};
+    Fold.Indices = {0, 1, 2, 0, 1, 3};
+    const dbc::Vec3 Below{0.0f, -10.0f, 1.0f};
+    CHECK(ExtrudedCounts(Fold, Below).Triangles == 2 * 8);
+
+    // A third lit face on that edge, going the other way, cancels one of those sides and its own: three separate
+    // triangles would have 24.
+    dbc::MeshGeometry Fin = Fold;
+    Fin.Vertices.push_back(dbc::Vec3{0.0f, -2.0f, 0.0f});
+    Fin.Indices.insert(Fin.Indices.end(), {1, 0, 4});
+    CHECK(ExtrudedCounts(Fin, Below).Triangles == 20);
+
+    // Vertices at one place that different bones move apart stay apart, with their sides.
+    dbc::MeshGeometry Skinned;
+    Skinned.Vertices = {dbc::Vec3{0.0f, 0.0f, 0.0f}, dbc::Vec3{1.0f, 0.0f, 0.0f}, dbc::Vec3{0.0f, 0.0f, 1.0f},
+                        dbc::Vec3{0.0f, 0.0f, 0.0f}, dbc::Vec3{1.0f, 0.0f, 0.0f}, dbc::Vec3{0.0f, 0.0f, -1.0f}};
+    Skinned.Indices = {0, 2, 1, 3, 4, 5};
+    const dbc::Vec3 Above{0.0f, 10.0f, 0.0f};
+    // Unskinned, the two triangles share their edge...
+    CHECK(ExtrudedCounts(Skinned, Above).Triangles == 2 * 2 + 4 * 2);
+    Skinned.BoneInfluences.resize(6);
+    for (std::size_t Vertex = 0; Vertex < 6; ++Vertex)
+    {
+        Skinned.BoneInfluences[Vertex].Indices[0] = Vertex < 3 ? 0 : 1;
+        Skinned.BoneInfluences[Vertex].Weights[0] = 1.0f;
+    }
+    // ... skinned to different bones, they do not.
+    CHECK(ExtrudedCounts(Skinned, Above).Triangles == 2 * 8);
+}
 
 TEST_CASE("GPU command ownership submits acquired window images even on abandonment")
 {

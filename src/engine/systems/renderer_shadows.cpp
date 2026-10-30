@@ -5,9 +5,66 @@
 
 namespace dbc
 {
-    void AppendShadowSources(EngineKernel& K, std::vector<Triangle>& Sources)
+    namespace
     {
+        [[nodiscard]] Vec3 WorldShadowLight(EngineKernel& K)
+        {
+            const int LightMode = K.Renderer().ShadowPositionMode();
+            return LightMode == -1 ? K.Renderer().ShadowPosition()
+                                   : Vec3{K.Lights().LightPositionX(LightMode), K.Lights().LightPositionY(LightMode),
+                                          K.Lights().LightPositionZ(LightMode)};
+        }
+
+        [[nodiscard]] SurfaceStyle ShadowVolumeStyle()
+        {
+            SurfaceStyle Style{};
+            Style.Fog = false;
+            Style.Ambient = false;
+            Style.ShadowVolume = true;
+            return Style;
+        }
+
+        [[nodiscard]] ViewVertex ShadowVolumeVertex(const Vec3& Point)
+        {
+            ViewVertex Vertex{};
+            Vertex.X = Point.X;
+            Vertex.Y = Point.Y;
+            Vertex.Z = Point.Z;
+            Vertex.Color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f};
+            return Vertex;
+        }
+    } // namespace
+
+    const ShadowTopology& RendererSystem::ShadowTopologyOf(const Mesh& MeshValue)
+    {
+        const std::shared_ptr<const MeshGeometry> Geometry = MeshValue.SharedGeometry();
+        const auto [Entry, Inserted] = ShadowTopologies_.try_emplace(Geometry->Revision);
+        if (Inserted)
+        {
+            Entry->second.Source = Geometry;
+            Entry->second.Topology = BuildShadowTopology(*Geometry);
+        }
+        return Entry->second.Topology;
+    }
+
+    void RendererSystem::ReleaseStaleShadowTopologies()
+    {
+        std::erase_if(ShadowTopologies_,
+                      [](const auto& Entry)
+                      {
+                          const std::shared_ptr<const MeshGeometry> Source = Entry.second.Source.lock();
+                          return !Source || Source->Revision != Entry.first;
+                      });
+    }
+
+    void AppendCasterVolumes(EngineKernel& K, std::vector<Triangle>& Volumes)
+    {
+        const Vec3 Light = WorldShadowLight(K);
+        const SurfaceStyle VolumeStyle = ShadowVolumeStyle();
         std::vector<Vec3> World;
+        std::vector<Vec3> VolumeVertices;
+        std::vector<uint32_t> VolumeIndices;
+        std::vector<uint8_t> Lit;
         K.Objects().ForEachObject(
             [&](int /*id*/, const Object3D& Object)
             {
@@ -16,11 +73,9 @@ namespace dbc
                 // A locked object lives on the screen, not in the world: it casts from what it draws.
                 if (Object.LockToScreen && Object.ShadowMeshes.empty())
                     return;
-                Triangle Source;
-                Source.Style.Fog = false;
-                Source.Style.Ambient = false;
-                Source.Style.ShadowCaster = true;
-                Source.Style.ShadowRange = Object.ShadowRange;
+                const float Range = Object.ShadowRange;
+                if (Range <= 0.0f)
+                    return;
                 for (const Mesh& MeshValue : Object.ShadowMeshes.empty() ? Object.Meshes : Object.ShadowMeshes)
                 {
                     if (!MeshValue.Visible)
@@ -33,26 +88,19 @@ namespace dbc
                             continue;
                     }
                     K.Renderer().WorldMeshVertices(Object, MeshValue, World);
-                    const std::vector<uint32_t>& Indices = MeshValue.Geometry().Indices;
-                    const std::size_t CornerCount = Indices.empty() ? World.size() : Indices.size();
-                    for (std::size_t Corner = 0; Corner + 2 < CornerCount; Corner += 3)
+                    VolumeVertices.clear();
+                    VolumeIndices.clear();
+                    ExtrudeShadowMesh(K.Renderer().ShadowTopologyOf(MeshValue), World, Light, Range, Lit,
+                                      VolumeVertices, VolumeIndices);
+                    for (Vec3& Point : VolumeVertices)
+                        Point = dbc::WorldToViewPoint(K, Point.X, Point.Y, Point.Z);
+                    for (std::size_t Corner = 0; Corner + 2 < VolumeIndices.size(); Corner += 3)
                     {
-                        bool Valid = true;
-                        for (std::size_t Offset = 0; Offset < 3; ++Offset)
-                        {
-                            const std::size_t Index = Indices.empty() ? Corner + Offset : Indices[Corner + Offset];
-                            if (Index >= World.size())
-                            {
-                                Valid = false;
-                                break;
-                            }
-                            const Vec3 View = dbc::WorldToViewPoint(K, World[Index].X, World[Index].Y, World[Index].Z);
-                            Source.Pos[Offset][0] = View.X;
-                            Source.Pos[Offset][1] = View.Y;
-                            Source.Pos[Offset][2] = View.Z;
-                        }
-                        if (Valid)
-                            Sources.push_back(Source);
+                        dbc::AppendClippedViewTriangle(K, ShadowVolumeVertex(VolumeVertices[VolumeIndices[Corner]]),
+                                                       ShadowVolumeVertex(VolumeVertices[VolumeIndices[Corner + 1]]),
+                                                       ShadowVolumeVertex(VolumeVertices[VolumeIndices[Corner + 2]]),
+                                                       nullptr, false, Volumes, false, VolumeStyle, -1, false, 0.0f, -1,
+                                                       0, false, true);
                     }
                 }
             });
@@ -60,26 +108,10 @@ namespace dbc
 
     void BuildShadowVolumes(EngineKernel& K, const std::vector<Triangle>& Sources, std::vector<Triangle>& Volumes)
     {
-        const int LightMode = K.Renderer().ShadowPositionMode();
-        const Vec3 FixedLight = K.Renderer().ShadowPosition();
-        const Vec3 WorldLight = LightMode == -1
-                                    ? FixedLight
-                                    : Vec3{K.Lights().LightPositionX(LightMode), K.Lights().LightPositionY(LightMode),
-                                           K.Lights().LightPositionZ(LightMode)};
+        const Vec3 WorldLight = WorldShadowLight(K);
         const Vec3 Light = dbc::WorldToViewPoint(K, WorldLight.X, WorldLight.Y, WorldLight.Z);
-        SurfaceStyle VolumeStyle{};
-        VolumeStyle.Fog = false;
-        VolumeStyle.Ambient = false;
-        VolumeStyle.ShadowVolume = true;
-        const auto MakeVertex = [](const Vec3& Point)
-        {
-            ViewVertex Vertex{};
-            Vertex.X = Point.X;
-            Vertex.Y = Point.Y;
-            Vertex.Z = Point.Z;
-            Vertex.Color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f};
-            return Vertex;
-        };
+        const SurfaceStyle VolumeStyle = ShadowVolumeStyle();
+        const auto MakeVertex = [](const Vec3& Point) { return ShadowVolumeVertex(Point); };
         const auto DirectionAwayFromLight = [&](const Vec3& Point, const Vec3& Fallback)
         {
             Vec3 Direction = Vec3Sub(Point, Light);
