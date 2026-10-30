@@ -2795,6 +2795,34 @@ TEST_CASE("A mirror alone in view draws its mask with samplers bound")
     CHECK(Kernel.Renderer().LastFrameDrawCalls() > 0);
 }
 
+TEST_CASE("A black-keyed texture is built once, however often the scene is rebuilt")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    const std::filesystem::path Images = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp";
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "beam.bmp").string(), 1));
+    Kernel.Objects().MakeObjectCube(1, 2.0f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 10.0f);
+    Kernel.Objects().TextureObject(1, 1);
+    REQUIRE(Kernel.Objects().SetObjectTransparency(1, 1));
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const auto Render = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+    };
+    Render();
+    const SDL_GPUTexture* First = Kernel.ImageStoreRef().GetImage(1)->GpuColorKeyTexture;
+    REQUIRE(First != nullptr);
+    Kernel.Objects().PositionObject(1, 1.0f, 0.0f, 10.0f);
+    Render();
+    Kernel.Objects().PositionObject(1, 2.0f, 0.0f, 10.0f);
+    Render();
+    CHECK(Kernel.ImageStoreRef().GetImage(1)->GpuColorKeyTexture == First);
+}
+
 TEST_CASE("A still scene never draws with an image texture released since it was built")
 {
     dbc::EngineKernel Kernel;

@@ -1714,6 +1714,9 @@ namespace dbc
 
     void ImageStore::DestroyImage(Image& ImageValue)
     {
+        // A cached draw may name the GPU texture behind an SDL texture too.
+        if (ImageValue.Texture || ImageValue.ColorKeyTexture || ImageValue.GpuTexture || ImageValue.GpuColorKeyTexture)
+            ++ReleasedGpuTextures_;
         if (ImageValue.Texture)
         {
             SDL_DestroyTexture(ImageValue.Texture);
@@ -1724,8 +1727,6 @@ namespace dbc
             SDL_DestroyTexture(ImageValue.ColorKeyTexture);
             ImageValue.ColorKeyTexture = nullptr;
         }
-        if (ImageValue.GpuTexture || ImageValue.GpuColorKeyTexture)
-            ++ReleasedGpuTextures_;
         if (ImageValue.GpuTexture && Kernel_.Gpu().GpuDevice())
         {
             SDL_ReleaseGPUTexture(Kernel_.Gpu().GpuDevice(), ImageValue.GpuTexture);
@@ -1926,6 +1927,11 @@ namespace dbc
         if (ImageValue.ColorKeyTexture)
         {
             return ImageValue.ColorKeyTexture;
+        }
+        // Built already, without an SDL texture: another attempt would reload the file and leak this one.
+        if (ImageValue.GpuColorKeyTexture)
+        {
+            return ImageValue.Texture;
         }
         if (ImageValue.SourcePath.empty())
         {

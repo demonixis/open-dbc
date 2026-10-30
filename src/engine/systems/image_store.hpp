@@ -76,7 +76,7 @@ namespace dbc
         // Image detail helpers (public so renderer / objects can call via kernel).
         void DestroyImage(Image& ImageValue);
 
-        // Counts the image GPU textures released so far: a renderer that cached a scene naming textures rebuilds it
+        // Counts the images whose textures were released: a renderer that cached a scene naming textures rebuilds it
         // when this changes.
         [[nodiscard]] uint64_t ReleasedGpuTextures() const
         {
