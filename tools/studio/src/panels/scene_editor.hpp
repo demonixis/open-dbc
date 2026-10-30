@@ -86,6 +86,13 @@ namespace dbc::studio
 
             // Called when the Scene mode is shown: opens a level if none is.
             void Activate();
+
+            // Asks for a name, then creates the level and saves it. Needs the Scene mode, which draws the popup.
+            void RequestNewLevel()
+            {
+                NewLevelRequested_ = true;
+            }
+
             bool Dirty() const;
             // Ctrl+S: a program's scene is read again after its edits, to show what they did.
             bool SaveAndRefresh();

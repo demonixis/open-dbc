@@ -18,6 +18,9 @@ A level is BASIC, and nothing else is stored. Each level has its own folder:
 | `levels/<name>/<name>.dba` | `FUNCTION LoadLevel_<name>()`: images, objects, matrices, Pro terrains, lights and 3D sounds |
 | `levels/<name>/world_settings.dba` | `FUNCTION SetupWorld_<name>()`: display mode, Pro vsync, window, `SYNC ON`/`SYNC RATE`, `HIDE MOUSE`, the environment and the level camera |
 
+**File → New Level**, or the same item in the **Scene** menu, asks for a name and
+saves the new level at once; a name already taken opens that level.
+
 Saving (**Ctrl+S** in the Scene mode, or **Scene → Save Level**) writes both
 files, then completes the main source's header: each missing `#include` joins
 the include block under the leading comment, and each missing call follows that

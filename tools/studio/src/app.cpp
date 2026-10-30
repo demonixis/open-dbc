@@ -1605,6 +1605,17 @@ namespace dbc::studio
                 RequestNewProject();
             }
 
+            const std::string LevelBlocker = SceneBlocker();
+            if (ImGui::MenuItem(TrId("New Level..."), nullptr, false, LevelBlocker.empty()))
+            {
+                SetMode(Mode::Scene);
+                Scene_.RequestNewLevel();
+            }
+            if (!LevelBlocker.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            {
+                ImGui::SetTooltip("%s", LevelBlocker.c_str());
+            }
+
             // SDL_dialog has no UIKit backend, and mobile has no freeform file
             // system to browse anyway: there the Project panel is the only way in.
             if constexpr (core::platform::HasNativeFileDialog())

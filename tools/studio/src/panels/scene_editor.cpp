@@ -666,7 +666,7 @@ namespace dbc::studio
         void SceneEditor::DrawSceneMenu()
         {
             if (ImGui::MenuItem("New Level...", nullptr, false, Project_.has_value()))
-                NewLevelRequested_ = true;
+                RequestNewLevel();
             const std::vector<std::string> Names = LevelNames();
             if (ImGui::BeginMenu("Open Level", !Names.empty()))
             {
@@ -1048,7 +1048,9 @@ namespace dbc::studio
             {
                 if (Dirty())
                     Save();
-                NewLevel(NewLevelName_);
+                // Asked for by name, it should exist from here on, unlike the level Activate() starts.
+                if (NewLevel(NewLevelName_))
+                    Save();
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();

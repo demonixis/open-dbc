@@ -270,6 +270,17 @@ namespace
             ExpectErrors_ = Value;
         }
 
+        // Goes through the New Level popup.
+        void CreateLevel(const std::string& Name)
+        {
+            Editor_.RequestNewLevel();
+            Frame();
+            ImGui::GetIO().AddInputCharactersUTF8(Name.c_str());
+            Frame();
+            Tap(ImGuiKey_Enter);
+            Frame();
+        }
+
         void WriteFile(const std::filesystem::path& Relative, const std::string& Text)
         {
             WriteText(Root_ / Relative, Text);
@@ -669,6 +680,28 @@ TEST_CASE("Another level imported by the program leaves the main source alone, a
     CHECK(Driver.Logged("stays out of main.dba") == 1);
     REQUIRE(Driver.Editor().Save());
     CHECK(Driver.Logged("stays out of main.dba") == 1);
+}
+
+TEST_CASE("A new level exists as soon as it is named, and only the first one joins the main source")
+{
+    SceneViewDriver Driver("level_new", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.CreateLevel("Cave");
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::LevelRelativePath("Cave")));
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::WorldRelativePath("Cave")));
+    const std::string Linked = Driver.ReadFile("main.dba");
+    CHECK(Linked == "#include \"levels/Cave/world_settings.dba\"\n#include \"levels/Cave/Cave.dba\"\n\n"
+                    "SetupWorld_Cave()\nLoadLevel_Cave()\n\nSYNC\n");
+
+    Driver.CreateLevel("Deep");
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::LevelRelativePath("Deep")));
+    CHECK(Driver.ReadFile("main.dba") == Linked);
+    CHECK(Driver.Logged("Level Deep stays out of main.dba") == 1);
+
+    // A name already taken opens that level, and writes nothing.
+    const std::string Before = Driver.ReadFile(scene::LevelRelativePath("Cave"));
+    Driver.CreateLevel("Cave");
+    CHECK(Driver.ReadFile(scene::LevelRelativePath("Cave")) == Before);
+    CHECK_FALSE(Driver.Editor().Dirty());
 }
 
 TEST_CASE("A level from before the folders moves into its own, and its environment follows when saved")
