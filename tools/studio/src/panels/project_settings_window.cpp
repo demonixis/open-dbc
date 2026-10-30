@@ -169,6 +169,7 @@ namespace dbc::studio
                     ImGui::InputInt("Min SDK", &Draft_.AndroidMinSdk);
                     ImGui::InputInt("Target SDK", &Draft_.AndroidTargetSdk);
 
+                    // Orientations and permissions are Android manifest values, shown verbatim: never translate them.
                     static const std::array<const char*, 5> KOrientations = {
                         "sensorLandscape", "landscape", "sensorPortrait", "portrait", "fullSensor",
                     };
@@ -219,6 +220,7 @@ namespace dbc::studio
 
                 if (DbproProject_ && ImGui::BeginTabItem("DBPro Display"))
                 {
+                    // Keys of the .dbpro file, shown verbatim like those of the other DBPro tabs: never translate them.
                     for (const char* Key : {"app title", "graphics mode", "window resolution", "fullscreen resolution",
                                             "commandlinearguments"})
                     {

@@ -36,6 +36,7 @@ namespace dbc::studio
         // The Scene mode docks its own Output window: a title shared with the Code
         // mode would belong to one dock space only.
         constexpr const char* KPanelSceneOutput = "Output##Scene";
+        // The persisted setting and the --log-level values, shown verbatim: never translate them.
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
 
         enum class ToolIcon
