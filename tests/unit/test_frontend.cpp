@@ -909,6 +909,17 @@ TEST_CASE("The typed parser accepts every tracked BASIC example")
     CHECK(Parsed == Expected.size());
 }
 
+TEST_CASE("A line of many words parses in linear time")
+{
+    // Searching every prefix for a command's name took minutes on a line this long.
+    const dbc::language::Program Program =
+        dbc::language::Compile(Source(Repeat("alpha ", 200000) + "\n", dbc::language::LanguageProfile::DbPro));
+    CHECK(Program.HasErrors());
+    const dbc::language::Program Command = dbc::language::Compile(
+        Source("set camera to follow 1, 2, 3, 4, 5, 6, 7, 0\n", dbc::language::LanguageProfile::DbPro));
+    CHECK_FALSE(Command.HasErrors());
+}
+
 TEST_CASE("Blocks and expressions nest up to the limit on a 512 KB thread")
 {
     const std::vector<std::string> Programs = NestedPrograms(dbc::language::KMaxNestingDepth);

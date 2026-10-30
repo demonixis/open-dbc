@@ -1248,7 +1248,7 @@ namespace dbc::language::detail
                     ++Words;
                 const SymbolDescriptor* Descriptor = nullptr;
                 std::size_t NameWords = 0;
-                for (std::size_t Count = Words; Count > 0; --Count)
+                for (std::size_t Count = std::min(Words, LongestCommandWords()); Count > 0; --Count)
                 {
                     const std::string Name = JoinWords(Value.Tokens, 0, Count);
                     Descriptor = FindSymbol(Source_.Profile, SymbolKind::Command, Name);

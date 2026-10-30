@@ -178,6 +178,8 @@ namespace dbc::language
     const SymbolDescriptor& Symbol(SymbolId Id);
     const SymbolDescriptor* FindSymbol(LanguageProfile Profile, SymbolKind Kind, std::string_view Spelling);
     const SymbolDescriptor* FindLongestCommandPrefix(LanguageProfile Profile, std::string_view Text);
+    // The most words any command's name has, which bounds the search for a name at the start of a line.
+    std::size_t LongestCommandWords();
     bool AvailableIn(const SymbolDescriptor& Descriptor, LanguageProfile Profile);
     SupportStatus SupportFor(const SymbolDescriptor& Descriptor, LanguageProfile Profile);
     CompatibilityStubPolicy StubPolicyFor(const SymbolDescriptor& Descriptor, LanguageProfile Profile);

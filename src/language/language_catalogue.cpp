@@ -323,6 +323,25 @@ namespace dbc::language
         return It == Index.end() ? nullptr : It->second;
     }
 
+    std::size_t LongestCommandWords()
+    {
+        static const std::size_t Longest = []
+        {
+            std::size_t Result = 0;
+            for (const SymbolDescriptor& Descriptor : KSymbols)
+            {
+                if (Descriptor.Kind == SymbolKind::Command)
+                {
+                    const auto Spaces =
+                        std::count(Descriptor.CanonicalName.begin(), Descriptor.CanonicalName.end(), ' ');
+                    Result = std::max(Result, static_cast<std::size_t>(Spaces) + 1);
+                }
+            }
+            return Result;
+        }();
+        return Longest;
+    }
+
     const SymbolDescriptor* FindLongestCommandPrefix(LanguageProfile Profile, std::string_view Text)
     {
         const std::string Upper = UpperAscii(Text);
