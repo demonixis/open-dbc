@@ -11,44 +11,63 @@
   linked; reused DBPro code comes from the MIT repository and keeps its notice.
 - Project assets are CC0. Version 0.4 ships with the current examples: six demos
   and tutorials covering the 747 Classic help symbols.
+- macOS releases target Apple Silicon only, exported games included: one binary per
+  target, no universal build.
+- No SBOM, `CODEOWNERS` or Dependabot: one maintainer, dependencies pinned in
+  `cmake/fetch_dependency.cmake`, no CI. AppStream and Flatpak wait until someone
+  asks for them.
 
 ## Before 0.4
 
 Build and release:
 
-- [ ] Release presets: Linux on an old glibc. macOS has `release-macos` (universal2),
-  Windows `windows-release`.
-- [ ] Platform metadata: `.desktop` and AppStream.
+- [ ] `release-macos` builds arm64 only.
+- [ ] Linux AppImage on demand, built on an old glibc so that it starts on older
+  distributions, with the Studio's `.desktop` entry.
+
+Validation:
+
+- [ ] Run the GPU mesh path on Vulkan, on Windows and Linux: `VSMesh` draws nearly
+  every opaque object and has only run on Metal.
+- [ ] Play the demos by hand, and export a game end to end with the new shader stage,
+  on each announced target.
 
 Robustness:
 
 - [ ] Check on Windows that a Studio run opens no console window beside the program:
   `opendbc-runner` is a console executable and SDL only hides consoles for
   background processes.
-- [ ] Fuzzing: frontend, DDS, DBO, WAV, memblocks.
+- [ ] One fuzzing session under sanitizers: frontend, DDS, DBO, WAV, memblocks. Each
+  input that crashes stays as a regression test.
 
 Repository files:
 
-- [ ] Issue and PR templates, `CODEOWNERS`, Dependabot. No CI workflow for now: it
-  took too many iterations to get working.
+- [ ] Issue and PR templates. No CI workflow for now: it took too many iterations to
+  get working.
 - [ ] README screenshots.
+- [ ] Documentation pass: remove what is redundant or not useful.
 
 Publication:
 
-- [ ] Signed tag `v0.4.0`, release with `SHA256SUMS` and an SBOM.
+- [ ] Signed tag `v0.4.0`, release with `SHA256SUMS`.
 
 ## Code quality
 
 - [ ] Code quality audit.
-- [ ] Separate the smoke-test code from the main code: a dedicated smoke `main`, or
-  one class compiled in Debug only.
+- [ ] Gather the run limits and capture hooks (`--headless`, `--max-frames`,
+  `--capture-output`, `--benchmark`) in one class. Release tests and benchmarks use
+  them, so they stay in every build.
+- [ ] Split and audit `renderer_system.cpp`, without changing behaviour.
 - [ ] Architecture audit.
 
 ## Rendering performance
 
-Move the renderer towards GPU-driven, data-driven rendering. Opaque object meshes
-and terrains draw from GPU buffers; everything else is still transformed, sorted and
-uploaded on the CPU every frame ([rendering.md](rendering.md)).
+Frozen: the heaviest demo, `wave_racer`, takes 3.1 ms per frame, a fifth of the
+budget at 60 fps. The work below reopens only when a real program exceeds 8 ms per
+frame on a target machine, measured.
+
+Opaque object meshes and terrains draw from GPU buffers; everything else is still
+transformed, sorted and uploaded on the CPU every frame ([rendering.md](rendering.md)).
 `scripts/benchmark_renderer.py`, Release, Apple silicon, median of three 300-frame
 headless runs:
 
@@ -79,25 +98,25 @@ Decisions:
 - One build of the world serves every view; cameras and VR eyes change uniforms only.
 - GPU culling with compute and indirect draws waits until CPU culling measures as
   a bottleneck.
+- A scene with an opaque object that depends on the depth order stays on the CPU
+  path: drawing GPU meshes first would change frames for a gain too small to see.
 - No static batching while draw calls stay cheap (at most 0.16 ms per frame in the
   scenes measured). If thousands of distinct static meshes ever call for it,
   merging their geometry is the portable answer: SDL_GPU cannot give each draw of
   a multi-draw indirect call its own instance offset.
 
-Work, in order:
+Work, in order, when a measurement calls for it:
 
-- [ ] Keep the GPU mesh draws while the objects stay unchanged: a camera move
-  rebuilds only the CPU triangles, and each view culls the draws it keeps.
-- [ ] GPU meshes for what still takes the CPU path in the demos, measured first
-  (`wave_racer`, `dusk_rally`, `sky_gardens`): texture-coordinate modes, built-in
-  effects and auxiliary stages in the vertex shader, with vertex formats sized to
-  the stages a mesh uses; glued and locked objects; reflection passes; scenes with
-  order-dependent opaque objects; transparent objects once a per-object order is
-  qualified.
-- [ ] GPU skinning, the slowest stress scene: bone indices and weights in the mesh's
-  vertex buffer, the object's bone palette in a vertex storage buffer, positions and
-  normals skinned in the vertex shader. Queries, collision and shadow volumes keep
-  skinning on the CPU from the same palette.
+- [ ] GPU skinning, the only wall left: about 50,000 skinned triangles fill the
+  budget. Bone indices and weights in the mesh's vertex buffer, the object's bone
+  palette in a vertex storage buffer, positions and normals skinned in the vertex
+  shader. Queries, collision and shadow volumes keep skinning on the CPU from the
+  same palette.
+- [ ] Update GPU mesh draws per object: one object that moves rebuilds them all, and
+  20,000 painted instances would take about 3 ms to walk.
+- [ ] GPU meshes for what still takes the CPU path: ghosted objects, auxiliary stages
+  and built-in effects in the vertex shader, with vertex formats sized to the stages
+  a mesh uses; locked and glued objects; matrices; reflection passes.
 - [ ] Frustum culling and the other visibility tests: per limb, bounds centred on
   the mesh, a spatial grid for large scenes, shadow casters, then occlusion if
   measurements call for it.
@@ -183,6 +202,12 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 ## Studio Scene view
 
+- [ ] Snapping like ProGrids: a grid that follows the move step, on by default with a
+  key to invert it, keys to change the step, snap when dropping an asset, align the
+  selection to the grid, vertex-to-vertex snap. Today it is off by default and only
+  acts on gizmo drags, over a grid fixed at 10 units.
+- [ ] Paint mode: place one object, several, or a radius with a density (trees,
+  grass). The generated code uses `INSTANCE OBJECT`, not one `LOAD OBJECT` per node.
 - [ ] Preview `.dbo` models (Assimp cannot read them; a box stands in) and
   `.dds` textures and thumbnails (SDL_image cannot read them).
 - [ ] Interactive UI coverage: navigation, gizmos, drag and drop and the
