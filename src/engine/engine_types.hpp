@@ -577,9 +577,6 @@ namespace dbc
         bool ReflectionPass = false;
         bool ReflectionOverlay = false;
         bool Backdrop = false;
-        bool ShadowCaster = false;
-        float ShadowRange = 2000.0f;
-        bool ShadowVolume = false;
         bool ShadowOverlay = false;
 
         bool operator==(const SurfaceStyle& Other) const
@@ -590,9 +587,7 @@ namespace dbc
                    TextureCubeModes == Other.TextureCubeModes && BuiltInEffect == Other.BuiltInEffect &&
                    EffectId == Other.EffectId && ReflectionSurface == Other.ReflectionSurface &&
                    ReflectionPass == Other.ReflectionPass && ReflectionOverlay == Other.ReflectionOverlay &&
-                   Backdrop == Other.Backdrop && ShadowCaster == Other.ShadowCaster &&
-                   ShadowRange == Other.ShadowRange && ShadowVolume == Other.ShadowVolume &&
-                   ShadowOverlay == Other.ShadowOverlay;
+                   Backdrop == Other.Backdrop && ShadowOverlay == Other.ShadowOverlay;
         }
     };
 

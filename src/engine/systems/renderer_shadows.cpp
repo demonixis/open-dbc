@@ -1,4 +1,5 @@
 #include "engine_kernel.hpp"
+#include "graphics_device_system.hpp"
 #include "light_manager.hpp"
 #include "object_manager.hpp"
 #include "renderer_internal.hpp"
@@ -15,23 +16,16 @@ namespace dbc
                                           K.Lights().LightPositionZ(LightMode)};
         }
 
-        [[nodiscard]] SurfaceStyle ShadowVolumeStyle()
+        [[nodiscard]] bool SameRevisions(const std::vector<uint64_t>& Revisions, const std::vector<Mesh>& Meshes)
         {
-            SurfaceStyle Style{};
-            Style.Fog = false;
-            Style.Ambient = false;
-            Style.ShadowVolume = true;
-            return Style;
-        }
-
-        [[nodiscard]] ViewVertex ShadowVolumeVertex(const Vec3& Point)
-        {
-            ViewVertex Vertex{};
-            Vertex.X = Point.X;
-            Vertex.Y = Point.Y;
-            Vertex.Z = Point.Z;
-            Vertex.Color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f};
-            return Vertex;
+            if (Revisions.size() != Meshes.size())
+                return false;
+            for (std::size_t Index = 0; Index < Meshes.size(); ++Index)
+            {
+                if (Revisions[Index] != Meshes[Index].Geometry().Revision)
+                    return false;
+            }
+            return true;
         }
     } // namespace
 
@@ -57,27 +51,37 @@ namespace dbc
                       });
     }
 
-    void AppendCasterVolumes(EngineKernel& K, std::vector<Triangle>& Volumes)
+    void RendererSystem::UpdateShadowCasters()
     {
+        EngineKernel& K = Kernel_;
         const Vec3 Light = WorldShadowLight(K);
-        const SurfaceStyle VolumeStyle = ShadowVolumeStyle();
-        std::vector<Vec3> World;
-        std::vector<Vec3> VolumeVertices;
-        std::vector<uint32_t> VolumeIndices;
-        std::vector<uint8_t> Lit;
+        const bool LightMoved =
+            Light.X != ShadowCasterLight_.X || Light.Y != ShadowCasterLight_.Y || Light.Z != ShadowCasterLight_.Z;
+        ShadowCasterLight_ = Light;
+        ++ShadowCasterWalk_;
+        bool Changed = false;
         K.Objects().ForEachObject(
-            [&](int /*id*/, const Object3D& Object)
+            [&](int Id, const Object3D& Object)
             {
-                if (!Object.Visible || !Object.ShadowShading)
+                if (!Object.Visible || !Object.ShadowShading || Object.ShadowRange <= 0.0f)
                     return;
-                // A locked object lives on the screen, not in the world: it casts from what it draws.
+                // A locked object lives on the screen, not in the world: only a shadow mesh of its own casts.
                 if (Object.LockToScreen && Object.ShadowMeshes.empty())
                     return;
-                const float Range = Object.ShadowRange;
-                if (Range <= 0.0f)
+                const auto [Entry, Inserted] = ShadowCasters_.try_emplace(Id);
+                ShadowCaster& Caster = Entry->second;
+                Caster.LastWalk = ShadowCasterWalk_;
+                const std::vector<Mesh>& Meshes = Object.ShadowMeshes.empty() ? Object.Meshes : Object.ShadowMeshes;
+                // A glued object follows a target whose changes do not mark it. Geometry edits need not mark it either.
+                if (!Inserted && !LightMoved && !Object.TransformDirty && !Object.Playing && !Object.Looping &&
+                    Object.GluedTargetObject <= 0 && SameRevisions(Caster.Revisions, Meshes))
                     return;
-                for (const Mesh& MeshValue : Object.ShadowMeshes.empty() ? Object.Meshes : Object.ShadowMeshes)
+                Caster.Vertices.clear();
+                Caster.Indices.clear();
+                Caster.Revisions.clear();
+                for (const Mesh& MeshValue : Meshes)
                 {
+                    Caster.Revisions.push_back(MeshValue.Geometry().Revision);
                     if (!MeshValue.Visible)
                         continue;
                     if (!Object.CachedNodeGlobals.empty() && MeshValue.SourceMeshIndex >= 0)
@@ -87,77 +91,116 @@ namespace dbc
                         if (Node != Object.MeshNodeByIndex.end() && NodeHiddenByLimb(Object, Node->second))
                             continue;
                     }
-                    K.Renderer().WorldMeshVertices(Object, MeshValue, World);
-                    VolumeVertices.clear();
-                    VolumeIndices.clear();
-                    ExtrudeShadowMesh(K.Renderer().ShadowTopologyOf(MeshValue), World, Light, Range, Lit,
-                                      VolumeVertices, VolumeIndices);
-                    for (Vec3& Point : VolumeVertices)
-                        Point = dbc::WorldToViewPoint(K, Point.X, Point.Y, Point.Z);
-                    for (std::size_t Corner = 0; Corner + 2 < VolumeIndices.size(); Corner += 3)
-                    {
-                        dbc::AppendClippedViewTriangle(K, ShadowVolumeVertex(VolumeVertices[VolumeIndices[Corner]]),
-                                                       ShadowVolumeVertex(VolumeVertices[VolumeIndices[Corner + 1]]),
-                                                       ShadowVolumeVertex(VolumeVertices[VolumeIndices[Corner + 2]]),
-                                                       nullptr, false, Volumes, false, VolumeStyle, -1, false, 0.0f, -1,
-                                                       0, false, true);
-                    }
+                    WorldMeshVertices(Object, MeshValue, ShadowWorldVertices_);
+                    ExtrudeShadowMesh(ShadowTopologyOf(MeshValue), ShadowWorldVertices_, Light, Object.ShadowRange,
+                                      ShadowLitFaces_, Caster.Vertices, Caster.Indices);
                 }
+                ++Current_.ShadowCastersExtruded;
+                Changed = true;
             });
+        const auto Gone = [this](const auto& Entry) { return Entry.second.LastWalk != ShadowCasterWalk_; };
+        Changed |= std::erase_if(ShadowCasters_, Gone) != 0;
+        if (!Changed)
+            return;
+        ShadowVolumesStale_ = true;
+        ShadowVolumeVertexCount_ = 0;
+        ShadowVolumeIndexCount_ = 0;
+        for (const auto& [Id, Caster] : ShadowCasters_)
+        {
+            (void)Id;
+            ShadowVolumeVertexCount_ += Caster.Vertices.size();
+            ShadowVolumeIndexCount_ += Caster.Indices.size();
+        }
     }
 
-    void BuildShadowVolumes(EngineKernel& K, const std::vector<Triangle>& Sources, std::vector<Triangle>& Volumes)
+    bool RendererSystem::UploadShadowVolumes(SDL_GPUCommandBuffer* Cmd)
     {
-        const Vec3 WorldLight = WorldShadowLight(K);
-        const Vec3 Light = dbc::WorldToViewPoint(K, WorldLight.X, WorldLight.Y, WorldLight.Z);
-        const SurfaceStyle VolumeStyle = ShadowVolumeStyle();
-        const auto MakeVertex = [](const Vec3& Point) { return ShadowVolumeVertex(Point); };
-        const auto DirectionAwayFromLight = [&](const Vec3& Point, const Vec3& Fallback)
+        if (!ShadowVolumesStale_)
+            return true;
+        if (ShadowVolumeIndexCount_ == 0)
         {
-            Vec3 Direction = Vec3Sub(Point, Light);
-            const float LengthSquared = Vec3Dot(Direction, Direction);
-            return LengthSquared > 0.000001f ? Vec3Normalize(Direction) : Fallback;
-        };
-        for (const Triangle& Source : Sources)
-        {
-            if (!Source.Style.ShadowCaster || Source.Is2d || Source.Style.ReflectionPass)
-                continue;
-            const float Range = std::max(0.0f, Source.Style.ShadowRange);
-            if (Range <= 0.0f)
-                continue;
-            Vec3 Base[3]{{Source.Pos[0][0], Source.Pos[0][1], Source.Pos[0][2]},
-                         {Source.Pos[1][0], Source.Pos[1][1], Source.Pos[1][2]},
-                         {Source.Pos[2][0], Source.Pos[2][1], Source.Pos[2][2]}};
-            const Vec3 FaceNormal = Vec3Cross(Vec3Sub(Base[1], Base[0]), Vec3Sub(Base[2], Base[0]));
-            const Vec3 Center{(Base[0].X + Base[1].X + Base[2].X) / 3.0f, (Base[0].Y + Base[1].Y + Base[2].Y) / 3.0f,
-                              (Base[0].Z + Base[1].Z + Base[2].Z) / 3.0f};
-            if (Vec3Dot(FaceNormal, Vec3Sub(Light, Center)) <= 0.000001f)
-                continue;
-            Vec3 Far[3]{};
-            const Vec3 Fallback = Vec3Normalize(Vec3{FaceNormal.X * -1.0f, FaceNormal.Y * -1.0f, FaceNormal.Z * -1.0f});
-            for (int VertexIndex = 0; VertexIndex < 3; ++VertexIndex)
-            {
-                const Vec3 Direction = DirectionAwayFromLight(Base[VertexIndex], Fallback);
-                Base[VertexIndex].X += Direction.X * 0.1f;
-                Base[VertexIndex].Y += Direction.Y * 0.1f;
-                Base[VertexIndex].Z += Direction.Z * 0.1f;
-                Far[VertexIndex] =
-                    Vec3{Base[VertexIndex].X + Direction.X * Range, Base[VertexIndex].Y + Direction.Y * Range,
-                         Base[VertexIndex].Z + Direction.Z * Range};
-            }
-            const auto Append = [&](const Vec3& A, const Vec3& B, const Vec3& C)
-            {
-                dbc::AppendClippedViewTriangle(K, MakeVertex(A), MakeVertex(B), MakeVertex(C), nullptr, false, Volumes,
-                                               false, VolumeStyle, -1, false, 0.0f, -1, 0, false, true);
-            };
-            Append(Base[0], Base[1], Base[2]);
-            Append(Far[2], Far[1], Far[0]);
-            for (int Edge = 0; Edge < 3; ++Edge)
-            {
-                const int Next = (Edge + 1) % 3;
-                Append(Base[Edge], Far[Next], Base[Next]);
-                Append(Base[Edge], Far[Edge], Far[Next]);
-            }
+            ShadowVolumesStale_ = false;
+            return true;
         }
+        SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
+        if (!Device || !Cmd)
+            return false;
+        const std::size_t VertexBytes = ShadowVolumeVertexCount_ * sizeof(Vec3);
+        const std::size_t IndexBytes = ShadowVolumeIndexCount_ * sizeof(uint32_t);
+        if (VertexBytes + IndexBytes > std::numeric_limits<Uint32>::max())
+        {
+            ReportRenderError("shadow volumes exceed the GPU transfer limit");
+            return false;
+        }
+        const auto EnsureBuffer =
+            [&](SDL_GPUBuffer*& Buffer, Uint32& Capacity, SDL_GPUBufferUsageFlags Usage, std::size_t Bytes)
+        {
+            if (Buffer && Capacity >= Bytes)
+                return true;
+            if (Buffer)
+                SDL_ReleaseGPUBuffer(Device, Buffer);
+            SDL_GPUBufferCreateInfo Info{};
+            Info.usage = Usage;
+            Info.size = static_cast<Uint32>(std::min<std::size_t>(
+                std::max<std::size_t>(Bytes, std::size_t{Capacity} * 2), std::numeric_limits<Uint32>::max()));
+            Buffer = SDL_CreateGPUBuffer(Device, &Info);
+            Capacity = Buffer ? Info.size : 0;
+            if (!Buffer)
+                ReportRenderError(std::string("shadow volume buffer creation failed: ") + SDL_GetError());
+            return Buffer != nullptr;
+        };
+        if (!EnsureBuffer(ShadowVertexBuffer_, ShadowVertexCapacity_, SDL_GPU_BUFFERUSAGE_VERTEX, VertexBytes) ||
+            !EnsureBuffer(ShadowIndexBuffer_, ShadowIndexCapacity_, SDL_GPU_BUFFERUSAGE_INDEX, IndexBytes))
+            return false;
+        SDL_GPUTransferBuffer* Transfer = MeshTransferBuffer(VertexBytes + IndexBytes);
+        if (!Transfer)
+            return false;
+
+        auto* Mapped = static_cast<std::byte*>(SDL_MapGPUTransferBuffer(Device, Transfer, true));
+        if (!Mapped)
+            return false;
+        std::byte* VertexOutput = Mapped;
+        auto* IndexOutput = reinterpret_cast<uint32_t*>(Mapped + VertexBytes);
+        uint32_t BaseVertex = 0;
+        for (const auto& [Id, Caster] : ShadowCasters_)
+        {
+            (void)Id;
+            if (Caster.Indices.empty())
+                continue;
+            SDL_memcpy(VertexOutput, Caster.Vertices.data(), Caster.Vertices.size() * sizeof(Vec3));
+            VertexOutput += Caster.Vertices.size() * sizeof(Vec3);
+            for (const uint32_t Index : Caster.Indices)
+                *IndexOutput++ = BaseVertex + Index;
+            BaseVertex += static_cast<uint32_t>(Caster.Vertices.size());
+        }
+        SDL_UnmapGPUTransferBuffer(Device, Transfer);
+
+        SDL_GPUCopyPass* Copy = SDL_BeginGPUCopyPass(Cmd);
+        if (!Copy)
+            return false;
+        const SDL_GPUTransferBufferLocation VertexSource{Transfer, 0};
+        const SDL_GPUBufferRegion VertexDestination{ShadowVertexBuffer_, 0, static_cast<Uint32>(VertexBytes)};
+        SDL_UploadToGPUBuffer(Copy, &VertexSource, &VertexDestination, true);
+        const SDL_GPUTransferBufferLocation IndexSource{Transfer, static_cast<Uint32>(VertexBytes)};
+        const SDL_GPUBufferRegion IndexDestination{ShadowIndexBuffer_, 0, static_cast<Uint32>(IndexBytes)};
+        SDL_UploadToGPUBuffer(Copy, &IndexSource, &IndexDestination, true);
+        SDL_EndGPUCopyPass(Copy);
+        ShadowVolumesStale_ = false;
+        return true;
+    }
+
+    void RendererSystem::ReleaseShadowVolumes()
+    {
+        if (SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice())
+        {
+            if (ShadowVertexBuffer_)
+                SDL_ReleaseGPUBuffer(Device, ShadowVertexBuffer_);
+            if (ShadowIndexBuffer_)
+                SDL_ReleaseGPUBuffer(Device, ShadowIndexBuffer_);
+        }
+        ShadowVertexBuffer_ = nullptr;
+        ShadowIndexBuffer_ = nullptr;
+        ShadowVertexCapacity_ = 0;
+        ShadowIndexCapacity_ = 0;
     }
 } // namespace dbc

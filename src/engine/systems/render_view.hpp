@@ -147,6 +147,7 @@ namespace dbc
         bool WorldRendered = false;
         bool Finalized = false;
         bool HasErrors = false;
+        bool ShadowCastersUpdated = false;
         int Vertices = 0;
         int Batches = 0;
         int Views = 0;

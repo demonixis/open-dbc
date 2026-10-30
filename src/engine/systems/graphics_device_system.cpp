@@ -1317,6 +1317,20 @@ namespace dbc
             ShadowVolumeInfo.depth_stencil_state.back_stencil_state = {SDL_GPU_STENCILOP_KEEP, SDL_GPU_STENCILOP_KEEP,
                                                                        SDL_GPU_STENCILOP_DECREMENT_AND_WRAP,
                                                                        SDL_GPU_COMPAREOP_ALWAYS};
+            // Volumes carry nothing but positions.
+            SDL_GPUVertexBufferDescription ShadowVolumeBuffer{};
+            ShadowVolumeBuffer.slot = 0;
+            ShadowVolumeBuffer.pitch = sizeof(float) * 3;
+            ShadowVolumeBuffer.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
+            SDL_GPUVertexAttribute ShadowVolumePosition{};
+            ShadowVolumePosition.location = 0;
+            ShadowVolumePosition.buffer_slot = 0;
+            ShadowVolumePosition.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
+            ShadowVolumePosition.offset = 0;
+            ShadowVolumeInfo.vertex_input_state.vertex_buffer_descriptions = &ShadowVolumeBuffer;
+            ShadowVolumeInfo.vertex_input_state.num_vertex_buffers = 1;
+            ShadowVolumeInfo.vertex_input_state.vertex_attributes = &ShadowVolumePosition;
+            ShadowVolumeInfo.vertex_input_state.num_vertex_attributes = 1;
             SDL_GPUShader* ShadowVolumeVertex = CreateEngineShader("shadow_volume", SDL_GPU_SHADERSTAGE_VERTEX, 0, 2);
             SDL_GPUShader* ShadowVolumeFragment =
                 CreateEngineShader("shadow_volume", SDL_GPU_SHADERSTAGE_FRAGMENT, 0, 0);

@@ -320,6 +320,12 @@ namespace dbc
                 ReflectionNormal = dbc::TransformObjectSpaceVector(K, Object, Vec3{0.0f, 0.0f, 1.0f});
                 HasReflection = true;
             });
+        // World-space volumes serve every view of the frame.
+        if (!Frame.ShadowCastersUpdated)
+        {
+            UpdateShadowCasters();
+            Frame.ShadowCastersUpdated = true;
+        }
         {
             // Check if the 3D scene needs rebuilding. The cached scene may name an image texture released since.
             const uint64_t ReleasedTextures = K.ImageStoreRef().ReleasedGpuTextures();
@@ -352,16 +358,7 @@ namespace dbc
         Current_.VisibleObjects += Scene.VisibleObjects;
         Current_.CulledObjects += Scene.CulledObjects;
 
-        auto& ShadowSources = Geometry.ShadowSources;
-        // Only shadow casters build volumes; copying every world triangle would cost more than the volumes.
-        ShadowSources.clear();
-        std::copy_if(Tris.begin(), Tris.end(), std::back_inserter(ShadowSources),
-                     [](const Triangle& TriangleValue) { return TriangleValue.Style.ShadowCaster; });
-        auto& ShadowTris = Geometry.Shadows;
-        ShadowTris.clear();
-        dbc::AppendCasterVolumes(K, ShadowTris);
-        dbc::BuildShadowVolumes(K, ShadowSources, ShadowTris);
-        const bool HasShadow = !ShadowTris.empty();
+        const bool HasShadow = ShadowVolumeIndexCount_ != 0;
         const Uint64 ConvertStart = SDL_GetPerformanceCounter();
         Current_.BuildMilliseconds += TicksToMilliseconds(ConvertStart - BuildStart - OrderTicks);
         Current_.OrderMilliseconds += TicksToMilliseconds(OrderTicks);
@@ -374,7 +371,7 @@ namespace dbc
         Geometry.MeshIndices = 0;
         {
             const std::size_t TriangleCount =
-                Tris.size() + Scene.Reflected.Triangles.size() + ShadowTris.size() + Scene.Overlay.Triangles.size();
+                Tris.size() + Scene.Reflected.Triangles.size() + Scene.Overlay.Triangles.size();
             Vertices.reserve(TriangleCount * 3 + 8192);
             Batches.reserve(2048);
             const auto AppendTriangle =
@@ -494,12 +491,6 @@ namespace dbc
                 InsertNext();
             AppendOrdered(Scene.Reflected, Vertices, Batches);
 
-            for (const Triangle& Tri : ShadowTris)
-            {
-                dbc::AppendGpuTriangle(K, Vertices, Batches, Tri.GpuTexture, Tri.Pos, Tri.Normal, Tri.Color, Tri.Uv,
-                                       false, false, false, Tri.Style, nullptr, false, false, -1, false, true);
-            }
-
             // Reflections and shadows darken what the stencil marked.
             const auto AppendDarkening = [&](bool Shadow)
             {
@@ -557,7 +548,7 @@ namespace dbc
     bool RendererSystem::UploadPreparedViews(std::span<PreparedViewGeometry> Geometry, SDL_GPUCommandBuffer* Cmd)
     {
         const StepTimer Timer{Current_.UploadMilliseconds};
-        if (!UploadStaticTerrains(Geometry, Cmd) || !UploadGpuMeshes(Cmd))
+        if (!UploadStaticTerrains(Geometry, Cmd) || !UploadGpuMeshes(Cmd) || !UploadShadowVolumes(Cmd))
             return false;
         auto& Gpu = Kernel_.Gpu();
         // Each view's vertices, then its GPU mesh instance records, in the one frame vertex buffer.
@@ -758,11 +749,9 @@ namespace dbc
                     if (!Selects(Batch))
                         continue;
                     const bool MaskBatch = Batch.Style.ReflectionSurface && !Batch.Style.ReflectionPass;
-                    const bool ShadowVolume = Batch.Style.ShadowVolume;
                     const bool ShadowOverlay = Batch.Style.ShadowOverlay;
                     const bool StencilTest = Batch.Style.ReflectionPass || Batch.Style.ReflectionOverlay;
-                    const int BatchEffect =
-                        MaskBatch || ShadowVolume || ShadowOverlay || ForcePipeline ? 0 : Batch.Style.EffectId;
+                    const int BatchEffect = MaskBatch || ShadowOverlay || ForcePipeline ? 0 : Batch.Style.EffectId;
                     bool StandardUniformsChanged = false;
                     if (Batch.Is2d != CurrentIs2d)
                     {
@@ -804,10 +793,6 @@ namespace dbc
                     else if (MaskBatch)
                     {
                         Pipeline = K.Gpu().ReflectionMaskPipeline();
-                    }
-                    else if (ShadowVolume)
-                    {
-                        Pipeline = K.Gpu().ShadowVolumePipeline();
                     }
                     else if (ShadowOverlay)
                     {
@@ -877,9 +862,7 @@ namespace dbc
                     }
 
                     // The reflection mask writes no colour, but its fragment shader samples like any other.
-                    const Uint32 SamplerCount = ShadowVolume       ? 0
-                                                : BatchEffect == 0 ? 9
-                                                                   : K.Gpu().EffectFragmentSamplerCount(BatchEffect);
+                    const Uint32 SamplerCount = BatchEffect == 0 ? 9 : K.Gpu().EffectFragmentSamplerCount(BatchEffect);
                     if (SamplerCount != 0)
                     {
                         SDL_GPUTexture* Texture = Batch.Texture;
@@ -1003,7 +986,7 @@ namespace dbc
                 return Batch.Is2d && !Batch.Style.ReflectionOverlay && !Batch.Style.ShadowOverlay &&
                        !Batch.Style.Backdrop && (!(!Frame.HudLast && K.Sprites().SpritesDrawFirst()) || !Batch.Sprite);
             };
-            const auto Draw3d = [&](const GpuBatch& Batch) { return !Batch.Is2d && !Batch.Style.ShadowVolume; };
+            const auto Draw3d = [&](const GpuBatch& Batch) { return !Batch.Is2d; };
             // Screen 2D keeps screen coordinates whatever the camera viewport.
             const auto DrawScreen2d = [&]()
             {
@@ -1032,10 +1015,7 @@ namespace dbc
             else
             {
                 const auto DrawNormal3d = [](const GpuBatch& Batch)
-                {
-                    return !Batch.Is2d && !Batch.Style.ReflectionSurface && !Batch.Style.ReflectionPass &&
-                           !Batch.Style.ShadowVolume;
-                };
+                { return !Batch.Is2d && !Batch.Style.ReflectionSurface && !Batch.Style.ReflectionPass; };
                 const auto DrawReflectionMask = [](const GpuBatch& Batch)
                 { return !Batch.Is2d && Batch.Style.ReflectionSurface && !Batch.Style.ReflectionPass; };
                 const auto DrawReflected = [](const GpuBatch& Batch)
@@ -1093,15 +1073,23 @@ namespace dbc
                     DrawBatches(
                         K.Gpu().ShadowDepthPipeline(), K.Gpu().ShadowDepthPipeline(), PerspUbo,
                         [](const GpuBatch& Batch)
-                        {
-                            return !Batch.Is2d && !Batch.Style.ReflectionPass && !Batch.Style.ShadowVolume &&
-                                   Batch.DepthTest && Batch.DepthWrite;
-                        },
+                        { return !Batch.Is2d && !Batch.Style.ReflectionPass && Batch.DepthTest && Batch.DepthWrite; },
                         true);
                 }
 
-                DrawBatches(K.Gpu().ShadowVolumePipeline(), K.Gpu().ShadowVolumePipeline(), PerspUbo,
-                            [](const GpuBatch& Batch) { return Batch.Style.ShadowVolume; });
+                if (SDL_GPUGraphicsPipeline* VolumePipeline = K.Gpu().ShadowVolumePipeline())
+                {
+                    SDL_BindGPUGraphicsPipeline(Pass, VolumePipeline);
+                    SDL_PushGPUVertexUniformData(Cmd, 0, &PerspUbo, sizeof(GpuVertexUniforms));
+                    SDL_PushGPUVertexUniformData(Cmd, 1, &View.WorldToView[0][0], sizeof(glm::mat4));
+                    const SDL_GPUBufferBinding VolumeVertices{ShadowVertexBuffer_, 0};
+                    SDL_BindGPUVertexBuffers(Pass, 0, &VolumeVertices, 1);
+                    const SDL_GPUBufferBinding VolumeIndices{ShadowIndexBuffer_, 0};
+                    SDL_BindGPUIndexBuffer(Pass, &VolumeIndices, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+                    SDL_DrawGPUIndexedPrimitives(Pass, static_cast<Uint32>(ShadowVolumeIndexCount_), 1, 0, 0, 0);
+                    SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
+                    BindSharedVertices(Pass);
+                }
                 DrawBatches(K.Gpu().ShadowOverlayPipeline(), K.Gpu().ShadowOverlayPipeline(), OrthoUbo,
                             [](const GpuBatch& Batch) { return Batch.Style.ShadowOverlay; });
                 if ((Frame.HudLast || K.Draw().IsDrawToFront()))
@@ -1124,10 +1112,11 @@ namespace dbc
             (Geometry.Scene && (!Geometry.Scene->World.Triangles.empty() || !Geometry.Scene->MeshDraws.empty())) ||
             !Geometry.TerrainIndices.empty();
         // Instancing can multiply past the range of the statistics.
-        const uint64_t ViewVertices = uint64_t{Vertices.size()} + Geometry.TerrainIndices.size() + Geometry.MeshIndices;
+        const uint64_t ViewVertices =
+            uint64_t{Vertices.size()} + Geometry.TerrainIndices.size() + Geometry.MeshIndices + ShadowVolumeIndexCount_;
         Frame.Vertices = static_cast<int>(
             std::min<uint64_t>(static_cast<uint64_t>(Frame.Vertices) + ViewVertices, std::numeric_limits<int>::max()));
-        Frame.Batches += static_cast<int>(Batches.size());
+        Frame.Batches += static_cast<int>(Batches.size()) + (ShadowVolumeIndexCount_ != 0 ? 1 : 0);
         ++Frame.Views;
         return true;
     }
@@ -1437,6 +1426,7 @@ namespace dbc
     {
         ReleaseStaticTerrains();
         ReleaseGpuMeshes();
+        ReleaseShadowVolumes();
     }
 
     std::shared_ptr<SceneTriangles> RendererSystem::SceneForRebuild()

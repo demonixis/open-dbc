@@ -30,11 +30,7 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    priority first within each phase. Opaque triangles go front to back, except
    that each run of triangles that are depth tested and written and not blended
    is grouped by draw-state hash; the others keep their place between the runs.
-   Reflection shading gathers the scene again with the mirrored view; stencil
-   shadow volumes are extruded on the CPU from each caster's whole mesh, since a
-   caster out of frame or turned away from the camera still shadows what is in
-   frame: its lit faces make the two caps, and the edges those faces do not share
-   make the sides.
+   Reflection shading gathers the scene again with the mirrored view.
 3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
    triangles that share textures, blending, depth state and `SurfaceStyle` merge
    into one `GpuBatch`. Static terrains and GPU meshes take the place of their CPU
@@ -48,8 +44,8 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    opaque, transparent then additive pipelines, the reflection mask and reflected
    scene, shadow volumes and their overlay, 2D over the scene. Each batch is one
    draw call that binds nine textures and pushes its texture-stage uniforms; a GPU
-   mesh batch also binds its buffers and draws every instance of its group. Volume
-   batches bind no texture: they only count their faces in the stencil.
+   mesh batch also binds its buffers and draws every instance of its group. All
+   shadow volumes make one draw call that binds no texture.
 6. `FinalizeFrame` records `STATISTIC(1)` (triangles) and `STATISTIC(5)`
    (batches), then clears bitmap 0 after a 3D frame.
 
@@ -89,13 +85,25 @@ world face normal the CPU path would use. While reflection shading is on, or an
 opaque object depends on the depth order (no depth test or write, alpha-tested
 transparency modes), every mesh keeps the CPU path.
 
+Stencil shadow volumes are extruded on the CPU from each caster's whole mesh, since a
+caster out of frame or turned away from the camera still shadows what is in frame.
+The caster's lit faces make the two caps and the edges they do not share make the
+sides, found once per `MeshGeometry` revision. A volume is kept in world space, so
+cameras and views share it: it is extruded again only when its caster moves, is
+edited, is animated or is glued to another object, or when the light moves. Any
+change uploads the volumes of all casters again, as positions and indices, and
+`shaders/shadow_volume.hlsl` draws them with no colour, varyings or textures. An
+object locked to the screen casts only from a shadow mesh of its own.
+
 ## Where frame time goes
 
 On the CPU path, time grows with visible triangles, not objects: clipping and
 filling `Triangle` records, ordering them, then converting and uploading
 `GpuVertex` records. A group of GPU meshes costs one draw call whatever its size and
 count, but distinct meshes cost one each, so with many of them recording the draws
-takes most of the frame. The VM is a small share of a 3D frame.
+takes most of the frame. The VM is a small share of a 3D frame. Shadow volumes cost
+the CPU only on frames where a caster or the light changes: those casters are
+extruded again and all volumes uploaded.
 
 ## Compatibility constraints
 

@@ -2249,6 +2249,163 @@ TEST_CASE("A DBPro shadow does not depend on how the camera sees its caster")
     CHECK(Darkened(0.0f, 10.0f, -0.1f, 0.0f, 0.0f) > 100);
 }
 
+// The red channel of a captured frame.
+static std::vector<int> CaptureReds(dbc::EngineKernel& Kernel)
+{
+    SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+    REQUIRE(Capture != nullptr);
+    std::vector<int> Reds;
+    Reds.reserve(static_cast<std::size_t>(Capture->w * Capture->h));
+    for (int Y = 0; Y < Capture->h; ++Y)
+        for (int X = 0; X < Capture->w; ++X)
+        {
+            Uint8 Red = 0, Green = 0, Blue = 0, Alpha = 0;
+            REQUIRE(SDL_ReadSurfacePixel(Capture, X, Y, &Red, &Green, &Blue, &Alpha));
+            Reds.push_back(Red);
+        }
+    SDL_DestroySurface(Capture);
+    return Reds;
+}
+
+TEST_CASE("A shadow volume is extruded again only when its caster changes")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 128, 96));
+    Kernel.Camera().SetAutoCamOff();
+    const auto PlaceCamera = [&](float X, float Y, float Z)
+    {
+        RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(X, Y, Z, &Error); });
+        RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PointCamera(0.0f, 0.0f, 0.0f, &Error); });
+    };
+    PlaceCamera(0.0f, 60.0f, -60.0f);
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    REQUIRE(Objects.MakeObjectPlain(1, 400.0f, 400.0f));
+    Objects.RotateObject(1, 270.0f, 0.0f, 0.0f);
+    REQUIRE(Objects.SetObjectLight(1, 0));
+    Objects.ColorObject(1, 0xE0E0E0);
+    for (const int Id : {2, 3})
+    {
+        Objects.MakeObjectCube(Id, 8.0f);
+        Objects.PositionObject(Id, Id == 2 ? -15.0f : 15.0f, 20.0f, 0.0f);
+        REQUIRE(Objects.SetObjectLight(Id, 0));
+        Objects.ColorObject(Id, 0xE0E0E0);
+    }
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE(Kernel.Gpu().SupportsStencil());
+    dbc::RendererSystem& Renderer = Kernel.Renderer();
+    Renderer.SetShadowPosition(-1, 0.0f, 100.0f, 0.0f);
+    const auto Extruded = [&] { return Renderer.LastFrameStats().ShadowCastersExtruded; };
+    const auto Reds = [&] { return CaptureReds(Kernel); };
+
+    const std::vector<int> NoShadow = Reds();
+    CHECK(Extruded() == 0);
+    REQUIRE(Objects.SetShadowShadingOn(2));
+    REQUIRE(Objects.SetShadowShadingOn(3));
+    const std::vector<int> Both = Reds();
+    CHECK(Extruded() == 2);
+    CHECK(Both != NoShadow);
+    CHECK(Reds() == Both);
+    CHECK(Extruded() == 0);
+
+    // The camera changes the picture, not the volumes.
+    PlaceCamera(40.0f, 60.0f, -40.0f);
+    CHECK(Reds() != Both);
+    CHECK(Extruded() == 0);
+    PlaceCamera(0.0f, 60.0f, -60.0f);
+    CHECK(Reds() == Both);
+    CHECK(Extruded() == 0);
+
+    // A caster that moves changes its own volume, which matches one extruded along with all the others.
+    Objects.PositionObject(2, -15.0f, 20.0f, 20.0f);
+    const std::vector<int> CasterMoved = Reds();
+    CHECK(Extruded() == 1);
+    CHECK(CasterMoved != Both);
+    Renderer.SetShadowPosition(-1, 0.0f, 90.0f, 0.0f);
+    CHECK(Reds() != CasterMoved);
+    CHECK(Extruded() == 2);
+    Renderer.SetShadowPosition(-1, 0.0f, 100.0f, 0.0f);
+    CHECK(Reds() == CasterMoved);
+    CHECK(Extruded() == 2);
+
+    // So does an edit of its vertices.
+    const std::vector<dbc::Vec3> Corners = Objects.GetObject(2)->Meshes.front().Geometry().Vertices;
+    REQUIRE(Objects.LockVertexdataForLimb(2, 0));
+    for (std::size_t Index = 0; Index < Corners.size(); ++Index)
+    {
+        REQUIRE(Objects.SetVertexdataPosition(static_cast<int>(Index), Corners[Index].X * 2.0f, Corners[Index].Y,
+                                              Corners[Index].Z * 2.0f));
+    }
+    Objects.UnlockVertexdata();
+    const std::vector<int> Edited = Reds();
+    CHECK(Extruded() == 1);
+    CHECK(Edited != CasterMoved);
+
+    // A hidden caster has no volume, and casts again when shown.
+    Objects.HideObject(3);
+    const std::vector<int> Hidden = Reds();
+    CHECK(Extruded() == 0);
+    CHECK(Hidden != Edited);
+    Objects.ShowObject(3);
+    CHECK(Reds() == Edited);
+    CHECK(Extruded() == 1);
+
+    // A caster glued to an object follows it, though the object that moves is not the caster.
+    Objects.MakeObjectCube(4, 1.0f);
+    Objects.PositionObject(4, 15.0f, 20.0f, 0.0f);
+    REQUIRE(Objects.GlueObjectToLimb(3, 4, 0));
+    Objects.PositionObject(3, 0.0f, 0.0f, 0.0f);
+    const std::vector<int> Glued = Reds();
+    Objects.PositionObject(4, 15.0f, 20.0f, 25.0f);
+    CHECK(Reds() != Glued);
+    CHECK(Extruded() == 1);
+
+    // A deleted caster takes its volume with it; a second camera extrudes nothing more.
+    Objects.DeleteObject(3);
+    const std::vector<int> Deleted = Reds();
+    CHECK(Extruded() == 0);
+    CHECK(Deleted != Glued);
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().MakeCamera(1, &Error); });
+    Objects.PositionObject(2, -15.0f, 20.0f, -20.0f);
+    (void)Reds();
+    CHECK(Extruded() == 1);
+    CHECK(Renderer.LastFrameStats().Views == 2);
+}
+
+TEST_CASE("An object locked to the screen casts a shadow only from a shadow mesh")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 128, 96));
+    Kernel.Camera().SetAutoCamOff();
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    REQUIRE(Objects.MakeObjectPlain(1, 400.0f, 400.0f));
+    Objects.PositionObject(1, 0.0f, 0.0f, 40.0f);
+    REQUIRE(Objects.SetObjectLight(1, 0));
+    Objects.ColorObject(1, 0xE0E0E0);
+    Objects.MakeObjectCube(2, 4.0f);
+    Objects.PositionObject(2, 0.0f, 0.0f, 10.0f);
+    REQUIRE(Objects.SetObjectLight(2, 0));
+    Objects.ColorObject(2, 0xE0E0E0);
+    REQUIRE(Objects.LockObjectOn(2));
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE(Kernel.Gpu().SupportsStencil());
+    Kernel.Renderer().SetShadowPosition(-1, 10.0f, 0.0f, -20.0f);
+
+    const std::vector<int> Plain = CaptureReds(Kernel);
+    REQUIRE(Objects.SetShadowShadingOn(2));
+    CHECK(CaptureReds(Kernel) == Plain);
+    CHECK(Kernel.Renderer().LastFrameStats().ShadowCastersExtruded == 0);
+
+    REQUIRE(Objects.MakeMeshFromObject(7, 2));
+    REQUIRE(Objects.SetShadowShadingOn(2, 7, 2000, 0));
+    const std::vector<int> Shadowed = CaptureReds(Kernel);
+    CHECK(Kernel.Renderer().LastFrameStats().ShadowCastersExtruded == 1);
+    int Darkened = 0;
+    for (std::size_t Index = 0; Index < Plain.size(); ++Index)
+        Darkened += Plain[Index] - Shadowed[Index] > 20 ? 1 : 0;
+    INFO("render error=", Kernel.Debug().LastRenderError());
+    CHECK(Darkened > 20);
+}
+
 TEST_CASE("Portable object visibility and GPU capability queries preserve DBPro semantics")
 {
     dbc::EngineKernel Kernel;

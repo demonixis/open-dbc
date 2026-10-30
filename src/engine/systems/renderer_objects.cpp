@@ -47,9 +47,6 @@ namespace dbc
             (Object.TransparencyMode == 4 || Object.TransparencyMode == 6) ? (207.0f / 255.0f) : 0.0f;
         Style.AlphaOverride = Object.AlphaMapping ? Object.AlphaMappingAlpha : -1.0f;
         Style.ReflectionSurface = Object.ReflectionShading;
-        // Others cast from their meshes, whatever the camera sees of them (AppendShadowSources).
-        Style.ShadowCaster = Object.ShadowShading && Object.ShadowMeshes.empty() && Object.LockToScreen;
-        Style.ShadowRange = Object.ShadowRange;
         return Style;
     }
 
@@ -223,8 +220,8 @@ namespace dbc
                                [](const auto& Value) { return Value != std::decay_t<decltype(Value)>{}; });
         };
         if (Surface.BlendTransparent || Surface.BlendAdditive || Surface.CubeGpuTexture || Style.EffectId != 0 ||
-            Style.ReflectionSurface || Style.ShadowCaster || Set(Surface.AuxiliaryGpuTextures) ||
-            Set(Surface.CoordinateModes) || Set(Style.TextureCubeModes) || Set(Style.TextureBlendModes, 1) ||
+            Style.ReflectionSurface || Set(Surface.AuxiliaryGpuTextures) || Set(Surface.CoordinateModes) ||
+            Set(Style.TextureCubeModes) || Set(Style.TextureBlendModes, 1) ||
             !K.Renderer().PrepareGpuMesh(MeshValue.SharedGeometry()))
             return false;
 

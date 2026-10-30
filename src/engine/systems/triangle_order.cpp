@@ -113,8 +113,7 @@ namespace dbc
             Mix(0, (Style.Wireframe ? 1u : 0u) | (Style.Fog ? 2u : 0u) | (Style.BlackFog ? 4u : 0u) |
                        (Style.Ambient ? 8u : 0u) | (Style.Filter ? 16u : 0u) | (Style.ReflectionSurface ? 32u : 0u) |
                        (Style.ReflectionPass ? 64u : 0u) | (Style.ReflectionOverlay ? 128u : 0u) |
-                       (Style.Backdrop ? 256u : 0u) | (Style.ShadowCaster ? 512u : 0u) |
-                       (Style.ShadowVolume ? 1024u : 0u) | (Style.ShadowOverlay ? 2048u : 0u));
+                       (Style.Backdrop ? 256u : 0u) | (Style.ShadowOverlay ? 512u : 0u));
         for (std::size_t Stage = 0; Stage < Style.TextureBlendModes.size(); ++Stage)
         {
             Hash = Mix(Hash, static_cast<uint32_t>(Style.TextureBlendModes[Stage]) |
@@ -122,9 +121,8 @@ namespace dbc
             Hash = Mix(Hash, static_cast<uint32_t>(Style.TextureMipModes[Stage]) |
                                  (Style.TextureCubeModes[Stage] ? uint64_t{1} << 32 : 0u));
         }
-        Hash = Mix(Hash, static_cast<uint32_t>(Style.BuiltInEffect) |
+        return Mix(Hash, static_cast<uint32_t>(Style.BuiltInEffect) |
                              static_cast<uint64_t>(static_cast<uint32_t>(Style.EffectId)) << 32);
-        return Mix(Hash, std::bit_cast<uint32_t>(Style.ShadowRange));
     }
 
     uint32_t DrawStateHash(const Triangle& TriangleValue, uint32_t StyleHash)

@@ -173,6 +173,25 @@ namespace dbc
         }
     }
 
+    SDL_GPUTransferBuffer* RendererSystem::MeshTransferBuffer(std::size_t Bytes)
+    {
+        if (GpuMeshTransfer_ && GpuMeshTransferCapacity_ >= Bytes)
+            return GpuMeshTransfer_;
+        SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
+        if (GpuMeshTransfer_)
+            SDL_ReleaseGPUTransferBuffer(Device, GpuMeshTransfer_);
+        SDL_GPUTransferBufferCreateInfo Info{};
+        Info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+        Info.size = static_cast<Uint32>(
+            std::min<std::size_t>(std::max<std::size_t>(Bytes, std::size_t{GpuMeshTransferCapacity_} * 2),
+                                  std::numeric_limits<Uint32>::max()));
+        GpuMeshTransfer_ = SDL_CreateGPUTransferBuffer(Device, &Info);
+        GpuMeshTransferCapacity_ = GpuMeshTransfer_ ? Info.size : 0;
+        if (!GpuMeshTransfer_)
+            ReportRenderError(std::string("mesh transfer buffer creation failed: ") + SDL_GetError());
+        return GpuMeshTransfer_;
+    }
+
     bool RendererSystem::UploadGpuMeshes(SDL_GPUCommandBuffer* Cmd)
     {
         std::size_t Bytes = 0;
@@ -192,23 +211,8 @@ namespace dbc
             ReportRenderError("mesh geometry exceeds the GPU transfer limit");
             return false;
         }
-        if (!GpuMeshTransfer_ || GpuMeshTransferCapacity_ < Bytes)
-        {
-            if (GpuMeshTransfer_)
-                SDL_ReleaseGPUTransferBuffer(Device, GpuMeshTransfer_);
-            SDL_GPUTransferBufferCreateInfo Info{};
-            Info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-            Info.size = static_cast<Uint32>(
-                std::min<std::size_t>(std::max<std::size_t>(Bytes, std::size_t{GpuMeshTransferCapacity_} * 2),
-                                      std::numeric_limits<Uint32>::max()));
-            GpuMeshTransfer_ = SDL_CreateGPUTransferBuffer(Device, &Info);
-            GpuMeshTransferCapacity_ = GpuMeshTransfer_ ? Info.size : 0;
-            if (!GpuMeshTransfer_)
-            {
-                ReportRenderError(std::string("mesh transfer buffer creation failed: ") + SDL_GetError());
-                return false;
-            }
-        }
+        if (!MeshTransferBuffer(Bytes))
+            return false;
 
         auto* Mapped = static_cast<std::byte*>(SDL_MapGPUTransferBuffer(Device, GpuMeshTransfer_, true));
         if (!Mapped)

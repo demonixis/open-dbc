@@ -64,7 +64,6 @@ namespace dbc
         Uint32 MeshInstances = 0;
         Uint32 MeshInstanceOffset = 0;
         uint64_t MeshIndices = 0;
-        std::vector<Triangle> ShadowSources, Shadows;
         SDL_FColor ClearColor{};
         Uint32 VertexOffset = 0;
         // Indices into static terrain vertex buffers, uploaded once per view at TerrainIndexOffset.
@@ -89,6 +88,8 @@ namespace dbc
         int Objects = 0;
         int VisibleObjects = 0;
         int CulledObjects = 0;
+        // Shadow casters that changed, whose volumes were extruded again.
+        int ShadowCastersExtruded = 0;
         // Gathering the scene's triangles and shadow volumes, ordering them, converting everything to GPU vertices
         // and batches, uploading those, and recording the draw calls.
         double BuildMilliseconds = 0.0;
@@ -358,6 +359,15 @@ namespace dbc
         // Frees the buffers of geometries that changed or that no view drew for a few seconds.
         void ReleaseUnusedGpuMeshes();
         void ReleaseGpuMeshes();
+        // The upload buffer GPU meshes and shadow volumes share, large enough for Bytes; null after reporting a
+        // failure.
+        SDL_GPUTransferBuffer* MeshTransferBuffer(std::size_t Bytes);
+
+        // Extrudes again the casters that changed since the last frame, and drops those gone. Must run before the
+        // scene build clears the objects' dirty flags.
+        void UpdateShadowCasters();
+        bool UploadShadowVolumes(SDL_GPUCommandBuffer* Commands);
+        void ReleaseShadowVolumes();
         void ReleaseStaleShadowTopologies();
 
         // An empty scene to rebuild into: the cached one, cleared, when no view still holds it.
@@ -417,6 +427,29 @@ namespace dbc
         };
 
         std::unordered_map<uint64_t, ShadowTopologyEntry> ShadowTopologies_;
+
+        // A caster's volume in world space, which the camera does not change, and what it was extruded from. All of
+        // them share one pair of GPU buffers, drawn in one call.
+        struct ShadowCaster
+        {
+            std::vector<Vec3> Vertices;
+            std::vector<uint32_t> Indices;
+            std::vector<uint64_t> Revisions;
+            uint64_t LastWalk = 0;
+        };
+
+        std::unordered_map<int, ShadowCaster> ShadowCasters_;
+        uint64_t ShadowCasterWalk_ = 0;
+        Vec3 ShadowCasterLight_{};
+        bool ShadowVolumesStale_ = false;
+        std::size_t ShadowVolumeVertexCount_ = 0;
+        std::size_t ShadowVolumeIndexCount_ = 0;
+        SDL_GPUBuffer* ShadowVertexBuffer_ = nullptr;
+        SDL_GPUBuffer* ShadowIndexBuffer_ = nullptr;
+        Uint32 ShadowVertexCapacity_ = 0;
+        Uint32 ShadowIndexCapacity_ = 0;
+        std::vector<Vec3> ShadowWorldVertices_;
+        std::vector<uint8_t> ShadowLitFaces_;
     };
 
 } // namespace dbc
