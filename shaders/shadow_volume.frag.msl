@@ -1,0 +1,27 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct type_VertexUniforms
+{
+    float4x4 ViewProj;
+};
+
+struct type_ModelUniforms
+{
+    float4x4 ModelView;
+};
+
+struct PSMain_out
+{
+    float4 out_var_SV_Target0 [[color(0)]];
+};
+
+fragment PSMain_out PSMain()
+{
+    PSMain_out out = {};
+    out.out_var_SV_Target0 = float4(0.0);
+    return out;
+}
+

@@ -878,11 +878,13 @@ namespace dbc
                     }
 
                     // The reflection mask writes no colour, but its fragment shader samples like any other.
-                    const Uint32 SamplerCount = BatchEffect == 0 ? 9 : K.Gpu().EffectFragmentSamplerCount(BatchEffect);
+                    const Uint32 SamplerCount = ShadowVolume       ? 0
+                                                : BatchEffect == 0 ? 9
+                                                                   : K.Gpu().EffectFragmentSamplerCount(BatchEffect);
                     if (SamplerCount != 0)
                     {
                         SDL_GPUTexture* Texture = Batch.Texture;
-                        if ((ShadowVolume || ShadowOverlay || ForcePipeline) && !Texture)
+                        if ((ShadowOverlay || ForcePipeline) && !Texture)
                             Texture = WhiteGpuTexture(K);
                         if (BatchEffect != 0 && !K.Gpu().EffectUsesObjectTexture(BatchEffect))
                             Texture = WhiteGpuTexture(K);

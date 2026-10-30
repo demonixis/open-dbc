@@ -11,7 +11,7 @@ endif()
 file(REMOVE_RECURSE "${OPENDBC_SHADER_VERIFY_DIR}")
 file(MAKE_DIRECTORY "${OPENDBC_SHADER_VERIFY_DIR}")
 # Engine shaders, then the Studio's Scene view shaders, which the runner never loads.
-foreach(OPENDBC_SHADER IN ITEMS shaders/dbclassic_tri shaders/vr_transfer
+foreach(OPENDBC_SHADER IN ITEMS shaders/dbclassic_tri shaders/shadow_volume shaders/vr_transfer
                                 tools/studio/shaders/scene_mesh tools/studio/shaders/scene_line)
     get_filename_component(OPENDBC_SHADER_NAME "${OPENDBC_SHADER}" NAME)
     get_filename_component(OPENDBC_SHADER_DIR "${OPENDBC_SHADER}" DIRECTORY)

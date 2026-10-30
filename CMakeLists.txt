@@ -476,6 +476,7 @@ set(OPENDBC_SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
 set(OPENDBC_SHADER_FILES
     dbclassic_tri.vert.spv dbclassic_tri.frag.spv dbclassic_tri.vert.msl dbclassic_tri.frag.msl
     dbclassic_mesh.vert.spv dbclassic_mesh.vert.msl
+    shadow_volume.vert.spv shadow_volume.frag.spv shadow_volume.vert.msl shadow_volume.frag.msl
     vr_transfer.vert.spv vr_transfer.frag.spv vr_transfer.vert.msl vr_transfer.frag.msl)
 list(TRANSFORM OPENDBC_SHADER_FILES PREPEND "${OPENDBC_SHADER_OUTPUT_DIR}/" OUTPUT_VARIABLE OPENDBC_SHADER_OUTPUTS)
 list(TRANSFORM OPENDBC_SHADER_FILES PREPEND "${OPENDBC_SHADER_SOURCE_DIR}/" OUTPUT_VARIABLE OPENDBC_CANONICAL_SHADERS)

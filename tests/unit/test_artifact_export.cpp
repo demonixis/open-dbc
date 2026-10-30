@@ -81,7 +81,8 @@ namespace
         fs::create_directories(HostShaders);
         for (const std::string_view Name :
              {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
-              "dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl", "vr_transfer.vert.spv", "vr_transfer.frag.spv",
+              "dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl", "shadow_volume.vert.spv", "shadow_volume.frag.spv",
+              "shadow_volume.vert.msl", "shadow_volume.frag.msl", "vr_transfer.vert.spv", "vr_transfer.frag.spv",
               "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
         {
             fs::copy_file(SourceShaders / Name, ProductShaders / Name, fs::copy_options::overwrite_existing);
@@ -95,9 +96,10 @@ namespace
                         BinaryHash + "\",\"needed\":[\"libc.so\"]}\n");
     }
 
-    constexpr std::array<std::string_view, 10> CanonicalShaders{
+    constexpr std::array<std::string_view, 14> CanonicalShaders{
         "dbclassic_tri.vert.spv",  "dbclassic_tri.frag.spv",  "dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl",
-        "dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl", "vr_transfer.vert.spv",   "vr_transfer.frag.spv",
+        "dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl", "shadow_volume.vert.spv", "shadow_volume.frag.spv",
+        "shadow_volume.vert.msl",  "shadow_volume.frag.msl",  "vr_transfer.vert.spv",   "vr_transfer.frag.spv",
         "vr_transfer.vert.msl",    "vr_transfer.frag.msl"};
 
     void CopyCanonicalShaders(const fs::path& Destination)
@@ -1060,9 +1062,12 @@ TEST_CASE("artifact host shader validation rejects missing or changed shaders")
     fs::copy_file(Product / "vr_transfer.vert.spv", Host / "vr_transfer.vert.spv");
     fs::copy_file(Product / "vr_transfer.frag.spv", Host / "vr_transfer.frag.spv");
     fs::copy_file(Product / "dbclassic_mesh.vert.spv", Host / "dbclassic_mesh.vert.spv");
+    fs::copy_file(Product / "shadow_volume.vert.spv", Host / "shadow_volume.vert.spv");
+    fs::copy_file(Product / "shadow_volume.frag.spv", Host / "shadow_volume.frag.spv");
     CHECK_FALSE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
-    for (const std::string_view Name : {"dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl", "dbclassic_mesh.vert.msl",
-                                        "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
+    for (const std::string_view Name :
+         {"dbclassic_tri.vert.msl", "dbclassic_tri.frag.msl", "dbclassic_mesh.vert.msl", "shadow_volume.vert.msl",
+          "shadow_volume.frag.msl", "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
         fs::copy_file(Product / Name, Host / Name);
     REQUIRE(toolchain::detail::ValidateArtifactShaders(Host, Product, Error));
     Write(Host / "dbclassic_tri.vert.msl", "changed");

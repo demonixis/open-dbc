@@ -1317,7 +1317,19 @@ namespace dbc
             ShadowVolumeInfo.depth_stencil_state.back_stencil_state = {SDL_GPU_STENCILOP_KEEP, SDL_GPU_STENCILOP_KEEP,
                                                                        SDL_GPU_STENCILOP_DECREMENT_AND_WRAP,
                                                                        SDL_GPU_COMPAREOP_ALWAYS};
-            GpuShadowVolumePipeline_ = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &ShadowVolumeInfo);
+            SDL_GPUShader* ShadowVolumeVertex = CreateEngineShader("shadow_volume", SDL_GPU_SHADERSTAGE_VERTEX, 0, 2);
+            SDL_GPUShader* ShadowVolumeFragment =
+                CreateEngineShader("shadow_volume", SDL_GPU_SHADERSTAGE_FRAGMENT, 0, 0);
+            if (ShadowVolumeVertex && ShadowVolumeFragment)
+            {
+                ShadowVolumeInfo.vertex_shader = ShadowVolumeVertex;
+                ShadowVolumeInfo.fragment_shader = ShadowVolumeFragment;
+                GpuShadowVolumePipeline_ = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &ShadowVolumeInfo);
+            }
+            if (ShadowVolumeVertex)
+                SDL_ReleaseGPUShader(GpuDevice_, ShadowVolumeVertex);
+            if (ShadowVolumeFragment)
+                SDL_ReleaseGPUShader(GpuDevice_, ShadowVolumeFragment);
 
             SDL_GPUColorTargetDescription ShadowOverlayTarget = ColorTarget;
             ShadowOverlayTarget.blend_state.enable_blend = true;

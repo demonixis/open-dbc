@@ -1274,7 +1274,9 @@ namespace dbc::studio
             for (const std::string_view Name :
                  {"dbclassic_tri.vert.spv", "dbclassic_tri.frag.spv", "dbclassic_tri.vert.msl",
                   "dbclassic_tri.frag.msl", "dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl",
-                  "vr_transfer.vert.spv", "vr_transfer.frag.spv", "vr_transfer.vert.msl", "vr_transfer.frag.msl"})
+                  "shadow_volume.vert.spv", "shadow_volume.frag.spv", "shadow_volume.vert.msl",
+                  "shadow_volume.frag.msl", "vr_transfer.vert.spv", "vr_transfer.frag.spv", "vr_transfer.vert.msl",
+                  "vr_transfer.frag.msl"})
             {
                 const std::optional<std::string> HostHash = internal::Sha256File(HostShaderRoot / Name);
                 const std::optional<std::string> ProductHash = internal::Sha256File(ProductShaderRoot / Name);

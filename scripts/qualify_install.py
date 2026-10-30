@@ -23,7 +23,7 @@ REFERENCE_SOURCES = tuple(
 OPENXR_LOADER_PREFIXES = ("libopenxr_loader", "openxr_loader")
 SHADER_NAMES = tuple(
     f"{shader}.{stage}.{format}"
-    for shader in ("dbclassic_tri", "vr_transfer")
+    for shader in ("dbclassic_tri", "shadow_volume", "vr_transfer")
     for format in ("spv", "msl")
     for stage in ("vert", "frag")
 ) + ("dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl")

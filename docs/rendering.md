@@ -1,7 +1,8 @@
 # Rendering
 
 The engine draws through SDL_GPU with one HLSL shader, `shaders/dbclassic_tri.hlsl`,
-plus the pipelines of loaded effects. Opaque object meshes and terrains draw from
+a depth-only one for shadow volumes, `shaders/shadow_volume.hlsl`, and the pipelines
+of loaded effects. Opaque object meshes and terrains draw from
 GPU buffers; the rest of the 3D geometry is still built on the CPU every frame.
 [roadmap.md](roadmap.md#rendering-performance) lists the work that moves it to the
 GPU.
@@ -46,7 +47,8 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    opaque, transparent then additive pipelines, the reflection mask and reflected
    scene, shadow volumes and their overlay, 2D over the scene. Each batch is one
    draw call that binds nine textures and pushes its texture-stage uniforms; a GPU
-   mesh batch also binds its buffers and draws every instance of its group.
+   mesh batch also binds its buffers and draws every instance of its group. Volume
+   batches bind no texture: they only count their faces in the stencil.
 6. `FinalizeFrame` records `STATISTIC(1)` (triangles) and `STATISTIC(5)`
    (batches), then clears bitmap 0 after a 3D frame.
 

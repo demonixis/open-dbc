@@ -1,0 +1,32 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct type_VertexUniforms
+{
+    float4x4 ViewProj;
+};
+
+struct type_ModelUniforms
+{
+    float4x4 ModelView;
+};
+
+struct VSMain_out
+{
+    float4 gl_Position [[position]];
+};
+
+struct VSMain_in
+{
+    float3 in_var_POSITION [[attribute(0)]];
+};
+
+vertex VSMain_out VSMain(VSMain_in in [[stage_in]], constant type_VertexUniforms& VertexUniforms [[buffer(0)]], constant type_ModelUniforms& ModelUniforms [[buffer(1)]])
+{
+    VSMain_out out = {};
+    out.gl_Position = VertexUniforms.ViewProj * (ModelUniforms.ModelView * float4(in.in_var_POSITION, 1.0));
+    return out;
+}
+
