@@ -2323,6 +2323,12 @@ TEST_CASE("A shadow caster does not darken the faces its light reaches")
         CHECK(DarkenedFrom(Eye.X, Eye.Y, Eye.Z).OnCube == 0);
     }
 
+    // With the light behind the camera the volume runs on past the far plane, and its back faces must still count.
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().SetCameraRange(1.0f, 3000.0f, &Error); });
+    Kernel.Renderer().SetShadowPosition(-1, -2500.0f, 100.0f, -150.0f);
+    CHECK(DarkenedFrom(-2000.0f, 0.0f, -100.0f).OnCube == 0);
+    Kernel.Renderer().SetShadowPosition(-1, -100.0f, 500.0f, -100.0f);
+
     // From behind the shadow falls on the floor, and the faces the light does not reach stay dark.
     const Darkened Behind = DarkenedFrom(300.0f, 120.0f, 300.0f);
     CHECK(Behind.OnCube > 1000);

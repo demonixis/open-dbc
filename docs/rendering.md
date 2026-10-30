@@ -99,7 +99,8 @@ Volumes count in the stencil the faces behind the scene (z-fail), so a near cap 
 passes the depth test darkens the lit face it lies against. It sits barely behind
 that face when the light grazes it, within the rounding of the two transforms, so
 near caps are drawn apart with a depth bias. Sides and far caps have none: where a
-shadow falls does not change.
+shadow falls does not change. A volume can also reach past the far plane, so volumes
+clamp their depth instead of clipping it, which would leave them open.
 
 ## Where frame time goes
 
