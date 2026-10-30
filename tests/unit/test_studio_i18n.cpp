@@ -8,6 +8,10 @@
 #include <imgui_internal.h>
 
 #include <algorithm>
+#include <cctype>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -35,6 +39,22 @@ namespace
                         {"scene node|Light", "Lumière"},
                         {"Copied {0} to {1}", "{1} reçoit {0}"}};
     };
+
+    // The {0} and %s of a text, sorted: a translation may reorder them, not lose or add one.
+    std::vector<std::string> Placeholders(std::string_view Text)
+    {
+        std::vector<std::string> Found;
+        for (std::size_t At = 0; At + 1 < Text.size(); ++At)
+        {
+            if (Text[At] == '%' && Text[At + 1] == 's')
+                Found.emplace_back("%s");
+            else if (Text[At] == '{' && At + 2 < Text.size() &&
+                     std::isdigit(static_cast<unsigned char>(Text[At + 1])) && Text[At + 2] == '}')
+                Found.emplace_back(Text.substr(At, 3));
+        }
+        std::sort(Found.begin(), Found.end());
+        return Found;
+    }
 
     std::string_view VisibleText(const char* Label)
     {
@@ -234,4 +254,37 @@ TEST_CASE("The French catalogue names every Studio window")
         CHECK(std::string_view(Tr(Window)) != Window);
     CHECK(std::string_view(Tr("Code")) == "Code");
     core::ActivateInterfaceLanguage("en");
+}
+
+TEST_CASE("The French catalogue covers the File menu and the Scene mode")
+{
+    core::ActivateInterfaceLanguage("fr");
+    CHECK(std::string_view(Tr("New Level...")) == "Nouveau niveau…");
+    CHECK(std::string_view(Tr("Scene (Ctrl+2)")) == "Scène (Ctrl+2)");
+    CHECK(std::string_view(Tr("World Settings")) == "Réglages du monde");
+    CHECK(TrFmt("Scene of {0}", {"main.dba"}) == "Scène de main.dba");
+    // These reach Tr through a variable, so that a search of the sources for literals misses them.
+    for (const char* Label :
+         {"Sphere", "3D Sound", "Spot Light", "First matrix", "Move (W)", "Several", "Heights", "Fog colour",
+          "The project folder is read-only.", "No model under the asset folder", " (hidden)"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    core::ActivateInterfaceLanguage("en");
+}
+
+TEST_CASE("French translations keep the placeholders of their source text")
+{
+    std::ifstream File(std::filesystem::path(TEST_SOURCE_DIR) / "tools/studio/locales/fr.json", std::ios::binary);
+    REQUIRE(File);
+    std::stringstream Text;
+    Text << File.rdbuf();
+
+    std::string Error;
+    const std::optional<core::TranslationCatalogue> Catalogue = core::ParseTranslationCatalogue(Text.str(), Error);
+    CHECK(Error.empty());
+    REQUIRE(Catalogue.has_value());
+    for (const auto& [Source, Translation] : Catalogue->Entries)
+    {
+        INFO(Source);
+        CHECK(Placeholders(Translation) == Placeholders(Source));
+    }
 }

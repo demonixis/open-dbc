@@ -60,6 +60,7 @@ if(NOT ANDROID AND NOT IOS)
     add_dependencies(test_studio_i18n opendbc_studio_locales)
     target_include_directories(test_studio_i18n PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
                                ${CMAKE_BINARY_DIR}/tools/studio/generated)
+    target_compile_definitions(test_studio_i18n PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     target_link_libraries(test_studio_i18n PRIVATE doctest_with_main dbc_engine imgui nlohmann_json::nlohmann_json)
     doctest_discover_tests(test_studio_i18n PROPERTIES LABELS "unit-studio")
 
@@ -105,6 +106,7 @@ if(NOT ANDROID AND NOT IOS)
         test_studio_scene_view.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/gpu_texture.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/locales.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/media_catalogue.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_assets.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/scene_editor.cpp
@@ -121,7 +123,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_renderer.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/theme.cpp
     )
-    add_dependencies(test_studio_scene_view opendbc_scene_shaders)
+    add_dependencies(test_studio_scene_view opendbc_scene_shaders opendbc_studio_locales)
     target_include_directories(test_studio_scene_view PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
                                ${CMAKE_BINARY_DIR}/tools/studio/generated)
     target_compile_definitions(test_studio_scene_view PRIVATE TEST_OUTPUT_DIR="${CMAKE_BINARY_DIR}/tests")

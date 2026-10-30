@@ -1,7 +1,7 @@
 rem Runs the Studio Scene view's generated files as a Pro program includes them
-#include "scene/pro/opendbc_game.dba"
-SetupGame()
-#include "scene/pro/levels/Golden.dba"
+#include "scene/pro/levels/Golden/world_settings.dba"
+SetupWorld_Golden()
+#include "scene/pro/levels/Golden/Golden.dba"
 LoadLevel_Golden()
 
 print "objects="; object exist(1000); object exist(1001); object exist(1002); object exist(1003)

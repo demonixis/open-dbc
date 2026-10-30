@@ -205,9 +205,8 @@ namespace dbc::studio
             bool operator==(const Environment&) const = default;
         };
 
-        // Program-wide display settings, kept in their own generated file because
-        // every level shares them.
-        struct GameSettings
+        // What a level asks of the display before anything is drawn.
+        struct DisplaySettings
         {
             std::optional<glm::ivec3> DisplayMode; // width, height, depth
             std::optional<int> Vsync;              // Pro four-argument SET DISPLAY MODE
@@ -218,7 +217,7 @@ namespace dbc::studio
             std::optional<int> SyncRate;
             bool HideMouse = false;
 
-            bool operator==(const GameSettings&) const = default;
+            bool operator==(const DisplaySettings&) const = default;
         };
 
         struct SceneDocument
@@ -227,6 +226,7 @@ namespace dbc::studio
             dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
             std::array<int, KIdSpaceCount> IdBase{1000, 1000, 1, 1, 1, 1};
             Environment Env;
+            DisplaySettings Display;
             std::vector<SceneNode> Nodes;
 
             int& Base(IdSpace Space)
@@ -278,6 +278,7 @@ namespace dbc::studio
         // "Level 1" -> "Level_1": a valid BASIC identifier suffix, never empty.
         std::string SanitizeLevelName(const std::string& Name);
         std::string LevelFunctionName(const SceneDocument& Document);
+        std::string WorldFunctionName(const SceneDocument& Document);
 
         // Snapshot undo: whole copies keep it simple and exact. Painting makes levels large, so the
         // oldest states go when all of them together hold too many nodes.

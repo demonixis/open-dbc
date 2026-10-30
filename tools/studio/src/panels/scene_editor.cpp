@@ -77,18 +77,17 @@ namespace dbc::studio
             Document_ = {};
             Saved_ = {};
             ReadErrors_.clear();
-            Game_ = {};
-            SavedGame_ = {};
-            GameErrors_.clear();
-            GameFileExists_ = false;
+            UnlinkedLevel_.clear();
             Selection_.clear();
         }
 
         void SceneEditor::Activate()
         {
-            if (!Project_ || HasLevel_)
+            if (!Project_)
                 return;
-            LoadGameSettings();
+            MoveOlderLevels();
+            if (HasLevel_)
+                return;
             const std::vector<std::string> Names = LevelNames();
             if (Names.empty())
                 NewLevel("Level1");
@@ -98,7 +97,7 @@ namespace dbc::studio
 
         bool SceneEditor::Dirty() const
         {
-            return HasLevel_ && (Document_ != Saved_ || Game_ != SavedGame_);
+            return HasLevel_ && Document_ != Saved_;
         }
 
         std::vector<std::string> SceneEditor::LevelNames() const
@@ -110,9 +109,9 @@ namespace dbc::studio
             const std::filesystem::path Folder = Project_->Root / scene::KLevelFolder;
             for (const auto& Entry : std::filesystem::directory_iterator(Folder, Error))
             {
-                const std::filesystem::path& Path = Entry.path();
-                if (Entry.is_regular_file(Error) && dbc::language::IsLanguageSource(Path))
-                    Names.push_back(dbc::PathToUtf8(Path.stem()));
+                const std::string Name = dbc::PathToUtf8(Entry.path().filename());
+                if (Entry.is_directory(Error) && std::filesystem::is_regular_file(LevelPath(Name), Error))
+                    Names.push_back(Name);
             }
             std::sort(Names.begin(), Names.end());
             return Names;
@@ -123,9 +122,9 @@ namespace dbc::studio
             return Project_->Root / scene::LevelRelativePath(Name);
         }
 
-        std::filesystem::path SceneEditor::GamePath() const
+        std::filesystem::path SceneEditor::WorldPath(const std::string& Name) const
         {
-            return Project_->Root / scene::KGameFileName;
+            return Project_->Root / scene::WorldRelativePath(Name);
         }
 
         void SceneEditor::OpenLevel(const std::string& Name)
@@ -138,27 +137,43 @@ namespace dbc::studio
             }
             Program_.reset();
             scene::LevelReadResult Read = scene::ReadLevel(*Text, Name, Project_->Profile);
-            for (const scene::ReadError& Error : Read.Errors)
-                Host_.Log(dbc::PathToUtf8(LevelPath(Name)) + ":" + std::to_string(Error.Line) + ": " + Error.Message,
-                          true);
-            if (!Read.Ok())
+            ReadErrors_.clear();
+            const auto Report = [&](const std::vector<scene::ReadError>& Errors, const std::filesystem::path& Path)
+            {
+                for (const scene::ReadError& Error : Errors)
+                {
+                    const std::string Where = ":" + std::to_string(Error.Line) + ": " + Error.Message;
+                    Host_.Log(dbc::PathToUtf8(Path) + Where, true);
+                    ReadErrors_.push_back(dbc::PathToUtf8(Path.filename()) + Where);
+                }
+            };
+            Report(Read.Errors, LevelPath(Name));
+            // A level without world settings runs with the engine's defaults, until a save writes them.
+            std::error_code Missing;
+            if (std::filesystem::exists(WorldPath(Name), Missing))
+            {
+                if (const std::optional<std::string> World = Host_.ReadSource(WorldPath(Name)))
+                    Report(scene::ReadWorld(*World, Read.Document), WorldPath(Name));
+                else
+                    Report({{0, "Cannot read the file"}}, WorldPath(Name));
+            }
+            if (!ReadErrors_.empty())
                 Host_.Log("The level stays read-only until these lines are fixed in the code editor", true);
             Document_ = std::move(Read.Document);
-            ReadErrors_ = std::move(Read.Errors);
             Saved_ = Document_;
             History_.Reset(Document_);
             HasLevel_ = true;
             Selection_.clear();
         }
 
-        void SceneEditor::NewLevel(const std::string& Name)
+        bool SceneEditor::NewLevel(const std::string& Name)
         {
             const std::string Clean = scene::SanitizeLevelName(Name);
             std::error_code Error;
             if (std::filesystem::exists(LevelPath(Clean), Error))
             {
                 OpenLevel(Clean);
-                return;
+                return false;
             }
             Program_.reset();
             Document_ = {};
@@ -169,32 +184,7 @@ namespace dbc::studio
             History_.Reset(Document_);
             HasLevel_ = true;
             Selection_.clear();
-        }
-
-        void SceneEditor::LoadGameSettings()
-        {
-            Game_ = {};
-            GameErrors_.clear();
-            std::error_code Error;
-            GameFileExists_ = std::filesystem::exists(GamePath(), Error);
-            if (GameFileExists_)
-            {
-                const std::optional<std::string> Text = Host_.ReadSource(GamePath());
-                if (!Text)
-                {
-                    GameErrors_.push_back({0, "Cannot read " + dbc::PathToUtf8(GamePath())});
-                }
-                else
-                {
-                    scene::GameReadResult Read = scene::ReadGame(*Text, Project_->Profile);
-                    Game_ = Read.Settings;
-                    GameErrors_ = std::move(Read.Errors);
-                }
-                for (const scene::ReadError& Read : GameErrors_)
-                    Host_.Log(dbc::PathToUtf8(GamePath()) + ":" + std::to_string(Read.Line) + ": " + Read.Message,
-                              true);
-            }
-            SavedGame_ = Game_;
+            return true;
         }
 
         void SceneEditor::OpenCapture(const std::filesystem::path& Source, const scene::SceneCapture& Capture,
@@ -264,18 +254,12 @@ namespace dbc::studio
                 Host_.Log("Cannot write " + dbc::PathToUtf8(LevelPath(Document_.Name)), true);
                 return false;
             }
-            Saved_ = Document_;
-
-            if (GameErrors_.empty() && (GameFileExists_ || Game_ != scene::GameSettings{}))
+            if (!Host_.WriteSource(WorldPath(Document_.Name), scene::WriteWorld(Document_), true))
             {
-                if (!Host_.WriteSource(GamePath(), scene::WriteGame(Game_, Project_->Profile), true))
-                {
-                    Host_.Log("Cannot write " + dbc::PathToUtf8(GamePath()), true);
-                    return false;
-                }
-                GameFileExists_ = true;
-                SavedGame_ = Game_;
+                Host_.Log("Cannot write " + dbc::PathToUtf8(WorldPath(Document_.Name)), true);
+                return false;
             }
+            Saved_ = Document_;
             return LinkMain();
         }
 
@@ -382,10 +366,23 @@ namespace dbc::studio
             const auto Relative = [&](const std::filesystem::path& Path)
             { return dbc::GenericPathToUtf8(Path.lexically_relative(Main.parent_path())); };
 
-            std::vector<scene::MainLink> Links;
-            if (GameFileExists_)
-                Links.push_back({Relative(GamePath()), scene::KGameFunctionName});
-            Links.push_back({Relative(LevelPath(Document_.Name)), scene::LevelFunctionName(Document_)});
+            const scene::LevelImports Imports = scene::FindLevelImports(
+                Main, Project_->Root / scene::KLevelFolder, Document_.Name, Project_->Profile, Host_.ReadSource);
+            // Once the program has its level, which one it loads and when is its own choice: two
+            // levels loaded in a row would also collide on their numbers.
+            if (Imports.OtherLevel && !Imports.Level)
+            {
+                if (UnlinkedLevel_ != Document_.Name)
+                    Host_.Log("Level " + Document_.Name + " stays out of " + dbc::PathToUtf8(Main.filename()) +
+                                  ", which already imports a level: call " + scene::WorldFunctionName(Document_) +
+                                  "() and " + scene::LevelFunctionName(Document_) + "() where the game loads it",
+                              false);
+                UnlinkedLevel_ = Document_.Name;
+                return true;
+            }
+            const std::vector<scene::MainLink> Links = {
+                {Relative(WorldPath(Document_.Name)), scene::WorldFunctionName(Document_), Imports.World},
+                {Relative(LevelPath(Document_.Name)), scene::LevelFunctionName(Document_), Imports.Level}};
             const scene::LinkResult Linked = scene::LinkIntoMain(*Text, Project_->Profile, Links);
             if (!Linked.Changed)
                 return true;
@@ -396,6 +393,49 @@ namespace dbc::studio
             }
             Host_.Log("Added the level's #include and call to " + dbc::PathToUtf8(Main.filename()), false);
             return true;
+        }
+
+        void SceneEditor::MoveOlderLevels()
+        {
+            std::error_code Error;
+            std::vector<std::filesystem::path> Older;
+            for (const auto& Entry : std::filesystem::directory_iterator(Project_->Root / scene::KLevelFolder, Error))
+                if (Entry.is_regular_file(Error) && dbc::language::IsLanguageSource(Entry.path()))
+                    Older.push_back(Entry.path());
+            if (Older.empty())
+                return;
+
+            const std::filesystem::path& Main = Project_->EntrySource;
+            const auto Relative = [&](const std::filesystem::path& Path)
+            { return dbc::GenericPathToUtf8(Path.lexically_relative(Main.parent_path())); };
+            const std::optional<std::string> Before = Host_.ReadSource(Main);
+            std::string Text = Before.value_or(std::string());
+            for (const std::filesystem::path& Path : Older)
+            {
+                const std::filesystem::path Target = LevelPath(dbc::PathToUtf8(Path.stem()));
+                std::error_code Move;
+                std::filesystem::create_directories(Target.parent_path(), Move);
+                if (!Move && !std::filesystem::exists(Target, Move))
+                    std::filesystem::rename(Path, Target, Move);
+                else if (!Move)
+                    Move = std::make_error_code(std::errc::file_exists);
+                if (Move)
+                {
+                    Host_.Log("Cannot move " + dbc::PathToUtf8(Path) + " to its folder: " + Move.message(), true);
+                    continue;
+                }
+                Host_.Log("Moved " + dbc::PathToUtf8(Path.filename()) + " to " + Relative(Target), false);
+                if (Before)
+                    Text = scene::MoveInclude(Text, Project_->Profile, Relative(Path), Relative(Target));
+            }
+            if (Before && Text != *Before && !Host_.WriteSource(Main, Text, false))
+                Host_.Log("Cannot update the main source " + dbc::PathToUtf8(Main), true);
+            if (Host_.FilesMoved)
+                Host_.FilesMoved();
+            if (std::filesystem::exists(Project_->Root / "opendbc_game.dba", Error))
+                Host_.Log("opendbc_game.dba stays as it is and its SetupGame() still runs, but the Scene view no "
+                          "longer edits it: each level's world settings hold the display now",
+                          false);
         }
 
         bool SceneEditor::Editable() const
@@ -613,10 +653,10 @@ namespace dbc::studio
 
         void SceneEditor::DrawMenus()
         {
-            if (ImGui::BeginMenu("Scene"))
+            if (ImGui::BeginMenu(TrId("Scene")))
                 DrawSceneMenu();
             // Like Unity's GameObject menu: everything a level can hold, by type.
-            if (ImGui::BeginMenu("Create", Editable()))
+            if (ImGui::BeginMenu(TrId("Create"), Editable()))
             {
                 DrawCreateItems();
                 ImGui::EndMenu();
@@ -625,10 +665,10 @@ namespace dbc::studio
 
         void SceneEditor::DrawSceneMenu()
         {
-            if (ImGui::MenuItem("New Level...", nullptr, false, Project_.has_value()))
-                NewLevelRequested_ = true;
+            if (ImGui::MenuItem(TrId("New Level..."), nullptr, false, Project_.has_value()))
+                RequestNewLevel();
             const std::vector<std::string> Names = LevelNames();
-            if (ImGui::BeginMenu("Open Level", !Names.empty()))
+            if (ImGui::BeginMenu(TrId("Open Level"), !Names.empty()))
             {
                 for (const std::string& Name : Names)
                     if (ImGui::MenuItem(Name.c_str(), nullptr, HasLevel_ && Name == Document_.Name))
@@ -641,26 +681,26 @@ namespace dbc::studio
             }
             if (Program_)
             {
-                if (ImGui::MenuItem("Apply to Source", "Ctrl+S", false, Dirty() && TransformEditable()))
+                if (ImGui::MenuItem(TrId("Apply to Source"), "Ctrl+S", false, Dirty() && TransformEditable()))
                     SaveAndRefresh();
-                if (ImGui::MenuItem("Refresh Program", nullptr, false, Host_.CaptureProgram != nullptr))
+                if (ImGui::MenuItem(TrId("Refresh Program"), nullptr, false, Host_.CaptureProgram != nullptr))
                     RefreshProgram();
             }
-            else if (ImGui::MenuItem("Save Level", "Ctrl+S", false, Editable()))
+            else if (ImGui::MenuItem(TrId("Save Level"), "Ctrl+S", false, Editable()))
             {
                 Save();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, TransformEditable() && History_.CanUndo()))
+            if (ImGui::MenuItem(TrId("Undo"), "Ctrl+Z", false, TransformEditable() && History_.CanUndo()))
                 Undo();
-            if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, TransformEditable() && History_.CanRedo()))
+            if (ImGui::MenuItem(TrId("Redo"), "Ctrl+Shift+Z", false, TransformEditable() && History_.CanRedo()))
                 Redo();
             ImGui::Separator();
-            if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, Editable() && !Selection_.empty()))
+            if (ImGui::MenuItem(TrId("Duplicate"), "Ctrl+D", false, Editable() && !Selection_.empty()))
                 DuplicateSelected();
-            if (ImGui::MenuItem("Delete", "Delete", false, Editable() && !Selection_.empty()))
+            if (ImGui::MenuItem(TrId("Delete"), "Delete", false, Editable() && !Selection_.empty()))
                 DeleteSelected();
-            if (ImGui::MenuItem("Align to Grid", "G", false,
+            if (ImGui::MenuItem(TrId("Align to Grid"), "G", false,
                                 TransformEditable() && (!Selection_.empty() || (CameraSelected_ && !Program_))))
                 AlignSelectionToGrid();
             ImGui::EndMenu();
@@ -677,60 +717,60 @@ namespace dbc::studio
                         continue;
                     if (Listed++ == KMenuAssetLimit)
                     {
-                        ImGui::MenuItem("More in the Assets panel", nullptr, false, false);
+                        ImGui::MenuItem(TrId("More in the Assets panel"), nullptr, false, false);
                         break;
                     }
                     if (ImGui::MenuItem(File.RelativeName.c_str()))
                         CreateFromAsset(Kind, File.RelativeName, std::nullopt);
                 }
                 if (Listed == 0)
-                    ImGui::MenuItem(Empty, nullptr, false, false);
+                    ImGui::MenuItem(TrId(Empty), nullptr, false, false);
             };
 
-            if (ImGui::BeginMenu("3D Object"))
+            if (ImGui::BeginMenu(TrId("3D Object")))
             {
                 for (const scene::NodeKind Kind : KPrimitives)
-                    if (ImGui::MenuItem(scene::NodeKindLabel(Kind)))
+                    if (ImGui::MenuItem(TrId(scene::NodeKindLabel(Kind))))
                         Create(Kind);
                 ImGui::Separator();
-                if (ImGui::BeginMenu("Model"))
+                if (ImGui::BeginMenu(TrId("Model")))
                 {
                     AssetItems(scene::NodeKind::Model, core::MediaKind::Model, "No model under the asset folder");
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Landscape"))
+            if (ImGui::BeginMenu(TrId("Landscape")))
             {
-                if (ImGui::MenuItem("Matrix"))
+                if (ImGui::MenuItem(TrId("Matrix")))
                     Create(scene::NodeKind::Matrix);
                 const bool Terrain = scene::KindAvailable(scene::NodeKind::Terrain, Document_.Profile);
-                if (ImGui::MenuItem("Terrain", nullptr, false, Terrain))
+                if (ImGui::MenuItem(TrId("Terrain"), nullptr, false, Terrain))
                     Create(scene::NodeKind::Terrain);
                 if (!Terrain && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                    ImGui::SetTooltip("MAKE TERRAIN needs the Pro profile");
+                    ImGui::SetTooltip("%s", Tr("MAKE TERRAIN needs the Pro profile"));
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Light"))
+            if (ImGui::BeginMenu(TrId("Light")))
             {
                 for (const scene::LightKind Kind :
                      {scene::LightKind::Point, scene::LightKind::Spot, scene::LightKind::Directional})
-                    if (ImGui::MenuItem(LightKindLabel(Kind)))
+                    if (ImGui::MenuItem(TrId(LightKindLabel(Kind))))
                         Create(scene::NodeKind::Light, Kind);
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Audio"))
+            if (ImGui::BeginMenu(TrId("Audio")))
             {
-                if (ImGui::BeginMenu(scene::NodeKindLabel(scene::NodeKind::Sound)))
+                if (ImGui::BeginMenu(TrId(scene::NodeKindLabel(scene::NodeKind::Sound))))
                 {
                     AssetItems(scene::NodeKind::Sound, core::MediaKind::Audio, "No sound under the asset folder");
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Camera"))
+            if (ImGui::BeginMenu(TrId("Camera")))
             {
-                if (ImGui::MenuItem("Level Camera", nullptr, Document_.Env.UseCamera))
+                if (ImGui::MenuItem(TrId("Level Camera"), nullptr, Document_.Env.UseCamera))
                 {
                     Document_.Env.UseCamera = !Document_.Env.UseCamera;
                     Selection_.clear();
@@ -826,10 +866,10 @@ namespace dbc::studio
             if (ReadErrors_.empty())
                 return;
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
-            ImGui::TextWrapped("Read-only: %s has lines the Scene view did not write.",
-                               dbc::GenericPathToUtf8(scene::LevelRelativePath(Document_.Name)).c_str());
-            for (const scene::ReadError& Error : ReadErrors_)
-                ImGui::BulletText("Line %u: %s", Error.Line, Error.Message.c_str());
+            ImGui::TextWrapped(
+                "%s", TrFmt("Read-only: {0} has lines the Scene view did not write.", {Document_.Name}).c_str());
+            for (const std::string& Error : ReadErrors_)
+                ImGui::BulletText("%s", Error.c_str());
             ImGui::PopStyleColor();
             ImGui::Separator();
         }
@@ -839,17 +879,18 @@ namespace dbc::studio
             if (!Program_)
                 return;
             ImGui::SetNextItemWidth(ImGui::GetFontSize() * 5.0f);
-            ImGui::InputInt("Setup frames", &Program_->SetupFrames, 0);
+            ImGui::InputInt(TrId("Setup frames"), &Program_->SetupFrames, 0);
             Program_->SetupFrames = std::max(Program_->SetupFrames, 0);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("How many frames the program runs before the scene counts as built. "
-                                  "What later frames set belongs to the game loop.");
+                ImGui::SetTooltip("%s", Tr("How many frames the program runs before the scene counts as built. "
+                                           "What later frames set belongs to the game loop."));
             ImGui::SameLine();
-            if (ImGui::SmallButton("Refresh"))
+            if (ImGui::SmallButton(TrId("Refresh")))
                 RefreshProgram();
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Runs the program again, without a window or sound, to read its scene");
-            ImGui::TextDisabled("Move, turn and scale what its statements decide; Ctrl+S writes it to the source.");
+                ImGui::SetTooltip("%s", Tr("Runs the program again, without a window or sound, to read its scene"));
+            ImGui::TextDisabled("%s",
+                                Tr("Move, turn and scale what its statements decide; Ctrl+S writes it to the source."));
             for (const std::string& Note : Program_->Notes)
                 ImGui::TextWrapped("%s", Note.c_str());
             ImGui::Separator();
@@ -904,12 +945,12 @@ namespace dbc::studio
                 if (ImGui::IsItemHovered())
                 {
                     if (Origin != nullptr && !Origin->Creator.File.empty())
-                        ImGui::SetTooltip("%s %d%s\n%s:%u", scene::NodeKindLabel(Node.Kind), Node.Id,
-                                          Node.Hidden ? " (hidden)" : "",
+                        ImGui::SetTooltip("%s %d%s\n%s:%u", Tr(scene::NodeKindLabel(Node.Kind)), Node.Id,
+                                          Node.Hidden ? Tr(" (hidden)") : "",
                                           dbc::PathToUtf8(dbc::PathFromUtf8(Origin->Creator.File).filename()).c_str(),
                                           Origin->Creator.Line);
                     else
-                        ImGui::SetTooltip("%s %d", scene::NodeKindLabel(Node.Kind), Node.Id);
+                        ImGui::SetTooltip("%s %d", Tr(scene::NodeKindLabel(Node.Kind)), Node.Id);
                 }
                 ImGui::PopID();
                 ImGui::PopID();
@@ -972,7 +1013,7 @@ namespace dbc::studio
             if (Document_.Env.UseCamera)
             {
                 ImGui::Separator();
-                if (ImGui::Selectable("Level Camera", CameraSelected_))
+                if (ImGui::Selectable(TrId("Level Camera"), CameraSelected_))
                 {
                     Selection_.clear();
                     CameraSelected_ = true;
@@ -991,7 +1032,7 @@ namespace dbc::studio
 
         void SceneEditor::DrawNewLevelPopup()
         {
-            constexpr const char* Popup = "New Level";
+            const char* Popup = TrId("New Level");
             if (NewLevelRequested_)
             {
                 ImGui::OpenPopup(Popup);
@@ -1002,18 +1043,21 @@ namespace dbc::studio
                 return;
             if (ImGui::IsWindowAppearing())
                 ImGui::SetKeyboardFocusHere();
-            const bool Entered =
-                ImGui::InputText("Name", NewLevelName_, sizeof(NewLevelName_), ImGuiInputTextFlags_EnterReturnsTrue);
-            ImGui::TextDisabled("Saved as %s", dbc::GenericPathToUtf8(scene::LevelRelativePath(NewLevelName_)).c_str());
-            if (Entered || ImGui::Button("Create"))
+            const bool Entered = ImGui::InputText(TrId("Name"), NewLevelName_, sizeof(NewLevelName_),
+                                                  ImGuiInputTextFlags_EnterReturnsTrue);
+            ImGui::TextDisabled(
+                "%s", TrFmt("Saved as {0}", {dbc::GenericPathToUtf8(scene::LevelRelativePath(NewLevelName_))}).c_str());
+            if (Entered || ImGui::Button(TrId("Create")))
             {
                 if (Dirty())
                     Save();
-                NewLevel(NewLevelName_);
+                // Asked for by name, it should exist from here on, unlike the level Activate() starts.
+                if (NewLevel(NewLevelName_))
+                    Save();
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button(TrId("Cancel")))
                 ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
         }

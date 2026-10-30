@@ -37,7 +37,7 @@ namespace dbc::studio
             std::filesystem::path AssetRoot;
             std::filesystem::path EntrySource;
             dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
-            // A .dbpro project, whose descriptor sets the display before SetupGame() runs.
+            // A .dbpro project, whose descriptor sets the display before the world settings run.
             bool HasDescriptor = false;
 
             bool operator==(const SceneProject&) const = default;
@@ -57,6 +57,8 @@ namespace dbc::studio
             // Opens a source in a tab without leaving the Scene view, so a patch of it can be undone.
             std::function<bool(const std::filesystem::path& Path)> OpenSource;
             std::function<bool()> CaptureRunning;
+            // Files moved without going through WriteSource.
+            std::function<void()> FilesMoved;
         };
 
         // The Scene mode: level files, selection, undo and the docked scene panels.
@@ -84,11 +86,18 @@ namespace dbc::studio
 
             // Called when the Scene mode is shown: opens a level if none is.
             void Activate();
+
+            // Asks for a name, then creates the level and saves it. Needs the Scene mode, which draws the popup.
+            void RequestNewLevel()
+            {
+                NewLevelRequested_ = true;
+            }
+
             bool Dirty() const;
             // Ctrl+S: a program's scene is read again after its edits, to show what they did.
             bool SaveAndRefresh();
             void RefreshProgram();
-            // Writes the level and game settings, then links them into the main source.
+            // Writes the level and its world settings, then links them into the main source.
             bool Save();
             // Shows what a program builds instead of a level. `Source` is the file asked for, `OnlyFile`
             // what the capture is limited to when that file is run through the program including it.
@@ -176,11 +185,13 @@ namespace dbc::studio
 
             std::vector<std::string> LevelNames() const;
             std::filesystem::path LevelPath(const std::string& Name) const;
-            std::filesystem::path GamePath() const;
+            std::filesystem::path WorldPath(const std::string& Name) const;
             void OpenLevel(const std::string& Name);
-            void NewLevel(const std::string& Name);
-            void LoadGameSettings();
+            // Returns whether the level is a new one, which only exists once saved.
+            bool NewLevel(const std::string& Name);
             bool LinkMain();
+            // Older projects keep levels/<name>.dba: each moves into its folder, and the main source follows.
+            void MoveOlderLevels();
 
             // The active node: the last one selected, whose values the Inspector shows.
             scene::SceneNode* Selected();
@@ -305,8 +316,10 @@ namespace dbc::studio
             scene::SceneDocument Document_;
             scene::SceneDocument Saved_;
             scene::SceneHistory History_;
-            // Errors of a level the Scene view could not read: it stays read-only.
-            std::vector<scene::ReadError> ReadErrors_;
+            // The level whose absence from the main source was last reported, to say it once.
+            std::string UnlinkedLevel_;
+            // Lines of its files the Scene view could not read, as "file:line: message": it stays read-only.
+            std::vector<std::string> ReadErrors_;
 
             // Set when the document was read from a running program rather than a level file.
             struct ProgramView
@@ -321,11 +334,6 @@ namespace dbc::studio
             std::optional<ProgramView> Program_;
             // What the last save promised, checked against the next capture.
             std::vector<scene::AxisEdit> PendingChecks_;
-
-            scene::GameSettings Game_;
-            scene::GameSettings SavedGame_;
-            std::vector<scene::ReadError> GameErrors_;
-            bool GameFileExists_ = false;
 
             // The back is the active node.
             SelectionList Selection_;

@@ -11,6 +11,8 @@
 
 #include "interpreter/basic_path.hpp"
 #include "language/frontend.hpp"
+#include "scene/scene_codegen.hpp"
+#include "scene/scene_document.hpp"
 
 namespace dbc::studio
 {
@@ -70,6 +72,13 @@ namespace dbc::studio
             {
                 const std::size_t End = Text.find('\n', Offset);
                 return End == std::string::npos ? Text.size() : End + 1;
+            }
+
+            // Offset of the line that holds `Offset`.
+            std::size_t LineStart(const std::string& Text, std::size_t Offset)
+            {
+                const std::size_t End = Offset == 0 ? std::string::npos : Text.rfind('\n', Offset - 1);
+                return End == std::string::npos ? 0 : End + 1;
             }
 
             std::string_view TrimLine(std::string_view Line)
@@ -146,6 +155,35 @@ namespace dbc::studio
                 Result.CodeIsBlank = Result.Code >= Text.size();
                 return Result;
             }
+
+            // Every file `Root` reaches through its #include lines, read with `Read`.
+            std::set<std::filesystem::path> IncludedFiles(const std::filesystem::path& Root,
+                                                          lang::LanguageProfile Profile, const SourceReader& Read)
+            {
+                std::set<std::filesystem::path> Included;
+                std::vector<std::filesystem::path> Pending{Root.lexically_normal()};
+                while (!Pending.empty())
+                {
+                    const std::filesystem::path Current = std::move(Pending.back());
+                    Pending.pop_back();
+                    std::optional<std::string> Text = Read(Current);
+                    if (!Text)
+                        continue;
+                    auto Source = std::make_shared<lang::SourceDocument>();
+                    Source->LogicalPath = Current;
+                    Source->Text = std::move(*Text);
+                    Source->Profile = Profile;
+                    for (const lang::IncludeDeclaration& Include : lang::LexAndParse(Source).Includes)
+                    {
+                        const std::filesystem::path Normal = interpreter::NormalizeBasicPath(Include.Path);
+                        const std::filesystem::path Path =
+                            Normal.is_absolute() ? Normal : (Current.parent_path() / Normal).lexically_normal();
+                        if (Included.insert(Path).second)
+                            Pending.push_back(Path);
+                    }
+                }
+                return Included;
+            }
         } // namespace
 
         LinkResult LinkIntoMain(const std::string& MainText, lang::LanguageProfile Profile,
@@ -159,31 +197,57 @@ namespace dbc::studio
 
             const Header Layout = ReadHeader(MainText);
 
-            // Includes join the include block at the top; calls follow it, in link
-            // order. A missing call goes right after the previous link's call, so
-            // SetupGame() keeps running before the levels.
-            std::vector<std::string> Includes;
-            std::map<std::size_t, std::vector<std::string>> Calls;
-            std::optional<std::size_t> Anchor;
+            std::vector<const lang::Statement*> Found;
             for (const MainLink& Link : Links)
             {
-                const std::string Wanted = NormalizedInclude(Link.IncludePath);
-                const bool Included = std::any_of(
-                    Program.Includes.begin(), Program.Includes.end(), [&](const lang::IncludeDeclaration& Include)
-                    { return NormalizedInclude(dbc::GenericPathToUtf8(Include.Path)) == Wanted; });
-                if (!Included)
-                    Includes.push_back("#include \"" + Link.IncludePath + "\"");
-
                 const std::string Function = Upper(Link.Function);
                 const lang::Statement* Call = FindCall(Program.Statements, Function);
                 for (const lang::FunctionDeclaration& Declaration : Program.Functions)
                     Call = Call != nullptr ? Call : FindCall(Declaration.Body, Function);
-                if (Call != nullptr)
+                Found.push_back(Call);
+            }
+
+            // Includes join the include block at the top; calls follow it, in link
+            // order. A missing call goes right after the previous link's call, else
+            // right before the next link's, so the world settings keep running before
+            // their level.
+            std::vector<std::string> Includes;
+            std::map<std::size_t, std::vector<std::string>> Calls;
+            std::optional<std::size_t> Anchor;
+            bool CallsOpenTheCode = false;
+            for (std::size_t Index = 0; Index < Links.size(); ++Index)
+            {
+                const MainLink& Link = Links[Index];
+                const std::string Wanted = NormalizedInclude(Link.IncludePath);
+                const bool Included =
+                    Link.Imported ||
+                    std::any_of(Program.Includes.begin(), Program.Includes.end(),
+                                [&](const lang::IncludeDeclaration& Include)
+                                { return NormalizedInclude(dbc::GenericPathToUtf8(Include.Path)) == Wanted; });
+                if (!Included)
+                    Includes.push_back("#include \"" + Link.IncludePath + "\"");
+
+                if (Found[Index] != nullptr)
                 {
-                    Anchor = AfterLine(MainText, Call->Span.Begin.Offset);
+                    Anchor = AfterLine(MainText, Found[Index]->Span.Begin.Offset);
                     continue;
                 }
-                Calls[Anchor.value_or(Layout.Code)].push_back(Link.Function + "()");
+                if (Included)
+                    continue;
+                if (Anchor)
+                {
+                    Calls[*Anchor].push_back(Link.Function + "()");
+                    continue;
+                }
+                const auto Next = std::find_if(Found.begin() + static_cast<std::ptrdiff_t>(Index) + 1, Found.end(),
+                                               [](const lang::Statement* Call) { return Call != nullptr; });
+                if (Next != Found.end())
+                {
+                    Calls[LineStart(MainText, (*Next)->Span.Begin.Offset)].push_back(Link.Function + "()");
+                    continue;
+                }
+                Calls[Layout.Code].push_back(Link.Function + "()");
+                CallsOpenTheCode = true;
             }
 
             LinkResult Result{MainText, false};
@@ -192,7 +256,7 @@ namespace dbc::studio
 
             // Blank lines keep the include block, the calls and the code apart.
             std::map<std::size_t, std::vector<std::string>> Inserts = Calls;
-            if (Calls.count(Layout.Code) != 0 && !Layout.CodeIsBlank)
+            if (CallsOpenTheCode && !Layout.CodeIsBlank)
                 Inserts[Layout.Code].push_back({});
             if (!Includes.empty())
             {
@@ -218,36 +282,56 @@ namespace dbc::studio
             return Result;
         }
 
-        bool SourceIncludes(const std::filesystem::path& Root, const std::filesystem::path& Target,
-                            lang::LanguageProfile Profile,
-                            const std::function<std::optional<std::string>(const std::filesystem::path&)>& Read)
+        std::string MoveInclude(const std::string& MainText, lang::LanguageProfile Profile, const std::string& From,
+                                const std::string& To)
         {
-            const std::filesystem::path Wanted = Target.lexically_normal();
-            std::set<std::filesystem::path> Seen{Root.lexically_normal()};
-            std::vector<std::filesystem::path> Pending{*Seen.begin()};
-            while (!Pending.empty())
+            auto Source = std::make_shared<lang::SourceDocument>();
+            Source->LogicalPath = "main.dba";
+            Source->Text = MainText;
+            Source->Profile = Profile;
+            const lang::Program Program = lang::LexAndParse(Source);
+
+            std::string Result = MainText;
+            const std::string Wanted = NormalizedInclude(From);
+            for (auto Include = Program.Includes.rbegin(); Include != Program.Includes.rend(); ++Include)
             {
-                const std::filesystem::path Current = std::move(Pending.back());
-                Pending.pop_back();
-                std::optional<std::string> Text = Read(Current);
-                if (!Text)
+                if (NormalizedInclude(dbc::GenericPathToUtf8(Include->Path)) != Wanted)
                     continue;
-                auto Source = std::make_shared<lang::SourceDocument>();
-                Source->LogicalPath = Current;
-                Source->Text = std::move(*Text);
-                Source->Profile = Profile;
-                for (const lang::IncludeDeclaration& Include : lang::LexAndParse(Source).Includes)
-                {
-                    const std::filesystem::path Normal = interpreter::NormalizeBasicPath(Include.Path);
-                    const std::filesystem::path Path =
-                        Normal.is_absolute() ? Normal : (Current.parent_path() / Normal).lexically_normal();
-                    if (Path == Wanted)
-                        return true;
-                    if (Seen.insert(Path).second)
-                        Pending.push_back(Path);
-                }
+                const std::size_t Open = Result.find('"', Include->Span.Begin.Offset);
+                const std::size_t Close = Open == std::string::npos ? Open : Result.find('"', Open + 1);
+                if (Close != std::string::npos)
+                    Result.replace(Open + 1, Close - Open - 1, To);
             }
-            return false;
+            return Result;
+        }
+
+        bool SourceIncludes(const std::filesystem::path& Root, const std::filesystem::path& Target,
+                            lang::LanguageProfile Profile, const SourceReader& Read)
+        {
+            return IncludedFiles(Root, Profile, Read).count(Target.lexically_normal()) != 0;
+        }
+
+        LevelImports FindLevelImports(const std::filesystem::path& Main, const std::filesystem::path& LevelFolder,
+                                      const std::string& LevelName, lang::LanguageProfile Profile,
+                                      const SourceReader& Read)
+        {
+            LevelImports Result;
+            const std::filesystem::path Folder = LevelFolder.lexically_normal();
+            const std::string Name = Upper(SanitizeLevelName(LevelName));
+            for (const std::filesystem::path& Path : IncludedFiles(Main, Profile, Read))
+            {
+                const std::filesystem::path Relative = Path.lexically_relative(Folder);
+                if (Relative.empty() || *Relative.begin() == "..")
+                    continue;
+                const std::string File = Upper(dbc::GenericPathToUtf8(Relative));
+                if (File == Name + "/" + Name + ".DBA")
+                    Result.Level = true;
+                else if (File == Name + "/" + Upper(KWorldFileName))
+                    Result.World = true;
+                else if (File.rfind(Name + "/", 0) != 0)
+                    Result.OtherLevel = true;
+            }
+            return Result;
         }
     } // namespace scene
 

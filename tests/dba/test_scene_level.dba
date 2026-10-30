@@ -1,7 +1,7 @@
 rem Runs the Studio Scene view's generated files as a Classic program includes them
-#include "scene/classic/opendbc_game.dba"
-SetupGame()
-#include "scene/classic/levels/Golden.dba"
+#include "scene/classic/levels/Golden/world_settings.dba"
+SetupWorld_Golden()
+#include "scene/classic/levels/Golden/Golden.dba"
 LoadLevel_Golden()
 
 print "objects="; object exist(1000); object exist(1001); object exist(1002); object exist(1003)

@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 
 #include "core/i18n.hpp"
+#include "core/locales.hpp"
 #include "panels/scene_editor.hpp"
 #include "path_utf8.hpp"
 #include "scene/scene_codegen.hpp"
@@ -12,6 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui_internal.h>
 
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -66,9 +68,9 @@ namespace
             REQUIRE(Gpu_ != nullptr);
 
             std::filesystem::remove_all(Root_);
-            std::filesystem::create_directories(Root_ / scene::KLevelFolder);
             WriteText(Root_ / "main.dba", "SYNC\n");
             WriteText(Root_ / scene::LevelRelativePath(Level.Name), scene::WriteLevel(Level));
+            WriteText(Root_ / scene::WorldRelativePath(Level.Name), scene::WriteWorld(Level));
 
             ImGui::CreateContext();
             ImGuiIO& Io = ImGui::GetIO();
@@ -101,6 +103,7 @@ namespace
             {
                 if (Error && !ExpectErrors_)
                     FAIL_CHECK(Message);
+                Log_.push_back(Message);
             };
             Editor_.Initialize(Gpu_, std::move(Host));
 
@@ -268,6 +271,37 @@ namespace
             ExpectErrors_ = Value;
         }
 
+        // Goes through the New Level popup.
+        void CreateLevel(const std::string& Name)
+        {
+            Editor_.RequestNewLevel();
+            Frame();
+            ImGui::GetIO().AddInputCharactersUTF8(Name.c_str());
+            Frame();
+            Tap(ImGuiKey_Enter);
+            Frame();
+        }
+
+        void WriteFile(const std::filesystem::path& Relative, const std::string& Text)
+        {
+            WriteText(Root_ / Relative, Text);
+        }
+
+        std::string ReadFile(const std::filesystem::path& Relative) const
+        {
+            std::ifstream File(Root_ / Relative, std::ios::binary);
+            std::ostringstream Text;
+            Text << File.rdbuf();
+            return Text.str();
+        }
+
+        // How many Output lines hold `Part`.
+        std::size_t Logged(const std::string& Part) const
+        {
+            return static_cast<std::size_t>(std::count_if(Log_.begin(), Log_.end(), [&](const std::string& Line)
+                                                          { return Line.find(Part) != std::string::npos; }));
+        }
+
         void Undo()
         {
             Key(KCommandKey, true);
@@ -289,6 +323,7 @@ namespace
         panels::SceneEditor Editor_;
         bool LayoutBuilt_ = false;
         bool ExpectErrors_ = false;
+        std::vector<std::string> Log_;
         int BarRows_ = 1;
     };
 } // namespace
@@ -609,6 +644,121 @@ TEST_CASE("Painted objects fold into one Hierarchy row, whose click selects them
     const std::vector<scene::SceneNode> Left = Driver.SavedNodes();
     REQUIRE(Left.size() == 1);
     CHECK_FALSE(Left[0].Painted);
+}
+
+TEST_CASE("Saving a level writes its folder and links it into a main source that has none")
+{
+    SceneViewDriver Driver("level_link", LevelOfCubes({glm::vec3(0.0f)}));
+    REQUIRE(Driver.Editor().Save());
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::WorldRelativePath("Level")));
+    CHECK(Driver.ReadFile("main.dba") == "#include \"levels/Level/world_settings.dba\"\n"
+                                         "#include \"levels/Level/Level.dba\"\n\n"
+                                         "SetupWorld_Level()\nLoadLevel_Level()\n\nSYNC\n");
+
+    // Saved again, nothing more to add.
+    const std::string Linked = Driver.ReadFile("main.dba");
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.ReadFile("main.dba") == Linked);
+}
+
+TEST_CASE("A level already imported by the program leaves the main source alone")
+{
+    const std::string Main = "#include \"game.dba\"\nSYNC\n";
+    SceneViewDriver Driver("level_imported", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.WriteFile("main.dba", Main);
+    Driver.WriteFile("game.dba", "#include \"levels/Level/world_settings.dba\"\n#include \"levels/Level/Level.dba\"\n");
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.ReadFile("main.dba") == Main);
+}
+
+TEST_CASE("Another level imported by the program leaves the main source alone, and says so once")
+{
+    const std::string Main = "#include \"levels/Other/Other.dba\"\nLoadLevel_Other()\nSYNC\n";
+    SceneViewDriver Driver("level_other", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.WriteFile("main.dba", Main);
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.ReadFile("main.dba") == Main);
+    CHECK(Driver.Logged("stays out of main.dba") == 1);
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.Logged("stays out of main.dba") == 1);
+}
+
+TEST_CASE("A new level exists as soon as it is named, and only the first one joins the main source")
+{
+    SceneViewDriver Driver("level_new", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.CreateLevel("Cave");
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::LevelRelativePath("Cave")));
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::WorldRelativePath("Cave")));
+    const std::string Linked = Driver.ReadFile("main.dba");
+    CHECK(Linked == "#include \"levels/Cave/world_settings.dba\"\n#include \"levels/Cave/Cave.dba\"\n\n"
+                    "SetupWorld_Cave()\nLoadLevel_Cave()\n\nSYNC\n");
+
+    Driver.CreateLevel("Deep");
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::LevelRelativePath("Deep")));
+    CHECK(Driver.ReadFile("main.dba") == Linked);
+    CHECK(Driver.Logged("Level Deep stays out of main.dba") == 1);
+
+    // A name already taken opens that level, and writes nothing.
+    const std::string Before = Driver.ReadFile(scene::LevelRelativePath("Cave"));
+    Driver.CreateLevel("Cave");
+    CHECK(Driver.ReadFile(scene::LevelRelativePath("Cave")) == Before);
+    CHECK_FALSE(Driver.Editor().Dirty());
+}
+
+TEST_CASE("The Scene view keeps working in French, and writes the same files")
+{
+    SceneViewDriver Driver("level_french", LevelOfCubes({glm::vec3(0.0f)}));
+    core::ActivateInterfaceLanguage("fr");
+    Driver.Frame();
+    const ImGuiWindow* Viewport = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelViewport));
+    REQUIRE(Viewport != nullptr);
+    CHECK(std::string_view(Viewport->Name).starts_with("Vue 3D###"));
+
+    Driver.CreateLevel("Cave");
+    CHECK(Driver.ReadFile(scene::LevelRelativePath("Cave")).find("FUNCTION LoadLevel_Cave()") != std::string::npos);
+    CHECK(Driver.ReadFile(scene::WorldRelativePath("Cave")).find("FUNCTION SetupWorld_Cave()") != std::string::npos);
+    CHECK(Driver.ReadFile("main.dba").find("LoadLevel_Cave()") != std::string::npos);
+    core::ActivateInterfaceLanguage("en");
+    Driver.Frame();
+}
+
+TEST_CASE("A level from before the folders moves into its own, and its environment follows when saved")
+{
+    SceneViewDriver Driver("level_flat", LevelOfCubes({glm::vec3(0.0f)}));
+    std::filesystem::remove_all(Driver.Root() / scene::KLevelFolder);
+    Driver.WriteFile("levels/Level.dba", "FUNCTION LoadLevel_Level()\n   FOG ON\n   MAKE OBJECT CUBE 1000, 20\n"
+                                         "ENDFUNCTION\n");
+    Driver.WriteFile("opendbc_game.dba", "FUNCTION SetupGame()\n   SYNC ON\nENDFUNCTION\n");
+    Driver.WriteFile("main.dba", "#include \"opendbc_game.dba\"\n#include \"levels/Level.dba\"\n\n"
+                                 "SetupGame()\nLoadLevel_Level()\n\nSYNC\n");
+
+    const panels::SceneProject Project = *Driver.Editor().Project();
+    Driver.Editor().SetProject(std::nullopt);
+    Driver.Editor().SetProject(Project);
+    Driver.Editor().Activate();
+    Driver.Frame();
+
+    CHECK_FALSE(std::filesystem::exists(Driver.Root() / "levels/Level.dba"));
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::LevelRelativePath("Level")));
+    CHECK(Driver.ReadFile("main.dba") == "#include \"opendbc_game.dba\"\n#include \"levels/Level/Level.dba\"\n\n"
+                                         "SetupGame()\nLoadLevel_Level()\n\nSYNC\n");
+    CHECK(Driver.Logged("opendbc_game.dba") == 1);
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.ReadFile(scene::LevelRelativePath("Level")).find("FOG ON") == std::string::npos);
+    CHECK(Driver.ReadFile(scene::WorldRelativePath("Level")).find("FOG ON") != std::string::npos);
+    CHECK(Driver.ReadFile("main.dba") == "#include \"opendbc_game.dba\"\n#include \"levels/Level/Level.dba\"\n"
+                                         "#include \"levels/Level/world_settings.dba\"\n\n"
+                                         "SetupGame()\nSetupWorld_Level()\nLoadLevel_Level()\n\nSYNC\n");
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / "opendbc_game.dba"));
+
+    // A target already there is reported, and the older file stays.
+    Driver.WriteFile("levels/Level.dba", "FUNCTION LoadLevel_Level()\nENDFUNCTION\n");
+    Driver.ExpectErrors(true);
+    Driver.Editor().Activate();
+    CHECK(Driver.Logged("Cannot move") == 1);
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / "levels/Level.dba"));
 }
 
 TEST_CASE("A program's scene replaces the level until a level is opened again")

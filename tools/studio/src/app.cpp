@@ -62,7 +62,7 @@ namespace dbc::studio
             const bool Pressed = ImGui::InvisibleButton(Id, ImVec2(Size, Size));
             ImGui::EndDisabled();
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", Tooltip);
+                ImGui::SetTooltip("%s", Tr(Tooltip));
 
             const ImVec2 Min = ImGui::GetItemRectMin();
             ImDrawList* Draw = ImGui::GetWindowDrawList();
@@ -131,11 +131,11 @@ namespace dbc::studio
         {
             ImGui::BeginDisabled(!Enabled);
             ImGui::PushStyleColor(ImGuiCol_Button, Active ? Theme::Selection : 0);
-            const bool Pressed = ImGui::Button(Label);
+            const bool Pressed = ImGui::Button(TrId(Label));
             ImGui::PopStyleColor();
             ImGui::EndDisabled();
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", Tooltip);
+                ImGui::SetTooltip("%s", Tr(Tooltip));
             return Pressed && Enabled && !Active;
         }
 
@@ -209,6 +209,7 @@ namespace dbc::studio
         };
         SceneHost.OpenSource = [this](const std::filesystem::path& Path) { return Editor_.Open(Path); };
         SceneHost.CaptureRunning = [this] { return SceneCapture_.has_value(); };
+        SceneHost.FilesMoved = [this] { Project_.Refresh(); };
         Scene_.Initialize(Gpu_, std::move(SceneHost));
         Reference_.Load(core::paths::FindReferenceDoc());
         Commands_.Build(Reference_);
@@ -1368,7 +1369,7 @@ namespace dbc::studio
         {
             Scene_.HandleShortcuts();
             if (Command && ImGui::IsKeyPressed(ImGuiKey_S, false) && Scene_.SaveAndRefresh())
-                Status_ = Scene_.ProgramSource() != nullptr ? "Applied to the source" : "Level saved";
+                Status_ = Tr(Scene_.ProgramSource() != nullptr ? "Applied to the source" : "Level saved");
             return;
         }
 
@@ -1592,32 +1593,43 @@ namespace dbc::studio
             return;
         }
 
-        if (ImGui::BeginMenu("File"))
+        if (ImGui::BeginMenu(TrId("File")))
         {
-            if (ImGui::MenuItem("New", "Ctrl+N"))
+            if (ImGui::MenuItem(TrId("New"), "Ctrl+N"))
             {
                 Editor_.NewFile();
             }
 
-            if (ImGui::MenuItem("New Project...", "Ctrl+Shift+N", false, !ExecutionBusy_))
+            if (ImGui::MenuItem(TrId("New Project..."), "Ctrl+Shift+N", false, !ExecutionBusy_))
             {
                 RequestNewProject();
+            }
+
+            const std::string LevelBlocker = SceneBlocker();
+            if (ImGui::MenuItem(TrId("New Level..."), nullptr, false, LevelBlocker.empty()))
+            {
+                SetMode(Mode::Scene);
+                Scene_.RequestNewLevel();
+            }
+            if (!LevelBlocker.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            {
+                ImGui::SetTooltip("%s", Tr(LevelBlocker.c_str()));
             }
 
             // SDL_dialog has no UIKit backend, and mobile has no freeform file
             // system to browse anyway: there the Project panel is the only way in.
             if constexpr (core::platform::HasNativeFileDialog())
             {
-                if (ImGui::MenuItem("Open File...", "Ctrl+O"))
+                if (ImGui::MenuItem(TrId("Open File..."), "Ctrl+O"))
                 {
                     ShowOpenFileDialog();
                 }
-                if (ImGui::MenuItem("Open in Scene View", nullptr, false,
+                if (ImGui::MenuItem(TrId("Open in Scene View"), nullptr, false,
                                     Execution_.CanCaptureScene() && !ExecutionBusy_ && Editor_.CurrentIsBasic()))
                 {
                     OpenInScene(Editor_.CurrentPath());
                 }
-                if (ImGui::MenuItem("Open Folder...", "Ctrl+Shift+O"))
+                if (ImGui::MenuItem(TrId("Open Folder..."), "Ctrl+Shift+O"))
                 {
                     const std::string Start =
                         Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
@@ -1632,7 +1644,7 @@ namespace dbc::studio
 
             if constexpr (!core::platform::HasFreeformFileSystem())
             {
-                if (ImGui::BeginMenu("Open Location"))
+                if (ImGui::BeginMenu(TrId("Open Location")))
                 {
                     for (const core::Workspace::Location& LocationValue : Workspace_.Locations())
                     {
@@ -1649,21 +1661,21 @@ namespace dbc::studio
                 }
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Save", "Ctrl+S", false, Editor_.HasDocument()))
+            if (ImGui::MenuItem(TrId("Save"), "Ctrl+S", false, Editor_.HasDocument()))
             {
                 SaveCurrent();
             }
-            if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S", false, Editor_.HasDocument()))
+            if (ImGui::MenuItem(TrId("Save As..."), "Ctrl+Shift+S", false, Editor_.HasDocument()))
             {
                 SaveCurrentAs();
             }
-            if (ImGui::MenuItem("Save All", nullptr, false, Editor_.AnyDirty()))
+            if (ImGui::MenuItem(TrId("Save All"), nullptr, false, Editor_.AnyDirty()))
             {
                 Editor_.SaveAll();
                 CheckCurrentDocument();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Quit", "Ctrl+Q"))
+            if (ImGui::MenuItem(TrId("Quit"), "Ctrl+Q"))
             {
                 RequestQuit();
             }
@@ -1945,7 +1957,7 @@ namespace dbc::studio
 
         // The mode switch sits in the middle of the toolbar.
         const std::string Blocker = SceneBlocker();
-        const float SwitchWidth = ImGui::CalcTextSize("Code").x + ImGui::CalcTextSize("Scene").x +
+        const float SwitchWidth = ImGui::CalcTextSize(Tr("Code")).x + ImGui::CalcTextSize(Tr("Scene")).x +
                                   Style.FramePadding.x * 4.0f + Style.ItemSpacing.x;
         ImGui::SameLine(std::max(ImGui::GetCursorPosX(), (ImGui::GetWindowWidth() - SwitchWidth) * 0.5f));
         if (ModeButton("Code", Mode_ == Mode::Code, true, "Code (Ctrl+1)"))
