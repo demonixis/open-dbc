@@ -122,7 +122,8 @@ namespace dbc::studio
         struct AxisOrigin
         {
             AxisAccess Access = AxisAccess::Locked;
-            SourceRef Writer;   // the statement setting this axis, if any
+            SourceRef Writer; // the statement setting this axis, if any
+            dbc::language::SymbolId WriterSymbol = dbc::language::SymbolId::Count;
             int Argument = -1;  // this axis's argument in `Writer`
             std::string Reason; // why it is locked, for the Inspector
         };
@@ -137,6 +138,9 @@ namespace dbc::studio
         };
 
         using NodeKey = std::pair<IdSpace, int>;
+
+        // Whether the engine holds a value a statement wrote, within what its own conversions lose.
+        bool SameTransformValue(TransformPart Part, float Left, float Right);
 
         struct CaptureReadOptions
         {

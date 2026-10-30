@@ -30,15 +30,6 @@ namespace dbc::studio
 
             // --- Writing ---------------------------------------------------
 
-            std::string Number(float Value)
-            {
-                if (Value == 0.0f || !std::isfinite(Value))
-                    return "0";
-                char Buffer[64];
-                const auto Result = std::to_chars(Buffer, Buffer + sizeof(Buffer), Value, std::chars_format::fixed);
-                return std::string(Buffer, Result.ptr);
-            }
-
             std::string Integer(int Value)
             {
                 return std::to_string(Value);
@@ -89,7 +80,8 @@ namespace dbc::studio
 
                 void Vector(SymbolId Id, int Target, const glm::vec3& Value)
                 {
-                    Command(Id, {Integer(Target), Number(Value.x), Number(Value.y), Number(Value.z)});
+                    Command(Id,
+                            {Integer(Target), NumberLiteral(Value.x), NumberLiteral(Value.y), NumberLiteral(Value.z)});
                 }
 
                 void Push()
@@ -148,40 +140,43 @@ namespace dbc::studio
                 switch (Node.Kind)
                 {
                     case NodeKind::Cube:
-                        Out.Command(SymbolId::Command_MakeObjectCube, {Id, Number(Node.Size)});
+                        Out.Command(SymbolId::Command_MakeObjectCube, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Box:
                         Out.Command(SymbolId::Command_MakeObjectBox,
-                                    {Id, Number(Node.Extent.x), Number(Node.Extent.y), Number(Node.Extent.z)});
+                                    {Id, NumberLiteral(Node.Extent.x), NumberLiteral(Node.Extent.y),
+                                     NumberLiteral(Node.Extent.z)});
                         break;
                     case NodeKind::Sphere:
                         if (Node.Detail && Profile == lang::LanguageProfile::DbPro)
-                            Out.Command(SymbolId::Command_MakeObjectSphere,
-                                        {Id, Number(Node.Size), Integer(Node.Detail->x), Integer(Node.Detail->y)});
+                            Out.Command(
+                                SymbolId::Command_MakeObjectSphere,
+                                {Id, NumberLiteral(Node.Size), Integer(Node.Detail->x), Integer(Node.Detail->y)});
                         else
-                            Out.Command(SymbolId::Command_MakeObjectSphere, {Id, Number(Node.Size)});
+                            Out.Command(SymbolId::Command_MakeObjectSphere, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Cylinder:
-                        Out.Command(SymbolId::Command_MakeObjectCylinder, {Id, Number(Node.Size)});
+                        Out.Command(SymbolId::Command_MakeObjectCylinder, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Cone:
-                        Out.Command(SymbolId::Command_MakeObjectCone, {Id, Number(Node.Size)});
+                        Out.Command(SymbolId::Command_MakeObjectCone, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Plain:
                         if (Node.PlainOrientation && Profile == lang::LanguageProfile::DbPro)
-                            Out.Command(
-                                SymbolId::Command_MakeObjectPlain,
-                                {Id, Number(Node.Extent.x), Number(Node.Extent.y), Integer(*Node.PlainOrientation)});
+                            Out.Command(SymbolId::Command_MakeObjectPlain,
+                                        {Id, NumberLiteral(Node.Extent.x), NumberLiteral(Node.Extent.y),
+                                         Integer(*Node.PlainOrientation)});
                         else
                             Out.Command(SymbolId::Command_MakeObjectPlain,
-                                        {Id, Number(Node.Extent.x), Number(Node.Extent.y)});
+                                        {Id, NumberLiteral(Node.Extent.x), NumberLiteral(Node.Extent.y)});
                         break;
                     case NodeKind::Triangle:
                     {
                         const auto& C = Node.Corners;
                         Out.Command(SymbolId::Command_MakeObjectTriangle,
-                                    {Id, Number(C[0].x), Number(C[0].y), Number(C[0].z), Number(C[1].x), Number(C[1].y),
-                                     Number(C[1].z), Number(C[2].x), Number(C[2].y), Number(C[2].z)});
+                                    {Id, NumberLiteral(C[0].x), NumberLiteral(C[0].y), NumberLiteral(C[0].z),
+                                     NumberLiteral(C[1].x), NumberLiteral(C[1].y), NumberLiteral(C[1].z),
+                                     NumberLiteral(C[2].x), NumberLiteral(C[2].y), NumberLiteral(C[2].z)});
                         break;
                     }
                     case NodeKind::Model:
@@ -233,7 +228,7 @@ namespace dbc::studio
                 if (Mat.Specular)
                     Out.Command(SymbolId::Command_SetObjectSpecular, {Id, Color(*Mat.Specular)});
                 if (Mat.SpecularPower)
-                    Out.Command(SymbolId::Command_SetObjectSpecularPower, {Id, Number(*Mat.SpecularPower)});
+                    Out.Command(SymbolId::Command_SetObjectSpecularPower, {Id, NumberLiteral(*Mat.SpecularPower)});
                 if (Mat.CastShadow)
                     Out.Command(SymbolId::Command_SetShadowShadingOn, {Id});
             }
@@ -270,13 +265,13 @@ namespace dbc::studio
                         }
                 }
                 const std::string Id = Integer(Node.Id);
-                Out.Command(SymbolId::Command_FillMatrix, {Id, Number(Base), Integer(Tile)});
+                Out.Command(SymbolId::Command_FillMatrix, {Id, NumberLiteral(Base), Integer(Tile)});
                 const int Columns = std::max(1, Node.XSegments) + 1;
                 for (std::size_t Index = 0; Index < Heights.size(); ++Index)
                     if (Heights[Index] != Base)
                         Out.Command(SymbolId::Command_SetMatrixHeight,
                                     {Id, Integer(static_cast<int>(Index) % Columns),
-                                     Integer(static_cast<int>(Index) / Columns), Number(Heights[Index])});
+                                     Integer(static_cast<int>(Index) / Columns), NumberLiteral(Heights[Index])});
                 Out.Command(SymbolId::Command_UpdateMatrix, {Id});
             }
 
@@ -308,8 +303,9 @@ namespace dbc::studio
                 switch (Node.Kind)
                 {
                     case NodeKind::Matrix:
-                        Out.Command(SymbolId::Command_MakeMatrix, {Id, Number(Node.Width), Number(Node.Depth),
-                                                                   Integer(Node.XSegments), Integer(Node.ZSegments)});
+                        Out.Command(SymbolId::Command_MakeMatrix,
+                                    {Id, NumberLiteral(Node.Width), NumberLiteral(Node.Depth), Integer(Node.XSegments),
+                                     Integer(Node.ZSegments)});
                         if (!Node.Mat.Texture.empty())
                             Out.Command(SymbolId::Command_PrepareMatrixTexture,
                                         {Id, Integer(Images.at(Node.Mat.Texture)), Integer(Node.TilesAcross),
@@ -335,7 +331,7 @@ namespace dbc::studio
                             case LightKind::Spot:
                                 // SET SPOT LIGHT resets the position and direction, so it comes first.
                                 Out.Command(SymbolId::Command_SetSpotLight,
-                                            {Id, Number(Node.SpotInner), Number(Node.SpotOuter)});
+                                            {Id, NumberLiteral(Node.SpotInner), NumberLiteral(Node.SpotOuter)});
                                 Out.Vector(SymbolId::Command_PositionLight, Node.Id, Node.Position);
                                 Out.Vector(SymbolId::Command_RotateLight, Node.Id, Node.Rotation);
                                 break;
@@ -347,7 +343,7 @@ namespace dbc::studio
                                 break;
                         }
                         if (Node.Range)
-                            Out.Command(SymbolId::Command_SetLightRange, {Id, Number(*Node.Range)});
+                            Out.Command(SymbolId::Command_SetLightRange, {Id, NumberLiteral(*Node.Range)});
                         if (Node.LightColor)
                             Out.Command(SymbolId::Command_ColorLight, {Id, Color(*Node.LightColor)});
                         break;
@@ -380,7 +376,7 @@ namespace dbc::studio
                     if (Env.FogColor)
                         Out.Command(SymbolId::Command_FogColor, {Color(*Env.FogColor)});
                     if (Env.FogDistance)
-                        Out.Command(SymbolId::Command_FogDistance, {Number(*Env.FogDistance)});
+                        Out.Command(SymbolId::Command_FogDistance, {NumberLiteral(*Env.FogDistance)});
                 }
                 if (Env.DefaultLightHidden)
                     Out.Command(SymbolId::Command_HideLight, {"0"});
@@ -396,13 +392,15 @@ namespace dbc::studio
             {
                 const glm::vec3& P = Env.CameraPosition;
                 const glm::vec3& R = Env.CameraRotation;
-                Out.Command(SymbolId::Command_PositionCamera, {Number(P.x), Number(P.y), Number(P.z)});
-                Out.Command(SymbolId::Command_RotateCamera, {Number(R.x), Number(R.y), Number(R.z)});
+                Out.Command(SymbolId::Command_PositionCamera,
+                            {NumberLiteral(P.x), NumberLiteral(P.y), NumberLiteral(P.z)});
+                Out.Command(SymbolId::Command_RotateCamera,
+                            {NumberLiteral(R.x), NumberLiteral(R.y), NumberLiteral(R.z)});
                 if (Env.CameraFov)
-                    Out.Command(SymbolId::Command_SetCameraFov, {Number(*Env.CameraFov)});
+                    Out.Command(SymbolId::Command_SetCameraFov, {NumberLiteral(*Env.CameraFov)});
                 if (Env.CameraRange)
                     Out.Command(SymbolId::Command_SetCameraRange,
-                                {Number(Env.CameraRange->x), Number(Env.CameraRange->y)});
+                                {NumberLiteral(Env.CameraRange->x), NumberLiteral(Env.CameraRange->y)});
             }
 
             // --- Reading ---------------------------------------------------
@@ -1221,6 +1219,15 @@ namespace dbc::studio
                 return lang::LexAndParse(Source);
             }
         } // namespace
+
+        std::string NumberLiteral(float Value)
+        {
+            if (Value == 0.0f || !std::isfinite(Value))
+                return "0";
+            char Buffer[64];
+            const auto Result = std::to_chars(Buffer, Buffer + sizeof(Buffer), Value, std::chars_format::fixed);
+            return std::string(Buffer, Result.ptr);
+        }
 
         std::string WriteLevel(const SceneDocument& Document)
         {

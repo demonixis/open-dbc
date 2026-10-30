@@ -79,6 +79,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_capture.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_codegen.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_patch.cpp
     )
     target_include_directories(test_studio_scene_capture PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
     target_link_libraries(test_studio_scene_capture PRIVATE doctest_with_main dbc_interpreter glm::glm)
@@ -115,6 +116,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_document.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_geometry.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_integration.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_patch.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_renderer.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/theme.cpp
     )

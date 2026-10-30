@@ -633,3 +633,64 @@ TEST_CASE("A program's scene replaces the level until a level is opened again")
     Driver.Tap(ImGuiKey_Delete);
     CHECK_FALSE(Driver.Editor().Dirty());
 }
+
+TEST_CASE("A gizmo move of a program's node rewrites its statement, and a locked axis stays put")
+{
+    const glm::vec3 Spot(0.0f, 0.0f, 0.0f);
+    const glm::vec3 Far(40.0f, 0.0f, 0.0f);
+    SceneViewDriver Driver("program_edit", LevelOfCubes({Spot}));
+    const std::filesystem::path Source = Driver.Root() / "program.dba";
+    const std::string Text = "make object cube 1, 30\n"
+                             "position object 1, 0, 0, 0\n"
+                             "make object cube 2, 30\n";
+    {
+        std::ofstream File(Source, std::ios::binary);
+        File << Text;
+    }
+    scene::SceneCapture Capture;
+    Capture.Status = "completed";
+    Capture.Files = {dbc::GenericPathToUtf8(Source)};
+    using dbc::language::SymbolId;
+    Capture.Commands.push_back({SymbolId::Command_MakeObjectCube, {{false, 1.0, {}}, {false, 30.0, {}}}});
+    Capture.Sites.push_back({0, 1, 1, 0});
+    Capture.Commands.push_back(
+        {SymbolId::Command_PositionObject, {{false, 1.0, {}}, {false, 0.0, {}}, {false, 0.0, {}}, {false, 0.0, {}}}});
+    Capture.Sites.push_back({0, 2, 1, 0});
+    Capture.Commands.push_back({SymbolId::Command_MakeObjectCube, {{false, 2.0, {}}, {false, 30.0, {}}}});
+    Capture.Sites.push_back({0, 3, 1, 0});
+    scene::CapturedObject First;
+    First.Id = 1;
+    Capture.Objects.push_back(First);
+    // Away from where any statement puts it, so something else moved it along X.
+    scene::CapturedObject Second;
+    Second.Id = 2;
+    Second.Position = Far;
+    Capture.Objects.push_back(Second);
+    Capture.HasCamera = true;
+    Capture.CameraPosition = glm::vec3(0.0f, 80.0f, -180.0f);
+    Capture.CameraRotation = glm::vec3(20.0f, 0.0f, 0.0f);
+    Driver.Editor().OpenCapture(Source, Capture, 1, {});
+    Driver.Frame();
+
+    Driver.Click(Far);
+    Driver.DragGizmoX(Far, 120.0f);
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    Driver.Click(Spot);
+    Driver.DragGizmoX(Spot, 120.0f);
+    CHECK(Driver.Editor().Dirty());
+    Driver.Undo();
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    Driver.DragGizmoX(Spot, 120.0f);
+    REQUIRE(Driver.Editor().Save());
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    std::ifstream File(Source, std::ios::binary);
+    std::ostringstream Saved;
+    Saved << File.rdbuf();
+    const std::string Patched = Saved.str();
+    CHECK(Patched != Text);
+    CHECK(Patched.starts_with("make object cube 1, 30\nposition object 1, "));
+    CHECK(Patched.ends_with(", 0, 0\nmake object cube 2, 30\n"));
+}

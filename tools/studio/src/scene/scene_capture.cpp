@@ -240,14 +240,6 @@ namespace dbc::studio
                         Site.Column};
             }
 
-            bool Same(TransformPart Part, float Left, float Right)
-            {
-                if (Part != TransformPart::Rotation)
-                    return std::abs(Left - Right) <= 0.01f;
-                const float Turn = std::fmod(std::abs(Left - Right), 360.0f);
-                return std::min(Turn, 360.0f - Turn) <= 0.05f;
-            }
-
             struct StateTransform
             {
                 glm::vec3 Position{0.0f};
@@ -277,6 +269,7 @@ namespace dbc::studio
                     const std::optional<TransformWriter> Form =
                         WriterOf(Capture.Commands[Index].Symbol, Capture.Commands[Index].Arguments.size());
                     Origin.Writer = RefOf(Capture, Index);
+                    Origin.WriterSymbol = Capture.Commands[Index].Symbol;
                     Origin.Argument = 1 + Axis - Form->FirstAxis;
                     const float Written = static_cast<float>(Capture.Commands[Index].Arguments[Origin.Argument].Number);
                     const int Count = Runs.at(KeyOf(Capture, Index));
@@ -284,7 +277,7 @@ namespace dbc::studio
                         Origin.Reason = "Its statement runs " + std::to_string(Count) + " times.";
                     else if (Capture.Sites[Index].Frame >= Options.SetupFrames)
                         Origin.Reason = "The game loop sets it.";
-                    else if (State && !Same(Part, StateAxis(*State, Part, Axis), Written))
+                    else if (State && !SameTransformValue(Part, StateAxis(*State, Part, Axis), Written))
                         Origin.Reason = KChangedAtRun;
                     else
                         Origin.Access = AxisAccess::Replace;
@@ -301,7 +294,7 @@ namespace dbc::studio
                     Origin.Reason = "Its creation runs " + std::to_string(Count) + " times.";
                 else if (Capture.Sites[Created].Frame >= Options.SetupFrames)
                     Origin.Reason = "The game loop creates it.";
-                else if (State && !Same(Part, StateAxis(*State, Part, Axis), Default))
+                else if (State && !SameTransformValue(Part, StateAxis(*State, Part, Axis), Default))
                     Origin.Reason = KChangedAtRun;
                 else
                     Origin.Access = AxisAccess::Insert;
@@ -340,6 +333,14 @@ namespace dbc::studio
                                    [&](std::string_view Word) { return Command.find(Word) != std::string_view::npos; });
             }
         } // namespace
+
+        bool SameTransformValue(TransformPart Part, float Left, float Right)
+        {
+            if (Part != TransformPart::Rotation)
+                return std::abs(Left - Right) <= 0.01f;
+            const float Turn = std::fmod(std::abs(Left - Right), 360.0f);
+            return std::min(Turn, 360.0f - Turn) <= 0.05f;
+        }
 
         bool ParseSceneCapture(const std::string& Text, const std::filesystem::path& SourceRoot,
                                const std::filesystem::path& AssetRoot, SceneCapture& Out, std::string& Error)

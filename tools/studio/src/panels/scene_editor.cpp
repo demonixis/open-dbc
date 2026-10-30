@@ -206,6 +206,10 @@ namespace dbc::studio
             const bool SameProgram = Program_ && Program_->Source == Source;
             scene::CaptureReadResult Read =
                 scene::ReadCapture(Capture, {dbc::PathToUtf8(Source.filename()), SetupFrames, OnlyFile});
+            if (SameProgram)
+                for (const std::string& Message : scene::UnappliedEdits(PendingChecks_, Read))
+                    Host_.Log(Message, true);
+            PendingChecks_.clear();
             Document_ = std::move(Read.Document);
             Saved_ = Document_;
             ReadErrors_.clear();
@@ -240,9 +244,8 @@ namespace dbc::studio
         {
             if (!Project_ || !HasLevel_)
                 return false;
-            // Nothing of a program's scene can change yet.
             if (Program_)
-                return true;
+                return SaveProgramEdits();
             if (!ReadErrors_.empty())
             {
                 Host_.Log("The level is read-only: fix the lines reported when it was opened", true);
@@ -273,6 +276,90 @@ namespace dbc::studio
                 SavedGame_ = Game_;
             }
             return LinkMain();
+        }
+
+        bool SceneEditor::SaveProgramEdits()
+        {
+            if (Document_ == Saved_)
+                return true;
+            scene::PatchPlan Plan = scene::PlanPatches(Saved_, Document_, Program_->Origins);
+
+            std::error_code Error;
+            const std::filesystem::path Root = std::filesystem::weakly_canonical(Project_->Root, Error);
+
+            struct Patched
+            {
+                std::filesystem::path Path;
+                scene::PatchResult Result;
+                std::size_t Count = 0;
+            };
+
+            // Every file is patched before any is written, so a refusal leaves the program whole.
+            std::vector<Patched> Files;
+            for (const auto& [File, Edits] : Plan.Files)
+            {
+                const std::filesystem::path Path = dbc::PathFromUtf8(File);
+                const std::string Name = dbc::PathToUtf8(Path.filename());
+                // The capture comes from another process: it never picks a file outside the project.
+                const std::filesystem::path Relative =
+                    std::filesystem::weakly_canonical(Path, Error).lexically_relative(Root);
+                if (Relative.empty() || *Relative.begin() == "..")
+                {
+                    Host_.Log("Cannot change " + File + ": it is outside the project", true);
+                    return false;
+                }
+                const std::optional<std::string> Text = Host_.ReadSource(Path);
+                if (!Text)
+                {
+                    Host_.Log("Cannot read " + File, true);
+                    return false;
+                }
+                scene::PatchResult Result = scene::PatchSource(*Text, File, Document_.Profile, Edits);
+                if (!Result.Error.empty())
+                {
+                    Host_.Log(Name + ", " + Result.Error, true);
+                    return false;
+                }
+                Files.push_back({Path, std::move(Result), Edits.size()});
+            }
+            for (const Patched& File : Files)
+            {
+                const std::string Name = dbc::PathToUtf8(File.Path.filename());
+                if (Host_.OpenSource)
+                    Host_.OpenSource(File.Path);
+                if (!Host_.WriteSource(File.Path, File.Result.Text, false))
+                {
+                    Host_.Log("Cannot update " + Name, true);
+                    return false;
+                }
+                Host_.Log("Applied " + std::to_string(File.Count) + " edit(s) to " + Name +
+                              ": save the file to keep them",
+                          false);
+                for (const std::string& Replaced : File.Result.Replaced)
+                    Host_.Log(Name + ":" + Replaced + " became a number", false);
+            }
+            Saved_ = Document_;
+            PendingChecks_ = std::move(Plan.Axes);
+            return true;
+        }
+
+        void SceneEditor::RefreshProgram()
+        {
+            if (!Program_ || !Host_.CaptureProgram || !Save())
+                return;
+            Host_.CaptureProgram(Program_->Source, Program_->SetupFrames);
+        }
+
+        bool SceneEditor::SaveAndRefresh()
+        {
+            if (!Program_)
+                return Save();
+            if (!Dirty())
+                return true;
+            if (!Save())
+                return false;
+            RefreshProgram();
+            return true;
         }
 
         bool SceneEditor::LinkMain()
@@ -306,6 +393,50 @@ namespace dbc::studio
         bool SceneEditor::Editable() const
         {
             return HasLevel_ && ReadErrors_.empty() && !Program_;
+        }
+
+        bool SceneEditor::TransformEditable() const
+        {
+            if (!Program_)
+                return Editable();
+            // The capture on its way would replace what is edited meanwhile.
+            return HasLevel_ && !(Host_.CaptureRunning && Host_.CaptureRunning());
+        }
+
+        bool SceneEditor::PartEditable(const scene::SceneNode& Node, scene::TransformPart Part) const
+        {
+            if (!Program_)
+                return true;
+            const scene::NodeOrigin* Origin = OriginOf(Node);
+            if (Origin == nullptr)
+                return false;
+            const auto& Axes = Origin->Axes[static_cast<std::size_t>(Part)];
+            return std::any_of(Axes.begin(), Axes.end(),
+                               [](const scene::AxisOrigin& Axis) { return Axis.Access != scene::AxisAccess::Locked; });
+        }
+
+        void SceneEditor::EnforceCaptureLocks()
+        {
+            // A program's scene keeps its nodes, so both documents line up.
+            if (!Program_ || Document_.Nodes.size() != Saved_.Nodes.size())
+                return;
+            for (std::size_t Index = 0; Index < Document_.Nodes.size(); ++Index)
+            {
+                scene::SceneNode& Node = Document_.Nodes[Index];
+                const scene::SceneNode& Saved = Saved_.Nodes[Index];
+                if (Node.Position == Saved.Position && Node.Rotation == Saved.Rotation && Node.Scale == Saved.Scale)
+                    continue;
+                const scene::NodeOrigin* Origin = OriginOf(Node);
+                for (std::size_t Part = 0; Part < scene::KTransformPartCount; ++Part)
+                {
+                    const auto Which = static_cast<scene::TransformPart>(Part);
+                    glm::vec3& Value = scene::TransformValue(Node, Which);
+                    const glm::vec3& Kept = scene::TransformValue(Saved, Which);
+                    for (std::size_t Axis = 0; Axis < 3; ++Axis)
+                        if (Origin == nullptr || Origin->Axes[Part][Axis].Access == scene::AxisAccess::Locked)
+                            Value[static_cast<int>(Axis)] = Kept[static_cast<int>(Axis)];
+                }
+            }
         }
 
         scene::SceneNode* SceneEditor::Selected()
@@ -366,12 +497,13 @@ namespace dbc::studio
 
         void SceneEditor::Commit()
         {
+            EnforceCaptureLocks();
             History_.Commit(Document_);
         }
 
         void SceneEditor::Undo()
         {
-            if (!Editable() || !History_.CanUndo())
+            if (!TransformEditable() || !History_.CanUndo())
                 return;
             Document_ = History_.Undo();
             PruneSelection();
@@ -379,7 +511,7 @@ namespace dbc::studio
 
         void SceneEditor::Redo()
         {
-            if (!Editable() || !History_.CanRedo())
+            if (!TransformEditable() || !History_.CanRedo())
                 return;
             Document_ = History_.Redo();
             PruneSelection();
@@ -499,21 +631,29 @@ namespace dbc::studio
                     }
                 ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("Save Level", "Ctrl+S", false, Editable()))
+            if (Program_)
+            {
+                if (ImGui::MenuItem("Apply to Source", "Ctrl+S", false, Dirty() && TransformEditable()))
+                    SaveAndRefresh();
+                if (ImGui::MenuItem("Refresh Program", nullptr, false, Host_.CaptureProgram != nullptr))
+                    RefreshProgram();
+            }
+            else if (ImGui::MenuItem("Save Level", "Ctrl+S", false, Editable()))
+            {
                 Save();
-            if (ImGui::MenuItem("Refresh Program", nullptr, false, Program_.has_value() && Host_.CaptureProgram))
-                Host_.CaptureProgram(Program_->Source, Program_->SetupFrames);
+            }
             ImGui::Separator();
-            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, Editable() && History_.CanUndo()))
+            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, TransformEditable() && History_.CanUndo()))
                 Undo();
-            if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, Editable() && History_.CanRedo()))
+            if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, TransformEditable() && History_.CanRedo()))
                 Redo();
             ImGui::Separator();
             if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, Editable() && !Selection_.empty()))
                 DuplicateSelected();
             if (ImGui::MenuItem("Delete", "Delete", false, Editable() && !Selection_.empty()))
                 DeleteSelected();
-            if (ImGui::MenuItem("Align to Grid", "G", false, Editable() && (!Selection_.empty() || CameraSelected_)))
+            if (ImGui::MenuItem("Align to Grid", "G", false,
+                                TransformEditable() && (!Selection_.empty() || (CameraSelected_ && !Program_))))
                 AlignSelectionToGrid();
             ImGui::EndMenu();
         }
@@ -669,6 +809,7 @@ namespace dbc::studio
             ImGui::End();
 
             DrawNewLevelPopup();
+            EnforceCaptureLocks();
             CommitIfIdle();
         }
 
@@ -696,10 +837,11 @@ namespace dbc::studio
                 ImGui::SetTooltip("How many frames the program runs before the scene counts as built. "
                                   "What later frames set belongs to the game loop.");
             ImGui::SameLine();
-            if (ImGui::SmallButton("Refresh") && Host_.CaptureProgram)
-                Host_.CaptureProgram(Program_->Source, Program_->SetupFrames);
+            if (ImGui::SmallButton("Refresh"))
+                RefreshProgram();
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("Runs the program again, without a window or sound, to read its scene");
+            ImGui::TextDisabled("Move, turn and scale what its statements decide; Ctrl+S writes it to the source.");
             for (const std::string& Note : Program_->Notes)
                 ImGui::TextWrapped("%s", Note.c_str());
             ImGui::Separator();

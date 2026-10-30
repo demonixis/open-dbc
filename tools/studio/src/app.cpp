@@ -207,6 +207,8 @@ namespace dbc::studio
             Editor_.GoToLine(Line);
             SetMode(Mode::Code);
         };
+        SceneHost.OpenSource = [this](const std::filesystem::path& Path) { return Editor_.Open(Path); };
+        SceneHost.CaptureRunning = [this] { return SceneCapture_.has_value(); };
         Scene_.Initialize(Gpu_, std::move(SceneHost));
         Reference_.Load(core::paths::FindReferenceDoc());
         Commands_.Build(Reference_);
@@ -867,6 +869,9 @@ namespace dbc::studio
             Status_ = "Stop the running program first";
             return;
         }
+        // Before the program runs, so that it sees what is being edited.
+        if (Scene_.Dirty() && !Scene_.Save())
+            return;
         OpenFile(Path);
         if (!ResolvedProject_)
         {
@@ -1362,8 +1367,8 @@ namespace dbc::studio
         if (Mode_ == Mode::Scene)
         {
             Scene_.HandleShortcuts();
-            if (Command && ImGui::IsKeyPressed(ImGuiKey_S, false) && Scene_.Save())
-                Status_ = "Level saved";
+            if (Command && ImGui::IsKeyPressed(ImGuiKey_S, false) && Scene_.SaveAndRefresh())
+                Status_ = Scene_.ProgramSource() != nullptr ? "Applied to the source" : "Level saved";
             return;
         }
 

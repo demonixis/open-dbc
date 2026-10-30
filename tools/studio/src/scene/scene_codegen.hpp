@@ -49,6 +49,8 @@ namespace dbc::studio
         };
 
         // Image numbers are assigned here, in node order, one per distinct path.
+        // A number as BASIC source: fixed notation, no exponent the language could not read.
+        std::string NumberLiteral(float Value);
         std::string WriteLevel(const SceneDocument& Document);
         // `Name` is the level name (the file stem); it must match the function.
         LevelReadResult ReadLevel(const std::string& Text, const std::string& Name,
