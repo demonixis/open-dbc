@@ -885,10 +885,8 @@ namespace dbc
                         SDL_PushGPUFragmentUniformData(Cmd, 1, &StageUniforms, sizeof(StageUniforms));
                     }
 
-                    const Uint32 SamplerCount =
-                        MaskBatch && !ForcePipeline
-                            ? 0
-                            : (BatchEffect == 0 ? 9 : K.Gpu().EffectFragmentSamplerCount(BatchEffect));
+                    // The reflection mask writes no colour, but its fragment shader samples like any other.
+                    const Uint32 SamplerCount = BatchEffect == 0 ? 9 : K.Gpu().EffectFragmentSamplerCount(BatchEffect);
                     if (SamplerCount != 0)
                     {
                         SDL_GPUTexture* Texture = Batch.Texture;

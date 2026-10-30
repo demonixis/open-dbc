@@ -2780,6 +2780,21 @@ TEST_CASE("Meshes stay on the CPU path where blending or the depth order decides
     CHECK(GpuDraws() == 2);
 }
 
+TEST_CASE("A mirror alone in view draws its mask with samplers bound")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    REQUIRE(Kernel.Objects().MakeObjectPlain(1, 8.0f, 8.0f));
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 10.0f);
+    REQUIRE(Kernel.Objects().SetReflectionShadingOn(1));
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+    REQUIRE(Capture != nullptr);
+    SDL_DestroySurface(Capture);
+    CHECK(Kernel.Renderer().LastFrameDrawCalls() > 0);
+}
+
 TEST_CASE("A still scene never draws with an image texture released since it was built")
 {
     dbc::EngineKernel Kernel;
