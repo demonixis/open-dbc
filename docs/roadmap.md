@@ -21,7 +21,6 @@
 
 Build and release:
 
-- [ ] `release-macos` builds arm64 only.
 - [ ] Linux AppImage on demand, built on an old glibc so that it starts on older
   distributions, with the Studio's `.desktop` entry.
 

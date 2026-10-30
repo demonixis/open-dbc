@@ -9,7 +9,8 @@ First public release.
   (Vulkan, Metal).
 - One `opendbc` executable: the Studio (code editor, Scene view, snippets, project
   creation, Build window) and the command line.
-- Exports to macOS, Windows, Linux, Android and iOS with `opendbc-runner`.
+- Exports to macOS (Apple silicon), Windows, Linux, Android and iOS with
+  `opendbc-runner`.
 - Classic multiplayer over ENet, native plugins through `LOAD DLL`, DBPro BSP
   worlds, Classic animations and desktop VR through OpenXR.
 - Six demos and tutorials covering the 747 Classic help symbols, with CC0 assets.

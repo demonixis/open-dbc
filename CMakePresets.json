@@ -23,7 +23,7 @@
     },
     {
       "name": "release-macos",
-      "displayName": "macOS Release, universal2 (arm64 and x86_64)",
+      "displayName": "macOS Release, Apple Silicon",
       "inherits": "release",
       "binaryDir": "${sourceDir}/build/release-macos",
       "condition": {
@@ -32,7 +32,7 @@
         "rhs": "Darwin"
       },
       "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64"
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
       }
     },
     {

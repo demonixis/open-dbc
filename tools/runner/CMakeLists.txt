@@ -34,9 +34,9 @@ if(APPLE AND NOT IOS)
         MACOSX_BUNDLE_BUNDLE_NAME "OpenDBC Runner"
         MACOSX_BUNDLE_GUI_IDENTIFIER "net.demonixis.opendbc.runner"
     )
-    # The linker signs arm64-only binaries, not universal or x86_64 ones, and the Studio bundle that nests
-    # the runner cannot be signed around unsigned code. Signing before the host manifest below keeps the
-    # binary hash it records; the manifest then breaks the resource seal, which exports re-sign.
+    # The Studio bundle that nests the runner cannot be signed around an unsigned bundle. Signing before the
+    # host manifest below keeps the binary hash it records; the manifest then breaks the resource seal, which
+    # exports re-sign.
     add_custom_command(TARGET opendbc-runner POST_BUILD
         COMMAND /usr/bin/codesign --force --sign - --timestamp=none "$<TARGET_BUNDLE_DIR:opendbc-runner>"
         COMMENT "Ad-hoc signing opendbc-runner"
