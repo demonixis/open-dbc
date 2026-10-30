@@ -2,6 +2,7 @@
 #include "core/i18n.hpp"
 #include "theme.hpp"
 
+#include <algorithm>
 #include <array>
 
 #include <imgui.h>
@@ -10,6 +11,13 @@ namespace dbc::studio
 {
     namespace
     {
+        // What an input leaves for the button beside it, whatever the button's language.
+        float ButtonRoom(const char* Label)
+        {
+            const ImGuiStyle& Style = ImGui::GetStyle();
+            return ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f + Style.ItemSpacing.x;
+        }
+
         // ImGui edits fixed buffers, so each string field round-trips through one.
         bool TextField(const char* Label, std::string& Value, ImGuiInputTextFlags Flags = 0)
         {
@@ -75,7 +83,7 @@ namespace dbc::studio
             ImGui::TextUnformatted(Tr("Google Play ties the app to this key. Keep a copy of the file and its password: "
                                       "without them, no update can be published."));
             ImGui::PopTextWrapPos();
-            ImGui::SetNextItemWidth(-90.0f);
+            ImGui::SetNextItemWidth(-ButtonRoom(Tr("Choose...")));
             TextField("##keystore", Keystore_.Path);
             ImGui::SameLine();
             if (ImGui::Button(TrId("Choose...")))
@@ -160,7 +168,7 @@ namespace dbc::studio
             }
 
             ImGui::SeparatorText(Tr("Output"));
-            ImGui::SetNextItemWidth(-90.0f);
+            ImGui::SetNextItemWidth(-ButtonRoom(Tr("Browse...")));
             TextField("##output", OutputFolder_);
             ImGui::SameLine();
             if (ImGui::Button(TrId("Browse...")))
@@ -189,21 +197,27 @@ namespace dbc::studio
             }
 
             ImGui::SeparatorText(Tr("Checks"));
+            // The labels line up after the longest status, whose width depends on the language.
+            float StatusWidth = 0.0f;
+            for (const char* Status : {"OK", "Missing", "Warning"})
+                StatusWidth = std::max(StatusWidth, ImGui::CalcTextSize(Tr(Status)).x);
+            StatusWidth += ImGui::GetStyle().ItemSpacing.x;
+            const float LabelX = ImGui::GetCursorPosX() + StatusWidth;
             for (const toolchain::ExportCheck& Check : Checks)
             {
                 const ImU32 Colour = Check.Passed ? Theme::Run : (Check.Required ? Theme::Error : Theme::Warning);
                 ImGui::PushStyleColor(ImGuiCol_Text, Colour);
                 ImGui::TextUnformatted(Tr(Check.Passed ? "OK" : (Check.Required ? "Missing" : "Warning")));
                 ImGui::PopStyleColor();
-                ImGui::SameLine(90.0f);
+                ImGui::SameLine(LabelX);
                 ImGui::TextUnformatted(Check.Label.c_str());
                 if (!Check.Passed && !Check.Detail.empty())
                 {
-                    ImGui::Indent(90.0f);
+                    ImGui::Indent(StatusWidth);
                     ImGui::PushTextWrapPos(0.0f);
                     ImGui::TextDisabled("%s", Check.Detail.c_str());
                     ImGui::PopTextWrapPos();
-                    ImGui::Unindent(90.0f);
+                    ImGui::Unindent(StatusWidth);
                 }
             }
             if (ImGui::SmallButton(TrId("Check again")))

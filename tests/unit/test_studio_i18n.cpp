@@ -203,6 +203,30 @@ TEST_CASE("Every embedded catalogue is listed after English and can be activated
     CHECK(std::string_view(Tr("Language")) == "Language");
 }
 
+TEST_CASE("The pseudo-locale lengthens text and keeps its placeholders")
+{
+    CHECK(core::PseudoLocalize("Open") == "[Ôpéñ~]");
+    CHECK(core::PseudoLocalize("x") == "[x~]");
+    CHECK(core::PseudoLocalize("Copied {0} to {12}") == "[Çôpîéd {0} tô {12}~~~]");
+    CHECK(core::PseudoLocalize("Open '%s' at %.1f%%") == "[Ôpéñ '%s' àt %.1f%%~~]");
+    CHECK(core::PseudoLocalize("100%") == "[100%~]");
+    CHECK(core::PseudoLocalize("{x}") == "[{x}~]");
+    CHECK(core::PseudoLocalize("Français") == "[Fràñçàîs~~]");
+}
+
+#ifndef NDEBUG
+TEST_CASE("Debug builds offer the pseudo-locale over every catalogue key")
+{
+    const std::vector<core::InterfaceLanguage>& Languages = core::InterfaceLanguages();
+    CHECK(std::any_of(Languages.begin(), Languages.end(),
+                      [](const core::InterfaceLanguage& Language) { return Language.Code == "pseudo"; }));
+    core::ActivateInterfaceLanguage("pseudo");
+    CHECK(std::string_view(Tr("Language")) == core::PseudoLocalize("Language"));
+    CHECK(std::string_view(TrC("transform part|scale")) == core::PseudoLocalize("scale"));
+    core::ActivateInterfaceLanguage("en");
+}
+#endif
+
 TEST_CASE("The interface font keeps ImGui's default and covers French typography")
 {
     ImGui::CreateContext();
