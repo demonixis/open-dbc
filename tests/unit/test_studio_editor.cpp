@@ -228,6 +228,16 @@ namespace
             return *Editor_.CurrentEditor();
         }
 
+        const ImGuiWindow* EditorWindow() const
+        {
+            for (const ImGuiWindow* Window : ImGui::GetCurrentContext()->Windows)
+            {
+                if (std::string_view(Window->Name).find("##editor") != std::string_view::npos)
+                    return Window;
+            }
+            return nullptr;
+        }
+
         const ImGuiWindow* Popup() const
         {
             const ImGuiWindow* Window = ImGui::FindWindowByName("##completion");
@@ -685,6 +695,47 @@ TEST_CASE("Studio find bar takes the keyboard: Enter goes to the next match inst
     }
     ImGui::DestroyContext();
     std::filesystem::remove_all(Root, Error);
+}
+
+TEST_CASE("Studio editor keeps the cursor in view while typing")
+{
+    CompletionHarness Harness;
+    TextEditor& Widget = Harness.Widget();
+    const auto LineInView = [&]
+    {
+        const ImGuiWindow* Window = Harness.EditorWindow();
+        REQUIRE(Window != nullptr);
+        const float Top = Window->DC.CursorStartPos.y +
+                          static_cast<float>(Widget.GetMainCursorPosition().line) * Widget.GetLineHeight();
+        return Top >= Window->Pos.y && Top + Widget.GetLineHeight() <= Window->Pos.y + Window->Size.y;
+    };
+
+    // Past the bottom of the view, where the list could not open either.
+    for (int Line = 0; Line < 100; ++Line)
+        Harness.Press(ImGuiKey_Enter);
+    Harness.Frame();
+    CHECK(LineInView());
+    Harness.Type("sy");
+    CHECK(Harness.Popup() != nullptr);
+    Harness.Press(ImGuiKey_Escape);
+
+    // Past the right edge, without jumping back to the start of the line on each letter.
+    Harness.Type(std::string(300, 'x'));
+    Harness.Frame();
+    const ImGuiWindow* Window = Harness.EditorWindow();
+    const float CursorX = static_cast<float>(Widget.GetMainCursorPosition().index) * Widget.GetGlyphWidth();
+    CHECK(Window->Scroll.x > 0.0f);
+    CHECK(CursorX - Window->Scroll.x < Window->Size.x);
+    CHECK(LineInView());
+
+    // Typing on a line already in view moves nothing.
+    Widget.SetCursor(TextEditor::DocPos(90, 0));
+    Harness.Frame();
+    Harness.Frame();
+    const float ScrollY = Window->Scroll.y;
+    Harness.Type("a");
+    Harness.Frame();
+    CHECK(Window->Scroll.y == ScrollY);
 }
 
 TEST_CASE("Studio parameter hint sits above the call without taking the keyboard")

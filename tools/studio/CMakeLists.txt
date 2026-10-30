@@ -36,6 +36,11 @@ target_link_libraries(imgui PUBLIC SDL3::SDL3)
 opendbc_fetch_dependency(imgui_texteditor
     https://github.com/goossens/ImGuiColorTextEdit.git
     cfc3f68ab307d695c66fde5fc90f16a8f14ca6cb
+    PATCH_COMMAND ${CMAKE_COMMAND}
+                  -DOPENDBC_GIT_EXECUTABLE=${GIT_EXECUTABLE}
+                  -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
+                  -DOPENDBC_PATCH_FILE=${CMAKE_SOURCE_DIR}/cmake/patches/texteditor-follow-cursor.patch
+                  -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
 )
 FetchContent_MakeAvailable(imgui_texteditor)
 

@@ -1,0 +1,27 @@
+diff --git a/TextEditor.cpp b/TextEditor.cpp
+index 130532d..3c088a1 100644
+--- a/TextEditor.cpp
++++ b/TextEditor.cpp
+@@ -1123,8 +1123,8 @@ bool TextEditor::updateState() {
+ 
+ 	if (typeSetter.update(config, document, lineFold)) {
+ 		// see if we can scroll to preserve the first visible line
+-		// but we don't overrule an API scroll request
+-		if (scrollToLineNumber == invalidLine) {
++		// but we don't overrule an API scroll request or a pending request to show the cursor
++		if (scrollToLineNumber == invalidLine && ensureVisiblePos.line == invalidLine) {
+ 			scrollToLine(previousFirstLine, Scroll::alignTop, firstVisibleLineFraction);
+ 		}
+ 	}
+@@ -1359,6 +1359,11 @@ void TextEditor::handleKeyboardInputs() {
+ 			io.InputQueueCharacters.resize(0);
+ 		}
+ 
++		// keep the cursor in view while editing moves it
++		if (document.isUpdated()) {
++			makeCursorVisible();
++		}
++
+ 		// notify OS of text input position for advanced Input Method Editor (IME)
+ 		// this is required for the SDL3 backend as it will not report text input events unless we do this
+ 		// see https://github.com/ocornut/imgui/issues/8584 for details
