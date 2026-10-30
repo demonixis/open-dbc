@@ -70,7 +70,7 @@ transparent and unculled terrains stay on the CPU path.
 Object meshes take the same route where the result cannot change. A mesh draws from
 GPU buffers when its object is opaque (not ghosted, faded by alpha, alpha-mapped,
 black-keyed or given a transparency mode), depth tested and written, and neither
-locked, glued, shadowed nor reflecting, and when the mesh has no bones, built-in
+locked, glued nor reflecting, and when the mesh has no bones, built-in
 effect, effect, auxiliary or cube stage, texture-coordinate mode or zero-length
 vertex normal. Its vertices and indices are uploaded once per `MeshGeometry`
 revision and released when that geometry changes or goes 300 frames undrawn.

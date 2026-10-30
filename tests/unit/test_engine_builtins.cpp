@@ -2605,6 +2605,57 @@ static GpuMeshComparison CompareGpuMeshFrames(dbc::EngineKernel& Kernel)
     return Result;
 }
 
+TEST_CASE("A shadow caster draws from GPU buffers and casts the same shadow")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error)
+                        { return Kernel.Camera().PositionCamera(0.0f, 40.0f, -40.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PointCamera(0.0f, 0.0f, 0.0f, &Error); });
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    REQUIRE(Objects.MakeObjectPlain(1, 400.0f, 400.0f));
+    Objects.RotateObject(1, 270.0f, 0.0f, 0.0f);
+    REQUIRE(Objects.SetObjectLight(1, 0));
+    Objects.ColorObject(1, 0xE0E0E0);
+    Objects.MakeObjectCube(2, 8.0f);
+    Objects.PositionObject(2, 0.0f, 20.0f, 0.0f);
+    REQUIRE(Objects.SetObjectLight(2, 0));
+    Objects.ColorObject(2, 0xE0E0E0);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE(Kernel.Gpu().SupportsStencil());
+    Kernel.Renderer().SetShadowPosition(-1, 0.0f, 100.0f, 0.0f);
+    const auto Reds = [&]
+    {
+        SDL_Surface* Frame = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Frame != nullptr);
+        std::vector<int> Values;
+        Values.reserve(static_cast<std::size_t>(Frame->w * Frame->h));
+        for (int Y = 0; Y < Frame->h; ++Y)
+            for (int X = 0; X < Frame->w; ++X)
+            {
+                Uint8 Red = 0, Green = 0, Blue = 0, Alpha = 0;
+                REQUIRE(SDL_ReadSurfacePixel(Frame, X, Y, &Red, &Green, &Blue, &Alpha));
+                Values.push_back(Red);
+            }
+        SDL_DestroySurface(Frame);
+        return Values;
+    };
+    const std::vector<int> Plain = Reds();
+
+    REQUIRE(Objects.SetShadowShadingOn(2));
+    const GpuMeshComparison Frames = CompareGpuMeshFrames(Kernel);
+    CHECK(Frames.GpuDraws == 2);
+    CHECK(Frames.Covered > 320 * 240 / 10);
+    CHECK(Frames.Different * 200 < Frames.Covered);
+    Kernel.Renderer().SetGpuMeshesEnabled(true);
+    const std::vector<int> Shadowed = Reds();
+    int Darkened = 0;
+    for (std::size_t Index = 0; Index < Plain.size(); ++Index)
+        Darkened += Plain[Index] - Shadowed[Index] > 20 ? 1 : 0;
+    CHECK(Darkened > 100);
+}
+
 TEST_CASE("Meshes drawn from GPU buffers look as the CPU path draws them")
 {
     dbc::EngineKernel Kernel;

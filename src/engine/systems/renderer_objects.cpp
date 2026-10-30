@@ -377,11 +377,12 @@ namespace dbc
 
                 // An object locked to the screen lives in camera space, where the eye is the origin.
                 const Vec3 EyePoint = Object.LockToScreen ? Vec3{0.0f, 0.0f, 0.0f} : Camera;
-                // Opaque, depth-tested objects in the world, outside any glue chain, with no shadow or reflection.
+                // Opaque, depth-tested objects in the world, outside any glue chain, with no reflection. Casting a
+                // shadow does not matter: volumes come from the whole mesh, not from what is drawn.
                 const bool GpuObject = GpuMeshes && Scene && AlphaPhase < 0 && !Object.LockToScreen &&
                                        Object.GluedTargetObject <= 0 && Object.Alpha >= 0.999f &&
                                        !Object.AlphaMapping && !Object.TransparentBlack && Object.DepthTest &&
-                                       Object.DepthWrite && !Object.ShadowShading && !Object.ReflectionShading;
+                                       Object.DepthWrite && !Object.ReflectionShading;
                 for (const Mesh& MeshValue : Object.Meshes)
                 {
                     if (!MeshValue.Visible)
