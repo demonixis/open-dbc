@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cfloat>
 #include <fstream>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlgpu3.h>
@@ -155,6 +156,17 @@ namespace dbc::studio
                     return TrC("dialect origin|interactive");
             }
             return "";
+        }
+
+        // The resolver names its command-line option here, where the Studio's dialog has buttons. Its
+        // other errors are diagnostics, which stay English.
+        const char* ResolutionMessage(const dbc::interpreter::ProjectResolveResult& Resolution)
+        {
+            if (!Resolution.DialectUndecided)
+                return Resolution.Error.c_str();
+            return Tr(Resolution.Detection.Kind == dbc::language::DialectDetectionKind::Conflict
+                          ? "This source has evidence for both DBC and DBPro: choose one."
+                          : "This source does not show which dialect it uses: choose DBC or DBPro.");
         }
 
         constexpr const char* KDbaFilter = "dba;dbpro";
@@ -589,7 +601,7 @@ namespace dbc::studio
             Settings_.LastFile.clear();
         Settings_.Save();
         if (!ResolveWorkspace(Folder, InitialProfile_))
-            Status_ = PendingResolution_.Error;
+            Status_ = ResolutionMessage(PendingResolution_);
         InitialProfile_.reset();
     }
 
@@ -1181,9 +1193,13 @@ namespace dbc::studio
             ImGui::OpenPopup(Popup);
             ResolutionPopupRequested_ = false;
         }
+        // Auto-resizing follows the content, and wrapped text leaves the title clipped.
+        ImGui::SetNextWindowSizeConstraints(
+            ImVec2(ImGui::CalcTextSize(Popup, nullptr, true).x + ImGui::GetStyle().WindowPadding.x * 2.0f, 0.0f),
+            ImVec2(FLT_MAX, FLT_MAX));
         if (!ImGui::BeginPopupModal(Popup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             return;
-        ImGui::TextWrapped("%s", PendingResolution_.Error.c_str());
+        ImGui::TextWrapped("%s", ResolutionMessage(PendingResolution_));
         if (!PendingResolution_.RemappablePath.empty())
         {
             std::array<char, 2048> Path{};
@@ -2032,9 +2048,15 @@ namespace dbc::studio
         const ImGuiIO& Io = ImGui::GetIO();
         char Fps[32];
         SDL_snprintf(Fps, sizeof(Fps), "%.0f FPS", Io.Framerate);
-        ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(Fps).x -
-                        ImGui::GetStyle().ItemSpacing.x);
-        ImGui::TextDisabled("%s", Fps);
+        // A long status leaves no room, and the counter must not cover the dialect.
+        const float StatusEnd = ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x;
+        const float FpsX =
+            ImGui::GetWindowWidth() - ImGui::CalcTextSize(Fps).x - ImGui::GetStyle().ItemSpacing.x * 2.0f;
+        if (StatusEnd + ImGui::GetStyle().ItemSpacing.x < FpsX)
+        {
+            ImGui::SameLine(FpsX);
+            ImGui::TextDisabled("%s", Fps);
+        }
 
         ImGui::EndChild();
         ImGui::PopStyleColor();

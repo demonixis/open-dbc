@@ -234,6 +234,7 @@ namespace dbc::interpreter
                     return Selected;
                 }
             }
+            Result.DialectUndecided = true;
             Result.Error = Result.Detection.Kind == language::DialectDetectionKind::Conflict
                                ? "Source contains evidence for both DBC and DBPro; select one with --dialect"
                                : "Source dialect is ambiguous; select DBC or DBPro with --dialect";

@@ -208,6 +208,22 @@ TEST_CASE("opening a DBA inside a unique DBPro project resolves the descriptor")
     CHECK(Result.Project->EntrySource == Fixture.Root / "src/main.dba");
 }
 
+TEST_CASE("an undecided dialect is told apart from the other resolution errors")
+{
+    ProjectFixture Fixture;
+    Fixture.Write("shared.dba", "print 1\n");
+    dbc::interpreter::ProjectResolveRequest Request;
+    Request.Target = Fixture.Root / "shared.dba";
+    const dbc::interpreter::ProjectResolveResult Undecided = dbc::interpreter::ResolveProject(Request);
+    CHECK_FALSE(Undecided);
+    CHECK(Undecided.DialectUndecided);
+
+    Request.Target = Fixture.Root / "missing.dba";
+    const dbc::interpreter::ProjectResolveResult Missing = dbc::interpreter::ResolveProject(Request);
+    CHECK_FALSE(Missing);
+    CHECK_FALSE(Missing.DialectUndecided);
+}
+
 TEST_CASE("a standalone DBA resolves relative assets beside its source")
 {
     ProjectFixture Fixture;

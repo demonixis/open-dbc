@@ -119,7 +119,7 @@ namespace dbc::studio
 
             bool Saved = false;
 
-            ImGui::SetNextWindowSize(ImVec2(560.0f, 520.0f), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2(720.0f, 560.0f), ImGuiCond_FirstUseEver);
             if (!ImGui::Begin(TrId("Project Settings"), &Open_))
             {
                 ImGui::End();

@@ -76,7 +76,7 @@ namespace dbc::studio
         BuildWindow::Action BuildWindow::DrawKeystoreDialog()
         {
             Action Result = Action::None;
-            ImGui::SetNextWindowSize(ImVec2(520.0f, 0.0f), ImGuiCond_Appearing);
+            ImGui::SetNextWindowSize(ImVec2(620.0f, 0.0f), ImGuiCond_Appearing);
             if (!ImGui::BeginPopupModal(TrId("Create keystore"), nullptr))
                 return Result;
             ImGui::PushTextWrapPos(0.0f);
@@ -97,7 +97,11 @@ namespace dbc::studio
             TextField(TrId("Confirm password"), Keystore_.Confirm, ImGuiInputTextFlags_Password);
             const bool PasswordReady = Keystore_.Password.size() >= 6 && Keystore_.Password == Keystore_.Confirm;
             if (!PasswordReady)
+            {
+                ImGui::PushTextWrapPos(0.0f);
                 ImGui::TextDisabled("%s", Tr("The passwords must match and have at least 6 characters."));
+                ImGui::PopTextWrapPos();
+            }
             ImGui::BeginDisabled(!PasswordReady || Keystore_.Path.empty() || Keystore_.Alias.empty() ||
                                  Keystore_.CommonName.empty());
             if (ImGui::Button(TrId("Create")))
@@ -188,7 +192,9 @@ namespace dbc::studio
                     ImGui::OpenPopup(TrId("Create keystore"));
                 if (const Action Dialog = DrawKeystoreDialog(); Dialog != Action::None)
                     Result = Dialog;
+                ImGui::PushTextWrapPos(0.0f);
                 ImGui::TextDisabled("%s", Tr("Passwords are kept until the Studio closes and are never saved."));
+                ImGui::PopTextWrapPos();
                 if (TextField(TrId("Keystore password"), Secrets.AndroidKeystorePassword,
                               ImGuiInputTextFlags_Password) ||
                     TextField(TrId("Key password"), Secrets.AndroidKeyPassword, ImGuiInputTextFlags_Password))

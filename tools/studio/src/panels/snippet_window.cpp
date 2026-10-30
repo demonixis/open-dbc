@@ -123,7 +123,9 @@ namespace dbc::studio
             if (BuiltinCount_ == Snippets_.size())
             {
                 ImGui::SeparatorText(Tr("My Snippets"));
+                ImGui::PushTextWrapPos(0.0f);
                 ImGui::TextDisabled("%s", Tr("Edit > Save Selection as Snippet"));
+                ImGui::PopTextWrapPos();
             }
             ImGui::EndChild();
 

@@ -204,7 +204,9 @@ namespace dbc::studio
             if (Node == nullptr)
             {
                 ImGui::EndDisabled();
+                ImGui::PushTextWrapPos(0.0f);
                 ImGui::TextDisabled("%s", Tr("Select a node in the Hierarchy or the Viewport."));
+                ImGui::PopTextWrapPos();
                 return;
             }
 
