@@ -77,6 +77,7 @@ namespace dbc::studio
             Document_ = {};
             Saved_ = {};
             ReadErrors_.clear();
+            UnlinkedLevel_.clear();
             Selection_.clear();
         }
 
@@ -362,9 +363,23 @@ namespace dbc::studio
             const auto Relative = [&](const std::filesystem::path& Path)
             { return dbc::GenericPathToUtf8(Path.lexically_relative(Main.parent_path())); };
 
+            const scene::LevelImports Imports = scene::FindLevelImports(
+                Main, Project_->Root / scene::KLevelFolder, Document_.Name, Project_->Profile, Host_.ReadSource);
+            // Once the program has its level, which one it loads and when is its own choice: two
+            // levels loaded in a row would also collide on their numbers.
+            if (Imports.OtherLevel && !Imports.Level)
+            {
+                if (UnlinkedLevel_ != Document_.Name)
+                    Host_.Log("Level " + Document_.Name + " stays out of " + dbc::PathToUtf8(Main.filename()) +
+                                  ", which already imports a level: call " + scene::WorldFunctionName(Document_) +
+                                  "() and " + scene::LevelFunctionName(Document_) + "() where the game loads it",
+                              false);
+                UnlinkedLevel_ = Document_.Name;
+                return true;
+            }
             const std::vector<scene::MainLink> Links = {
-                {Relative(WorldPath(Document_.Name)), scene::WorldFunctionName(Document_)},
-                {Relative(LevelPath(Document_.Name)), scene::LevelFunctionName(Document_)}};
+                {Relative(WorldPath(Document_.Name)), scene::WorldFunctionName(Document_), Imports.World},
+                {Relative(LevelPath(Document_.Name)), scene::LevelFunctionName(Document_), Imports.Level}};
             const scene::LinkResult Linked = scene::LinkIntoMain(*Text, Project_->Profile, Links);
             if (!Linked.Changed)
                 return true;

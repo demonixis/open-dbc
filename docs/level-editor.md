@@ -21,9 +21,11 @@ A level is BASIC, and nothing else is stored. Each level has its own folder:
 Saving (**Ctrl+S** in the Scene mode, or **Scene → Save Level**) writes both
 files, then completes the main source's header: each missing `#include` joins
 the include block under the leading comment, and each missing call follows that
-block, `SetupWorld_<name>()` first, then `LoadLevel_<name>()`. An include or call
-already present anywhere is left where it is. When
-the main source is open in a tab, the edit goes to that tab, undoable, and is
+block, `SetupWorld_<name>()` first, then `LoadLevel_<name>()`. What the program
+already imports, directly or through its other includes, is left alone, call
+included. Once it imports a level, another level adds nothing: Output names the
+functions to call where the game loads it, and **F5** still runs the imported
+level. When the main source is open in a tab, the edit goes to that tab, undoable, and is
 saved with it. **F5** in the Scene mode saves the level, then runs the main
 source.
 

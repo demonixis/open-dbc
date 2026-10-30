@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui_internal.h>
 
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -101,6 +102,7 @@ namespace
             {
                 if (Error && !ExpectErrors_)
                     FAIL_CHECK(Message);
+                Log_.push_back(Message);
             };
             Editor_.Initialize(Gpu_, std::move(Host));
 
@@ -268,6 +270,26 @@ namespace
             ExpectErrors_ = Value;
         }
 
+        void WriteFile(const std::filesystem::path& Relative, const std::string& Text)
+        {
+            WriteText(Root_ / Relative, Text);
+        }
+
+        std::string ReadFile(const std::filesystem::path& Relative) const
+        {
+            std::ifstream File(Root_ / Relative, std::ios::binary);
+            std::ostringstream Text;
+            Text << File.rdbuf();
+            return Text.str();
+        }
+
+        // How many Output lines hold `Part`.
+        std::size_t Logged(const std::string& Part) const
+        {
+            return static_cast<std::size_t>(std::count_if(Log_.begin(), Log_.end(), [&](const std::string& Line)
+                                                          { return Line.find(Part) != std::string::npos; }));
+        }
+
         void Undo()
         {
             Key(KCommandKey, true);
@@ -289,6 +311,7 @@ namespace
         panels::SceneEditor Editor_;
         bool LayoutBuilt_ = false;
         bool ExpectErrors_ = false;
+        std::vector<std::string> Log_;
         int BarRows_ = 1;
     };
 } // namespace
@@ -609,6 +632,43 @@ TEST_CASE("Painted objects fold into one Hierarchy row, whose click selects them
     const std::vector<scene::SceneNode> Left = Driver.SavedNodes();
     REQUIRE(Left.size() == 1);
     CHECK_FALSE(Left[0].Painted);
+}
+
+TEST_CASE("Saving a level writes its folder and links it into a main source that has none")
+{
+    SceneViewDriver Driver("level_link", LevelOfCubes({glm::vec3(0.0f)}));
+    REQUIRE(Driver.Editor().Save());
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::WorldRelativePath("Level")));
+    CHECK(Driver.ReadFile("main.dba") == "#include \"levels/Level/world_settings.dba\"\n"
+                                         "#include \"levels/Level/Level.dba\"\n\n"
+                                         "SetupWorld_Level()\nLoadLevel_Level()\n\nSYNC\n");
+
+    // Saved again, nothing more to add.
+    const std::string Linked = Driver.ReadFile("main.dba");
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.ReadFile("main.dba") == Linked);
+}
+
+TEST_CASE("A level already imported by the program leaves the main source alone")
+{
+    const std::string Main = "#include \"game.dba\"\nSYNC\n";
+    SceneViewDriver Driver("level_imported", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.WriteFile("main.dba", Main);
+    Driver.WriteFile("game.dba", "#include \"levels/Level/world_settings.dba\"\n#include \"levels/Level/Level.dba\"\n");
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.ReadFile("main.dba") == Main);
+}
+
+TEST_CASE("Another level imported by the program leaves the main source alone, and says so once")
+{
+    const std::string Main = "#include \"levels/Other/Other.dba\"\nLoadLevel_Other()\nSYNC\n";
+    SceneViewDriver Driver("level_other", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.WriteFile("main.dba", Main);
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.ReadFile("main.dba") == Main);
+    CHECK(Driver.Logged("stays out of main.dba") == 1);
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.Logged("stays out of main.dba") == 1);
 }
 
 TEST_CASE("A program's scene replaces the level until a level is opened again")

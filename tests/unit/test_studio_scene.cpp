@@ -617,35 +617,85 @@ TEST_CASE("An older level's environment moves to the world settings when saved")
 
 TEST_CASE("Main sources get their includes on top, then the setup and level calls")
 {
-    const std::vector<scene::MainLink> Links = {{"opendbc_game.dba", "SetupGame"},
-                                                {"levels/First.dba", "LoadLevel_First"}};
+    const std::vector<scene::MainLink> Links = {{"levels/First/world_settings.dba", "SetupWorld_First"},
+                                                {"levels/First/First.dba", "LoadLevel_First"}};
     const std::string Main = "REM My game\r\n\r\nREM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n";
     const scene::LinkResult Linked = scene::LinkIntoMain(Main, LanguageProfile::Dbc, Links);
     CHECK(Linked.Changed);
-    CHECK(Linked.Text == "REM My game\r\n\r\n#include \"opendbc_game.dba\"\r\n#include \"levels/First.dba\"\r\n\r\n"
-                         "SetupGame()\r\nLoadLevel_First()\r\n\r\nREM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n");
+    CHECK(Linked.Text == "REM My game\r\n\r\n#include \"levels/First/world_settings.dba\"\r\n"
+                         "#include \"levels/First/First.dba\"\r\n\r\n"
+                         "SetupWorld_First()\r\nLoadLevel_First()\r\n\r\n"
+                         "REM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n");
     CHECK_FALSE(scene::LinkIntoMain(Linked.Text, LanguageProfile::Dbc, Links).Changed);
 
-    // A second level joins the include block, and its call follows the first level's.
-    const std::vector<scene::MainLink> Third = {{"opendbc_game.dba", "SetupGame"},
-                                                {"levels/First.dba", "LoadLevel_First"},
-                                                {"levels/Cave.dba", "LoadLevel_Cave"}};
-    CHECK(scene::LinkIntoMain(Linked.Text, LanguageProfile::Dbc, Third).Text ==
-          "REM My game\r\n\r\n#include \"opendbc_game.dba\"\r\n#include \"levels/First.dba\"\r\n"
-          "#include \"levels/Cave.dba\"\r\n\r\nSetupGame()\r\nLoadLevel_First()\r\nLoadLevel_Cave()\r\n\r\n"
-          "REM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n");
-
-    // A call the user moved is found where it is; a new level's call follows SetupGame().
-    const std::string Moved = "#include \"opendbc_game.dba\"\nprint 1\nSetupGame()\nwait key\n";
-    const std::vector<scene::MainLink> Second = {{"opendbc_game.dba", "SetupGame"},
-                                                 {"levels\\Cave.dba", "LoadLevel_Cave"}};
+    // A call the user moved is found where it is, and the next link's follows it.
+    const std::string Moved = "#include \"levels/Cave/world_settings.dba\"\nprint 1\nSetupWorld_Cave()\nwait key\n";
+    const std::vector<scene::MainLink> Second = {{"levels/Cave/world_settings.dba", "SetupWorld_Cave"},
+                                                 {"levels\\Cave\\Cave.dba", "LoadLevel_Cave"}};
     const scene::LinkResult Added = scene::LinkIntoMain(Moved, LanguageProfile::DbPro, Second);
-    CHECK(Added.Text == "#include \"opendbc_game.dba\"\n#include \"levels\\Cave.dba\"\nprint 1\nSetupGame()\n"
-                        "LoadLevel_Cave()\nwait key\n");
+    CHECK(Added.Text == "#include \"levels/Cave/world_settings.dba\"\n#include \"levels\\Cave\\Cave.dba\"\nprint 1\n"
+                        "SetupWorld_Cave()\nLoadLevel_Cave()\nwait key\n");
 
     // An empty file gets the includes and the calls only.
     CHECK(scene::LinkIntoMain("", LanguageProfile::Dbc, Links).Text ==
-          "#include \"opendbc_game.dba\"\n#include \"levels/First.dba\"\n\nSetupGame()\nLoadLevel_First()\n");
+          "#include \"levels/First/world_settings.dba\"\n#include \"levels/First/First.dba\"\n\n"
+          "SetupWorld_First()\nLoadLevel_First()\n");
+}
+
+TEST_CASE("What a program already imports stays as it is")
+{
+    const std::vector<scene::MainLink> Links = {{"levels/Cave/world_settings.dba", "SetupWorld_Cave"},
+                                                {"levels/Cave/Cave.dba", "LoadLevel_Cave"}};
+
+    // Included but never called from here: the program loads it where it wants.
+    const std::string Later =
+        "#include \"levels/Cave/world_settings.dba\"\n#include \"LEVELS\\CAVE\\CAVE.DBA\"\nsync\n";
+    CHECK_FALSE(scene::LinkIntoMain(Later, LanguageProfile::Dbc, Links).Changed);
+
+    // Reached through another include, it needs neither a line nor a call.
+    const std::vector<scene::MainLink> Reached = {{Links[0].IncludePath, Links[0].Function, true},
+                                                  {Links[1].IncludePath, Links[1].Function, true}};
+    CHECK_FALSE(scene::LinkIntoMain("#include \"game.dba\"\nsync\n", LanguageProfile::Dbc, Reached).Changed);
+
+    // World settings joining a level run right before it, after whatever comes first.
+    const std::vector<scene::MainLink> WorldMissing = {{Links[0].IncludePath, Links[0].Function},
+                                                       {Links[1].IncludePath, Links[1].Function, true}};
+    CHECK(scene::LinkIntoMain("#include \"levels/Cave/Cave.dba\"\n\nSetupGame()\nLoadLevel_Cave()\nsync\n",
+                              LanguageProfile::Dbc, WorldMissing)
+              .Text == "#include \"levels/Cave/Cave.dba\"\n#include \"levels/Cave/world_settings.dba\"\n\n"
+                       "SetupGame()\nSetupWorld_Cave()\nLoadLevel_Cave()\nsync\n");
+}
+
+TEST_CASE("A program's level imports are found through its includes")
+{
+    const std::map<std::filesystem::path, std::string> Files = {
+        {"/game/main.dba", "#include \"lib/game.dba\"\n"},
+        {"/game/lib/game.dba", "#include \"../levels/First/world_settings.dba\"\n"
+                               "#include \"../levels/First/First.dba\"\n#include \"../levels/First/ui.dba\"\n"},
+        {"/game/flat.dba", "#include \"levels/First.dba\"\n"},
+        {"/game/none.dba", "#include \"lib/other.dba\"\n"},
+        {"/game/lib/other.dba", "sync\n"}};
+    const auto Read = [&](const std::filesystem::path& Path) -> std::optional<std::string>
+    {
+        const auto Found = Files.find(Path);
+        return Found == Files.end() ? std::nullopt : std::optional(Found->second);
+    };
+    const auto Find = [&](const char* Main, const char* Level)
+    { return scene::FindLevelImports(Main, "/game/levels", Level, LanguageProfile::Dbc, Read); };
+
+    const scene::LevelImports First = Find("/game/main.dba", "First");
+    CHECK(First.Level);
+    CHECK(First.World);
+    CHECK_FALSE(First.OtherLevel);
+    const scene::LevelImports Cave = Find("/game/main.dba", "Cave");
+    CHECK_FALSE(Cave.Level);
+    CHECK_FALSE(Cave.World);
+    CHECK(Cave.OtherLevel);
+    // A level from before the folders still counts as one.
+    CHECK(Find("/game/flat.dba", "Cave").OtherLevel);
+    const scene::LevelImports None = Find("/game/none.dba", "Cave");
+    CHECK_FALSE(None.Level);
+    CHECK_FALSE(None.OtherLevel);
 }
 
 TEST_CASE("Multi-selection edits copy only the changed fields each node has")

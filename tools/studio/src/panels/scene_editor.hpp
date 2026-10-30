@@ -305,6 +305,8 @@ namespace dbc::studio
             scene::SceneDocument Document_;
             scene::SceneDocument Saved_;
             scene::SceneHistory History_;
+            // The level whose absence from the main source was last reported, to say it once.
+            std::string UnlinkedLevel_;
             // Lines of its files the Scene view could not read, as "file:line: message": it stays read-only.
             std::vector<std::string> ReadErrors_;
 
