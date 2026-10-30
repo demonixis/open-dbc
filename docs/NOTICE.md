@@ -19,11 +19,12 @@ sponsored by The Game Creators Ltd or Dark Basic Software Limited.
 | DBO block codes in `src/engine/systems/object_manager.cpp`; DBPro extension inventory in `scripts/data/` and the catalogue | Same DBPro snapshot | MIT, as above; the licence ships with every binary |
 | `src/engine/noto_sans_regular_ttf.hpp` | Noto Sans Regular, embedded as a byte array | SIL Open Font License; see [NotoSans-LICENSE.md](../licenses/NotoSans-LICENSE.md) |
 
-Build dependencies (SDL3, SDL3_image, SDL3_mixer, SDL3_ttf, Assimp, GLM, spdlog, ENet,
-Dear ImGui, ImGuiColorTextEdit, ImGuizmo, nlohmann/json, OpenXR-SDK) are fetched at build
-time and carry their own licences; none of their source is vendored here. Desktop
-builds ship the OpenXR loader with its OpenXR-SDK and jsoncpp notices. MoltenVK and
-the headset runtime are installed separately.
+Build dependencies (SDL3, SDL3_image, SDL3_mixer, SDL3_ttf, SDL3_shadercross with DXC
+and SPIRV-Cross, Assimp, GLM, spdlog, unordered_dense, ENet, Jolt Physics, Dear ImGui,
+ImGuiColorTextEdit, ImGuizmo, nlohmann/json, OpenXR-SDK, and doctest for the tests) are
+fetched at build time and carry their own licences; none of their source is vendored
+here. Desktop builds ship the OpenXR loader with its OpenXR-SDK and jsoncpp notices.
+MoltenVK and the headset runtime are installed separately.
 
 Linux builds also use the system GStreamer libraries (LGPL); OpenDBC does not
 bundle them or their codec plugins. See [video.md](video.md) for runtime dependencies.

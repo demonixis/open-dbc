@@ -136,9 +136,9 @@ as BMP, the format DarkBASIC Classic loads. The bobs draw their own images in BA
 
 ## Compatibility stubs
 
-AVI animations, audio CDs, FTP, DirectPlay network games, DLLs, the registry and
-raw video memory have no portable equivalent. OpenDBC keeps their 93 commands as documented
-stubs: commands do nothing, numbers read 0 and strings are empty.
+Audio CDs, FTP, the Windows folder and old hardware switches have no portable
+equivalent. OpenDBC keeps their commands as documented stubs: commands do nothing,
+numbers read 0 and strings are empty.
 
 | Program | What it shows |
 | --- | --- |

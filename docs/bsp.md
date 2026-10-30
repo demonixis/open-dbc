@@ -50,5 +50,5 @@ the radii, one-sided triangles, a 0.001 skin and at most five slide steps. It
 does not push out an ellipsoid that already overlaps the world. DBPro ignored the
 threshold for its own format; OpenDBC applies the Quake 3 meaning to every map.
 
-`SET BSP MULTITEXTURING ON/OFF` only drove Quake 1/2 lightmaps and remain
+`SET BSP MULTITEXTURING ON/OFF` only drove Quake 1/2 lightmaps and stays
 unsupported (DBC2043).

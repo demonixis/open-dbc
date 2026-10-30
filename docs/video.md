@@ -29,10 +29,6 @@ frame pump advances it independently of BASIC rendering; SDL_GPU keeps drawing
 the decoded pictures. Windows N editions need the Media Feature Pack. Missing
 media components and unsupported codecs follow the inert-animation behavior above.
 
-Windows tests exercise Unicode paths, H.264 frames, pause/resume, restart, end of
-playback, destruction during playback and invalid files. The fixture has no audio;
-audible output and hardware decoding still need separate qualification.
-
 ## Linux dependencies
 
 Linux builds require the system development packages for `gstreamer-1.0`,
@@ -52,11 +48,6 @@ they bundle no GStreamer or codec binaries. Playback requires the Base plugins
 and decoders for the file. Neither GTK nor Qt is required. The optional system
 `libav` plugin may use FFmpeg internally; OpenDBC does not require it or link
 FFmpeg directly. Legacy AVI support therefore also depends on installed plugins.
-
-Linux video tests generate raw and Motion JPEG AVI with PCM audio using Base and Good plugins,
-and exercise playback without libav factories. Headless runs use a synchronized
-silent audio sink. Real audio output, hardware decoding and distribution/Steam
-Runtime compatibility need separate platform qualification.
 
 ## Playback
 

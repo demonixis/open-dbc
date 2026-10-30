@@ -25,11 +25,10 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 - The profile is resolved before lexing and never changes during a run.
 - The VM never reparses text and has no engine dependency; the builtin bridge is
   the only layer that knows both VM values and engine calls.
-- Desktop Studios compile the program with the unsaved tabs, then run its image
-  in `opendbc-runner`, a child process: a crash or hang in the program leaves the
-  Studio running, and Stop sends `SIGTERM`, which ends the run as cancelled. The
-  iOS and Android Studios cannot start processes and run programs in-process,
-  where `SYNC` and waits yield so the Studio stays responsive.
+- Desktop Studios compile the program with the unsaved tabs and run its image in a
+  child process, `opendbc-runner`; Stop sends `SIGTERM`, which ends the run as
+  cancelled. The iOS and Android Studios cannot start processes and run programs
+  in-process, where `SYNC` and waits yield so the Studio stays responsive.
 - A program image (`.obc`, `src/interpreter/program_image.cpp`) stores the
   bytecode and project startup under the runtime fingerprint; loading it checks
   the container, then the verifier runs as for freshly compiled bytecode.
@@ -71,8 +70,7 @@ Each callable has a per-profile state:
 | Unsupported | Rejected at bind time with `DBC2043` |
 
 Shared VR forms and the Classic `X/Y/Z VECTOR3` readers are the only additions to
-the historical profiles ([vr.md](vr.md)). Anything else new waits for the future
-`DbcNew` / `DbProNew` profiles.
+the historical profiles ([vr.md](vr.md)).
 
 ## Engine
 
@@ -98,15 +96,8 @@ Profile differences the policy selects, among others:
 | `HIDE LIMB` affects one limb | Propagates to child limbs |
 | Screen text lasts one frame | Screen text stays until `CLS` |
 
-Choices where the original cannot be reproduced portably:
-
-- Fonts are Unicode, so the charset argument changes nothing.
-- 16-bit display modes are emulated over RGBA32, with RGB565 bitmap memblocks.
-- Static line of sight is exact; its accuracy argument is ignored.
-- Native pointers never cross into the VM.
-- No MIDI bank ships: a failed `.mid` load tries the same name as `.mp3`, then
-  `.wav` (`scripts/generate_dbc_midi_fallbacks.py`).
-- Missing force-feedback hardware makes force commands no-ops.
+Where the original cannot be reproduced portably, the
+[reference](reference/open-dbc_reference.md#documented-engine-choices) lists the choice.
 
 ## Tests and generated files
 

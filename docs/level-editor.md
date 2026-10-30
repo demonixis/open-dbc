@@ -29,10 +29,10 @@ source.
 
 The Studio reads a level back with the language frontend. It accepts only the
 statements it writes, with literal arguments and `RGB()` of literal channels;
-`REM @…` lines carry names, number ranges and which objects are painted. Any other statement makes the
-level read-only, and the Hierarchy and Output list the offending lines. A
-level is written with the project's profile, and a Pro-only command makes it
-read-only in a Classic project.
+`REM @…` lines carry names, number ranges and which objects are painted. Any
+other statement makes the level read-only, and the Hierarchy and Output list the
+offending lines. A level is written with the project's profile, and a Pro-only
+command makes it read-only in a Classic project.
 
 Each level starts its numbers at a configurable base per kind: objects and
 images at 1000, matrices, terrains, lights and sounds at 1. New nodes take the lowest
@@ -142,6 +142,24 @@ into a right click. **Grid** shows or hides the grid.
 A vertex drag reaches 40 pixels around the mouse, and the selection waits on its
 last vertex in between. It works on the Move, Rotate and Scale tools.
 
+Dropping an image on a node textures it. Dropping a
+model or a sound places it on the ground under the cursor. In Assets, a
+double-click applies the image to the selection, gives the sound to a selected
+3D sound, or adds the model or sound in front of the camera.
+
+The viewport is a preview drawn by the Studio, not by the engine. Its
+primitives, matrices, terrains and models use the engine's geometry and
+import, so sizes, origins and UVs match the program. Lighting is simple
+per-pixel shading with ambient, up to eight lights, specular and linear fog.
+Faces are drawn from both sides. Pro shadows use the engine's method: stencil
+volumes extruded 2000 units from the shadow source (light 0 at the origin
+unless `SET SHADOW POSITION` says otherwise), darkened by 25 %. A source on the
+ground, such as light 0 or a light that does not exist, lays every volume along
+the floor, which comes out as streaks and a grid of z-fighting in the Scene view
+and the game alike. Ticking **Casts a shadow** in a level without a source
+therefore sets a fixed one at (0, 100, 0). A model the import cannot read shows
+as a 10-unit box.
+
 ## Paint
 
 **Paint** (**B**) places copies of an object over the level, for trees or grass.
@@ -173,21 +191,3 @@ so its copies are written in full. Either way they draw as instances of one
 geometry, as [rendering](rendering.md) explains. A level file grows by about 100
 bytes per object, and the Studio's preview, which draws them one by one, is meant
 for thousands of them.
-
-Dropping an image on a node textures it. Dropping a
-model or a sound places it on the ground under the cursor. In Assets, a
-double-click applies the image to the selection, gives the sound to a selected
-3D sound, or adds the model or sound in front of the camera.
-
-The viewport is a preview drawn by the Studio, not by the engine. Its
-primitives, matrices, terrains and models use the engine's geometry and
-import, so sizes, origins and UVs match the program. Lighting is simple
-per-pixel shading with ambient, up to eight lights, specular and linear fog.
-Faces are drawn from both sides. Pro shadows use the engine's method: stencil
-volumes extruded 2000 units from the shadow source (light 0 at the origin
-unless `SET SHADOW POSITION` says otherwise), darkened by 25 %. A source on the
-ground, such as light 0 or a light that does not exist, lays every volume along
-the floor, which comes out as streaks and a grid of z-fighting in the Scene view
-and the game alike. Ticking **Casts a shadow** in a level without a source
-therefore sets a fixed one at (0, 100, 0). A model the import cannot read shows
-as a 10-unit box.

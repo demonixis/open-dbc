@@ -39,7 +39,8 @@ without a path it runs `program.obc` from its own resources.
 | `--benchmark --benchmark-output F` | Write frame timings and renderer statistics |
 
 While a program runs, **F3** toggles the debug overlay and **F4** writes
-`open-dbc-dump-scene.txt` and `open-dbc-dump-renderer.txt`.
+`open-dbc-dump-scene.txt` and `open-dbc-dump-renderer.txt`. In the Studio, the
+**Build** menu sets the log level and the overlay at launch.
 
 ## Profiles
 
@@ -49,8 +50,9 @@ the project configuration, a unique `.dbpro` descriptor, then decisive syntax.
 An ambiguous source is an error on the command line and a question in the Studio;
 it never falls back to Classic silently. Includes inherit the root's profile.
 
-Paths in BASIC accept `/`, `\` or a mix, and resolve from the asset root. POSIX
-hosts do not emulate drive letters or UNC paths.
+Paths in BASIC accept `/`, `\` or a mix. They are normalized, then resolved from
+the asset root, and must stay inside it. POSIX hosts do not emulate drive letters
+or UNC paths.
 
 ## Studio
 
@@ -127,9 +129,10 @@ opendbc export game.dbpro --dialect dbpro --target android-aab --output dist
 | `android-apk`, `android-aab` | `Name.apk` or `Name.aab` signed with the debug key | signed with the project keystore and verified |
 | `ios`, on macOS | `Name-Xcode/`, an Xcode project | signed in Xcode: choose the team, then Product > Archive |
 
-An export holds the runner, the compiled program image and the project's
-assets, never its `.dba` or `.dbpro` files; it refuses path traversal, symbolic
-links, secret files and `#INCLUDE` files outside the project. At first launch the
+An export holds the runner, the compiled program image and the project's assets
+as they are, since programs build file names at run time, never its `.dba` or
+`.dbpro` files; it refuses path traversal, symbolic links, secret files and
+`#INCLUDE` files outside the project. At first launch the
 payload is copied to per-user storage, where the program writes its files and
 log. The project's identity, version, icon, permissions and keystore live in
 `.opendbc-project.json`; tools and signing identities belong to the machine, in
@@ -148,35 +151,14 @@ command line and build machines read the environment:
 | `OPENDBC_SIGNTOOL` | `signtool.exe`, when no Windows SDK holds it |
 | `OPENDBC_ANDROID_KEYSTORE_PASSWORD`, `OPENDBC_ANDROID_KEY_PASSWORD` | Android keystore and key passwords |
 
-Windows native export tests inspect PE icon/version resources and launch the exported
-runner from Unicode directories. To qualify signing with an installed certificate,
-set `OPENDBC_WINDOWS_CERTIFICATE` and run
-`build/default/tests/unit/test_artifact_export.exe --no-skip --test-case="Windows signed exports pass Authenticode verification"`.
-This signs and timestamps both the runner and OpenXR loader, then verifies each
-with `signtool verify /pa`. It requires a trusted code signing certificate and
-access to the configured timestamp server.
-
 Android builds need a JDK 17 or newer and the Android SDK, found through
 `JAVA_HOME`, `ANDROID_HOME`, Android Studio or the Studio preferences; the first
 build downloads Gradle. The Build window creates the upload keystore Google Play
 ties to the app: keep a copy of the file and its password.
 
-Mobile targets embed runtimes built from the same sources as the Studio (macOS,
-Android NDK `26.3.11579264`); configure them again together after a change:
-
-```bash
-cmake --preset ios-runtime && cmake --build --preset ios-runtime
-cmake --preset ios-simulator-runtime && cmake --build --preset ios-simulator-runtime
-cmake --preset android-host && cmake --build --preset android-host
-cmake --preset default \
-  -DOPENDBC_IOS_RUNTIME_LIBRARY="$PWD/build/ios-runtime/tools/runner/libOpenDBCRuntime.a" \
-  -DOPENDBC_IOS_SIMULATOR_RUNTIME_LIBRARY="$PWD/build/ios-simulator-runtime/tools/runner/libOpenDBCRuntime.a" \
-  -DOPENDBC_ANDROID_EXPORT_HOST_LIBRARY="$PWD/build/android-host/tools/runner/libmain.so"
-cmake --build --preset default
-```
-
-`scripts/qualify_exports.py --mobile --run-ios-simulator` exports, builds and
-runs every target this Mac can.
+Mobile targets embed runtimes built apart from the Studio
+([CONTRIBUTING.md](CONTRIBUTING.md#exports)).
 
 On touch screens the top, bottom, left, right and centre zones act as the arrow
-keys and space; the back action is escape.
+keys and space, and the back action is escape. On desktops this takes a real touch
+screen, not a trackpad.

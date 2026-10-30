@@ -42,7 +42,6 @@ Repository files:
 - [ ] Issue and PR templates. No CI workflow for now: it took too many iterations to
   get working.
 - [ ] README screenshots.
-- [ ] Documentation pass: remove what is redundant or not useful.
 
 Publication:
 
@@ -57,42 +56,13 @@ Publication:
 
 Frozen: the heaviest demo, `wave_racer`, takes 3.1 ms per frame, a fifth of the
 budget at 60 fps. The work below reopens only when a real program exceeds 8 ms per
-frame on a target machine, measured.
-
-Opaque object meshes and terrains draw from GPU buffers; everything else is still
-transformed, sorted and uploaded on the CPU every frame ([rendering.md](rendering.md)).
-`scripts/benchmark_renderer.py`, Release, Apple silicon, median of three 300-frame
-headless runs:
-
-| Program | Triangles | Draw calls | CPU ms per frame |
-| --- | ---: | ---: | ---: |
-| `skinned` (stress) | 14,418 | 1 | 4.8 |
-| `hive_defender` | 89,543 | 30 | 1.0 |
-| `distinct_meshes` (stress) | 127,712 | 401 | 0.8 |
-| `shared_mesh` (stress) | 27,384 | 1 | 0.6 |
-| `two_views` (stress) | 335,354 | 5 | 0.5 |
-
-Objects that share a geometry draw as instances of one call; walking the objects
-to build their draws now takes half to two thirds of the mesh scenes' frames. The
-skinned scene stays on the CPU path, where building the triangles takes about half
-of the frame.
+frame on a target machine, [measured](rendering.md#measuring).
 
 Decisions:
 
-- Meshes move to GPU buffers in object space, shared by every object that uses
-  them, and the vertex shader transforms and lights them, as for terrains. The CPU
-  path stays for what has no GPU form yet (CPU skinning, locked objects, shadow
-  volumes); each move keeps the constraints listed in rendering.md.
-- Sort compact draw keys (pipeline, textures, then depth), never geometry records.
-  Transparent and additive surfaces keep their back-to-front order per triangle
-  until a per-object order is qualified.
-- Per-instance data comes from an instance-rate vertex buffer bound at an offset,
-  not from `SV_InstanceID` with `first_instance`.
 - One build of the world serves every view; cameras and VR eyes change uniforms only.
 - GPU culling with compute and indirect draws waits until CPU culling measures as
   a bottleneck.
-- A scene with an opaque object that depends on the depth order stays on the CPU
-  path: drawing GPU meshes first would change frames for a gain too small to see.
 - No static batching while draw calls stay cheap (at most 0.16 ms per frame in the
   scenes measured). If thousands of distinct static meshes ever call for it,
   merging their geometry is the portable answer: SDL_GPU cannot give each draw of
@@ -145,23 +115,9 @@ DBPro's own BSP format, its drawing and collision are done ([bsp.md](bsp.md)).
 
 ## Standalone runtime
 
-Decisions:
-
-- An exported game ships `opendbc-runner`, not the Studio: VM, engine and asset
-  loaders, without the editor, the BASIC frontend, ImGui or DXC. The Studio keeps
-  DXC and still runs unbuilt projects directly.
-- A Studio release packages the runner beside it: `Contents/Helpers/opendbc-runner.app`
-  inside the macOS bundle, sibling executables in the Windows and Linux folders.
-- Exports contain verified bytecode, shaders in the target backend's format and
-  assets as they are, never sources. Assets keep their formats because programs
-  build file names at run time.
-- Engine shaders are HLSL, compiled by the pinned DXC like effects.
-- Metal shaders ship as MSL source; the engine no longer transpiles SPIR-V at run time.
-
-Work:
-
-- [ ] Studio packaging with the runner: nested macOS bundle signed inside out,
-  shared folder on Windows and Linux.
+- [ ] Studio packaging with the runner: `Contents/Helpers/opendbc-runner.app` inside
+  the macOS bundle, signed inside out; sibling executables in a shared folder on
+  Windows and Linux.
 
 ## Exports
 
@@ -207,8 +163,7 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 - [ ] Remove the `DbcNew` / `DbProNew` remnants: the reserved touch, orientation and
   accelerometer commands become shared additions to both profiles or go away;
-  update `architecture.md`, the editorial data, the generators and the extension
-  rule in `AGENTS.md`.
+  update the editorial data, the generators and the extension rule in `AGENTS.md`.
 - [ ] Studio: embedded help, installed samples, welcome screen.
 - [ ] Split the largest source files; measure coverage; negative verifier tests.
 - [ ] One policy for missing objects, documented integer semantics, deterministic `RND`.
