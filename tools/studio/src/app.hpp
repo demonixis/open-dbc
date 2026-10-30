@@ -149,7 +149,6 @@ namespace dbc::studio
         bool ShowProblems_ = true;
         bool ShowCode_ = true;
         bool ShowMedia_ = true;
-        bool ShowDemo_ = false;
         bool ShowAbout_ = false;
         bool QuitRequested_ = false;
         bool QuitSaveInProgress_ = false;

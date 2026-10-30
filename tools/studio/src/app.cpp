@@ -922,11 +922,6 @@ namespace dbc::studio
         DrawPanels();
         HandleShortcuts();
 
-        if (ShowDemo_)
-        {
-            ImGui::ShowDemoWindow(&ShowDemo_);
-        }
-
         if (ShowAbout_)
         {
             DrawAbout();
@@ -1621,8 +1616,6 @@ namespace dbc::studio
                 else
                     BuildDefaultLayout(ImGui::GetID(KDockSpaceName));
             }
-            ImGui::Separator();
-            ImGui::MenuItem("ImGui Demo", nullptr, &ShowDemo_);
             ImGui::EndMenu();
         }
 
