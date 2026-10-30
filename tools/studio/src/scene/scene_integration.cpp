@@ -282,6 +282,29 @@ namespace dbc::studio
             return Result;
         }
 
+        std::string MoveInclude(const std::string& MainText, lang::LanguageProfile Profile, const std::string& From,
+                                const std::string& To)
+        {
+            auto Source = std::make_shared<lang::SourceDocument>();
+            Source->LogicalPath = "main.dba";
+            Source->Text = MainText;
+            Source->Profile = Profile;
+            const lang::Program Program = lang::LexAndParse(Source);
+
+            std::string Result = MainText;
+            const std::string Wanted = NormalizedInclude(From);
+            for (auto Include = Program.Includes.rbegin(); Include != Program.Includes.rend(); ++Include)
+            {
+                if (NormalizedInclude(dbc::GenericPathToUtf8(Include->Path)) != Wanted)
+                    continue;
+                const std::size_t Open = Result.find('"', Include->Span.Begin.Offset);
+                const std::size_t Close = Open == std::string::npos ? Open : Result.find('"', Open + 1);
+                if (Close != std::string::npos)
+                    Result.replace(Open + 1, Close - Open - 1, To);
+            }
+            return Result;
+        }
+
         bool SourceIncludes(const std::filesystem::path& Root, const std::filesystem::path& Target,
                             lang::LanguageProfile Profile, const SourceReader& Read)
         {

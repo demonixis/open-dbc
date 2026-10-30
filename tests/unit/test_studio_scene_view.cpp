@@ -671,6 +671,45 @@ TEST_CASE("Another level imported by the program leaves the main source alone, a
     CHECK(Driver.Logged("stays out of main.dba") == 1);
 }
 
+TEST_CASE("A level from before the folders moves into its own, and its environment follows when saved")
+{
+    SceneViewDriver Driver("level_flat", LevelOfCubes({glm::vec3(0.0f)}));
+    std::filesystem::remove_all(Driver.Root() / scene::KLevelFolder);
+    Driver.WriteFile("levels/Level.dba", "FUNCTION LoadLevel_Level()\n   FOG ON\n   MAKE OBJECT CUBE 1000, 20\n"
+                                         "ENDFUNCTION\n");
+    Driver.WriteFile("opendbc_game.dba", "FUNCTION SetupGame()\n   SYNC ON\nENDFUNCTION\n");
+    Driver.WriteFile("main.dba", "#include \"opendbc_game.dba\"\n#include \"levels/Level.dba\"\n\n"
+                                 "SetupGame()\nLoadLevel_Level()\n\nSYNC\n");
+
+    const panels::SceneProject Project = *Driver.Editor().Project();
+    Driver.Editor().SetProject(std::nullopt);
+    Driver.Editor().SetProject(Project);
+    Driver.Editor().Activate();
+    Driver.Frame();
+
+    CHECK_FALSE(std::filesystem::exists(Driver.Root() / "levels/Level.dba"));
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / scene::LevelRelativePath("Level")));
+    CHECK(Driver.ReadFile("main.dba") == "#include \"opendbc_game.dba\"\n#include \"levels/Level/Level.dba\"\n\n"
+                                         "SetupGame()\nLoadLevel_Level()\n\nSYNC\n");
+    CHECK(Driver.Logged("opendbc_game.dba") == 1);
+    CHECK_FALSE(Driver.Editor().Dirty());
+
+    REQUIRE(Driver.Editor().Save());
+    CHECK(Driver.ReadFile(scene::LevelRelativePath("Level")).find("FOG ON") == std::string::npos);
+    CHECK(Driver.ReadFile(scene::WorldRelativePath("Level")).find("FOG ON") != std::string::npos);
+    CHECK(Driver.ReadFile("main.dba") == "#include \"opendbc_game.dba\"\n#include \"levels/Level/Level.dba\"\n"
+                                         "#include \"levels/Level/world_settings.dba\"\n\n"
+                                         "SetupGame()\nSetupWorld_Level()\nLoadLevel_Level()\n\nSYNC\n");
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / "opendbc_game.dba"));
+
+    // A target already there is reported, and the older file stays.
+    Driver.WriteFile("levels/Level.dba", "FUNCTION LoadLevel_Level()\nENDFUNCTION\n");
+    Driver.ExpectErrors(true);
+    Driver.Editor().Activate();
+    CHECK(Driver.Logged("Cannot move") == 1);
+    CHECK(std::filesystem::is_regular_file(Driver.Root() / "levels/Level.dba"));
+}
+
 TEST_CASE("A program's scene replaces the level until a level is opened again")
 {
     const glm::vec3 Spot(0.0f, 0.0f, 0.0f);

@@ -57,6 +57,8 @@ namespace dbc::studio
             // Opens a source in a tab without leaving the Scene view, so a patch of it can be undone.
             std::function<bool(const std::filesystem::path& Path)> OpenSource;
             std::function<bool()> CaptureRunning;
+            // Files moved without going through WriteSource.
+            std::function<void()> FilesMoved;
         };
 
         // The Scene mode: level files, selection, undo and the docked scene panels.
@@ -181,6 +183,8 @@ namespace dbc::studio
             // Returns whether the level is a new one, which only exists once saved.
             bool NewLevel(const std::string& Name);
             bool LinkMain();
+            // Older projects keep levels/<name>.dba: each moves into its folder, and the main source follows.
+            void MoveOlderLevels();
 
             // The active node: the last one selected, whose values the Inspector shows.
             scene::SceneNode* Selected();

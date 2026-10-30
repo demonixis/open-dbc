@@ -29,6 +29,12 @@ level. When the main source is open in a tab, the edit goes to that tab, undoabl
 saved with it. **F5** in the Scene mode saves the level, then runs the main
 source.
 
+A project from before these folders moves its `levels/<name>.dba` into place when
+the Scene mode opens, and the main source's `#include` follows. The next save moves
+the level's environment to its world settings. A root `opendbc_game.dba` stays where
+it is, and its `SetupGame()` still runs before them; delete both once its display
+settings are in the level's.
+
 The Studio reads a level back with the language frontend. It accepts only the
 statements it writes, with literal arguments and `RGB()` of literal channels;
 `REM @…` lines carry names, number ranges and which objects are painted. Any

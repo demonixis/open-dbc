@@ -666,6 +666,14 @@ TEST_CASE("What a program already imports stays as it is")
                        "SetupGame()\nSetupWorld_Cave()\nLoadLevel_Cave()\nsync\n");
 }
 
+TEST_CASE("Moving an include keeps the rest of the main source")
+{
+    const std::string Main = "REM Game\r\n#include \"LEVELS\\First.dba\" `the first\r\nprint 1\r\n";
+    CHECK(scene::MoveInclude(Main, LanguageProfile::Dbc, "levels/First.dba", "levels/First/First.dba") ==
+          "REM Game\r\n#include \"levels/First/First.dba\" `the first\r\nprint 1\r\n");
+    CHECK(scene::MoveInclude(Main, LanguageProfile::Dbc, "levels/Cave.dba", "levels/Cave/Cave.dba") == Main);
+}
+
 TEST_CASE("A program's level imports are found through its includes")
 {
     const std::map<std::filesystem::path, std::string> Files = {

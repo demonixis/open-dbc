@@ -35,6 +35,10 @@ namespace dbc::studio
         LinkResult LinkIntoMain(const std::string& MainText, dbc::language::LanguageProfile Profile,
                                 const std::vector<MainLink>& Links);
 
+        // Points the main source's #include of `From` at `To`, as they are written there.
+        std::string MoveInclude(const std::string& MainText, dbc::language::LanguageProfile Profile,
+                                const std::string& From, const std::string& To);
+
         using SourceReader = std::function<std::optional<std::string>(const std::filesystem::path&)>;
 
         // Whether `Root` reaches `Target` through its #include lines, read with `Read`.

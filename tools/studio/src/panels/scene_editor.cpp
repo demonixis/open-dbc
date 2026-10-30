@@ -83,7 +83,10 @@ namespace dbc::studio
 
         void SceneEditor::Activate()
         {
-            if (!Project_ || HasLevel_)
+            if (!Project_)
+                return;
+            MoveOlderLevels();
+            if (HasLevel_)
                 return;
             const std::vector<std::string> Names = LevelNames();
             if (Names.empty())
@@ -390,6 +393,49 @@ namespace dbc::studio
             }
             Host_.Log("Added the level's #include and call to " + dbc::PathToUtf8(Main.filename()), false);
             return true;
+        }
+
+        void SceneEditor::MoveOlderLevels()
+        {
+            std::error_code Error;
+            std::vector<std::filesystem::path> Older;
+            for (const auto& Entry : std::filesystem::directory_iterator(Project_->Root / scene::KLevelFolder, Error))
+                if (Entry.is_regular_file(Error) && dbc::language::IsLanguageSource(Entry.path()))
+                    Older.push_back(Entry.path());
+            if (Older.empty())
+                return;
+
+            const std::filesystem::path& Main = Project_->EntrySource;
+            const auto Relative = [&](const std::filesystem::path& Path)
+            { return dbc::GenericPathToUtf8(Path.lexically_relative(Main.parent_path())); };
+            const std::optional<std::string> Before = Host_.ReadSource(Main);
+            std::string Text = Before.value_or(std::string());
+            for (const std::filesystem::path& Path : Older)
+            {
+                const std::filesystem::path Target = LevelPath(dbc::PathToUtf8(Path.stem()));
+                std::error_code Move;
+                std::filesystem::create_directories(Target.parent_path(), Move);
+                if (!Move && !std::filesystem::exists(Target, Move))
+                    std::filesystem::rename(Path, Target, Move);
+                else if (!Move)
+                    Move = std::make_error_code(std::errc::file_exists);
+                if (Move)
+                {
+                    Host_.Log("Cannot move " + dbc::PathToUtf8(Path) + " to its folder: " + Move.message(), true);
+                    continue;
+                }
+                Host_.Log("Moved " + dbc::PathToUtf8(Path.filename()) + " to " + Relative(Target), false);
+                if (Before)
+                    Text = scene::MoveInclude(Text, Project_->Profile, Relative(Path), Relative(Target));
+            }
+            if (Before && Text != *Before && !Host_.WriteSource(Main, Text, false))
+                Host_.Log("Cannot update the main source " + dbc::PathToUtf8(Main), true);
+            if (Host_.FilesMoved)
+                Host_.FilesMoved();
+            if (std::filesystem::exists(Project_->Root / "opendbc_game.dba", Error))
+                Host_.Log("opendbc_game.dba stays as it is and its SetupGame() still runs, but the Scene view no "
+                          "longer edits it: each level's world settings hold the display now",
+                          false);
         }
 
         bool SceneEditor::Editable() const

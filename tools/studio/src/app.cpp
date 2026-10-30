@@ -209,6 +209,7 @@ namespace dbc::studio
         };
         SceneHost.OpenSource = [this](const std::filesystem::path& Path) { return Editor_.Open(Path); };
         SceneHost.CaptureRunning = [this] { return SceneCapture_.has_value(); };
+        SceneHost.FilesMoved = [this] { Project_.Refresh(); };
         Scene_.Initialize(Gpu_, std::move(SceneHost));
         Reference_.Load(core::paths::FindReferenceDoc());
         Commands_.Build(Reference_);
