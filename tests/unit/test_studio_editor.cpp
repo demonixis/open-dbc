@@ -738,6 +738,73 @@ TEST_CASE("Studio editor keeps the cursor in view while typing")
     CHECK(Window->Scroll.y == ScrollY);
 }
 
+TEST_CASE("Studio editor types over a closer instead of doubling it")
+{
+    CompletionHarness Harness;
+    TextEditor& Widget = Harness.Widget();
+    const auto Typed = [&](std::string_view Keys)
+    {
+        Widget.SetText("");
+        Harness.Frame();
+        Harness.Type(Keys);
+        return Harness.Text();
+    };
+    const auto PlaceCursor = [&](std::string_view Line, size_t Index)
+    {
+        Widget.SetText(std::string(Line));
+        Widget.SetCursor(TextEditor::DocPos(0, Index));
+        Harness.Frame();
+        Harness.Frame();
+    };
+
+    // What ends up in the file is what was typed, whatever the editor closed by itself.
+    for (const std::string_view Line :
+         {"x = rgb(1, 2, 3)", "x = rgb(abs(1), 2)", "a(1) = b(2)", "print \"hello\"", "print \"a\" + \"b\"",
+          "print \"(\" + str$(1)", "print \"don't\"", "rem don't", "x = rgb()"})
+    {
+        CAPTURE(Line);
+        CHECK(Typed(Line) == Line);
+    }
+
+    // Stepping out of a call ends its hint.
+    Typed("x = rgb(1)");
+    CHECK(Harness.Hint() == nullptr);
+
+    // A correction on the way changes nothing.
+    Typed("x = rgb(12");
+    Harness.Press(ImGuiKey_Backspace);
+    Harness.Type(")");
+    CHECK(Harness.Text() == "x = rgb(1)");
+
+    // A closer already in the file counts too, and stepping over it is no edit.
+    PlaceCursor("x = rgb(1)", 9);
+    const size_t UndoIndex = Widget.GetUndoIndex();
+    Harness.Type(")");
+    CHECK(Harness.Text() == "x = rgb(1)");
+    CHECK(Widget.GetMainCursorPosition().index == 10);
+    CHECK(Widget.GetUndoIndex() == UndoIndex);
+
+    // Brackets in strings do not count, and a closer that is needed still goes in.
+    const std::string_view InString = "print \"(\" + str$(1)";
+    PlaceCursor(InString, InString.size() - 1);
+    Harness.Type(")");
+    CHECK(Harness.Text() == InString);
+    PlaceCursor("x = rgb((1)", 10);
+    Harness.Type(")");
+    CHECK(Harness.Text() == "x = rgb((1))");
+    PlaceCursor("print \"abc", 10);
+    Harness.Type("\"");
+    CHECK(Harness.Text() == "print \"abc\"");
+
+    // Outside strings, and around a selection, pairs still complete.
+    CHECK(Typed("x = (") == "x = ()");
+    Widget.SetText("print \"abc\"");
+    Widget.SelectRegion(TextEditor::DocPos(0, 7), TextEditor::DocPos(0, 10));
+    Harness.Frame();
+    Harness.Type("(");
+    CHECK(Harness.Text() == "print \"(abc)\"");
+}
+
 TEST_CASE("Studio parameter hint sits above the call without taking the keyboard")
 {
     CompletionHarness Harness;

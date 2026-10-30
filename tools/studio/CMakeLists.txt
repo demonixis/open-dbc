@@ -41,6 +41,11 @@ opendbc_fetch_dependency(imgui_texteditor
                   -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
                   -DOPENDBC_PATCH_FILE=${CMAKE_SOURCE_DIR}/cmake/patches/texteditor-follow-cursor.patch
                   -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
+          COMMAND ${CMAKE_COMMAND}
+                  -DOPENDBC_GIT_EXECUTABLE=${GIT_EXECUTABLE}
+                  -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
+                  -DOPENDBC_PATCH_FILE=${CMAKE_SOURCE_DIR}/cmake/patches/texteditor-type-over-closers.patch
+                  -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
 )
 FetchContent_MakeAvailable(imgui_texteditor)
 

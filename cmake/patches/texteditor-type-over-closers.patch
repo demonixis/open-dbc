@@ -1,0 +1,90 @@
+diff --git a/TextEditor.cpp b/TextEditor.cpp
+index 3c088a1..467e79a 100644
+--- a/TextEditor.cpp
++++ b/TextEditor.cpp
+@@ -2439,6 +2439,52 @@ void TextEditor::moveTo(DocPos coordinate, bool select) {
+ }
+ 
+ 
++//
++//	TextEditor::isInsideQuotes
++//
++
++bool TextEditor::isInsideQuotes(DocPos location, ImWchar quote) const {
++	// quotes alternate on a line, so an odd number of them comes before anything they enclose
++	auto& line = document[location.line];
++	auto isQuote = [quote](const Glyph& glyph) { return glyph.codepoint == quote; };
++	return std::count_if(line.begin(), line.begin() + location.index, isQuote) % 2 == 1;
++}
++
++
++//
++//	TextEditor::typingStepsOverCloser
++//
++
++bool TextEditor::typingStepsOverCloser(ImWchar character) {
++	auto location = cursors.getCurrent().getSelectionEnd();
++
++	if (!CodePoint::isPairCloser(character) || location == document.getEndOfLine(location) || document.getCodePoint(location) != character) {
++		return false;
++	}
++
++	auto opener = CodePoint::toPairOpener(character);
++
++	if (opener == character) {
++		return isInsideQuotes(location, character);
++	}
++
++	// another bracket would be one too many when the line has no opener left for it, strings aside
++	auto balance = 0;
++	auto inString = false;
++
++	for (const auto& glyph : document[location.line]) {
++		if (glyph.codepoint == CodePoint::doubleQuote) {
++			inString = !inString;
++
++		} else if (!inString) {
++			balance += (glyph.codepoint == opener) - (glyph.codepoint == character);
++		}
++	}
++
++	return balance <= 0;
++}
++
++
+ //
+ //	TextEditor::handleCharacter
+ //
+@@ -2461,6 +2507,19 @@ void TextEditor::handleCharacter(ImWchar character) {
+ 		completePairCloser = 0;
+ 	}
+ 
++	if (!config.overwrite && config.completePairedGlyphs && !cursors.hasMultiple() && !cursors.anyHasSelection()) {
++		// a closer that is already there takes the place of one more
++		if (typingStepsOverCloser(character)) {
++			moveRight(false, false);
++			return;
++		}
++
++		// within a string, or as an apostrophe, a glyph is just text
++		auto location = cursors.getCurrent().getSelectionEnd();
++		auto isApostrophe = character == CodePoint::singleQuote && location.index > 0 && CodePoint::isWord(document[location.line][location.index - 1].codepoint);
++		isPaired = isPaired && !isApostrophe && !isInsideQuotes(location, CodePoint::doubleQuote);
++	}
++
+ 	if (cursors.anyHasSelection() && isPaired) {
+ 		// encapsulate the current selections with the requested pairs
+ 		for (auto cursor = cursors.begin(); cursor < cursors.end(); cursor++) {
+diff --git a/TextEditor.h b/TextEditor.h
+index 4638e73..70df1c6 100644
+--- a/TextEditor.h
++++ b/TextEditor.h
+@@ -1682,6 +1682,8 @@ protected:
+ 	void moveTo(DocPos coordinate, bool select);
+ 
+ 	// add/delete characters
++	bool isInsideQuotes(DocPos location, ImWchar quote) const;
++	bool typingStepsOverCloser(ImWchar character);
+ 	void handleCharacter(ImWchar character);
+ 	void handleBackspace(bool wordMode);
+ 	void handleDelete(bool wordMode);
