@@ -37,6 +37,10 @@ namespace dbc::studio
 
         // An unknown code shows English. Same thread and timing rules as SetActiveTranslations.
         void ActivateInterfaceLanguage(std::string_view Code);
+
+        // ImGui's own menus and messages follow the active language. Needs a current ImGui context,
+        // and again after every language change, since ImGui keeps pointers to what TrId returned.
+        void TranslateImGuiStrings();
     } // namespace core
 
 } // namespace dbc::studio

@@ -198,3 +198,26 @@ TEST_CASE("The interface font keeps ImGui's default and covers French typography
     ImGui::Render();
     ImGui::DestroyContext();
 }
+
+TEST_CASE("ImGui's own strings follow the language and keep their English wording")
+{
+    ImGui::CreateContext();
+    std::vector<std::string> Defaults;
+    for (int Key = 0; Key < ImGuiLocKey_COUNT; ++Key)
+        Defaults.emplace_back(VisibleText(ImGui::LocalizeGetMsg(static_cast<ImGuiLocKey>(Key))));
+
+    core::ActivateInterfaceLanguage("fr");
+    core::TranslateImGuiStrings();
+    const char* HideTabBar = ImGui::LocalizeGetMsg(ImGuiLocKey_DockingHideTabBar);
+    CHECK(VisibleText(HideTabBar) == "Masquer la barre d’onglets");
+    CHECK(ImHashStr(HideTabBar) == ImHashStr("###HideTabBar"));
+    CHECK(std::string_view(ImGui::LocalizeGetMsg(ImGuiLocKey_WindowingUntitled)) == "(Sans titre)");
+    CHECK(std::string_view(ImGui::LocalizeGetMsg(ImGuiLocKey_OpenLink_s)).find("%s") != std::string_view::npos);
+
+    core::ActivateInterfaceLanguage("en");
+    core::TranslateImGuiStrings();
+    for (int Key = 0; Key < ImGuiLocKey_COUNT; ++Key)
+        CHECK(VisibleText(ImGui::LocalizeGetMsg(static_cast<ImGuiLocKey>(Key))) ==
+              Defaults[static_cast<std::size_t>(Key)]);
+    ImGui::DestroyContext();
+}

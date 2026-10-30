@@ -1108,6 +1108,8 @@ namespace dbc::studio
             DBC_LOG_WARN("Cannot read the system languages: {}", SDL_GetError());
         }
         core::ActivateInterfaceLanguage(core::ResolveInterfaceLanguage(Settings_.Language, SystemLocales));
+        if (ImGui::GetCurrentContext() != nullptr)
+            core::TranslateImGuiStrings();
     }
 
     void App::DrawFrame()

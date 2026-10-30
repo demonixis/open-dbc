@@ -1,5 +1,19 @@
 {
   "@name": "Français",
+  "(Main menu bar)": "(Barre de menu principale)",
+  "(Popup)": "(Fenêtre contextuelle)",
+  "(Untitled)": "(Sans titre)",
   "Automatic": "Automatique",
-  "Language": "Langue"
+  "Click and drag to move or undock whole node.": "Cliquez et glissez pour déplacer ou détacher tout le groupe.",
+  "Copy Link": "Copier le lien",
+  "Hide tab bar": "Masquer la barre d’onglets",
+  "Hold SHIFT to enable Docking window.": "Maintenez MAJ pour ancrer la fenêtre.",
+  "Language": "Langue",
+  "Open '%s'": "Ouvrir « %s »",
+  "Reset": "Réinitialiser",
+  "Reset order": "Réinitialiser l’ordre",
+  "Reset visibility": "Réinitialiser la visibilité",
+  "Size all columns to default": "Taille par défaut pour toutes les colonnes",
+  "Size all columns to fit": "Ajuster toutes les colonnes",
+  "Size column to fit": "Ajuster cette colonne"
 }

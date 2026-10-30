@@ -3,8 +3,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iterator>
 #include <utility>
 
+#include <imgui.h>
+#include <imgui_internal.h>
 #include <nlohmann/json.hpp>
 
 // Defines KTranslationCatalogueFiles from tools/studio/locales.
@@ -130,6 +133,29 @@ namespace dbc::studio
                 }
             }
             SetActiveTranslations(nullptr);
+        }
+
+        void TranslateImGuiStrings()
+        {
+            const ImGuiLocEntry Entries[] = {
+                {ImGuiLocKey_TableSizeOne, TrId("Size column to fit###SizeOne")},
+                {ImGuiLocKey_TableSizeAllFit, TrId("Size all columns to fit###SizeAll")},
+                {ImGuiLocKey_TableSizeAllDefault, TrId("Size all columns to default###SizeAll")},
+                {ImGuiLocKey_TableReset, Tr("Reset")},
+                {ImGuiLocKey_TableResetOrder, TrId("Reset order###ResetOrder")},
+                {ImGuiLocKey_TableResetVisibility, TrId("Reset visibility###ResetVisibility")},
+                {ImGuiLocKey_WindowingMainMenuBar, Tr("(Main menu bar)")},
+                {ImGuiLocKey_WindowingPopup, Tr("(Popup)")},
+                {ImGuiLocKey_WindowingUntitled, Tr("(Untitled)")},
+                {ImGuiLocKey_OpenLink_s, Tr("Open '%s'")},
+                {ImGuiLocKey_CopyLink, TrId("Copy Link###CopyLink")},
+                {ImGuiLocKey_DockingHideTabBar, TrId("Hide tab bar###HideTabBar")},
+                {ImGuiLocKey_DockingHoldShiftToDock, Tr("Hold SHIFT to enable Docking window.")},
+                {ImGuiLocKey_DockingDragToUndockOrMoveNode, Tr("Click and drag to move or undock whole node.")},
+            };
+            // Everything but the version string: a new ImGui key must be added above.
+            static_assert(std::size(Entries) == ImGuiLocKey_COUNT - 1);
+            ImGui::LocalizeRegisterEntries(Entries, static_cast<int>(std::size(Entries)));
         }
     } // namespace core
 
