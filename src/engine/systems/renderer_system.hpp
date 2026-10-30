@@ -408,6 +408,8 @@ namespace dbc
         Uint32 TerrainTransferCapacity_ = 0;
         std::size_t LastStaticTerrainTriangles_ = 0;
         std::unordered_map<uint64_t, GpuMeshBuffers> GpuMeshes_;
+        // ImageStore::ReleasedGpuTextures when the cached scene was last checked.
+        uint64_t CachedReleasedTextures_ = 0;
         SDL_GPUTransferBuffer* GpuMeshTransfer_ = nullptr;
         Uint32 GpuMeshTransferCapacity_ = 0;
     };

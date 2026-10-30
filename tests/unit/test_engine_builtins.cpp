@@ -2780,6 +2780,43 @@ TEST_CASE("Meshes stay on the CPU path where blending or the depth order decides
     CHECK(GpuDraws() == 2);
 }
 
+TEST_CASE("A still scene never draws with an image texture released since it was built")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 320, 240));
+    Kernel.Camera().SetAutoCamOff();
+    const std::filesystem::path Images = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/bmp";
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "beam.bmp").string(), 1));
+    // One object drawn from GPU buffers, one from CPU triangles.
+    Kernel.Objects().MakeObjectCube(1, 2.0f);
+    Kernel.Objects().PositionObject(1, -2.0f, 0.0f, 10.0f);
+    Kernel.Objects().TextureObject(1, 1);
+    Kernel.Objects().MakeObjectCube(2, 2.0f);
+    Kernel.Objects().PositionObject(2, 2.0f, 0.0f, 10.0f);
+    Kernel.Objects().TextureObject(2, 1);
+    Kernel.Objects().GhostObjectOn(2);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    const auto Render = [&]
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        SDL_DestroySurface(Capture);
+        REQUIRE(Kernel.Renderer().CachedMeshDraws().size() == 1);
+        REQUIRE_FALSE(Kernel.Renderer().CachedWorldTris().empty());
+    };
+
+    Render();
+    REQUIRE(Kernel.Renderer().CachedMeshDraws().front().Texture != nullptr);
+    // Nothing moves: only the released texture tells that the cached scene is stale.
+    REQUIRE(Kernel.ImageStoreRef().LoadImageFile((Images / "spark.bmp").string(), 1));
+    Render();
+    const dbc::Image* Replaced = Kernel.ImageStoreRef().GetImage(1);
+    REQUIRE(Replaced != nullptr);
+    REQUIRE(Replaced->GpuTexture != nullptr);
+    CHECK(Kernel.Renderer().CachedMeshDraws().front().Texture == Replaced->GpuTexture);
+    CHECK(Kernel.Renderer().CachedWorldTris().front().GpuTexture == Replaced->GpuTexture);
+}
+
 TEST_CASE("Rendered object vertices match the query transforms exactly")
 {
     dbc::EngineKernel Kernel;

@@ -1724,6 +1724,8 @@ namespace dbc
             SDL_DestroyTexture(ImageValue.ColorKeyTexture);
             ImageValue.ColorKeyTexture = nullptr;
         }
+        if (ImageValue.GpuTexture || ImageValue.GpuColorKeyTexture)
+            ++ReleasedGpuTextures_;
         if (ImageValue.GpuTexture && Kernel_.Gpu().GpuDevice())
         {
             SDL_ReleaseGPUTexture(Kernel_.Gpu().GpuDevice(), ImageValue.GpuTexture);

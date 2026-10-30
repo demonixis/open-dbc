@@ -49,8 +49,9 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    (batches), then clears bitmap 0 after a 3D frame.
 
 A view's triangle lists are cached while the camera, every object, the visible
-particle emitters and the animations stay still, and shared with the view
-without a copy. Any change, or a second view, rebuilds them whole.
+particle emitters and the animations stay still and no image texture is released,
+and shared with the view without a copy. Any change, or a second view, rebuilds
+them whole.
 
 Bitmap 0, the screen's 2D layer, keeps one GPU texture. Every write to a bitmap
 reports the rectangle it changed; before the layer is drawn, the texture receives

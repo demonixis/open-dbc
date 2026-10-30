@@ -75,6 +75,14 @@ namespace dbc
 
         // Image detail helpers (public so renderer / objects can call via kernel).
         void DestroyImage(Image& ImageValue);
+
+        // Counts the image GPU textures released so far: a renderer that cached a scene naming textures rebuilds it
+        // when this changes.
+        [[nodiscard]] uint64_t ReleasedGpuTextures() const
+        {
+            return ReleasedGpuTextures_;
+        }
+
         bool FillImageFromSurface(Image& ImageValue, SDL_Surface* Surface, const std::string& SourcePath,
                                   std::string* Error = nullptr);
         [[nodiscard]] int LoadImageInternalFromPath(const std::string& Resolved, int DivideTextureSize = 0);
@@ -103,6 +111,8 @@ namespace dbc
 
       private:
         friend class MatrixManager;
+
+        uint64_t ReleasedGpuTextures_ = 0;
 
         [[nodiscard]] bool CloneImageInternal(int& Output, int ImageId, std::string* Error = nullptr);
         void ReleaseImageInternal(int ImageId);

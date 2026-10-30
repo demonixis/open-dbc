@@ -3521,8 +3521,11 @@ namespace dbc
                 HasReflection = true;
             });
         {
-            // Check if the 3D scene needs rebuilding.
-            bool SceneDirty = K.Camera().IsDirty() || K.Objects().AnyObjectDirty() || !K.Renderer().HasCachedTris();
+            // Check if the 3D scene needs rebuilding. The cached scene may name an image texture released since.
+            const uint64_t ReleasedTextures = K.ImageStoreRef().ReleasedGpuTextures();
+            bool SceneDirty = K.Camera().IsDirty() || K.Objects().AnyObjectDirty() || !K.Renderer().HasCachedTris() ||
+                              ReleasedTextures != CachedReleasedTextures_;
+            CachedReleasedTextures_ = ReleasedTextures;
             // Animated objects always require rebuild.
             if (!SceneDirty)
             {
