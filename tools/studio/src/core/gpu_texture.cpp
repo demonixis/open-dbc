@@ -1,4 +1,5 @@
 #include "core/gpu_texture.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -16,20 +17,20 @@ namespace dbc::studio
             Out = {};
             if (Gpu == nullptr)
             {
-                Error = "No GPU device";
+                Error = Tr("No GPU device");
                 return false;
             }
             SDL_Surface* Rgba = SDL_ConvertSurface(Surface, SDL_PIXELFORMAT_ABGR8888);
             if (Rgba == nullptr)
             {
-                Error = std::string("Cannot convert image: ") + SDL_GetError();
+                Error = TrFmt("Cannot convert image: {0}", {SDL_GetError()});
                 return false;
             }
             const std::uint64_t RequiredBytes = static_cast<std::uint64_t>(Rgba->w) * Rgba->h * 4u;
             if (Rgba->w <= 0 || Rgba->h <= 0 || RequiredBytes > std::numeric_limits<Uint32>::max())
             {
                 SDL_DestroySurface(Rgba);
-                Error = "Image is too large for a GPU transfer";
+                Error = Tr("Image is too large for a GPU transfer");
                 return false;
             }
 
@@ -45,7 +46,7 @@ namespace dbc::studio
             if (Texture == nullptr)
             {
                 SDL_DestroySurface(Rgba);
-                Error = std::string("Cannot create texture: ") + SDL_GetError();
+                Error = TrFmt("Cannot create texture: {0}", {SDL_GetError()});
                 return false;
             }
 
@@ -55,7 +56,7 @@ namespace dbc::studio
             SDL_GPUTransferBuffer* Transfer = SDL_CreateGPUTransferBuffer(Gpu, &TransferInfo);
             const auto Fail = [&](const char* Operation)
             {
-                Error = std::string(Operation) + ": " + SDL_GetError();
+                Error = TrFmt("{0}: {1}", {Tr(Operation), SDL_GetError()});
                 if (Transfer != nullptr)
                     SDL_ReleaseGPUTransferBuffer(Gpu, Transfer);
                 SDL_ReleaseGPUTexture(Gpu, Texture);
@@ -120,7 +121,7 @@ namespace dbc::studio
             SDL_Surface* Loaded = IMG_Load(dbc::PathToUtf8(Path).c_str());
             if (Loaded == nullptr)
             {
-                Error = std::string("Cannot load image: ") + SDL_GetError();
+                Error = TrFmt("Cannot load image: {0}", {SDL_GetError()});
                 return false;
             }
             if (MaxSize > 0 && (Loaded->w > MaxSize || Loaded->h > MaxSize))

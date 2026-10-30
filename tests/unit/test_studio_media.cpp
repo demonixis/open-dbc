@@ -81,3 +81,10 @@ TEST_CASE("Studio media preserves UTF-8 names through native filesystem paths")
     Input >> Contents;
     CHECK(Contents == "data");
 }
+
+TEST_CASE("File sizes read in the unit that fits")
+{
+    CHECK(core::FormatFileSize(512) == "512 B");
+    CHECK(core::FormatFileSize(1536) == "1.5 KB");
+    CHECK(core::FormatFileSize(3 * 1024 * 1024) == "3.0 MB");
+}

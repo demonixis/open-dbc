@@ -9,6 +9,7 @@
 
 #include "core/file_dialog.hpp"
 #include "core/i18n.hpp"
+#include "core/media_catalogue.hpp"
 #include "core/platform.hpp"
 #include "core/workspace.hpp"
 #include "dba/command_database.hpp"
@@ -28,24 +29,6 @@ namespace dbc::studio
                 Haystack.begin(), Haystack.end(), Needle.begin(), Needle.end(), [](char A, char B)
                 { return std::tolower(static_cast<unsigned char>(A)) == std::tolower(static_cast<unsigned char>(B)); });
             return It != Haystack.end();
-        }
-
-        std::string HumanSize(std::uintmax_t Bytes)
-        {
-            char Buffer[32];
-            if (Bytes < 1024)
-            {
-                SDL_snprintf(Buffer, sizeof(Buffer), "%llu B", static_cast<unsigned long long>(Bytes));
-            }
-            else if (Bytes < 1024 * 1024)
-            {
-                SDL_snprintf(Buffer, sizeof(Buffer), "%.1f KB", static_cast<double>(Bytes) / 1024.0);
-            }
-            else
-            {
-                SDL_snprintf(Buffer, sizeof(Buffer), "%.1f MB", static_cast<double>(Bytes) / (1024.0 * 1024.0));
-            }
-            return Buffer;
         }
 
         void LabelledValue(const char* Label, std::string_view Value)
@@ -119,7 +102,7 @@ namespace dbc::studio
         {
             if constexpr (core::platform::HasNativeFileDialog())
             {
-                if (ImGui::Button("Open Folder...") && Dialog_ != nullptr)
+                if (ImGui::Button(TrId("Open Folder...")) && Dialog_ != nullptr)
                 {
                     Dialog_->OpenFolder(Parent, dbc::PathToUtf8(Folder_),
                                         [this](const std::string& Path)
@@ -134,12 +117,12 @@ namespace dbc::studio
                 // No file picker on iOS: the workspace roots are the only way in.
                 ImGui::SetNextItemWidth(220.0f);
                 const std::string Preview =
-                    Folder_.empty() ? std::string("Choose a location") : dbc::PathToUtf8(Folder_.filename());
+                    Folder_.empty() ? std::string(Tr("Choose a location")) : dbc::PathToUtf8(Folder_.filename());
                 if (ImGui::BeginCombo("##location", Preview.c_str()))
                 {
                     for (const core::Workspace::Location& LocationValue : Workspace_->Locations())
                     {
-                        if (ImGui::Selectable(LocationValue.Name.c_str(), Folder_ == LocationValue.Path))
+                        if (ImGui::Selectable(Tr(LocationValue.Name.c_str()), Folder_ == LocationValue.Path))
                         {
                             SetFolder(LocationValue.Path, Profile_);
                         }
@@ -149,7 +132,7 @@ namespace dbc::studio
             }
 
             ImGui::SameLine();
-            if (ImGui::Button("Refresh") && !Folder_.empty())
+            if (ImGui::Button(TrId("Refresh")) && !Folder_.empty())
             {
                 SetFolder(Folder_, Profile_);
             }
@@ -157,11 +140,13 @@ namespace dbc::studio
             ImGui::SameLine();
             if (Folder_.empty())
             {
-                ImGui::TextDisabled("no folder");
+                ImGui::TextDisabled("%s", Tr("no folder"));
             }
             else
             {
-                ImGui::TextDisabled("%s  -  %zu program(s)", dbc::PathToUtf8(Folder_).c_str(), Programs_.size());
+                ImGui::TextDisabled(
+                    "%s", TrFmt("{0}  -  {1} program(s)", {dbc::PathToUtf8(Folder_), std::to_string(Programs_.size())})
+                              .c_str());
             }
         }
 
@@ -170,7 +155,7 @@ namespace dbc::studio
             ImGui::SetNextItemWidth(-1.0f);
             char Filter[256];
             SDL_snprintf(Filter, sizeof(Filter), "%s", Filter_.c_str());
-            if (ImGui::InputTextWithHint("##filter", "Filter", Filter, sizeof(Filter)))
+            if (ImGui::InputTextWithHint("##filter", Tr("Filter"), Filter, sizeof(Filter)))
             {
                 Filter_ = Filter;
             }
@@ -216,7 +201,7 @@ namespace dbc::studio
         {
             if (Selected_ < 0 || Selected_ >= static_cast<int>(Programs_.size()))
             {
-                ImGui::TextDisabled("Select a program.");
+                ImGui::TextDisabled("%s", Tr("Select a program."));
                 return;
             }
 
@@ -229,7 +214,7 @@ namespace dbc::studio
             ImGui::TextDisabled("%s", Program.RelativeName.c_str());
 
             ImGui::Spacing();
-            if (ImGui::Button("Run"))
+            if (ImGui::Button(TrId("Run")))
             {
                 if (OnRun_)
                 {
@@ -237,7 +222,7 @@ namespace dbc::studio
                 }
             }
             ImGui::SameLine();
-            if (ImGui::Button("Open in Editor"))
+            if (ImGui::Button(TrId("Open in Editor")))
             {
                 if (OnEdit_)
                 {
@@ -249,17 +234,16 @@ namespace dbc::studio
             ImGui::Separator();
             ImGui::Spacing();
 
-            LabelledValue("Author", Program.Author);
-            LabelledValue("Date", Program.Date);
-            LabelledValue("Dialect", dbc::language::ProfileName(Program.Profile));
-            LabelledValue("Size", HumanSize(Program.Size));
+            LabelledValue(Tr("Author"), Program.Author);
+            LabelledValue(Tr("Date"), Program.Date);
+            LabelledValue(Tr("Dialect"), dbc::language::ProfileName(Program.Profile));
+            LabelledValue(Tr("Size"), core::FormatFileSize(Program.Size));
 
             if (Program.Analyzed)
             {
-                char Lines[64];
-                SDL_snprintf(Lines, sizeof(Lines), "%d  (%d code, %d comments)", Program.LineCount, Program.CodeLines,
-                             Program.CommentLines);
-                LabelledValue("Lines", Lines);
+                LabelledValue(Tr("Lines"), TrFmt("{0}  ({1} code, {2} comments)",
+                                                 {std::to_string(Program.LineCount), std::to_string(Program.CodeLines),
+                                                  std::to_string(Program.CommentLines)}));
             }
 
             ImGui::Spacing();
@@ -268,7 +252,7 @@ namespace dbc::studio
             {
                 // The signal that matters before pressing Run.
                 ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(Theme::Error));
-                const bool Open = ImGui::CollapsingHeader("Unrecognised statements");
+                const bool Open = ImGui::CollapsingHeader(TrId("Unrecognised statements"));
                 ImGui::PopStyleColor();
 
                 ImGui::SameLine();
@@ -276,7 +260,7 @@ namespace dbc::studio
 
                 if (Open)
                 {
-                    ImGui::TextDisabled("Not a comment, label, assignment, flow control or known command.");
+                    ImGui::TextDisabled("%s", Tr("Not a comment, label, assignment, flow control or known command."));
                     if (ImGui::BeginChild("##unknown", ImVec2(0.0f, 140.0f), ImGuiChildFlags_Borders))
                     {
                         for (const dba::ProgramInfo::UnknownLine& Unknown : Program.Unrecognised)
@@ -293,7 +277,7 @@ namespace dbc::studio
             if (!Program.UnsupportedUsed.empty())
             {
                 ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(Theme::Number));
-                const bool Open = ImGui::CollapsingHeader("Unsupported commands");
+                const bool Open = ImGui::CollapsingHeader(TrId("Unsupported commands"));
                 ImGui::PopStyleColor();
 
                 ImGui::SameLine();
@@ -301,7 +285,7 @@ namespace dbc::studio
 
                 if (Open)
                 {
-                    ImGui::TextDisabled("These commands are rejected for this language profile.");
+                    ImGui::TextDisabled("%s", Tr("These commands are rejected for this language profile."));
                     if (ImGui::BeginChild("##unsupported", ImVec2(0.0f, 120.0f), ImGuiChildFlags_Borders))
                     {
                         for (const std::string& Command : Program.UnsupportedUsed)
@@ -316,7 +300,7 @@ namespace dbc::studio
             if (!Program.CompatibilityStubsUsed.empty())
             {
                 ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(Theme::Number));
-                const bool Open = ImGui::CollapsingHeader("Compatibility stubs");
+                const bool Open = ImGui::CollapsingHeader(TrId("Compatibility stubs"));
                 ImGui::PopStyleColor();
 
                 ImGui::SameLine();
@@ -324,14 +308,15 @@ namespace dbc::studio
 
                 if (Open)
                 {
-                    ImGui::TextDisabled("These commands execute with documented neutral compatibility behavior.");
+                    ImGui::TextDisabled("%s",
+                                        Tr("These commands execute with documented neutral compatibility behavior."));
                     if (ImGui::BeginChild("##compatibility_stubs", ImVec2(0.0f, 120.0f), ImGuiChildFlags_Borders))
                     {
                         for (const dba::ProgramInfo::CompatibilityStubUse& Command : Program.CompatibilityStubsUsed)
                         {
                             ImGui::TextUnformatted(Command.Name.c_str());
                             ImGui::SameLine();
-                            ImGui::TextDisabled(Command.Permanent ? "(permanent)" : "(temporary)");
+                            ImGui::TextDisabled("%s", Tr(Command.Permanent ? "(permanent)" : "(temporary)"));
                         }
                     }
                     ImGui::EndChild();
@@ -340,7 +325,7 @@ namespace dbc::studio
 
             if (!Program.Commands.empty())
             {
-                const bool Open = ImGui::CollapsingHeader("Commands used");
+                const bool Open = ImGui::CollapsingHeader(TrId("Commands used"));
                 ImGui::SameLine();
                 ImGui::TextDisabled("(%zu)", Program.Commands.size());
 

@@ -5,6 +5,7 @@
 
 #include <imgui.h>
 
+#include "core/i18n.hpp"
 #include "theme.hpp"
 
 namespace dbc::studio
@@ -115,30 +116,30 @@ namespace dbc::studio
 
         void OutputPanel::Draw()
         {
-            if (ImGui::Button("Clear"))
+            if (ImGui::Button(TrId("Clear")))
             {
                 Clear();
             }
 
             ImGui::SameLine();
             const bool HasSelection = Anchor_ >= 0;
-            if (ImGui::Button(HasSelection ? "Copy selection" : "Copy all"))
+            if (ImGui::Button(TrId(HasSelection ? "Copy selection" : "Copy all")))
             {
                 ImGui::SetClipboardText(CopyText(true).c_str());
             }
             if (ImGui::IsItemHovered())
             {
-                ImGui::SetTooltip("Ctrl+C. Click a line to select it, Shift+click to extend.");
+                ImGui::SetTooltip("%s", Tr("Ctrl+C. Click a line to select it, Shift+click to extend."));
             }
 
             ImGui::SameLine();
-            ImGui::Checkbox("Auto-scroll", &AutoScroll_);
+            ImGui::Checkbox(TrId("Auto-scroll"), &AutoScroll_);
 
             ImGui::SameLine();
             ImGui::SetNextItemWidth(-1.0f);
             char Filter[256];
             std::snprintf(Filter, sizeof(Filter), "%s", Filter_.c_str());
-            if (ImGui::InputTextWithHint("##filter", "Filter", Filter, sizeof(Filter)))
+            if (ImGui::InputTextWithHint("##filter", Tr("Filter"), Filter, sizeof(Filter)))
             {
                 Filter_ = Filter;
             }
@@ -181,11 +182,11 @@ namespace dbc::studio
 
                 if (ImGui::BeginPopupContextItem("##linemenu"))
                 {
-                    if (ImGui::MenuItem("Copy line"))
+                    if (ImGui::MenuItem(TrId("Copy line")))
                     {
                         ImGui::SetClipboardText(EntryValue.Text.c_str());
                     }
-                    if (ImGui::MenuItem("Copy all"))
+                    if (ImGui::MenuItem(TrId("Copy all")))
                     {
                         CopyAll = true;
                     }

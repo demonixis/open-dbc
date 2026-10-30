@@ -1,4 +1,5 @@
 #include "snippet_library.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include "interpreter/atomic_file.hpp"
@@ -108,7 +109,7 @@ namespace dbc::studio
                     const std::size_t At = Lower(Body).find(Lower(Function.Name), Function.Span.Begin.Offset);
                     if (At != std::string::npos)
                         Name = Body.substr(At, Function.Name.size());
-                    Result.Error = "This file already declares " + Name + "().";
+                    Result.Error = TrFmt("This file already declares {0}().", {Name});
                     return Result;
                 }
             }
@@ -241,19 +242,19 @@ namespace dbc::studio
             const std::string Stem = FileStem(Value.Name);
             if (Stem.empty())
             {
-                Error = "The snippet name needs at least one letter or digit.";
+                Error = Tr("The snippet name needs at least one letter or digit.");
                 return {};
             }
             if (Trim(Value.Body).empty())
             {
-                Error = "The snippet is empty.";
+                Error = Tr("The snippet is empty.");
                 return {};
             }
             const std::filesystem::path Path = Folder / dbc::PathFromUtf8(Stem + ".dba");
             std::error_code FileError;
             if (std::filesystem::exists(Path, FileError) || FileError)
             {
-                Error = "A snippet file named " + dbc::PathToUtf8(Path.filename()) + " already exists.";
+                Error = TrFmt("A snippet file named {0} already exists.", {dbc::PathToUtf8(Path.filename())});
                 return {};
             }
             if (!dbc::interpreter::AtomicWriteText(Path, FormatSnippet(Value), &Error))

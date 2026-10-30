@@ -51,6 +51,7 @@ ctest --preset default
 | --- | --- |
 | CLI, Studio, exports, debugging | [docs/usage.md](docs/usage.md) |
 | Studio Scene view (level editor) | [docs/level-editor.md](docs/level-editor.md) |
+| Studio languages and how to translate it | [docs/localization.md](docs/localization.md) |
 | Code layout, language pipeline, compatibility rules, tests | [docs/architecture.md](docs/architecture.md) |
 | Renderer frame, its costs and how to measure them | [docs/rendering.md](docs/rendering.md) |
 | Commands and their support state, per profile | [docs/reference/](docs/reference/) |

@@ -203,6 +203,30 @@ TEST_CASE("Every embedded catalogue is listed after English and can be activated
     CHECK(std::string_view(Tr("Language")) == "Language");
 }
 
+TEST_CASE("The pseudo-locale lengthens text and keeps its placeholders")
+{
+    CHECK(core::PseudoLocalize("Open") == "[Ôpéñ~]");
+    CHECK(core::PseudoLocalize("x") == "[x~]");
+    CHECK(core::PseudoLocalize("Copied {0} to {12}") == "[Çôpîéd {0} tô {12}~~~]");
+    CHECK(core::PseudoLocalize("Open '%s' at %.1f%%") == "[Ôpéñ '%s' àt %.1f%%~~]");
+    CHECK(core::PseudoLocalize("100%") == "[100%~]");
+    CHECK(core::PseudoLocalize("{x}") == "[{x}~]");
+    CHECK(core::PseudoLocalize("Français") == "[Fràñçàîs~~]");
+}
+
+#ifndef NDEBUG
+TEST_CASE("Debug builds offer the pseudo-locale over every catalogue key")
+{
+    const std::vector<core::InterfaceLanguage>& Languages = core::InterfaceLanguages();
+    CHECK(std::any_of(Languages.begin(), Languages.end(),
+                      [](const core::InterfaceLanguage& Language) { return Language.Code == "pseudo"; }));
+    core::ActivateInterfaceLanguage("pseudo");
+    CHECK(std::string_view(Tr("Language")) == core::PseudoLocalize("Language"));
+    CHECK(std::string_view(TrC("transform part|scale")) == core::PseudoLocalize("scale"));
+    core::ActivateInterfaceLanguage("en");
+}
+#endif
+
 TEST_CASE("The interface font keeps ImGui's default and covers French typography")
 {
     ImGui::CreateContext();
@@ -268,6 +292,51 @@ TEST_CASE("The French catalogue covers the File menu and the Scene mode")
          {"Sphere", "3D Sound", "Spot Light", "First matrix", "Move (W)", "Several", "Heights", "Fog colour",
           "The project folder is read-only.", "No model under the asset folder", " (hidden)"})
         CHECK(std::string_view(Tr(Label)) != Label);
+    core::ActivateInterfaceLanguage("en");
+}
+
+TEST_CASE("The French catalogue covers the menus and the application's messages")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Label : {"Edit", "Build", "View", "Help", "Find and Replace", "Reset Layout", "Stopped"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    CHECK(std::string_view(TrC("dialect origin|detected")) == "détecté");
+    CHECK(TrFmt("Run failed (exit {0})", {"3"}) == "Échec de l’exécution (code 3)");
+    core::ActivateInterfaceLanguage("en");
+    CHECK(std::string_view(TrC("dialect origin|detected")) == "detected");
+}
+
+TEST_CASE("The French catalogue covers the launcher, the build window and the project settings")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Label : {"Unrecognised statements", "Development (unsigned)", "macOS app", "Windows executable",
+                              "Linux folder", "iOS (Xcode project)", "Missing", "My Projects", "Samples", "File System",
+                              "Open any folder on this machine", "Screen orientation", "DBPro Advanced"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    CHECK(TrFmt("Line {0}: {1}", {"3", "x"}) == "Ligne 3 : x");
+    core::ActivateInterfaceLanguage("en");
+}
+
+TEST_CASE("The French catalogue covers the code, media, output and snippet panels")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Label : {"Filter by name", "Sort by name", "Auto-scroll", "No problems in the last run or check.",
+                              "Replace All", "Not supported by OpenDBC: using it is a compile error.", "Insert Snippet",
+                              "Lighting", "Save and Load", "Two edits touch the same text.", "Models"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    CHECK(TrFmt("{0} call(s)", {"3"}) == "3 appel(s)");
+    CHECK(TrFmt("Saved in {0}", {"x"}) == "Enregistré dans x");
+    core::ActivateInterfaceLanguage("en");
+}
+
+TEST_CASE("The French catalogue covers the export toolchain")
+{
+    core::ActivateInterfaceLanguage("fr");
+    for (const char* Label : {"Export cancelled", "Export host matches this Studio", "Keystore passwords",
+                              "Save the active document as a .dba file before running.", "Verifying the signature"})
+        CHECK(std::string_view(Tr(Label)) != Label);
+    CHECK(TrFmt("Published {0}", {"x"}) == "x publié");
+    CHECK(TrFmt("Command failed ({0}): {1}{2}", {"1", "x", ""}) == "La commande a échoué (1) : x");
     core::ActivateInterfaceLanguage("en");
 }
 

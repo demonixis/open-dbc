@@ -9,7 +9,7 @@ First public release.
   (Vulkan, Metal).
 - One `opendbc` executable: the Studio (code editor, Scene view with snapping, a
   paint tool and the transforms of any program, snippets, project creation,
-  Build window) and the command line.
+  Build window) and the command line. The Studio speaks English and French.
 - Exports to macOS (Apple silicon), Windows, Linux, Android and iOS with
   `opendbc-runner`.
 - Classic multiplayer over ENet, native plugins through `LOAD DLL`, DBPro BSP

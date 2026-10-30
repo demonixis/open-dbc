@@ -1,0 +1,20 @@
+# Literals that read like interface text and must stay as they are, one per
+# line, escaped as in C++. See docs/localization.md for what stays in English.
+# Language, dialect and product names.
+DBC
+DBPro
+DarkBASIC Classic
+DarkBASIC Professional
+OpenDBC 
+# Platform names, and what macOS calls a signing identity.
+iOS
+Android
+Developer ID Application:
+# The match-case toggle shows sample letters, a BASIC command and the default
+# title written to a project's generated code.
+Aa
+SYNC ON
+My Game
+# The default product name of an exported artifact and an Apple Info.plist key.
+OpenDBC Artifact
+UISupportedInterfaceOrientations~ipad

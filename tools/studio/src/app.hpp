@@ -243,7 +243,7 @@ namespace dbc::studio
         core::ProjectTemplate NewProjectTemplate_ = core::ProjectTemplate::BasicScene;
         std::string NewProjectError_;
 
-        std::string Status_ = "Ready";
+        std::string Status_;
     };
 
 } // namespace dbc::studio

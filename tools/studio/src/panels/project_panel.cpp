@@ -1,4 +1,5 @@
 #include "project_panel.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -140,14 +141,14 @@ namespace dbc::studio
 
                 if (IsDba(NodeValue.Path) && ImGui::BeginPopupContextItem("##filemenu"))
                 {
-                    if (ImGui::MenuItem("Open"))
+                    if (ImGui::MenuItem(TrId("Open")))
                     {
                         if (OnActivate_)
                         {
                             OnActivate_(NodeValue.Path);
                         }
                     }
-                    if (OnOpenInScene_ && ImGui::MenuItem("Open in Scene View"))
+                    if (OnOpenInScene_ && ImGui::MenuItem(TrId("Open in Scene View")))
                         OnOpenInScene_(NodeValue.Path);
                     ImGui::EndPopup();
                 }
@@ -160,15 +161,15 @@ namespace dbc::studio
         {
             if (Root_.empty())
             {
-                ImGui::TextDisabled("No folder opened.");
-                ImGui::TextDisabled("File > Open Folder...");
+                ImGui::TextDisabled("%s", Tr("No folder opened."));
+                ImGui::TextDisabled("%s", Tr("File > Open Folder..."));
                 return;
             }
 
             ImGui::TextUnformatted(Tree_.Name.empty() ? dbc::PathToUtf8(Root_).c_str() : Tree_.Name.c_str());
-            ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Refresh").x -
+            ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(Tr("Refresh")).x -
                             ImGui::GetStyle().FramePadding.x * 2.0f);
-            if (ImGui::SmallButton("Refresh"))
+            if (ImGui::SmallButton(TrId("Refresh")))
             {
                 Refresh();
             }
@@ -176,12 +177,14 @@ namespace dbc::studio
 
             if (Descriptor_)
             {
-                if (ImGui::TreeNodeEx("Sources", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
+                if (ImGui::TreeNodeEx(TrId("Sources"),
+                                      ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
                 {
                     for (std::size_t Index = 0; Index < OrderedSources_.size(); ++Index)
                     {
-                        const std::string Name = (Index == 0 ? "Main: " : std::to_string(Index) + ": ") +
-                                                 dbc::PathToUtf8(OrderedSources_[Index].filename());
+                        const std::string File = dbc::PathToUtf8(OrderedSources_[Index].filename());
+                        const std::string Name =
+                            Index == 0 ? TrFmt("Main: {0}", {File}) : std::to_string(Index) + ": " + File;
                         ImGui::TreeNodeEx(Name.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen |
                                                             ImGuiTreeNodeFlags_SpanAvailWidth);
                         if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && OnActivate_)
@@ -189,12 +192,12 @@ namespace dbc::studio
                     }
                     ImGui::TreePop();
                 }
-                if (ImGui::TreeNodeEx("Media", ImGuiTreeNodeFlags_SpanAvailWidth))
+                if (ImGui::TreeNodeEx(TrId("Media"), ImGuiTreeNodeFlags_SpanAvailWidth))
                 {
                     ImGui::TextDisabled("%s", dbc::PathToUtf8(AssetRoot_).c_str());
                     ImGui::TreePop();
                 }
-                if (ImGui::TreeNodeEx("Other files", ImGuiTreeNodeFlags_SpanAvailWidth))
+                if (ImGui::TreeNodeEx(TrId("Other files"), ImGuiTreeNodeFlags_SpanAvailWidth))
                 {
                     for (Node& Child : Tree_.Children)
                         DrawNode(Child);

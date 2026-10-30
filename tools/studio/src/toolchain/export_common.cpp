@@ -1,3 +1,4 @@
+#include "core/i18n.hpp"
 #include "export_internal.hpp"
 #include "interpreter/basic_path.hpp"
 #include "interpreter/execution_service.hpp"
@@ -53,7 +54,7 @@ namespace dbc::studio
         {
             if (Progress == nullptr || Progress->Cancel == nullptr || !Progress->Cancel->load())
                 return false;
-            Error = "Export cancelled";
+            Error = Tr("Export cancelled");
             return true;
         }
 
@@ -466,7 +467,7 @@ namespace dbc::studio
                 if (Claim != detail::ArtifactStageClaim::AlreadyExists)
                     return Claim == detail::ArtifactStageClaim::Claimed;
             }
-            Error = "Cannot allocate a unique artifact staging directory";
+            Error = Tr("Cannot allocate a unique artifact staging directory");
             return false;
         }
 
@@ -493,9 +494,9 @@ namespace dbc::studio
             {
                 std::error_code FileError;
                 Error = fs::exists(Destination, FileError) && !FileError
-                            ? "Export destination already exists: " + dbc::PathToUtf8(Destination)
-                            : "Cannot publish artifact atomically without replacing a destination: " +
-                                  dbc::PathToUtf8(Destination);
+                            ? TrFmt("Export destination already exists: {0}", {dbc::PathToUtf8(Destination)})
+                            : TrFmt("Cannot publish artifact atomically without replacing a destination: {0}",
+                                    {dbc::PathToUtf8(Destination)});
             }
             return Published;
         }
@@ -506,14 +507,14 @@ namespace dbc::studio
             fs::create_directories(Destination.parent_path(), FileError);
             if (FileError)
             {
-                Error = "Cannot create artifact directory '" + dbc::PathToUtf8(Destination.parent_path()) +
-                        "': " + FileError.message();
+                Error = TrFmt("Cannot create artifact directory '{0}': {1}",
+                              {dbc::PathToUtf8(Destination.parent_path()), FileError.message()});
                 return false;
             }
             fs::copy_file(Source, Destination, fs::copy_options::overwrite_existing, FileError);
             if (FileError)
             {
-                Error = "Cannot copy '" + dbc::PathToUtf8(Source) + "': " + FileError.message();
+                Error = TrFmt("Cannot copy '{0}': {1}", {dbc::PathToUtf8(Source), FileError.message()});
                 return false;
             }
             const fs::perms Permissions = fs::status(Source, FileError).permissions();
@@ -528,26 +529,26 @@ namespace dbc::studio
             const fs::path CanonicalSource = fs::weakly_canonical(Source, FileError);
             if (FileError || !fs::is_directory(CanonicalSource, FileError))
             {
-                Error = "Artifact host directory does not exist: " + dbc::PathToUtf8(Source);
+                Error = TrFmt("Artifact host directory does not exist: {0}", {dbc::PathToUtf8(Source)});
                 return false;
             }
             const fs::path CanonicalDestinationParent = fs::weakly_canonical(Destination.parent_path(), FileError);
             if (FileError)
             {
-                Error = "Cannot resolve artifact staging parent: " + FileError.message();
+                Error = TrFmt("Cannot resolve artifact staging parent: {0}", {FileError.message()});
                 return false;
             }
             const fs::path CanonicalDestination =
                 (CanonicalDestinationParent / Destination.filename()).lexically_normal();
             if (IsSameOrDescendant(CanonicalDestination, CanonicalSource))
             {
-                Error = "Artifact staging directory cannot be inside its source host";
+                Error = Tr("Artifact staging directory cannot be inside its source host");
                 return false;
             }
             fs::create_directories(Destination, FileError);
             if (FileError)
             {
-                Error = "Cannot create artifact staging directory: " + FileError.message();
+                Error = TrFmt("Cannot create artifact staging directory: {0}", {FileError.message()});
                 return false;
             }
             for (fs::recursive_directory_iterator It(CanonicalSource, fs::directory_options::none, FileError), End;
@@ -555,24 +556,24 @@ namespace dbc::studio
             {
                 if (FileError)
                 {
-                    Error = "Cannot inspect artifact host: " + FileError.message();
+                    Error = TrFmt("Cannot inspect artifact host: {0}", {FileError.message()});
                     return false;
                 }
                 const fs::file_status Status = It->symlink_status(FileError);
                 if (FileError)
                 {
-                    Error = "Cannot inspect artifact host entry: " + FileError.message();
+                    Error = TrFmt("Cannot inspect artifact host entry: {0}", {FileError.message()});
                     return false;
                 }
                 if (fs::is_symlink(Status))
                 {
-                    Error = "Artifact hosts cannot contain symlinks: " + dbc::PathToUtf8(It->path());
+                    Error = TrFmt("Artifact hosts cannot contain symlinks: {0}", {dbc::PathToUtf8(It->path())});
                     return false;
                 }
                 const fs::path Relative = fs::relative(It->path(), CanonicalSource, FileError);
                 if (FileError || !IsSafeRelative(Relative))
                 {
-                    Error = "Artifact host contains an unsafe path";
+                    Error = Tr("Artifact host contains an unsafe path");
                     return false;
                 }
                 const fs::path Target = Destination / Relative;
@@ -581,7 +582,7 @@ namespace dbc::studio
                     fs::create_directories(Target, FileError);
                     if (FileError)
                     {
-                        Error = "Cannot create artifact host directory: " + FileError.message();
+                        Error = TrFmt("Cannot create artifact host directory: {0}", {FileError.message()});
                         return false;
                     }
                 }
@@ -592,7 +593,7 @@ namespace dbc::studio
             }
             if (FileError)
             {
-                Error = "Cannot inspect artifact host: " + FileError.message();
+                Error = TrFmt("Cannot inspect artifact host: {0}", {FileError.message()});
                 return false;
             }
             return true;
@@ -604,7 +605,7 @@ namespace dbc::studio
             std::filesystem::remove_all(Path, FileError);
             if (FileError || std::filesystem::exists(Path, FileError))
             {
-                Error = "Cannot remove artifact staging content: " + dbc::PathToUtf8(Path);
+                Error = TrFmt("Cannot remove artifact staging content: {0}", {dbc::PathToUtf8(Path)});
                 return false;
             }
             return true;
@@ -639,7 +640,7 @@ namespace dbc::studio
         {
             if (!dbc::language::IsLanguageSource(Request.EntrySource))
             {
-                Error = "BASIC artifact entry must use the .dba extension";
+                Error = Tr("BASIC artifact entry must use the .dba extension");
                 return false;
             }
             dbc::interpreter::ExecutionRequest BuildRequest;
@@ -677,7 +678,7 @@ namespace dbc::studio
                 const auto First = std::find_if(Build.Diagnostics.begin(), Build.Diagnostics.end(),
                                                 [](const dbc::interpreter::ExecutionDiagnostic& Value)
                                                 { return Value.Severity == dbc::language::DiagnosticSeverity::Error; });
-                Error = First == Build.Diagnostics.end() ? "BASIC artifact compilation failed"
+                Error = First == Build.Diagnostics.end() ? Tr("BASIC artifact compilation failed")
                                                          : First->Code + ": " + First->Message;
                 return false;
             }
@@ -701,13 +702,13 @@ namespace dbc::studio
             const fs::path ProjectRoot = fs::weakly_canonical(Request.ProjectRoot, FileError);
             if (FileError || !fs::is_directory(ProjectRoot, FileError))
             {
-                Error = "Project root does not exist: " + dbc::PathToUtf8(Request.ProjectRoot);
+                Error = TrFmt("Project root does not exist: {0}", {dbc::PathToUtf8(Request.ProjectRoot)});
                 return false;
             }
             const fs::path Entry = fs::weakly_canonical(Request.EntrySource, FileError);
             if (FileError || !fs::is_regular_file(Entry, FileError))
             {
-                Error = "BASIC entry does not exist: " + dbc::PathToUtf8(Request.EntrySource);
+                Error = TrFmt("BASIC entry does not exist: {0}", {dbc::PathToUtf8(Request.EntrySource)});
                 return false;
             }
             fs::path OutputRoot = fs::weakly_canonical(Request.OutputDirectory, FileError);
@@ -717,26 +718,26 @@ namespace dbc::studio
                 const fs::path OutputParent = fs::weakly_canonical(Request.OutputDirectory.parent_path(), FileError);
                 if (FileError)
                 {
-                    Error = "Cannot resolve the artifact output directory";
+                    Error = Tr("Cannot resolve the artifact output directory");
                     return false;
                 }
                 OutputRoot = (OutputParent / Request.OutputDirectory.filename()).lexically_normal();
             }
             if (OutputRoot == ProjectRoot)
             {
-                Error = "Artifact output directory cannot be the project root";
+                Error = Tr("Artifact output directory cannot be the project root");
                 return false;
             }
             if (Lower(dbc::PathToUtf8(Entry.extension())) != ".dba")
             {
-                Error = "BASIC entry must be a .dba file";
+                Error = Tr("BASIC entry must be a .dba file");
                 return false;
             }
 
             fs::create_directories(PayloadRoot, FileError);
             if (FileError)
             {
-                Error = "Cannot create the artifact payload: " + FileError.message();
+                Error = TrFmt("Cannot create the artifact payload: {0}", {FileError.message()});
                 return false;
             }
             std::optional<fs::path> ConfiguredKeystore;
@@ -749,7 +750,7 @@ namespace dbc::studio
                 Keystore = fs::weakly_canonical(Keystore, FileError);
                 if (FileError)
                 {
-                    Error = "Cannot resolve the configured keystore: " + FileError.message();
+                    Error = TrFmt("Cannot resolve the configured keystore: {0}", {FileError.message()});
                     return false;
                 }
                 ConfiguredKeystore = std::move(Keystore);
@@ -759,18 +760,19 @@ namespace dbc::studio
             {
                 if (FileError)
                 {
-                    Error = "Cannot inspect project files: " + FileError.message();
+                    Error = TrFmt("Cannot inspect project files: {0}", {FileError.message()});
                     return false;
                 }
                 const fs::file_status Status = It->symlink_status(FileError);
                 if (FileError)
                 {
-                    Error = "Cannot inspect project entry: " + FileError.message();
+                    Error = TrFmt("Cannot inspect project entry: {0}", {FileError.message()});
                     return false;
                 }
                 if (fs::is_symlink(Status))
                 {
-                    Error = "Projects containing symlinks cannot be exported: " + dbc::PathToUtf8(It->path());
+                    Error =
+                        TrFmt("Projects containing symlinks cannot be exported: {0}", {dbc::PathToUtf8(It->path())});
                     return false;
                 }
                 if (fs::is_directory(Status))
@@ -778,7 +780,7 @@ namespace dbc::studio
                     const fs::path Directory = fs::weakly_canonical(It->path(), FileError);
                     if (FileError)
                     {
-                        Error = "Cannot resolve a project directory: " + FileError.message();
+                        Error = TrFmt("Cannot resolve a project directory: {0}", {FileError.message()});
                         return false;
                     }
                     if (IsExcludedDirectory(It->path()) || IsSameOrDescendant(Directory, OutputRoot))
@@ -793,7 +795,7 @@ namespace dbc::studio
                     const fs::path CanonicalFile = fs::weakly_canonical(It->path(), FileError);
                     if (FileError)
                     {
-                        Error = "Cannot resolve a project file: " + FileError.message();
+                        Error = TrFmt("Cannot resolve a project file: {0}", {FileError.message()});
                         return false;
                     }
                     if (CanonicalFile == *ConfiguredKeystore)
@@ -801,14 +803,15 @@ namespace dbc::studio
                 }
                 if (IsSensitive(It->path()))
                 {
-                    Error = "Project contains a file that may contain secrets and must be excluded explicitly: " +
-                            dbc::PathToUtf8(It->path());
+                    Error =
+                        TrFmt("Project contains a file that may contain secrets and must be excluded explicitly: {0}",
+                              {dbc::PathToUtf8(It->path())});
                     return false;
                 }
                 const fs::path Relative = fs::relative(It->path(), ProjectRoot, FileError);
                 if (FileError || !IsSafeRelative(Relative))
                 {
-                    Error = "Project contains an unsafe relative path";
+                    Error = Tr("Project contains an unsafe relative path");
                     return false;
                 }
                 if (!CopyArtifactFile(It->path(), PayloadRoot / Relative, Error))
@@ -816,21 +819,22 @@ namespace dbc::studio
                 const std::optional<std::string> Hash = HashFile(PayloadRoot / Relative);
                 if (!Hash)
                 {
-                    Error = "Cannot hash copied artifact payload file: " + dbc::PathToUtf8((PayloadRoot / Relative));
+                    Error = TrFmt("Cannot hash copied artifact payload file: {0}",
+                                  {dbc::PathToUtf8((PayloadRoot / Relative))});
                     return false;
                 }
                 Files.push_back({Relative, *Hash});
             }
             if (FileError)
             {
-                Error = "Cannot inspect project files: " + FileError.message();
+                Error = TrFmt("Cannot inspect project files: {0}", {FileError.message()});
                 return false;
             }
             const fs::path AssetRoot =
                 fs::weakly_canonical(Request.AssetRoot.empty() ? ProjectRoot : Request.AssetRoot, FileError);
             if (FileError || !fs::is_directory(AssetRoot, FileError))
             {
-                Error = "Artifact asset root does not exist: " + dbc::PathToUtf8(Request.AssetRoot);
+                Error = TrFmt("Artifact asset root does not exist: {0}", {dbc::PathToUtf8(Request.AssetRoot)});
                 return false;
             }
             RelativeAssetRoot = fs::relative(AssetRoot, ProjectRoot, FileError);
@@ -845,19 +849,20 @@ namespace dbc::studio
                 {
                     if (FileError)
                     {
-                        Error = "Cannot inspect remapped DBPro media: " + FileError.message();
+                        Error = TrFmt("Cannot inspect remapped DBPro media: {0}", {FileError.message()});
                         return false;
                     }
                     const fs::file_status Status = It->symlink_status(FileError);
                     if (FileError || fs::is_symlink(Status))
                     {
-                        Error = "Remapped DBPro media cannot contain symlinks: " + dbc::PathToUtf8(It->path());
+                        Error =
+                            TrFmt("Remapped DBPro media cannot contain symlinks: {0}", {dbc::PathToUtf8(It->path())});
                         return false;
                     }
                     const fs::path Relative = fs::relative(It->path(), AssetRoot, FileError);
                     if (FileError || !IsSafeRelative(Relative))
                     {
-                        Error = "Remapped DBPro media contains an unsafe path";
+                        Error = Tr("Remapped DBPro media contains an unsafe path");
                         return false;
                     }
                     if (fs::is_directory(Status))
@@ -870,7 +875,7 @@ namespace dbc::studio
                         fs::create_directories(PayloadRoot / RelativeAssetRoot / Relative, FileError);
                         if (FileError)
                         {
-                            Error = "Cannot create remapped media directory: " + FileError.message();
+                            Error = TrFmt("Cannot create remapped media directory: {0}", {FileError.message()});
                             return false;
                         }
                         continue;
@@ -883,8 +888,8 @@ namespace dbc::studio
                         continue;
                     if (IsSensitive(It->path()))
                     {
-                        Error = "Remapped DBPro media contains a file that may expose secrets: " +
-                                dbc::PathToUtf8(It->path());
+                        Error = TrFmt("Remapped DBPro media contains a file that may expose secrets: {0}",
+                                      {dbc::PathToUtf8(It->path())});
                         return false;
                     }
                     const fs::path Destination = RelativeAssetRoot / Relative;
@@ -893,7 +898,7 @@ namespace dbc::studio
                     const std::optional<std::string> Hash = HashFile(PayloadRoot / Destination);
                     if (!Hash)
                     {
-                        Error = "Cannot hash remapped DBPro media";
+                        Error = Tr("Cannot hash remapped DBPro media");
                         return false;
                     }
                     Files.push_back({Destination, *Hash});
@@ -903,7 +908,7 @@ namespace dbc::studio
                 RelativeAssetRoot.clear();
             if (FileError)
             {
-                Error = "Cannot inspect remapped DBPro media: " + FileError.message();
+                Error = TrFmt("Cannot inspect remapped DBPro media: {0}", {FileError.message()});
                 return false;
             }
             std::sort(
@@ -933,13 +938,13 @@ namespace dbc::studio
                                  std::ios::binary | std::ios::trunc);
             if (!Output)
             {
-                Error = "Cannot write the embedded artifact manifest";
+                Error = Tr("Cannot write the embedded artifact manifest");
                 return false;
             }
             Output << Manifest.dump(2) << '\n';
             if (!Output.good())
             {
-                Error = "Cannot finish the embedded artifact manifest";
+                Error = Tr("Cannot finish the embedded artifact manifest");
                 return false;
             }
             return true;
@@ -960,7 +965,7 @@ namespace dbc::studio
             Output.close();
             if (!Output)
             {
-                Error = "Cannot write the artifact program image";
+                Error = Tr("Cannot write the artifact program image");
                 return false;
             }
             Files.push_back(
@@ -990,18 +995,18 @@ namespace dbc::studio
             if (FileError || !fs::is_regular_file(Status) || fs::is_symlink(Status))
             {
                 if (!Request.Settings.IconSource.empty() || Required)
-                    Error = "Artifact icon must be a regular non-symlink PNG file";
+                    Error = Tr("Artifact icon must be a regular non-symlink PNG file");
                 return std::nullopt;
             }
             if (Lower(dbc::PathToUtf8(Source.extension())) != ".png")
             {
-                Error = "Artifact icon source must be a PNG file";
+                Error = Tr("Artifact icon source must be a PNG file");
                 return std::nullopt;
             }
             Source = fs::weakly_canonical(Source, FileError);
             if (FileError)
             {
-                Error = "Cannot resolve the artifact icon source";
+                Error = Tr("Cannot resolve the artifact icon source");
                 return std::nullopt;
             }
             return Source;
@@ -1013,7 +1018,7 @@ namespace dbc::studio
             SDL_Surface* Original = IMG_Load(dbc::PathToUtf8(Source).c_str());
             if (Original == nullptr)
             {
-                Error = "Cannot load artifact icon: " + dbc::PathToUtf8(Source);
+                Error = TrFmt("Cannot load artifact icon: {0}", {dbc::PathToUtf8(Source)});
                 return false;
             }
             const std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> OriginalOwner(Original,
@@ -1021,7 +1026,7 @@ namespace dbc::studio
             SDL_Surface* Scaled = SDL_ScaleSurface(Original, Size, Size, SDL_SCALEMODE_LINEAR);
             if (Scaled == nullptr)
             {
-                Error = "Cannot scale the artifact icon";
+                Error = Tr("Cannot scale the artifact icon");
                 return false;
             }
             const std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> ScaledOwner(Scaled, SDL_DestroySurface);
@@ -1036,7 +1041,7 @@ namespace dbc::studio
                     !SDL_SetSurfaceBlendMode(Scaled, SDL_BLENDMODE_BLEND) ||
                     !SDL_BlitSurface(Scaled, nullptr, OpaqueOwner.get(), nullptr))
                 {
-                    Error = "Cannot flatten the iOS artifact icon";
+                    Error = Tr("Cannot flatten the iOS artifact icon");
                     return false;
                 }
                 SurfaceToSave = OpaqueOwner.get();
@@ -1045,7 +1050,7 @@ namespace dbc::studio
             fs::create_directories(Destination.parent_path(), FileError);
             if (FileError)
             {
-                Error = "Cannot write artifact icon: " + dbc::PathToUtf8(Destination);
+                Error = TrFmt("Cannot write artifact icon: {0}", {dbc::PathToUtf8(Destination)});
                 return false;
             }
 #if defined(__APPLE__)
@@ -1061,7 +1066,7 @@ namespace dbc::studio
                     std::error_code Ignored;
                     fs::remove(Bitmap, Ignored);
                     if (Error.empty())
-                        Error = "Cannot write opaque artifact icon: " + dbc::PathToUtf8(Destination);
+                        Error = TrFmt("Cannot write opaque artifact icon: {0}", {dbc::PathToUtf8(Destination)});
                     return false;
                 }
                 return RemoveRequired(Bitmap, Error);
@@ -1070,13 +1075,13 @@ namespace dbc::studio
             (void)Context;
             if (Opaque)
             {
-                Error = "Opaque iOS artifact icons can only be produced on macOS";
+                Error = Tr("Opaque iOS artifact icons can only be produced on macOS");
                 return false;
             }
 #endif
             if (!IMG_SavePNG(SurfaceToSave, dbc::PathToUtf8(Destination).c_str()))
             {
-                Error = "Cannot write artifact icon: " + dbc::PathToUtf8(Destination);
+                Error = TrFmt("Cannot write artifact icon: {0}", {dbc::PathToUtf8(Destination)});
                 return false;
             }
             return true;
@@ -1097,19 +1102,19 @@ namespace dbc::studio
                 Settings.BundleId.empty() ? "net.demonixis.opendbc.artifact" : Settings.BundleId;
             if (!IsBundleIdentifier(BundleId))
             {
-                Error = "iOS bundle ID must contain at least two valid identifier segments";
+                Error = Tr("iOS bundle ID must contain at least two valid identifier segments");
                 return false;
             }
             if (!IsAppleVersion(Settings.VersionName) || Settings.VersionCode < 1)
             {
-                Error = "iOS versions require one to three numeric components and a positive build number";
+                Error = Tr("iOS versions require one to three numeric components and a positive build number");
                 return false;
             }
             const fs::path RootPlist = App / "Info.plist";
             const fs::path Plist = fs::is_regular_file(RootPlist) ? RootPlist : App / "Contents/Info.plist";
             if (!fs::is_regular_file(Plist))
             {
-                Error = "The Apple export host has no Info.plist";
+                Error = Tr("The Apple export host has no Info.plist");
                 return false;
             }
             const auto ReplaceString = [&Context, &Plist, &Error](std::string_view Key, std::string_view Value)
@@ -1146,7 +1151,7 @@ namespace dbc::studio
         {
             if (Identity.empty())
             {
-                Error = "macOS distribution builds need a Developer ID Application identity";
+                Error = Tr("macOS distribution builds need a Developer ID Application identity");
                 return false;
             }
             // Plugins loaded by LOAD DLL, OpenXR runtimes and MoltenVK come from other teams or are unsigned;
@@ -1163,7 +1168,7 @@ namespace dbc::studio
                           "</dict></plist>\n";
                 if (!Output)
                 {
-                    Error = "Cannot write the macOS entitlements";
+                    Error = Tr("Cannot write the macOS entitlements");
                     return false;
                 }
             }
@@ -1181,7 +1186,7 @@ namespace dbc::studio
             }
             if (FileError)
             {
-                Error = "Cannot inspect the macOS bundle: " + FileError.message();
+                Error = TrFmt("Cannot inspect the macOS bundle: {0}", {FileError.message()});
                 return false;
             }
             const std::vector<std::string> Signing = {"/usr/bin/codesign", "--force", "--timestamp", "--options",
@@ -1209,7 +1214,7 @@ namespace dbc::studio
                     {"/usr/bin/ditto", "-c", "-k", "--keepParent", dbc::PathToUtf8(App), dbc::PathToUtf8(Archive)},
                     Error))
                 return false;
-            Context.Note("Submitting to Apple notarization; this usually takes a few minutes");
+            Context.Note(Tr("Submitting to Apple notarization; this usually takes a few minutes"));
             const std::optional<std::string> Output =
                 Context.RunCapturing({{"/usr/bin/xcrun", "notarytool", "submit", dbc::PathToUtf8(Archive),
                                        "--keychain-profile", Profile, "--wait", "--output-format", "json"},
@@ -1224,9 +1229,11 @@ namespace dbc::studio
             if (Status != "Accepted")
             {
                 const std::string Id = Verdict.is_object() ? Verdict.value("id", std::string{}) : std::string{};
-                Error = "Apple notarization did not accept the app (" + (Status.empty() ? "no verdict" : Status) + ")" +
-                        (Id.empty() ? std::string{}
-                                    : ". Details: xcrun notarytool log " + Id + " --keychain-profile " + Profile);
+                Error = TrFmt("Apple notarization did not accept the app ({0})",
+                              {Status.empty() ? Tr("no verdict") : Status.c_str()}) +
+                        (Id.empty()
+                             ? std::string{}
+                             : ". " + TrFmt("Details: xcrun notarytool log {0} --keychain-profile {1}", {Id, Profile}));
                 return false;
             }
             return Context.Run({"/usr/bin/xcrun", "stapler", "staple", dbc::PathToUtf8(App)}, Error) &&
@@ -1260,7 +1267,7 @@ namespace dbc::studio
                 !BinaryHash || Manifest["runtime_manifest_sha256"].get<std::string>() != *RuntimeHash ||
                 Manifest["binary_sha256"].get<std::string>() != *BinaryHash)
             {
-                Error = "Artifact host was not built from the current OpenDBC runtime sources";
+                Error = Tr("Artifact host was not built from the current OpenDBC runtime sources");
                 return false;
             }
             return true;
@@ -1280,7 +1287,7 @@ namespace dbc::studio
                 const std::optional<std::string> ProductHash = internal::Sha256File(ProductShaderRoot / Name);
                 if (!HostHash || !ProductHash || *HostHash != *ProductHash)
                 {
-                    Error = "Artifact host does not contain the canonical shaders shipped by OpenDBC";
+                    Error = Tr("Artifact host does not contain the canonical shaders shipped by OpenDBC");
                     return false;
                 }
             }
@@ -1294,7 +1301,7 @@ namespace dbc::studio
             if (!Input || Manifest.is_discarded() || !Manifest.is_object() || !Manifest.contains("needed") ||
                 !Manifest["needed"].is_array())
             {
-                Error = "Android artifact host has no dynamic dependency inventory";
+                Error = Tr("Android artifact host has no dynamic dependency inventory");
                 return false;
             }
             static const std::set<std::string> Allowed = {"libandroid.so", "libc.so",        "libdl.so", "liblog.so",
@@ -1303,7 +1310,7 @@ namespace dbc::studio
             {
                 if (!Dependency.is_string() || !Allowed.contains(Dependency.get<std::string>()))
                 {
-                    Error = "Android artifact host has a forbidden dynamic dependency";
+                    Error = Tr("Android artifact host has a forbidden dynamic dependency");
                     return false;
                 }
             }
@@ -1324,7 +1331,7 @@ namespace dbc::studio
                 return ArtifactStageClaim::Claimed;
             if (!FileError)
                 return ArtifactStageClaim::AlreadyExists;
-            Error = "Cannot create artifact staging directory: " + FileError.message();
+            Error = TrFmt("Cannot create artifact staging directory: {0}", {FileError.message()});
             return ArtifactStageClaim::Failed;
         }
     } // namespace toolchain

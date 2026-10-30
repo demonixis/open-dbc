@@ -1,4 +1,5 @@
 #include "completion.hpp"
+#include "core/i18n.hpp"
 
 #include <algorithm>
 #include <span>
@@ -583,10 +584,10 @@ namespace dbc::studio
                     case dbc::language::SupportStatus::Implemented:
                         break;
                     case dbc::language::SupportStatus::CompatibilityStub:
-                        Help.Warning = "Compatibility stub: accepted, but does not do what it historically did.";
+                        Help.Warning = Tr("Compatibility stub: accepted, but does not do what it historically did.");
                         break;
                     case dbc::language::SupportStatus::Unsupported:
-                        Help.Warning = "Not supported by OpenDBC: using it is a compile error.";
+                        Help.Warning = Tr("Not supported by OpenDBC: using it is a compile error.");
                         break;
                 }
                 if (Help.Description.empty())

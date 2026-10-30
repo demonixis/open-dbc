@@ -1,4 +1,5 @@
 #include "editor_panel.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -406,8 +407,8 @@ namespace dbc::studio
             {
                 // Characters typed since opening have no Windows-1252 byte; UTF-8 keeps them.
                 Doc.Format.Windows1252 = false;
-                Notices_.push_back(Path.filename().string() +
-                                   " is now saved as UTF-8: Windows-1252 cannot store some of its characters.");
+                Notices_.push_back(TrFmt("{0} is now saved as UTF-8: Windows-1252 cannot store some of its characters.",
+                                         {dbc::PathToUtf8(Path.filename())}));
             }
 
             Doc.Path = Path;
@@ -583,7 +584,7 @@ namespace dbc::studio
             ImGui::SetNextItemWidth(FieldWidth);
             if (FindFailed_)
                 ImGui::PushStyleColor(ImGuiCol_FrameBg, Theme::ErrorLine);
-            const bool Entered = ImGui::InputTextWithHint("##find", "Find", FindText_, sizeof(FindText_),
+            const bool Entered = ImGui::InputTextWithHint("##find", Tr("Find"), FindText_, sizeof(FindText_),
                                                           ImGuiInputTextFlags_EnterReturnsTrue);
             if (FindFailed_)
                 ImGui::PopStyleColor();
@@ -601,15 +602,15 @@ namespace dbc::studio
 
             ImGui::BeginDisabled(FindText_[0] == '\0');
             ImGui::SameLine();
-            if (ImGui::Button("Next"))
+            if (ImGui::Button(TrId("Next")))
             {
                 FindNext();
                 FindFocus_ = true;
             }
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("Select the next match (Enter, Ctrl+G)");
+                ImGui::SetTooltip("%s", Tr("Select the next match (Enter, Ctrl+G)"));
             ImGui::SameLine();
-            if (ImGui::Button("All"))
+            if (ImGui::Button(TrId("All")))
             {
                 Editor.SetCursor(Editor.GetMainCursorSelection().start);
                 Editor.SelectAllOccurrencesOf(FindText_, FindCaseSensitive_, FindWholeWord_);
@@ -617,16 +618,16 @@ namespace dbc::studio
                 Editor.SetFocus();
             }
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("Select every match, with a cursor on each");
+                ImGui::SetTooltip("%s", Tr("Select every match, with a cursor on each"));
             ImGui::EndDisabled();
             ImGui::SameLine();
             const bool CaseChanged = ImGui::Checkbox("Aa", &FindCaseSensitive_);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Match case");
+                ImGui::SetTooltip("%s", Tr("Match case"));
             ImGui::SameLine();
-            const bool WordChanged = ImGui::Checkbox("Word", &FindWholeWord_);
+            const bool WordChanged = ImGui::Checkbox(TrId("Word"), &FindWholeWord_);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Match whole words only");
+                ImGui::SetTooltip("%s", Tr("Match whole words only"));
             if (CaseChanged || WordChanged)
                 SearchFromAnchor();
             ImGui::SameLine();
@@ -635,13 +636,13 @@ namespace dbc::studio
             if (FindFailed_)
             {
                 ImGui::SameLine();
-                ImGui::TextColored(ImColor(Theme::Error), "No results");
+                ImGui::TextColored(ImColor(Theme::Error), "%s", Tr("No results"));
             }
 
             if (FindReplacing_ && !Editor.IsReadOnlyEnabled())
             {
                 ImGui::SetNextItemWidth(FieldWidth);
-                if (ImGui::InputTextWithHint("##replace", "Replace with", ReplaceText_, sizeof(ReplaceText_),
+                if (ImGui::InputTextWithHint("##replace", Tr("Replace with"), ReplaceText_, sizeof(ReplaceText_),
                                              ImGuiInputTextFlags_EnterReturnsTrue))
                 {
                     ReplaceCurrent();
@@ -649,10 +650,10 @@ namespace dbc::studio
                 }
                 ImGui::BeginDisabled(FindText_[0] == '\0');
                 ImGui::SameLine();
-                if (ImGui::Button("Replace"))
+                if (ImGui::Button(TrId("Replace")))
                     ReplaceCurrent();
                 ImGui::SameLine();
-                if (ImGui::Button("Replace All"))
+                if (ImGui::Button(TrId("Replace All")))
                     ReplaceAll();
                 ImGui::EndDisabled();
             }
@@ -740,18 +741,19 @@ namespace dbc::studio
                 return;
             }
 
-            if (!ImGui::IsPopupOpen("Unsaved changes"))
+            const char* Popup = TrId("Unsaved changes");
+            if (!ImGui::IsPopupOpen(Popup))
             {
-                ImGui::OpenPopup("Unsaved changes");
+                ImGui::OpenPopup(Popup);
             }
 
-            if (!ImGui::BeginPopupModal("Unsaved changes", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+            if (!ImGui::BeginPopupModal(Popup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             {
                 return;
             }
 
             Document& Doc = *Documents_[PendingClose_];
-            ImGui::Text("%s has unsaved changes.", Doc.Title.c_str());
+            ImGui::TextUnformatted(TrFmt("{0} has unsaved changes.", {Doc.Title}).c_str());
             ImGui::Spacing();
 
             const auto Erase = [this]
@@ -764,7 +766,7 @@ namespace dbc::studio
                 ImGui::CloseCurrentPopup();
             };
 
-            if (ImGui::Button("Save"))
+            if (ImGui::Button(TrId("Save")))
             {
                 if (!Doc.Path.empty() && WriteDocument(Doc, Doc.Path))
                 {
@@ -778,12 +780,12 @@ namespace dbc::studio
                 }
             }
             ImGui::SameLine();
-            if (ImGui::Button("Discard"))
+            if (ImGui::Button(TrId("Discard")))
             {
                 Erase();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button(TrId("Cancel")))
             {
                 Documents_[PendingClose_]->Open = true;
                 PendingClose_ = -1;
@@ -797,7 +799,7 @@ namespace dbc::studio
         {
             if (Documents_.empty())
             {
-                ImGui::TextDisabled("No file open. Use File > Open, or pick one in the Project panel.");
+                ImGui::TextDisabled("%s", Tr("No file open. Use File > Open, or pick one in the Project panel."));
                 return;
             }
 

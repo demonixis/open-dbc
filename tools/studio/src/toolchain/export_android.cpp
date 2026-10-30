@@ -1,3 +1,4 @@
+#include "core/i18n.hpp"
 #include "export_internal.hpp"
 #include "path_utf8.hpp"
 #include "toolchain_locator.hpp"
@@ -21,7 +22,7 @@ namespace dbc::studio
             const fs::file_status Status = fs::symlink_status(Path, FileError);
             if (FileError || !fs::is_regular_file(Status) || fs::is_symlink(Status))
             {
-                Error = "The installed Android export host has no regular non-symlink libmain.so";
+                Error = Tr("The installed Android export host has no regular non-symlink libmain.so");
                 return false;
             }
             std::array<unsigned char, 64> Header{};
@@ -30,7 +31,7 @@ namespace dbc::studio
             if (Input.gcount() < 20 || Header[0] != 0x7f || Header[1] != 'E' || Header[2] != 'L' || Header[3] != 'F' ||
                 Header[4] != 2 || Header[5] != 1 || Header[6] != 1 || Header[18] != 0xb7 || Header[19] != 0)
             {
-                Error = "The installed Android export host libmain.so is not ELF64 little-endian AArch64";
+                Error = Tr("The installed Android export host libmain.so is not ELF64 little-endian AArch64");
                 return false;
             }
             const auto Little = [](const unsigned char* Bytes, int Count)
@@ -62,8 +63,8 @@ namespace dbc::studio
             }
             if (!Loadable || !Aligned)
             {
-                Error = "The installed Android export host libmain.so is not aligned on 16 KB pages, which Google "
-                        "Play requires";
+                Error = Tr("The installed Android export host libmain.so is not aligned on 16 KB pages, which Google "
+                           "Play requires");
                 return false;
             }
             return true;
@@ -97,7 +98,7 @@ namespace dbc::studio
             std::error_code FileError;
             if (!fs::is_directory(Host, FileError))
             {
-                Error = "The installed product does not contain the qualified Android export host";
+                Error = Tr("The installed product does not contain the qualified Android export host");
                 return false;
             }
             const fs::path Library = Host / "app/src/main/jniLibs/arm64-v8a/libmain.so";
@@ -114,7 +115,7 @@ namespace dbc::studio
         static bool VerifyAndroidSignature(const ExportContext& Context, const ExportToolchain& Toolchain,
                                            const fs::path& Package, bool Bundle, std::string& Error)
         {
-            Context.Note("Verifying the signature");
+            Context.Note(Tr("Verifying the signature"));
             if (Bundle)
             {
                 // jarsigner exits successfully on an unsigned bundle, so its verdict is read from the output.
@@ -129,7 +130,7 @@ namespace dbc::studio
                     return false;
                 if (Output->find("jar verified.") == std::string::npos)
                 {
-                    Error = "The Android App Bundle is not signed";
+                    Error = Tr("The Android App Bundle is not signed");
                     return false;
                 }
                 return true;
@@ -137,7 +138,7 @@ namespace dbc::studio
             const std::optional<fs::path> BuildTools = LatestAndroidBuildTools(Toolchain.AndroidSdk);
             if (!BuildTools)
             {
-                Error = "Verifying the APK needs the Android SDK build tools";
+                Error = Tr("Verifying the APK needs the Android SDK build tools");
                 return false;
             }
 #if defined(_WIN32)
@@ -163,7 +164,7 @@ namespace dbc::studio
             Result.OutputPath = Request.OutputDirectory / (ProductName + (Bundle ? ".aab" : ".apk"));
             if (fs::exists(Result.OutputPath, FileError))
             {
-                Result.Error = "Export destination already exists: " + dbc::PathToUtf8(Result.OutputPath);
+                Result.Error = TrFmt("Export destination already exists: {0}", {dbc::PathToUtf8(Result.OutputPath)});
                 Result.OutputPath.clear();
                 return Result;
             }
@@ -183,14 +184,14 @@ namespace dbc::studio
                 Request.Settings.BundleId.empty() ? "net.demonixis.opendbc.artifact" : Request.Settings.BundleId;
             if (!IsBundleIdentifier(BundleId))
             {
-                Result.Error = "Android bundle ID must contain at least two valid Java identifier segments";
+                Result.Error = Tr("Android bundle ID must contain at least two valid Java identifier segments");
                 return Result;
             }
             static const std::set<std::string> AndroidOrientations = {"sensorLandscape", "landscape", "sensorPortrait",
                                                                       "portrait", "fullSensor"};
             if (!AndroidOrientations.contains(Request.Settings.AndroidOrientation))
             {
-                Result.Error = "Unsupported Android screen orientation";
+                Result.Error = Tr("Unsupported Android screen orientation");
                 return Result;
             }
             static const std::set<std::string> AndroidPermissions = {"INTERNET",
@@ -203,7 +204,7 @@ namespace dbc::studio
             if (std::any_of(Request.Settings.AndroidPermissions.begin(), Request.Settings.AndroidPermissions.end(),
                             [](const std::string& Permission) { return !AndroidPermissions.contains(Permission); }))
             {
-                Result.Error = "Unsupported Android permission";
+                Result.Error = Tr("Unsupported Android permission");
                 return Result;
             }
             constexpr int AndroidHostMinSdk = 29;
@@ -214,14 +215,14 @@ namespace dbc::studio
                 Request.Settings.AndroidTargetSdk < Request.Settings.AndroidMinSdk ||
                 Request.Settings.AndroidTargetSdk > AndroidCompileSdk)
             {
-                Result.Error = "Android settings require minSdk 29 or newer and targetSdk no newer than 36";
+                Result.Error = Tr("Android settings require minSdk 29 or newer and targetSdk no newer than 36");
                 return Result;
             }
             fs::path Keystore;
             const bool UseSigning = Request.Sign && !Request.Settings.AndroidKeystorePath.empty();
             if (Request.Sign && !UseSigning)
             {
-                Result.Error = "Android release export requires a configured keystore";
+                Result.Error = Tr("Android release export requires a configured keystore");
                 return Result;
             }
             if (UseSigning)
@@ -233,13 +234,13 @@ namespace dbc::studio
                 if (FileError || !fs::is_regular_file(KeystoreStatus) || fs::is_symlink(KeystoreStatus) ||
                     Request.Settings.AndroidKeyAlias.empty())
                 {
-                    Result.Error = "Android signing requires a regular non-symlink keystore and a key alias";
+                    Result.Error = Tr("Android signing requires a regular non-symlink keystore and a key alias");
                     return Result;
                 }
                 Keystore = fs::weakly_canonical(Keystore, FileError);
                 if (FileError)
                 {
-                    Result.Error = "Cannot resolve the Android keystore";
+                    Result.Error = Tr("Cannot resolve the Android keystore");
                     return Result;
                 }
             }
@@ -248,7 +249,7 @@ namespace dbc::studio
             std::ofstream Properties(Project / "artifact.properties", std::ios::binary | std::ios::trunc);
             if (!Properties)
             {
-                Result.Error = "Cannot write Android artifact properties";
+                Result.Error = Tr("Cannot write Android artifact properties");
                 return Result;
             }
             Properties << "applicationId=" << PropertyValue(BundleId) << '\n'
@@ -262,7 +263,7 @@ namespace dbc::studio
                        << '\n';
             if (!Properties.good())
             {
-                Result.Error = "Cannot finish Android artifact properties";
+                Result.Error = Tr("Cannot finish Android artifact properties");
                 return Result;
             }
             Properties.close();
@@ -270,7 +271,7 @@ namespace dbc::studio
             std::ofstream Manifest(Project / "app/src/main/AndroidManifest.xml", std::ios::binary | std::ios::trunc);
             if (!Manifest)
             {
-                Result.Error = "Cannot write the Android artifact manifest";
+                Result.Error = Tr("Cannot write the Android artifact manifest");
                 return Result;
             }
             Manifest << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
@@ -291,7 +292,7 @@ namespace dbc::studio
                      << "    </activity>\n  </application>\n</manifest>\n";
             if (!Manifest.good())
             {
-                Result.Error = "Cannot finish the Android artifact manifest";
+                Result.Error = Tr("Cannot finish the Android artifact manifest");
                 return Result;
             }
             Manifest.close();
@@ -299,12 +300,12 @@ namespace dbc::studio
             if (UseSigning &&
                 (Request.Secrets.AndroidKeystorePassword.empty() || Request.Secrets.AndroidKeyPassword.empty()))
             {
-                Result.Error = "Android signing requires the keystore and key passwords";
+                Result.Error = Tr("Android signing requires the keystore and key passwords");
                 return Result;
             }
             if (Request.Toolchain.JavaHome.empty() || Request.Toolchain.AndroidSdk.empty())
             {
-                Result.Error = "Android packaging requires a JDK 17+ and the Android SDK";
+                Result.Error = Tr("Android packaging requires a JDK 17+ and the Android SDK");
                 return Result;
             }
             std::ofstream LocalProperties(Project / "local.properties", std::ios::binary | std::ios::trunc);
@@ -313,7 +314,7 @@ namespace dbc::studio
             LocalProperties.close();
             if (!LocalProperties)
             {
-                Result.Error = "Cannot write the Android SDK location";
+                Result.Error = Tr("Cannot write the Android SDK location");
                 return Result;
             }
 
@@ -334,30 +335,30 @@ namespace dbc::studio
                                                 Request.Secrets.AndroidKeystorePassword);
                 Gradle.Environment.emplace_back("OPENDBC_ANDROID_KEY_PASSWORD", Request.Secrets.AndroidKeyPassword);
             }
-            Context.Note(std::string("Running Gradle ") + Task);
+            Context.Note(TrFmt("Running Gradle {0}", {Task}));
             if (!Context.Run(Gradle, Result.Error))
                 return Result;
             const fs::path PublishSource = Project / (Bundle ? "app/build/outputs/bundle/release/app-release.aab"
                                                              : "app/build/outputs/apk/release/app-release.apk");
             if (!fs::is_regular_file(PublishSource, FileError))
             {
-                Result.Error = "Android packaging completed without producing the expected artifact";
+                Result.Error = Tr("Android packaging completed without producing the expected artifact");
                 return Result;
             }
             if (UseSigning && !VerifyAndroidSignature(Context, Request.Toolchain, PublishSource, Bundle, Result.Error))
                 return Result;
             if (!UseSigning)
-                Result.Messages.push_back("Development build signed with the Android debug key: it installs on a "
-                                          "device, but Google Play needs a Distribution build");
+                Result.Messages.push_back(Tr("Development build signed with the Android debug key: it installs on a "
+                                             "device, but Google Play needs a Distribution build"));
             if (!PublishAndRemoveStage(PublishSource, Result.OutputPath, Stage, Result.Error))
             {
                 Result.OutputPath.clear();
                 return Result;
             }
             Cleanup.Path.clear();
-            Result.Messages.push_back("Exported the program image and " + std::to_string(Files.size()) +
-                                      " asset files");
-            Result.Messages.push_back("Published " + dbc::PathToUtf8(Result.OutputPath));
+            Result.Messages.push_back(
+                TrFmt("Exported the program image and {0} asset files", {std::to_string(Files.size())}));
+            Result.Messages.push_back(TrFmt("Published {0}", {dbc::PathToUtf8(Result.OutputPath)}));
             return Result;
         }
     } // namespace toolchain::internal

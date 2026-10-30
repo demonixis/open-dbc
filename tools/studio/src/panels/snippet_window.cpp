@@ -1,4 +1,5 @@
 #include "snippet_window.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include "theme.hpp"
@@ -67,7 +68,7 @@ namespace dbc::studio
 
         std::optional<core::Snippet> SnippetWindow::DrawInsert()
         {
-            constexpr const char* Popup = "Insert Snippet";
+            const char* Popup = TrId("Insert Snippet");
             if (InsertRequested_)
             {
                 ImGui::OpenPopup(Popup);
@@ -81,12 +82,16 @@ namespace dbc::studio
             if (ImGui::IsWindowAppearing())
                 ImGui::SetKeyboardFocusHere();
             ImGui::SetNextItemWidth(16.0f * Em);
-            ImGui::InputTextWithHint("##filter", "Filter", Filter_.data(), Filter_.size());
+            ImGui::InputTextWithHint("##filter", Tr("Filter"), Filter_.data(), Filter_.size());
+
+            // Only the built-in snippets have catalogue entries: a user's own text stays as they wrote it.
+            const auto Shown = [&](std::size_t Index, const std::string& Text)
+            { return Index < BuiltinCount_ ? Tr(Text.c_str()) : Text.c_str(); };
 
             const auto Visible = [&](std::size_t Index)
             {
                 const core::Snippet& Value = Snippets_[Index];
-                return Value.Supports(Profile_) && ContainsIgnoringCase(Value.Name, Filter_.data());
+                return Value.Supports(Profile_) && ContainsIgnoringCase(Shown(Index, Value.Name), Filter_.data());
             };
             if (Selected_ < 0 || static_cast<std::size_t>(Selected_) >= Snippets_.size() || !Visible(Selected_))
             {
@@ -102,11 +107,11 @@ namespace dbc::studio
             for (std::size_t Index = 0; Index < Snippets_.size(); ++Index)
             {
                 if (Index == BuiltinCount_)
-                    ImGui::SeparatorText("My Snippets");
+                    ImGui::SeparatorText(Tr("My Snippets"));
                 if (!Visible(Index))
                     continue;
                 ImGui::PushID(static_cast<int>(Index));
-                if (ImGui::Selectable(Snippets_[Index].Name.c_str(), Selected_ == static_cast<int>(Index),
+                if (ImGui::Selectable(Shown(Index, Snippets_[Index].Name), Selected_ == static_cast<int>(Index),
                                       ImGuiSelectableFlags_AllowDoubleClick))
                 {
                     Selected_ = static_cast<int>(Index);
@@ -117,8 +122,10 @@ namespace dbc::studio
             }
             if (BuiltinCount_ == Snippets_.size())
             {
-                ImGui::SeparatorText("My Snippets");
-                ImGui::TextDisabled("Edit > Save Selection as Snippet");
+                ImGui::SeparatorText(Tr("My Snippets"));
+                ImGui::PushTextWrapPos(0.0f);
+                ImGui::TextDisabled("%s", Tr("Edit > Save Selection as Snippet"));
+                ImGui::PopTextWrapPos();
             }
             ImGui::EndChild();
 
@@ -127,11 +134,11 @@ namespace dbc::studio
             if (Selected_ >= 0)
             {
                 core::Snippet& Value = Snippets_[Selected_];
-                ImGui::TextUnformatted(Value.Name.c_str());
+                ImGui::TextUnformatted(Shown(Selected_, Value.Name));
                 if (!Value.Description.empty())
                 {
                     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(Theme::TextDim));
-                    ImGui::TextWrapped("%s", Value.Description.c_str());
+                    ImGui::TextWrapped("%s", Shown(Selected_, Value.Description));
                     ImGui::PopStyleColor();
                 }
                 // Read-only, so the buffer is never written through.
@@ -140,22 +147,22 @@ namespace dbc::studio
             }
             else
             {
-                ImGui::TextDisabled("No snippet matches.");
+                ImGui::TextDisabled("%s", Tr("No snippet matches."));
                 ImGui::Dummy(ImVec2(0.0f, ImGui::GetContentRegionAvail().y - Footer));
             }
             ImGui::EndGroup();
 
             ImGui::BeginDisabled(Selected_ < 0);
-            if (ImGui::Button("Insert") && Selected_ >= 0)
+            if (ImGui::Button(TrId("Insert")) && Selected_ >= 0)
                 Inserted = Snippets_[Selected_];
             ImGui::EndDisabled();
             ImGui::SameLine();
-            if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+            if (ImGui::Button(TrId("Close")) || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
                 ImGui::CloseCurrentPopup();
             if (!UserFolder_.empty())
             {
                 ImGui::SameLine();
-                ImGui::TextDisabled("My Snippets: %s", dbc::PathToUtf8(UserFolder_).c_str());
+                ImGui::TextDisabled("%s", TrFmt("My Snippets: {0}", {dbc::PathToUtf8(UserFolder_)}).c_str());
             }
             if (Inserted)
                 ImGui::CloseCurrentPopup();
@@ -165,7 +172,7 @@ namespace dbc::studio
 
         void SnippetWindow::DrawSave()
         {
-            constexpr const char* Popup = "Save as Snippet";
+            const char* Popup = TrId("Save as Snippet");
             if (SaveRequested_)
             {
                 ImGui::OpenPopup(Popup);
@@ -176,18 +183,18 @@ namespace dbc::studio
 
             if (ImGui::IsWindowAppearing())
                 ImGui::SetKeyboardFocusHere();
-            const bool Entered =
-                ImGui::InputText("Name", SaveName_.data(), SaveName_.size(), ImGuiInputTextFlags_EnterReturnsTrue);
-            ImGui::InputText("Description", SaveDescription_.data(), SaveDescription_.size());
+            const bool Entered = ImGui::InputText(TrId("Name"), SaveName_.data(), SaveName_.size(),
+                                                  ImGuiInputTextFlags_EnterReturnsTrue);
+            ImGui::InputText(TrId("Description"), SaveDescription_.data(), SaveDescription_.size());
             const bool Pro = Profile_ == dbc::language::LanguageProfile::DbPro;
-            ImGui::Checkbox(Pro ? "Also offer it to DBC projects" : "Also offer it to DBPro projects",
+            ImGui::Checkbox(TrId(Pro ? "Also offer it to DBC projects" : "Also offer it to DBPro projects"),
                             &SaveBothProfiles_);
-            ImGui::TextDisabled("Saved in %s", dbc::PathToUtf8(UserFolder_).c_str());
+            ImGui::TextDisabled("%s", TrFmt("Saved in {0}", {dbc::PathToUtf8(UserFolder_)}).c_str());
             if (!SaveError_.empty())
                 ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", SaveError_.c_str());
 
             ImGui::BeginDisabled(SaveName_[0] == '\0');
-            if (ImGui::Button("Save") || (Entered && SaveName_[0] != '\0'))
+            if (ImGui::Button(TrId("Save")) || (Entered && SaveName_[0] != '\0'))
             {
                 core::Snippet Value;
                 Value.Name = SaveName_.data();
@@ -200,7 +207,7 @@ namespace dbc::studio
             }
             ImGui::EndDisabled();
             ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button(TrId("Cancel")))
                 ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
         }

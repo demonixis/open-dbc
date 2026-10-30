@@ -1,4 +1,5 @@
 #include "execution_adapter.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -93,7 +94,7 @@ namespace dbc::studio
                     Source.LogicalPath = std::filesystem::absolute(Source.LogicalPath, PathError).lexically_normal();
                     if (PathError)
                     {
-                        Error = "Cannot resolve buffered source path: " + PathError.message();
+                        Error = TrFmt("Cannot resolve buffered source path: {0}", {PathError.message()});
                         return false;
                     }
                     HasRoot = HasRoot || Source.LogicalPath == Root;
@@ -130,14 +131,14 @@ namespace dbc::studio
             {
                 if (!dbc::language::IsLanguageSource(Document.LogicalPath))
                 {
-                    Error = "BASIC source must use the .dba extension";
+                    Error = Tr("BASIC source must use the .dba extension");
                     return false;
                 }
                 std::error_code PathError;
                 Root = std::filesystem::absolute(Document.LogicalPath, PathError).lexically_normal();
                 if (PathError)
                 {
-                    Error = "Cannot resolve source path: " + PathError.message();
+                    Error = TrFmt("Cannot resolve source path: {0}", {PathError.message()});
                     Root.clear();
                     return false;
                 }
@@ -261,7 +262,7 @@ namespace dbc::studio
             Kernel_ = std::make_unique<dbc::EngineKernel>();
             if (!Kernel_->Initialize(Startup.Title, Startup.Width, Startup.Height))
             {
-                Report("Failed to create the OpenDBC runtime", true);
+                Report(Tr("Failed to create the OpenDBC runtime"), true);
                 ShutdownRuntime();
                 return false;
             }
@@ -323,7 +324,7 @@ namespace dbc::studio
             if (!IsRunning())
                 return;
             Kernel_->Debug().DumpDiagnostics();
-            Report("Wrote open-dbc-dump-scene.txt and open-dbc-dump-renderer.txt", false);
+            Report(Tr("Wrote open-dbc-dump-scene.txt and open-dbc-dump-renderer.txt"), false);
         }
 
         bool ExecutionAdapter::CanDumpDiagnostics() const
@@ -457,8 +458,8 @@ namespace dbc::studio
             std::error_code FileError;
             if (!std::filesystem::is_regular_file(Runner, FileError))
             {
-                Report("Cannot run the program: opendbc-runner is missing from " +
-                           dbc::PathToUtf8(Runner.parent_path()),
+                Report(TrFmt("Cannot run the program: opendbc-runner is missing from {0}",
+                             {dbc::PathToUtf8(Runner.parent_path())}),
                        true);
                 RootLogicalPath_.clear();
                 return false;
@@ -492,7 +493,8 @@ namespace dbc::studio
                 const std::filesystem::path Temporary = std::filesystem::temp_directory_path(FileError);
                 if (FileError)
                 {
-                    Report("Cannot find a temporary folder for the program image: " + FileError.message(), true);
+                    Report(TrFmt("Cannot find a temporary folder for the program image: {0}", {FileError.message()}),
+                           true);
                     Finish(static_cast<int>(dbc::interpreter::CommandLineExitCode::Target));
                     return false;
                 }
@@ -505,7 +507,7 @@ namespace dbc::studio
             if (!dbc::interpreter::AtomicWriteText(
                     Image_, std::string_view(reinterpret_cast<const char*>(Image.data()), Image.size()), &Error))
             {
-                Report("Cannot write the program image: " + Error, true);
+                Report(TrFmt("Cannot write the program image: {0}", {Error}), true);
                 Finish(static_cast<int>(dbc::interpreter::CommandLineExitCode::Target));
                 return false;
             }

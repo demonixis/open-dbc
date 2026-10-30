@@ -1,4 +1,5 @@
 #include "scene/heightmap.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -79,14 +80,14 @@ namespace dbc::studio
         {
             if (Size < 2 || Levels.size() != static_cast<std::size_t>(Size) * static_cast<std::size_t>(Size))
             {
-                Error = "A heightmap must be square and at least 2x2";
+                Error = Tr("A heightmap must be square and at least 2x2");
                 return false;
             }
             std::error_code FileError;
             std::filesystem::create_directories(Path.parent_path(), FileError);
             if (FileError)
             {
-                Error = "Cannot create " + dbc::PathToUtf8(Path.parent_path()) + ": " + FileError.message();
+                Error = TrFmt("Cannot create {0}: {1}", {dbc::PathToUtf8(Path.parent_path()), FileError.message()});
                 return false;
             }
             SDL_Surface* Surface = SDL_CreateSurface(Size, Size, SDL_PIXELFORMAT_RGB24);
@@ -115,7 +116,7 @@ namespace dbc::studio
             std::filesystem::rename(Temporary, Path, FileError);
             if (FileError)
             {
-                Error = "Cannot write " + dbc::PathToUtf8(Path) + ": " + FileError.message();
+                Error = TrFmt("Cannot write {0}: {1}", {dbc::PathToUtf8(Path), FileError.message()});
                 std::filesystem::remove(Temporary, FileError);
                 return false;
             }

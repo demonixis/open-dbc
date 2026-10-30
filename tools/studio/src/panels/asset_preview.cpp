@@ -1,4 +1,5 @@
 #include "asset_preview.hpp"
+#include "core/i18n.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -142,13 +143,13 @@ namespace dbc::studio
             {
                 if (!MIX_Init())
                 {
-                    Error_ = std::string("Cannot init mixer: ") + SDL_GetError();
+                    Error_ = TrFmt("Cannot init mixer: {0}", {SDL_GetError()});
                     return false;
                 }
                 Mixer_ = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
                 if (Mixer_ == nullptr)
                 {
-                    Error_ = std::string("Cannot open audio device: ") + SDL_GetError();
+                    Error_ = TrFmt("Cannot open audio device: {0}", {SDL_GetError()});
                     MIX_Quit();
                     return false;
                 }
@@ -157,14 +158,14 @@ namespace dbc::studio
             Audio_ = MIX_LoadAudio(Mixer_, dbc::PathToUtf8(Path).c_str(), false);
             if (Audio_ == nullptr)
             {
-                Error_ = std::string("Cannot load audio: ") + SDL_GetError();
+                Error_ = TrFmt("Cannot load audio: {0}", {SDL_GetError()});
                 return false;
             }
 
             Track_ = MIX_CreateTrack(Mixer_);
             if (Track_ == nullptr || !MIX_SetTrackAudio(Track_, Audio_))
             {
-                Error_ = std::string("Cannot create track: ") + SDL_GetError();
+                Error_ = TrFmt("Cannot create track: {0}", {SDL_GetError()});
                 ReleaseAudio();
                 return false;
             }
@@ -200,7 +201,7 @@ namespace dbc::studio
 
             const bool Playing = MIX_TrackPlaying(Track_);
 
-            if (ImGui::Button(Playing ? "Pause" : "Play"))
+            if (ImGui::Button(TrId(Playing ? "Pause" : "Play")))
             {
                 if (Playing)
                 {
@@ -213,7 +214,7 @@ namespace dbc::studio
             }
 
             ImGui::SameLine();
-            if (ImGui::Button("Stop"))
+            if (ImGui::Button(TrId("Stop")))
             {
                 MIX_StopTrack(Track_, 0);
             }
@@ -246,7 +247,7 @@ namespace dbc::studio
 
             ImGui::TextUnformatted(dbc::PathToUtf8(Path_.filename()).c_str());
             ImGui::SameLine();
-            if (ImGui::SmallButton("Close"))
+            if (ImGui::SmallButton(TrId("Close")))
             {
                 Close();
                 return;

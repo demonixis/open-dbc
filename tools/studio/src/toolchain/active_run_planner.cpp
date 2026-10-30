@@ -1,4 +1,5 @@
 #include "active_run_planner.hpp"
+#include "core/i18n.hpp"
 
 #include <utility>
 
@@ -15,17 +16,17 @@ namespace dbc::studio
             ActiveRunPlan Plan;
             if (ActivePath.empty())
             {
-                Plan.Error = "Save the active document as a .dba file before running.";
+                Plan.Error = Tr("Save the active document as a .dba file before running.");
                 return Plan;
             }
             if (!dbc::language::IsLanguageSource(ActivePath))
             {
-                Plan.Error = "The active document is not a .dba BASIC source.";
+                Plan.Error = Tr("The active document is not a .dba BASIC source.");
                 return Plan;
             }
             if (!Project)
             {
-                Plan.Error = "Select DBC or DBPro before running the active document.";
+                Plan.Error = Tr("Select DBC or DBPro before running the active document.");
                 return Plan;
             }
 

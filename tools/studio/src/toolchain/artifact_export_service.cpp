@@ -1,4 +1,5 @@
 #include "artifact_export_service.hpp"
+#include "core/i18n.hpp"
 #include "core/paths.hpp"
 #include "export_internal.hpp"
 #include "path_utf8.hpp"
@@ -21,9 +22,12 @@ namespace dbc::studio
                 return {{}, {}, Request.Settings.LoadError};
             std::error_code Error;
             if (!fs::is_directory(Request.OutputDirectory, Error))
-                return {{}, {}, "Export destination is not a directory: " + dbc::PathToUtf8(Request.OutputDirectory)};
+                return {
+                    {},
+                    {},
+                    TrFmt("Export destination is not a directory: {0}", {dbc::PathToUtf8(Request.OutputDirectory)})};
             const internal::ExportContext Context{&Progress};
-            Context.Note("Compiling " + dbc::PathToUtf8(Request.EntrySource.filename()));
+            Context.Note(TrFmt("Compiling {0}", {dbc::PathToUtf8(Request.EntrySource.filename())}));
             std::vector<std::uint8_t> Image;
             std::string ProgramError;
             if (!internal::BuildExportProgram(Request, Image, ProgramError))
@@ -41,7 +45,7 @@ namespace dbc::studio
                 case ArtifactTarget::AndroidBundle:
                     return internal::ExportAndroid(Context, Request, Image, true);
             }
-            return {{}, {}, "Unknown artifact target"};
+            return {{}, {}, Tr("Unknown artifact target")};
         }
 
         ArtifactExportRequest MakeArtifactExportRequest(const dbc::interpreter::ResolvedProject& Project,

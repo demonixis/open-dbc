@@ -61,6 +61,87 @@ namespace dbc::studio
                 return std::any_of(Languages.begin(), Languages.end(),
                                    [Code](const InterfaceLanguage& Language) { return Language.Code == Code; });
             }
+
+            // Latin-1 only: the interface font has no other accented letters.
+            std::string_view PseudoLetter(char Letter)
+            {
+                switch (Letter)
+                {
+                    case 'a':
+                        return "à";
+                    case 'c':
+                        return "ç";
+                    case 'e':
+                        return "é";
+                    case 'i':
+                        return "î";
+                    case 'n':
+                        return "ñ";
+                    case 'o':
+                        return "ô";
+                    case 'u':
+                        return "ü";
+                    case 'y':
+                        return "ý";
+                    case 'A':
+                        return "À";
+                    case 'C':
+                        return "Ç";
+                    case 'E':
+                        return "É";
+                    case 'I':
+                        return "Î";
+                    case 'N':
+                        return "Ñ";
+                    case 'O':
+                        return "Ô";
+                    case 'U':
+                        return "Ü";
+                    case 'Y':
+                        return "Ý";
+                    default:
+                        return {};
+                }
+            }
+
+            // How long the {0} or printf conversion that Text starts with is, else 0.
+            std::size_t PlaceholderLength(std::string_view Text)
+            {
+                if (Text.front() == '{')
+                {
+                    const std::size_t End = Text.find_first_not_of("0123456789", 1);
+                    return End != std::string_view::npos && End > 1 && Text[End] == '}' ? End + 1 : 0;
+                }
+                if (Text.front() == '%')
+                {
+                    const std::size_t End = Text.find_first_not_of("-+ #0123456789.lhzjt", 1);
+                    return End != std::string_view::npos ? End + 1 : 0;
+                }
+                return 0;
+            }
+
+#ifndef NDEBUG
+            constexpr std::string_view KPseudoCode = "pseudo";
+
+            // A key's English text is all a pseudo-translation needs, so no catalogue of its own.
+            const TextTable& PseudoTranslations()
+            {
+                static const TextTable Table = []
+                {
+                    TextTable Result;
+                    for (const EmbeddedCatalogue& Embedded : EmbeddedCatalogues())
+                    {
+                        for (const auto& [Source, Translation] : Embedded.Catalogue.Entries)
+                        {
+                            const std::string_view Key(Source);
+                            Result.emplace(Source, PseudoLocalize(Key.substr(Key.find('|') + 1)));
+                        }
+                    }
+                    return Result;
+                }();
+                return Table;
+            }
+#endif
         } // namespace
 
         std::optional<TranslationCatalogue> ParseTranslationCatalogue(std::string_view Text, std::string& Error)
@@ -100,6 +181,9 @@ namespace dbc::studio
                 std::vector<InterfaceLanguage> Result{{"en", "English"}};
                 for (const EmbeddedCatalogue& Embedded : EmbeddedCatalogues())
                     Result.push_back({Embedded.Code, Embedded.Catalogue.Name});
+#ifndef NDEBUG
+                Result.push_back({std::string(KPseudoCode), "Pseudo"});
+#endif
                 return Result;
             }();
             return Languages;
@@ -124,6 +208,13 @@ namespace dbc::studio
 
         void ActivateInterfaceLanguage(std::string_view Code)
         {
+#ifndef NDEBUG
+            if (Code == KPseudoCode)
+            {
+                SetActiveTranslations(&PseudoTranslations());
+                return;
+            }
+#endif
             for (const EmbeddedCatalogue& Embedded : EmbeddedCatalogues())
             {
                 if (Embedded.Code == Code)
@@ -133,6 +224,31 @@ namespace dbc::studio
                 }
             }
             SetActiveTranslations(nullptr);
+        }
+
+        std::string PseudoLocalize(std::string_view Text)
+        {
+            std::string Result = "[";
+            std::size_t Letters = 0;
+            for (std::size_t Index = 0; Index < Text.size();)
+            {
+                if (const std::size_t Length = PlaceholderLength(Text.substr(Index)))
+                {
+                    Result += Text.substr(Index, Length);
+                    Index += Length;
+                    continue;
+                }
+                const std::string_view Accented = PseudoLetter(Text[Index]);
+                if (Accented.empty())
+                    Result += Text[Index];
+                else
+                    Result += Accented;
+                Letters += std::isalpha(static_cast<unsigned char>(Text[Index])) != 0;
+                ++Index;
+            }
+            Result.append(std::max<std::size_t>(Letters * 2 / 5, 1), '~');
+            Result += ']';
+            return Result;
         }
 
         void TranslateImGuiStrings()

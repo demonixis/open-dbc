@@ -806,7 +806,7 @@ namespace dbc::studio
                 RendererReady_ = Renderer_.Initialize(Gpu_, Error);
                 if (!RendererReady_)
                 {
-                    Host_.Log("The Scene viewport cannot render: " + Error, true);
+                    Host_.Log(TrFmt("The Scene viewport cannot render: {0}", {Error}), true);
                     Renderer_.Shutdown();
                     Gpu_ = nullptr;
                 }

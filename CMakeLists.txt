@@ -699,6 +699,22 @@ if(BUILD_TESTS)
     )
 
     add_test(
+        NAME studio_strings_audit
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/audit_studio_strings.py --check
+    )
+    set_tests_properties(studio_strings_audit PROPERTIES
+        LABELS "unit;portable"
+    )
+
+    add_test(
+        NAME studio_strings_audit_rules
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/test_audit_studio_strings.py
+    )
+    set_tests_properties(studio_strings_audit_rules PROPERTIES
+        LABELS "unit;portable"
+    )
+
+    add_test(
         NAME classic_fixture_regeneration
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_classic_fixtures.py --check
     )

@@ -27,7 +27,10 @@ namespace dbc::studio
                                                                  MediaKind::Effect, MediaKind::Video, MediaKind::Font};
 
         // Plural label for the Media panel filter ("Images", "Audio", ...).
-        std::string_view MediaKindLabel(MediaKind Kind);
+        const char* MediaKindLabel(MediaKind Kind);
+
+        // "512 B", "1.5 KB", "3.0 MB" in the interface language.
+        std::string FormatFileSize(std::uintmax_t Bytes);
 
         // Classifies by extension, case-insensitively; nullopt for non-media files.
         std::optional<MediaKind> ClassifyMedia(const std::filesystem::path& Path);
