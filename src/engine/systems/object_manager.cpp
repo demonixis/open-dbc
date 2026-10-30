@@ -3845,9 +3845,7 @@ namespace dbc
     {
         Object3D Object = NewObjectState();
         Object.Visible = true;
-        Mesh MeshValue;
-        RendererSystem::AddTriangle(MeshValue, Vec3{X1, Y1, Z1}, Vec3{X2, Y2, Z2}, Vec3{X3, Y3, Z3});
-        Object.Meshes.push_back(std::move(MeshValue));
+        Object.Meshes.push_back(RendererSystem::MakeTriangleMesh(Vec3{X1, Y1, Z1}, Vec3{X2, Y2, Z2}, Vec3{X3, Y3, Z3}));
         Object.BoundingRadius = std::abs(X2 - X1);
         Objects_[ObjectId] = std::move(Object);
         NotifyObjectCreated(ObjectId);

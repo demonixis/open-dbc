@@ -195,6 +195,134 @@ TEST_CASE("Companded WAV files load")
     }
 }
 
+TEST_CASE("Primitive meshes lay the texture upright on every face")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("primitive-uvs", 16, 16));
+    Kernel.Objects().MakeObjectBox(1, 4.0f, 6.0f, 8.0f);
+    Kernel.Objects().MakeObjectCylinder(2, 2.0f, 4.0f, 12);
+    Kernel.Objects().MakeObjectCone(3, 2.0f, 4.0f, 12);
+    Kernel.Objects().MakeObjectTriangle(4, 0.0f, 4.0f, 0.0f, -4.0f, -3.0f, 0.0f, 4.0f, -3.0f, 0.0f);
+    Kernel.Objects().MakeObjectSphere(7, 2.0f, 8, 12);
+
+    const auto Geometry = [&](int ObjectId) -> const dbc::MeshGeometry&
+    { return Kernel.Objects().GetObject(ObjectId)->Meshes.front().Geometry(); };
+
+    // Seen from the front a triangle winds clockwise, as U right and V down do: otherwise the texture is mirrored.
+    for (const int ObjectId : {1, 2, 3, 4, 7})
+    {
+        const dbc::MeshGeometry& Mesh = Geometry(ObjectId);
+        REQUIRE(Mesh.Uvs.size() == Mesh.Vertices.size());
+        for (size_t Index = 0; Index + 2 < Mesh.Indices.size(); Index += 3)
+        {
+            const SDL_FPoint& A = Mesh.Uvs[Mesh.Indices[Index]];
+            const SDL_FPoint& B = Mesh.Uvs[Mesh.Indices[Index + 1]];
+            const SDL_FPoint& C = Mesh.Uvs[Mesh.Indices[Index + 2]];
+            CHECK((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x) > 0.0f);
+        }
+    }
+
+    const auto Normal = [](const dbc::MeshGeometry& Mesh, size_t Index)
+    {
+        const dbc::Vec3& A = Mesh.Vertices[Mesh.Indices[Index]];
+        return dbc::Vec3Normalize(dbc::Vec3Cross(dbc::Vec3Sub(Mesh.Vertices[Mesh.Indices[Index + 1]], A),
+                                                 dbc::Vec3Sub(Mesh.Vertices[Mesh.Indices[Index + 2]], A)));
+    };
+    // The texture's angle around Y on a wrapped side, where U falls from 1 to 0 as the mesh's angle grows.
+    const auto CheckWrapped = [](const dbc::Vec3& Position, const SDL_FPoint& Uv, float Radius)
+    {
+        const float Angle = 2.0f * static_cast<float>(M_PI) * (1.0f - Uv.x);
+        CHECK(Position.X == doctest::Approx(Radius * std::sin(Angle)).epsilon(0.001));
+        CHECK(Position.Z == doctest::Approx(Radius * std::cos(Angle)).epsilon(0.001));
+    };
+
+    // A face's two triangles agree, and U runs right and V down as seen from outside the box.
+    const dbc::MeshGeometry& Box = Geometry(1);
+    REQUIRE(Box.Indices.size() == 36);
+    for (size_t Index = 0; Index + 2 < Box.Indices.size(); Index += 3)
+    {
+        const dbc::Vec3 Face = Normal(Box, Index);
+        for (size_t Corner = 0; Corner < 3; ++Corner)
+        {
+            const dbc::Vec3& P = Box.Vertices[Box.Indices[Index + Corner]];
+            const SDL_FPoint& Uv = Box.Uvs[Box.Indices[Index + Corner]];
+            if (std::abs(Face.Y) > 0.5f)
+            {
+                CHECK(Uv.x == doctest::Approx((P.X + 2.0f) / 4.0f));
+                CHECK(Uv.y == doctest::Approx(Face.Y > 0.0f ? (4.0f - P.Z) / 8.0f : (P.Z + 4.0f) / 8.0f));
+            }
+            else
+            {
+                const dbc::Vec3 Right = dbc::Vec3Cross(Face, dbc::Vec3{0.0f, 1.0f, 0.0f});
+                const float HalfWidth = std::abs(Face.X) > 0.5f ? 4.0f : 2.0f;
+                CHECK(Uv.x == doctest::Approx((dbc::Vec3Dot(P, Right) + HalfWidth) / (2.0f * HalfWidth)));
+                CHECK(Uv.y == doctest::Approx((3.0f - P.Y) / 6.0f));
+            }
+        }
+    }
+
+    const dbc::MeshGeometry& Cylinder = Geometry(2);
+    REQUIRE(Cylinder.Indices.size() == 144);
+    for (size_t Index = 0; Index + 2 < Cylinder.Indices.size(); Index += 3)
+    {
+        const dbc::Vec3 Face = Normal(Cylinder, Index);
+        for (size_t Corner = 0; Corner < 3; ++Corner)
+        {
+            const dbc::Vec3& P = Cylinder.Vertices[Cylinder.Indices[Index + Corner]];
+            const SDL_FPoint& Uv = Cylinder.Uvs[Cylinder.Indices[Index + Corner]];
+            if (std::abs(Face.Y) > 0.5f)
+            {
+                CHECK(Uv.x == doctest::Approx(0.5f + 0.25f * P.X));
+                CHECK(Uv.y == doctest::Approx(Face.Y > 0.0f ? 0.5f - 0.25f * P.Z : 0.5f + 0.25f * P.Z));
+            }
+            else
+            {
+                CHECK(Uv.y == doctest::Approx((2.0f - P.Y) / 4.0f));
+                CheckWrapped(P, Uv, 2.0f);
+            }
+        }
+    }
+
+    const dbc::MeshGeometry& Cone = Geometry(3);
+    REQUIRE(Cone.Indices.size() == 36);
+    for (size_t Index = 0; Index + 2 < Cone.Indices.size(); Index += 3)
+    {
+        const SDL_FPoint& Left = Cone.Uvs[Cone.Indices[Index]];
+        const SDL_FPoint& Right = Cone.Uvs[Cone.Indices[Index + 1]];
+        const SDL_FPoint& Tip = Cone.Uvs[Cone.Indices[Index + 2]];
+        CheckWrapped(Cone.Vertices[Cone.Indices[Index]], Left, 2.0f);
+        CheckWrapped(Cone.Vertices[Cone.Indices[Index + 1]], Right, 2.0f);
+        CHECK(Left.y == doctest::Approx(1.0f));
+        CHECK(Right.y == doctest::Approx(1.0f));
+        CHECK(Tip.x == doctest::Approx((Left.x + Right.x) * 0.5f));
+        CHECK(Tip.y == doctest::Approx(0.0f));
+    }
+
+    // Upright as a plain trimmed to the triangle, which faces +Z.
+    const std::vector<SDL_FPoint>& Upright = Geometry(4).Uvs;
+    REQUIRE(Upright.size() == 3);
+    CHECK(Upright[0].x == doctest::Approx(0.5f));
+    CHECK(Upright[0].y == doctest::Approx(0.0f));
+    CHECK(Upright[1].x == doctest::Approx(1.0f));
+    CHECK(Upright[1].y == doctest::Approx(1.0f));
+    CHECK(Upright[2].x == doctest::Approx(0.0f));
+    CHECK(Upright[2].y == doctest::Approx(1.0f));
+
+    // Facing up, it reads like the top of a box. A triangle without area keeps finite coordinates.
+    Kernel.Objects().MakeObjectTriangle(5, 0.0f, 0.0f, 2.0f, 2.0f, 0.0f, -2.0f, -2.0f, 0.0f, -2.0f);
+    const std::vector<SDL_FPoint>& Flat = Geometry(5).Uvs;
+    CHECK(Flat[0].x == doctest::Approx(0.5f));
+    CHECK(Flat[0].y == doctest::Approx(0.0f));
+    CHECK(Flat[1].x == doctest::Approx(1.0f));
+    CHECK(Flat[1].y == doctest::Approx(1.0f));
+    Kernel.Objects().MakeObjectTriangle(6, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    for (const SDL_FPoint& Uv : Geometry(6).Uvs)
+    {
+        CHECK(Uv.x == doctest::Approx(0.0f));
+        CHECK(Uv.y == doctest::Approx(0.0f));
+    }
+}
+
 TEST_CASE("Primitive meshes use outward winding and enable culling by default")
 {
     dbc::EngineKernel Kernel;

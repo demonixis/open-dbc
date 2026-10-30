@@ -210,15 +210,13 @@ namespace dbc
         float FogFactor(float Z);
 
         // Mesh construction (static — pure functions)
-        static void AddTriangle(Mesh& MeshValue, const Vec3& A, const Vec3& B, const Vec3& C,
-                                SDL_FPoint Ta = SDL_FPoint{0.0f, 0.0f}, SDL_FPoint Tb = SDL_FPoint{1.0f, 0.0f},
-                                SDL_FPoint Tc = SDL_FPoint{1.0f, 1.0f});
         static void RegenerateMeshNormals(Mesh& MeshValue);
         static Mesh MakePlainMesh(float Width, float Height);
         static Mesh MakeBoxMesh(float Width, float Height, float Depth);
         static Mesh MakeSphereMesh(float Radius, int Rings, int Segments);
         static Mesh MakeCylinderMesh(float Radius, float Height, int Segments, bool TopCap, bool BottomCap);
         static Mesh MakeConeMesh(float Radius, float Height, int Segments);
+        static Mesh MakeTriangleMesh(const Vec3& A, const Vec3& B, const Vec3& C);
 
         // Assimp import helpers
         static void BuildMeshNodeMapRecursive(const aiNode* Node,

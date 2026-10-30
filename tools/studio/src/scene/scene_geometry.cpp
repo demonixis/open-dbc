@@ -35,10 +35,9 @@ namespace dbc::studio
                 return Degrees * KPi / 180.0f;
             }
 
-            // The engine's AddTriangle: every face of a box, cylinder or cone gets
-            // these three UVs, and its normal comes from the winding.
-            void AddTriangle(CpuMesh& Mesh, const glm::vec3& A, const glm::vec3& B, const glm::vec3& C,
-                             glm::vec2 Ta = {0.0f, 0.0f}, glm::vec2 Tb = {1.0f, 0.0f}, glm::vec2 Tc = {1.0f, 1.0f})
+            // The normal comes from the winding.
+            void AddTriangle(CpuMesh& Mesh, const glm::vec3& A, const glm::vec3& B, const glm::vec3& C, glm::vec2 Ta,
+                             glm::vec2 Tb, glm::vec2 Tc)
             {
                 const glm::vec3 Cross = glm::cross(B - A, C - A);
                 const float Length = glm::length(Cross);
@@ -251,8 +250,12 @@ namespace dbc::studio
                                       Profile == dbc::language::LanguageProfile::Dbc);
                     break;
                 case NodeKind::Triangle:
-                    AddTriangle(Mesh, Node.Corners[0], Node.Corners[1], Node.Corners[2]);
+                {
+                    const auto Corner = [&](int Index)
+                    { return dbc::Vec3{Node.Corners[Index].x, Node.Corners[Index].y, Node.Corners[Index].z}; };
+                    Mesh = FromEngine(RendererSystem::MakeTriangleMesh(Corner(0), Corner(1), Corner(2)));
                     break;
+                }
                 case NodeKind::Matrix:
                     Mesh = Matrix(Node);
                     break;

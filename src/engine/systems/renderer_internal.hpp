@@ -30,15 +30,15 @@ namespace dbc
     [[nodiscard]] AssimpImportResult ImportSceneWithFlags(const std::string& Path, unsigned int Flags);
 
     // Primitive meshes: renderer_primitives.cpp.
-    void AddTriangle(Mesh& MeshValue, const Vec3& A, const Vec3& B, const Vec3& C,
-                     SDL_FPoint Ta = SDL_FPoint{0.0f, 0.0f}, SDL_FPoint Tb = SDL_FPoint{1.0f, 0.0f},
-                     SDL_FPoint Tc = SDL_FPoint{1.0f, 1.0f});
+    void AddTriangle(Mesh& MeshValue, const Vec3& A, const Vec3& B, const Vec3& C, SDL_FPoint Ta, SDL_FPoint Tb,
+                     SDL_FPoint Tc);
     void RegenerateMeshNormals(Mesh& MeshValue);
     Mesh MakePlainMesh(float Width, float Height);
     Mesh MakeBoxMesh(float Width, float Height, float Depth);
     Mesh MakeSphereMesh(float Radius, int Rings, int Segments);
     Mesh MakeCylinderMesh(float Radius, float Height, int Segments, bool TopCap, bool BottomCap);
     Mesh MakeConeMesh(float Radius, float Height, int Segments);
+    Mesh MakeTriangleMesh(const Vec3& A, const Vec3& B, const Vec3& C);
 
     // Object and limb transforms: renderer_transforms.cpp.
     [[nodiscard]] Vec3 TransformObjectSpacePoint(EngineKernel& K, const Object3D& Object, const Vec3& Local);

@@ -1732,12 +1732,6 @@ namespace dbc
     // RendererSystem — static methods (pure functions)
     // =======================================================================
 
-    void RendererSystem::AddTriangle(Mesh& MeshValue, const Vec3& A, const Vec3& B, const Vec3& C, SDL_FPoint Ta,
-                                     SDL_FPoint Tb, SDL_FPoint Tc)
-    {
-        dbc::AddTriangle(MeshValue, A, B, C, Ta, Tb, Tc);
-    }
-
     void RendererSystem::RegenerateMeshNormals(Mesh& MeshValue)
     {
         dbc::RegenerateMeshNormals(MeshValue);
@@ -1766,6 +1760,11 @@ namespace dbc
     Mesh RendererSystem::MakeConeMesh(float Radius, float Height, int Segments)
     {
         return dbc::MakeConeMesh(Radius, Height, Segments);
+    }
+
+    Mesh RendererSystem::MakeTriangleMesh(const Vec3& A, const Vec3& B, const Vec3& C)
+    {
+        return dbc::MakeTriangleMesh(A, B, C);
     }
 
     void RendererSystem::BuildMeshNodeMapRecursive(const aiNode* Node,

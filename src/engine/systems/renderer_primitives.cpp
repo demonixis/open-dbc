@@ -3,6 +3,22 @@
 
 namespace dbc
 {
+    namespace
+    {
+        // A texture's corners as seen from the front of a face: U runs right, V runs down.
+        constexpr SDL_FPoint KTopLeft{0.0f, 0.0f};
+        constexpr SDL_FPoint KTopRight{1.0f, 0.0f};
+        constexpr SDL_FPoint KBottomRight{1.0f, 1.0f};
+        constexpr SDL_FPoint KBottomLeft{0.0f, 1.0f};
+
+        void AddQuad(Mesh& MeshValue, const Vec3& A, const Vec3& B, const Vec3& C, const Vec3& D, SDL_FPoint Ta,
+                     SDL_FPoint Tb, SDL_FPoint Tc, SDL_FPoint Td)
+        {
+            AddTriangle(MeshValue, A, B, C, Ta, Tb, Tc);
+            AddTriangle(MeshValue, A, C, D, Ta, Tc, Td);
+        }
+    } // namespace
+
     void AddTriangle(Mesh& MeshValue, const Vec3& A, const Vec3& B, const Vec3& C, SDL_FPoint Ta, SDL_FPoint Tb,
                      SDL_FPoint Tc)
     {
@@ -86,23 +102,13 @@ namespace dbc
         const Vec3 P110{Hx, Hy, -Hz};
         const Vec3 P111{Hx, Hy, Hz};
 
-        AddTriangle(MeshValue, P001, P101, P111);
-        AddTriangle(MeshValue, P001, P111, P011);
-
-        AddTriangle(MeshValue, P100, P000, P010);
-        AddTriangle(MeshValue, P100, P010, P110);
-
-        AddTriangle(MeshValue, P000, P001, P011);
-        AddTriangle(MeshValue, P000, P011, P010);
-
-        AddTriangle(MeshValue, P101, P100, P110);
-        AddTriangle(MeshValue, P101, P110, P111);
-
-        AddTriangle(MeshValue, P010, P011, P111);
-        AddTriangle(MeshValue, P010, P111, P110);
-
-        AddTriangle(MeshValue, P000, P100, P101);
-        AddTriangle(MeshValue, P000, P101, P001);
+        // Each face holds the whole texture, upright on the sides. Seen from above or below, X runs right.
+        AddQuad(MeshValue, P001, P101, P111, P011, KBottomRight, KBottomLeft, KTopLeft, KTopRight);
+        AddQuad(MeshValue, P100, P000, P010, P110, KBottomRight, KBottomLeft, KTopLeft, KTopRight);
+        AddQuad(MeshValue, P000, P001, P011, P010, KBottomRight, KBottomLeft, KTopLeft, KTopRight);
+        AddQuad(MeshValue, P101, P100, P110, P111, KBottomRight, KBottomLeft, KTopLeft, KTopRight);
+        AddQuad(MeshValue, P010, P011, P111, P110, KBottomLeft, KTopLeft, KTopRight, KBottomRight);
+        AddQuad(MeshValue, P000, P100, P101, P001, KTopLeft, KTopRight, KBottomRight, KBottomLeft);
         return MeshValue;
     }
 
@@ -130,7 +136,8 @@ namespace dbc
                 const float St = std::sin(Th);
                 Geometry.Vertices.push_back(Vec3{Radius * St * Cp, Radius * Sp, Radius * Ct * Cp});
                 Geometry.Normals.push_back(Vec3Normalize(Vec3{St * Cp, Sp, Ct * Cp}));
-                Geometry.Uvs.push_back(SDL_FPoint{U, 1.0f - V});
+                // Th grows towards the left of a viewer outside, U towards the right.
+                Geometry.Uvs.push_back(SDL_FPoint{1.0f - U, 1.0f - V});
             }
         }
 
@@ -168,8 +175,11 @@ namespace dbc
             const Vec3 B1{std::sin(A1) * Radius, -Hy, std::cos(A1) * Radius};
             const Vec3 T0{B0.X, Hy, B0.Z};
             const Vec3 T1{B1.X, Hy, B1.Z};
-            AddTriangle(MeshValue, B0, T1, T0);
-            AddTriangle(MeshValue, B0, B1, T1);
+            // The angle grows towards the left of a viewer outside, U towards the right: one wrap of the texture.
+            const float U0 = 1.0f - static_cast<float>(I) / static_cast<float>(S);
+            const float U1 = 1.0f - static_cast<float>(I + 1) / static_cast<float>(S);
+            AddTriangle(MeshValue, B0, T1, T0, SDL_FPoint{U0, 1.0f}, SDL_FPoint{U1, 0.0f}, SDL_FPoint{U0, 0.0f});
+            AddTriangle(MeshValue, B0, B1, T1, SDL_FPoint{U0, 1.0f}, SDL_FPoint{U1, 1.0f}, SDL_FPoint{U1, 0.0f});
         }
 
         if (TopCap)
@@ -181,7 +191,10 @@ namespace dbc
                 const float A1 = static_cast<float>(2.0 * M_PI) * static_cast<float>(I + 1) / static_cast<float>(S);
                 const Vec3 P0{std::sin(A0) * Radius, Hy, std::cos(A0) * Radius};
                 const Vec3 P1{std::sin(A1) * Radius, Hy, std::cos(A1) * Radius};
-                AddTriangle(MeshValue, C, P0, P1);
+                // The texture is laid flat on the cap and the circle cut out of it, as on the top of a box.
+                AddTriangle(MeshValue, C, P0, P1, SDL_FPoint{0.5f, 0.5f},
+                            SDL_FPoint{0.5f + 0.5f * std::sin(A0), 0.5f - 0.5f * std::cos(A0)},
+                            SDL_FPoint{0.5f + 0.5f * std::sin(A1), 0.5f - 0.5f * std::cos(A1)});
             }
         }
 
@@ -194,7 +207,9 @@ namespace dbc
                 const float A1 = static_cast<float>(2.0 * M_PI) * static_cast<float>(I + 1) / static_cast<float>(S);
                 const Vec3 P0{std::sin(A0) * Radius, -Hy, std::cos(A0) * Radius};
                 const Vec3 P1{std::sin(A1) * Radius, -Hy, std::cos(A1) * Radius};
-                AddTriangle(MeshValue, C, P1, P0);
+                AddTriangle(MeshValue, C, P1, P0, SDL_FPoint{0.5f, 0.5f},
+                            SDL_FPoint{0.5f + 0.5f * std::sin(A1), 0.5f + 0.5f * std::cos(A1)},
+                            SDL_FPoint{0.5f + 0.5f * std::sin(A0), 0.5f + 0.5f * std::cos(A0)});
             }
         }
 
@@ -214,8 +229,44 @@ namespace dbc
             const float A1 = static_cast<float>(2.0 * M_PI) * static_cast<float>(I + 1) / static_cast<float>(S);
             const Vec3 P0{std::sin(A0) * Radius, -Hy, std::cos(A0) * Radius};
             const Vec3 P1{std::sin(A1) * Radius, -Hy, std::cos(A1) * Radius};
-            AddTriangle(MeshValue, P0, P1, Tip);
+            // As on a cylinder, each face narrowing to the middle of its strip at the tip.
+            const float U0 = 1.0f - static_cast<float>(I) / static_cast<float>(S);
+            const float U1 = 1.0f - static_cast<float>(I + 1) / static_cast<float>(S);
+            AddTriangle(MeshValue, P0, P1, Tip, SDL_FPoint{U0, 1.0f}, SDL_FPoint{U1, 1.0f},
+                        SDL_FPoint{(U0 + U1) * 0.5f, 0.0f});
         }
+        return MeshValue;
+    }
+
+    Mesh MakeTriangleMesh(const Vec3& A, const Vec3& B, const Vec3& C)
+    {
+        // The texture lies flat on the triangle's plane, upright as on a wall or a floor seen from the front, and
+        // spans the triangle's extent: the triangle is a plain trimmed down, whatever its corners.
+        const Vec3 Normal = Vec3Normalize(Vec3Cross(Vec3Sub(B, A), Vec3Sub(C, A)));
+        const Vec3 Up =
+            std::abs(Normal.Y) > 0.999f ? Vec3{0.0f, 0.0f, Normal.Y > 0.0f ? 1.0f : -1.0f} : Vec3{0.0f, 1.0f, 0.0f};
+        const Vec3 Right = Vec3Normalize(Vec3Cross(Normal, Up));
+        const Vec3 Down = Vec3Cross(Normal, Right);
+
+        const auto Span = [&](const Vec3& Axis, float& Min, float& Extent)
+        {
+            const float Pa = Vec3Dot(A, Axis);
+            const float Pb = Vec3Dot(B, Axis);
+            const float Pc = Vec3Dot(C, Axis);
+            Min = std::min({Pa, Pb, Pc});
+            Extent = std::max({Pa, Pb, Pc}) - Min;
+        };
+        float MinU = 0.0f, ExtentU = 0.0f, MinV = 0.0f, ExtentV = 0.0f;
+        Span(Right, MinU, ExtentU);
+        Span(Down, MinV, ExtentV);
+        const auto Uv = [&](const Vec3& P)
+        {
+            return SDL_FPoint{ExtentU > 0.0f ? (Vec3Dot(P, Right) - MinU) / ExtentU : 0.0f,
+                              ExtentV > 0.0f ? (Vec3Dot(P, Down) - MinV) / ExtentV : 0.0f};
+        };
+
+        Mesh MeshValue;
+        AddTriangle(MeshValue, A, B, C, Uv(A), Uv(B), Uv(C));
         return MeshValue;
     }
 } // namespace dbc

@@ -431,6 +431,18 @@ TEST_CASE("Scene primitives keep the engine's sizes and tessellation")
     Node.Kind = scene::NodeKind::Cone;
     CHECK(scene::BuildMesh(Node, LanguageProfile::Dbc).Vertices.size() == 16 * 3);
 
+    // The same UVs as MAKE OBJECT TRIANGLE: upright, not sheared by the corners' order.
+    Node.Kind = scene::NodeKind::Triangle;
+    Node.Corners = {glm::vec3(0.0f, 4.0f, 0.0f), glm::vec3(-4.0f, -3.0f, 0.0f), glm::vec3(4.0f, -3.0f, 0.0f)};
+    Mesh = scene::BuildMesh(Node, LanguageProfile::Dbc);
+    REQUIRE(Mesh.Vertices.size() == 3);
+    CHECK(Mesh.Vertices[0].Uv.x == doctest::Approx(0.5f));
+    CHECK(Mesh.Vertices[0].Uv.y == doctest::Approx(0.0f));
+    CHECK(Mesh.Vertices[1].Uv.x == doctest::Approx(1.0f));
+    CHECK(Mesh.Vertices[1].Uv.y == doctest::Approx(1.0f));
+    CHECK(Mesh.Vertices[2].Uv.x == doctest::Approx(0.0f));
+    CHECK(Mesh.Vertices[2].Uv.y == doctest::Approx(1.0f));
+
     Node.Kind = scene::NodeKind::Matrix;
     Node.Width = 100.0f;
     Node.Depth = 50.0f;
