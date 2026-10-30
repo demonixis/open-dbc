@@ -168,7 +168,12 @@ namespace dbc
                 Kernel_.Vr().DetachDevice();
                 Gpu.DestroyGpuBackend();
             }
-            Gpu.GpuDevice() = SDL_CreateGPUDevice(ShaderFormats, true, GpuDriver);
+#ifdef NDEBUG
+            constexpr bool GpuDebugMode = false;
+#else
+            constexpr bool GpuDebugMode = true;
+#endif
+            Gpu.GpuDevice() = SDL_CreateGPUDevice(ShaderFormats, GpuDebugMode, GpuDriver);
             Ready = SetupDevice();
             if (!Ready)
             {
