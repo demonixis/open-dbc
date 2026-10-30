@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string_view>
 
 #include "language/frontend.hpp"
@@ -116,6 +117,87 @@ namespace dbc::studio
                                    [&](const std::unique_ptr<lang::Expression>& Child)
                                    { return Child != nullptr && ReadsTheSameTwice(*Child, Parsed, Profile); });
             }
+
+            struct TextRange
+            {
+                std::size_t Begin = 0;
+                std::size_t End = 0;
+            };
+
+            // An expression's span stops at its operands, so in `(a + b) / 2` it starts after the parenthesis.
+            // Nothing when the parentheses it leaves out are not next to it.
+            std::optional<TextRange> WholeExpression(std::string_view Text, const lang::Expression& Value)
+            {
+                TextRange Range{Value.Span.Begin.Offset, Value.Span.End.Offset};
+                if (Range.Begin > Range.End || Range.End > Text.size())
+                    return std::nullopt;
+                int Unclosed = 0;
+                int Unopened = 0;
+                bool InString = false;
+                for (std::size_t Index = Range.Begin; Index < Range.End; ++Index)
+                {
+                    const char Character = Text[Index];
+                    if (Character == '"')
+                        InString = !InString;
+                    else if (!InString && Character == '(')
+                        ++Unclosed;
+                    else if (!InString && Character == ')' && Unclosed > 0)
+                        --Unclosed;
+                    else if (!InString && Character == ')')
+                        ++Unopened;
+                }
+                const auto IsBlank = [](char Character) { return Character == ' ' || Character == '\t'; };
+                for (; Unopened > 0; --Unopened)
+                {
+                    std::size_t At = Range.Begin;
+                    while (At > 0 && IsBlank(Text[At - 1]))
+                        --At;
+                    if (At == 0 || Text[At - 1] != '(')
+                        return std::nullopt;
+                    Range.Begin = At - 1;
+                }
+                for (; Unclosed > 0; --Unclosed)
+                {
+                    std::size_t At = Range.End;
+                    while (At < Text.size() && IsBlank(Text[At]))
+                        ++At;
+                    if (At == Text.size() || Text[At] != ')')
+                        return std::nullopt;
+                    Range.End = At + 1;
+                }
+                return Range;
+            }
+
+            // How many statements name a known command, and with how many arguments.
+            struct CommandCount
+            {
+                std::size_t Known = 0;
+                std::size_t Unknown = 0;
+                std::size_t Arguments = 0;
+
+                void Add(const std::vector<lang::Statement>& Statements)
+                {
+                    for (const lang::Statement& Value : Statements)
+                    {
+                        if (Value.Kind == lang::StatementKind::Command)
+                        {
+                            ++(Value.Builtin ? Known : Unknown);
+                            Arguments += Value.Expressions.size();
+                        }
+                        Add(Value.Body);
+                        Add(Value.ElseBody);
+                        for (const lang::CaseClause& Clause : Value.Cases)
+                            Add(Clause.Body);
+                    }
+                }
+
+                void Add(const lang::Program& Parsed)
+                {
+                    Add(Parsed.Statements);
+                    for (const lang::FunctionDeclaration& Function : Parsed.Functions)
+                        Add(Function.Body);
+                }
+            };
 
             std::size_t ErrorCount(const lang::Program& Parsed)
             {
@@ -232,6 +314,10 @@ namespace dbc::studio
                 for (std::size_t PartIndex = 0; PartIndex < KTransformPartCount; ++PartIndex)
                 {
                     const auto Part = static_cast<TransformPart>(PartIndex);
+                    // A matrix has no turn or scale for BASIC to set, whatever a group edit did to its fields.
+                    const SymbolId Command = WholeCommand(Key.first, Part);
+                    if (Command == SymbolId::Count)
+                        continue;
                     const glm::vec3& Was = TransformValue(*Old, Part);
                     const glm::vec3& Now = TransformValue(Node, Part);
                     const auto& Axes = Origin.Axes[PartIndex];
@@ -281,9 +367,6 @@ namespace dbc::studio
                                 Add(KAxisRotations[Axis], {Now[static_cast<int>(Axis)]});
                         continue;
                     }
-                    const SymbolId Command = WholeCommand(Key.first, Part);
-                    if (Command == SymbolId::Count)
-                        continue;
                     // Right after the creation, an axis nothing has set still holds its default.
                     const float Default = Part == TransformPart::Scale ? 100.0f : 0.0f;
                     Add(Command, {Adds[0] ? Now.x : Default, Adds[1] ? Now.y : Default, Adds[2] ? Now.z : Default});
@@ -299,6 +382,8 @@ namespace dbc::studio
             const lang::Program Parsed = Parse(Text, LogicalPath, Profile);
             std::vector<Change> Changes;
             Changes.reserve(Edits.size());
+            CommandCount Expected;
+            Expected.Add(Parsed);
             for (const SourceEdit& Edit : Edits)
             {
                 const std::string Where = "line " + std::to_string(Edit.Line) + ": ";
@@ -318,12 +403,16 @@ namespace dbc::studio
                         return Result;
                     }
                     const lang::Expression& Old = *Value->Expressions[Argument];
+                    const std::optional<TextRange> Range = WholeExpression(Text, Old);
+                    if (!Range)
+                    {
+                        Result.Error = Where + "the argument's parentheses could not be told apart.";
+                        return Result;
+                    }
                     if (!IsNumber(Old))
-                        Result.Replaced.push_back(
-                            std::to_string(Old.Span.Begin.Line) + ": " +
-                            std::string(
-                                Text.substr(Old.Span.Begin.Offset, Old.Span.End.Offset - Old.Span.Begin.Offset)));
-                    Changes.push_back({Old.Span.Begin.Offset, Old.Span.End.Offset, NumberLiteral(Edit.Values.front())});
+                        Result.Replaced.push_back(std::to_string(Old.Span.Begin.Line) + ": " +
+                                                  Text.substr(Range->Begin, Range->End - Range->Begin));
+                    Changes.push_back({Range->Begin, Range->End, NumberLiteral(Edit.Values.front())});
                     continue;
                 }
 
@@ -334,7 +423,13 @@ namespace dbc::studio
                     return Result;
                 }
                 const lang::Expression& Id = *Value->Expressions[IdArgument];
-                const std::string IdText = Text.substr(Id.Span.Begin.Offset, Id.Span.End.Offset - Id.Span.Begin.Offset);
+                const std::optional<TextRange> IdRange = WholeExpression(Text, Id);
+                if (!IdRange)
+                {
+                    Result.Error = Where + "the number's parentheses could not be told apart.";
+                    return Result;
+                }
+                const std::string IdText = Text.substr(IdRange->Begin, IdRange->End - IdRange->Begin);
                 if (!ReadsTheSameTwice(Id, Parsed, Profile))
                 {
                     Result.Error = Where + "a statement cannot follow it, because " + IdText +
@@ -347,6 +442,8 @@ namespace dbc::studio
                 for (const float Number : Edit.Values)
                     Added += ", " + NumberLiteral(Number);
                 Changes.push_back(InsertAfter(Text, *Value, Added));
+                ++Expected.Known;
+                Expected.Arguments += 1 + Edit.Values.size();
             }
 
             // Stable, then applied from the end: earlier offsets stay valid, and insertions at one place keep their
@@ -364,7 +461,12 @@ namespace dbc::studio
                 }
                 Result.Text.replace(Value.Begin, Value.End - Value.Begin, Value.Text);
             }
-            if (ErrorCount(Parse(Result.Text, LogicalPath, Profile)) > ErrorCount(Parsed))
+            // A command whose arguments do not parse is no error at this stage, only an unknown command, so count them.
+            const lang::Program Edited = Parse(Result.Text, LogicalPath, Profile);
+            CommandCount Found;
+            Found.Add(Edited);
+            if (ErrorCount(Edited) > ErrorCount(Parsed) || Found.Known != Expected.Known ||
+                Found.Unknown != Expected.Unknown || Found.Arguments != Expected.Arguments)
                 Result.Error = "The edited source would not parse, so it was left as it is.";
             return Result;
         }

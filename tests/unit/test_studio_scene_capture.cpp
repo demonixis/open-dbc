@@ -348,6 +348,35 @@ TEST_CASE("locked axes never reach the source")
     CHECK(Plan.Axes.empty());
 }
 
+TEST_CASE("what a number cannot show stays locked")
+{
+    Captured Program("patch_cannot_show");
+    const fs::path Source = Program.Write("main.dba", "make object cone 1, 8\n"
+                                                      "xrotate object 1, 90\n"
+                                                      "fix object pivot 1\n"
+                                                      "make object cube 2, 5\n"
+                                                      "make light 1\n"
+                                                      "make matrix 1, 100, 100, 4, 4\n");
+    const CaptureReadResult Read = Program.Run(Source);
+    for (std::size_t Index = 0; Index < 3; ++Index)
+    {
+        CHECK(Axis(Read, 1, TransformPart::Rotation, Index).Access == AxisAccess::Locked);
+        CHECK(Axis(Read, 1, TransformPart::Position, Index).Access == AxisAccess::Insert);
+        CHECK(Axis(Read, 2, TransformPart::Rotation, Index).Access == AxisAccess::Insert);
+    }
+    const NodeOrigin& Light = Read.Origins.at({IdSpace::Light, 1});
+    const auto& LightTurns = Light.Axes[static_cast<std::size_t>(TransformPart::Rotation)];
+    CHECK(LightTurns[1].Access == AxisAccess::Insert);
+    CHECK(LightTurns[2].Access == AxisAccess::Locked);
+
+    SceneDocument Edited = Read.Document;
+    Edited.Find(IdSpace::Matrix, 1)->Rotation.x = 30.0f;
+    Edited.Find(IdSpace::Matrix, 1)->Scale.x = 200.0f;
+    const PatchPlan Plan = PlanPatches(Read.Document, Edited, Read.Origins);
+    CHECK(Plan.Files.empty());
+    CHECK(Plan.Axes.empty());
+}
+
 TEST_CASE("an expression an edit replaces is reported")
 {
     Captured Program("patch_expression");
@@ -368,6 +397,36 @@ TEST_CASE("an expression an edit replaces is reported")
     // A plain number needs no warning, even a negative one.
     REQUIRE(Patch.Replaced.size() == 1);
     CHECK(Patch.Replaced.front() == "3: a# * 2");
+}
+
+TEST_CASE("a replaced argument and a repeated number keep their parentheses whole")
+{
+    Captured Program("patch_parentheses");
+    const fs::path Source = Program.Write("main.dba", "a# = 2 : b# = 4 : n = 1\n"
+                                                      "make object cube (n + 1) * 2, 5\n"
+                                                      "make object sphere 1, 5\n"
+                                                      "position object 1, (a# + b#) / 2, 2 * (a# + 1), ((b#))\n"
+                                                      "make object cone n * (n + 2), 5\n");
+    const CaptureReadResult Read = Program.Run(Source);
+    REQUIRE(Axis(Read, 1, TransformPart::Position, 0).Access == AxisAccess::Replace);
+    REQUIRE(Axis(Read, 4, TransformPart::Position, 0).Access == AxisAccess::Insert);
+    REQUIRE(Axis(Read, 3, TransformPart::Position, 0).Access == AxisAccess::Insert);
+
+    SceneDocument Edited = Read.Document;
+    Edited.Find(IdSpace::Object, 1)->Position = glm::vec3(10.0f, 20.0f, 30.0f);
+    Edited.Find(IdSpace::Object, 4)->Position.x = 40.0f;
+    Edited.Find(IdSpace::Object, 3)->Position.x = 50.0f;
+    const PatchPlan Plan = ApplyEdits(Read, Edited, Source);
+    CHECK(ReadFile(Source) == "a# = 2 : b# = 4 : n = 1\n"
+                              "make object cube (n + 1) * 2, 5\n"
+                              "position object (n + 1) * 2, 40, 0, 0\n"
+                              "make object sphere 1, 5\n"
+                              "position object 1, 10, 20, ((30))\n"
+                              "make object cone n * (n + 2), 5\n"
+                              "position object n * (n + 2), 50, 0, 0\n");
+    const CaptureReadResult Again = Program.Run(Source);
+    CHECK(Program.Capture.Status == "completed");
+    CHECK(UnappliedEdits(Plan.Axes, Again).empty());
 }
 
 TEST_CASE("a one-line IF keeps the added statement, and line endings carry over")

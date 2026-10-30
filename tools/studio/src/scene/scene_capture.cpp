@@ -223,6 +223,7 @@ namespace dbc::studio
                 int Creator = -1;
                 // The last call setting each axis, by part.
                 std::array<std::array<int, 3>, KTransformPartCount> Writers{{{-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}}};
+                bool PivotFixed = false;
             };
 
             using SiteKey = std::tuple<std::uint32_t, std::uint32_t, std::uint32_t, SymbolId>;
@@ -261,6 +262,12 @@ namespace dbc::studio
             {
                 constexpr const char* KChangedAtRun = "Another command changes it while the program runs.";
                 AxisOrigin Origin;
+                // A turn set before it would end up in the shape, where the number no longer shows it.
+                if (Part == TransformPart::Rotation && Tracked.PivotFixed)
+                {
+                    Origin.Reason = "FIX OBJECT PIVOT folds its turns into the shape.";
+                    return Origin;
+                }
                 const float Default = Part == TransformPart::Scale ? 100.0f : 0.0f;
                 const int Writer = Tracked.Writers[static_cast<std::size_t>(Part)][Axis];
                 if (Writer >= 0)
@@ -495,6 +502,8 @@ namespace dbc::studio
                     Tracked = {};
                     Tracked.Creator = static_cast<int>(Index);
                 }
+                if (Command.Symbol == SymbolId::Command_FixObjectPivot)
+                    Tracks[{IdSpace::Object, IdAt(0)}].PivotFixed = true;
                 if (const std::optional<TransformWriter> Writer = WriterOf(Command.Symbol, Command.Arguments.size()))
                 {
                     Track& Tracked = Tracks[{Writer->Space, IdAt(0)}];
@@ -543,6 +552,12 @@ namespace dbc::studio
                     for (int Axis = 0; Axis < 3; ++Axis)
                         Origin.Axes[Part][static_cast<std::size_t>(Axis)] = ClassifyAxis(
                             Capture, Options, Runs, Tracked->second, State, static_cast<TransformPart>(Part), Axis);
+                if (Key.first == IdSpace::Light)
+                {
+                    AxisOrigin& Roll = Origin.Axes[static_cast<std::size_t>(TransformPart::Rotation)][2];
+                    Roll = {};
+                    Roll.Reason = "A light's direction has no roll.";
+                }
                 return Origin;
             };
 
