@@ -48,22 +48,7 @@ namespace dbc::studio
         void EditorPanel::Initialize(const dba::CommandDatabase* Commands)
         {
             Commands_ = Commands;
-
-            AutoComplete_.userData = this;
-            AutoComplete_.callback = [](TextEditor::AutoCompleteState& State)
-            {
-                // The widget does not clear this between callbacks, so without it
-                // the list keeps every match from every previous keystroke.
-                State.suggestions.clear();
-
-                const auto* Panel = static_cast<const EditorPanel*>(State.userData);
-                if (Panel == nullptr || Panel->Commands_ == nullptr || State.searchTerm.empty())
-                {
-                    return;
-                }
-
-                State.suggestions = Panel->Commands_->Complete(Panel->CurrentProfile(), State.searchTerm, 40);
-            };
+            Completion_.Initialize(Commands);
         }
 
         void EditorPanel::SetProfile(dbc::language::LanguageProfile Profile)
@@ -118,20 +103,20 @@ namespace dbc::studio
             Editor.SetAutoIndentEnabled(true);
             Editor.SetShowScrollbarMiniMapEnabled(true);
             Editor.SetShowWhitespacesEnabled(false);
-            Editor.SetAutoCompleteConfig(&AutoComplete_);
 
             // Hovering a command shows its signature and description.
             const dba::CommandDatabase* Commands = Commands_;
+            const CompletionPopup* Completion = &Completion_;
             TextEditor* Self = &Editor;
             Editor.SetTextHoverCallback(
-                [Commands, Self, Profile](TextEditor::PopupData& Data)
+                [Commands, Completion, Self, Profile](TextEditor::PopupData& Data)
                 {
                     // The widget opens the popup for any glyph under the mouse, so a
                     // callback that draws nothing leaves an empty box floating around.
                     // Close it explicitly whenever there is no documentation to show.
                     const dba::Command* CommandValue = nullptr;
 
-                    if (Commands != nullptr)
+                    if (Commands != nullptr && !Completion->IsOpen())
                     {
                         const TextEditor::DocPos Start = Self->FindWordStart(Data.pos);
                         const TextEditor::DocPos End = Self->FindWordEnd(Data.pos);
@@ -142,18 +127,14 @@ namespace dbc::studio
                         }
                     }
 
-                    if (CommandValue == nullptr || CommandValue->Description.empty())
+                    if (CommandValue == nullptr)
                     {
                         ImGui::CloseCurrentPopup();
                         return;
                     }
 
-                    ImGui::TextUnformatted(CommandValue->Signature.empty() ? CommandValue->Classic.c_str()
-                                                                           : CommandValue->Signature.c_str());
-                    ImGui::Separator();
-                    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 30.0f);
-                    ImGui::TextUnformatted(CommandValue->Description.c_str());
-                    ImGui::PopTextWrapPos();
+                    DrawCommandHelp(dba::DescribeCommand(*Commands, Profile, CommandValue->Classic),
+                                    ImGui::GetFontSize() * 30.0f);
                 });
         }
 
@@ -659,7 +640,16 @@ namespace dbc::studio
                             ImGui::SetTooltip("%s", dbc::PathToUtf8(Doc.Path).c_str());
                         }
 
+                        const ImGuiID EditorId = ImGui::GetID("##editor");
+                        if (Doc.Basic)
+                        {
+                            Completion_.BeforeEditor(*Doc.Editor, EditorId);
+                        }
                         Doc.Editor->Render("##editor", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None);
+                        if (Doc.Basic)
+                        {
+                            Completion_.AfterEditor(*Doc.Editor, Doc.Profile, EditorId);
+                        }
                         ImGui::EndTabItem();
                     }
 

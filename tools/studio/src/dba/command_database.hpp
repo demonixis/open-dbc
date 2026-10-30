@@ -16,11 +16,11 @@ namespace dbc::studio
         {
             const dbc::language::SymbolDescriptor* Descriptor = nullptr;
             std::string Classic;
-            std::string Signature;
             std::string Description;
             std::string Key;
             std::string Initials;
-            int WordCount = 1;
+            // The lower-case words of the name.
+            std::vector<std::string> Words;
         };
 
         class CommandDatabase
@@ -34,8 +34,6 @@ namespace dbc::studio
             }
 
             const Command* Find(dbc::language::LanguageProfile Profile, std::string_view Name) const;
-            std::vector<std::string> Complete(dbc::language::LanguageProfile Profile, std::string_view Term,
-                                              size_t Limit) const;
 
           private:
             std::vector<Command> Commands_;

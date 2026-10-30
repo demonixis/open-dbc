@@ -189,6 +189,8 @@ set(STUDIO_SOURCES
     src/dba/code_outline.hpp
     src/dba/command_database.cpp
     src/dba/command_database.hpp
+    src/dba/completion.cpp
+    src/dba/completion.hpp
     src/dba/language.cpp
     src/dba/language.hpp
     src/dba/program_info.cpp
@@ -202,6 +204,8 @@ set(STUDIO_SOURCES
     src/panels/asset_preview.hpp
     src/panels/code_panel.cpp
     src/panels/code_panel.hpp
+    src/panels/completion_popup.cpp
+    src/panels/completion_popup.hpp
     src/panels/editor_panel.cpp
     src/panels/editor_panel.hpp
     src/panels/launcher_window.cpp

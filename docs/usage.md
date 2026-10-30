@@ -99,6 +99,15 @@ filtered by kind and name; double-clicking an image or sound previews it.
 `.fx` and `.hlsl` effects open in the editor as HLSL text, without completion,
 outline or Run.
 
+Typing a BASIC tab lists the commands and functions of its profile, with the
+selected one's signature and description beside the list. A space continues a
+name: `set window ` lists what can follow, and accepting replaces every word,
+spelled in the case you typed. Words may be abbreviated (`set win ti`), skipped
+(`set title`) or reduced to initials (`swt`). Tab and Enter accept a selected
+name; only Tab accepts a single letter or a loose match, which may be a variable.
+Up, Down, Page Up and Page Down move in the list, Escape closes it and Ctrl+Space
+opens it, listing everything when nothing matches.
+
 **Build → Compile HLSL Effect…** compiles a `.fx` or `.hlsl` file with `VSMain`
 and `PSMain` entry points into SPIR-V and MSL stages (`<name>.vert.spv`,
 `<name>.vert.msl`, `<name>.frag.spv`, `<name>.frag.msl`) and `<name>.effect.json`,

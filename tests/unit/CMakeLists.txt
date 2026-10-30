@@ -27,6 +27,7 @@ if(NOT ANDROID AND NOT IOS)
         test_studio_language.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/code_outline.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/command_database.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/completion.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/program_info.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/reference.cpp
     )
@@ -37,8 +38,10 @@ if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_editor
         test_studio_editor.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/command_database.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/completion.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/language.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/reference.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/completion_popup.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/editor_panel.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/text_encoding.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/recovery.cpp

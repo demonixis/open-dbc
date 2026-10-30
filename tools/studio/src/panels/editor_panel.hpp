@@ -11,6 +11,7 @@
 #include "core/recovery.hpp"
 #include "core/text_encoding.hpp"
 #include "language/language_profile.hpp"
+#include "panels/completion_popup.hpp"
 #include <TextEditor.h>
 
 namespace dbc::studio
@@ -130,7 +131,7 @@ namespace dbc::studio
             std::vector<std::string> Notices_;
 
             const dba::CommandDatabase* Commands_ = nullptr;
-            TextEditor::AutoCompleteConfig AutoComplete_;
+            CompletionPopup Completion_;
             dbc::language::LanguageProfile ProjectProfile_ = dbc::language::LanguageProfile::Dbc;
         };
     } // namespace panels

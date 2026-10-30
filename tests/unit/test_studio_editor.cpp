@@ -11,6 +11,7 @@
 #include <iterator>
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 using namespace dbc::studio;
 
@@ -130,6 +131,351 @@ TEST_CASE("Studio editor brings an already open tab to the front when it is open
     }
     ImGui::DestroyContext();
     std::filesystem::remove_all(Root, Error);
+}
+
+namespace
+{
+    // Runs the real editor and popup through ImGui without a window: only what is
+    // typed and pressed goes in, only the text and the cursor come out.
+    class CompletionHarness
+    {
+      public:
+        // An untitled BASIC tab unless a file is given.
+        explicit CompletionHarness(const std::filesystem::path& File = {})
+        {
+            ImGui::CreateContext();
+            ImGuiIO& Io = ImGui::GetIO();
+            Io.DisplaySize = ImVec2(800.0f, 600.0f);
+            Io.IniFilename = nullptr;
+            Io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+            // As in the Studio: it competes for Escape, Tab, Enter and the arrows.
+            Io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+            Commands_.Build(Reference_);
+            Editor_.Initialize(&Commands_);
+            if (File.empty())
+                Editor_.NewFile();
+            else
+                REQUIRE(Editor_.Open(File));
+            Frame();
+            Editor_.CurrentEditor()->SetFocus();
+            Frame();
+            Frame();
+        }
+
+        ~CompletionHarness()
+        {
+            ImGui::DestroyContext();
+        }
+
+        void Frame()
+        {
+            ImGui::NewFrame();
+            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+            ImGui::SetNextWindowSize(ImVec2(800.0f, 600.0f));
+            ImGui::Begin("Editor");
+            Editor_.Draw();
+            ImGui::End();
+            ImGui::Render();
+        }
+
+        void Type(std::string_view Text)
+        {
+            for (const char Character : Text)
+            {
+                ImGui::GetIO().AddInputCharacter(static_cast<unsigned char>(Character));
+                Frame();
+            }
+        }
+
+        void Press(ImGuiKey Key)
+        {
+            ImGui::GetIO().AddKeyEvent(Key, true);
+            Frame();
+            ImGui::GetIO().AddKeyEvent(Key, false);
+            Frame();
+        }
+
+        void Click(ImVec2 Position)
+        {
+            ImGui::GetIO().AddMousePosEvent(Position.x, Position.y);
+            Frame();
+            ImGui::GetIO().AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+            Frame();
+            ImGui::GetIO().AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+            Frame();
+            Frame();
+        }
+
+        void PressManualTrigger()
+        {
+            // On macOS ImGui swaps Ctrl and Cmd, so this is the trigger everywhere.
+            ImGui::GetIO().AddKeyEvent(ImGuiMod_Ctrl, true);
+            ImGui::GetIO().AddKeyEvent(ImGuiKey_Space, true);
+            Frame();
+            ImGui::GetIO().AddKeyEvent(ImGuiKey_Space, false);
+            ImGui::GetIO().AddKeyEvent(ImGuiMod_Ctrl, false);
+            Frame();
+        }
+
+        std::string Text()
+        {
+            return Widget().GetText();
+        }
+
+        TextEditor& Widget()
+        {
+            return *Editor_.CurrentEditor();
+        }
+
+        const ImGuiWindow* Popup() const
+        {
+            const ImGuiWindow* Window = ImGui::FindWindowByName("##completion");
+            return Window != nullptr && Window->Active ? Window : nullptr;
+        }
+
+      private:
+        dba::Reference Reference_;
+        dba::CommandDatabase Commands_;
+        panels::EditorPanel Editor_;
+    };
+} // namespace
+
+TEST_CASE("Studio completion replaces every word of a command")
+{
+    CompletionHarness Harness;
+    Harness.Type("set window ti");
+    Harness.Press(ImGuiKey_Enter);
+    CHECK(Harness.Text() == "set window title");
+
+    // One undoable edit brings back what was typed, and typing resumes after the name.
+    Harness.Widget().Undo();
+    CHECK(Harness.Text() == "set window ti");
+    Harness.Widget().Redo();
+    Harness.Type(" ");
+    CHECK(Harness.Text() == "set window title ");
+}
+
+TEST_CASE("Studio completion lists the next words after a space and takes the arrows")
+{
+    CompletionHarness Harness;
+    Harness.Type("print 1");
+    Harness.Press(ImGuiKey_Enter);
+    Harness.Type("  set window ");
+    const size_t Line = Harness.Widget().GetMainCursorPosition().line;
+
+    Harness.Press(ImGuiKey_DownArrow);
+    Harness.Press(ImGuiKey_DownArrow);
+    Harness.Press(ImGuiKey_UpArrow);
+    CHECK(Harness.Widget().GetMainCursorPosition().line == Line);
+    Harness.Press(ImGuiKey_Tab);
+    CHECK(Harness.Text() == "print 1\n  set window layout");
+}
+
+TEST_CASE("Studio completion opens under the words it completes and only when a name can continue")
+{
+    CompletionHarness Harness;
+    CHECK(Harness.Popup() == nullptr);
+
+    // Eleven lines widen the line numbers, which moves the text.
+    for (int Line = 0; Line < 10; ++Line)
+    {
+        Harness.Type("end");
+        Harness.Press(ImGuiKey_Escape);
+        Harness.Press(ImGuiKey_Enter);
+    }
+    Harness.Type("    set window ");
+    const ImGuiWindow* Popup = Harness.Popup();
+    REQUIRE(Popup != nullptr);
+    TextEditor& Widget = Harness.Widget();
+    const ImVec2 Corner(Popup->Pos.x + Widget.GetGlyphWidth() * 0.5f, Popup->Pos.y - Widget.GetLineHeight() * 0.5f);
+    CHECK(Widget.GetWordAtMousePos(Corner) == "set");
+    CHECK(ImGui::GetCurrentContext()->NavWindow != Popup);
+
+    // Deleting never opens the list: only typing does.
+    Harness.Type("zz");
+    CHECK(Harness.Popup() == nullptr);
+    Harness.Press(ImGuiKey_Backspace);
+    Harness.Press(ImGuiKey_Backspace);
+    CHECK(Harness.Popup() == nullptr);
+    Harness.Type("t");
+    CHECK(Harness.Popup() != nullptr);
+    Harness.Press(ImGuiKey_Escape);
+    CHECK(Harness.Popup() == nullptr);
+
+    Harness.Press(ImGuiKey_Enter);
+    Harness.Type("print ");
+    CHECK(Harness.Popup() == nullptr);
+    Harness.Type("set ");
+    CHECK(Harness.Popup() != nullptr);
+    Harness.Widget().SetCursor(TextEditor::DocPos(0, 0));
+    Harness.Frame();
+    CHECK(Harness.Popup() == nullptr);
+}
+
+TEST_CASE("Studio completion leaves Enter and Tab alone without a selection")
+{
+    SUBCASE("After a space")
+    {
+        CompletionHarness Harness;
+        Harness.Type("set window ");
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "set window \n");
+    }
+    SUBCASE("A single letter is a variable until Tab says otherwise")
+    {
+        CompletionHarness Harness;
+        Harness.Type("x");
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "x\n");
+    }
+    SUBCASE("A loose match")
+    {
+        CompletionHarness Harness;
+        Harness.Type("title");
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "title\n");
+    }
+    SUBCASE("Tab accepts a loose match")
+    {
+        CompletionHarness Harness;
+        Harness.Type("swt");
+        Harness.Press(ImGuiKey_Tab);
+        CHECK(Harness.Text() == "set window title");
+    }
+    SUBCASE("A name no command starts with")
+    {
+        CompletionHarness Harness;
+        Harness.Type("qqqq");
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "qqqq\n");
+    }
+}
+
+TEST_CASE("Studio completion takes the mouse and gives the keyboard back")
+{
+    SUBCASE("Clicking a row accepts it")
+    {
+        CompletionHarness Harness;
+        Harness.Type("set window ");
+        const ImGuiWindow* Popup = Harness.Popup();
+        REQUIRE(Popup != nullptr);
+        Harness.Click(ImVec2(Popup->Pos.x + 20.0f, Popup->Pos.y + ImGui::GetFrameHeight() * 1.5f));
+        CHECK(Harness.Text() == "set window off");
+        CHECK(Harness.Popup() == nullptr);
+        Harness.Type(" ");
+        CHECK(Harness.Text() == "set window off ");
+    }
+    SUBCASE("Clicking the help leaves the list open and typing goes to the editor")
+    {
+        CompletionHarness Harness;
+        Harness.Type("set w");
+        const ImGuiWindow* Popup = Harness.Popup();
+        REQUIRE(Popup != nullptr);
+        Harness.Click(ImVec2(Popup->Pos.x + Popup->Size.x - 20.0f, Popup->Pos.y + Popup->Size.y - 10.0f));
+        CHECK(Harness.Popup() != nullptr);
+        Harness.Type("indow ti");
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "set window title");
+    }
+}
+
+TEST_CASE("Studio completion closes on Escape and keeps the focus")
+{
+    CompletionHarness Harness;
+    Harness.Type("set w");
+    Harness.Press(ImGuiKey_Escape);
+    Harness.Press(ImGuiKey_Enter);
+    CHECK(Harness.Text() == "set w\n");
+    Harness.Type("x");
+    CHECK(Harness.Text() == "set w\nx");
+}
+
+TEST_CASE("Studio completion stays out of comments, strings and effect tabs")
+{
+    SUBCASE("Comment")
+    {
+        CompletionHarness Harness;
+        Harness.Type("rem set w");
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "rem set w\n");
+    }
+    SUBCASE("Block comment")
+    {
+        CompletionHarness Harness;
+        Harness.Type("remstart");
+        Harness.Press(ImGuiKey_Enter);
+        Harness.Type("set w");
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "remstart\nset w\n");
+    }
+    SUBCASE("String")
+    {
+        CompletionHarness Harness;
+        Harness.Type("print \"set w");
+        Harness.Press(ImGuiKey_Enter);
+        // The editor closes the quote by itself, so Enter splits the string.
+        CHECK(Harness.Text() == "print \"set w\n\"");
+    }
+    SUBCASE("Effect")
+    {
+        const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-completion";
+        std::error_code Error;
+        std::filesystem::remove_all(Root, Error);
+        std::filesystem::create_directories(Root, Error);
+        REQUIRE_FALSE(Error);
+        std::ofstream{Root / "main.fx"};
+        {
+            CompletionHarness Harness(Root / "main.fx");
+            Harness.Type("set w");
+            Harness.Press(ImGuiKey_Enter);
+            CHECK(Harness.Text() == "set w\n");
+        }
+        std::filesystem::remove_all(Root, Error);
+    }
+}
+
+TEST_CASE("Studio completion follows the cursor and opens on demand")
+{
+    SUBCASE("Backspace narrows the words again")
+    {
+        CompletionHarness Harness;
+        Harness.Type("set windoz");
+        Harness.Press(ImGuiKey_Backspace);
+        Harness.Type("w ti");
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "set window title");
+    }
+    SUBCASE("Accepting replaces the rest of the word under the cursor")
+    {
+        CompletionHarness Harness;
+        Harness.Type("set window tixx");
+        Harness.Press(ImGuiKey_LeftArrow);
+        Harness.Press(ImGuiKey_LeftArrow);
+        Harness.PressManualTrigger();
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "set window title");
+    }
+    SUBCASE("Ctrl+Space lists everything on an empty line")
+    {
+        CompletionHarness Harness;
+        Harness.PressManualTrigger();
+        Harness.Press(ImGuiKey_DownArrow);
+        Harness.Press(ImGuiKey_Enter);
+        CHECK_FALSE(Harness.Text().empty());
+        CHECK(Harness.Text().find('\n') == std::string::npos);
+    }
+    SUBCASE("Leaving the line closes the list")
+    {
+        CompletionHarness Harness;
+        Harness.Type("print 1");
+        Harness.Press(ImGuiKey_Enter);
+        Harness.Type("set w");
+        Harness.Widget().SetCursor(TextEditor::DocPos(0, 0));
+        Harness.Frame();
+        Harness.Press(ImGuiKey_Enter);
+        CHECK(Harness.Text() == "\nprint 1\nset w");
+    }
 }
 
 TEST_CASE("Studio text codec keeps Windows-1252, CRLF and BOM files byte for byte")
