@@ -24,6 +24,7 @@ add_library(dbc_engine STATIC
   systems/renderer_animation.cpp
   systems/renderer_batches.cpp
   systems/renderer_gpu_meshes.cpp
+  systems/renderer_hud.cpp
   systems/renderer_model_import.cpp
   systems/renderer_objects.cpp
   systems/renderer_primitives.cpp

@@ -8,7 +8,6 @@
 #include "gpu_command_buffer.hpp"
 #include "graphics_device_system.hpp"
 #include "image_store.hpp"
-#include "light_manager.hpp"
 #include "log.hpp"
 #include "matrix_manager.hpp"
 #include "object_manager.hpp"
@@ -16,7 +15,6 @@
 #include "renderer_internal.hpp"
 #include "renderer_transforms.hpp"
 #include "sprite_system.hpp"
-#include "terrain_mesh.hpp"
 #include "text_system.hpp"
 #include "video_system.hpp"
 #include "vr_system.hpp"
@@ -25,57 +23,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <cctype>
 #include <limits>
-#include <numeric>
-#include <stdexcept>
-#include <string_view>
-#include <tuple>
-
-#if __has_include(<SDL3_image/SDL_image.h>)
-#include <SDL3_image/SDL_image.h>
-#elif __has_include(<SDL_image.h>)
-#include <SDL_image.h>
-#endif
 
 namespace dbc
 {
-    namespace
-    {
-        [[nodiscard]] Uint32 DecodeUtf8Codepoint(const std::string& Text, size_t& Index)
-        {
-            if (Index >= Text.size())
-            {
-                return 0;
-            }
-            const unsigned char C0 = static_cast<unsigned char>(Text[Index++]);
-            if ((C0 & 0x80u) == 0)
-            {
-                return static_cast<Uint32>(C0);
-            }
-            if ((C0 & 0xE0u) == 0xC0u && Index < Text.size())
-            {
-                const unsigned char C1 = static_cast<unsigned char>(Text[Index++]);
-                return static_cast<Uint32>(((C0 & 0x1Fu) << 6) | (C1 & 0x3Fu));
-            }
-            if ((C0 & 0xF0u) == 0xE0u && Index + 1 < Text.size())
-            {
-                const unsigned char C1 = static_cast<unsigned char>(Text[Index++]);
-                const unsigned char C2 = static_cast<unsigned char>(Text[Index++]);
-                return static_cast<Uint32>(((C0 & 0x0Fu) << 12) | ((C1 & 0x3Fu) << 6) | (C2 & 0x3Fu));
-            }
-            if ((C0 & 0xF8u) == 0xF0u && Index + 2 < Text.size())
-            {
-                const unsigned char C1 = static_cast<unsigned char>(Text[Index++]);
-                const unsigned char C2 = static_cast<unsigned char>(Text[Index++]);
-                const unsigned char C3 = static_cast<unsigned char>(Text[Index++]);
-                return static_cast<Uint32>(((C0 & 0x07u) << 18) | ((C1 & 0x3Fu) << 12) | ((C2 & 0x3Fu) << 6) |
-                                           (C3 & 0x3Fu));
-            }
-            return '?';
-        }
-    } // anonymous namespace
-
     // Copies the offscreen capture target back to the CPU and, on the way,
     // blits it to the swapchain so the user still sees the frame.
     // Takes ownership of the command buffer: it submits it.
@@ -241,19 +192,7 @@ namespace dbc
         K.Text().ClearOverlayTextLines();
         if (K.Debug().IsOverlayEnabled())
             K.Debug().QueueOverlayText();
-        K.Text().ForEachDebugTextLine(
-            [&](const DebugTextLine& Line)
-            {
-                if (Line.Value.empty() || !K.Text().EnsureActiveTextFont(Line.Request))
-                    return;
-                for (size_t I = 0; I < Line.Value.size();)
-                {
-                    const Uint32 Cp = DecodeUtf8Codepoint(Line.Value, I);
-                    if (Cp == '\r' || Cp == '\n')
-                        continue;
-                    (void)K.Text().EnsureTextGlyph(Line.Request, Cp);
-                }
-            });
+        dbc::EnsureHudGlyphs(K);
         K.Text().RefreshTextAtlasGpu();
 
         RenderFrameState Frame;
@@ -270,6 +209,66 @@ namespace dbc
         return BuildPreparedView(View, Geometry, Frame) &&
                UploadPreparedViews(std::span<PreparedViewGeometry>(&Geometry, 1), Cmd) &&
                RecordPreparedView(View, Target, Geometry, Cmd, Frame);
+    }
+
+    std::shared_ptr<const SceneTriangles> RendererSystem::RebuildScene(bool HasReflection, const Vec3& ReflectionPoint,
+                                                                       const Vec3& ReflectionNormal, Uint64& OrderTicks)
+    {
+        EngineKernel& K = Kernel_;
+        std::shared_ptr<SceneTriangles> Scene = SceneForRebuild();
+        auto& Tris = Scene->World.Triangles;
+        auto& ReflectedTris = Scene->Reflected.Triangles;
+        auto& OverlayTris = Scene->Overlay.Triangles;
+        Tris.reserve(8192);
+        ReflectedTris.reserve(8192);
+        OverlayTris.reserve(2048);
+        K.Matrices().ForEachMatrix([&](int /*id*/, const Matrix& MatrixValue)
+                                   { dbc::RenderMatrix(K, MatrixValue, Tris); });
+        K.Matrices().ForEachTerrain(
+            [&](int /*id*/, const Matrix& Terrain)
+            {
+                if (!K.Renderer().DrawsTerrainOnGpu(Terrain))
+                    dbc::RenderMatrix(K, Terrain, Tris);
+            });
+        dbc::RenderBspWorld(K, Tris);
+        // The reflection passes keep every mesh on the CPU path, as do objects whose opaque triangles
+        // depend on their place in the depth order.
+        const bool GpuMeshes =
+            GpuMeshesEnabled_ && !HasReflection && K.Gpu().MeshPipeline(true, false) && !dbc::ObjectsNeedDepthOrder(K);
+        dbc::RenderObjects(K, Tris, OverlayTris, Scene.get(), GpuMeshes);
+        dbc::RenderParticles(K, Tris);
+        Uint64 OrderStart = SDL_GetPerformanceCounter();
+        OrderWorldTriangles(Scene->World);
+        dbc::GroupGpuMeshDraws(Scene->MeshDraws);
+        OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
+        if (HasReflection)
+        {
+            std::vector<Triangle> IgnoredOverlay;
+            K.Renderer().SetReflectionView(ReflectionPoint, ReflectionNormal);
+            K.Matrices().ForEachMatrix([&](int /*id*/, const Matrix& MatrixValue)
+                                       { dbc::RenderMatrix(K, MatrixValue, ReflectedTris); });
+            K.Matrices().ForEachTerrain([&](int /*id*/, const Matrix& Terrain)
+                                        { dbc::RenderMatrix(K, Terrain, ReflectedTris); });
+            dbc::RenderBspWorld(K, ReflectedTris);
+            dbc::RenderObjects(K, ReflectedTris, IgnoredOverlay);
+            dbc::RenderParticles(K, ReflectedTris);
+            K.Renderer().ClearReflectionView();
+            ReflectedTris.erase(std::remove_if(ReflectedTris.begin(), ReflectedTris.end(),
+                                               [](const Triangle& TriangleValue)
+                                               { return TriangleValue.Style.ReflectionSurface || TriangleValue.Is2d; }),
+                                ReflectedTris.end());
+            for (Triangle& TriangleValue : ReflectedTris)
+                TriangleValue.Style.ReflectionPass = true;
+            OrderStart = SDL_GetPerformanceCounter();
+            OrderWorldTriangles(Scene->Reflected);
+            OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
+        }
+        // Overlays: always back-to-front (2D compositing order).
+        OrderStart = SDL_GetPerformanceCounter();
+        OrderOverlayTriangles(Scene->Overlay);
+        OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
+        CacheScene(Scene);
+        return Scene;
     }
 
     bool RendererSystem::BuildPreparedView(const RenderView& View, PreparedViewGeometry& Geometry,
@@ -339,60 +338,7 @@ namespace dbc
 
             if (SceneDirty)
             {
-                std::shared_ptr<SceneTriangles> Scene = SceneForRebuild();
-                auto& Tris = Scene->World.Triangles;
-                auto& ReflectedTris = Scene->Reflected.Triangles;
-                auto& OverlayTris = Scene->Overlay.Triangles;
-                Tris.reserve(8192);
-                ReflectedTris.reserve(8192);
-                OverlayTris.reserve(2048);
-                K.Matrices().ForEachMatrix([&](int /*id*/, const Matrix& MatrixValue)
-                                           { dbc::RenderMatrix(K, MatrixValue, Tris); });
-                K.Matrices().ForEachTerrain(
-                    [&](int /*id*/, const Matrix& Terrain)
-                    {
-                        if (!K.Renderer().DrawsTerrainOnGpu(Terrain))
-                            dbc::RenderMatrix(K, Terrain, Tris);
-                    });
-                dbc::RenderBspWorld(K, Tris);
-                // The reflection passes keep every mesh on the CPU path, as do objects whose opaque triangles
-                // depend on their place in the depth order.
-                const bool GpuMeshes = GpuMeshesEnabled_ && !HasReflection && K.Gpu().MeshPipeline(true, false) &&
-                                       !dbc::ObjectsNeedDepthOrder(K);
-                dbc::RenderObjects(K, Tris, OverlayTris, Scene.get(), GpuMeshes);
-                dbc::RenderParticles(K, Tris);
-                Uint64 OrderStart = SDL_GetPerformanceCounter();
-                OrderWorldTriangles(Scene->World);
-                dbc::GroupGpuMeshDraws(Scene->MeshDraws);
-                OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
-                if (HasReflection)
-                {
-                    std::vector<Triangle> IgnoredOverlay;
-                    K.Renderer().SetReflectionView(ReflectionPoint, ReflectionNormal);
-                    K.Matrices().ForEachMatrix([&](int /*id*/, const Matrix& MatrixValue)
-                                               { dbc::RenderMatrix(K, MatrixValue, ReflectedTris); });
-                    K.Matrices().ForEachTerrain([&](int /*id*/, const Matrix& Terrain)
-                                                { dbc::RenderMatrix(K, Terrain, ReflectedTris); });
-                    dbc::RenderBspWorld(K, ReflectedTris);
-                    dbc::RenderObjects(K, ReflectedTris, IgnoredOverlay);
-                    dbc::RenderParticles(K, ReflectedTris);
-                    K.Renderer().ClearReflectionView();
-                    ReflectedTris.erase(
-                        std::remove_if(ReflectedTris.begin(), ReflectedTris.end(), [](const Triangle& TriangleValue)
-                                       { return TriangleValue.Style.ReflectionSurface || TriangleValue.Is2d; }),
-                        ReflectedTris.end());
-                    for (Triangle& TriangleValue : ReflectedTris)
-                        TriangleValue.Style.ReflectionPass = true;
-                    OrderStart = SDL_GetPerformanceCounter();
-                    OrderWorldTriangles(Scene->Reflected);
-                    OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
-                }
-                // Overlays: always back-to-front (2D compositing order).
-                OrderStart = SDL_GetPerformanceCounter();
-                OrderOverlayTriangles(Scene->Overlay);
-                OrderTicks += SDL_GetPerformanceCounter() - OrderStart;
-                CacheScene(Scene);
-                Geometry.Scene = std::move(Scene);
+                Geometry.Scene = RebuildScene(HasReflection, ReflectionPoint, ReflectionNormal, OrderTicks);
                 K.Camera().ClearDirty();
                 K.Objects().ClearAllDirtyFlags();
             }
@@ -554,27 +500,22 @@ namespace dbc
                                        false, false, false, Tri.Style, nullptr, false, false, -1, false, true);
             }
 
+            // Reflections and shadows darken what the stencil marked.
+            const auto AppendDarkening = [&](bool Shadow)
+            {
+                SurfaceStyle OverlayStyle{};
+                OverlayStyle.Fog = false;
+                OverlayStyle.Ambient = false;
+                OverlayStyle.ReflectionOverlay = !Shadow;
+                OverlayStyle.ShadowOverlay = Shadow;
+                dbc::AppendGpuQuad(K, Vertices, Batches, WhiteGpuTexture(K), 0.0f, 0.0f,
+                                   static_cast<float>(View.LogicalWidth), static_cast<float>(View.LogicalHeight),
+                                   SDL_FColor{0.0f, 0.0f, 0.0f, 64.0f / 255.0f}, 0.0f, true, true, OverlayStyle);
+            };
             if (HasReflection)
-            {
-                SurfaceStyle OverlayStyle{};
-                OverlayStyle.Fog = false;
-                OverlayStyle.Ambient = false;
-                OverlayStyle.ReflectionOverlay = true;
-                dbc::AppendGpuQuad(K, Vertices, Batches, WhiteGpuTexture(K), 0.0f, 0.0f,
-                                   static_cast<float>(View.LogicalWidth), static_cast<float>(View.LogicalHeight),
-                                   SDL_FColor{0.0f, 0.0f, 0.0f, 64.0f / 255.0f}, 0.0f, true, true, OverlayStyle);
-            }
-
+                AppendDarkening(false);
             if (HasShadow)
-            {
-                SurfaceStyle OverlayStyle{};
-                OverlayStyle.Fog = false;
-                OverlayStyle.Ambient = false;
-                OverlayStyle.ShadowOverlay = true;
-                dbc::AppendGpuQuad(K, Vertices, Batches, WhiteGpuTexture(K), 0.0f, 0.0f,
-                                   static_cast<float>(View.LogicalWidth), static_cast<float>(View.LogicalHeight),
-                                   SDL_FColor{0.0f, 0.0f, 0.0f, 64.0f / 255.0f}, 0.0f, true, true, OverlayStyle);
-            }
+                AppendDarkening(true);
 
             const auto AppendHud = [&](std::vector<GpuVertex>& HudVertices, std::vector<GpuBatch>& HudBatches)
             {
@@ -583,190 +524,7 @@ namespace dbc
                 if ((Frame.HudLast || K.Draw().IsDrawToFront()))
                     AppendOverlay(HudVertices, HudBatches);
 
-                K.Draw().ForEachPrimitive2D(
-                    [&](const Primitive2D& P)
-                    {
-                        const SDL_FColor C = UnpackColor(P.Color);
-                        if (P.Type == Primitive2DType::Dot)
-                        {
-                            dbc::AppendGpuQuad(K, HudVertices, HudBatches, WhiteGpuTexture(K), static_cast<float>(P.X1),
-                                               static_cast<float>(P.Y1), 1.0f, 1.0f, C);
-                        }
-                        else if (P.Type == Primitive2DType::Line)
-                        {
-                            dbc::AppendGpuLine(K, HudVertices, HudBatches, static_cast<float>(P.X1),
-                                               static_cast<float>(P.Y1), static_cast<float>(P.X2),
-                                               static_cast<float>(P.Y2), C, 1.0f);
-                        }
-                        else if (P.Type == Primitive2DType::Box)
-                        {
-                            // Filled, inclusive of its right and bottom edge, shaded between the corner colours.
-                            const float L = static_cast<float>(std::min(P.X1, P.X2));
-                            const float T = static_cast<float>(std::min(P.Y1, P.Y2));
-                            const float R = static_cast<float>(std::max(P.X1, P.X2)) + 1.0f;
-                            const float B = static_cast<float>(std::max(P.Y1, P.Y2)) + 1.0f;
-                            const SDL_FColor Tl = UnpackColor(P.CornerColors[0]);
-                            const SDL_FColor Tr = UnpackColor(P.CornerColors[1]);
-                            const SDL_FColor Br = UnpackColor(P.CornerColors[2]);
-                            const SDL_FColor Bl = UnpackColor(P.CornerColors[3]);
-                            const SDL_FColor Corners[4]{Tl, Tr, Br, Bl};
-                            const float ZeroN[3][3]{};
-                            const float PosA[3][3]{{L, T, 0.0f}, {R, T, 0.0f}, {R, B, 0.0f}};
-                            const SDL_FColor ColA[3]{Tl, Tl, Tl};
-                            const SDL_FPoint UvA[3]{{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}};
-                            dbc::AppendGpuTriangle(K, HudVertices, HudBatches, WhiteGpuTexture(K), PosA, ZeroN, ColA,
-                                                   UvA, false, true, false, {}, Corners);
-                            const float PosB[3][3]{{L, T, 0.0f}, {R, B, 0.0f}, {L, B, 0.0f}};
-                            const SDL_FColor ColB[3]{Tl, Tl, Tl};
-                            const SDL_FPoint UvB[3]{{0.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
-                            dbc::AppendGpuTriangle(K, HudVertices, HudBatches, WhiteGpuTexture(K), PosB, ZeroN, ColB,
-                                                   UvB, false, true, false, {}, Corners);
-                        }
-                        else if (P.Type == Primitive2DType::Circle || P.Type == Primitive2DType::Ellipse)
-                        {
-                            const float Cx = static_cast<float>(P.X1);
-                            const float Cy = static_cast<float>(P.Y1);
-                            const float Rx = std::max(1.0f, std::abs(static_cast<float>(P.X2)));
-                            const float Ry = std::max(1.0f, std::abs(static_cast<float>(P.Y2)));
-                            constexpr int KSegs = 48;
-                            float Px = Cx + Rx;
-                            float Py = Cy;
-                            for (int I = 1; I <= KSegs; ++I)
-                            {
-                                const float A = static_cast<float>(I) * static_cast<float>(2.0 * M_PI / KSegs);
-                                const float Nx = Cx + std::cos(A) * Rx;
-                                const float Ny = Cy + std::sin(A) * Ry;
-                                dbc::AppendGpuLine(K, HudVertices, HudBatches, Px, Py, Nx, Ny, C, 1.0f);
-                                Px = Nx;
-                                Py = Ny;
-                            }
-                        }
-                    });
-
-                K.Text().ForEachDebugTextLine(
-                    [&](const DebugTextLine& Line)
-                    {
-                        if (Line.Value.empty())
-                            return;
-
-                        int TextW = 0;
-                        int TextH = 0;
-                        if (Line.Request.Opaque && K.Text().MeasureText(Line.Request, Line.Value, TextW, TextH))
-                        {
-                            dbc::AppendGpuQuad(K, HudVertices, HudBatches, WhiteGpuTexture(K), Line.X, Line.Y,
-                                               static_cast<float>(TextW), static_cast<float>(TextH),
-                                               UnpackColor(K.Draw().BackdropColor()), 0.0f, false, true);
-                        }
-
-                        if (!K.Text().EnsureActiveTextFont(Line.Request))
-                            return;
-                        const int LineSkip = std::max(1, TTF_GetFontLineSkip(K.Text().ActiveTextFont()));
-                        const SDL_FColor GlyphColor = UnpackColor(Line.Color);
-
-                        float PenX = Line.X;
-                        float PenY = Line.Y;
-                        Uint32 PrevCp = 0;
-                        bool HasPrev = false;
-                        for (size_t I = 0; I < Line.Value.size();)
-                        {
-                            const Uint32 Cp = DecodeUtf8Codepoint(Line.Value, I);
-                            if (Cp == '\r')
-                                continue;
-                            if (Cp == '\n')
-                            {
-                                PenX = Line.X;
-                                PenY += static_cast<float>(LineSkip);
-                                HasPrev = false;
-                                PrevCp = 0;
-                                continue;
-                            }
-
-                            TextGlyph* Glyph = K.Text().FindTextGlyph(Line.Request, Cp);
-                            if (!Glyph)
-                            {
-                                HasPrev = false;
-                                PrevCp = 0;
-                                continue;
-                            }
-
-                            int Kerning = 0;
-                            if (HasPrev)
-                            {
-                                (void)TTF_GetGlyphKerning(K.Text().ActiveTextFont(), PrevCp, Cp, &Kerning);
-                            }
-
-                            if (Glyph->Width > 0 && Glyph->Height > 0)
-                            {
-                                if (K.Text().Atlas().GpuTexture)
-                                {
-                                    const float DrawX = PenX + static_cast<float>(Glyph->Minx + Kerning);
-                                    // SDL_ttf already places every rendered glyph surface on its line origin.
-                                    // Applying ascent/maxy here a second time makes characters jump vertically.
-                                    const float DrawY = PenY;
-                                    dbc::AppendGpuQuadUv(K, HudVertices, HudBatches, K.Text().Atlas().GpuTexture, DrawX,
-                                                         DrawY, static_cast<float>(Glyph->Width),
-                                                         static_cast<float>(Glyph->Height), GlyphColor,
-                                                         SDL_FPoint{Glyph->U0, Glyph->V0},
-                                                         SDL_FPoint{Glyph->U1, Glyph->V1}, 0.0f, true, true);
-                                }
-                            }
-
-                            PenX += static_cast<float>(Glyph->Advance + Kerning);
-                            PrevCp = Cp;
-                            HasPrev = true;
-                        }
-                    });
-
-                K.ImageStoreRef().ForEachOverlayBlit(
-                    [&](const OverlayImageBlit& Blit)
-                    {
-                        Image* BlitImg = K.ImageStoreRef().GetImage(Blit.ImageId);
-                        if (!BlitImg || (!BlitImg->Texture && !BlitImg->GpuTexture))
-                            return;
-                        SDL_GPUTexture* Tex = dbc::ImageGpuTexture(K, *BlitImg, Blit.TransparentBlack);
-                        if (!Tex)
-                            return;
-                        dbc::AppendGpuQuad(K, HudVertices, HudBatches, Tex, Blit.X, Blit.Y,
-                                           static_cast<float>(BlitImg->Width), static_cast<float>(BlitImg->Height),
-                                           SDL_FColor{1, 1, 1, 1}, 0.0f, Blit.TransparentBlack || BlitImg->HasAlpha);
-                    });
-
-                const auto AppendSprite = [&](const SpriteData& Spr)
-                {
-                    Image* SprImg = K.ImageStoreRef().GetImage(Spr.ImageId);
-                    if (!SprImg || (!SprImg->Texture && !SprImg->GpuTexture))
-                        return;
-                    SDL_GPUTexture* Tex = dbc::ImageGpuTexture(K, *SprImg, false);
-                    if (!Tex)
-                        return;
-                    float W = Spr.CustomSize
-                                  ? static_cast<float>(Spr.SizeX)
-                                  : static_cast<float>(Spr.AnimatedAtlas
-                                                           ? Spr.FrameWidth
-                                                           : (Spr.ImageWidth > 0 ? Spr.ImageWidth : SprImg->Width)) *
-                                        Spr.ScaleX / 100.0f;
-                    float H = Spr.CustomSize
-                                  ? static_cast<float>(Spr.SizeY)
-                                  : static_cast<float>(Spr.AnimatedAtlas
-                                                           ? Spr.FrameHeight
-                                                           : (Spr.ImageHeight > 0 ? Spr.ImageHeight : SprImg->Height)) *
-                                        Spr.ScaleY / 100.0f;
-                    SpriteData Positioned = Spr;
-                    Positioned.X = Spr.X * K.Sprites().SpriteGlobalScaleX() + K.Sprites().SpriteGlobalOffsetX();
-                    const float SpriteScaleX = Spr.CustomSize ? 1.0f : Spr.ScaleX / 100.0f;
-                    const float SpriteScaleY = Spr.CustomSize ? 1.0f : Spr.ScaleY / 100.0f;
-                    Positioned.OffsetX = static_cast<int>(static_cast<float>(Spr.OffsetX) * SpriteScaleX *
-                                                          K.Sprites().SpriteGlobalScaleX());
-                    Positioned.OffsetY = static_cast<int>(static_cast<float>(Spr.OffsetY) * SpriteScaleY);
-                    W *= K.Sprites().SpriteGlobalScaleX();
-                    const SDL_FColor Color{
-                        std::clamp(Spr.DiffuseR / 255.0f, 0.0f, 1.0f), std::clamp(Spr.DiffuseG / 255.0f, 0.0f, 1.0f),
-                        std::clamp(Spr.DiffuseB / 255.0f, 0.0f, 1.0f), std::clamp(Spr.Alpha / 255.0f, 0.0f, 1.0f)};
-                    const bool Transparent = Color.a < 0.999f || (Spr.Transparent && SprImg->HasAlpha);
-                    dbc::AppendGpuSpriteQuad(K, HudVertices, HudBatches, Tex, Positioned, W, H, Color, Transparent);
-                };
-                K.Sprites().ForEachVisibleSprite(AppendSprite);
-                K.Sprites().ForEachPastedSprite(AppendSprite);
+                dbc::AppendHudLayer(K, HudVertices, HudBatches);
             };
             if (Geometry.Hud && Frame.HudLast)
             {

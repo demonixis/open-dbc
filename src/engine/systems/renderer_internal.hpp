@@ -93,6 +93,12 @@ namespace dbc
                        float Y1, float X2, float Y2, SDL_FColor Color, float Thickness = 1.0f, float Z = 0.0f,
                        bool Transparent = false, bool Is2d = true);
 
+    // The 2D layer: renderer_hud.cpp.
+    // Puts the glyphs of this frame's text in the atlas, before anything is drawn with it.
+    void EnsureHudGlyphs(EngineKernel& K);
+    // Screen primitives, text, pasted images and sprites.
+    void AppendHudLayer(EngineKernel& K, std::vector<GpuVertex>& HudVertices, std::vector<GpuBatch>& HudBatches);
+
     // GPU mesh draws: renderer_gpu_meshes.cpp.
     void GroupGpuMeshDraws(std::vector<GpuMeshDraw>& Draws);
 

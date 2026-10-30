@@ -368,6 +368,9 @@ namespace dbc
 
         // An empty scene to rebuild into: the cached one, cleared, when no view still holds it.
         std::shared_ptr<SceneTriangles> SceneForRebuild();
+        // Gathers, orders and caches the scene of the active view; OrderTicks receives the time spent ordering.
+        std::shared_ptr<const SceneTriangles> RebuildScene(bool HasReflection, const Vec3& ReflectionPoint,
+                                                           const Vec3& ReflectionNormal, Uint64& OrderTicks);
         // Clears the view's terrain indices and drops the buffers of terrains deleted or back on the CPU path.
         void PrepareStaticTerrains(PreparedViewGeometry& Geometry);
         // The terrains drawn before the objects, or those drawn after them, as their CPU triangles would be.
