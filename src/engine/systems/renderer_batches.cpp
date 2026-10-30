@@ -1,9 +1,9 @@
 #include "engine_kernel.hpp"
 #include "graphics_device_system.hpp"
-#include "sprite_system.hpp"
 #include "image_store.hpp"
 #include "platform_io.hpp"
 #include "renderer_internal.hpp"
+#include "sprite_system.hpp"
 
 namespace dbc
 {
@@ -48,19 +48,17 @@ namespace dbc
     // The material rides in the box-colour attributes: ambient, alpha override, specular and emissive.
     void FillSurfaceMaterial(GpuVertex& Out, const SurfaceStyle& Style)
     {
-        const auto Channel = [](uint32_t Packed, unsigned Shift)
-        { return static_cast<float>((Packed >> Shift) & 0xFFu) / 255.0f; };
-        Out.BoxTrR = Channel(Style.AmbientColor, 16u);
-        Out.BoxTrG = Channel(Style.AmbientColor, 8u);
-        Out.BoxTrB = Channel(Style.AmbientColor, 0u);
+        Out.BoxTrR = PackedChannel(Style.AmbientColor, 16u);
+        Out.BoxTrG = PackedChannel(Style.AmbientColor, 8u);
+        Out.BoxTrB = PackedChannel(Style.AmbientColor, 0u);
         Out.BoxTrA = Style.AlphaOverride >= 0.0f ? -(Style.AlphaOverride + 1.0f) : 0.0f;
-        Out.BoxBrR = Channel(Style.SpecularColor, 16u);
-        Out.BoxBrG = Channel(Style.SpecularColor, 8u);
-        Out.BoxBrB = Channel(Style.SpecularColor, 0u);
+        Out.BoxBrR = PackedChannel(Style.SpecularColor, 16u);
+        Out.BoxBrG = PackedChannel(Style.SpecularColor, 8u);
+        Out.BoxBrB = PackedChannel(Style.SpecularColor, 0u);
         Out.BoxBrA = Style.SpecularPower;
-        Out.BoxBlR = Channel(Style.EmissiveColor, 16u);
-        Out.BoxBlG = Channel(Style.EmissiveColor, 8u);
-        Out.BoxBlB = Channel(Style.EmissiveColor, 0u);
+        Out.BoxBlR = PackedChannel(Style.EmissiveColor, 16u);
+        Out.BoxBlG = PackedChannel(Style.EmissiveColor, 8u);
+        Out.BoxBlB = PackedChannel(Style.EmissiveColor, 0u);
         Out.BoxBlA = Style.AlphaTestThreshold;
     }
 
@@ -84,8 +82,6 @@ namespace dbc
         const Uint32 First = static_cast<Uint32>(Vertices.size());
         for (int I = 0; I < 3; ++I)
         {
-            const auto Channel = [](uint32_t Packed, unsigned Shift)
-            { return static_cast<float>((Packed >> Shift) & 0xFFu) / 255.0f; };
             GpuVertex Out{};
             Out.X = Pos[I][0];
             Out.Y = Pos[I][1];
@@ -93,9 +89,9 @@ namespace dbc
             Out.Nx = Normal[I][0];
             Out.Ny = Normal[I][1];
             Out.Nz = Normal[I][2];
-            Out.R = Color[I].r * Channel(Style.DiffuseColor, 16u);
-            Out.G = Color[I].g * Channel(Style.DiffuseColor, 8u);
-            Out.B = Color[I].b * Channel(Style.DiffuseColor, 0u);
+            Out.R = Color[I].r * PackedChannel(Style.DiffuseColor, 16u);
+            Out.G = Color[I].g * PackedChannel(Style.DiffuseColor, 8u);
+            Out.B = Color[I].b * PackedChannel(Style.DiffuseColor, 0u);
             Out.A = Color[I].a;
             Out.U = Uv[I].x;
             Out.V = Uv[I].y;
@@ -160,25 +156,14 @@ namespace dbc
                        SDL_GPUTexture* Texture, float X, float Y, float W, float H, SDL_FColor Color, float Z,
                        bool Transparent, bool Is2d, SurfaceStyle Style)
     {
-        if (W <= 0.0f || H <= 0.0f)
-        {
-            return;
-        }
-        const float PosA[3][3]{{X, Y, Z}, {X + W, Y, Z}, {X + W, Y + H, Z}};
-        const float ZeroN[3][3]{};
-        const SDL_FColor ColA[3]{Color, Color, Color};
-        const SDL_FPoint UvA[3]{{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}};
-        dbc::AppendGpuTriangle(K, Vertices, Batches, Texture, PosA, ZeroN, ColA, UvA, Transparent, Is2d, false, Style);
-
-        const float PosB[3][3]{{X, Y, Z}, {X + W, Y + H, Z}, {X, Y + H, Z}};
-        const SDL_FColor ColB[3]{Color, Color, Color};
-        const SDL_FPoint UvB[3]{{0.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
-        dbc::AppendGpuTriangle(K, Vertices, Batches, Texture, PosB, ZeroN, ColB, UvB, Transparent, Is2d, false, Style);
+        AppendGpuQuadUv(K, Vertices, Batches, Texture, X, Y, W, H, Color, SDL_FPoint{0.0f, 0.0f},
+                        SDL_FPoint{1.0f, 1.0f}, Z, Transparent, Is2d, Style);
     }
 
     void AppendGpuQuadUv(EngineKernel& K, std::vector<GpuVertex>& Vertices, std::vector<GpuBatch>& Batches,
                          SDL_GPUTexture* Texture, float X, float Y, float W, float H, SDL_FColor Color,
-                         const SDL_FPoint& Uv0, const SDL_FPoint& Uv1, float Z, bool Transparent, bool Is2d)
+                         const SDL_FPoint& Uv0, const SDL_FPoint& Uv1, float Z, bool Transparent, bool Is2d,
+                         SurfaceStyle Style)
     {
         if (W <= 0.0f || H <= 0.0f)
         {
@@ -188,12 +173,12 @@ namespace dbc
         const float ZeroN[3][3]{};
         const SDL_FColor ColA[3]{Color, Color, Color};
         const SDL_FPoint UvA[3]{{Uv0.x, Uv0.y}, {Uv1.x, Uv0.y}, {Uv1.x, Uv1.y}};
-        dbc::AppendGpuTriangle(K, Vertices, Batches, Texture, PosA, ZeroN, ColA, UvA, Transparent, Is2d);
+        dbc::AppendGpuTriangle(K, Vertices, Batches, Texture, PosA, ZeroN, ColA, UvA, Transparent, Is2d, false, Style);
 
         const float PosB[3][3]{{X, Y, Z}, {X + W, Y + H, Z}, {X, Y + H, Z}};
         const SDL_FColor ColB[3]{Color, Color, Color};
         const SDL_FPoint UvB[3]{{Uv0.x, Uv0.y}, {Uv1.x, Uv1.y}, {Uv0.x, Uv1.y}};
-        dbc::AppendGpuTriangle(K, Vertices, Batches, Texture, PosB, ZeroN, ColB, UvB, Transparent, Is2d);
+        dbc::AppendGpuTriangle(K, Vertices, Batches, Texture, PosB, ZeroN, ColB, UvB, Transparent, Is2d, false, Style);
     }
 
     void AppendGpuSpriteQuad(EngineKernel& K, std::vector<GpuVertex>& Vertices, std::vector<GpuBatch>& Batches,

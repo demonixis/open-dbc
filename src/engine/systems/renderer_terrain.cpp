@@ -121,7 +121,6 @@ namespace dbc
                 Batch.Texture = Img ? dbc::ImageGpuTexture(K, *Img, false) : nullptr;
                 if (!Batch.Texture)
                     Batch.Texture = WhiteGpuTexture(K);
-                Batch.FirstVertex = static_cast<Uint32>(Geometry.Vertices.size());
                 Batch.Style.Wireframe = Terrain.Wireframe;
                 Batch.Style.Fog = Terrain.Fog;
                 Batch.Style.Ambient = Terrain.Ambient;

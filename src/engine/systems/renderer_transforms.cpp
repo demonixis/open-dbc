@@ -3,8 +3,39 @@
 #include "object_manager.hpp"
 #include "renderer_internal.hpp"
 
+#include <utility>
+
 namespace dbc
 {
+    namespace
+    {
+        // Brings the cached node transforms up to the object's animation time and clip.
+        void RefreshNodeGlobals(const Object3D& Object)
+        {
+            double TimeTicks = Object.AnimTimeSeconds * Object.ActiveAnimTicksPerSec;
+            if (Object.ActiveAnimDurationTicks > 0.0)
+            {
+                if (Object.Looping)
+                {
+                    TimeTicks = std::fmod(TimeTicks, Object.ActiveAnimDurationTicks);
+                    if (TimeTicks < 0.0)
+                        TimeTicks += Object.ActiveAnimDurationTicks;
+                }
+                else
+                {
+                    TimeTicks = std::clamp(TimeTicks, 0.0, Object.ActiveAnimDurationTicks);
+                }
+            }
+            if (TimeTicks != Object.CachedAnimTicks || Object.ActiveAnimationClip != Object.CachedAnimClip)
+            {
+                Object.CachedNodeGlobals.clear();
+                BuildObjectNodeGlobalMap(Object, TimeTicks, Object.CachedNodeGlobals);
+                Object.CachedAnimTicks = TimeTicks;
+                Object.CachedAnimClip = Object.ActiveAnimationClip;
+            }
+        }
+    } // namespace
+
     [[nodiscard]] Vec3 TransformProceduralMeshPoint(const Object3D& Object, const Mesh& MeshValue, const Vec3& Point)
     {
         Vec3 Result = ApplyAiTransformPoint(MeshValue.Geometry().BindTransform, Point);
@@ -26,7 +57,7 @@ namespace dbc
             {
                 break;
             }
-            if (const Mesh* Limb = dbc::FindLimbMesh(K, *Target, Current->GluedTargetLimb))
+            if (const Mesh* Limb = dbc::FindLimbMesh(*Target, Current->GluedTargetLimb))
             {
                 if (Current->GlueMode == 1)
                 {
@@ -58,7 +89,7 @@ namespace dbc
             {
                 break;
             }
-            if (const Mesh* Limb = dbc::FindLimbMesh(K, *Target, Current->GluedTargetLimb))
+            if (const Mesh* Limb = dbc::FindLimbMesh(*Target, Current->GluedTargetLimb))
             {
                 if (Current->GlueMode != 1)
                     P = ApplyLimbRotation(MakeLimbSteps(*Limb), P);
@@ -79,27 +110,7 @@ namespace dbc
         if (!Object.AssimpScene || !Object.AssimpScene->mRootNode || MeshValue.SourceMeshIndex < 0)
             return nullptr;
 
-        double TimeTicks = Object.AnimTimeSeconds * Object.ActiveAnimTicksPerSec;
-        if (Object.ActiveAnimDurationTicks > 0.0)
-        {
-            if (Object.Looping)
-            {
-                TimeTicks = std::fmod(TimeTicks, Object.ActiveAnimDurationTicks);
-                if (TimeTicks < 0.0)
-                    TimeTicks += Object.ActiveAnimDurationTicks;
-            }
-            else
-            {
-                TimeTicks = std::clamp(TimeTicks, 0.0, Object.ActiveAnimDurationTicks);
-            }
-        }
-        if (TimeTicks != Object.CachedAnimTicks || Object.ActiveAnimationClip != Object.CachedAnimClip)
-        {
-            Object.CachedNodeGlobals.clear();
-            BuildObjectNodeGlobalMap(Object, TimeTicks, Object.CachedNodeGlobals);
-            Object.CachedAnimTicks = TimeTicks;
-            Object.CachedAnimClip = Object.ActiveAnimationClip;
-        }
+        RefreshNodeGlobals(Object);
         const auto Node = Object.MeshNodeByIndex.find(static_cast<unsigned int>(MeshValue.SourceMeshIndex));
         if (Node == Object.MeshNodeByIndex.end())
             return nullptr;
@@ -119,7 +130,7 @@ namespace dbc
 
     [[nodiscard]] Vec3 WorldLimbOrigin(EngineKernel& K, const Object3D& Object, int LimbId)
     {
-        if (const Mesh* Limb = dbc::FindLimbMesh(K, Object, LimbId))
+        if (const Mesh* Limb = dbc::FindLimbMesh(Object, LimbId))
         {
             const aiMatrix4x4* MeshTransform = CurrentImportedMeshTransform(Object, *Limb);
             const Vec3 Local = TransformMeshPointInObject(Object, *Limb, Vec3{}, MeshTransform, false);
@@ -131,29 +142,7 @@ namespace dbc
             const aiNode* LimbNode = Object.LimbNodes[static_cast<size_t>(LimbId)];
             if (LimbNode && Object.AssimpScene->mRootNode)
             {
-                double TimeTicks = Object.AnimTimeSeconds * Object.ActiveAnimTicksPerSec;
-                if (Object.ActiveAnimDurationTicks > 0.0)
-                {
-                    if (Object.Looping)
-                    {
-                        TimeTicks = std::fmod(TimeTicks, Object.ActiveAnimDurationTicks);
-                        if (TimeTicks < 0.0)
-                        {
-                            TimeTicks += Object.ActiveAnimDurationTicks;
-                        }
-                    }
-                    else
-                    {
-                        TimeTicks = std::clamp(TimeTicks, 0.0, Object.ActiveAnimDurationTicks);
-                    }
-                }
-                if ((TimeTicks != Object.CachedAnimTicks) || (Object.ActiveAnimationClip != Object.CachedAnimClip))
-                {
-                    Object.CachedNodeGlobals.clear();
-                    BuildObjectNodeGlobalMap(Object, TimeTicks, Object.CachedNodeGlobals);
-                    Object.CachedAnimTicks = TimeTicks;
-                    Object.CachedAnimClip = Object.ActiveAnimationClip;
-                }
+                RefreshNodeGlobals(Object);
                 const auto GlobalIt = Object.CachedNodeGlobals.find(LimbNode);
                 if (GlobalIt != Object.CachedNodeGlobals.end())
                 {
@@ -222,7 +211,7 @@ namespace dbc
         return true;
     }
 
-    Mesh* FindLimbMesh([[maybe_unused]] EngineKernel& K, Object3D& Object, int LimbId)
+    const Mesh* FindLimbMesh(const Object3D& Object, int LimbId)
     {
         if (LimbId < 0)
         {
@@ -240,7 +229,7 @@ namespace dbc
             if (Node && Node->mNumMeshes > 0)
             {
                 const unsigned int Target = Node->mMeshes[0];
-                for (Mesh& M : Object.Meshes)
+                for (const Mesh& M : Object.Meshes)
                 {
                     if (M.SourceMeshIndex == static_cast<int>(Target))
                     {
@@ -259,35 +248,8 @@ namespace dbc
         return nullptr;
     }
 
-    const Mesh* FindLimbMesh([[maybe_unused]] EngineKernel& K, const Object3D& Object, int LimbId)
+    Mesh* FindLimbMesh(Object3D& Object, int LimbId)
     {
-        if (LimbId < 0)
-        {
-            return nullptr;
-        }
-        const size_t Li = static_cast<size_t>(LimbId);
-
-        if (Li < Object.LimbNodes.size())
-        {
-            const aiNode* Node = Object.LimbNodes[Li];
-            if (Node && Node->mNumMeshes > 0)
-            {
-                const unsigned int Target = Node->mMeshes[0];
-                for (const Mesh& M : Object.Meshes)
-                {
-                    if (M.SourceMeshIndex == static_cast<int>(Target))
-                    {
-                        return &M;
-                    }
-                }
-            }
-            return nullptr;
-        }
-
-        if (Li < Object.Meshes.size())
-        {
-            return &Object.Meshes[Li];
-        }
-        return nullptr;
+        return const_cast<Mesh*>(FindLimbMesh(std::as_const(Object), LimbId));
     }
 } // namespace dbc

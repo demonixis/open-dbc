@@ -231,11 +231,9 @@ namespace dbc
         Instance.Normal[1][3] = Object.UseLighting ? 1.0f : 0.0f;
         Instance.Normal[2][3] = FaceNormals || K.Renderer().NormalizeNormals() ? 1.0f : 0.0f;
         // As AppendGpuTriangle scales the corner colours by the diffuse material.
-        const auto Channel = [](uint32_t Packed, unsigned Shift)
-        { return static_cast<float>((Packed >> Shift) & 0xFFu) / 255.0f; };
-        Instance.ColorScale[0] = Surface.Color.r * Channel(Style.DiffuseColor, 16u);
-        Instance.ColorScale[1] = Surface.Color.g * Channel(Style.DiffuseColor, 8u);
-        Instance.ColorScale[2] = Surface.Color.b * Channel(Style.DiffuseColor, 0u);
+        Instance.ColorScale[0] = Surface.Color.r * PackedChannel(Style.DiffuseColor, 16u);
+        Instance.ColorScale[1] = Surface.Color.g * PackedChannel(Style.DiffuseColor, 8u);
+        Instance.ColorScale[2] = Surface.Color.b * PackedChannel(Style.DiffuseColor, 0u);
         Instance.ColorScale[3] = Surface.Color.a;
         // A mesh without texture coordinates takes the scroll offset alone, as the CPU path does.
         Instance.UvTransform[0] = Object.TexScaleU;
@@ -261,11 +259,10 @@ namespace dbc
     // Scene, when given, receives how many objects the pass went through, showed and culled and, with GpuMeshes,
     // the meshes drawn from GPU buffers instead of triangles.
     void RenderObjects(EngineKernel& K, std::vector<Triangle>& WorldTris, std::vector<Triangle>& OverlayTris,
-                       SceneTriangles* Counts, bool GpuMeshes)
+                       SceneTriangles* Scene, bool GpuMeshes)
     {
-        const RenderView View = K.Renderer().ActiveView()
-                                    ? *K.Renderer().ActiveView()
-                                    : K.Renderer().CameraView(K.Core().WindowWidth(), K.Core().WindowHeight());
+        std::optional<RenderView> CameraView;
+        const RenderView& View = ActiveOrCameraView(K, CameraView);
 
         const Vec3 Camera = ActiveCameraPosition(K);
         const bool Reflecting = K.Renderer().ReflectionViewEnabled();
@@ -290,12 +287,12 @@ namespace dbc
         K.Objects().ForEachObject(
             [&](int Id, Object3D& Object)
             {
-                if (Counts)
-                    ++Counts->Objects;
+                if (Scene)
+                    ++Scene->Objects;
                 if (!Object.Visible)
                     return;
-                if (Counts)
-                    ++Counts->VisibleObjects;
+                if (Scene)
+                    ++Scene->VisibleObjects;
 
                 // ── Frustum culling (sphere test) ────────────────────────────────────
                 // Skip objects whose bounding sphere lies entirely outside the view frustum.
@@ -314,8 +311,8 @@ namespace dbc
 
                     if (!View.ContainsSphere({Vc.X, Vc.Y, Vc.Z}, WorldRadius, Object.Ghosted && Object.GhostMode == 0))
                     {
-                        if (Counts)
-                            ++Counts->CulledObjects;
+                        if (Scene)
+                            ++Scene->CulledObjects;
                         return;
                     }
                 }
@@ -367,7 +364,7 @@ namespace dbc
                 // An object locked to the screen lives in camera space, where the eye is the origin.
                 const Vec3 EyePoint = Object.LockToScreen ? Vec3{0.0f, 0.0f, 0.0f} : Camera;
                 // Opaque, depth-tested objects in the world, outside any glue chain, with no shadow or reflection.
-                const bool GpuObject = GpuMeshes && Counts && AlphaPhase < 0 && !Object.LockToScreen &&
+                const bool GpuObject = GpuMeshes && Scene && AlphaPhase < 0 && !Object.LockToScreen &&
                                        Object.GluedTargetObject <= 0 && Object.Alpha >= 0.999f &&
                                        !Object.AlphaMapping && !Object.TransparentBlack && Object.DepthTest &&
                                        Object.DepthWrite && !Object.ShadowShading && !Object.ReflectionShading;
@@ -419,7 +416,7 @@ namespace dbc
                     const std::vector<aiMatrix4x4> BonePalette = BuildBonePalette(Object, MeshValue, NodeGlobals);
                     const MeshWorldTransform ToWorld(K, Object, MeshValue, MeshTransform);
                     if (GpuObject && BonePalette.empty() &&
-                        AppendGpuMeshDraw(K, Object, MeshValue, ToWorld, Counts->MeshDraws))
+                        AppendGpuMeshDraw(K, Object, MeshValue, ToWorld, Scene->MeshDraws))
                         continue;
                     const MeshGeometry& Geometry = MeshValue.Geometry();
                     std::vector<Vec3> SkinnedPositions;
@@ -694,7 +691,6 @@ namespace dbc
                             }
 
                             Triangle Tri;
-                            Tri.Texture = Surface->Texture;
                             Tri.GpuTexture = Surface->GpuTexture;
                             Tri.Depth = (Pd0 + Pd1 + Pd2) / 3.0f;
                             const bool AutomaticTransparency = Surface->BlendTransparent || C0.Color.a < 0.999f ||
@@ -762,10 +758,10 @@ namespace dbc
                         };
                         dbc::AppendClippedViewTriangle(
                             K, ViewCorner(V0, C0, ShaderDirection0), ViewCorner(V1, C1, ShaderDirection1),
-                            ViewCorner(V2, C2, ShaderDirection2), Surface->Texture, Surface->GpuTexture,
-                            Surface->BlendTransparent, WorldTris, Surface->BlendAdditive, Surface->Style, AlphaPhase,
-                            VeryEarly, DepthBias, -1, 0, Object.DepthWrite, Object.DepthTest,
-                            Surface->AuxiliaryGpuTextures, Surface->CubeGpuTexture, Surface->StyleHash);
+                            ViewCorner(V2, C2, ShaderDirection2), Surface->GpuTexture, Surface->BlendTransparent,
+                            WorldTris, Surface->BlendAdditive, Surface->Style, AlphaPhase, VeryEarly, DepthBias, -1, 0,
+                            Object.DepthWrite, Object.DepthTest, Surface->AuxiliaryGpuTextures, Surface->CubeGpuTexture,
+                            Surface->StyleHash);
                     }
                 }
                 dbc::RenderObjectBounds(K, Object, WorldTris);

@@ -274,21 +274,22 @@ namespace dbc
         return OutputCount;
     }
 
+    const RenderView& ActiveOrCameraView(EngineKernel& K, std::optional<RenderView>& Storage)
+    {
+        if (const RenderView* View = K.Renderer().ActiveView())
+            return *View;
+        return Storage.emplace(K.Renderer().CameraView(K.Core().WindowWidth(), K.Core().WindowHeight()));
+    }
+
     void AppendClippedViewTriangle(EngineKernel& K, const ViewVertex& V0, const ViewVertex& V1, const ViewVertex& V2,
-                                   SDL_Texture* Texture, SDL_GPUTexture* GpuTexture, bool Transparent,
-                                   std::vector<Triangle>& Tris, bool Additive, const SurfaceStyle& Style,
-                                   int AlphaPhase, bool VeryEarly, float DepthBias, int MatrixGhostMode,
-                                   int RenderPriority, bool DepthWrite, bool DepthTest,
-                                   const std::array<SDL_GPUTexture*, 7>& AuxiliaryGpuTextures,
+                                   SDL_GPUTexture* GpuTexture, bool Transparent, std::vector<Triangle>& Tris,
+                                   bool Additive, const SurfaceStyle& Style, int AlphaPhase, bool VeryEarly,
+                                   float DepthBias, int MatrixGhostMode, int RenderPriority, bool DepthWrite,
+                                   bool DepthTest, const std::array<SDL_GPUTexture*, 7>& AuxiliaryGpuTextures,
                                    SDL_GPUTexture* CubeGpuTexture, std::optional<uint32_t> StyleHash)
     {
         std::optional<RenderView> CameraView;
-        const RenderView* View = K.Renderer().ActiveView();
-        if (!View)
-        {
-            CameraView.emplace(K.Renderer().CameraView(K.Core().WindowWidth(), K.Core().WindowHeight()));
-            View = &*CameraView;
-        }
+        const RenderView* View = &ActiveOrCameraView(K, CameraView);
 
         ViewVertex ClippedA[8]{};
         ViewVertex ClippedB[8]{};
@@ -315,7 +316,6 @@ namespace dbc
             const ViewVertex C = ClippedA[I + 1];
 
             Triangle Tri;
-            Tri.Texture = Texture;
             Tri.GpuTexture = GpuTexture;
             Tri.AuxiliaryGpuTextures = AuxiliaryGpuTextures;
             Tri.CubeGpuTexture = CubeGpuTexture;

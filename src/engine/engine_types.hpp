@@ -598,7 +598,6 @@ namespace dbc
 
     struct Triangle
     {
-        SDL_Texture* Texture = nullptr;
         SDL_GPUTexture* GpuTexture = nullptr;
         float Depth = 0.0f;
         // DrawStateHash, recorded when the triangle is built so ordering never reads its state back.
@@ -653,7 +652,7 @@ namespace dbc
         float CubeDirection[3]{};
     };
 
-    // A vertex of a GPU-resident mesh, in object space; the shader's other inputs come once per draw.
+    // A vertex of a GPU-resident mesh, in object space; the shader's other inputs come once per instance.
     struct GpuMeshVertex
     {
         float Position[3]{};

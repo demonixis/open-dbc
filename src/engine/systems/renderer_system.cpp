@@ -11,7 +11,6 @@
 #include "log.hpp"
 #include "matrix_manager.hpp"
 #include "object_manager.hpp"
-#include "platform_io.hpp"
 #include "renderer_internal.hpp"
 #include "renderer_transforms.hpp"
 #include "sprite_system.hpp"
@@ -21,7 +20,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include <limits>
 
@@ -152,6 +150,18 @@ namespace dbc
             return static_cast<double>(Ticks) * 1000.0 / static_cast<double>(SDL_GetPerformanceFrequency());
         }
 
+        // Puts back the view that was active before a view was built or recorded.
+        struct ViewScope
+        {
+            RendererSystem& Renderer;
+            const RenderView* Previous;
+
+            ~ViewScope()
+            {
+                Renderer.SetActiveView(Previous);
+            }
+        };
+
         // Adds the time from its construction to its destruction to a step's milliseconds.
         struct StepTimer
         {
@@ -280,16 +290,7 @@ namespace dbc
         const RenderView* PreviousView = ActiveView();
         SetActiveView(&View);
 
-        struct ViewScope
-        {
-            RendererSystem& Renderer;
-            const RenderView* Previous;
-
-            ~ViewScope()
-            {
-                Renderer.SetActiveView(Previous);
-            }
-        } Scope{*this, PreviousView};
+        const ViewScope Scope{*this, PreviousView};
 
         // When fog is on and backdrop is off, DarkBASIC Classic uses the fog colour as the clear colour
         // so the horizon blends seamlessly into the sky.
@@ -621,16 +622,7 @@ namespace dbc
         const RenderView* PreviousView = ActiveView();
         SetActiveView(&View);
 
-        struct ViewScope
-        {
-            RendererSystem& Renderer;
-            const RenderView* Previous;
-
-            ~ViewScope()
-            {
-                Renderer.SetActiveView(Previous);
-            }
-        } Scope{*this, PreviousView};
+        const ViewScope Scope{*this, PreviousView};
 
         const auto& Vertices = Geometry.Vertices;
         const auto& Batches = Geometry.Batches;
@@ -1461,7 +1453,7 @@ namespace dbc
     }
 
     // =======================================================================
-    // RendererSystem — public methods (delegate to file-local implementations)
+    // RendererSystem — public methods (delegate to the renderer's other files)
     // =======================================================================
 
     RenderView RendererSystem::CameraView(Uint32 PhysicalWidth, Uint32 PhysicalHeight) const
@@ -1602,12 +1594,12 @@ namespace dbc
 
     Mesh* RendererSystem::FindLimbMesh(Object3D& Object, int LimbId)
     {
-        return dbc::FindLimbMesh(Kernel_, Object, LimbId);
+        return dbc::FindLimbMesh(Object, LimbId);
     }
 
     const Mesh* RendererSystem::FindLimbMesh(const Object3D& Object, int LimbId)
     {
-        return dbc::FindLimbMesh(Kernel_, Object, LimbId);
+        return dbc::FindLimbMesh(Object, LimbId);
     }
 
     Vec3 RendererSystem::WorldObjectOrigin(const Object3D& Object)
@@ -1742,23 +1734,6 @@ namespace dbc
     float RendererSystem::FogFactor(float Z)
     {
         return dbc::FogFactor(Kernel_, Z);
-    }
-
-    void RendererSystem::AppendClippedViewTriangle(const ViewVertex& V0, const ViewVertex& V1, const ViewVertex& V2,
-                                                   SDL_Texture* Texture, SDL_GPUTexture* GpuTexture, bool Transparent,
-                                                   std::vector<Triangle>& Tris, bool Additive)
-    {
-        dbc::AppendClippedViewTriangle(Kernel_, V0, V1, V2, Texture, GpuTexture, Transparent, Tris, Additive);
-    }
-
-    GpuFragmentUniforms RendererSystem::BuildFragmentUniforms()
-    {
-        return dbc::BuildFragmentUniforms(Kernel_);
-    }
-
-    SDL_GPUTexture* RendererSystem::ImageGpuTexture(Image& ImageValue, bool TransparentBlack)
-    {
-        return dbc::ImageGpuTexture(Kernel_, ImageValue, TransparentBlack);
     }
 
     // =======================================================================

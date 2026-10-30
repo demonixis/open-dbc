@@ -104,7 +104,7 @@ namespace dbc
         ~RendererSystem();
 
         // Main render entry point (called by CoreSystem::Sync)
-        // retain_2d keeps transient pasted sprites and Classic screen text alive
+        // Retain2d keeps transient pasted sprites and Classic screen text alive
         // while execution is blocked. Screen primitives and image pastes live
         // persistently in bitmap 0 until CLS and do not depend on this flag.
         void RenderScene(bool Retain2d = false);
@@ -158,11 +158,6 @@ namespace dbc
             return MipmapModeOverride_;
         }
 
-        [[nodiscard]] int MipmapMode() const
-        {
-            return MipmapMode_;
-        }
-
         [[nodiscard]] int ResolveMipmapMode(int SurfaceMode) const;
         void ResetRuntimeCompatibilityState();
 
@@ -209,11 +204,6 @@ namespace dbc
         }
 
         float FogFactor(float Z);
-        void AppendClippedViewTriangle(const ViewVertex& V0, const ViewVertex& V1, const ViewVertex& V2,
-                                       SDL_Texture* Texture, SDL_GPUTexture* GpuTexture, bool Transparent,
-                                       std::vector<Triangle>& Tris, bool Additive = false);
-        GpuFragmentUniforms BuildFragmentUniforms();
-        SDL_GPUTexture* ImageGpuTexture(Image& ImageValue, bool TransparentBlack);
 
         // Mesh construction (static — pure functions)
         static void AddTriangle(Mesh& MeshValue, const Vec3& A, const Vec3& B, const Vec3& C,
@@ -277,7 +267,7 @@ namespace dbc
         [[nodiscard]] bool DrawsTerrainOnGpu(const Matrix& Terrain) const;
 
         // Readies the GPU buffers of a geometry for drawing, once per revision; false when it cannot be drawn
-        // from them (no normals for every vertex, an index outside the vertices).
+        // from them (a zero-length vertex normal, an index outside the vertices).
         [[nodiscard]] bool PrepareGpuMesh(const std::shared_ptr<const MeshGeometry>& Geometry)
         {
             return GpuMeshEntry(Geometry) != nullptr;

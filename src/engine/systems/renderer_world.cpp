@@ -15,16 +15,10 @@ namespace dbc
         if (MatrixValue.SegX <= 0 || MatrixValue.SegZ <= 0)
             return;
         Image* Img = MatrixValue.ImageId != 0 ? K.ImageStoreRef().GetImage(MatrixValue.ImageId) : nullptr;
-        SDL_Texture* Texture = Img ? Img->Texture : nullptr;
         SDL_GPUTexture* GpuTexture = Img ? dbc::ImageGpuTexture(K, *Img, false) : nullptr;
 
         std::optional<RenderView> CameraView;
-        const RenderView* View = K.Renderer().ActiveView();
-        if (!View)
-        {
-            CameraView.emplace(K.Renderer().CameraView(K.Core().WindowWidth(), K.Core().WindowHeight()));
-            View = &*CameraView;
-        }
+        const RenderView* View = &ActiveOrCameraView(K, CameraView);
         const Vec3 Camera = ActiveCameraPosition(K);
         const bool CullBackFaces = MatrixValue.Cull && !K.Renderer().ReflectionViewEnabled();
 
@@ -231,20 +225,20 @@ namespace dbc
                         if (MatrixValue.IsTerrain)
                         {
                             if (FrontFacing(P00.World, P11.World, P10.World))
-                                dbc::AppendClippedViewTriangle(K, Q0, Q2, Q1, Texture, GpuTexture, false, Tris, false,
-                                                               Style, AlphaPhase, false, 0.0f, GhostMode, Priority);
+                                dbc::AppendClippedViewTriangle(K, Q0, Q2, Q1, GpuTexture, false, Tris, false, Style,
+                                                               AlphaPhase, false, 0.0f, GhostMode, Priority);
                             if (FrontFacing(P00.World, P01.World, P11.World))
-                                dbc::AppendClippedViewTriangle(K, Q0, Q3, Q2, Texture, GpuTexture, false, Tris, false,
-                                                               Style, AlphaPhase, false, 0.0f, GhostMode, Priority);
+                                dbc::AppendClippedViewTriangle(K, Q0, Q3, Q2, GpuTexture, false, Tris, false, Style,
+                                                               AlphaPhase, false, 0.0f, GhostMode, Priority);
                         }
                         else
                         {
                             if (FrontFacing(P00.World, P10.World, P11.World))
-                                dbc::AppendClippedViewTriangle(K, Q0, Q1, Q2, Texture, GpuTexture, false, Tris, false,
-                                                               Style, AlphaPhase, false, 0.0f, GhostMode, Priority);
+                                dbc::AppendClippedViewTriangle(K, Q0, Q1, Q2, GpuTexture, false, Tris, false, Style,
+                                                               AlphaPhase, false, 0.0f, GhostMode, Priority);
                             if (FrontFacing(P00.World, P11.World, P01.World))
-                                dbc::AppendClippedViewTriangle(K, Q0, Q2, Q3, Texture, GpuTexture, false, Tris, false,
-                                                               Style, AlphaPhase, false, 0.0f, GhostMode, Priority);
+                                dbc::AppendClippedViewTriangle(K, Q0, Q2, Q3, GpuTexture, false, Tris, false, Style,
+                                                               AlphaPhase, false, 0.0f, GhostMode, Priority);
                         }
                     }
                 }
@@ -267,21 +261,14 @@ namespace dbc
         DecodeBspPvs(Map, Leaf, Visible);
 
         std::optional<RenderView> CameraView;
-        const RenderView* View = K.Renderer().ActiveView();
-        if (!View)
-        {
-            CameraView.emplace(K.Renderer().CameraView(K.Core().WindowWidth(), K.Core().WindowHeight()));
-            View = &*CameraView;
-        }
+        const RenderView* View = &ActiveOrCameraView(K, CameraView);
         const Vec3 Camera = ActiveCameraPosition(K);
 
-        std::vector<SDL_Texture*> Textures(Map.TextureNames.size(), nullptr);
         std::vector<SDL_GPUTexture*> GpuTextures(Map.TextureNames.size(), nullptr);
         for (std::size_t Index = 0; Index < Map.TextureNames.size(); ++Index)
         {
             if (Image* Img = K.ImageStoreRef().GetImage(World.TextureImage(static_cast<int>(Index))))
             {
-                Textures[Index] = Img->Texture;
                 GpuTextures[Index] = dbc::ImageGpuTexture(K, *Img, false);
             }
         }
@@ -331,8 +318,8 @@ namespace dbc
                                                   static_cast<float>(Source.Color & 0xFFu) / 255.0f,
                                                   static_cast<float>((Source.Color >> 24) & 0xFFu) / 255.0f};
                     }
-                    dbc::AppendClippedViewTriangle(K, Corners[0], Corners[1], Corners[2], Textures[Polygon.Texture],
-                                                   GpuTextures[Polygon.Texture], false, Tris, false, Style);
+                    dbc::AppendClippedViewTriangle(K, Corners[0], Corners[1], Corners[2], GpuTextures[Polygon.Texture],
+                                                   false, Tris, false, Style);
                 }
             }
         }
@@ -416,8 +403,8 @@ namespace dbc
                 }
                 if (Valid)
                 {
-                    dbc::AppendClippedViewTriangle(K, Vertices[0], Vertices[1], Vertices[2], nullptr, nullptr, false,
-                                                   Tris, false, Style, 0, false, -0.0001f, -1, 2, false, true);
+                    dbc::AppendClippedViewTriangle(K, Vertices[0], Vertices[1], Vertices[2], nullptr, false, Tris,
+                                                   false, Style, 0, false, -0.0001f, -1, 2, false, true);
                 }
             }
         };
@@ -435,11 +422,9 @@ namespace dbc
                 if (!Emitter.Visible)
                     return;
 
-                SDL_Texture* Texture = nullptr;
                 SDL_GPUTexture* GpuTexture = nullptr;
                 if (Image* ParticleImage = K.ImageStoreRef().GetImage(Emitter.ImageId))
                 {
-                    Texture = ParticleImage->Texture;
                     GpuTexture = dbc::ImageGpuTexture(K, *ParticleImage, false);
                 }
 
@@ -490,12 +475,10 @@ namespace dbc
                             Center.X + HalfSize, Center.Y - HalfSize, Center.Z, 0.0f, 0.0f, 0.0f, {1.0f, 1.0f}, Color};
                         const ViewVertex BottomLeft{
                             Center.X - HalfSize, Center.Y - HalfSize, Center.Z, 0.0f, 0.0f, 0.0f, {0.0f, 1.0f}, Color};
-                        dbc::AppendClippedViewTriangle(K, TopLeft, BottomRight, TopRight, Texture, GpuTexture,
-                                                       Emitter.Ghost, WorldTris, false, Style, -1, false, 0.0f,
-                                                       GhostMode, 1, false);
-                        dbc::AppendClippedViewTriangle(K, TopLeft, BottomLeft, BottomRight, Texture, GpuTexture,
-                                                       Emitter.Ghost, WorldTris, false, Style, -1, false, 0.0f,
-                                                       GhostMode, 1, false);
+                        dbc::AppendClippedViewTriangle(K, TopLeft, BottomRight, TopRight, GpuTexture, Emitter.Ghost,
+                                                       WorldTris, false, Style, -1, false, 0.0f, GhostMode, 1, false);
+                        dbc::AppendClippedViewTriangle(K, TopLeft, BottomLeft, BottomRight, GpuTexture, Emitter.Ghost,
+                                                       WorldTris, false, Style, -1, false, 0.0f, GhostMode, 1, false);
                         WorldPosition.X += TrailStep.X;
                         WorldPosition.Y += TrailStep.Y;
                         WorldPosition.Z += TrailStep.Z;

@@ -63,7 +63,7 @@ namespace dbc
                         V2.X = View2.X;
                         V2.Y = View2.Y;
                         V2.Z = View2.Z;
-                        dbc::AppendClippedViewTriangle(K, V0, V1, V2, nullptr, nullptr, false, Sources, false, Style);
+                        dbc::AppendClippedViewTriangle(K, V0, V1, V2, nullptr, false, Sources, false, Style);
                     }
                 }
             });
@@ -126,8 +126,8 @@ namespace dbc
             }
             const auto Append = [&](const Vec3& A, const Vec3& B, const Vec3& C)
             {
-                dbc::AppendClippedViewTriangle(K, MakeVertex(A), MakeVertex(B), MakeVertex(C), nullptr, nullptr, false,
-                                               Volumes, false, VolumeStyle, -1, false, 0.0f, -1, 0, false, true);
+                dbc::AppendClippedViewTriangle(K, MakeVertex(A), MakeVertex(B), MakeVertex(C), nullptr, false, Volumes,
+                                               false, VolumeStyle, -1, false, 0.0f, -1, 0, false, true);
             };
             Append(Base[0], Base[1], Base[2]);
             Append(Far[2], Far[1], Far[0]);

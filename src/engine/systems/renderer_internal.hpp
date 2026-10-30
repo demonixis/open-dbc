@@ -8,6 +8,12 @@ namespace dbc
 {
     struct SpriteData;
 
+    // One channel of a packed colour, from 0 to 1.
+    [[nodiscard]] inline float PackedChannel(uint32_t Packed, unsigned Shift)
+    {
+        return static_cast<float>((Packed >> Shift) & 0xFFu) / 255.0f;
+    }
+
     // Node animation: renderer_animation.cpp.
     aiMatrix4x4 EvaluateNodeLocalTransform(const Object3D& Object, const aiNode* Node, double TimeTicks,
                                            const std::unordered_map<std::string, const aiNodeAnim*>& Channels,
@@ -47,8 +53,8 @@ namespace dbc
         const std::unordered_map<const aiNode*, aiMatrix4x4>& NodeGlobals);
     [[nodiscard]] bool SkinMeshVertex(const Mesh& MeshValue, std::size_t VertexIndex,
                                       const std::vector<aiMatrix4x4>& BonePalette, Vec3& Point, Vec3& Normal);
-    Mesh* FindLimbMesh([[maybe_unused]] EngineKernel& K, Object3D& Object, int LimbId);
-    const Mesh* FindLimbMesh([[maybe_unused]] EngineKernel& K, const Object3D& Object, int LimbId);
+    const Mesh* FindLimbMesh(const Object3D& Object, int LimbId);
+    Mesh* FindLimbMesh(Object3D& Object, int LimbId);
 
     // Stencil shadow volumes: renderer_shadows.cpp.
     void AppendShadowMeshSources(EngineKernel& K, std::vector<Triangle>& Sources);
@@ -85,7 +91,7 @@ namespace dbc
     void AppendGpuQuadUv(EngineKernel& K, std::vector<GpuVertex>& Vertices, std::vector<GpuBatch>& Batches,
                          SDL_GPUTexture* Texture, float X, float Y, float W, float H, SDL_FColor Color,
                          const SDL_FPoint& Uv0, const SDL_FPoint& Uv1, float Z = 0.0f, bool Transparent = false,
-                         bool Is2d = true);
+                         bool Is2d = true, SurfaceStyle Style = {});
     void AppendGpuSpriteQuad(EngineKernel& K, std::vector<GpuVertex>& Vertices, std::vector<GpuBatch>& Batches,
                              SDL_GPUTexture* Texture, const SpriteData& Sprite, float Width, float Height,
                              SDL_FColor Color, bool Transparent);
@@ -103,6 +109,8 @@ namespace dbc
     void GroupGpuMeshDraws(std::vector<GpuMeshDraw>& Draws);
 
     // View transforms, clipping and fragment uniforms: renderer_view.cpp.
+    // The view being built or, outside a frame, the camera's, which Storage then holds.
+    [[nodiscard]] const RenderView& ActiveOrCameraView(EngineKernel& K, std::optional<RenderView>& Storage);
     [[nodiscard]] Vec3 ActiveCameraPosition(EngineKernel& K);
     [[nodiscard]] float FogFactor(EngineKernel& K, float Z);
 
@@ -147,11 +155,10 @@ namespace dbc
     [[nodiscard]] bool ProjectPointLocked(EngineKernel& K, float Wx, float Wy, float Wz, SDL_FPoint& OutPos,
                                           float& OutDepth);
     void AppendClippedViewTriangle(EngineKernel& K, const ViewVertex& V0, const ViewVertex& V1, const ViewVertex& V2,
-                                   SDL_Texture* Texture, SDL_GPUTexture* GpuTexture, bool Transparent,
-                                   std::vector<Triangle>& Tris, bool Additive = false, const SurfaceStyle& Style = {},
-                                   int AlphaPhase = -1, bool VeryEarly = false, float DepthBias = 0.0f,
-                                   int MatrixGhostMode = -1, int RenderPriority = 0, bool DepthWrite = true,
-                                   bool DepthTest = true,
+                                   SDL_GPUTexture* GpuTexture, bool Transparent, std::vector<Triangle>& Tris,
+                                   bool Additive = false, const SurfaceStyle& Style = {}, int AlphaPhase = -1,
+                                   bool VeryEarly = false, float DepthBias = 0.0f, int MatrixGhostMode = -1,
+                                   int RenderPriority = 0, bool DepthWrite = true, bool DepthTest = true,
                                    const std::array<SDL_GPUTexture*, 7>& AuxiliaryGpuTextures = {},
                                    SDL_GPUTexture* CubeGpuTexture = nullptr,
                                    std::optional<uint32_t> StyleHash = std::nullopt);
