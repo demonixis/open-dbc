@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include "core/i18n.hpp"
 #include "core/media_catalogue.hpp"
 #include "scene/heightmap.hpp"
 #include "scene/scene_geometry.hpp"
@@ -44,7 +45,7 @@ namespace dbc::studio
                 if (ImGui::Checkbox("##set", &Enabled))
                     Value = Enabled ? std::optional<T>(Default) : std::nullopt;
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("Unchecked: the engine default, and no statement");
+                    ImGui::SetTooltip("%s", Tr("Unchecked: the engine default, and no statement"));
                 ImGui::SameLine();
                 if (Value)
                 {
@@ -62,14 +63,14 @@ namespace dbc::studio
 
             void OptionalColor(const char* Label, std::optional<scene::Rgb>& Value, scene::Rgb Default)
             {
-                Optional(Label, Value, Default, [&](scene::Rgb& Color) { EditColor(Label, Color); });
+                Optional(Label, Value, Default, [&](scene::Rgb& Color) { EditColor(TrId(Label), Color); });
             }
 
             void OptionalFloat(const char* Label, std::optional<float>& Value, float Default, float Speed, float Min,
                                float Max)
             {
                 Optional(Label, Value, Default,
-                         [&](float& Number) { ImGui::DragFloat(Label, &Number, Speed, Min, Max, "%.2f"); });
+                         [&](float& Number) { ImGui::DragFloat(TrId(Label), &Number, Speed, Min, Max, "%.2f"); });
             }
 
             // A path field that also takes a file dragged from the Assets panel.
@@ -107,7 +108,7 @@ namespace dbc::studio
                     Changed = true;
                 }
                 ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-                ImGui::TextUnformatted(Label);
+                ImGui::TextUnformatted(Tr(Label));
                 ImGui::PopID();
                 return Changed;
             }
@@ -115,7 +116,7 @@ namespace dbc::studio
             void Heading(const char* Label)
             {
                 ImGui::Spacing();
-                ImGui::SeparatorText(Label);
+                ImGui::SeparatorText(Tr(Label));
             }
         } // namespace
 
@@ -132,13 +133,13 @@ namespace dbc::studio
             const scene::NodeOrigin* Origin = OriginOf(Node);
             if (Origin == nullptr || Origin->Creator.File.empty())
             {
-                ImGui::TextDisabled("No statement of the program creates it by this number.");
+                ImGui::TextDisabled("%s", Tr("No statement of the program creates it by this number."));
                 return;
             }
             ImGui::TextDisabled("%s:%u", dbc::PathToUtf8(dbc::PathFromUtf8(Origin->Creator.File).filename()).c_str(),
                                 Origin->Creator.Line);
             ImGui::SameLine();
-            if (ImGui::SmallButton("Show in Code") && Host_.ShowSource)
+            if (ImGui::SmallButton(TrId("Show in Code")) && Host_.ShowSource)
                 Host_.ShowSource(dbc::PathFromUtf8(Origin->Creator.File), Origin->Creator.Line);
         }
 
@@ -174,11 +175,11 @@ namespace dbc::studio
             for (const Group& Value : Groups)
             {
                 ImGui::PushID(Value.Labels.c_str());
-                ImGui::TextDisabled("%s locked: %s", Value.Labels.c_str(), Value.Axis->Reason.c_str());
+                ImGui::TextDisabled("%s", TrFmt("{0} locked: {1}", {Value.Labels, Value.Axis->Reason}).c_str());
                 if (Value.Axis->Writer.Line != 0)
                 {
                     ImGui::SameLine();
-                    if (ImGui::SmallButton("Show") && Host_.ShowSource)
+                    if (ImGui::SmallButton(TrId("Show")) && Host_.ShowSource)
                         Host_.ShowSource(dbc::PathFromUtf8(Value.Axis->Writer.File), Value.Axis->Writer.Line);
                 }
                 ImGui::PopID();
@@ -203,7 +204,7 @@ namespace dbc::studio
             if (Node == nullptr)
             {
                 ImGui::EndDisabled();
-                ImGui::TextDisabled("Select a node in the Hierarchy or the Viewport.");
+                ImGui::TextDisabled("%s", Tr("Select a node in the Hierarchy or the Viewport."));
                 return;
             }
 
@@ -222,42 +223,44 @@ namespace dbc::studio
                                        [&](const scene::SceneNode* Other) { return Other->Kind == Node->Kind; }));
             if (Multi)
             {
-                ImGui::Text("%zu nodes selected", Nodes.size());
-                ImGui::TextDisabled("Showing %s; edits apply to each node that has the field.", Node->Name.c_str());
+                ImGui::TextUnformatted(TrFmt("{0} nodes selected", {std::to_string(Nodes.size())}).c_str());
+                ImGui::TextDisabled(
+                    "%s", TrFmt("Showing {0}; edits apply to each node that has the field.", {Node->Name}).c_str());
             }
             else
             {
-                ImGui::TextDisabled("%s", scene::NodeKindLabel(Node->Kind));
+                ImGui::TextDisabled("%s", Tr(scene::NodeKindLabel(Node->Kind)));
                 char Name[128];
                 std::strncpy(Name, Node->Name.c_str(), sizeof(Name) - 1);
                 Name[sizeof(Name) - 1] = '\0';
-                if (ImGui::InputText("Name", Name, sizeof(Name)))
+                if (ImGui::InputText(TrId("Name"), Name, sizeof(Name)))
                     Node->Name = Name;
                 int Id = Node->Id;
-                if (ImGui::InputInt("Number", &Id, 0) && Id > 0 &&
+                if (ImGui::InputInt(TrId("Number"), &Id, 0) && Id > 0 &&
                     Document_.Find(scene::IdSpaceOf(Node->Kind), Id) == nullptr)
                 {
                     Node->Id = Id;
                     Select(Node);
                 }
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("The object, matrix, terrain, light or sound number the code uses");
+                    ImGui::SetTooltip("%s", Tr("The object, matrix, terrain, light or sound number the code uses"));
             }
             if (IsObject)
             {
                 const bool Available = scene::StaticAvailable(Document_.Profile);
                 ImGui::BeginDisabled(!Available);
                 // A static object no longer exists to animate.
-                if (ImGui::Checkbox("Make Static Object", &Node->Static) && Node->Static)
+                if (ImGui::Checkbox(TrId("Make Static Object"), &Node->Static) && Node->Static)
                 {
                     Node->Frames.reset();
                     Node->Speed.reset();
                 }
                 ImGui::EndDisabled();
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                    ImGui::SetTooltip("%s", Available ? "MAKE STATIC OBJECT, then DELETE OBJECT: fixed scenery for the "
-                                                        "static collision commands; its number is free at run time"
-                                                      : "MAKE STATIC OBJECT is not implemented in the Pro profile");
+                    ImGui::SetTooltip("%s",
+                                      Tr(Available ? "MAKE STATIC OBJECT, then DELETE OBJECT: fixed scenery for the "
+                                                     "static collision commands; its number is free at run time"
+                                                   : "MAKE STATIC OBJECT is not implemented in the Pro profile"));
             }
 
             Heading("Transform");
@@ -271,31 +274,32 @@ namespace dbc::studio
                 DrawAxisLocks(*Node, Part);
             };
             BeginPart(scene::TransformPart::Position);
-            ImGui::DragFloat3("Position", &Node->Position.x, 0.5f);
+            ImGui::DragFloat3(TrId("Position"), &Node->Position.x, 0.5f);
             EndPart(scene::TransformPart::Position);
             const bool Turns = IsObject || (IsLight && Node->Light != scene::LightKind::Point);
             if (Turns)
             {
                 BeginPart(scene::TransformPart::Rotation);
-                ImGui::DragFloat3("Rotation", &Node->Rotation.x, 0.5f);
+                ImGui::DragFloat3(TrId("Rotation"), &Node->Rotation.x, 0.5f);
                 EndPart(scene::TransformPart::Rotation);
             }
             if (IsObject)
             {
                 BeginPart(scene::TransformPart::Scale);
                 const glm::vec3 PreviousScale = Node->Scale;
-                if (ImGui::DragFloat3("Scale %", &Node->Scale.x, 0.5f, 0.0f, 100000.0f) && UniformScale_)
+                if (ImGui::DragFloat3(TrId("Scale %"), &Node->Scale.x, 0.5f, 0.0f, 100000.0f) && UniformScale_)
                     Node->Scale = scene::ProportionalScale(PreviousScale, Node->Scale);
-                ImGui::Checkbox("Uniform scale", &UniformScale_);
+                ImGui::Checkbox(TrId("Uniform scale"), &UniformScale_);
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("Scaling one axis scales the others in proportion, here and with the gizmo");
+                    ImGui::SetTooltip("%s",
+                                      Tr("Scaling one axis scales the others in proportion, here and with the gizmo"));
                 EndPart(scene::TransformPart::Scale);
             }
             ImGui::BeginDisabled(!Editable());
             if (Node->Kind == scene::NodeKind::Terrain)
-                ImGui::TextDisabled("A terrain runs from its position toward -Z.");
+                ImGui::TextDisabled("%s", Tr("A terrain runs from its position toward -Z."));
             if (Node->Kind == scene::NodeKind::Matrix)
-                ImGui::TextDisabled("A matrix runs from its position toward +X and +Z.");
+                ImGui::TextDisabled("%s", Tr("A matrix runs from its position toward +X and +Z."));
 
             if (SharedShape)
                 DrawShape(*Node);
@@ -315,35 +319,35 @@ namespace dbc::studio
             switch (Node.Kind)
             {
                 case scene::NodeKind::Cube:
-                    ImGui::DragFloat("Size", &Node.Size, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat(TrId("Size"), &Node.Size, 0.25f, 0.01f, 100000.0f);
                     break;
                 case scene::NodeKind::Box:
-                    ImGui::DragFloat3("Width, height, depth", &Node.Extent.x, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat3(TrId("Width, height, depth"), &Node.Extent.x, 0.25f, 0.01f, 100000.0f);
                     break;
                 case scene::NodeKind::Sphere:
-                    ImGui::DragFloat("Diameter", &Node.Size, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat(TrId("Diameter"), &Node.Size, 0.25f, 0.01f, 100000.0f);
                     if (Pro(Document_))
                         Optional("Rings, segments", Node.Detail, glm::ivec2(12, 16),
                                  [](glm::ivec2& Detail)
                                  {
-                                     ImGui::DragInt2("Rings, segments", &Detail.x, 0.25f, 3, 100);
+                                     ImGui::DragInt2(TrId("Rings, segments"), &Detail.x, 0.25f, 3, 100);
                                      Detail = glm::max(Detail, glm::ivec2(3));
                                  });
                     break;
                 case scene::NodeKind::Cylinder:
                 case scene::NodeKind::Cone:
-                    ImGui::DragFloat("Size", &Node.Size, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat(TrId("Size"), &Node.Size, 0.25f, 0.01f, 100000.0f);
                     break;
                 case scene::NodeKind::Plain:
-                    ImGui::DragFloat2("Width, height", &Node.Extent.x, 0.25f, 0.01f, 100000.0f);
+                    ImGui::DragFloat2(TrId("Width, height"), &Node.Extent.x, 0.25f, 0.01f, 100000.0f);
                     if (Pro(Document_))
                         Optional("Orientation", Node.PlainOrientation, 0,
-                                 [](int& Orientation) { ImGui::InputInt("Orientation", &Orientation); });
+                                 [](int& Orientation) { ImGui::InputInt(TrId("Orientation"), &Orientation); });
                     break;
                 case scene::NodeKind::Triangle:
-                    ImGui::DragFloat3("Corner 1", &Node.Corners[0].x, 0.25f);
-                    ImGui::DragFloat3("Corner 2", &Node.Corners[1].x, 0.25f);
-                    ImGui::DragFloat3("Corner 3", &Node.Corners[2].x, 0.25f);
+                    ImGui::DragFloat3(TrId("Corner 1"), &Node.Corners[0].x, 0.25f);
+                    ImGui::DragFloat3(TrId("Corner 2"), &Node.Corners[1].x, 0.25f);
+                    ImGui::DragFloat3(TrId("Corner 3"), &Node.Corners[2].x, 0.25f);
                     break;
                 case scene::NodeKind::Model:
                     AssetField("Model file", Node.Asset, core::MediaKind::Model);
@@ -352,27 +356,29 @@ namespace dbc::studio
                 case scene::NodeKind::Terrain:
                     AssetField("Heightmap", Node.Asset, core::MediaKind::Image);
                     if (Node.Asset.empty())
-                        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "A terrain needs a square heightmap image.");
+                        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "%s",
+                                           Tr("A terrain needs a square heightmap image."));
                     DrawTerrainHeightmap(Node);
                     break;
                 case scene::NodeKind::Matrix:
-                    ImGui::DragFloat("Width", &Node.Width, 1.0f, 0.01f, 100000.0f);
-                    ImGui::DragFloat("Depth", &Node.Depth, 1.0f, 0.01f, 100000.0f);
-                    ImGui::DragInt("Tiles across", &Node.XSegments, 0.2f, 1, 256);
-                    ImGui::DragInt("Tiles down", &Node.ZSegments, 0.2f, 1, 256);
+                    ImGui::DragFloat(TrId("Width"), &Node.Width, 1.0f, 0.01f, 100000.0f);
+                    ImGui::DragFloat(TrId("Depth"), &Node.Depth, 1.0f, 0.01f, 100000.0f);
+                    ImGui::DragInt(TrId("Tiles across"), &Node.XSegments, 0.2f, 1, 256);
+                    ImGui::DragInt(TrId("Tiles down"), &Node.ZSegments, 0.2f, 1, 256);
                     DrawMatrixHeights(Node);
                     break;
                 case scene::NodeKind::Light:
                 {
                     int Kind = static_cast<int>(Node.Light);
-                    if (ImGui::Combo("Type", &Kind, "Point\0Spot\0Directional\0"))
+                    const char* const Types[] = {Tr("Point"), Tr("Spot"), Tr("Directional")};
+                    if (ImGui::Combo(TrId("Type"), &Kind, Types, 3))
                         Node.Light = static_cast<scene::LightKind>(Kind);
                     if (Node.Light != scene::LightKind::Directional)
                         OptionalFloat("Range", Node.Range, 1000.0f, 1.0f, 0.0f, 100000.0f);
                     if (Node.Light == scene::LightKind::Spot)
                     {
-                        ImGui::DragFloat("Inner cone", &Node.SpotInner, 0.25f, 0.0f, 180.0f);
-                        ImGui::DragFloat("Outer cone", &Node.SpotOuter, 0.25f, 0.0f, 180.0f);
+                        ImGui::DragFloat(TrId("Inner cone"), &Node.SpotInner, 0.25f, 0.0f, 180.0f);
+                        ImGui::DragFloat(TrId("Outer cone"), &Node.SpotOuter, 0.25f, 0.0f, 180.0f);
                     }
                     OptionalColor("Colour", Node.LightColor, 0xFFFFFF);
                     break;
@@ -380,20 +386,22 @@ namespace dbc::studio
                 case scene::NodeKind::Sound:
                     AssetField("Sound file", Node.Asset, core::MediaKind::Audio);
                     if (Node.Asset.empty())
-                        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "A 3D sound needs a sound file.");
-                    ImGui::Checkbox("Play on load", &Node.PlayOnLoad);
+                        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "%s", Tr("A 3D sound needs a sound file."));
+                    ImGui::Checkbox(TrId("Play on load"), &Node.PlayOnLoad);
                     if (ImGui::IsItemHovered())
-                        ImGui::SetTooltip("Unchecked, the sound waits for the program's PLAY SOUND or LOOP SOUND");
+                        ImGui::SetTooltip("%s",
+                                          Tr("Unchecked, the sound waits for the program's PLAY SOUND or LOOP SOUND"));
                     if (Node.PlayOnLoad)
                     {
                         ImGui::SameLine();
-                        ImGui::Checkbox("Loop", &Node.Loop);
+                        ImGui::Checkbox(TrId("Loop"), &Node.Loop);
                         if (ImGui::IsItemHovered())
-                            ImGui::SetTooltip("LOOP SOUND repeats it; unchecked, PLAY SOUND plays it once");
+                            ImGui::SetTooltip("%s", Tr("LOOP SOUND repeats it; unchecked, PLAY SOUND plays it once"));
                     }
                     Optional("Volume %", Node.Volume, 100,
-                             [](int& Volume) { ImGui::SliderInt("Volume %", &Volume, 0, 100); });
-                    ImGui::TextDisabled("The program hears it from POSITION LISTENER, at 0, 0, 0 until moved.");
+                             [](int& Volume) { ImGui::SliderInt(TrId("Volume %"), &Volume, 0, 100); });
+                    ImGui::TextDisabled("%s",
+                                        Tr("The program hears it from POSITION LISTENER, at 0, 0, 0 until moved."));
                     break;
             }
         }
@@ -419,43 +427,47 @@ namespace dbc::studio
             Heading("Animation");
             if (Node.Static)
             {
-                ImGui::TextDisabled("A static object does not animate.");
+                ImGui::TextDisabled("%s", Tr("A static object does not animate."));
                 return;
             }
             const scene::ModelAnimation* Info = ModelAnimationOf(Node.Asset);
             const bool HasClip = Info != nullptr && Info->Count > 0;
             if (!HasClip && !Node.Frames)
             {
-                ImGui::TextDisabled("%s", Node.Asset.empty() ? "Pick a model file first."
-                                          : Info == nullptr  ? "The model file cannot be read."
-                                                             : "This model has no animation.");
+                ImGui::TextDisabled("%s", Tr(Node.Asset.empty() ? "Pick a model file first."
+                                             : Info == nullptr  ? "The model file cannot be read."
+                                                                : "This model has no animation."));
                 return;
             }
 
             // LOAD OBJECT keeps one timeline: an animation is a range of its frames.
             const int Last = HasClip ? Info->LastFrame : std::max(0, Node.Frames->y);
-            const std::string Clip = (HasClip && !Info->Name.empty() ? Info->Name : std::string("Animation")) +
-                                     " (frames 0 to " + std::to_string(Last) + ")";
-            const char* Items[] = {"None", Clip.c_str()};
+            const std::string Clip = TrFmt(
+                "{0} (frames 0 to {1})",
+                {HasClip && !Info->Name.empty() ? Info->Name : std::string(Tr("Animation")), std::to_string(Last)});
+            const char* Items[] = {Tr("None"), Clip.c_str()};
             int Choice = Node.Frames ? 1 : 0;
-            if (ImGui::Combo("Animation", &Choice, Items, 2))
+            if (ImGui::Combo(TrId("Animation"), &Choice, Items, 2))
                 Node.Frames = Choice == 0 ? std::nullopt : std::optional<glm::ivec2>(glm::ivec2(0, Last));
             if (HasClip && Info->Count > 1)
-                ImGui::TextDisabled("The file holds %u animations; LOAD OBJECT plays the first.", Info->Count);
+                ImGui::TextDisabled("%s", TrFmt("The file holds {0} animations; LOAD OBJECT plays the first.",
+                                                {std::to_string(Info->Count)})
+                                              .c_str());
             if (!Node.Frames)
                 return;
 
-            ImGui::Checkbox("Loop", &Node.Loop);
+            ImGui::Checkbox(TrId("Loop"), &Node.Loop);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("LOOP OBJECT repeats the frames; unchecked, PLAY OBJECT plays them once");
+                ImGui::SetTooltip("%s", Tr("LOOP OBJECT repeats the frames; unchecked, PLAY OBJECT plays them once"));
             glm::ivec2& Frames = *Node.Frames;
-            ImGui::DragIntRange2("Frames", &Frames.x, &Frames.y, 0.25f, 0, Last, "First %d", "Last %d");
+            ImGui::DragIntRange2(TrId("Frames"), &Frames.x, &Frames.y, 0.25f, 0, Last,
+                                 TrFmt("First {0}", {"%d"}).c_str(), TrFmt("Last {0}", {"%d"}).c_str());
             Frames.x = std::clamp(Frames.x, 0, Last);
             Frames.y = std::clamp(Frames.y, Frames.x, Last);
-            Optional("Speed", Node.Speed, 20, [](int& Speed) { ImGui::SliderInt("Speed", &Speed, 1, 200); });
+            Optional("Speed", Node.Speed, 20, [](int& Speed) { ImGui::SliderInt(TrId("Speed"), &Speed, 1, 200); });
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("SET OBJECT SPEED; 20 plays the file at its own rate");
-            ImGui::TextDisabled("The viewport shows the model still.");
+                ImGui::SetTooltip("%s", Tr("SET OBJECT SPEED; 20 plays the file at its own rate"));
+            ImGui::TextDisabled("%s", Tr("The viewport shows the model still."));
         }
 
         void SceneEditor::DrawMatrixHeights(scene::SceneNode& Node)
@@ -464,29 +476,29 @@ namespace dbc::studio
             if (!Node.Heights.empty() && scene::MatrixHeights(Node).empty())
             {
                 // The tile count changed: the old heights no longer fit.
-                ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error),
-                                   "The heights no longer fit this matrix.");
-                if (ImGui::Button("Flatten"))
+                ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s",
+                                   Tr("The heights no longer fit this matrix."));
+                if (ImGui::Button(TrId("Flatten")))
                     Node.Heights.clear();
             }
 
             const int TileCount =
                 Node.Mat.Texture.empty() ? 1 : std::max(1, Node.TilesAcross) * std::max(1, Node.TilesDown);
-            ImGui::DragFloat("Fill height", &FillHeight_, 0.25f);
+            ImGui::DragFloat(TrId("Fill height"), &FillHeight_, 0.25f);
             ImGui::BeginDisabled(TileCount == 1);
-            ImGui::SliderInt("Fill tile", &FillTile_, 1, std::max(2, TileCount));
+            ImGui::SliderInt(TrId("Fill tile"), &FillTile_, 1, std::max(2, TileCount));
             ImGui::EndDisabled();
             FillTile_ = std::clamp(FillTile_, 1, TileCount);
-            if (ImGui::Button("Fill"))
+            if (ImGui::Button(TrId("Fill")))
             {
                 Node.Heights.assign(scene::MatrixVertexCount(Node), FillHeight_);
                 Node.Tile = FillTile_;
             }
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("FILL MATRIX: every height to Fill height, every tile to Fill tile");
+                ImGui::SetTooltip("%s", Tr("FILL MATRIX: every height to Fill height, every tile to Fill tile"));
 
-            ImGui::DragFloat("Height range", &HeightRange_, 0.25f, 0.0f, 100000.0f);
-            if (ImGui::Button("Randomize"))
+            ImGui::DragFloat(TrId("Height range"), &HeightRange_, 0.25f, 0.0f, 100000.0f);
+            if (ImGui::Button(TrId("Randomize")))
             {
                 // RANDOMIZE MATRIX draws whole heights from 0 to the range, excluded.
                 const int Maximum = static_cast<int>(HeightRange_);
@@ -496,8 +508,8 @@ namespace dbc::studio
                     Height = static_cast<float>(Distribution(Random_));
             }
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("RANDOMIZE MATRIX: random whole heights below the range");
-            ImGui::TextDisabled("The heights are saved in the level, so every run shows this matrix.");
+                ImGui::SetTooltip("%s", Tr("RANDOMIZE MATRIX: random whole heights below the range"));
+            ImGui::TextDisabled("%s", Tr("The heights are saved in the level, so every run shows this matrix."));
         }
 
         void SceneEditor::DrawTerrainHeightmap(scene::SceneNode& Node)
@@ -505,7 +517,7 @@ namespace dbc::studio
             Heading("Generate heightmap");
             static constexpr int KSizes[] = {64, 128, 256, 512};
             const std::string Current = std::to_string(HeightmapSize_) + " x " + std::to_string(HeightmapSize_);
-            if (ImGui::BeginCombo("Size", Current.c_str()))
+            if (ImGui::BeginCombo(TrId("Size"), Current.c_str()))
             {
                 for (const int Size : KSizes)
                     if (ImGui::Selectable((std::to_string(Size) + " x " + std::to_string(Size)).c_str(),
@@ -516,12 +528,12 @@ namespace dbc::studio
 
             // Terrain heights are an image's grey levels, 0 to KTerrainHeightScale.
             std::optional<scene::Heightmap> Generated;
-            ImGui::DragFloat("Fill height", &TerrainFillHeight_, 0.25f, 0.0f, scene::KTerrainHeightScale);
-            if (ImGui::Button("Fill##terrain"))
+            ImGui::DragFloat(TrId("Fill height"), &TerrainFillHeight_, 0.25f, 0.0f, scene::KTerrainHeightScale);
+            if (ImGui::Button(TrId("Fill##terrain")))
                 Generated = scene::FlatHeightmap(HeightmapSize_, TerrainFillHeight_);
-            ImGui::DragFloat("Height range", &TerrainRange_, 0.25f, 0.0f, scene::KTerrainHeightScale);
-            ImGui::DragInt("Hills across", &TerrainHills_, 0.1f, 1, 32);
-            if (ImGui::Button("Randomize##terrain"))
+            ImGui::DragFloat(TrId("Height range"), &TerrainRange_, 0.25f, 0.0f, scene::KTerrainHeightScale);
+            ImGui::DragInt(TrId("Hills across"), &TerrainHills_, 0.1f, 1, 32);
+            if (ImGui::Button(TrId("Randomize##terrain")))
                 Generated = scene::RandomHeightmap(HeightmapSize_, TerrainRange_, TerrainHills_, Random_);
 
             const std::filesystem::path Relative = scene::TerrainHeightmapPath(Document_.Name, Node.Id);
@@ -537,7 +549,7 @@ namespace dbc::studio
             }
             if (!TerrainError_.empty())
                 ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", TerrainError_.c_str());
-            ImGui::TextDisabled("Writes %s", dbc::GenericPathToUtf8(Relative).c_str());
+            ImGui::TextDisabled("%s", TrFmt("Writes {0}", {dbc::GenericPathToUtf8(Relative)}).c_str());
         }
 
         void SceneEditor::DrawMaterial(scene::SceneNode& Node)
@@ -547,43 +559,43 @@ namespace dbc::studio
             AssetField("Texture", Mat.Texture, core::MediaKind::Image);
             if (Node.Kind == scene::NodeKind::Matrix && !Mat.Texture.empty())
             {
-                ImGui::DragInt("Image tiles across", &Node.TilesAcross, 0.1f, 1, 64);
-                ImGui::DragInt("Image tiles down", &Node.TilesDown, 0.1f, 1, 64);
+                ImGui::DragInt(TrId("Image tiles across"), &Node.TilesAcross, 0.1f, 1, 64);
+                ImGui::DragInt(TrId("Image tiles down"), &Node.TilesDown, 0.1f, 1, 64);
             }
             if (scene::IdSpaceOf(Node.Kind) != scene::IdSpace::Object)
                 return;
 
             OptionalColor("Colour", Mat.Color, 0xFFFFFF);
-            ImGui::Checkbox("Ghost", &Mat.Ghost);
+            ImGui::Checkbox(TrId("Ghost"), &Mat.Ghost);
             if (Mat.Ghost)
             {
                 ImGui::SameLine();
                 Optional("Ghost mode", Mat.GhostMode, 0,
-                         [](int& Mode) { ImGui::SliderInt("Ghost mode", &Mode, 0, 5); });
+                         [](int& Mode) { ImGui::SliderInt(TrId("Ghost mode"), &Mode, 0, 5); });
             }
 
             scene::ObjectFlags& Flags = Mat.Flags;
-            ImGui::Checkbox("Wireframe", &Flags.Wireframe);
+            ImGui::Checkbox(TrId("Wireframe"), &Flags.Wireframe);
             if (Pro(Document_))
             {
-                ImGui::SliderInt("Transparency", &Flags.Transparency, 0, 7);
+                ImGui::SliderInt(TrId("Transparency"), &Flags.Transparency, 0, 7);
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("SET OBJECT transparency mode; 0 draws black as black");
+                    ImGui::SetTooltip("%s", Tr("SET OBJECT transparency mode; 0 draws black as black"));
             }
             else
             {
                 bool Transparent = Flags.Transparency != scene::OpaqueTransparency(Document_.Profile);
-                if (ImGui::Checkbox("Black is transparent", &Transparent))
+                if (ImGui::Checkbox(TrId("Black is transparent"), &Transparent))
                     Flags.Transparency = Transparent ? 0 : scene::OpaqueTransparency(Document_.Profile);
             }
-            ImGui::Checkbox("Cull back faces", &Flags.Cull);
+            ImGui::Checkbox(TrId("Cull back faces"), &Flags.Cull);
             ImGui::SameLine();
-            ImGui::Checkbox("Filter", &Flags.Filter);
-            ImGui::Checkbox("Lighting", &Flags.Lighting);
+            ImGui::Checkbox(TrId("Filter"), &Flags.Filter);
+            ImGui::Checkbox(TrId("Lighting"), &Flags.Lighting);
             ImGui::SameLine();
-            ImGui::Checkbox("Fog", &Flags.Fog);
+            ImGui::Checkbox(TrId("Fog"), &Flags.Fog);
             ImGui::SameLine();
-            ImGui::Checkbox("Ambient", &Flags.Ambient);
+            ImGui::Checkbox(TrId("Ambient"), &Flags.Ambient);
 
             if (!Pro(Document_))
                 return;
@@ -594,26 +606,27 @@ namespace dbc::studio
             OptionalFloat("Specular power", Mat.SpecularPower, 10.0f, 0.25f, 0.0f, 255.0f);
             // Without SET SHADOW POSITION the engine casts from light 0 at the origin, which
             // lies on the ground of most levels; the first caster gets a fixed source above.
-            if (ImGui::Checkbox("Casts a shadow", &Mat.CastShadow) && Mat.CastShadow && !Document_.Env.ShadowMode)
+            if (ImGui::Checkbox(TrId("Casts a shadow"), &Mat.CastShadow) && Mat.CastShadow && !Document_.Env.ShadowMode)
                 Document_.Env.ShadowMode = -1;
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("SET SHADOW SHADING ON, cast from the shadow source in Level Settings");
+                ImGui::SetTooltip("%s", Tr("SET SHADOW SHADING ON, cast from the shadow source in Level Settings"));
         }
 
         void SceneEditor::DrawCameraSettings()
         {
             scene::Environment& Env = Document_.Env;
-            ImGui::Checkbox("Use a level camera", &Env.UseCamera);
+            ImGui::Checkbox(TrId("Use a level camera"), &Env.UseCamera);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Writes AUTOCAM OFF and places camera 0; unchecked, the program keeps its camera");
+                ImGui::SetTooltip(
+                    "%s", Tr("Writes AUTOCAM OFF and places camera 0; unchecked, the program keeps its camera"));
             if (!Env.UseCamera)
                 return;
-            ImGui::DragFloat3("Camera position", &Env.CameraPosition.x, 0.5f);
-            ImGui::DragFloat3("Camera rotation", &Env.CameraRotation.x, 0.5f);
+            ImGui::DragFloat3(TrId("Camera position"), &Env.CameraPosition.x, 0.5f);
+            ImGui::DragFloat3(TrId("Camera rotation"), &Env.CameraRotation.x, 0.5f);
             OptionalFloat("Field of view", Env.CameraFov, 75.0f, 0.25f, 1.0f, 179.0f);
             Optional("Near, far", Env.CameraRange, glm::vec2(0.1f, 5000.0f),
-                     [](glm::vec2& Range) { ImGui::DragFloat2("Near, far", &Range.x, 0.5f, 0.01f, 1000000.0f); });
-            if (ImGui::Button("Match the viewport"))
+                     [](glm::vec2& Range) { ImGui::DragFloat2(TrId("Near, far"), &Range.x, 0.5f, 0.01f, 1000000.0f); });
+            if (ImGui::Button(TrId("Match the viewport")))
             {
                 Env.CameraPosition = Camera_.Position;
                 Env.CameraRotation = glm::vec3(Camera_.Pitch, Camera_.Yaw, 0.0f);
@@ -626,10 +639,10 @@ namespace dbc::studio
                 return;
             ImGui::BeginDisabled(!Editable());
             scene::Environment& Env = Document_.Env;
-            if (ImGui::CollapsingHeader("Level", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader(TrId("Level"), ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImGui::TextDisabled("%s", dbc::GenericPathToUtf8(scene::LevelRelativePath(Document_.Name)).c_str());
-                ImGui::TextDisabled("Function %s()", scene::LevelFunctionName(Document_).c_str());
+                ImGui::TextDisabled("%s", TrFmt("Function {0}()", {scene::LevelFunctionName(Document_)}).c_str());
 
                 Heading("Numbers");
                 static const char* const Labels[] = {"First object",  "First image", "First matrix",
@@ -637,32 +650,33 @@ namespace dbc::studio
                 for (std::size_t Space = 0; Space < scene::KIdSpaceCount; ++Space)
                 {
                     int Base = Document_.IdBase[Space];
-                    if (ImGui::InputInt(Labels[Space], &Base) && Base > 0)
+                    if (ImGui::InputInt(TrId(Labels[Space]), &Base) && Base > 0)
                         Document_.IdBase[Space] = Base;
                 }
-                ImGui::TextDisabled("New nodes take free numbers from these, away from the program's own.");
+                ImGui::TextDisabled("%s", Tr("New nodes take free numbers from these, away from the program's own."));
             }
 
-            if (ImGui::CollapsingHeader("World Settings", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader(TrId("World Settings"), ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImGui::TextDisabled("%s", dbc::GenericPathToUtf8(scene::WorldRelativePath(Document_.Name)).c_str());
-                ImGui::TextDisabled("Function %s()", scene::WorldFunctionName(Document_).c_str());
+                ImGui::TextDisabled("%s", TrFmt("Function {0}()", {scene::WorldFunctionName(Document_)}).c_str());
 
                 Heading("Light and colour");
                 Optional("Ambient %", Env.AmbientPercent, 25,
-                         [](int& Percent) { ImGui::SliderInt("Ambient %", &Percent, 0, 100); });
+                         [](int& Percent) { ImGui::SliderInt(TrId("Ambient %"), &Percent, 0, 100); });
                 OptionalColor("Ambient colour", Env.AmbientColor, 0xFFFFFF);
                 OptionalColor("Backdrop", Env.Backdrop, 0x000000);
-                ImGui::Checkbox("Hide light 0", &Env.DefaultLightHidden);
+                ImGui::Checkbox(TrId("Hide light 0"), &Env.DefaultLightHidden);
                 if (!Env.DefaultLightHidden)
                 {
                     Optional("Light 0 rotation", Env.DefaultLightRotation, glm::vec3(45.0f, 0.0f, 0.0f),
-                             [](glm::vec3& Rotation) { ImGui::DragFloat3("Light 0 rotation", &Rotation.x, 0.5f); });
+                             [](glm::vec3& Rotation)
+                             { ImGui::DragFloat3(TrId("Light 0 rotation"), &Rotation.x, 0.5f); });
                     OptionalColor("Light 0 colour", Env.DefaultLightColor, 0xFFFFFF);
                 }
 
                 Heading("Fog");
-                ImGui::Checkbox("Fog", &Env.Fog);
+                ImGui::Checkbox(TrId("Fog"), &Env.Fog);
                 if (Env.Fog)
                 {
                     OptionalColor("Fog colour", Env.FogColor, 0x000000);
@@ -673,10 +687,11 @@ namespace dbc::studio
                 {
                     Heading("Shadows");
                     bool Shadows = Env.ShadowMode.has_value();
-                    if (ImGui::Checkbox("Shadow source", &Shadows))
+                    if (ImGui::Checkbox(TrId("Shadow source"), &Shadows))
                         Env.ShadowMode = Shadows ? std::optional<int>(-1) : std::nullopt;
                     if (ImGui::IsItemHovered())
-                        ImGui::SetTooltip("SET SHADOW POSITION; objects cast with Casts a shadow in their material");
+                        ImGui::SetTooltip(
+                            "%s", Tr("SET SHADOW POSITION; objects cast with Casts a shadow in their material"));
                     if (Env.ShadowMode)
                     {
                         // Light 0 and missing lights sit at the origin, on the ground of most
@@ -684,14 +699,14 @@ namespace dbc::studio
                         const auto Label = [&](int Mode)
                         {
                             if (Mode == -1)
-                                return std::string("Fixed position");
+                                return std::string(Tr("Fixed position"));
                             const scene::SceneNode* Light =
                                 Mode > 0 ? Document_.Find(scene::IdSpace::Light, Mode) : nullptr;
                             if (Light != nullptr)
-                                return "Light " + std::to_string(Mode) + ": " + Light->Name;
-                            return "Light " + std::to_string(Mode) + " (at the origin)";
+                                return TrFmt("Light {0}: {1}", {std::to_string(Mode), Light->Name});
+                            return TrFmt("Light {0} (at the origin)", {std::to_string(Mode)});
                         };
-                        if (ImGui::BeginCombo("Cast from", Label(*Env.ShadowMode).c_str()))
+                        if (ImGui::BeginCombo(TrId("Cast from"), Label(*Env.ShadowMode).c_str()))
                         {
                             std::vector<int> Modes = {-1, 0};
                             for (const scene::SceneNode& Node : Document_.Nodes)
@@ -705,7 +720,7 @@ namespace dbc::studio
                             ImGui::EndCombo();
                         }
                         if (*Env.ShadowMode == -1)
-                            ImGui::DragFloat3("Shadow position", &Env.ShadowPosition.x, 0.5f);
+                            ImGui::DragFloat3(TrId("Shadow position"), &Env.ShadowPosition.x, 0.5f);
                     }
                 }
 
@@ -714,33 +729,36 @@ namespace dbc::studio
 
                 Heading("Display");
                 if (Project_ && Project_->HasDescriptor)
-                    ImGui::TextWrapped("These statements run after the .dbpro project's own display settings.");
+                    ImGui::TextWrapped("%s",
+                                       Tr("These statements run after the .dbpro project's own display settings."));
                 scene::DisplaySettings& Display = Document_.Display;
                 Optional("Display mode", Display.DisplayMode, glm::ivec3(800, 600, 32),
-                         [](glm::ivec3& Mode) { ImGui::InputInt3("Width, height, depth", &Mode.x); });
+                         [](glm::ivec3& Mode) { ImGui::InputInt3(TrId("Width, height, depth"), &Mode.x); });
                 if (Pro(Document_) && Display.DisplayMode)
                 {
                     bool Vsync = Display.Vsync.value_or(0) != 0;
-                    if (ImGui::Checkbox("Vertical sync", &Vsync))
+                    if (ImGui::Checkbox(TrId("Vertical sync"), &Vsync))
                         Display.Vsync = Vsync ? 1 : 0;
                 }
                 int Window = Display.Windowed ? (*Display.Windowed ? 1 : 2) : 0;
-                if (ImGui::Combo("Window", &Window, "Program default\0Windowed\0Full screen\0"))
+                const char* const Windows[] = {Tr("Program default"), Tr("Windowed"), Tr("Full screen")};
+                if (ImGui::Combo(TrId("Window"), &Window, Windows, 3))
                     Display.Windowed = Window == 0 ? std::nullopt : std::optional<bool>(Window == 1);
                 Optional("Window size", Display.WindowSize, glm::ivec2(800, 600),
-                         [](glm::ivec2& Size) { ImGui::InputInt2("Window size", &Size.x); });
+                         [](glm::ivec2& Size) { ImGui::InputInt2(TrId("Window size"), &Size.x); });
                 Optional("Title", Display.WindowTitle, std::string("My Game"),
                          [](std::string& Title)
                          {
                              char Buffer[128];
                              std::strncpy(Buffer, Title.c_str(), sizeof(Buffer) - 1);
                              Buffer[sizeof(Buffer) - 1] = '\0';
-                             if (ImGui::InputText("Title", Buffer, sizeof(Buffer)))
+                             if (ImGui::InputText(TrId("Title"), Buffer, sizeof(Buffer)))
                                  Title = Buffer;
                          });
                 ImGui::Checkbox("SYNC ON", &Display.SyncOn);
-                Optional("Sync rate", Display.SyncRate, 60, [](int& Rate) { ImGui::InputInt("Sync rate", &Rate); });
-                ImGui::Checkbox("Hide the mouse", &Display.HideMouse);
+                Optional("Sync rate", Display.SyncRate, 60,
+                         [](int& Rate) { ImGui::InputInt(TrId("Sync rate"), &Rate); });
+                ImGui::Checkbox(TrId("Hide the mouse"), &Display.HideMouse);
             }
             ImGui::EndDisabled();
         }

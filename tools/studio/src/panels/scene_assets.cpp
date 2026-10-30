@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cctype>
 
+#include "core/i18n.hpp"
 #include "theme.hpp"
 
 namespace dbc::studio
@@ -80,16 +81,18 @@ namespace dbc::studio
                 return;
             Assets();
 
-            if (ImGui::Button("Refresh"))
+            if (ImGui::Button(TrId("Refresh")))
                 RefreshAssets();
             ImGui::SameLine();
             ImGui::SetNextItemWidth(120.0f);
-            ImGui::Combo("##kind", &AssetFilterKind_, "All\0Images\0Models\0Sounds\0");
+            const char* const Kinds[] = {Tr("All"), Tr("Images"), Tr("Models"), Tr("Sounds")};
+            ImGui::Combo("##kind", &AssetFilterKind_, Kinds, 4);
             ImGui::SameLine();
             ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x));
-            ImGui::InputTextWithHint("##filter", "Filter", AssetFilter_, sizeof(AssetFilter_));
+            ImGui::InputTextWithHint("##filter", Tr("Filter"), AssetFilter_, sizeof(AssetFilter_));
             if (AssetScan_.Truncated)
-                ImGui::TextDisabled("Only the first %zu files are listed.", KAssetLimit);
+                ImGui::TextDisabled(
+                    "%s", TrFmt("Only the first {0} files are listed.", {std::to_string(KAssetLimit)}).c_str());
 
             const std::string Filter = Lower(AssetFilter_);
             const float Tile = KThumbnailSize * 0.75f;
@@ -191,8 +194,8 @@ namespace dbc::studio
                     ImGui::EndDragDropSource();
                 }
                 if (Hovered)
-                    ImGui::SetTooltip("%s\nDrag onto the viewport or a file field; double-click to apply.",
-                                      File.RelativeName.c_str());
+                    ImGui::SetTooltip("%s\n%s", File.RelativeName.c_str(),
+                                      Tr("Drag onto the viewport or a file field; double-click to apply."));
                 if (Hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && Editable())
                 {
                     scene::SceneNode* Node = Selected();

@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "core/i18n.hpp"
 #include "core/media_catalogue.hpp"
 #include "scene/scene_geometry.hpp"
 #include "theme.hpp"
@@ -733,7 +734,7 @@ namespace dbc::studio
             const auto ToolButton = [&](const char* Label, Tool Value, const char* Tip)
             {
                 ImGui::PushStyleColor(ImGuiCol_Button, Tool_ == Value ? Theme::Selection : 0);
-                if (ImGui::Button(Label))
+                if (ImGui::Button(TrId(Label)))
                 {
                     Tool_ = Value;
                     if (Value == Tool::Paint)
@@ -741,7 +742,7 @@ namespace dbc::studio
                 }
                 ImGui::PopStyleColor();
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("%s", Tip);
+                    ImGui::SetTooltip("%s", Tr(Tip));
                 ImGui::SameLine();
             };
             // The window has no padding, so the bar adds its own below the tab.
@@ -752,15 +753,15 @@ namespace dbc::studio
             ToolButton("Rotate", Tool::Rotate, "Rotate (E)");
             ToolButton("Scale", Tool::Scale, "Scale (R)");
             ToolButton("Paint", Tool::Paint, "Paint objects over the level (B)");
-            ImGui::Checkbox("Local", &LocalGizmo_);
+            ImGui::Checkbox(TrId("Local"), &LocalGizmo_);
             ImGui::SameLine();
-            ImGui::Checkbox("Snap", &Snap_);
+            ImGui::Checkbox(TrId("Snap"), &Snap_);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Move, rotate and scale by steps\n"
-                                  "Hold Ctrl/Cmd: invert snapping\n"
-                                  "- and =: smaller or larger grid\n"
-                                  "G: align the selection to the grid\n"
-                                  "Hold V: drag by a vertex onto another node's vertex");
+                ImGui::SetTooltip("%s", Tr("Move, rotate and scale by steps\n"
+                                           "Hold Ctrl/Cmd: invert snapping\n"
+                                           "- and =: smaller or larger grid\n"
+                                           "G: align the selection to the grid\n"
+                                           "Hold V: drag by a vertex onto another node's vertex"));
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::AlignTextToFramePadding();
             ImGui::TextDisabled("%g", MoveSnap_);
@@ -768,26 +769,26 @@ namespace dbc::studio
             if (ImGui::ArrowButton("##snap-steps", ImGuiDir_Down))
                 ImGui::OpenPopup("Snap steps");
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Snap steps");
+                ImGui::SetTooltip("%s", Tr("Snap steps"));
             if (ImGui::BeginPopup("Snap steps"))
             {
                 ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
-                ImGui::DragFloat("Move", &MoveSnap_, 0.1f, scene::KMinGridStep, scene::KMaxGridStep, "%.2f");
+                ImGui::DragFloat(TrId("Move"), &MoveSnap_, 0.1f, scene::KMinGridStep, scene::KMaxGridStep, "%.2f");
                 ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
-                ImGui::DragFloat("Rotate (degrees)", &RotateSnap_, 0.5f, 0.1f, 180.0f, "%.1f");
+                ImGui::DragFloat(TrId("Rotate (degrees)"), &RotateSnap_, 0.5f, 0.1f, 180.0f, "%.1f");
                 ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
-                ImGui::DragFloat("Scale (%)", &ScaleSnap_, 0.5f, 0.1f, 1000.0f, "%.1f");
+                ImGui::DragFloat(TrId("Scale (%)"), &ScaleSnap_, 0.5f, 0.1f, 1000.0f, "%.1f");
                 ImGui::EndPopup();
             }
             ImGui::SameLine();
-            ImGui::Checkbox("Grid", &ShowGrid_);
+            ImGui::Checkbox(TrId("Grid"), &ShowGrid_);
             ImGui::SameLine();
             ImGui::BeginDisabled(!Document_.Env.UseCamera);
-            ImGui::Checkbox("Level camera view", &LookThroughCamera_);
+            ImGui::Checkbox(TrId("Level camera view"), &LookThroughCamera_);
             ImGui::EndDisabled();
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", Document_.Env.UseCamera ? "See the level through its camera"
-                                                                : "Enable the level camera in Level Settings");
+                ImGui::SetTooltip("%s", Tr(Document_.Env.UseCamera ? "See the level through its camera"
+                                                                   : "Enable the level camera in Level Settings"));
             if (!Document_.Env.UseCamera)
                 LookThroughCamera_ = false;
             if (Tool_ == Tool::Paint)
@@ -881,10 +882,10 @@ namespace dbc::studio
 
             if (!ReadErrors_.empty())
                 Draw->AddText(ImVec2(Start.x + 8.0f, Start.y + 8.0f), IM_COL32(255, 120, 100, 255),
-                              "Read-only level: see the Hierarchy panel");
+                              Tr("Read-only level: see the Hierarchy panel"));
             if (Program_)
                 Draw->AddText(ImVec2(Start.x + 8.0f, Start.y + 8.0f), IM_COL32(255, 210, 120, 255),
-                              ("Scene of " + dbc::PathToUtf8(Program_->Source.filename())).c_str());
+                              TrFmt("Scene of {0}", {dbc::PathToUtf8(Program_->Source.filename())}).c_str());
         }
     } // namespace panels
 

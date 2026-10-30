@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 
 #include "core/i18n.hpp"
+#include "core/locales.hpp"
 #include "panels/scene_editor.hpp"
 #include "path_utf8.hpp"
 #include "scene/scene_codegen.hpp"
@@ -702,6 +703,23 @@ TEST_CASE("A new level exists as soon as it is named, and only the first one joi
     Driver.CreateLevel("Cave");
     CHECK(Driver.ReadFile(scene::LevelRelativePath("Cave")) == Before);
     CHECK_FALSE(Driver.Editor().Dirty());
+}
+
+TEST_CASE("The Scene view keeps working in French, and writes the same files")
+{
+    SceneViewDriver Driver("level_french", LevelOfCubes({glm::vec3(0.0f)}));
+    core::ActivateInterfaceLanguage("fr");
+    Driver.Frame();
+    const ImGuiWindow* Viewport = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelViewport));
+    REQUIRE(Viewport != nullptr);
+    CHECK(std::string_view(Viewport->Name).starts_with("Vue 3D###"));
+
+    Driver.CreateLevel("Cave");
+    CHECK(Driver.ReadFile(scene::LevelRelativePath("Cave")).find("FUNCTION LoadLevel_Cave()") != std::string::npos);
+    CHECK(Driver.ReadFile(scene::WorldRelativePath("Cave")).find("FUNCTION SetupWorld_Cave()") != std::string::npos);
+    CHECK(Driver.ReadFile("main.dba").find("LoadLevel_Cave()") != std::string::npos);
+    core::ActivateInterfaceLanguage("en");
+    Driver.Frame();
 }
 
 TEST_CASE("A level from before the folders moves into its own, and its environment follows when saved")

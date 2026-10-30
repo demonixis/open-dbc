@@ -9,6 +9,7 @@
 #include <glm/geometric.hpp>
 #include <glm/gtc/constants.hpp>
 
+#include "core/i18n.hpp"
 #include "scene/scene_geometry.hpp"
 
 namespace dbc::studio
@@ -64,7 +65,7 @@ namespace dbc::studio
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Style.ItemSpacing.x);
 
             ImGui::SetNextItemWidth(FontSize * 10.0f);
-            if (ImGui::BeginCombo("##paint-object", PaintObject_ ? PaintObject_->Name.c_str() : "Choose an object"))
+            if (ImGui::BeginCombo("##paint-object", PaintObject_ ? PaintObject_->Name.c_str() : Tr("Choose an object")))
             {
                 // Copies of one object appear once.
                 std::vector<const scene::SceneNode*> Looks;
@@ -80,23 +81,23 @@ namespace dbc::studio
                         SetPaintObject(Node);
                     ImGui::PopID();
                 }
-                ImGui::SeparatorText("Model files");
+                ImGui::SeparatorText(Tr("Model files"));
                 for (const core::MediaFile& File : Assets().Files)
                     if (File.Kind == core::MediaKind::Model && ImGui::Selectable(File.RelativeName.c_str()))
                         SetPaintModel(File.RelativeName);
                 ImGui::EndCombo();
             }
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("What to place. Entering the tool takes the selected object.\n"
-                                  "Click to place; hold Shift to erase its painted copies within the radius");
+                ImGui::SetTooltip("%s", Tr("What to place. Entering the tool takes the selected object.\n"
+                                           "Click to place; hold Shift to erase its painted copies within the radius"));
             ImGui::SameLine();
 
             const auto ModeButton = [&](const char* Label, PaintMode Mode, const char* Tip)
             {
-                if (ImGui::RadioButton(Label, PaintMode_ == Mode))
+                if (ImGui::RadioButton(TrId(Label), PaintMode_ == Mode))
                     PaintMode_ = Mode;
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("%s", Tip);
+                    ImGui::SetTooltip("%s", Tr(Tip));
                 ImGui::SameLine();
             };
             ModeButton("One", PaintMode::One, "A click places one object, on the grid while snapping (1)");
@@ -107,23 +108,23 @@ namespace dbc::studio
             if (PaintMode_ == PaintMode::Several)
             {
                 Width();
-                ImGui::DragInt("Count", &PaintCount_, 0.2f, 1, 200);
+                ImGui::DragInt(TrId("Count"), &PaintCount_, 0.2f, 1, 200);
                 ImGui::SameLine();
             }
             Width();
-            ImGui::DragFloat("Radius", &PaintRadius_, 0.5f, 1.0f, 2000.0f, "%.0f");
+            ImGui::DragFloat(TrId("Radius"), &PaintRadius_, 0.5f, 1.0f, 2000.0f, "%.0f");
             ImGui::SameLine();
             if (PaintMode_ == PaintMode::Brush)
             {
                 Width();
-                ImGui::DragFloat("Density", &PaintDensity_, 0.1f, 0.1f, 500.0f, "%.1f");
+                ImGui::DragFloat(TrId("Density"), &PaintDensity_, 0.1f, 0.1f, 500.0f, "%.1f");
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("Objects per 100 x 100 units");
+                    ImGui::SetTooltip("%s", Tr("Objects per 100 x 100 units"));
                 ImGui::SameLine();
             }
-            ImGui::Checkbox("Random turn", &PaintTurn_);
+            ImGui::Checkbox(TrId("Random turn"), &PaintTurn_);
             ImGui::SameLine();
-            ImGui::Checkbox("Random scale", &PaintRandomScale_);
+            ImGui::Checkbox(TrId("Random scale"), &PaintRandomScale_);
             if (!PaintRandomScale_)
                 return;
             ImGui::SameLine();
@@ -131,7 +132,7 @@ namespace dbc::studio
             if (ImGui::DragFloat2("##paint-scale", &PaintScale_.x, 0.5f, 1.0f, 1000.0f, "%.0f%%"))
                 PaintScale_.y = std::max(PaintScale_.x, PaintScale_.y);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Each object's scale is multiplied by a value between these two");
+                ImGui::SetTooltip("%s", Tr("Each object's scale is multiplied by a value between these two"));
         }
 
         std::optional<float> SceneEditor::PaintSurfaceDistance(const scene::Ray& Ray) const

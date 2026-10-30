@@ -653,10 +653,10 @@ namespace dbc::studio
 
         void SceneEditor::DrawMenus()
         {
-            if (ImGui::BeginMenu("Scene"))
+            if (ImGui::BeginMenu(TrId("Scene")))
                 DrawSceneMenu();
             // Like Unity's GameObject menu: everything a level can hold, by type.
-            if (ImGui::BeginMenu("Create", Editable()))
+            if (ImGui::BeginMenu(TrId("Create"), Editable()))
             {
                 DrawCreateItems();
                 ImGui::EndMenu();
@@ -665,10 +665,10 @@ namespace dbc::studio
 
         void SceneEditor::DrawSceneMenu()
         {
-            if (ImGui::MenuItem("New Level...", nullptr, false, Project_.has_value()))
+            if (ImGui::MenuItem(TrId("New Level..."), nullptr, false, Project_.has_value()))
                 RequestNewLevel();
             const std::vector<std::string> Names = LevelNames();
-            if (ImGui::BeginMenu("Open Level", !Names.empty()))
+            if (ImGui::BeginMenu(TrId("Open Level"), !Names.empty()))
             {
                 for (const std::string& Name : Names)
                     if (ImGui::MenuItem(Name.c_str(), nullptr, HasLevel_ && Name == Document_.Name))
@@ -681,26 +681,26 @@ namespace dbc::studio
             }
             if (Program_)
             {
-                if (ImGui::MenuItem("Apply to Source", "Ctrl+S", false, Dirty() && TransformEditable()))
+                if (ImGui::MenuItem(TrId("Apply to Source"), "Ctrl+S", false, Dirty() && TransformEditable()))
                     SaveAndRefresh();
-                if (ImGui::MenuItem("Refresh Program", nullptr, false, Host_.CaptureProgram != nullptr))
+                if (ImGui::MenuItem(TrId("Refresh Program"), nullptr, false, Host_.CaptureProgram != nullptr))
                     RefreshProgram();
             }
-            else if (ImGui::MenuItem("Save Level", "Ctrl+S", false, Editable()))
+            else if (ImGui::MenuItem(TrId("Save Level"), "Ctrl+S", false, Editable()))
             {
                 Save();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, TransformEditable() && History_.CanUndo()))
+            if (ImGui::MenuItem(TrId("Undo"), "Ctrl+Z", false, TransformEditable() && History_.CanUndo()))
                 Undo();
-            if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, TransformEditable() && History_.CanRedo()))
+            if (ImGui::MenuItem(TrId("Redo"), "Ctrl+Shift+Z", false, TransformEditable() && History_.CanRedo()))
                 Redo();
             ImGui::Separator();
-            if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, Editable() && !Selection_.empty()))
+            if (ImGui::MenuItem(TrId("Duplicate"), "Ctrl+D", false, Editable() && !Selection_.empty()))
                 DuplicateSelected();
-            if (ImGui::MenuItem("Delete", "Delete", false, Editable() && !Selection_.empty()))
+            if (ImGui::MenuItem(TrId("Delete"), "Delete", false, Editable() && !Selection_.empty()))
                 DeleteSelected();
-            if (ImGui::MenuItem("Align to Grid", "G", false,
+            if (ImGui::MenuItem(TrId("Align to Grid"), "G", false,
                                 TransformEditable() && (!Selection_.empty() || (CameraSelected_ && !Program_))))
                 AlignSelectionToGrid();
             ImGui::EndMenu();
@@ -717,60 +717,60 @@ namespace dbc::studio
                         continue;
                     if (Listed++ == KMenuAssetLimit)
                     {
-                        ImGui::MenuItem("More in the Assets panel", nullptr, false, false);
+                        ImGui::MenuItem(TrId("More in the Assets panel"), nullptr, false, false);
                         break;
                     }
                     if (ImGui::MenuItem(File.RelativeName.c_str()))
                         CreateFromAsset(Kind, File.RelativeName, std::nullopt);
                 }
                 if (Listed == 0)
-                    ImGui::MenuItem(Empty, nullptr, false, false);
+                    ImGui::MenuItem(TrId(Empty), nullptr, false, false);
             };
 
-            if (ImGui::BeginMenu("3D Object"))
+            if (ImGui::BeginMenu(TrId("3D Object")))
             {
                 for (const scene::NodeKind Kind : KPrimitives)
-                    if (ImGui::MenuItem(scene::NodeKindLabel(Kind)))
+                    if (ImGui::MenuItem(TrId(scene::NodeKindLabel(Kind))))
                         Create(Kind);
                 ImGui::Separator();
-                if (ImGui::BeginMenu("Model"))
+                if (ImGui::BeginMenu(TrId("Model")))
                 {
                     AssetItems(scene::NodeKind::Model, core::MediaKind::Model, "No model under the asset folder");
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Landscape"))
+            if (ImGui::BeginMenu(TrId("Landscape")))
             {
-                if (ImGui::MenuItem("Matrix"))
+                if (ImGui::MenuItem(TrId("Matrix")))
                     Create(scene::NodeKind::Matrix);
                 const bool Terrain = scene::KindAvailable(scene::NodeKind::Terrain, Document_.Profile);
-                if (ImGui::MenuItem("Terrain", nullptr, false, Terrain))
+                if (ImGui::MenuItem(TrId("Terrain"), nullptr, false, Terrain))
                     Create(scene::NodeKind::Terrain);
                 if (!Terrain && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                    ImGui::SetTooltip("MAKE TERRAIN needs the Pro profile");
+                    ImGui::SetTooltip("%s", Tr("MAKE TERRAIN needs the Pro profile"));
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Light"))
+            if (ImGui::BeginMenu(TrId("Light")))
             {
                 for (const scene::LightKind Kind :
                      {scene::LightKind::Point, scene::LightKind::Spot, scene::LightKind::Directional})
-                    if (ImGui::MenuItem(LightKindLabel(Kind)))
+                    if (ImGui::MenuItem(TrId(LightKindLabel(Kind))))
                         Create(scene::NodeKind::Light, Kind);
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Audio"))
+            if (ImGui::BeginMenu(TrId("Audio")))
             {
-                if (ImGui::BeginMenu(scene::NodeKindLabel(scene::NodeKind::Sound)))
+                if (ImGui::BeginMenu(TrId(scene::NodeKindLabel(scene::NodeKind::Sound))))
                 {
                     AssetItems(scene::NodeKind::Sound, core::MediaKind::Audio, "No sound under the asset folder");
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Camera"))
+            if (ImGui::BeginMenu(TrId("Camera")))
             {
-                if (ImGui::MenuItem("Level Camera", nullptr, Document_.Env.UseCamera))
+                if (ImGui::MenuItem(TrId("Level Camera"), nullptr, Document_.Env.UseCamera))
                 {
                     Document_.Env.UseCamera = !Document_.Env.UseCamera;
                     Selection_.clear();
@@ -866,7 +866,8 @@ namespace dbc::studio
             if (ReadErrors_.empty())
                 return;
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
-            ImGui::TextWrapped("Read-only: %s has lines the Scene view did not write.", Document_.Name.c_str());
+            ImGui::TextWrapped(
+                "%s", TrFmt("Read-only: {0} has lines the Scene view did not write.", {Document_.Name}).c_str());
             for (const std::string& Error : ReadErrors_)
                 ImGui::BulletText("%s", Error.c_str());
             ImGui::PopStyleColor();
@@ -878,17 +879,18 @@ namespace dbc::studio
             if (!Program_)
                 return;
             ImGui::SetNextItemWidth(ImGui::GetFontSize() * 5.0f);
-            ImGui::InputInt("Setup frames", &Program_->SetupFrames, 0);
+            ImGui::InputInt(TrId("Setup frames"), &Program_->SetupFrames, 0);
             Program_->SetupFrames = std::max(Program_->SetupFrames, 0);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("How many frames the program runs before the scene counts as built. "
-                                  "What later frames set belongs to the game loop.");
+                ImGui::SetTooltip("%s", Tr("How many frames the program runs before the scene counts as built. "
+                                           "What later frames set belongs to the game loop."));
             ImGui::SameLine();
-            if (ImGui::SmallButton("Refresh"))
+            if (ImGui::SmallButton(TrId("Refresh")))
                 RefreshProgram();
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Runs the program again, without a window or sound, to read its scene");
-            ImGui::TextDisabled("Move, turn and scale what its statements decide; Ctrl+S writes it to the source.");
+                ImGui::SetTooltip("%s", Tr("Runs the program again, without a window or sound, to read its scene"));
+            ImGui::TextDisabled("%s",
+                                Tr("Move, turn and scale what its statements decide; Ctrl+S writes it to the source."));
             for (const std::string& Note : Program_->Notes)
                 ImGui::TextWrapped("%s", Note.c_str());
             ImGui::Separator();
@@ -943,12 +945,12 @@ namespace dbc::studio
                 if (ImGui::IsItemHovered())
                 {
                     if (Origin != nullptr && !Origin->Creator.File.empty())
-                        ImGui::SetTooltip("%s %d%s\n%s:%u", scene::NodeKindLabel(Node.Kind), Node.Id,
-                                          Node.Hidden ? " (hidden)" : "",
+                        ImGui::SetTooltip("%s %d%s\n%s:%u", Tr(scene::NodeKindLabel(Node.Kind)), Node.Id,
+                                          Node.Hidden ? Tr(" (hidden)") : "",
                                           dbc::PathToUtf8(dbc::PathFromUtf8(Origin->Creator.File).filename()).c_str(),
                                           Origin->Creator.Line);
                     else
-                        ImGui::SetTooltip("%s %d", scene::NodeKindLabel(Node.Kind), Node.Id);
+                        ImGui::SetTooltip("%s %d", Tr(scene::NodeKindLabel(Node.Kind)), Node.Id);
                 }
                 ImGui::PopID();
                 ImGui::PopID();
@@ -1011,7 +1013,7 @@ namespace dbc::studio
             if (Document_.Env.UseCamera)
             {
                 ImGui::Separator();
-                if (ImGui::Selectable("Level Camera", CameraSelected_))
+                if (ImGui::Selectable(TrId("Level Camera"), CameraSelected_))
                 {
                     Selection_.clear();
                     CameraSelected_ = true;
@@ -1030,7 +1032,7 @@ namespace dbc::studio
 
         void SceneEditor::DrawNewLevelPopup()
         {
-            constexpr const char* Popup = "New Level";
+            const char* Popup = TrId("New Level");
             if (NewLevelRequested_)
             {
                 ImGui::OpenPopup(Popup);
@@ -1041,10 +1043,11 @@ namespace dbc::studio
                 return;
             if (ImGui::IsWindowAppearing())
                 ImGui::SetKeyboardFocusHere();
-            const bool Entered =
-                ImGui::InputText("Name", NewLevelName_, sizeof(NewLevelName_), ImGuiInputTextFlags_EnterReturnsTrue);
-            ImGui::TextDisabled("Saved as %s", dbc::GenericPathToUtf8(scene::LevelRelativePath(NewLevelName_)).c_str());
-            if (Entered || ImGui::Button("Create"))
+            const bool Entered = ImGui::InputText(TrId("Name"), NewLevelName_, sizeof(NewLevelName_),
+                                                  ImGuiInputTextFlags_EnterReturnsTrue);
+            ImGui::TextDisabled(
+                "%s", TrFmt("Saved as {0}", {dbc::GenericPathToUtf8(scene::LevelRelativePath(NewLevelName_))}).c_str());
+            if (Entered || ImGui::Button(TrId("Create")))
             {
                 if (Dirty())
                     Save();
@@ -1054,7 +1057,7 @@ namespace dbc::studio
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button(TrId("Cancel")))
                 ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
         }
