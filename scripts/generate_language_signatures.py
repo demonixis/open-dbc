@@ -108,6 +108,7 @@ STRING_PARAMETERS = {
 
 PROFILE_STRING_PARAMETERS = {
     ("Dbc", "APPEND OBJECT"): {0},
+    ("DbPro", "APPEND OBJECT"): {0},
     ("Dbc", "SET GRAPHICS CARD"): {0},
 }
 

@@ -37,9 +37,6 @@ Language:
 - [ ] Remove the VR forms and the `X/Y/Z VECTOR3` readers from Classic; `vr_tracking.dba`
   moves to DBPro.
 - [ ] Reserve the Scene view for DBPro.
-- [ ] Port to DBPro the common commands only Classic implements: `WAIT`,
-  `SET OBJECT FRAME`, `APPEND OBJECT`, `SCROLL OBJECT TEXTURE`,
-  `SET OBJECT COLLISION TO POLYGONS` and `SET GLOBAL COLLISION ON/OFF`.
 - [ ] Then default new projects to DBPro.
 
 Build and release:

@@ -1287,6 +1287,34 @@ UNIT_WITNESSES += (
      "stencil-shadow", SHADOW_SHADING_TEST),
 )
 
+COMMON_COMMANDS_TEST = "test_engine_builtins.cpp::DBPro runs the common commands Classic already had"
+UNIT_WITNESSES += (
+    ("dbpro", "Command", "APPEND OBJECT", "append object \"motion.x\", 1, 100\n", "engine-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SET OBJECT FRAME", "set object frame 1, 2\n", "engine-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SET OBJECT FRAME", "set object frame 1, 2, 1\n", "engine-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SCROLL OBJECT TEXTURE", "scroll object texture 1, 0.5, 0.25\n", "render-state",
+     COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SCROLL OBJECT TEXTURE", "scroll object texture 1, 1, 0.5, 0.25\n", "render-state",
+     COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SET OBJECT COLLISION TO POLYGONS", "set object collision to polygons 1\n",
+     "collision-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SET GLOBAL COLLISION ON", "set global collision on\n", "collision-state",
+     COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SET GLOBAL COLLISION OFF", "set global collision off\n", "collision-state",
+     COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SCROLL BACKDROP", "scroll backdrop 25, -50\n", "engine-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SCROLL BACKDROP", "scroll backdrop 0, 25, -50\n", "engine-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "SET GAMMA", "set gamma 128, 255, 511\n", "render-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Function", "LIMB TEXTURE", "value = limb texture(1, 0)\n", "engine-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Function", "LIMB TEXTURE", "value = limb texture(1, 0, 1)\n", "engine-state", COMMON_COMMANDS_TEST),
+    ("dbpro", "Function", "ALPHABLENDING AVAILABLE", "value = alphablending available()\n", "gpu-capability",
+     COMMON_COMMANDS_TEST),
+    ("dbpro", "Function", "FILTERING AVAILABLE", "value = filtering available()\n", "gpu-capability",
+     COMMON_COMMANDS_TEST),
+    ("dbpro", "Command", "WAIT", "wait 1\n", "vm-state",
+     "test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively"),
+)
+
 ODE_RIGID_BODY_TEST = (
     "test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend"
 )

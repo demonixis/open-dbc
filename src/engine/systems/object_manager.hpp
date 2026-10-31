@@ -234,6 +234,8 @@ namespace dbc
         bool SetObjectFog(int ObjectId, int Enabled, std::string* Error = nullptr);
         bool SetObjectAmbient(int ObjectId, int Enabled, std::string* Error = nullptr);
         bool ScrollObjectTexture(int ObjectId, float U, float V, std::string* Error = nullptr);
+        bool ScrollObjectTexture(int ObjectId, int Stage, float U, float V, std::string* Error = nullptr);
+        bool RecalculateBounds(int ObjectId, const char* Command, std::string* Error = nullptr);
         bool ScaleObjectTexture(int ObjectId, float U, float V, std::string* Error = nullptr);
         bool ScaleObjectTexture(int ObjectId, int Stage, float U, float V, std::string* Error = nullptr);
         bool SetAlphaMappingOn(int ObjectId, float Percentage, std::string* Error = nullptr);

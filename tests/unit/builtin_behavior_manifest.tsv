@@ -730,6 +730,7 @@ dbpro	2	3	Command	ADD MESH TO VERTEXDATA	engine-state	test_engine_builtins.cpp::
 dbpro	3	4	Command	ADD VECTOR2	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	4	5	Command	ADD VECTOR3	golden-output	test_dbpro_vector3.dba	659ac5b90a10d29c88abf6699989dc61a5e407016c77c6353a79e384ede0d4f4
 dbpro	5	6	Command	ADD VECTOR4	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
+dbpro	9	10	Command	APPEND OBJECT	engine-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	12	15	Command	AUTOCAM OFF	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	13	17	Command	AUTOCAM ON	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	16	21	Command	BACKDROP OFF	render-state	test_engine_builtins.cpp::Portable backdrops and linear fog preserve profile semantics	-
@@ -1032,7 +1033,9 @@ dbpro	437	666	Command	SCALE SPRITE	render-state	test_engine_builtins.cpp::DBPro 
 dbpro	438	667	Command	SCALE VECTOR2	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	439	668	Command	SCALE VECTOR3	golden-output	test_dbpro_vector3.dba	659ac5b90a10d29c88abf6699989dc61a5e407016c77c6353a79e384ede0d4f4
 dbpro	440	669	Command	SCALE VECTOR4	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
+dbpro	441	671	Command	SCROLL BACKDROP	engine-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	442	673	Command	SCROLL LIMB TEXTURE	render-state	test_engine_builtins.cpp::Portable limb checklist colour and texture transforms preserve stage semantics	-
+dbpro	443	675	Command	SCROLL OBJECT TEXTURE	render-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	452	692	Command	SET ALPHA MAPPING ON	pixel-capture	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
 dbpro	454	694	Command	SET AMBIENT LIGHT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	455	695	Command	SET BLEND MAPPING ON	material-pixel	test_engine_builtins.cpp::DBPro blend operations and cube faces reach the portable stock shader	-
@@ -1069,6 +1072,9 @@ dbpro	486	740	Command	SET DISPLAY MODE	golden-output	test_dbpro_display_image_te
 dbpro	490	743	Command	SET EFFECT ON	effect-state	test_shader_compiler.cpp::Studio compiles a relocatable HLSL effect package	-
 dbpro	491	744	Command	SET EFFECT TECHNIQUE	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
 dbpro	492	745	Command	SET EFFECT TRANSPOSE	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
+dbpro	495	749	Command	SET GAMMA	render-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
+dbpro	496	751	Command	SET GLOBAL COLLISION OFF	collision-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
+dbpro	497	753	Command	SET GLOBAL COLLISION ON	collision-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	502	757	Command	SET IDENTITY MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	503	758	Command	SET IMAGE COLORKEY	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	504	759	Command	SET INDEXDATA	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
@@ -1097,6 +1103,7 @@ dbpro	530	797	Command	SET OBJECT AMBIENT	render-state	test_engine_builtins.cpp::
 dbpro	531	799	Command	SET OBJECT COLLISION OFF	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	532	801	Command	SET OBJECT COLLISION ON	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	533	803	Command	SET OBJECT COLLISION TO BOXES	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
+dbpro	534	805	Command	SET OBJECT COLLISION TO POLYGONS	collision-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	535	807	Command	SET OBJECT COLLISION TO SPHERES	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	536	808	Command	SET OBJECT CULL	render-state	test_engine_builtins.cpp::DBPro object render flags drive portable renderer state	-
 dbpro	537	809	Command	SET OBJECT DIFFUSE	material-pixel	test_engine_builtins.cpp::DBPro object materials drive the stock shader	-
@@ -1104,6 +1111,7 @@ dbpro	538	810	Command	SET OBJECT EFFECT	effect-pixel	test_shader_compiler.cpp::C
 dbpro	539	811	Command	SET OBJECT EMISSIVE	material-pixel	test_engine_builtins.cpp::DBPro object materials drive the stock shader	-
 dbpro	540	812	Command	SET OBJECT FILTER	render-state	test_engine_builtins.cpp::DBPro object render flags drive portable renderer state	-
 dbpro	541	813	Command	SET OBJECT FOG	render-state	test_engine_builtins.cpp::DBPro object render flags drive portable renderer state	-
+dbpro	542	815	Command	SET OBJECT FRAME	engine-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	543	817	Command	SET OBJECT INTERPOLATION	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	545	819	Command	SET OBJECT LIGHT	render-state	test_engine_builtins.cpp::DBPro object render flags drive portable renderer state	-
 dbpro	546	820	Command	SET OBJECT NORMALS	geometry-render	test_engine_builtins.cpp::DBPro object and limb normal commands rewrite rendered geometry	-
@@ -1219,6 +1227,7 @@ dbpro	678	1007	Command	UNGLUE OBJECT	engine-state	test_engine_builtins.cpp::Port
 dbpro	680	1010	Command	UNLOCK VERTEXDATA	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	681	1012	Command	UPDATE MATRIX	golden-output	test_dbpro_matrix.dba	30249d63af2c68ea4bd5e89b776ddc8b417c3da3efe3e2ea7615212e0196b210
 dbpro	682	1013	Command	VIEW MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	683	1015	Command	WAIT	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
 dbpro	684	1017	Command	WAIT KEY	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
 dbpro	685	1018	Command	WORLD MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	686	1020	Command	WRITE BYTE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
@@ -1241,6 +1250,7 @@ dbpro	705	1058	Command	ZROTATE CAMERA	engine-state	test_engine_builtins.cpp::Por
 dbpro	706	1060	Command	ZROTATE OBJECT	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	708	1063	Function	ABS	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	709	1065	Function	ACOS	golden-output	test_dbpro_core.dba	8d62c939abc65069a90e348b81888038410b08ddf81ef5c642ada8634a676b3d
+dbpro	710	1067	Function	ALPHABLENDING AVAILABLE	gpu-capability	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	720	1086	Function	APPNAME$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	721	1088	Function	ASC	value	test_engine_builtins.cpp::Text compatibility commands and functions expose observable state in both profiles	-
 dbpro	722	1090	Function	ASIN	golden-output	test_dbpro_core.dba	8d62c939abc65069a90e348b81888038410b08ddf81ef5c642ada8634a676b3d
@@ -1296,6 +1306,7 @@ dbpro	791	1200	Function	FILE END	golden-output	test_dbpro_file_memblock.dba	f12c
 dbpro	792	1202	Function	FILE EXIST	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	793	1204	Function	FILE OPEN	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	794	1206	Function	FILE SIZE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	795	1208	Function	FILTERING AVAILABLE	gpu-capability	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	797	1210	Function	FOG AVAILABLE	capability	test_engine_builtins.cpp::Portable backdrops and linear fog preserve profile semantics	-
 dbpro	804	1224	Function	GET DATE$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	805	1226	Function	GET DIR$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
@@ -1395,6 +1406,7 @@ dbpro	915	1412	Function	LIMB POSITION Z	engine-state	test_engine_builtins.cpp::P
 dbpro	916	1413	Function	LIMB SCALE X	golden-output	test_dbpro_objects_pro.dba	0147c25fbf83ad7bd7481f4fdcd3c6696fb745ea1668ea4b094537a2305fd1bb
 dbpro	917	1414	Function	LIMB SCALE Y	golden-output	test_dbpro_objects_pro.dba	0147c25fbf83ad7bd7481f4fdcd3c6696fb745ea1668ea4b094537a2305fd1bb
 dbpro	918	1415	Function	LIMB SCALE Z	golden-output	test_dbpro_objects_pro.dba	0147c25fbf83ad7bd7481f4fdcd3c6696fb745ea1668ea4b094537a2305fd1bb
+dbpro	919	1417	Function	LIMB TEXTURE	engine-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	921	1420	Function	LIMB VISIBLE	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	922	1422	Function	LISTENER ANGLE X	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	923	1424	Function	LISTENER ANGLE Y	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-

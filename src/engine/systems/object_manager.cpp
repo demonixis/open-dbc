@@ -6363,6 +6363,42 @@ namespace dbc
         return true;
     }
 
+    bool ObjectManager::ScrollObjectTexture(int ObjectId, int Stage, float U, float V, std::string* Error)
+    {
+        if (Stage == 0)
+            return ScrollObjectTexture(ObjectId, U, V, Error);
+        if (Stage < 0)
+        {
+            if (Error)
+                *Error = "SCROLL OBJECT TEXTURE stage must be non-negative";
+            return false;
+        }
+        Object3D* ObjectPointer = RequireObject(ObjectId, "SCROLL OBJECT TEXTURE", Error);
+        if (!ObjectPointer)
+            return false;
+        for (Mesh& MeshValue : ObjectPointer->Meshes)
+        {
+            if (!MeshValue.Geometry().UvStages.contains(Stage))
+                continue;
+            for (SDL_FPoint& Uv : MeshValue.EditGeometry().UvStages.at(Stage))
+            {
+                Uv.x += U;
+                Uv.y += V;
+            }
+        }
+        ObjectPointer->TransformDirty = true;
+        return true;
+    }
+
+    bool ObjectManager::RecalculateBounds(int ObjectId, const char* Command, std::string* Error)
+    {
+        Object3D* ObjectPointer = RequireObject(ObjectId, Command, Error);
+        if (!ObjectPointer)
+            return false;
+        RecalculateObjectBounds(*ObjectPointer);
+        return true;
+    }
+
     bool ObjectManager::ScaleObjectTexture(int ObjectId, float U, float V, std::string* Error)
     {
         if (!ScaleObjectTexture(ObjectId, 0, U, V, Error))

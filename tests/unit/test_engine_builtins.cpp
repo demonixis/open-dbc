@@ -4979,6 +4979,9 @@ TEST_CASE("SLEEP and key waits suspend resume and cancel cooperatively")
     const dbc::vm::BuiltinInvocation DbProSleep{
         4, dbc::language::SymbolId::Command_Sleep, DbProSleepArguments, {dbc::language::TypeKind::Void, {}}, false};
     CHECK(Host.Invoke(DbProSleep).State == dbc::vm::BuiltinState::Completed);
+    const dbc::vm::BuiltinInvocation DbProWait{
+        5, dbc::language::SymbolId::Command_Wait, DbProSleepArguments, {dbc::language::TypeKind::Void, {}}, false};
+    CHECK(Host.Invoke(DbProWait).State == dbc::vm::BuiltinState::CompletedAndSuspend);
     const dbc::vm::BuiltinInvocation WaitKey{
         2, dbc::language::SymbolId::Command_WaitKey, {}, {dbc::language::TypeKind::Void, {}}, false};
     CHECK(Host.Invoke(WaitKey).State == dbc::vm::BuiltinState::Pending);
@@ -9663,6 +9666,78 @@ TEST_CASE("Asset load failures become runtime errors and leave no resource slot"
     CHECK(Kernel.ImageStoreRef().BitmapExist(92) == 0);
 }
 
+TEST_CASE("DBPro runs the common commands Classic already had")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("dbpro-common-commands", 32, 32));
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    Context.AssetRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic";
+    std::string Error;
+    const auto Number = [](double Value) { return BuiltinValue::FromNumber(Value); };
+
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_LoadObject,
+                          {BuiltinValue::FromString("obj/crawleridle.x"), Number(1)}, Error));
+    const int FramesBefore = Kernel.Objects().TotalObjectFrames(1);
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_AppendObject,
+                          {BuiltinValue::FromString("obj/crawlerwalk.x"), Number(1), Number(FramesBefore + 1)}, Error));
+    CHECK(Kernel.Objects().TotalObjectFrames(1) > FramesBefore);
+
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetObjectFrame, {Number(1), Number(3)}, Error));
+    CHECK(Kernel.Objects().GetObject(1)->Frame == 3);
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetObjectFrame, {Number(1), Number(4), Number(1)},
+                          Error));
+    CHECK(Kernel.Objects().GetObject(1)->Frame == 4);
+    CHECK_FALSE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetObjectFrame,
+                              {Number(99), Number(4), Number(1)}, Error));
+
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_MakeObjectBox,
+                          {Number(2), Number(2), Number(2), Number(2)}, Error));
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollObjectTexture,
+                          {Number(2), Number(0.25), Number(-0.5)}, Error));
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollObjectTexture,
+                          {Number(2), Number(0), Number(0.5), Number(0.25)}, Error));
+    CHECK(Kernel.Objects().GetObject(2)->TexScrollU == doctest::Approx(0.75f));
+    CHECK(Kernel.Objects().GetObject(2)->TexScrollV == doctest::Approx(-0.25f));
+    dbc::Mesh& Box = Kernel.Objects().GetObject(2)->Meshes.front();
+    Box.EditGeometry().UvStages[1] = Box.Geometry().Uvs;
+    const float StageU = Box.Geometry().UvStages.at(1).front().x;
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollObjectTexture,
+                          {Number(2), Number(1), Number(0.5), Number(0)}, Error));
+    CHECK(Box.Geometry().UvStages.at(1).front().x == doctest::Approx(StageU + 0.5f));
+    CHECK_FALSE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollObjectTexture,
+                              {Number(2), Number(-1), Number(0.5), Number(0)}, Error));
+    CHECK(Error.find("non-negative") != std::string::npos);
+
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetObjectCollisionToPolygons, {Number(2)}, Error));
+    CHECK(Kernel.Objects().GetObject(2)->CollisionShapeValue == dbc::CollisionShape::Polygon);
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetGlobalCollisionOn, {}, Error));
+    CHECK(Kernel.Objects().GlobalCollisionEnabled());
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetGlobalCollisionOff, {}, Error));
+    CHECK_FALSE(Kernel.Objects().GlobalCollisionEnabled());
+
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollBackdrop, {Number(25), Number(-50)}, Error));
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_ScrollBackdrop,
+                          {Number(0), Number(25), Number(-50)}, Error));
+    REQUIRE(InvokeCommand(Context, dbc::language::SymbolId::Command_SetGamma, {Number(128), Number(255), Number(511)},
+                          Error));
+    CHECK(Kernel.Renderer().GammaLevels() == std::array<int, 3>{128, 255, 511});
+
+    BuiltinValue Result;
+    REQUIRE(
+        InvokeFunction(Context, dbc::language::SymbolId::Function_LimbTexture, {Number(2), Number(0)}, Result, Error));
+    CHECK(ReadBuiltinInteger(Result) == 0);
+    REQUIRE(InvokeFunction(Context, dbc::language::SymbolId::Function_LimbTexture, {Number(2), Number(0), Number(1)},
+                           Result, Error));
+    CHECK(ReadBuiltinInteger(Result) == 0);
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE(InvokeFunction(Context, dbc::language::SymbolId::Function_AlphablendingAvailable, {}, Result, Error));
+    CHECK(ReadBuiltinInteger(Result) == 1);
+    REQUIRE(InvokeFunction(Context, dbc::language::SymbolId::Function_FilteringAvailable, {}, Result, Error));
+    CHECK(ReadBuiltinInteger(Result) == 1);
+}
+
 TEST_CASE("Classic restored object commands preserve typed state and historical paths")
 {
     dbc::EngineKernel Kernel;
@@ -9849,9 +9924,7 @@ TEST_CASE("Classic gamma and mipmap modes drive final pixels and sampler state")
     CHECK(dbc::language::SupportFor(GammaDescriptor, dbc::language::LanguageProfile::Dbc) ==
           dbc::language::SupportStatus::Implemented);
     CHECK(dbc::language::SupportFor(GammaDescriptor, dbc::language::LanguageProfile::DbPro) ==
-          dbc::language::SupportStatus::Unsupported);
-    CHECK(dbc::language::StubPolicyFor(GammaDescriptor, dbc::language::LanguageProfile::DbPro) ==
-          dbc::language::CompatibilityStubPolicy::None);
+          dbc::language::SupportStatus::Implemented);
 
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("classic-final-color", 32, 32));
@@ -9927,11 +10000,6 @@ TEST_CASE("Classic gamma and mipmap modes drive final pixels and sampler state")
     CHECK(Kernel.Renderer().GammaLevels() == std::array<int, 3>{255, 255, 255});
     CHECK_FALSE(Kernel.Renderer().HasMipmapModeOverride());
     CHECK(Kernel.Renderer().ResolveMipmapMode(1) == 1);
-    Context.Profile = dbc::language::LanguageProfile::DbPro;
-    CHECK_FALSE(Command(dbc::language::SymbolId::Command_SetGamma,
-                        {BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(0)}));
-    CHECK(Error == "Unsupported command: SET GAMMA");
-    CHECK(Kernel.Renderer().GammaLevels() == std::array<int, 3>{255, 255, 255});
 }
 
 TEST_CASE("Classic portable static world, line of sight, and global collision have observable state")

@@ -1,5 +1,4 @@
 profile	symbol_id	kind	name	disposition	family	proof	prerequisite
-dbpro	Command_AppendObject	Command	APPEND OBJECT	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_AttachObjectToStatic	Command	ATTACH OBJECT TO STATIC	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_AutomaticCameraCollision	Command	AUTOMATIC CAMERA COLLISION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_AutomaticObjectCollision	Command	AUTOMATIC OBJECT COLLISION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
@@ -79,8 +78,6 @@ dbpro	Command_ResumeAnimation	Command	RESUME ANIMATION	Deferred	video	dbc-help,d
 dbpro	Command_SaveSound	Command	SAVE SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveStaticObjects	Command	SAVE STATIC OBJECTS	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveTerrain	Command	SAVE TERRAIN	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
-dbpro	Command_ScrollBackdrop	Command	SCROLL BACKDROP	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ScrollObjectTexture	Command	SCROLL OBJECT TEXTURE	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SendNetMessageBitmap	Command	SEND NET MESSAGE BITMAP	Target	display	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SendNetMessageFloat	Command	SEND NET MESSAGE FLOAT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SendNetMessageImage	Command	SEND NET MESSAGE IMAGE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -91,14 +88,9 @@ dbpro	Command_SendNetMessageSound	Command	SEND NET MESSAGE SOUND	Target	audio	db
 dbpro	Command_SendNetMessageString	Command	SEND NET MESSAGE STRING	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetCameraToImage	Command	SET CAMERA TO IMAGE	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetDvdChapter	Command	SET DVD CHAPTER	Deferred	video	dbpro-reference	media-backend
-dbpro	Command_SetGamma	Command	SET GAMMA	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetGlobalCollisionOff	Command	SET GLOBAL COLLISION OFF	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetGlobalCollisionOn	Command	SET GLOBAL COLLISION ON	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGlobalObjectCreation	Command	SET GLOBAL OBJECT CREATION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetNetConnection	Command	SET NET CONNECTION	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectCollisionToPolygons	Command	SET OBJECT COLLISION TO POLYGONS	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectFrame	Command	SET OBJECT FRAME	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOff	Command	SET STATIC OBJECTS WIREFRAME OFF	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOn	Command	SET STATIC OBJECTS WIREFRAME ON	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetTerrainHeightmap	Command	SET TERRAIN HEIGHTMAP	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
@@ -112,11 +104,9 @@ dbpro	Command_SetVertexShaderOn	Command	SET VERTEX SHADER ON	Target	core	dbpro-r
 dbpro	Command_StopAnimation	Command	STOP ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Command_StopRecordingSound	Command	STOP RECORDING SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_UnlockBackbuffer	Command	UNLOCK BACKBUFFER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_Wait	Command	WAIT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_WriteDirblock	Command	WRITE DIRBLOCK	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_WriteToClipboard	Command	WRITE TO CLIPBOARD	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_WriteToRegistry	Command	WRITE TO REGISTRY	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_AlphablendingAvailable	Function	ALPHABLENDING AVAILABLE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_AnimationExist	Function	ANIMATION EXIST	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Function_AnimationHeight	Function	ANIMATION HEIGHT	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Function_AnimationLooping	Function	ANIMATION LOOPING	Deferred	video	dbc-help,dbpro-reference	media-backend
@@ -128,7 +118,6 @@ dbpro	Function_AnimationWidth	Function	ANIMATION WIDTH	Deferred	video	dbc-help,d
 dbpro	Function_CreateNetPlayer	Function	CREATE NET PLAYER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DllCallExist	Function	DLL CALL EXIST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DllExist	Function	DLL EXIST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_FilteringAvailable	Function	FILTERING AVAILABLE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetBackbufferDepth	Function	GET BACKBUFFER DEPTH	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetBackbufferHeight	Function	GET BACKBUFFER HEIGHT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetBackbufferPitch	Function	GET BACKBUFFER PITCH	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -147,7 +136,6 @@ dbpro	Function_GetMemblockPtr	Function	GET MEMBLOCK PTR	Target	memory	dbc-help,d
 dbpro	Function_GetRegistryString	Function	GET REGISTRY$	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetTerrainGroundHeight	Function	GET TERRAIN GROUND HEIGHT	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
 dbpro	Function_GetTerrainSize	Function	GET TERRAIN SIZE	Target	core	legacy-unverified	engine-subsystem-and-oracle
-dbpro	Function_LimbTexture	Function	LIMB TEXTURE	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NetGameExists	Function	NET GAME EXISTS	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NetGameLost	Function	NET GAME LOST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NetGameNowHosting	Function	NET GAME NOW HOSTING	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
