@@ -164,7 +164,8 @@ namespace dbc::studio
                     Move.y += 1.0f;
                 if (ImGui::IsKeyDown(ImGuiKey_Q))
                     Move.y -= 1.0f;
-                const float Speed = std::max(Camera_.Distance, 20.0f) * (Io.KeyShift ? 3.0f : 1.0f);
+                const float Speed =
+                    std::max(Camera_.Distance, 20.0f) * (Io.KeyShift ? 3.0f : 1.0f) * EditorSettings_.CameraSpeed;
                 Camera_.Position += Move * Speed * Io.DeltaTime;
             }
             else if (Navigating_ && Orbit)
@@ -184,7 +185,8 @@ namespace dbc::studio
             {
                 // Dolly toward the pivot, slower when close. A power, so that the large deltas of a
                 // trackpad flick cannot take the distance through zero.
-                Camera_.Distance = std::clamp(Camera_.Distance * std::pow(0.88f, Io.MouseWheel), 1.0f, 15000.0f);
+                Camera_.Distance = std::clamp(
+                    Camera_.Distance * std::pow(0.88f, Io.MouseWheel * EditorSettings_.ScrollSpeed), 1.0f, 15000.0f);
                 Camera_.Position = Pivot - Ahead * Camera_.Distance;
             }
         }

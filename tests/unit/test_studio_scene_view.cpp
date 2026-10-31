@@ -415,6 +415,21 @@ TEST_CASE("A fast two-finger scroll zooms in, and the same scroll back out retur
     CHECK(glm::length(Driver.Editor().View().Eye - Start) < 0.01f);
 }
 
+TEST_CASE("The scroll speed setting scales the viewport's zoom")
+{
+    SceneViewDriver Driver("scroll_speed", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.MoveMouse(Driver.ScreenOf(glm::vec3(0.0f)));
+    const glm::vec3 Start = Driver.Editor().View().Eye;
+
+    core::EditorSettings Settings;
+    Settings.ScrollSpeed = 2.0f;
+    Driver.Editor().SetEditorSettings(Settings);
+    ImGui::GetIO().AddMouseWheelEvent(0.0f, 1.0f);
+    Driver.Frame();
+    // 190 units from the pivot, kept at 0.88 per notch.
+    CHECK(glm::length(Driver.Editor().View().Eye - Start) == doctest::Approx(190.0f * (1.0f - 0.88f * 0.88f)));
+}
+
 TEST_CASE("The grid keys change the step moves land on")
 {
     const glm::vec3 Start(3.0f, 15.0f, 2.0f);

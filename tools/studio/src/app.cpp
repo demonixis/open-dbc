@@ -275,6 +275,7 @@ namespace dbc::studio
 
         RunOptions_.LogLevel = Settings_.LogLevel;
         RunOptions_.DebugOverlay = Settings_.DebugOverlay;
+        Scene_.SetEditorSettings(Settings_.Editor);
 
         IconGenerator_.SetLogHandler([this](const std::string& Message) { Output_.Append(Message); });
 
@@ -1624,6 +1625,28 @@ namespace dbc::studio
         ImGui::End();
     }
 
+    void App::DrawEditorSettings()
+    {
+        if (!ShowEditorSettings_)
+            return;
+        ImGui::SetNextWindowSize(ImVec2(460.0f, 110.0f), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin(TrId("Editor Settings"), &ShowEditorSettings_))
+        {
+            const auto Speed = [this](const char* Label, float& Value)
+            {
+                constexpr ImGuiSliderFlags Flags = ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp;
+                if (ImGui::SliderFloat(Label, &Value, core::EditorSettings::KMinSpeed, core::EditorSettings::KMaxSpeed,
+                                       "%.2f", Flags))
+                    Scene_.SetEditorSettings(Settings_.Editor);
+                if (ImGui::IsItemDeactivatedAfterEdit())
+                    Settings_.Save();
+            };
+            Speed(TrId("Scroll speed"), Settings_.Editor.ScrollSpeed);
+            Speed(TrId("Camera speed"), Settings_.Editor.CameraSpeed);
+        }
+        ImGui::End();
+    }
+
     void App::DrawPanels()
     {
         if (Mode_ == Mode::Scene)
@@ -1640,6 +1663,7 @@ namespace dbc::studio
 
         Launcher_.Draw(Window_);
         DrawBuildWindow();
+        DrawEditorSettings();
 
         if (SettingsWindow_.Draw(ProjectSettings_))
         {
@@ -1872,6 +1896,11 @@ namespace dbc::studio
                                 Target != nullptr && Target->AnyCursorHasSelection()))
             {
                 Snippets_.OpenSave(Target->GetSectionText(Target->GetMainCursorSelection()), Editor_.CurrentProfile());
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem(TrId("Editor Settings...")))
+            {
+                ShowEditorSettings_ = true;
             }
             ImGui::EndMenu();
         }

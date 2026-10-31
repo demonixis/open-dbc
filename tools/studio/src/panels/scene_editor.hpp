@@ -18,6 +18,7 @@
 
 #include "core/gpu_texture.hpp"
 #include "core/media_catalogue.hpp"
+#include "core/settings.hpp"
 #include "scene/scene_capture.hpp"
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_document.hpp"
@@ -123,6 +124,11 @@ namespace dbc::studio
             void HandleShortcuts();
             // Records the viewport's offscreen pass, before the ImGui pass samples it.
             void RecordGpu(SDL_GPUCommandBuffer* Commands);
+
+            void SetEditorSettings(const core::EditorSettings& Value)
+            {
+                EditorSettings_ = Value;
+            }
 
             // What the viewport showed when it last drew.
             const scene::ViewParameters& View() const
@@ -372,6 +378,7 @@ namespace dbc::studio
             bool UniformScale_ = false;
             bool LookThroughCamera_ = false;
             bool Navigating_ = false;
+            core::EditorSettings EditorSettings_;
             bool GizmoActive_ = false;
             // Position and scale % when the gizmo drag began: snapping and uniform scale start from them.
             glm::vec3 GizmoStartPosition_{0.0f};

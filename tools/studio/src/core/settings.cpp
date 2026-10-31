@@ -4,6 +4,7 @@
 #include "path_utf8.hpp"
 #include <type_traits>
 
+#include <algorithm>
 #include <fstream>
 
 #include <nlohmann/json.hpp>
@@ -26,7 +27,9 @@ namespace dbc::studio
             {
                 return Fallback;
             }
-            const bool Valid = std::is_same_v<T, bool> ? It->is_boolean() : It->is_string();
+            const bool Valid = std::is_same_v<T, bool>    ? It->is_boolean()
+                               : std::is_same_v<T, float> ? It->is_number()
+                                                          : It->is_string();
             if (!Valid)
             {
                 if (Error.empty())
@@ -84,6 +87,10 @@ namespace dbc::studio
             S.Language = Get<std::string>(J, "language", S.Language, Error);
             S.Theme = Get<std::string>(J, "theme", S.Theme, Error);
             S.DebugOverlay = Get<bool>(J, "debugOverlay", S.DebugOverlay, Error);
+            S.Editor.ScrollSpeed = std::clamp(Get<float>(J, "scrollSpeed", S.Editor.ScrollSpeed, Error),
+                                              EditorSettings::KMinSpeed, EditorSettings::KMaxSpeed);
+            S.Editor.CameraSpeed = std::clamp(Get<float>(J, "cameraSpeed", S.Editor.CameraSpeed, Error),
+                                              EditorSettings::KMinSpeed, EditorSettings::KMaxSpeed);
             if (const auto Values = J.find("projectPathRemappings"); Values != J.end() && Values->is_object())
             {
                 for (const auto& [Key, Value] : Values->items())
@@ -151,6 +158,8 @@ namespace dbc::studio
             J["language"] = Language;
             J["theme"] = Theme;
             J["debugOverlay"] = DebugOverlay;
+            J["scrollSpeed"] = Editor.ScrollSpeed;
+            J["cameraSpeed"] = Editor.CameraSpeed;
             J["projectPathRemappings"] = ProjectPathRemappings;
             J["javaHome"] = JavaHome;
             J["androidSdk"] = AndroidSdk;

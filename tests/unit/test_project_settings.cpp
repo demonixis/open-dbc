@@ -154,6 +154,28 @@ TEST_CASE("Studio preferences reject wrong JSON types without throwing")
     CHECK_FALSE(Error.empty());
 }
 
+TEST_CASE("Studio preferences keep the Editor Settings speeds within their range")
+{
+    std::string Error;
+    const auto Default = core::Settings::Parse("{}", Error);
+    CHECK(Default.Editor.ScrollSpeed == doctest::Approx(1.0f));
+    CHECK(Default.Editor.CameraSpeed == doctest::Approx(1.0f));
+
+    const auto Set = core::Settings::Parse(R"({"scrollSpeed":2.5,"cameraSpeed":0.5})", Error);
+    CHECK(Error.empty());
+    CHECK(Set.Editor.ScrollSpeed == doctest::Approx(2.5f));
+    CHECK(Set.Editor.CameraSpeed == doctest::Approx(0.5f));
+
+    const auto Outside = core::Settings::Parse(R"({"scrollSpeed":-3,"cameraSpeed":1e30})", Error);
+    CHECK(Error.empty());
+    CHECK(Outside.Editor.ScrollSpeed == doctest::Approx(core::EditorSettings::KMinSpeed));
+    CHECK(Outside.Editor.CameraSpeed == doctest::Approx(core::EditorSettings::KMaxSpeed));
+
+    const auto Wrong = core::Settings::Parse(R"({"scrollSpeed":"fast"})", Error);
+    CHECK_FALSE(Error.empty());
+    CHECK(Wrong.Editor.ScrollSpeed == doctest::Approx(1.0f));
+}
+
 TEST_CASE("Invalid project settings cannot replace the original descriptor")
 {
     TemporaryProject Project;

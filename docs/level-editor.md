@@ -188,6 +188,9 @@ into a right click. **Grid** shows or hides the grid.
 A vertex drag reaches 40 pixels around the mouse, and the selection waits on its
 last vertex in between. It works on the Move, Rotate and Scale tools.
 
+**Edit > Editor Settings** multiplies the wheel's zoom (**Scroll speed**) and the
+camera's flight (**Camera speed**), and keeps them with the Studio preferences.
+
 Dropping an image on a node textures it. Dropping a
 model or a sound places it on the ground under the cursor. In Assets, a
 double-click applies the image to the selection, gives the sound to a selected

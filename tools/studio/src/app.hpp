@@ -107,6 +107,7 @@ namespace dbc::studio
         void ShowProblems(const std::vector<toolchain::RunDiagnostic>& Diagnostics);
         void RunLauncherPath(const std::filesystem::path& Path);
         void StopRun();
+        void DrawEditorSettings();
         void OpenBuildWindow();
         void DrawBuildWindow();
         toolchain::ArtifactExportRequest MakeBuildRequest() const;
@@ -167,6 +168,7 @@ namespace dbc::studio
         bool ShowCode_ = true;
         bool ShowMedia_ = true;
         bool ShowAbout_ = false;
+        bool ShowEditorSettings_ = false;
         bool QuitRequested_ = false;
         bool QuitSaveInProgress_ = false;
 

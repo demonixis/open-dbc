@@ -10,6 +10,18 @@ namespace dbc::studio
 {
     namespace core
     {
+        // Edit > Editor Settings, as multipliers.
+        struct EditorSettings
+        {
+            static constexpr float KMinSpeed = 0.1f;
+            static constexpr float KMaxSpeed = 5.0f;
+
+            // The viewport's zoom under the wheel or two fingers.
+            float ScrollSpeed = 1.0f;
+            // The viewport camera's flight.
+            float CameraSpeed = 1.0f;
+        };
+
         // Preferences use JSON in the per-user directory; ImGui persists window geometry and docking.
         struct Settings
         {
@@ -21,6 +33,7 @@ namespace dbc::studio
             // "auto" follows the system, otherwise "dark" or "light".
             std::string Theme = "dark";
             bool DebugOverlay = false;
+            EditorSettings Editor;
             std::map<std::string, std::string> ProjectPathRemappings;
 
             // External tools for exports. Empty JDK and SDK paths mean automatic detection.
