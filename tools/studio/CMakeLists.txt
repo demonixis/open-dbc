@@ -339,8 +339,8 @@ add_custom_command(
     OUTPUT "${STUDIO_SNIPPET_INCLUDE}"
     COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_SNIPPET_INCLUDE} -DSOURCE_DIR=${STUDIO_SNIPPET_DIR}
             "-DFILES=${STUDIO_SNIPPET_FILES}" -DARRAY=KBuiltinSnippetFiles
-            -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
-    DEPENDS ${STUDIO_SNIPPET_INPUTS} "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+            -P "${CMAKE_SOURCE_DIR}/cmake/embed_files.cmake"
+    DEPENDS ${STUDIO_SNIPPET_INPUTS} "${CMAKE_SOURCE_DIR}/cmake/embed_files.cmake"
     COMMENT "Embed the Studio snippets"
     VERBATIM)
 add_custom_target(opendbc_studio_snippets DEPENDS "${STUDIO_SNIPPET_INCLUDE}")
@@ -359,8 +359,8 @@ add_custom_command(
     OUTPUT "${STUDIO_LOCALE_INCLUDE}"
     COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_LOCALE_INCLUDE} -DSOURCE_DIR=${STUDIO_LOCALE_DIR}
             "-DFILES=${STUDIO_LOCALE_FILES}" -DARRAY=KTranslationCatalogueFiles
-            -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
-    DEPENDS ${STUDIO_LOCALE_INPUTS} "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+            -P "${CMAKE_SOURCE_DIR}/cmake/embed_files.cmake"
+    DEPENDS ${STUDIO_LOCALE_INPUTS} "${CMAKE_SOURCE_DIR}/cmake/embed_files.cmake"
     COMMENT "Embed the Studio translations"
     VERBATIM)
 add_custom_target(opendbc_studio_locales DEPENDS "${STUDIO_LOCALE_INCLUDE}")
@@ -374,9 +374,9 @@ add_custom_command(
     OUTPUT "${STUDIO_FONT_INCLUDE}"
     COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_FONT_INCLUDE} -DSOURCE_DIR=${STUDIO_FONT_DIR}
             "-DFILES=${STUDIO_FONT_FILES}" -DARRAY=KStudioFontFiles
-            -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+            -P "${CMAKE_SOURCE_DIR}/cmake/embed_files.cmake"
     DEPENDS "${STUDIO_FONT_DIR}/Roboto-Medium.ttf" "${STUDIO_FONT_DIR}/Cousine-Regular.ttf"
-            "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+            "${CMAKE_SOURCE_DIR}/cmake/embed_files.cmake"
     COMMENT "Embed the Studio fonts"
     VERBATIM)
 add_custom_target(opendbc_studio_fonts DEPENDS "${STUDIO_FONT_INCLUDE}")
