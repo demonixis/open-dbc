@@ -1448,6 +1448,38 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ODE_JOINT_TEST = "test_physics.cpp::ODE joints hold bodies together"
+ODE_DOOR_TEST = "test_physics.cpp::ODE swing door hinges hold a body to the world"
+ODE_COMPOUND_TEST = "test_physics.cpp::ODE static objects are made of boxes"
+ODE_CHARACTER_TEST = "test_physics.cpp::ODE character controllers walk and fall"
+ODE_DUCK_TEST = "test_physics.cpp::ODE character controllers duck under what they cannot pass"
+
+UNIT_WITNESSES += tuple(
+    ("dbpro", Kind, Name, Code, "jolt-rigid-body", Test)
+    for Kind, Name, Code, Test in (
+        ("Command", "ODE CREATE BALL JOINT", "ode create ball joint 1, 2, 3, 0.0, 20.0, 0.0\n", ODE_JOINT_TEST),
+        ("Command", "ODE CREATE HINGE JOINT", "ode create hinge joint 3, 2, 0.0, 0.0, 1.0, 0.0, 20.0, 0.0\n",
+         ODE_JOINT_TEST),
+        ("Command", "ODE CREATE HINGE JOINT", "ode create hinge joint 1, 3, 2, 0.0, 0.0, 1.0, 0.0, 20.0, 0.0\n",
+         ODE_JOINT_TEST),
+        ("Command", "ODE SET HINGE JOINT LIMIT", "ode set hinge joint limit 7, -0.5, 1.0\n", ODE_JOINT_TEST),
+        ("Function", "ODE CREATE SWINGDOOR HINGE", "value = ode create swingdoor hinge(2, -2.0, 0.0, 0.0, 90.0)\n",
+         ODE_DOOR_TEST),
+        ("Command", "ODE START STATIC OBJECT", "ode start static object 2\n", ODE_COMPOUND_TEST),
+        ("Command", "ODE ADD STATIC OBJECT BOX", "ode add static object box 2, 3\n", ODE_COMPOUND_TEST),
+        ("Command", "ODE END STATIC OBJECT", "ode end static object 2, 1\n", ODE_COMPOUND_TEST),
+        ("Command", "ODE CREATE CHARACTER CONTROLLER", "ode create character controller 2, 20.0, 100.0, 45.0\n",
+         ODE_CHARACTER_TEST),
+        ("Command", "ODE CONTROL CHARACTER CONTROLLER",
+         "ode control character controller 2, 0.0, 0.0, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0\n", ODE_CHARACTER_TEST),
+        ("Function", "ODE GET CHARACTER CONTROLLER DUCKING", "value# = ode get character controller ducking(2)\n",
+         ODE_DUCK_TEST),
+        ("Function", "ODE GET CHARACTER FALL DISTANCE", "value# = ode get character fall distance()\n",
+         ODE_CHARACTER_TEST),
+        ("Function", "ODE GET CHARACTER HIT FLOOR", "value = ode get character hit floor()\n", ODE_CHARACTER_TEST),
+    )
+)
+
 ODE_MESSAGE_TEST = "test_physics.cpp::ODE collisions arrive as messages"
 ODE_SURFACE_TEST = "test_physics.cpp::ODE contact surfaces bounce only when asked to"
 ODE_RAY_TEST = "test_physics.cpp::ODE rays find the first surface they meet"

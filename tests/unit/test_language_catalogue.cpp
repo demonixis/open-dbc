@@ -114,7 +114,7 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
         }
     }
     CHECK(ExtensionSymbols == 121);
-    CHECK(ImplementedExtensionSymbols == 75);
+    CHECK(ImplementedExtensionSymbols == 87);
 
     CHECK(dbc::language::Symbol(SymbolId::Command_OdeStart).Kind == SymbolKind::Reserved);
     const auto& ActiveOde = dbc::language::Symbol(SymbolId::Command_ExtOdeStart);

@@ -68,6 +68,40 @@ Static terrain meshes count as terrain for `ODE RAY`'s mask (1), capsules as cap
 `ODE RAY CAST` tests one object's body, or all of them with object 0. `ODE RAY FORCE` adds a force along the ray at the
 hit point of a moving body, for its next update.
 
+## Joints
+
+`ODE CREATE BALL JOINT` and `ODE CREATE HINGE JOINT` take a joint number, two bodies, at least one moving, and a point
+and axis in world space. The hinge form without a number uses the first object's. `ODE SET HINGE JOINT LIMIT` takes
+radians, from -pi to 0 and from 0 to pi, as the first object's turn about the axis from where the hinge was made. Bodies
+a joint connects do not collide. A joint goes with either of its bodies.
+
+`ODE CREATE SWINGDOOR HINGE` holds a moving body to the world about its own Y axis, through a point relative to its
+origin. It answers 0 for a number without a body and ignores the angle, as the plugin did.
+
+## Static objects
+
+`ODE START STATIC OBJECT`, any number of `ODE ADD STATIC OBJECT BOX` and `ODE END STATIC OBJECT` make one static body at
+its object's place. Each box takes its size from its own object, and counts its position and rotation from the finished
+body's. Material 1 makes the body terrain for rays. The plugin's smallest box of 6 units per side is not applied.
+
+## Character controller
+
+`ODE CREATE CHARACTER CONTROLLER` makes a capsule that stands on the object's lowest point, as tall as the object and
+with the radius of a quarter of width plus depth, which is the size of the plugin's fixed capsule on an object 30 wide
+and 70 tall. It takes its own gravity downward, the fall speed that limits it and the steepest slope it stands on. It
+climbs steps of 10.35 in 70 of its height, pushes loose bodies, stops falling bodies and stands on moving ones.
+
+`ODE CONTROL CHARACTER CONTROLLER` lasts until the next call. Speed is a distance per 1/120 s in the direction of the Y
+angle, slowed by the cosine of the X angle; a positive push force replaces it, in the direction of the push angle. The
+jump speed starts a jump from the ground, and thrust is the least upward speed for as long as it is set. A ducking
+value of exactly 1 lowers the capsule to 52 in 70, and it stands again when there is room.
+
+The object's X rotation is 1 on the ground and 0 otherwise, as in the plugin, and its other angles stay the program's.
+`ODE GET CHARACTER HIT FLOOR` is 1 once after a landing, where the plugin gave a value of the floor's mesh that does not
+exist here. `ODE GET CHARACTER FALL DISTANCE` is half the height fallen, once. Body forms that act through forces and
+velocities report an error on a character; `ODE SET BODY POSITION` moves it. Object motion is not smoothed as the plugin
+did, and water forms are absent.
+
 ## Solver
 
 `ODE SET WORLD ERP` is Jolt's position correction per iteration, and `ODE SET WORLD QUICK STEP NUM ITERATIONS` its

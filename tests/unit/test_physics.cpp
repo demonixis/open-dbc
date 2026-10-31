@@ -14,6 +14,7 @@
 #include <limits>
 #include <numbers>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace dbc::interpreter::detail;
@@ -1700,5 +1701,879 @@ TEST_CASE("ODE rays find the first surface they meet")
         Error.clear();
         CHECK_FALSE(InvokeFunction(Scene.Context, SymbolId::Function_ExtOdeGetRayObjectHit, {}, Result, Error));
         CHECK(Error == "ODE GET RAY OBJECT HIT requires ODE START");
+    }
+}
+
+namespace
+{
+    // A cube hanging freely from a static post above it, over nothing.
+    void HangCube(OdeScene& Scene, int Post, int Cube)
+    {
+        Scene.Kernel.Objects().MakeObjectCube(Post, 1.0f);
+        Scene.Kernel.Objects().PositionObject(Post, 0.0f, 20.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {static_cast<double>(Post)}));
+        Scene.Kernel.Objects().MakeObjectCube(Cube, 1.0f);
+        Scene.Kernel.Objects().PositionObject(Cube, 5.0f, 20.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {static_cast<double>(Cube)}));
+    }
+
+    double DistanceToPost(OdeScene& Scene, int Cube)
+    {
+        const double DeltaX = Scene.X(Cube);
+        const double DeltaY = Scene.Y(Cube) - 20.0;
+        const double DeltaZ = Scene.Z(Cube);
+        return std::sqrt(DeltaX * DeltaX + DeltaY * DeltaY + DeltaZ * DeltaZ);
+    }
+} // namespace
+
+TEST_CASE("ODE joints hold bodies together")
+{
+    SUBCASE("A ball joint swings like a pendulum at a constant distance")
+    {
+        OdeScene Scene;
+        HangCube(Scene, 2, 3);
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 0.0, 20.0, 0.0}), Scene.Error);
+        double Lowest = 20.0;
+        double Leftmost = 5.0;
+        for (int Index = 0; Index < 180; ++Index)
+        {
+            Scene.Step();
+            Lowest = std::min<double>(Lowest, Scene.Y(3));
+            Leftmost = std::min<double>(Leftmost, Scene.X(3));
+            REQUIRE(DistanceToPost(Scene, 3) == doctest::Approx(5.0).epsilon(0.02));
+        }
+        CHECK(Lowest == doctest::Approx(15.0).epsilon(0.02));
+        // Free, it would have fallen 44 units; held, it swings through the bottom and out on the other side.
+        CHECK(Leftmost < -3.0);
+    }
+
+    SUBCASE("A hinge turns only about its axis")
+    {
+        OdeScene Scene;
+        HangCube(Scene, 2, 3);
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeCreateHingeJoint, {1, 3, 2, 0.0, 0.0, 1.0, 0.0, 20.0, 0.0}),
+                        Scene.Error);
+        // Pushing along the axis moves nothing; a ball joint would swing out of the plane.
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetWorldGravity, {0.0, 0.0, 0.0}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {3, 0.0, 0.0, 5.0}));
+        Scene.Step(30);
+        // Free, it would have gone 2.5. On so long a lever the solver brings it back to within a degree before the
+        // body comes to rest and goes to sleep.
+        CHECK(std::abs(Scene.Z(3)) < 0.25f);
+        Scene.Step(120);
+        CHECK(std::abs(Scene.Z(3)) < 0.1f);
+        CHECK(Scene.X(3) == doctest::Approx(5.0f).epsilon(0.02));
+        // Across the axis it turns freely around the pin.
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {3, 0.0, -4.0, 0.0}));
+        Scene.Step(30);
+        CHECK(Scene.Y(3) < 19.0f);
+        CHECK(std::abs(Scene.Z(3)) < 0.1f);
+        CHECK(DistanceToPost(Scene, 3) == doctest::Approx(5.0).epsilon(0.02));
+    }
+
+    SUBCASE("A hinge limit stops the swing, measured as object A's turn about the axis")
+    {
+        OdeScene Scene;
+        HangCube(Scene, 2, 3);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateHingeJoint, {7, 3, 2, 0.0, 0.0, 1.0, 0.0, 20.0, 0.0}));
+        // The cube lies on +X, so falling is a negative turn about +Z.
+        const double Low = -0.5;
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeSetHingeJointLimit, {7, Low, 1.0}), Scene.Error);
+        double Lowest = 20.0;
+        for (int Index = 0; Index < 240; ++Index)
+        {
+            Scene.Step();
+            Lowest = std::min<double>(Lowest, Scene.Y(3));
+        }
+        CHECK(Lowest == doctest::Approx(20.0 + 5.0 * std::sin(Low)).epsilon(0.02));
+        CHECK(Scene.Y(3) == doctest::Approx(20.0 + 5.0 * std::sin(Low)).epsilon(0.02));
+    }
+
+    SUBCASE("Bodies a joint connects do not collide")
+    {
+        OdeScene Scene;
+        // The cube's hinge pin is inside the post, as a door's is inside its frame.
+        Scene.Kernel.Objects().MakeObjectBox(2, 2.0f, 2.0f, 2.0f);
+        Scene.Kernel.Objects().PositionObject(2, 0.0f, 20.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {2}));
+        Scene.Kernel.Objects().MakeObjectBox(3, 4.0f, 1.0f, 1.0f);
+        Scene.Kernel.Objects().PositionObject(3, 1.5f, 20.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {3}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateHingeJoint, {1, 3, 2, 0.0, 0.0, 1.0, 0.0, 20.0, 0.0}));
+        Scene.Step(60);
+        // It swings from where it overlaps the post; the post would otherwise throw it out or hold it level.
+        CHECK(Scene.Y(3) < 19.0f);
+        CHECK(Scene.X(3) * Scene.X(3) + (Scene.Y(3) - 20.0f) * (Scene.Y(3) - 20.0f) ==
+              doctest::Approx(2.25f).epsilon(0.05));
+        int Exists = 0;
+        REQUIRE(Scene.Kernel.Physics().CollisionMessageExists(Exists, &Scene.Error));
+        CHECK(Exists == 0);
+    }
+
+    SUBCASE("Two moving bodies can share a joint, and destroying one frees the other")
+    {
+        OdeScene Scene;
+        Scene.DynamicSphere(2, 10.0f);
+        Scene.Kernel.Objects().MakeObjectSphere(3, 2.0f, 8, 8);
+        Scene.Kernel.Objects().PositionObject(3, 3.0f, 10.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicSphere, {3}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 3.0, 10.0, 0.0}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {2, 0.0, 6.0, 0.0}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetGravity, {2, 0}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetGravity, {3, 0}));
+        Scene.Step(30);
+        const auto Separation = [&Scene]
+        {
+            const float DeltaX = Scene.X(2) - Scene.X(3);
+            const float DeltaY = Scene.Y(2) - Scene.Y(3);
+            return std::sqrt(DeltaX * DeltaX + DeltaY * DeltaY);
+        };
+        CHECK(Separation() == doctest::Approx(3.0f).epsilon(0.02));
+        CHECK(Scene.Y(3) > 10.2f);
+
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeDestroyObject, {2}));
+        const float YBefore = Scene.Y(3);
+        const double Velocity = Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityY, {3});
+        Scene.Step(30);
+        // Free, and it keeps the velocity it had; the number can be used again.
+        CHECK(Scene.Y(3) == doctest::Approx(YBefore + 0.5 * Velocity).epsilon(0.05));
+        Scene.DynamicSphere(2, 30.0f);
+        CHECK(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 0.0, 0.0, 0.0}));
+    }
+
+    SUBCASE("A deleted object takes its joints with it")
+    {
+        OdeScene Scene;
+        HangCube(Scene, 2, 3);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 0.0, 20.0, 0.0}));
+        Scene.Step(10);
+        Scene.Kernel.Objects().DeleteObject(2);
+        Scene.Kernel.Physics().ObjectDeleted(2);
+        Scene.Step(60);
+        // The cube falls free once the post has gone.
+        CHECK(DistanceToPost(Scene, 3) > 5.5);
+    }
+
+    SUBCASE("Wrong use is reported")
+    {
+        OdeScene Scene;
+        HangCube(Scene, 2, 3);
+        Scene.Kernel.Objects().MakeObjectCube(4, 1.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {4}));
+
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 99, 0.0, 0.0, 0.0}));
+        CHECK(Scene.Error.find("ODE body for object 99") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 3, 3, 0.0, 0.0, 0.0}));
+        CHECK(Scene.Error.find("two different bodies") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 4, 0.0, 0.0, 0.0}));
+        CHECK(Scene.Error.find("one moving body") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateHingeJoint, {1, 3, 2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}));
+        CHECK(Scene.Error.find("axis") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetHingeJointLimit, {1, -1.0, 1.0}));
+        CHECK(Scene.Error.find("requires joint 1") != std::string::npos);
+
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 0.0, 20.0, 0.0}));
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 0.0, 20.0, 0.0}));
+        CHECK(Scene.Error.find("joint 1 exists") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetHingeJointLimit, {1, -1.0, 1.0}));
+        CHECK(Scene.Error.find("ball joint") != std::string::npos);
+
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateHingeJoint, {2, 3, 2, 0.0, 0.0, 1.0, 0.0, 20.0, 0.0}));
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetHingeJointLimit, {2, 0.5, 1.0}));
+        CHECK(Scene.Error.find("low limit") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetHingeJointLimit, {2, -1.0, 4.0}));
+    }
+
+    SUBCASE("The eight-argument hinge takes its number from the first object")
+    {
+        OdeScene Scene;
+        HangCube(Scene, 2, 3);
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeCreateHingeJoint, {3, 2, 0.0, 0.0, 1.0, 0.0, 20.0, 0.0}),
+                        Scene.Error);
+        CHECK(Scene.Run(SymbolId::Command_ExtOdeSetHingeJointLimit, {3, -0.5, 0.5}));
+        Scene.Step(60);
+        CHECK(DistanceToPost(Scene, 3) == doctest::Approx(5.0).epsilon(0.02));
+    }
+
+    SUBCASE("A restarted world has no joints")
+    {
+        OdeScene Scene;
+        HangCube(Scene, 2, 3);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 0.0, 20.0, 0.0}));
+        Scene.Step(5);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeStart));
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetHingeJointLimit, {1, -1.0, 1.0}));
+        CHECK(Scene.Error.find("requires joint 1") != std::string::npos);
+    }
+}
+
+TEST_CASE("ODE swing door hinges hold a body to the world")
+{
+    SUBCASE("The door turns about its own Y axis through a point relative to its origin")
+    {
+        OdeScene Scene;
+        Scene.Kernel.Objects().MakeObjectBox(2, 4.0f, 6.0f, 0.5f);
+        Scene.Kernel.Objects().PositionObject(2, 10.0f, 3.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {2}));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCreateSwingdoorHinge, {2, -2.0, 0.0, 0.0, 90.0}) == 1.0);
+        // Already turning about the hinge at (8, 3, 0), so it keeps a whole radian per second.
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetAngularVelocity, {2, 0.0, 1.0, 0.0}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {2, 0.0, 0.0, -2.0}));
+        Scene.Step(60);
+        // Gravity cannot take it down, and it stays at the door's width from the hinge.
+        CHECK(Scene.Y(2) == doctest::Approx(3.0f).epsilon(0.01));
+        const float DeltaX = Scene.X(2) - 8.0f;
+        const float DeltaZ = Scene.Z(2);
+        CHECK(DeltaX * DeltaX + DeltaZ * DeltaZ == doctest::Approx(4.0f).epsilon(0.02));
+        CHECK(DeltaZ < -1.0f);
+    }
+
+    SUBCASE("A number without a body answers 0, and a static body is refused")
+    {
+        OdeScene Scene;
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCreateSwingdoorHinge, {50, 0.0, 0.0, 0.0, 0.0}) == 0.0);
+        Scene.Floor();
+        BuiltinValue Result;
+        std::vector<BuiltinValue> Arguments;
+        for (const double Value : {1.0, 0.0, 0.0, 0.0, 0.0})
+            Arguments.push_back(BuiltinValue::FromNumber(Value));
+        std::string Error;
+        CHECK_FALSE(
+            InvokeFunction(Scene.Context, SymbolId::Function_ExtOdeCreateSwingdoorHinge, Arguments, Result, Error));
+        CHECK(Error.find("moving body") != std::string::npos);
+    }
+
+    SUBCASE("Destroying the door removes its hinge")
+    {
+        OdeScene Scene;
+        Scene.Kernel.Objects().MakeObjectBox(2, 4.0f, 6.0f, 0.5f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {2}));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCreateSwingdoorHinge, {2, -2.0, 0.0, 0.0, 0.0}) == 1.0);
+        Scene.Step(5);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeDestroyObject, {2}));
+        Scene.Step(5);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {2}));
+        const float Before = Scene.Y(2);
+        Scene.Step(30);
+        CHECK(Scene.Y(2) < Before - 0.5f);
+    }
+}
+
+TEST_CASE("ODE static objects are made of boxes")
+{
+    const auto MakeCompound = [](OdeScene& Scene, int Material)
+    {
+        // Two platforms with a gap between them, each a box of its own, at the finished object's height.
+        Scene.Kernel.Objects().MakeObjectCube(2, 1.0f);
+        Scene.Kernel.Objects().PositionObject(2, 0.0f, 5.0f, 0.0f);
+        Scene.Kernel.Objects().MakeObjectBox(3, 4.0f, 2.0f, 4.0f);
+        Scene.Kernel.Objects().PositionObject(3, -5.0f, 0.0f, 0.0f);
+        Scene.Kernel.Objects().MakeObjectBox(4, 4.0f, 2.0f, 4.0f);
+        Scene.Kernel.Objects().PositionObject(4, 5.0f, 0.0f, 0.0f);
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeStartStaticObject, {2}), Scene.Error);
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeAddStaticObjectBox, {2, 3}), Scene.Error);
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeAddStaticObjectBox, {2, 4}), Scene.Error);
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeEndStaticObject, {2, static_cast<double>(Material)}),
+                        Scene.Error);
+    };
+
+    SUBCASE("Spheres land on each box and fall through the gap")
+    {
+        OdeScene Scene;
+        MakeCompound(Scene, 0);
+        Scene.DropSphere(5, -5.0f, 12.0f);
+        Scene.DropSphere(6, 5.0f, 12.0f);
+        Scene.DropSphere(7, 0.0f, 12.0f);
+        Scene.Step(180);
+        // The boxes sit five above their own positions, since they count from the finished object.
+        CHECK(Scene.Y(5) == doctest::Approx(7.0f).epsilon(0.02));
+        CHECK(Scene.Y(6) == doctest::Approx(7.0f).epsilon(0.02));
+        CHECK(Scene.Y(7) < 0.0f);
+    }
+
+    SUBCASE("A box's rotation and centre count too")
+    {
+        OdeScene Scene;
+        Scene.Kernel.Objects().MakeObjectCube(2, 1.0f);
+        // A tall thin box laid on its side by turning it about Z, so it stops a sphere well away from its origin.
+        Scene.Kernel.Objects().MakeObjectBox(3, 1.0f, 12.0f, 4.0f);
+        Scene.Kernel.Objects().RotateObject(3, 0.0f, 0.0f, 90.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeStartStaticObject, {2}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddStaticObjectBox, {2, 3}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeEndStaticObject, {2, 0}));
+        Scene.DropSphere(5, 5.0f, 10.0f);
+        Scene.Step(180);
+        CHECK(Scene.Y(5) == doctest::Approx(1.5f).epsilon(0.02));
+    }
+
+    SUBCASE("Material 1 makes it terrain for rays")
+    {
+        OdeScene Scene;
+        MakeCompound(Scene, 1);
+        int Hit = 0;
+        REQUIRE(Scene.Kernel.Physics().Ray(Hit, -5.0f, 20.0f, 0.0f, -5.0f, -20.0f, 0.0f, 1, &Scene.Error));
+        CHECK(Hit == 1);
+        REQUIRE(Scene.Kernel.Physics().Ray(Hit, -5.0f, 20.0f, 0.0f, -5.0f, -20.0f, 0.0f, 2, &Scene.Error));
+        CHECK(Hit == 0);
+        REQUIRE(Scene.Kernel.Physics().Ray(Hit, 0.0f, 20.0f, 0.0f, 0.0f, -20.0f, 0.0f, 1, &Scene.Error));
+        CHECK(Hit == 0);
+    }
+
+    SUBCASE("Any other material makes it an object for rays")
+    {
+        OdeScene Scene;
+        MakeCompound(Scene, 3);
+        int Hit = 0;
+        REQUIRE(Scene.Kernel.Physics().Ray(Hit, -5.0f, 20.0f, 0.0f, -5.0f, -20.0f, 0.0f, 2, &Scene.Error));
+        CHECK(Hit == 1);
+        REQUIRE(Scene.Kernel.Physics().Ray(Hit, -5.0f, 20.0f, 0.0f, -5.0f, -20.0f, 0.0f, 1, &Scene.Error));
+        CHECK(Hit == 0);
+    }
+
+    SUBCASE("Wrong use is reported")
+    {
+        OdeScene Scene;
+        Scene.Kernel.Objects().MakeObjectCube(2, 1.0f);
+        Scene.Kernel.Objects().MakeObjectCube(3, 1.0f);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeAddStaticObjectBox, {2, 3}));
+        CHECK(Scene.Error.find("ODE START STATIC OBJECT") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeEndStaticObject, {2, 0}));
+        CHECK(Scene.Error.find("ODE START STATIC OBJECT") != std::string::npos);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeStartStaticObject, {2}));
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeAddStaticObjectBox, {2, 99}));
+        CHECK(Scene.Error.find("object 99") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeAddStaticObjectBox, {4, 3}));
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeEndStaticObject, {2, 0}));
+        CHECK(Scene.Error.find("ODE ADD STATIC OBJECT BOX first") != std::string::npos);
+        // The failed end closed the object.
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeEndStaticObject, {2, 0}));
+        CHECK(Scene.Error.find("ODE START STATIC OBJECT") != std::string::npos);
+    }
+
+    SUBCASE("A restarted world forgets an unfinished object")
+    {
+        OdeScene Scene;
+        Scene.Kernel.Objects().MakeObjectCube(2, 1.0f);
+        Scene.Kernel.Objects().MakeObjectCube(3, 1.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeStartStaticObject, {2}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddStaticObjectBox, {2, 3}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeStart));
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeEndStaticObject, {2, 0}));
+    }
+}
+
+namespace
+{
+    // A character the size and proportions of a person two units tall, half a unit in radius.
+    void MakeCharacter(OdeScene& Scene, int ObjectId, float X, float Y, float Z, double Gravity = 20.0,
+                       double FallSpeed = 100.0, double MaximumSlope = 45.0)
+    {
+        Scene.Kernel.Objects().MakeObjectBox(ObjectId, 1.0f, 2.0f, 1.0f);
+        Scene.Kernel.Objects().PositionObject(ObjectId, X, Y, Z);
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeCreateCharacterController,
+                                  {static_cast<double>(ObjectId), Gravity, FallSpeed, MaximumSlope}),
+                        Scene.Error);
+    }
+
+    struct CharacterInput
+    {
+        double YDegrees = 0.0;
+        double XDegrees = 0.0;
+        double Speed = 0.0;
+        double Jump = 0.0;
+        double Ducking = 0.0;
+        double PushDegrees = 0.0;
+        double PushForce = 0.0;
+        double Thrust = 0.0;
+    };
+
+    bool ControlCharacter(OdeScene& Scene, int ObjectId, const CharacterInput& Input)
+    {
+        return Scene.Run(SymbolId::Command_ExtOdeControlCharacterController,
+                         {static_cast<double>(ObjectId), Input.YDegrees, Input.XDegrees, Input.Speed, Input.Jump,
+                          Input.Ducking, Input.PushDegrees, Input.PushForce, Input.Thrust});
+    }
+
+    // The character's feet are at its object's lowest point, one below its position.
+    constexpr float StandingY = 1.0f;
+} // namespace
+
+TEST_CASE("ODE character controllers walk and fall")
+{
+    SUBCASE("It falls by its own gravity and comes to rest on the floor")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, 11.0f, 0.0f);
+        Scene.Step(30);
+        // Half a second at 20, not the world's 9.81.
+        CHECK(Scene.Y(2) == doctest::Approx(11.0f - 0.5f * 20.0f * 0.25f).epsilon(0.03));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityY, {2}) == doctest::Approx(-10.0).epsilon(0.03));
+        Scene.Step(120);
+        CHECK(Scene.Y(2) == doctest::Approx(StandingY).epsilon(0.03));
+    }
+
+    SUBCASE("The fall speed limits how fast it falls")
+    {
+        OdeScene Scene;
+        MakeCharacter(Scene, 2, 0.0f, 1000.0f, 0.0f, 20.0, 5.0);
+        Scene.Step(120);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityY, {2}) == doctest::Approx(-5.0).epsilon(0.01));
+        CHECK(Scene.Y(2) > 1000.0f - 2.0f * 5.0f - 0.1f);
+    }
+
+    SUBCASE("Walking moves it at speed per 1/120 s, the way it faces")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        Scene.Step(5);
+        CharacterInput Input;
+        Input.Speed = 0.05;
+        REQUIRE_MESSAGE(ControlCharacter(Scene, 2, Input), Scene.Error);
+        Scene.Step(60);
+        CHECK(Scene.Z(2) == doctest::Approx(6.0f).epsilon(0.03));
+        CHECK(Scene.X(2) == doctest::Approx(0.0f).epsilon(0.02));
+        CHECK(Scene.Y(2) == doctest::Approx(StandingY).epsilon(0.03));
+
+        // The walk lasts until the next control, here turning a quarter to the right.
+        Input.YDegrees = 90.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step(30);
+        CHECK(Scene.X(2) == doctest::Approx(3.0f).epsilon(0.03));
+        CHECK(Scene.Z(2) == doctest::Approx(6.0f).epsilon(0.03));
+
+        // Pitch slows the walk by its cosine, up or down.
+        Input.YDegrees = 0.0;
+        Input.XDegrees = -60.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        const float ZBefore = Scene.Z(2);
+        Scene.Step(60);
+        CHECK(Scene.Z(2) - ZBefore == doctest::Approx(3.0f).epsilon(0.03));
+        CHECK(Scene.Y(2) == doctest::Approx(StandingY).epsilon(0.03));
+    }
+
+    SUBCASE("A push replaces the walk")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        Scene.Step(5);
+        CharacterInput Input;
+        Input.Speed = 0.05;
+        Input.PushDegrees = 270.0;
+        Input.PushForce = 0.025;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step(60);
+        CHECK(Scene.X(2) == doctest::Approx(-3.0f).epsilon(0.03));
+        CHECK(Scene.Z(2) == doctest::Approx(0.0f).epsilon(0.03));
+    }
+
+    SUBCASE("A wall stops it")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        Scene.Kernel.Objects().MakeObjectBox(3, 10.0f, 10.0f, 1.0f);
+        Scene.Kernel.Objects().PositionObject(3, 0.0f, 5.0f, 5.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {3}));
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        CharacterInput Input;
+        Input.Speed = 0.05;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step(120);
+        // The wall's near face is at 4.5, less the radius of 0.5.
+        CHECK(Scene.Z(2) == doctest::Approx(4.0f).epsilon(0.02));
+    }
+
+    SUBCASE("It climbs a low step and not a high one")
+    {
+        const auto ZAfterWalkingAt = [](float StepHeight)
+        {
+            OdeScene Scene;
+            Scene.Floor();
+            Scene.Kernel.Objects().MakeObjectBox(3, 20.0f, StepHeight, 20.0f);
+            Scene.Kernel.Objects().PositionObject(3, 0.0f, 0.5f * StepHeight, 12.0f);
+            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {3}));
+            MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+            CharacterInput Input;
+            Input.Speed = 0.05;
+            REQUIRE(ControlCharacter(Scene, 2, Input));
+            Scene.Step(120);
+            return std::pair{Scene.Z(2), Scene.Y(2)};
+        };
+        // 10.35 in 70 of a height of 2 climbs up to about 0.3.
+        const auto [LowZ, LowY] = ZAfterWalkingAt(0.2f);
+        CHECK(LowZ > 8.0f);
+        CHECK(LowY == doctest::Approx(StandingY + 0.2f).epsilon(0.03));
+        const auto [HighZ, HighY] = ZAfterWalkingAt(1.0f);
+        CHECK(HighZ == doctest::Approx(1.5f).epsilon(0.03));
+        CHECK(HighY == doctest::Approx(StandingY).epsilon(0.03));
+    }
+
+    SUBCASE("A slope is walked up below the maximum and not above it")
+    {
+        const auto HeightAfterWalkingUp = [](float SlopeDegrees)
+        {
+            OdeScene Scene;
+            Scene.Floor();
+            Scene.Kernel.Objects().MakeObjectBox(3, 20.0f, 1.0f, 40.0f);
+            // A ramp rising along +Z, its top surface at the height of the floor at Z = 3.
+            const float Radians = SlopeDegrees * std::numbers::pi_v<float> / 180.0f;
+            Scene.Kernel.Objects().PositionObject(3, 0.0f, 20.0f * std::sin(Radians) - 0.5f * std::cos(Radians),
+                                                  3.0f + 20.0f * std::cos(Radians) + 0.5f * std::sin(Radians));
+            Scene.Kernel.Objects().RotateObject(3, -SlopeDegrees, 0.0f, 0.0f);
+            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {3}));
+            MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+            CharacterInput Input;
+            Input.Speed = 0.05;
+            REQUIRE(ControlCharacter(Scene, 2, Input));
+            Scene.Step(240);
+            return Scene.Y(2);
+        };
+        CHECK(HeightAfterWalkingUp(30.0f) > 4.0f);
+        CHECK(HeightAfterWalkingUp(60.0f) < 2.0f);
+    }
+
+    SUBCASE("It jumps only from the ground")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        Scene.Step(5);
+        CharacterInput Input;
+        Input.Jump = 10.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Input.Jump = 0.0;
+        Scene.Step(15);
+        // A quarter of a second after leaving at 10: 10t - 10t^2.
+        CHECK(Scene.Y(2) == doctest::Approx(StandingY + 10.0f * 0.25f - 0.5f * 20.0f * 0.0625f).epsilon(0.05));
+        const double Rising = Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityY, {2});
+        CHECK(Rising == doctest::Approx(5.0).epsilon(0.1));
+
+        // In the air, a second jump does nothing.
+        Input.Jump = 10.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Input.Jump = 0.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step();
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityY, {2}) < Rising);
+
+        Scene.Step(120);
+        CHECK(Scene.Y(2) == doctest::Approx(StandingY).epsilon(0.03));
+    }
+
+    SUBCASE("Thrust carries it up while it lasts")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        Scene.Step(5);
+        CharacterInput Input;
+        Input.Thrust = 3.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step(60);
+        CHECK(Scene.Y(2) == doctest::Approx(StandingY + 3.0f).epsilon(0.03));
+        Input.Thrust = 0.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step(120);
+        CHECK(Scene.Y(2) == doctest::Approx(StandingY).epsilon(0.03));
+    }
+
+    SUBCASE("Landing is reported once, with half the distance fallen")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY + 10.0f, 0.0f);
+        Scene.Step(5);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterHitFloor) == 0.0);
+        Scene.Step(120);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterHitFloor) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterHitFloor) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterFallDistance) == doctest::Approx(5.0).epsilon(0.03));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterFallDistance) == 0.0);
+        Scene.Step(30);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterHitFloor) == 0.0);
+    }
+
+    SUBCASE("The object's X rotation says whether it stands, and its other angles stay the program's")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, 5.0f, 0.0f);
+        Scene.Kernel.Objects().RotateObject(2, 0.0f, 33.0f, 0.0f);
+        Scene.Step(5);
+        CHECK(Scene.Kernel.Objects().ObjectAngleX(2) == doctest::Approx(0.0f));
+        Scene.Step(120);
+        CHECK(Scene.Kernel.Objects().ObjectAngleX(2) == doctest::Approx(1.0f));
+        CHECK(Scene.Kernel.Objects().ObjectAngleY(2) == doctest::Approx(33.0f));
+    }
+
+    SUBCASE("Short updates extrapolate its motion, and not gravity's pull while it stands")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        Scene.Step(5);
+        CharacterInput Input;
+        Input.Speed = 0.05;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step();
+        const float ZBefore = Scene.Z(2);
+        const float YBefore = Scene.Y(2);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0 / 240.0}));
+        CHECK(Scene.Z(2) == doctest::Approx(ZBefore + 6.0f / 240.0f).epsilon(0.01));
+        CHECK(Scene.Y(2) == doctest::Approx(YBefore).epsilon(0.001));
+    }
+}
+
+TEST_CASE("ODE character controllers duck under what they cannot pass")
+{
+    // A slab whose underside is 1.8 above the floor, starting four along Z.
+    const auto MakeLowCeiling = [](OdeScene& Scene)
+    {
+        Scene.Floor();
+        Scene.Kernel.Objects().MakeObjectBox(3, 10.0f, 1.0f, 10.0f);
+        Scene.Kernel.Objects().PositionObject(3, 0.0f, 2.3f, 9.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {3}));
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        Scene.Step(5);
+    };
+
+    SUBCASE("Standing it cannot pass, and ducked it can")
+    {
+        OdeScene Scene;
+        MakeLowCeiling(Scene);
+        CharacterInput Input;
+        Input.Speed = 0.05;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step(90);
+        // Its rounded top meets the slab a little before the slab's edge is over its axis.
+        CHECK(Scene.Z(2) < 4.0f);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterControllerDucking, {2}) == 0.0);
+
+        Input.Ducking = 1.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterControllerDucking, {2}) == 1.0);
+        Scene.Step(60);
+        CHECK(Scene.Z(2) > 6.0f);
+        CHECK(Scene.Y(2) == doctest::Approx(StandingY).epsilon(0.03));
+    }
+
+    SUBCASE("Under the slab it stays ducked until there is room")
+    {
+        OdeScene Scene;
+        MakeLowCeiling(Scene);
+        CharacterInput Input;
+        Input.Speed = 0.05;
+        Input.Ducking = 1.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step(90);
+        REQUIRE(Scene.Z(2) > 8.0f);
+
+        // Told to stand under the slab, it cannot; walking back out it stands by itself.
+        Input.Ducking = 0.0;
+        Input.Speed = 0.0;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterControllerDucking, {2}) == 1.0);
+        Input.Speed = -0.05;
+        for (int Index = 0; Index < 120; ++Index)
+        {
+            REQUIRE(ControlCharacter(Scene, 2, Input));
+            Scene.Step();
+        }
+        CHECK(Scene.Z(2) < 3.0f);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterControllerDucking, {2}) == 0.0);
+    }
+
+    SUBCASE("Only exactly 1 ducks")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        CharacterInput Input;
+        Input.Ducking = 0.5;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetCharacterControllerDucking, {2}) == 0.0);
+    }
+}
+
+TEST_CASE("ODE character controllers share the world with bodies")
+{
+    SUBCASE("It rides what it stands on")
+    {
+        OdeScene Scene;
+        Scene.Kernel.Objects().MakeObjectBox(3, 20.0f, 1.0f, 20.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {3}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyKinematic, {3, 1}));
+        MakeCharacter(Scene, 2, 0.0f, 1.5f, 0.0f);
+        Scene.Step(5);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {3, 2.0, 0.0, 0.0}));
+        Scene.Step(60);
+        CHECK(Scene.X(2) == doctest::Approx(2.0f).epsilon(0.05));
+        CHECK(Scene.Y(2) == doctest::Approx(1.5f).epsilon(0.03));
+    }
+
+    SUBCASE("It pushes a loose body")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        Scene.Kernel.Objects().MakeObjectCube(3, 1.0f);
+        Scene.Kernel.Objects().PositionObject(3, 0.0f, 0.5f, 3.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {3}));
+        Scene.Step(5);
+        CharacterInput Input;
+        Input.Speed = 0.03;
+        REQUIRE(ControlCharacter(Scene, 2, Input));
+        Scene.Step(120);
+        CHECK(Scene.Z(3) > 3.5f);
+    }
+
+    SUBCASE("A falling body lands on it rather than passing through")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        MakeCharacter(Scene, 2, 0.0f, StandingY, 0.0f);
+        Scene.DropSphere(3, 0.0f, 8.0f);
+        Scene.Step(30);
+        int Touching = 0;
+        Scene.Step(60);
+        while (true)
+        {
+            int Exists = 0;
+            REQUIRE(Scene.Kernel.Physics().CollisionMessageExists(Exists, &Scene.Error));
+            if (Exists == 0)
+                break;
+            REQUIRE(Scene.Kernel.Physics().NextCollisionMessage(&Scene.Error));
+            const dbc::PhysicsCollisionMessage* Message = Scene.Kernel.Physics().CollisionMessage(&Scene.Error);
+            REQUIRE(Message);
+            if ((Message->ObjectA == 2 && Message->ObjectB == 3) || (Message->ObjectA == 3 && Message->ObjectB == 2))
+                ++Touching;
+        }
+        CHECK(Touching > 0);
+    }
+
+    SUBCASE("Rays see it as a capsule")
+    {
+        OdeScene Scene;
+        MakeCharacter(Scene, 2, 0.0f, 10.0f, 0.0f);
+        int Hit = 0;
+        REQUIRE(Scene.Kernel.Physics().Ray(Hit, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4, &Scene.Error));
+        CHECK(Hit == 1);
+        REQUIRE(Scene.Kernel.Physics().RayObjectHit(Hit, &Scene.Error));
+        CHECK(Hit == 2);
+        float Point = 0.0f;
+        REQUIRE(Scene.Kernel.Physics().RayCollision(Point, 1, &Scene.Error));
+        CHECK(Point == doctest::Approx(11.0f).epsilon(0.02));
+        REQUIRE(Scene.Kernel.Physics().Ray(Hit, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2, &Scene.Error));
+        CHECK(Hit == 0);
+    }
+
+    SUBCASE("It moves by position, and its feet stay on the object's lowest point")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        // A model whose origin is at its feet stands at the floor's height, not half sunk.
+        Scene.Kernel.Objects().MakeObjectBox(2, 1.0f, 2.0f, 1.0f);
+        Scene.Kernel.Objects().OffsetLimb(2, 0, 0.0f, 1.0f, 0.0f, 0, &Scene.Error);
+        Scene.Kernel.Objects().PositionObject(2, 0.0f, 3.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateCharacterController, {2, 20.0, 100.0, 45.0}));
+        Scene.Step(120);
+        CHECK(Scene.Y(2) == doctest::Approx(0.0f).epsilon(0.03));
+
+        REQUIRE_MESSAGE(Scene.Run(SymbolId::Command_ExtOdeSetBodyPosition, {2, 5.0, 0.0, 5.0}), Scene.Error);
+        CHECK(Scene.X(2) == doctest::Approx(5.0f));
+        Scene.Step(5);
+        CHECK(Scene.X(2) == doctest::Approx(5.0f));
+        CHECK(Scene.Z(2) == doctest::Approx(5.0f));
+    }
+
+    SUBCASE("Rigid body forms that cannot apply say so")
+    {
+        OdeScene Scene;
+        MakeCharacter(Scene, 2, 0.0f, 5.0f, 0.0f);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {2, 1.0, 0.0, 0.0}));
+        CHECK(Scene.Error.find("character controller of object 2") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {2, 1.0, 0.0, 0.0}));
+        CHECK(Scene.Error.find("character controller of object 2") != std::string::npos);
+        Scene.DynamicSphere(3, 5.0f);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 0.0, 0.0, 0.0}));
+        CHECK(Scene.Error.find("character controller") != std::string::npos);
+    }
+
+    SUBCASE("A disabled character stands still and rays pass it")
+    {
+        OdeScene Scene;
+        MakeCharacter(Scene, 2, 0.0f, 10.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetEnabled, {2, 0}));
+        Scene.Step(30);
+        CHECK(Scene.Y(2) == doctest::Approx(10.0f));
+        int Hit = 1;
+        REQUIRE(Scene.Kernel.Physics().Ray(Hit, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4, &Scene.Error));
+        CHECK(Hit == 0);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetEnabled, {2, 1}));
+        Scene.Step(30);
+        CHECK(Scene.Y(2) < 9.0f);
+    }
+
+    SUBCASE("Bad values and missing characters are reported")
+    {
+        OdeScene Scene;
+        Scene.Kernel.Objects().MakeObjectBox(2, 1.0f, 2.0f, 1.0f);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateCharacterController, {99, 20.0, 100.0, 45.0}));
+        CHECK(Scene.Error.find("object 99") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateCharacterController, {2, -1.0, 100.0, 45.0}));
+        CHECK(Scene.Error.find("negative gravity") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateCharacterController, {2, 20.0, 0.0, 45.0}));
+        CHECK(Scene.Error.find("fall speed") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateCharacterController, {2, 20.0, 100.0, 0.0}));
+        CHECK(Scene.Error.find("maximum slope") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateCharacterController, {2, 20.0, 100.0, 91.0}));
+
+        CharacterInput Input;
+        CHECK_FALSE(ControlCharacter(Scene, 2, Input));
+        CHECK(Scene.Error.find("ODE body for object 2") != std::string::npos);
+        Scene.DynamicSphere(3, 5.0f);
+        CHECK_FALSE(ControlCharacter(Scene, 3, Input));
+        CHECK(Scene.Error.find("requires a character controller for object 3") != std::string::npos);
+
+        int Value = 0;
+        float Distance = 0.0f;
+        CHECK_FALSE(Scene.Kernel.Physics().CharacterHitFloor(Value, &Scene.Error));
+        CHECK(Scene.Error.find("ODE CREATE CHARACTER CONTROLLER") != std::string::npos);
+        CHECK_FALSE(Scene.Kernel.Physics().CharacterFallDistance(Distance, &Scene.Error));
+    }
+
+    SUBCASE("Characters follow the life of their objects and of the world")
+    {
+        OdeScene Scene;
+        MakeCharacter(Scene, 2, 0.0f, 50.0f, 0.0f);
+        Scene.Step(5);
+        // Made again, the old character has gone.
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateCharacterController, {2, 40.0, 100.0, 45.0}));
+        const float Before = Scene.Y(2);
+        Scene.Step(30);
+        CHECK(Scene.Y(2) == doctest::Approx(Before - 0.5f * 40.0f * 0.25f).epsilon(0.03));
+
+        // Replaced by an ordinary body, it obeys that body's forms.
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {2}));
+        CHECK(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {2, 1.0, 0.0, 0.0}));
+        MakeCharacter(Scene, 3, 0.0f, 20.0f, 0.0f);
+
+        // Deleting the object or destroying the body ends it, leaving nothing to step.
+        Scene.Kernel.Objects().DeleteObject(3);
+        Scene.Step(2);
+        int Value = 0;
+        CHECK_FALSE(Scene.Kernel.Physics().CharacterHitFloor(Value, &Scene.Error));
+        MakeCharacter(Scene, 4, 5.0f, 20.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeDestroyObject, {4}));
+        Scene.Step(2);
+        CHECK_FALSE(Scene.Kernel.Physics().CharacterHitFloor(Value, &Scene.Error));
+
+        MakeCharacter(Scene, 5, 10.0f, 20.0f, 0.0f);
+        Scene.Step(2);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeStart));
+        CHECK_FALSE(Scene.Kernel.Physics().CharacterHitFloor(Value, &Scene.Error));
+        CHECK_FALSE(ControlCharacter(Scene, 5, CharacterInput{}));
     }
 }

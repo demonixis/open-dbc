@@ -65,6 +65,10 @@ namespace dbc
         bool CreateStaticTriangleMesh(int ObjectId, int Limb, int ScalingPercent, std::string* Error = nullptr);
         bool CreateStaticTriangleMeshLimb(int ObjectId, int Limb, std::string* Error = nullptr);
         bool CreateStaticTerrainMesh(int ObjectId, std::string* Error = nullptr);
+        // A static body made of boxes, each placed relative to the finished object by its own position and rotation.
+        bool StartStaticObject(int ObjectId, std::string* Error = nullptr);
+        bool AddStaticObjectBox(int ObjectId, int BoxObjectId, std::string* Error = nullptr);
+        bool EndStaticObject(int ObjectId, int Material, std::string* Error = nullptr);
         bool DestroyObject(int ObjectId, std::string* Error = nullptr);
 
         bool SetWorldGravity(float X, float Y, float Z, std::string* Error = nullptr);
@@ -99,6 +103,29 @@ namespace dbc
                       std::string* Error = nullptr);
         bool AddTorque(int ObjectId, float X, float Y, float Z, std::string* Error = nullptr);
         bool AddImpulse(int ObjectId, float X, float Y, float Z, std::string* Error = nullptr);
+
+        // A joint's points and axis are in world space. Object A is what a hinge's angle measures, against object B.
+        bool CreateBallJoint(int JointId, int ObjectA, int ObjectB, float X, float Y, float Z,
+                             std::string* Error = nullptr);
+        bool CreateHingeJoint(int JointId, int ObjectA, int ObjectB, float AxisX, float AxisY, float AxisZ, float X,
+                              float Y, float Z, std::string* Error = nullptr);
+        bool SetHingeJointLimit(int JointId, float Low, float High, std::string* Error = nullptr);
+        // Holds a body to the world about its own Y axis, through a point relative to its origin.
+        bool CreateSwingDoorHinge(int& Output, int ObjectId, float X, float Y, float Z, float Angle,
+                                  std::string* Error = nullptr);
+
+        // Gravity is downward, in world units per second squared, and the fall speed its limit.
+        bool CreateCharacterController(int ObjectId, float Gravity, float FallSpeed, float MaximumSlopeDegrees,
+                                       std::string* Error = nullptr);
+        // Speed and push force are distances per 1/120 s and last until the next call; jump and thrust units per
+        // second. Ducking is exactly 1.
+        bool ControlCharacterController(int ObjectId, float YDegrees, float XDegrees, float Speed, float Jump,
+                                        float Ducking, float PushDegrees, float PushForce, float Thrust,
+                                        std::string* Error = nullptr);
+        [[nodiscard]] bool CharacterDucking(float& Output, int ObjectId, std::string* Error = nullptr);
+        // Both say what happened at the last landing, once.
+        bool CharacterHitFloor(int& Output, std::string* Error = nullptr);
+        bool CharacterFallDistance(float& Output, std::string* Error = nullptr);
 
         // Messages come out newest first. Asking whether one exists clears the current one, as in the plugin.
         bool CollisionMessageExists(int& Output, std::string* Error = nullptr);
