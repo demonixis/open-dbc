@@ -253,7 +253,7 @@ namespace dbc::studio
         bool NewProjectRequested_ = false;
         std::array<char, 65> NewProjectName_{};
         std::string NewProjectLocation_;
-        dbc::language::LanguageProfile NewProjectProfile_ = dbc::language::LanguageProfile::Dbc;
+        dbc::language::LanguageProfile NewProjectProfile_ = dbc::language::LanguageProfile::DbPro;
         core::ProjectTemplate NewProjectTemplate_ = core::ProjectTemplate::BasicScene;
         std::string NewProjectError_;
 

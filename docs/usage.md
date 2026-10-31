@@ -85,9 +85,10 @@ project. macOS's file dialog hides `.opendbc-project.json` until you press
 Cmd+Shift+.; Open Folder on its folder does the same.
 
 **File → New Project…** (Ctrl+Shift+N) creates a folder holding `main.dba`,
-from an empty main loop or a basic 1280×720 scene. A DBPro project also gets a
-historical `.dbpro` descriptor; a DBC project gets an `.opendbc-project.json`
-that sets its dialect and entry.
+from an empty main loop or a basic 1280×720 scene. The language starts on DBPro,
+the one the [Scene view](level-editor.md) edits, and its project also gets a
+historical `.dbpro` descriptor; a DBC project gets an `.opendbc-project.json` that
+sets its dialect and entry.
 
 **Edit → Insert Snippet…** (Ctrl+J) adds a snippet: cameras (FPS, TPS, orbit),
 a basic scene, a delta-time loop, lighting, fog, sound, game states, saving and

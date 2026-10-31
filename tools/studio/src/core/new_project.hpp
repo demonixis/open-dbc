@@ -23,7 +23,7 @@ namespace dbc::studio
             // Existing folder the project folder is created in.
             std::filesystem::path Location;
             std::string Name;
-            dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
+            dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::DbPro;
             ProjectTemplate Template = ProjectTemplate::BasicScene;
         };
 

@@ -313,9 +313,10 @@ TEST_CASE("The French catalogue covers the File menu and the Scene mode")
     CHECK(std::string_view(Tr("World Settings")) == "Réglages du monde");
     CHECK(TrFmt("Scene of {0}", {"main.dba"}) == "Scène de main.dba");
     // These reach Tr through a variable, so that a search of the sources for literals misses them.
-    for (const char* Label :
-         {"Sphere", "3D Sound", "Spot Light", "First matrix", "Move (W)", "Several", "Heights", "Fog colour",
-          "The project folder is read-only.", "No model under the asset folder", " (hidden)"})
+    for (const char* Label : {"Sphere", "3D Sound", "Spot Light", "First matrix", "Move (W)", "Several", "Heights",
+                              "Fog colour", "The project folder is read-only.",
+                              "The Scene view edits DBPro projects only. Classic levels keep running as BASIC.",
+                              "No model under the asset folder", " (hidden)"})
         CHECK(std::string_view(Tr(Label)) != Label);
     core::ActivateInterfaceLanguage("en");
 }

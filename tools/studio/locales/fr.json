@@ -723,6 +723,7 @@
   "The Android App Bundle is not signed": "L’Android App Bundle n’est pas signé",
   "The Apple export host has no Info.plist": "L’hôte d’export Apple n’a pas d’Info.plist",
   "The Launcher could not activate the selected .dba document.": "Le lanceur n’a pas pu activer le document .dba sélectionné.",
+  "The Scene view edits DBPro projects only. Classic levels keep running as BASIC.": "La vue Scène ne modifie que les projets DBPro. Les niveaux Classic continuent de s’exécuter en BASIC.",
   "The Scene viewport cannot render: {0}": "La vue 3D de la scène ne peut pas s’afficher : {0}",
   "The active document is not a .dba BASIC source.": "Le document actif n’est pas une source BASIC .dba.",
   "The country is a two-letter code, such as FR": "Le pays est un code à deux lettres, comme FR",

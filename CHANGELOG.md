@@ -11,6 +11,8 @@ First public release.
   paint tool and the transforms of any program, snippets, project creation,
   Build window) and the command line. The Studio speaks English and French and
   has dark and light themes.
+- New projects default to DBPro, and the Scene view edits DBPro projects only;
+  levels written for Classic are BASIC and keep running.
 - Exports to macOS (Apple silicon), Windows, Linux, Android and iOS with
   `opendbc-runner`.
 - Classic multiplayer over ENet, native plugins through `LOAD DLL`, DBPro BSP

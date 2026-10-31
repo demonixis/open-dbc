@@ -124,6 +124,22 @@ TEST_CASE("a new DBPro project writes a valid historical descriptor")
     CHECK(Project.Descriptor->Diagnostics.empty());
 }
 
+TEST_CASE("a new project is DBPro unless the request says otherwise")
+{
+    TemporaryLocation Location;
+    core::NewProjectRequest Request;
+    Request.Location = Location.Root;
+    Request.Name = "Default Game";
+    CHECK(Request.Profile == LanguageProfile::DbPro);
+    const core::NewProjectResult Created = core::CreateProject(Request);
+    REQUIRE_MESSAGE(Created, Created.Error);
+    CHECK(std::filesystem::is_regular_file(Created.Root / "Default Game.dbpro"));
+
+    const auto Resolved = Resolve(Created.Root);
+    REQUIRE_MESSAGE(Resolved, Resolved.Error);
+    CHECK(Resolved.Project->Profile == LanguageProfile::DbPro);
+}
+
 TEST_CASE("project creation never touches an existing folder")
 {
     TemporaryLocation Location;

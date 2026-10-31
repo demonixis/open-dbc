@@ -36,8 +36,6 @@ Language:
 
 - [ ] Remove the VR forms and the `X/Y/Z VECTOR3` readers from Classic; `vr_tracking.dba`
   moves to DBPro.
-- [ ] Reserve the Scene view for DBPro.
-- [ ] Then default new projects to DBPro.
 
 Build and release:
 

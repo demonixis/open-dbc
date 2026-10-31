@@ -6,8 +6,9 @@ Viewport, Inspector, Level Settings, Assets and Output. Every panel docks,
 tabs and closes like the Code mode's; **View → Reset Layout** restores the
 current mode's layout.
 
-The mode needs an open, writable project whose main source is a `.dba` file.
-Otherwise the switch is disabled and its tooltip says why.
+The mode needs an open, writable DBPro project whose main source is a `.dba` file.
+Otherwise the switch is disabled and its tooltip says why. Levels written for
+Classic are BASIC: they keep running, and the view does not edit them.
 
 The switch shows the active tab. A level's file opens that level, and so does
 the main source of a project with levels; any other `.dba` opens as
@@ -20,8 +21,8 @@ A level is BASIC, and nothing else is stored. Each level has its own folder:
 
 | File | Holds |
 | --- | --- |
-| `levels/<name>/<name>.dba` | `FUNCTION LoadLevel_<name>()`: images, objects, matrices, Pro terrains, lights and 3D sounds |
-| `levels/<name>/world_settings.dba` | `FUNCTION SetupWorld_<name>()`: display mode, Pro vsync, window, `SYNC ON`/`SYNC RATE`, `HIDE MOUSE`, the environment and the level camera |
+| `levels/<name>/<name>.dba` | `FUNCTION LoadLevel_<name>()`: images, objects, matrices, terrains, lights and 3D sounds |
+| `levels/<name>/world_settings.dba` | `FUNCTION SetupWorld_<name>()`: display mode, vsync, window, `SYNC ON`/`SYNC RATE`, `HIDE MOUSE`, the environment and the level camera |
 
 **File → New Level**, or the same item in the **Scene** menu, asks for a name and
 saves the new level at once; a name already taken opens that level.
@@ -47,8 +48,7 @@ The Studio reads a level back with the language frontend. It accepts only the
 statements it writes, with literal arguments and `RGB()` of literal channels;
 `REM @…` lines carry names, number ranges and which objects are painted. Any
 other statement, in either file, makes the level read-only, and the Hierarchy and
-Output list the offending lines. A level is written with the project's profile, and a Pro-only
-command makes it read-only in a Classic project.
+Output list the offending lines.
 
 Each level starts its numbers at a configurable base per kind: objects and
 images at 1000, matrices, terrains, lights and sounds at 1. New nodes take the lowest
@@ -90,15 +90,14 @@ drops the edits.
 ## Content
 
 The **Create** menu, shown in the Scene mode's menu bar and on a right-click in
-the Hierarchy, groups what a level can hold by type; items the profile does
-not implement are disabled:
+the Hierarchy, groups what a level can hold by type:
 
 | Menu | Kind | Commands |
 | --- | --- | --- |
 | 3D Object | Cube, box, sphere, cylinder, cone, plain, triangle | `MAKE OBJECT …` |
 | 3D Object → Model | A model file from the asset folder | `LOAD OBJECT` |
 | Landscape | Matrix | `MAKE MATRIX`, `PREPARE MATRIX TEXTURE`, `FILL MATRIX`, `SET MATRIX HEIGHT`, `UPDATE MATRIX`, `POSITION MATRIX` |
-| Landscape | Terrain (Pro) | `MAKE TERRAIN`, `TEXTURE TERRAIN`, `POSITION TERRAIN` |
+| Landscape | Terrain | `MAKE TERRAIN`, `TEXTURE TERRAIN`, `POSITION TERRAIN` |
 | Light | Point, spot or directional light | `MAKE LIGHT`, `SET … LIGHT`, `POSITION`/`ROTATE LIGHT`, `SET LIGHT RANGE`, `COLOR LIGHT` |
 | Audio → 3D Sound | A sound file from the asset folder | `LOAD 3DSOUND`, `POSITION SOUND`, `SET SOUND VOLUME`, `PLAY SOUND` or `LOOP SOUND` |
 | Camera | The level camera, on or off | see Level Settings |
@@ -108,9 +107,6 @@ Models and sounds from the menu land in front of the editor camera.
 The Inspector edits the selected node:
 - name, number, position, rotation (degrees, applied X, then Y, then Z) and scale (%).
   **Uniform scale** keeps the scale's proportions, in the Inspector and with the gizmo;
-- in Classic, **Make Static Object**: `MAKE STATIC OBJECT` then `DELETE OBJECT`,
-  so the object becomes fixed scenery for the static collision commands and its
-  number is free at run time. Pro does not implement the command;
 - shape;
 - a matrix's heights: **Fill** sets every height and the tile (`FILL MATRIX`),
   **Randomize** draws whole heights below a range (`RANDOMIZE MATRIX`). The
@@ -130,13 +126,13 @@ The Inspector edits the selected node:
 - a 3D sound's file, whether it plays once or loops when the level loads, and
   its volume. The program hears it from `POSITION LISTENER`, which stays at
   0, 0, 0 until the program moves it;
-- texture, `COLOR OBJECT`, `GHOST OBJECT ON` and the `SET OBJECT` flags;
-- in Pro, also diffuse, ambience, emissive, specular colour and power, and `SET SHADOW SHADING ON`.
+- texture, `COLOR OBJECT`, `GHOST OBJECT ON`, the `SET OBJECT` flags, diffuse,
+  ambience, emissive, specular colour and power, and `SET SHADOW SHADING ON`.
 
 Level Settings holds:
 - ambient light and colour, backdrop colour and fog;
 - light 0's visibility, rotation and colour;
-- the Pro shadow source (`SET SHADOW POSITION`);
+- the shadow source (`SET SHADOW POSITION`);
 - the number bases;
 - the level camera, off by default. When on, it writes `AUTOCAM OFF` then
   `POSITION`/`ROTATE CAMERA`, FOV and range. The viewport can look through it;
@@ -201,7 +197,7 @@ The viewport is a preview drawn by the Studio, not by the engine. Its
 primitives, matrices, terrains and models use the engine's geometry and
 import, so sizes, origins and UVs match the program. Lighting is simple
 per-pixel shading with ambient, up to eight lights, specular and linear fog.
-Faces are drawn from both sides. Pro shadows use the engine's method: stencil
+Faces are drawn from both sides. Shadows use the engine's method: stencil
 volumes extruded 2000 units from the shadow source (light 0 at the origin
 unless `SET SHADOW POSITION` says otherwise), darkened by 25 %. A source on the
 ground, such as light 0 or a light that does not exist, lays every volume along
@@ -234,11 +230,10 @@ A painted object is a node like any other: the gizmo, the Inspector and undo wor
 on it. The Hierarchy folds objects painted alike into one row, whose click selects
 them all and whose arrow lists them.
 
-In Pro, a painted object that looks like an earlier one, with the same shape,
-file, material and static state, is written as `INSTANCE OBJECT` of it, then its
-own transform and animation. So editing one out of the group, or deleting the
-original, only changes how the next save writes them. Classic has no such command,
-so its copies are written in full. Either way they draw as instances of one
-geometry, as [rendering](rendering.md) explains. A level file grows by about 100
-bytes per object, and the Studio's preview, which draws them one by one, is meant
-for thousands of them.
+A painted object that looks like an earlier one, with the same shape, file and
+material, is written as `INSTANCE OBJECT` of it, then its own transform and
+animation. So editing one out of the group, or deleting the original, only changes
+how the next save writes them. They draw as instances of one geometry, as
+[rendering](rendering.md) explains. A level file grows by about 100 bytes per
+object, and the Studio's preview, which draws them one by one, is meant for
+thousands of them.

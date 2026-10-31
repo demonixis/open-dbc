@@ -788,7 +788,7 @@ namespace dbc::studio
         // builds can only write there anyway.
         const bool Beside = core::platform::HasFreeformFileSystem() && !Project_.Root().empty();
         NewProjectLocation_ = dbc::PathToUtf8((Beside ? Project_.Root().parent_path() : Workspace_.ImportRoot()));
-        NewProjectProfile_ = ResolvedProject_ ? ResolvedProject_->Profile : dbc::language::LanguageProfile::Dbc;
+        NewProjectProfile_ = dbc::language::LanguageProfile::DbPro;
         NewProjectRequested_ = true;
     }
 
@@ -869,6 +869,8 @@ namespace dbc::studio
             return "Open a project folder to edit its levels.";
         if (!ResolvedProject_)
             return "The project's language and main source are not resolved yet.";
+        if (ResolvedProject_->Profile != dbc::language::LanguageProfile::DbPro)
+            return "The Scene view edits DBPro projects only. Classic levels keep running as BASIC.";
         if (ResolvedProject_->EntrySource.empty() || !dbc::language::IsLanguageSource(ResolvedProject_->EntrySource))
             return "The project needs a main .dba source that includes the level.";
         if (!Workspace_.IsWritable(ResolvedProject_->ProjectRoot))
@@ -908,9 +910,15 @@ namespace dbc::studio
         // The capture under way shows its scene when it ends.
         if (SceneCapture_)
             return;
+        // Ctrl+2 gets here without the disabled switch's tooltip.
+        const std::string Blocker = SceneBlocker();
+        if (!Blocker.empty())
+        {
+            Status_ = Tr(Blocker.c_str());
+            return;
+        }
         const std::filesystem::path Source = Editor_.CurrentIsBasic() ? Editor_.CurrentPath() : std::filesystem::path();
-        if (Mode_ == Mode::Scene || !SceneBlocker().empty() || Source.empty() || ExecutionBusy_ ||
-            !Execution_.CanCaptureScene())
+        if (Mode_ == Mode::Scene || Source.empty() || ExecutionBusy_ || !Execution_.CanCaptureScene())
         {
             SetMode(Mode::Scene);
             return;
@@ -1402,11 +1410,11 @@ namespace dbc::studio
 
         ImGui::Spacing();
         ImGui::TextUnformatted(Tr("Language"));
-        if (ImGui::RadioButton("DarkBASIC Classic", NewProjectProfile_ == dbc::language::LanguageProfile::Dbc))
-            NewProjectProfile_ = dbc::language::LanguageProfile::Dbc;
-        ImGui::SameLine();
         if (ImGui::RadioButton("DarkBASIC Professional", NewProjectProfile_ == dbc::language::LanguageProfile::DbPro))
             NewProjectProfile_ = dbc::language::LanguageProfile::DbPro;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("DarkBASIC Classic", NewProjectProfile_ == dbc::language::LanguageProfile::Dbc))
+            NewProjectProfile_ = dbc::language::LanguageProfile::Dbc;
         ImGui::TextUnformatted(Tr("Template"));
         if (ImGui::RadioButton(TrId("Basic Scene"), NewProjectTemplate_ == core::ProjectTemplate::BasicScene))
             NewProjectTemplate_ = core::ProjectTemplate::BasicScene;
