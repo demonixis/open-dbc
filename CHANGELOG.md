@@ -28,3 +28,5 @@ First public release.
   per camera, and given their own field of view and depth bias.
 - DBPro automatic collision for objects and cameras, fire and snow particles, and
   global shadow colour, shades and light.
+- DBPro's Advanced Terrain, level of detail models, memblocks kept with objects and in
+  DBO files, `REDUCE MESH`, `CONVERT OBJECT FVF` and `MAKE EMITTER`.

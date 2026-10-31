@@ -73,8 +73,8 @@ Publication:
 
 ## DBPro parity
 
-The catalogue counts 923 of DBPro's 1,264 core commands and functions as implemented,
-against 719 of 748 in Classic. The other 341 are sorted here by name only; confirm each
+The catalogue counts 979 of DBPro's 1,264 core commands and functions as implemented,
+against 719 of 748 in Classic. The other 285 are sorted here by name only; confirm each
 one when it is picked up.
 
 152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access
@@ -86,9 +86,10 @@ To port, in order:
 - [ ] `TEXTURE SCREEN` and `SET SCREEN EFFECT`, before the HDR target.
 - [ ] Multiplayer ([network.md](network.md)), 35 of 37 forms already in Classic, and
   animations ([video.md](video.md)), 16 of 21.
-- [ ] `MAKE EMITTER`.
-- [ ] Advanced Terrain (16 forms), force feedback (11, all in Classic) and what remains
-  of the other gaps, such as `ADD LOD TO OBJECT` and `REDUCE MESH`.
+- [ ] Force feedback (11, all in Classic) and what remains of the other gaps: the rest of
+  Advanced Terrain once a source gives its signatures (`LOAD TERRAIN`, `SAVE TERRAIN`,
+  `DESTROY TERRAIN`, the size readers), and `SET GLOBAL OBJECT CREATION`, whose draw
+  orders the renderer decides for itself.
 
 To rethink rather than port:
 
