@@ -17,29 +17,29 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 
 | Symbol | Kind | Arity | Typed overloads | OpenDBC status | Provenance | Description |
 |---|---|---:|---|---|---|---|
-| `ODE ADD FORCE` | Command | 7 | integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE ADD FORCE` | Command | 7 | integer, real, real, real, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE ADD STATIC OBJECT BOX` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE COLLISION GET MESSAGE` | Command | 0 | none -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE CONTROL CHARACTER CONTROLLER` | Command | 9 | integer, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE CREATE BALL JOINT` | Command | 6 | integer, integer, integer, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE CREATE CHARACTER CONTROLLER` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE DYNAMIC BOX` | Command | 1, 3, 4, 6 | integer -> void; integer, integer, integer -> void; integer, real, real, real -> void; integer, integer, integer, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE DYNAMIC BOX MANUAL` | Command | 10 | integer, real, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE DYNAMIC CAPSULE` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE DYNAMIC CYLINDER` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE CREATE DYNAMIC BOX` | Command | 1, 3, 4, 6 | integer -> void; integer, integer, integer -> void; integer, real, real, real -> void; integer, integer, integer, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE CREATE DYNAMIC BOX MANUAL` | Command | 10 | integer, real, real, real, real, real, real, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE CREATE DYNAMIC CAPSULE` | Command | 3 | integer, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE CREATE DYNAMIC CYLINDER` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE CREATE DYNAMIC SPHERE` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
-| `ODE CREATE DYNAMIC TRIANGLE MESH` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE CREATE DYNAMIC TRIANGLE MESH` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE CREATE HINGE JOINT` | Command | 8-9 | integer, integer, real, real, real, real, real, real -> void; integer, integer, integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE CREATE RAGDOLL FROM BONE MODEL` | Command | 2-3 | integer, real -> void; integer, real, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE CREATE STATIC BOX` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
-| `ODE CREATE STATIC BOX LIMB` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE STATIC CAPSULE` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE STATIC CYLINDER` | Command | 10 | integer, real, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE CREATE STATIC BOX LIMB` | Command | 2 | integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE CREATE STATIC CAPSULE` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE CREATE STATIC CYLINDER` | Command | 10 | integer, real, real, real, real, real, real, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE CREATE STATIC SPHERE` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE CREATE STATIC TERRAIN` | Command | 4 | integer, integer, integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE STATIC TERRAIN MESH` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE STATIC TRIANGLE MESH` | Command | 1, 3, 4 | integer -> void; integer, integer, integer -> void; integer, integer, integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE CREATE STATIC TRIANGLE MESH LIMB` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE CREATE STATIC TERRAIN MESH` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE CREATE STATIC TRIANGLE MESH` | Command | 1, 3, 4 | integer -> void; integer, integer, integer -> void; integer, integer, integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE CREATE STATIC TRIANGLE MESH LIMB` | Command | 2 | integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE CREATE STATIC UNIVERSE` | Command | 0 | none -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE CREATE TREE CYLINDER` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE DESTROY OBJECT` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
@@ -49,7 +49,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ODE SET ACTIVE` | Command | 2 | integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET ANGULAR VELOCITY` | Command | 4 | integer, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET BODY FRICTION` | Command | 2 | integer, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
-| `ODE SET BODY MASS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE SET BODY MASS` | Command | 2 | integer, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET BODY POSITION` | Command | 4 | integer, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET BODY ROTATION` | Command | 4 | integer, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET CHARACTER CONTROLLER` | Command | 8 | integer, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -70,15 +70,15 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ODE SET HINGE JOINT LIMIT` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SET LINEAR VELOCITY` | Command | 4 | integer, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET RAGDOLL MODE` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET RAY CAST` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET RESPONSE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET STEP MODE` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE SET RAY CAST` | Command | 2 | integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE SET RESPONSE` | Command | 2 | integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE SET STEP MODE` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET WATER LINE` | Command | 1 | real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SET WORLD CFM` | Command | 1 | real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET WORLD ERP` | Command | 1 | real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE SET WORLD ERP` | Command | 1 | real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET WORLD GRAVITY` | Command | 3 | real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
-| `ODE SET WORLD QUICK STEP NUM ITERATIONS` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET WORLD STEP` | Command | 1 | real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE SET WORLD QUICK STEP NUM ITERATIONS` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE SET WORLD STEP` | Command | 1 | real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SETSURFACE MODE` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SETSURFACE MODE CONTACT APPROX0` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SETSURFACE MODE CONTACT APPROX1` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |

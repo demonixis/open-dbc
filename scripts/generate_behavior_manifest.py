@@ -1399,6 +1399,55 @@ UNIT_WITNESSES += tuple(
     for Kind, Name, Code in LOT50_ODE_WITNESSES
 )
 
+ODE_BOX_TEST = "test_physics.cpp::ODE boxes measure their objects or take explicit sizes"
+ODE_ROUND_SHAPE_TEST = "test_physics.cpp::ODE cylinders and capsules behave like their shapes"
+ODE_MESH_TEST = "test_physics.cpp::ODE triangle meshes are the real surface of their objects"
+ODE_FORCE_TEST = "test_physics.cpp::ODE forces act over the whole of one update"
+ODE_CONTROL_TEST = "test_physics.cpp::ODE bodies can leave the simulation's control"
+ODE_WORLD_TEST = "test_physics.cpp::ODE world settings reach the solver"
+
+UNIT_WITNESSES += tuple(
+    ("dbpro", Kind, Name, Code, "jolt-rigid-body", Test)
+    for Kind, Name, Code, Test in (
+        ("Command", "ODE CREATE DYNAMIC BOX", "ode create dynamic box 2\n", ODE_BOX_TEST),
+        ("Command", "ODE CREATE DYNAMIC BOX", "ode create dynamic box 2, -1, 0\n", ODE_BOX_TEST),
+        ("Command", "ODE CREATE DYNAMIC BOX", "ode create dynamic box 2, 4.0, 6.0, 4.0\n", ODE_BOX_TEST),
+        ("Command", "ODE CREATE DYNAMIC BOX", "ode create dynamic box 2, -1, 0, 100.0, 50.0, 0.0\n", ODE_BOX_TEST),
+        ("Command", "ODE CREATE DYNAMIC BOX MANUAL",
+         "ode create dynamic box manual 2, 3.0, 10.0, -2.0, 6.0, 2.0, 2.0, 0.0, 0.0, 90.0\n", ODE_BOX_TEST),
+        ("Command", "ODE CREATE STATIC BOX LIMB", "ode create static box limb 1, 1\n", ODE_BOX_TEST),
+        ("Command", "ODE CREATE DYNAMIC CYLINDER", "ode create dynamic cylinder 2\n", ODE_ROUND_SHAPE_TEST),
+        ("Command", "ODE CREATE STATIC CYLINDER",
+         "ode create static cylinder 1, 0.0, 0.0, 0.0, 40.0, 10.0, 40.0, 0.0, 0.0, 0.0\n", ODE_ROUND_SHAPE_TEST),
+        ("Command", "ODE CREATE DYNAMIC CAPSULE", "ode create dynamic capsule 2, 0.0, 0.0\n", ODE_ROUND_SHAPE_TEST),
+        ("Command", "ODE CREATE STATIC CAPSULE", "ode create static capsule 1\n", ODE_ROUND_SHAPE_TEST),
+        ("Command", "ODE CREATE DYNAMIC TRIANGLE MESH", "ode create dynamic triangle mesh 2\n", ODE_MESH_TEST),
+        ("Command", "ODE CREATE STATIC TERRAIN MESH", "ode create static terrain mesh 1\n", ODE_MESH_TEST),
+        ("Command", "ODE CREATE STATIC TRIANGLE MESH", "ode create static triangle mesh 1\n", ODE_MESH_TEST),
+        ("Command", "ODE CREATE STATIC TRIANGLE MESH", "ode create static triangle mesh 1, 1, 200\n", ODE_MESH_TEST),
+        ("Command", "ODE CREATE STATIC TRIANGLE MESH", "ode create static triangle mesh 1, -1, 100, 0\n",
+         ODE_MESH_TEST),
+        ("Command", "ODE CREATE STATIC TRIANGLE MESH LIMB", "ode create static triangle mesh limb 1, 0\n",
+         ODE_MESH_TEST),
+        ("Command", "ODE ADD FORCE", "ode add force 2, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0\n", ODE_FORCE_TEST),
+        ("Command", "ODE ADD TORQUE", "ode add torque 2, 6.0, -12.0, 24.0\n", ODE_FORCE_TEST),
+        ("Command", "ODE ADD IMPULSE", "ode add impulse 2, 1.0, -2.0, 3.0\n", ODE_FORCE_TEST),
+        ("Command", "ODE SET BODY MASS", "ode set body mass 2, 2.0\n", ODE_FORCE_TEST),
+        ("Function", "ODE GET BODY ANGULAR VELOCITY X", "value# = ode get body angular velocity x(2)\n", ODE_FORCE_TEST),
+        ("Function", "ODE GET BODY ANGULAR VELOCITY Y", "value# = ode get body angular velocity y(2)\n", ODE_FORCE_TEST),
+        ("Function", "ODE GET BODY ANGULAR VELOCITY Z", "value# = ode get body angular velocity z(2)\n", ODE_FORCE_TEST),
+        ("Command", "ODE SET BODY KINEMATIC", "ode set body kinematic 2, 1\n", ODE_CONTROL_TEST),
+        ("Command", "ODE SET BODY DAMPING", "ode set body damping 2, 1.0, 0.5\n", ODE_CONTROL_TEST),
+        ("Command", "ODE SET RESPONSE", "ode set response 2, 2\n", ODE_CONTROL_TEST),
+        ("Command", "ODE SET RAY CAST", "ode set ray cast 2, 1\n", ODE_WORLD_TEST),
+        ("Command", "ODE SET STEP MODE", "ode set step mode 1\n", ODE_WORLD_TEST),
+        ("Command", "ODE SET WORLD ERP", "ode set world erp 0.2\n", ODE_WORLD_TEST),
+        ("Command", "ODE SET WORLD QUICK STEP NUM ITERATIONS", "ode set world quick step num iterations 30\n",
+         ODE_WORLD_TEST),
+        ("Command", "ODE SET WORLD STEP", "ode set world step 0.01\n", ODE_WORLD_TEST),
+    )
+)
+
 
 UNIT_WITNESSES += tuple(
     (profile, kind, name, code, "xr-state-and-vector",

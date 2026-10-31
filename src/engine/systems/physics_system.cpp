@@ -16,16 +16,23 @@
 #include <Jolt/Physics/Body/BodyLock.h>
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
+#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/RegisterTypes.h>
 
 #include <SDL3/SDL_timer.h>
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <cstdint>
+#include <initializer_list>
 #include <numbers>
 #include <string>
 #include <thread>
@@ -41,16 +48,26 @@ namespace dbc
         constexpr JPH::ObjectLayer DisabledLayer = 2;
 
         constexpr float DefaultStepSeconds = 1.0f / 60.0f;
+        constexpr float MinimumStepSeconds = 1.0f / 1000.0f;
+        constexpr float MaximumStepSeconds = 1.0f / 10.0f;
         constexpr float MaximumManualUpdateSeconds = 1.0f;
         constexpr float MaximumFrameUpdateSeconds = 0.1f;
         // Absorbs float rounding, so N updates of one step run exactly N steps.
         constexpr float StepToleranceSeconds = 1.0e-5f;
 
         constexpr float MinimumShapeExtent = 0.01f;
+        constexpr float MinimumHullVolume = 1.0e-8f;
         constexpr float DefaultMass = 1.0f;
         constexpr float DefaultFriction = 0.9f;
         constexpr float DefaultLinearDamping = 0.001f;
         constexpr float DefaultAngularDamping = 0.005f;
+
+        // Jolt's friction works from the impulses of an earlier iteration, so one iteration is not enough.
+        constexpr int MinimumVelocitySteps = 2;
+        constexpr int MaximumVelocitySteps = 255;
+        // ODE SET STEP MODE 1 asked for ODE's slower exact solver; Jolt's nearest equivalent is many more iterations.
+        constexpr int ExactVelocitySteps = 50;
+        constexpr int ExactPositionSteps = 10;
 
         class JoltRuntime
         {
@@ -180,9 +197,14 @@ namespace dbc
                 return 0.5f * (Min + Max);
             }
 
+            [[nodiscard]] JPH::Vec3 Size() const
+            {
+                return Max - Min;
+            }
+
             [[nodiscard]] JPH::Vec3 HalfExtent() const
             {
-                return JPH::Vec3::sMax(0.5f * (Max - Min), JPH::Vec3::sReplicate(MinimumShapeExtent));
+                return JPH::Vec3::sMax(0.5f * Size(), JPH::Vec3::sReplicate(MinimumShapeExtent));
             }
         };
 
@@ -190,6 +212,25 @@ namespace dbc
         JPH::RefConst<JPH::Shape> MakeBoxShape(JPH::Vec3Arg HalfExtent)
         {
             return new JPH::BoxShape(HalfExtent, std::min(JPH::cDefaultConvexRadius, HalfExtent.ReduceMin()));
+        }
+
+        JPH::RefConst<JPH::Shape> MakeCylinderShape(float HalfHeight, float Radius)
+        {
+            return new JPH::CylinderShape(HalfHeight, Radius,
+                                          std::min({JPH::cDefaultConvexRadius, HalfHeight, Radius}));
+        }
+
+        // The proportions the plugin measured from an object's size.
+        struct CapsuleSize
+        {
+            float HalfHeight = 0.0f;
+            float Radius = 0.0f;
+        };
+
+        CapsuleSize CapsuleSizeFor(JPH::Vec3Arg Size, float ScaleModifier)
+        {
+            return {std::max(0.5f * Size.GetY() * 0.55f * ScaleModifier, MinimumShapeExtent),
+                    std::max(0.25f * (Size.GetX() + Size.GetZ()) * 0.967f, MinimumShapeExtent)};
         }
 
         // A body's position is its object's origin, so a shape off that origin moves inside the body.
@@ -205,17 +246,41 @@ namespace dbc
     {
         struct BodyRecord
         {
+            int ObjectId = 0;
             JPH::BodyID Id;
             bool Moving = false;
             bool Enabled = true;
             bool ZyxRotation = false;
+            // A capsule's body never turns, so what the object shows stays the program's own choice.
+            bool SyncRotation = true;
+            bool KinematicRequested = false;
+            bool PseudoStatic = false;
+            bool HasPendingForce = false;
+            JPH::Vec3 PendingForce = JPH::Vec3::sZero();
+            JPH::Vec3 PendingTorque = JPH::Vec3::sZero();
+
+            [[nodiscard]] bool Kinematic() const
+            {
+                return KinematicRequested || PseudoStatic;
+            }
         };
 
         struct BodyOptions
         {
             bool Dynamic = false;
+            bool Sensor = false;
+            bool LockRotation = false;
             float Mass = DefaultMass;
             float Friction = DefaultFriction;
+            float Restitution = 0.0f;
+            JPH::RVec3 Position = JPH::RVec3::sZero();
+            JPH::Quat Rotation = JPH::Quat::sIdentity();
+        };
+
+        struct ObjectGeometry
+        {
+            std::vector<JPH::Vec3> Points;
+            std::vector<std::uint32_t> Indices;
         };
 
         explicit Impl(EngineKernel& Kernel) : Kernel(Kernel) {}
@@ -235,6 +300,12 @@ namespace dbc
             World = std::make_unique<JPH::PhysicsSystem>();
             World->Init(65536, 0, 65536, 10240, BroadPhase, ObjectVsBroadPhaseFilter, ObjectLayerPairFilter);
             World->SetGravity(JPH::Vec3(0.0f, -9.81f, 0.0f));
+            const JPH::PhysicsSettings& Defaults = World->GetPhysicsSettings();
+            PositionCorrection = Defaults.mBaumgarte;
+            VelocitySteps = static_cast<int>(Defaults.mNumVelocitySteps);
+            PositionSteps = static_cast<int>(Defaults.mNumPositionSteps);
+            ExactStepMode = false;
+            AnyPendingForce = false;
             StepSeconds = DefaultStepSeconds;
             AccumulatedSeconds = 0.0f;
             LastUpdateNanoseconds = SDL_GetTicksNS();
@@ -330,45 +401,85 @@ namespace dbc
             }
         }
 
-        bool ObjectBounds(const Object3D& Object, int ObjectId, const char* Command, LocalBounds& Output,
+        // Every vertex of an object, or of one limb, where it sits relative to the object's origin. Limb -1 is the
+        // whole object.
+        bool GatherGeometry(const Object3D& Object, int ObjectId, int Limb, const char* Command, ObjectGeometry& Output,
+                            std::string* Error)
+        {
+            std::vector<Vec3> Vertices;
+            const auto AddMesh = [&](const Mesh& MeshValue)
+            {
+                const auto Base = static_cast<std::uint32_t>(Output.Points.size());
+                Kernel.Renderer().ObjectMeshVertices(Object, MeshValue, Vertices);
+                for (const Vec3& Local : Vertices)
+                {
+                    Vec3 Point{Local.X * Object.ScaleX, Local.Y * Object.ScaleY, Local.Z * Object.ScaleZ};
+                    if (Object.ApplyPivot)
+                        Point = Mat3Apply(Point, Object.PivotMatrix);
+                    Output.Points.emplace_back(Point.X, Point.Y, Point.Z);
+                }
+                const std::vector<std::uint32_t>& Indices = MeshValue.Geometry().Indices;
+                for (const std::uint32_t Index : Indices)
+                    Output.Indices.push_back(Base + Index);
+                if (Indices.empty())
+                {
+                    for (std::uint32_t Index = 0; Index < Vertices.size(); ++Index)
+                        Output.Indices.push_back(Base + Index);
+                }
+            };
+
+            if (Limb != -1)
+            {
+                const Mesh* LimbMesh = Kernel.Renderer().FindLimbMesh(Object, Limb);
+                if (!LimbMesh)
+                    return Fail(Error, std::string(Command) + " requires limb " + std::to_string(Limb) + " of object " +
+                                           std::to_string(ObjectId));
+                AddMesh(*LimbMesh);
+            }
+            else
+            {
+                for (const Mesh& MeshValue : Object.Meshes)
+                    AddMesh(MeshValue);
+            }
+            if (Output.Points.empty())
+                return Fail(Error, std::string(Command) + " requires object " + std::to_string(ObjectId) +
+                                       " to have mesh geometry");
+            return true;
+        }
+
+        bool ObjectBounds(const Object3D& Object, int ObjectId, int Limb, const char* Command, LocalBounds& Output,
                           std::string* Error)
         {
-            bool Found = false;
-            std::vector<Vec3> Vertices;
-            const Vec3 Scale{Object.ScaleX, Object.ScaleY, Object.ScaleZ};
+            ObjectGeometry Geometry;
+            if (!GatherGeometry(Object, ObjectId, Limb, Command, Geometry, Error))
+                return false;
             JPH::Vec3 Min = JPH::Vec3::sReplicate(FLT_MAX);
             JPH::Vec3 Max = JPH::Vec3::sReplicate(-FLT_MAX);
-            for (int Pass = 0; Pass < 2; ++Pass)
+            for (JPH::Vec3Arg Point : Geometry.Points)
             {
-                // The first pass finds the box whose centre the second pass measures the radius from.
-                const JPH::Vec3 Center = 0.5f * (Min + Max);
-                for (const Mesh& MeshValue : Object.Meshes)
-                {
-                    Kernel.Renderer().ObjectMeshVertices(Object, MeshValue, Vertices);
-                    for (const Vec3& Local : Vertices)
-                    {
-                        Vec3 Point{Local.X * Scale.X, Local.Y * Scale.Y, Local.Z * Scale.Z};
-                        if (Object.ApplyPivot)
-                            Point = Mat3Apply(Point, Object.PivotMatrix);
-                        const JPH::Vec3 Position(Point.X, Point.Y, Point.Z);
-                        if (Pass == 0)
-                        {
-                            Min = JPH::Vec3::sMin(Min, Position);
-                            Max = JPH::Vec3::sMax(Max, Position);
-                            Found = true;
-                        }
-                        else
-                        {
-                            Output.Radius = std::max(Output.Radius, (Position - Center).Length());
-                        }
-                    }
-                }
-                if (!Found)
-                    return Fail(Error, std::string(Command) + " requires object " + std::to_string(ObjectId) +
-                                           " to have mesh geometry");
+                Min = JPH::Vec3::sMin(Min, Point);
+                Max = JPH::Vec3::sMax(Max, Point);
             }
             Output.Min = Min;
             Output.Max = Max;
+            const JPH::Vec3 Center = Output.Center();
+            for (JPH::Vec3Arg Point : Geometry.Points)
+                Output.Radius = std::max(Output.Radius, (Point - Center).Length());
+            return true;
+        }
+
+        // A collision box a program set on the object replaces the extents of its vertices.
+        bool CollisionBounds(const Object3D& Object, int ObjectId, int Limb, const char* Command, LocalBounds& Output,
+                             std::string* Error)
+        {
+            if (Limb != -1 || !Object.CollisionAabbExplicit)
+                return ObjectBounds(Object, ObjectId, Limb, Command, Output, Error);
+            const JPH::Vec3 Scale(Object.ScaleX, Object.ScaleY, Object.ScaleZ);
+            const AABB& Box = Object.CollisionAabb;
+            const JPH::Vec3 First = Scale * JPH::Vec3(Box.MinX, Box.MinY, Box.MinZ);
+            const JPH::Vec3 Second = Scale * JPH::Vec3(Box.MaxX, Box.MaxY, Box.MaxZ);
+            Output.Min = JPH::Vec3::sMin(First, Second);
+            Output.Max = JPH::Vec3::sMax(First, Second);
             return true;
         }
 
@@ -382,58 +493,232 @@ namespace dbc
             return Object;
         }
 
-        bool AddBody(int ObjectId, const Object3D& Object, const char* Command, JPH::RefConst<JPH::Shape> Shape,
-                     const BodyOptions& Options, std::string* Error)
+        [[nodiscard]] static BodyOptions OptionsAt(const Object3D& Object, bool Dynamic)
+        {
+            BodyOptions Options;
+            Options.Dynamic = Dynamic;
+            Options.Position = JPH::RVec3(Object.PosX, Object.PosY, Object.PosZ);
+            Options.Rotation = ToPhysicsRotation(Object);
+            return Options;
+        }
+
+        BodyRecord* AddBody(int ObjectId, const Object3D& Object, const char* Command, JPH::RefConst<JPH::Shape> Shape,
+                            const BodyOptions& Options, std::string* Error)
         {
             if (const auto Existing = Records.find(ObjectId); Existing != Records.end())
                 DestroyRecord(Existing);
 
-            JPH::BodyCreationSettings Settings(Shape.GetPtr(), JPH::RVec3(Object.PosX, Object.PosY, Object.PosZ),
-                                               ToPhysicsRotation(Object),
+            JPH::BodyCreationSettings Settings(Shape.GetPtr(), Options.Position, Options.Rotation,
                                                Options.Dynamic ? JPH::EMotionType::Dynamic : JPH::EMotionType::Static,
                                                Options.Dynamic ? MovingLayer : NonMovingLayer);
             Settings.mFriction = Options.Friction;
+            Settings.mRestitution = Options.Restitution;
             Settings.mLinearDamping = DefaultLinearDamping;
             Settings.mAngularDamping = DefaultAngularDamping;
+            Settings.mIsSensor = Options.Sensor;
             if (Options.Dynamic)
             {
                 // Mass does not follow the volume, so a force means the same on bodies of any size.
                 Settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
                 Settings.mMassPropertiesOverride.mMass = Options.Mass;
                 Settings.mMotionQuality = JPH::EMotionQuality::LinearCast;
+                if (Options.LockRotation)
+                    Settings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY |
+                                            JPH::EAllowedDOFs::TranslationZ;
             }
             const JPH::BodyID BodyId = Bodies().CreateAndAddBody(
                 Settings, Options.Dynamic ? JPH::EActivation::Activate : JPH::EActivation::DontActivate);
             if (BodyId.IsInvalid())
-                return Fail(Error, std::string(Command) + " exhausted the physics body pool");
-            Records.emplace(ObjectId, BodyRecord{BodyId, Options.Dynamic, true, Object.UseZyxRotation});
-            return true;
+            {
+                Fail(Error, std::string(Command) + " exhausted the physics body pool");
+                return nullptr;
+            }
+            BodyRecord& Record = Records[ObjectId];
+            Record.ObjectId = ObjectId;
+            Record.Id = BodyId;
+            Record.Moving = Options.Dynamic;
+            Record.ZyxRotation = Object.UseZyxRotation;
+            return &Record;
         }
 
         bool CreateSphere(int ObjectId, bool Dynamic, const char* Command, std::string* Error)
         {
             const Object3D* Object = RequireObject(ObjectId, Command, Error);
             LocalBounds Bounds;
-            if (!Object || !ObjectBounds(*Object, ObjectId, Command, Bounds, Error))
+            if (!Object || !ObjectBounds(*Object, ObjectId, -1, Command, Bounds, Error))
                 return false;
-            BodyOptions Options;
-            Options.Dynamic = Dynamic;
             return AddBody(
-                ObjectId, *Object, Command,
-                OffsetShape(new JPH::SphereShape(std::max(Bounds.Radius, MinimumShapeExtent)), Bounds.Center()),
-                Options, Error);
+                       ObjectId, *Object, Command,
+                       OffsetShape(new JPH::SphereShape(std::max(Bounds.Radius, MinimumShapeExtent)), Bounds.Center()),
+                       OptionsAt(*Object, Dynamic), Error) != nullptr;
         }
 
-        bool CreateBox(int ObjectId, bool Dynamic, const char* Command, std::string* Error)
+        bool CreateBox(int ObjectId, bool Dynamic, int Limb, const char* Command, std::string* Error)
         {
             const Object3D* Object = RequireObject(ObjectId, Command, Error);
             LocalBounds Bounds;
-            if (!Object || !ObjectBounds(*Object, ObjectId, Command, Bounds, Error))
+            if (!Object || !CollisionBounds(*Object, ObjectId, Limb, Command, Bounds, Error))
                 return false;
-            BodyOptions Options;
-            Options.Dynamic = Dynamic;
             return AddBody(ObjectId, *Object, Command, OffsetShape(MakeBoxShape(Bounds.HalfExtent()), Bounds.Center()),
-                           Options, Error);
+                           OptionsAt(*Object, Dynamic), Error) != nullptr;
+        }
+
+        bool CreateTunedBox(int ObjectId, int Limb, int TipOverMode, float Weight, float Friction, float Restitution,
+                            const char* Command, std::string* Error)
+        {
+            const Object3D* Object = RequireObject(ObjectId, Command, Error);
+            LocalBounds Bounds;
+            if (!Object || !CollisionBounds(*Object, ObjectId, Limb, Command, Bounds, Error))
+                return false;
+
+            BodyOptions Options = OptionsAt(*Object, true);
+            Options.Sensor = TipOverMode == 11;
+            // -1 is the plugin's marker for a default.
+            if (Weight != -1.0f)
+                Options.Mass = DefaultMass * Weight / 100.0f;
+            if (Friction != -1.0f)
+                Options.Friction = Friction / 50.0f;
+            if (Restitution != -1.0f)
+                Options.Restitution = std::min(Restitution / 100.0f, 1.0f);
+
+            const JPH::Vec3 HalfExtent = Bounds.HalfExtent();
+            JPH::RefConst<JPH::Shape> Shape = MakeBoxShape(HalfExtent);
+            if (TipOverMode >= 1 && TipOverMode <= 3)
+            {
+                // A wide thin plate through the box keeps it from settling flat on the sides the plate crosses.
+                JPH::Vec3 PlateHalfExtent = 1.5f * HalfExtent;
+                PlateHalfExtent.SetComponent(TipOverMode - 1, MinimumShapeExtent);
+                JPH::Ref<JPH::StaticCompoundShapeSettings> Compound = new JPH::StaticCompoundShapeSettings();
+                Compound->AddShape(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), Shape.GetPtr());
+                Compound->AddShape(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), MakeBoxShape(PlateHalfExtent).GetPtr());
+                const JPH::ShapeSettings::ShapeResult Result = Compound->Create();
+                if (Result.HasError())
+                    return Fail(Error,
+                                std::string(Command) + " could not build its shape: " + Result.GetError().c_str());
+                Shape = Result.Get();
+            }
+            return AddBody(ObjectId, *Object, Command, OffsetShape(Shape, Bounds.Center()), Options, Error) != nullptr;
+        }
+
+        bool CreateCapsule(int ObjectId, bool Dynamic, float ScaleModifier, float Raised, const char* Command,
+                           std::string* Error)
+        {
+            const Object3D* Object = RequireObject(ObjectId, Command, Error);
+            LocalBounds Bounds;
+            if (!Object || !CollisionBounds(*Object, ObjectId, -1, Command, Bounds, Error))
+                return false;
+            const CapsuleSize Size = CapsuleSizeFor(Bounds.Size(), ScaleModifier);
+            // The plugin hung a feet-origin model under the capsule's centre. Standing the capsule on the object's
+            // lowest point places such a model the same way, and keeps a centred primitive out of the ground too.
+            const JPH::Vec3 Center = Bounds.Center();
+            const JPH::Vec3 Offset(Center.GetX(), Bounds.Min.GetY() + Raised + Size.Radius + Size.HalfHeight,
+                                   Center.GetZ());
+            BodyOptions Options = OptionsAt(*Object, Dynamic);
+            Options.LockRotation = true;
+            BodyRecord* Record =
+                AddBody(ObjectId, *Object, Command,
+                        OffsetShape(new JPH::CapsuleShape(Size.HalfHeight, Size.Radius), Offset), Options, Error);
+            if (!Record)
+                return false;
+            Record->SyncRotation = false;
+            return true;
+        }
+
+        bool CreateStaticMesh(int ObjectId, int Limb, float ScalingPercent, const char* Command, std::string* Error)
+        {
+            const Object3D* Object = RequireObject(ObjectId, Command, Error);
+            ObjectGeometry Geometry;
+            if (!Object || !GatherGeometry(*Object, ObjectId, Limb, Command, Geometry, Error))
+                return false;
+            if (ScalingPercent <= 0.0f)
+                return Fail(Error, std::string(Command) + " requires a positive scaling percentage");
+
+            const float Scale = ScalingPercent / 100.0f;
+            JPH::VertexList Vertices;
+            Vertices.reserve(Geometry.Points.size());
+            for (JPH::Vec3Arg Point : Geometry.Points)
+                Vertices.push_back(JPH::Float3(Scale * Point.GetX(), Scale * Point.GetY(), Scale * Point.GetZ()));
+            JPH::IndexedTriangleList Triangles;
+            Triangles.reserve(Geometry.Indices.size() / 3);
+            for (std::size_t Index = 0; Index + 2 < Geometry.Indices.size(); Index += 3)
+                Triangles.push_back(JPH::IndexedTriangle(Geometry.Indices[Index], Geometry.Indices[Index + 1],
+                                                         Geometry.Indices[Index + 2], 0));
+
+            JPH::Ref<JPH::MeshShapeSettings> Settings =
+                new JPH::MeshShapeSettings(std::move(Vertices), std::move(Triangles));
+            const JPH::ShapeSettings::ShapeResult Result = Settings->Create();
+            if (Result.HasError())
+                return Fail(Error, std::string(Command) + " could not build a mesh from object " +
+                                       std::to_string(ObjectId) + ": " + Result.GetError().c_str());
+            return AddBody(ObjectId, *Object, Command, Result.Get(), OptionsAt(*Object, false), Error) != nullptr;
+        }
+
+        // Jolt does not simulate moving triangle meshes; a hull keeps the object's outline without its hollows.
+        bool CreateDynamicHull(int ObjectId, const char* Command, std::string* Error)
+        {
+            const Object3D* Object = RequireObject(ObjectId, Command, Error);
+            ObjectGeometry Geometry;
+            if (!Object || !GatherGeometry(*Object, ObjectId, -1, Command, Geometry, Error))
+                return false;
+            JPH::Ref<JPH::ConvexHullShapeSettings> Settings =
+                new JPH::ConvexHullShapeSettings(Geometry.Points.data(), static_cast<int>(Geometry.Points.size()));
+            const JPH::ShapeSettings::ShapeResult Result = Settings->Create();
+            if (Result.HasError())
+                return Fail(Error, std::string(Command) + " could not build a convex hull from object " +
+                                       std::to_string(ObjectId) + ": " + Result.GetError().c_str());
+            // Jolt accepts a flat hull, but a body without volume has no inertia to simulate.
+            if (Result.Get()->GetVolume() < MinimumHullVolume)
+                return Fail(Error, std::string(Command) + " requires object " + std::to_string(ObjectId) +
+                                       " to have volume; ODE CREATE DYNAMIC BOX takes a flat object");
+            return AddBody(ObjectId, *Object, Command, Result.Get(), OptionsAt(*Object, true), Error) != nullptr;
+        }
+
+        void AddPendingForce(BodyRecord& Record, JPH::Vec3Arg Force, JPH::Vec3Arg Torque)
+        {
+            Record.PendingForce += Force;
+            Record.PendingTorque += Torque;
+            Record.HasPendingForce = true;
+            AnyPendingForce = true;
+        }
+
+        // A force lasts for one update, so the impulse covers that update's whole duration at any update rate.
+        void ApplyPendingForces(float Seconds)
+        {
+            if (!AnyPendingForce)
+                return;
+            AnyPendingForce = false;
+            JPH::BodyInterface& Interface = Bodies();
+            for (auto& [ObjectId, Record] : Records)
+            {
+                static_cast<void>(ObjectId);
+                if (!Record.HasPendingForce)
+                    continue;
+                Interface.AddImpulse(Record.Id, Seconds * Record.PendingForce);
+                Interface.AddAngularImpulse(Record.Id, Seconds * Record.PendingTorque);
+                Record.HasPendingForce = false;
+                Record.PendingForce = JPH::Vec3::sZero();
+                Record.PendingTorque = JPH::Vec3::sZero();
+            }
+        }
+
+        void ApplyMotionType(const BodyRecord& Record)
+        {
+            JPH::BodyInterface& Interface = Bodies();
+            Interface.SetMotionType(Record.Id,
+                                    Record.Kinematic() ? JPH::EMotionType::Kinematic : JPH::EMotionType::Dynamic,
+                                    JPH::EActivation::Activate);
+            if (Record.Kinematic())
+                Interface.SetLinearAndAngularVelocity(Record.Id, JPH::Vec3::sZero(), JPH::Vec3::sZero());
+        }
+
+        void ApplyPhysicsSettings()
+        {
+            JPH::PhysicsSettings Settings = World->GetPhysicsSettings();
+            Settings.mBaumgarte = PositionCorrection;
+            Settings.mNumVelocitySteps =
+                static_cast<JPH::uint>(ExactStepMode ? std::max(VelocitySteps, ExactVelocitySteps) : VelocitySteps);
+            Settings.mNumPositionSteps = static_cast<JPH::uint>(ExactStepMode ? ExactPositionSteps : PositionSteps);
+            World->SetPhysicsSettings(Settings);
         }
 
         // Without a presented frame there is no meaningful elapsed time: a loop stepping without SYNC gets a regular
@@ -451,6 +736,7 @@ namespace dbc
             LastUpdateNanoseconds = SDL_GetTicksNS();
             LastPresentTicks = Kernel.Core().LastRenderTicks();
             RemoveOrphanedBodies();
+            ApplyPendingForces(Seconds);
 
             AccumulatedSeconds += Seconds;
             while (AccumulatedSeconds >= StepSeconds - StepToleranceSeconds)
@@ -486,10 +772,12 @@ namespace dbc
                     Rotation = (JPH::Quat::sRotation(AngularVelocity / AngularSpeed, AngularSpeed * RemainderSeconds) *
                                 Rotation)
                                    .Normalized();
-                const JPH::Vec3 Angles = ToObjectDegrees(Rotation, Record.ZyxRotation);
                 Kernel.Objects().PositionObject(ObjectId, static_cast<float>(Position.GetX()),
                                                 static_cast<float>(Position.GetY()),
                                                 static_cast<float>(Position.GetZ()));
+                if (!Record.SyncRotation)
+                    continue;
+                const JPH::Vec3 Angles = ToObjectDegrees(Rotation, Record.ZyxRotation);
                 Kernel.Objects().RotateObject(ObjectId, Angles.GetX(), Angles.GetY(), Angles.GetZ());
             }
         }
@@ -504,6 +792,11 @@ namespace dbc
         std::unordered_map<int, BodyRecord> Records;
         float StepSeconds = DefaultStepSeconds;
         float AccumulatedSeconds = 0.0f;
+        float PositionCorrection = 0.0f;
+        int VelocitySteps = 0;
+        int PositionSteps = 0;
+        bool ExactStepMode = false;
+        bool AnyPendingForce = false;
         Uint64 LastUpdateNanoseconds = 0;
         Uint64 LastPresentTicks = 0;
         bool Started = false;
@@ -572,7 +865,136 @@ namespace dbc
 
     bool PhysicsSystem::CreateStaticBox(int ObjectId, std::string* Error)
     {
-        return Impl_->CreateBox(ObjectId, false, "ODE CREATE STATIC BOX", Error);
+        return Impl_->CreateBox(ObjectId, false, -1, "ODE CREATE STATIC BOX", Error);
+    }
+
+    bool PhysicsSystem::CreateStaticBoxLimb(int ObjectId, int Limb, std::string* Error)
+    {
+        return Impl_->CreateBox(ObjectId, false, Limb, "ODE CREATE STATIC BOX LIMB", Error);
+    }
+
+    bool PhysicsSystem::CreateDynamicBox(int ObjectId, std::string* Error)
+    {
+        return Impl_->CreateBox(ObjectId, true, -1, "ODE CREATE DYNAMIC BOX", Error);
+    }
+
+    bool PhysicsSystem::CreateDynamicBox(int ObjectId, int Limb, int TipOverMode, float Weight, float Friction,
+                                         float Restitution, std::string* Error)
+    {
+        constexpr const char* Command = "ODE CREATE DYNAMIC BOX";
+        if (!ValidateFinite({Weight, Friction, Restitution}, Command, Error))
+            return false;
+        if (TipOverMode != 0 && TipOverMode != 1 && TipOverMode != 2 && TipOverMode != 3 && TipOverMode != 11)
+            return Fail(Error, "ODE CREATE DYNAMIC BOX requires a tip-over mode of 0, 1, 2, 3 or 11");
+        if ((Weight != -1.0f && Weight <= 0.0f) || (Friction != -1.0f && Friction < 0.0f) ||
+            (Restitution != -1.0f && Restitution < 0.0f))
+            return Fail(Error, "ODE CREATE DYNAMIC BOX requires a positive weight and no negative friction or bounce");
+        return Impl_->CreateTunedBox(ObjectId, Limb, TipOverMode, Weight, Friction, Restitution, Command, Error);
+    }
+
+    bool PhysicsSystem::CreateDynamicBoxSized(int ObjectId, float XSize, float YSize, float ZSize, std::string* Error)
+    {
+        constexpr const char* Command = "ODE CREATE DYNAMIC BOX";
+        const Object3D* Object = Impl_->RequireObject(ObjectId, Command, Error);
+        if (!Object || !ValidateFinite({XSize, YSize, ZSize}, Command, Error))
+            return false;
+        if (XSize <= 0.0f || YSize <= 0.0f || ZSize <= 0.0f)
+            return Fail(Error, "ODE CREATE DYNAMIC BOX requires positive sizes");
+        return Impl_->AddBody(ObjectId, *Object, Command, MakeBoxShape(0.5f * JPH::Vec3(XSize, YSize, ZSize)),
+                              Impl::OptionsAt(*Object, true), Error) != nullptr;
+    }
+
+    bool PhysicsSystem::CreateDynamicBoxManual(int ObjectId, float X, float Y, float Z, float XSize, float YSize,
+                                               float ZSize, float XDegrees, float YDegrees, float ZDegrees,
+                                               std::string* Error)
+    {
+        constexpr const char* Command = "ODE CREATE DYNAMIC BOX MANUAL";
+        const Object3D* Object = Impl_->RequireObject(ObjectId, Command, Error);
+        if (!Object || !ValidateFinite({X, Y, Z, XSize, YSize, ZSize, XDegrees, YDegrees, ZDegrees}, Command, Error))
+            return false;
+        if (XSize <= 0.0f || YSize <= 0.0f || ZSize <= 0.0f)
+            return Fail(Error, "ODE CREATE DYNAMIC BOX MANUAL requires positive sizes");
+        Impl::BodyOptions Options = Impl::OptionsAt(*Object, true);
+        Options.Position = JPH::RVec3(X, Y, Z);
+        Options.Rotation = ToPhysicsRotation(XDegrees, YDegrees, ZDegrees, Object->UseZyxRotation);
+        if (!Impl_->AddBody(ObjectId, *Object, Command, MakeBoxShape(0.5f * JPH::Vec3(XSize, YSize, ZSize)), Options,
+                            Error))
+            return false;
+        Impl_->Kernel.Objects().PositionObject(ObjectId, X, Y, Z);
+        Impl_->Kernel.Objects().RotateObject(ObjectId, XDegrees, YDegrees, ZDegrees);
+        return true;
+    }
+
+    bool PhysicsSystem::CreateDynamicCylinder(int ObjectId, std::string* Error)
+    {
+        constexpr const char* Command = "ODE CREATE DYNAMIC CYLINDER";
+        const Object3D* Object = Impl_->RequireObject(ObjectId, Command, Error);
+        LocalBounds Bounds;
+        if (!Object || !Impl_->CollisionBounds(*Object, ObjectId, -1, Command, Bounds, Error))
+            return false;
+        const JPH::Vec3 HalfExtent = Bounds.HalfExtent();
+        return Impl_->AddBody(
+                   ObjectId, *Object, Command,
+                   OffsetShape(MakeCylinderShape(HalfExtent.GetY(), std::max(HalfExtent.GetX(), HalfExtent.GetZ())),
+                               Bounds.Center()),
+                   Impl::OptionsAt(*Object, true), Error) != nullptr;
+    }
+
+    bool PhysicsSystem::CreateStaticCylinder(int ObjectId, float X, float Y, float Z, float XSize, float YSize,
+                                             float ZSize, float XRadians, float YRadians, float ZRadians,
+                                             std::string* Error)
+    {
+        constexpr const char* Command = "ODE CREATE STATIC CYLINDER";
+        const Object3D* Object = Impl_->RequireObject(ObjectId, Command, Error);
+        if (!Object || !ValidateFinite({X, Y, Z, XSize, YSize, ZSize, XRadians, YRadians, ZRadians}, Command, Error))
+            return false;
+        if (XSize <= 0.0f || YSize <= 0.0f || ZSize <= 0.0f)
+            return Fail(Error, "ODE CREATE STATIC CYLINDER requires positive sizes");
+        Impl::BodyOptions Options = Impl::OptionsAt(*Object, false);
+        Options.Position = JPH::RVec3(X, Y, Z);
+        // As in the plugin, this one form takes radians.
+        Options.Rotation = JPH::Quat::sEulerAngles(JPH::Vec3(XRadians, YRadians, ZRadians));
+        return Impl_->AddBody(ObjectId, *Object, Command,
+                              MakeCylinderShape(std::max(0.5f * YSize, MinimumShapeExtent),
+                                                std::max(0.5f * std::max(XSize, ZSize), MinimumShapeExtent)),
+                              Options, Error) != nullptr;
+    }
+
+    bool PhysicsSystem::CreateDynamicCapsule(int ObjectId, float ScaleModifier, float Raised, std::string* Error)
+    {
+        constexpr const char* Command = "ODE CREATE DYNAMIC CAPSULE";
+        if (!ValidateFinite({ScaleModifier, Raised}, Command, Error))
+            return false;
+        if (ScaleModifier < 0.0f)
+            return Fail(Error, "ODE CREATE DYNAMIC CAPSULE requires a non-negative scale modifier");
+        return Impl_->CreateCapsule(ObjectId, true, ScaleModifier == 0.0f ? 1.0f : ScaleModifier, Raised, Command,
+                                    Error);
+    }
+
+    bool PhysicsSystem::CreateStaticCapsule(int ObjectId, std::string* Error)
+    {
+        return Impl_->CreateCapsule(ObjectId, false, 1.0f, 0.0f, "ODE CREATE STATIC CAPSULE", Error);
+    }
+
+    bool PhysicsSystem::CreateDynamicTriangleMesh(int ObjectId, std::string* Error)
+    {
+        return Impl_->CreateDynamicHull(ObjectId, "ODE CREATE DYNAMIC TRIANGLE MESH", Error);
+    }
+
+    bool PhysicsSystem::CreateStaticTriangleMesh(int ObjectId, int Limb, int ScalingPercent, std::string* Error)
+    {
+        return Impl_->CreateStaticMesh(ObjectId, Limb, static_cast<float>(ScalingPercent),
+                                       "ODE CREATE STATIC TRIANGLE MESH", Error);
+    }
+
+    bool PhysicsSystem::CreateStaticTriangleMeshLimb(int ObjectId, int Limb, std::string* Error)
+    {
+        return Impl_->CreateStaticMesh(ObjectId, Limb, 100.0f, "ODE CREATE STATIC TRIANGLE MESH LIMB", Error);
+    }
+
+    bool PhysicsSystem::CreateStaticTerrainMesh(int ObjectId, std::string* Error)
+    {
+        return Impl_->CreateStaticMesh(ObjectId, -1, 100.0f, "ODE CREATE STATIC TERRAIN MESH", Error);
     }
 
     bool PhysicsSystem::CreateStaticSphere(int ObjectId, std::string* Error)
@@ -600,6 +1022,50 @@ namespace dbc
         JPH::BodyIDVector AllBodies;
         Impl_->World->GetBodies(AllBodies);
         Impl_->Bodies().ActivateBodies(AllBodies.data(), static_cast<int>(AllBodies.size()));
+        return true;
+    }
+
+    bool PhysicsSystem::SetWorldStep(float Seconds, std::string* Error)
+    {
+        if (!Impl_->RequireStarted("ODE SET WORLD STEP", Error) ||
+            !ValidateFinite({Seconds}, "ODE SET WORLD STEP", Error))
+            return false;
+        if (Seconds < MinimumStepSeconds || Seconds > MaximumStepSeconds)
+            return Fail(Error, "ODE SET WORLD STEP requires a step between 0.001 and 0.1 seconds");
+        Impl_->StepSeconds = Seconds;
+        return true;
+    }
+
+    bool PhysicsSystem::SetWorldErp(float Value, std::string* Error)
+    {
+        if (!Impl_->RequireStarted("ODE SET WORLD ERP", Error) || !ValidateFinite({Value}, "ODE SET WORLD ERP", Error))
+            return false;
+        if (Value < 0.0f || Value > 1.0f)
+            return Fail(Error, "ODE SET WORLD ERP requires a value between 0 and 1");
+        Impl_->PositionCorrection = Value;
+        Impl_->ApplyPhysicsSettings();
+        return true;
+    }
+
+    bool PhysicsSystem::SetWorldQuickStepIterations(int Iterations, std::string* Error)
+    {
+        if (!Impl_->RequireStarted("ODE SET WORLD QUICK STEP NUM ITERATIONS", Error))
+            return false;
+        if (Iterations < 1)
+            return Fail(Error, "ODE SET WORLD QUICK STEP NUM ITERATIONS requires at least one iteration");
+        Impl_->VelocitySteps = std::clamp(Iterations, MinimumVelocitySteps, MaximumVelocitySteps);
+        Impl_->ApplyPhysicsSettings();
+        return true;
+    }
+
+    bool PhysicsSystem::SetStepMode(int Mode, std::string* Error)
+    {
+        if (!Impl_->RequireStarted("ODE SET STEP MODE", Error))
+            return false;
+        if (Mode != 0 && Mode != 1)
+            return Fail(Error, "ODE SET STEP MODE requires 0 (quick) or 1 (exact)");
+        Impl_->ExactStepMode = Mode == 1;
+        Impl_->ApplyPhysicsSettings();
         return true;
     }
 
@@ -658,6 +1124,99 @@ namespace dbc
         return true;
     }
 
+    bool PhysicsSystem::SetBodyMass(int ObjectId, float Mass, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE SET BODY MASS", Error);
+        if (!Record || !ValidateFinite({Mass}, "ODE SET BODY MASS", Error))
+            return false;
+        if (Mass <= 0.0f)
+            return Fail(Error, "ODE SET BODY MASS requires a positive mass");
+        const JPH::BodyLockWrite Lock(Impl_->World->GetBodyLockInterfaceNoLock(), Record->Id);
+        if (!Lock.Succeeded())
+            return Fail(Error, "ODE SET BODY MASS could not write the body of object " + std::to_string(ObjectId));
+        Lock.GetBody().GetMotionProperties()->ScaleToMass(Mass);
+        return true;
+    }
+
+    bool PhysicsSystem::SetBodyDamping(int ObjectId, float Linear, float Angular, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE SET BODY DAMPING", Error);
+        if (!Record || !ValidateFinite({Linear, Angular}, "ODE SET BODY DAMPING", Error))
+            return false;
+        if (Linear < 0.0f || Angular < 0.0f)
+            return Fail(Error, "ODE SET BODY DAMPING requires non-negative values");
+        const JPH::BodyLockWrite Lock(Impl_->World->GetBodyLockInterfaceNoLock(), Record->Id);
+        if (!Lock.Succeeded())
+            return Fail(Error, "ODE SET BODY DAMPING could not write the body of object " + std::to_string(ObjectId));
+        JPH::MotionProperties* Motion = Lock.GetBody().GetMotionProperties();
+        Motion->SetLinearDamping(Linear);
+        Motion->SetAngularDamping(Angular);
+        return true;
+    }
+
+    bool PhysicsSystem::SetBodyKinematic(int ObjectId, int Kinematic, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE SET BODY KINEMATIC", Error);
+        if (!Record)
+            return false;
+        Record->KinematicRequested = Kinematic != 0;
+        Impl_->ApplyMotionType(*Record);
+        return true;
+    }
+
+    bool PhysicsSystem::SetResponse(int ObjectId, int Mode, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE SET RESPONSE", Error);
+        if (!Record)
+            return false;
+        if (Mode < 0 || Mode > 2)
+            return Fail(Error, "ODE SET RESPONSE requires 0 (default), 1 (ignore universe) or 2 (pseudo-static)");
+        // Mode 1 only ignored ODE CREATE STATIC UNIVERSE's mesh, which cannot exist here, so it responds like mode 0.
+        // Mode 2 holds still and still pushes others, which is what a kinematic body does.
+        Record->PseudoStatic = Mode == 2;
+        Impl_->ApplyMotionType(*Record);
+        return true;
+    }
+
+    bool PhysicsSystem::SetRayCast(int ObjectId, int Mode, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE SET RAY CAST", Error);
+        if (!Record)
+            return false;
+        Impl_->Bodies().SetMotionQuality(Record->Id,
+                                         Mode > 0 ? JPH::EMotionQuality::LinearCast : JPH::EMotionQuality::Discrete);
+        return true;
+    }
+
+    bool PhysicsSystem::AddForce(int ObjectId, float X, float Y, float Z, float PointX, float PointY, float PointZ,
+                                 std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE ADD FORCE", Error);
+        if (!Record || !ValidateFinite({X, Y, Z, PointX, PointY, PointZ}, "ODE ADD FORCE", Error))
+            return false;
+        const JPH::Vec3 Force(X, Y, Z);
+        Impl_->AddPendingForce(*Record, Force, JPH::Vec3(PointX, PointY, PointZ).Cross(Force));
+        return true;
+    }
+
+    bool PhysicsSystem::AddTorque(int ObjectId, float X, float Y, float Z, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE ADD TORQUE", Error);
+        if (!Record || !ValidateFinite({X, Y, Z}, "ODE ADD TORQUE", Error))
+            return false;
+        Impl_->AddPendingForce(*Record, JPH::Vec3::sZero(), JPH::Vec3(X, Y, Z));
+        return true;
+    }
+
+    bool PhysicsSystem::AddImpulse(int ObjectId, float X, float Y, float Z, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE ADD IMPULSE", Error);
+        if (!Record || !ValidateFinite({X, Y, Z}, "ODE ADD IMPULSE", Error))
+            return false;
+        Impl_->Bodies().AddImpulse(Record->Id, JPH::Vec3(X, Y, Z));
+        return true;
+    }
+
     bool PhysicsSystem::SetGravity(int ObjectId, int Enabled, std::string* Error)
     {
         Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE SET GRAVITY", Error);
@@ -709,30 +1268,25 @@ namespace dbc
         return true;
     }
 
-    bool PhysicsSystem::LinearVelocityX(float& Output, int ObjectId, std::string* Error) const
+    bool PhysicsSystem::LinearVelocity(float& Output, int ObjectId, int Axis, std::string* Error) const
     {
-        const Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, "ODE GET BODY LINEAR VELOCITY X", Error);
+        static constexpr const char* Commands[] = {"ODE GET BODY LINEAR VELOCITY X", "ODE GET BODY LINEAR VELOCITY Y",
+                                                   "ODE GET BODY LINEAR VELOCITY Z"};
+        const Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, Commands[Axis], Error);
         if (!Record)
             return false;
-        Output = Impl_->Bodies().GetLinearVelocity(Record->Id).GetX();
+        Output = Impl_->Bodies().GetLinearVelocity(Record->Id)[Axis];
         return true;
     }
 
-    bool PhysicsSystem::LinearVelocityY(float& Output, int ObjectId, std::string* Error) const
+    bool PhysicsSystem::AngularVelocity(float& Output, int ObjectId, int Axis, std::string* Error) const
     {
-        const Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, "ODE GET BODY LINEAR VELOCITY Y", Error);
+        static constexpr const char* Commands[] = {"ODE GET BODY ANGULAR VELOCITY X", "ODE GET BODY ANGULAR VELOCITY Y",
+                                                   "ODE GET BODY ANGULAR VELOCITY Z"};
+        const Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, Commands[Axis], Error);
         if (!Record)
             return false;
-        Output = Impl_->Bodies().GetLinearVelocity(Record->Id).GetY();
-        return true;
-    }
-
-    bool PhysicsSystem::LinearVelocityZ(float& Output, int ObjectId, std::string* Error) const
-    {
-        const Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, "ODE GET BODY LINEAR VELOCITY Z", Error);
-        if (!Record)
-            return false;
-        Output = Impl_->Bodies().GetLinearVelocity(Record->Id).GetZ();
+        Output = Impl_->Bodies().GetAngularVelocity(Record->Id)[Axis];
         return true;
     }
 } // namespace dbc

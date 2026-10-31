@@ -358,6 +358,10 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `NORMALIZE VECTOR2` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `NORMALIZE VECTOR3` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `NORMALIZE VECTOR4` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE ADD IMPULSE` | Command | 4 | integer, real, real, real -> void | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE ADD TORQUE` | Command | 4 | integer, real, real, real -> void | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE SET BODY DAMPING` | Command | 3 | integer, real, real -> void | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE SET BODY KINEMATIC` | Command | 2 | integer, integer -> void | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
 | `OFFSET LIMB` | Command | 5-6 | number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OFFSET SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OPEN IMAGEBLOCK` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -1150,6 +1154,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `OBJECT SIZE Z` | Function | 1-2 | number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `OBJECT SPEED` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `OBJECT VISIBLE` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET BODY ANGULAR VELOCITY X` | Function | 1 | integer -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET BODY ANGULAR VELOCITY Y` | Function | 1 | integer -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET BODY ANGULAR VELOCITY Z` | Function | 1 | integer -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
 | `ONLYSQUARETEXTURES AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `PARTICLES EXIST` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `PARTICLES POSITION X` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |

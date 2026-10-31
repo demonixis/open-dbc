@@ -301,31 +301,18 @@ dbpro	Command_WriteStringToRegistry	Command	WRITE STRING TO REGISTRY	Target	text
 dbpro	Function_ZbufferAvailable	Function	ZBUFFER AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ZfogAvailable	Function	ZFOG AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetRegistry	Function	GET REGISTRY	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtOdeAddForce	Command	ODE ADD FORCE	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeAddStaticObjectBox	Command	ODE ADD STATIC OBJECT BOX	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCollisionGetMessage	Command	ODE COLLISION GET MESSAGE	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeControlCharacterController	Command	ODE CONTROL CHARACTER CONTROLLER	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateBallJoint	Command	ODE CREATE BALL JOINT	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateCharacterController	Command	ODE CREATE CHARACTER CONTROLLER	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateDynamicBox	Command	ODE CREATE DYNAMIC BOX	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateDynamicBoxManual	Command	ODE CREATE DYNAMIC BOX MANUAL	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateDynamicCapsule	Command	ODE CREATE DYNAMIC CAPSULE	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateDynamicCylinder	Command	ODE CREATE DYNAMIC CYLINDER	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateDynamicTriangleMesh	Command	ODE CREATE DYNAMIC TRIANGLE MESH	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateHingeJoint	Command	ODE CREATE HINGE JOINT	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateRagdollFromBoneModel	Command	ODE CREATE RAGDOLL FROM BONE MODEL	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateStaticBoxLimb	Command	ODE CREATE STATIC BOX LIMB	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateStaticCapsule	Command	ODE CREATE STATIC CAPSULE	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateStaticCylinder	Command	ODE CREATE STATIC CYLINDER	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateStaticTerrain	Command	ODE CREATE STATIC TERRAIN	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateStaticTerrainMesh	Command	ODE CREATE STATIC TERRAIN MESH	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateStaticTriangleMesh	Command	ODE CREATE STATIC TRIANGLE MESH	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeCreateStaticTriangleMeshLimb	Command	ODE CREATE STATIC TRIANGLE MESH LIMB	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateStaticUniverse	Command	ODE CREATE STATIC UNIVERSE	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateTreeCylinder	Command	ODE CREATE TREE CYLINDER	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeDestroyRagdoll	Command	ODE DESTROY RAGDOLL	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeEndStaticObject	Command	ODE END STATIC OBJECT	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeSetBodyMass	Command	ODE SET BODY MASS	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetCharacterController	Command	ODE SET CHARACTER CONTROLLER	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetContact	Command	ODE SET CONTACT	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetContactBounce	Command	ODE SET CONTACT BOUNCE	Target	physics	ode-extension	jolt-adapter-and-oracle
@@ -341,14 +328,8 @@ dbpro	Command_ExtOdeSetContactSoftErp	Command	ODE SET CONTACT SOFT ERP	Target	ph
 dbpro	Command_ExtOdeSetContactVelocity	Command	ODE SET CONTACT VELOCITY	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetHingeJointLimit	Command	ODE SET HINGE JOINT LIMIT	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetRagdollMode	Command	ODE SET RAGDOLL MODE	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeSetRayCast	Command	ODE SET RAY CAST	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeSetResponse	Command	ODE SET RESPONSE	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeSetStepMode	Command	ODE SET STEP MODE	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetWaterLine	Command	ODE SET WATER LINE	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetWorldCfm	Command	ODE SET WORLD CFM	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeSetWorldErp	Command	ODE SET WORLD ERP	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeSetWorldQuickStepNumIterations	Command	ODE SET WORLD QUICK STEP NUM ITERATIONS	Target	physics	ode-extension	jolt-adapter-and-oracle
-dbpro	Command_ExtOdeSetWorldStep	Command	ODE SET WORLD STEP	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetsurfaceMode	Command	ODE SETSURFACE MODE	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetsurfaceModeContactApprox0	Command	ODE SETSURFACE MODE CONTACT APPROX0	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeSetsurfaceModeContactApprox1	Command	ODE SETSURFACE MODE CONTACT APPROX1	Target	physics	ode-extension	jolt-adapter-and-oracle

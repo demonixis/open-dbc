@@ -1681,20 +1681,44 @@ dbpro	1435	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and 
 dbpro	1438	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1440	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbpro	1442	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1450	2004	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1456	2010	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1456	2011	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1456	2012	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1456	2013	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1457	2014	Command	ODE CREATE DYNAMIC BOX MANUAL	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1458	2015	Command	ODE CREATE DYNAMIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1459	2016	Command	ODE CREATE DYNAMIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
 dbpro	1460	2017	Command	ODE CREATE DYNAMIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1461	2018	Command	ODE CREATE DYNAMIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
 dbpro	1464	2023	Command	ODE CREATE STATIC BOX	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1465	2024	Command	ODE CREATE STATIC BOX LIMB	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1466	2025	Command	ODE CREATE STATIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1467	2026	Command	ODE CREATE STATIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
 dbpro	1468	2027	Command	ODE CREATE STATIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1470	2029	Command	ODE CREATE STATIC TERRAIN MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1471	2030	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1471	2031	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1471	2032	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1472	2033	Command	ODE CREATE STATIC TRIANGLE MESH LIMB	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
 dbpro	1475	2036	Command	ODE DESTROY OBJECT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1477	2038	Command	ODE END	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1479	2040	Command	ODE SET ACTIVE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1480	2041	Command	ODE SET ANGULAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1481	2042	Command	ODE SET BODY FRICTION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1482	2043	Command	ODE SET BODY MASS	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
 dbpro	1483	2044	Command	ODE SET BODY POSITION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1484	2045	Command	ODE SET BODY ROTATION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1498	2059	Command	ODE SET ENABLED	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1499	2060	Command	ODE SET GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1501	2062	Command	ODE SET LINEAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1503	2064	Command	ODE SET RAY CAST	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1504	2065	Command	ODE SET RESPONSE	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
+dbpro	1505	2066	Command	ODE SET STEP MODE	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1508	2069	Command	ODE SET WORLD ERP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
 dbpro	1509	2070	Command	ODE SET WORLD GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1510	2071	Command	ODE SET WORLD QUICK STEP NUM ITERATIONS	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1511	2072	Command	ODE SET WORLD STEP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
 dbpro	1525	2086	Command	ODE START	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1527	2088	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1527	2089	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
@@ -1723,3 +1747,10 @@ dbpro	1588	2161	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR built
 dbpro	1589	2163	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbpro	1590	2165	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbpro	1591	2167	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1592	2168	Command	ODE ADD TORQUE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1593	2169	Command	ODE ADD IMPULSE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1594	2170	Command	ODE SET BODY KINEMATIC	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
+dbpro	1595	2171	Command	ODE SET BODY DAMPING	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
+dbpro	1596	2172	Function	ODE GET BODY ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1597	2173	Function	ODE GET BODY ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1598	2174	Function	ODE GET BODY ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
