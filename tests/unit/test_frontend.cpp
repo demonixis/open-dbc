@@ -145,6 +145,26 @@ TEST_CASE("Historical profiles reject Professional lexical forms in Classic")
     CHECK_FALSE(HasCode(Professional, "DBC1007"));
 }
 
+TEST_CASE("Classic accepts its historical operator spellings and DBPro does not")
+{
+    const std::string Text = "a = 1\n"
+                             "if a => 1 then a = 2\n"
+                             "if a =< 1 then a = 3\n"
+                             "if a !-8 then a = 4\n"
+                             "if a > 0 & a < 9 then a = 5\n";
+    const dbc::language::Program Classic = dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::Dbc));
+    for (const auto& Diagnostic : Classic.Diagnostics)
+        INFO(dbc::language::FormatDiagnostic(*Classic.Source, Diagnostic));
+    CHECK_FALSE(Classic.HasErrors());
+    REQUIRE(Classic.Statements.size() == 5);
+    CHECK(Classic.Statements[1].Expressions.front()->Text == ">=");
+    CHECK(Classic.Statements[2].Expressions.front()->Text == "<=");
+    CHECK(Classic.Statements[3].Expressions.front()->Text == "<>");
+    CHECK(Classic.Statements[4].Expressions.front()->Text == "AND");
+
+    CHECK(dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro)).HasErrors());
+}
+
 TEST_CASE("REMSTART blocks are comments and must be closed")
 {
     const auto Open = Source("print 1\nremstart\nprint 2\n", dbc::language::LanguageProfile::Dbc);

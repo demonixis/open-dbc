@@ -425,6 +425,8 @@ namespace dbc::language::detail
                         return OperatorInfo{42, false, "||"};
                     case TokenKind::UnsupportedOperator:
                         return OperatorInfo{44, false, ".."};
+                    case TokenKind::LogicalAnd:
+                        return OperatorInfo{30, false, "AND"};
                     case TokenKind::Equal:
                         return OperatorInfo{40, false, "="};
                     case TokenKind::NotEqual:

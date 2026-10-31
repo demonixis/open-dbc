@@ -92,6 +92,7 @@ namespace dbc::language
         BitAnd,
         BitOr,
         BitXor,
+        LogicalAnd,
         UnsupportedOperator,
         End,
         Invalid,

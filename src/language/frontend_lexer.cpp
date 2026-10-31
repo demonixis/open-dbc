@@ -359,7 +359,28 @@ namespace dbc::language::detail
                         Kind = TokenKind::Power;
                         break;
                     case '=':
-                        Kind = TokenKind::Equal;
+                        // Classic also accepts the reversed spellings of >= and <=.
+                        if (Source_.Profile == LanguageProfile::Dbc && Peek() == '>')
+                        {
+                            Advance();
+                            Kind = TokenKind::GreaterEqual;
+                        }
+                        else if (Source_.Profile == LanguageProfile::Dbc && Peek() == '<')
+                        {
+                            Advance();
+                            Kind = TokenKind::LessEqual;
+                        }
+                        else
+                        {
+                            Kind = TokenKind::Equal;
+                        }
+                        break;
+                    case '!':
+                        // Classic spells <> as a lone '!': `if velocity#(a)!-8`.
+                        if (Source_.Profile == LanguageProfile::Dbc)
+                        {
+                            Kind = TokenKind::NotEqual;
+                        }
                         break;
                     case '.':
                         if (Peek() == '.')
@@ -425,6 +446,11 @@ namespace dbc::language::detail
                             Advance();
                             Kind = TokenKind::BitAnd;
                             RequireProfessional(Begin, "Bitwise operators require the DBPro profile");
+                        }
+                        else if (Source_.Profile == LanguageProfile::Dbc)
+                        {
+                            // Classic spells AND as a lone '&': `if a# > 180 & a# < 360`.
+                            Kind = TokenKind::LogicalAnd;
                         }
                         break;
                     case '|':
