@@ -19,7 +19,8 @@
 - Keep `dbc_language` independent of engine, SDL and UI. Use the typed frontend and verified VM; never add text-execution fallbacks or bypass bytecode verification.
 - `src/language/language_catalogue.inc` is the sole language inventory. Preserve stable `SymbolId`s, historical signatures and per-profile support states. Dispatch builtins by `SymbolId`.
 - Resolve profiles before lexing and keep them immutable. Engine compatibility uses `RuntimeCompatibilityPolicy`, never filenames or textual dialect checks.
-- Preserve historical Classic/Pro behavior. Only the shared VR forms and Classic Vector3 readers documented in `docs/vr.md` may extend these profiles; do not widen Pro while restoring Classic. Stubs are not implementations; unsupported forms keep explicit diagnostics.
+- Preserve historical Classic/Pro behavior. Classic is frozen and takes no additions; the VR forms and Vector3 readers documented in `docs/vr.md` are the only exception until they leave it. OpenDBC's additions go into the `dbpro` profile only, with no new profile: they change nothing for programs that do not call them and have multi-word names. Do not widen Pro while restoring Classic. Stubs are not implementations; unsupported forms keep explicit diagnostics.
+- Features reach the engine through catalogue commands. The Studio writes those commands instead of sending settings to the runner another way; only asset generation and baking stay in the Studio, as files that a command loads.
 - Keep engine HLSL shaders, CPU layouts, bindings and CMake contracts consistent. Preserve include/export path confinement and secret handling.
 
 ## Build and validation
