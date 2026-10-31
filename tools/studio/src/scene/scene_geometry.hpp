@@ -63,7 +63,7 @@ namespace dbc::studio
         inline constexpr float KTerrainHeightScale = 100.0f;
 
         // Primitives and matrices; empty for models and terrains, which need files.
-        CpuMesh BuildMesh(const SceneNode& Node, dbc::language::LanguageProfile Profile);
+        CpuMesh BuildMesh(const SceneNode& Node);
         // LOAD OBJECT through Assimp, with the engine's left-handed conversion and
         // each mesh's first material texture in its search order.
         bool LoadModelMesh(const std::filesystem::path& Path, CpuMesh& Out, std::string& Error);

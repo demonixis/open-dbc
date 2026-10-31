@@ -61,7 +61,7 @@ namespace dbc::studio
         };
 
         PatchResult PatchSource(const std::string& Text, const std::string& LogicalPath,
-                                dbc::language::LanguageProfile Profile, std::span<const SourceEdit> Edits);
+                                std::span<const SourceEdit> Edits);
 
         // The edits a fresh capture of the patched program does not show, as messages for the user.
         std::vector<std::string> UnappliedEdits(std::span<const AxisEdit> Edits, const CaptureReadResult& Read);

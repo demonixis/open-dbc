@@ -367,8 +367,13 @@ namespace dbc::studio
                 Error = TrFmt("The scene capture names an unknown dialect: {0}", {Profile});
                 return false;
             }
+            if (*Parsed != KSceneProfile)
+            {
+                Error = TrFmt("The Scene view reads DBPro programs only, and this one ran as {0}.",
+                              {lang::ProfileName(*Parsed)});
+                return false;
+            }
             Out = {};
-            Out.Profile = *Parsed;
             Out.Status = TextOf(Field(Root, "status"));
             Out.Frames = static_cast<std::size_t>(std::max(IntField(Root, "frames"), 0));
             Out.Truncated = BoolField(Root, "truncated", false);
@@ -481,7 +486,7 @@ namespace dbc::studio
         CaptureReadResult ReadCapture(const SceneCapture& Capture, const CaptureReadOptions& Options)
         {
             CaptureReadResult Result;
-            ReplayResult Replay = ReplayCalls(Capture.Commands, Options.Name, Capture.Profile);
+            ReplayResult Replay = ReplayCalls(Capture.Commands, Options.Name);
             Result.Document = std::move(Replay.Document);
             SceneDocument& Document = Result.Document;
 
@@ -634,8 +639,8 @@ namespace dbc::studio
                     default:
                         break;
                 }
-                // A program may delete what it created; only a static object outlives its number.
-                const bool Gone = !State && Space != IdSpace::Sound && !Node.Static;
+                // A program may delete what it created.
+                const bool Gone = !State && Space != IdSpace::Sound;
                 const NodeKey Key{Space, Node.Id};
                 if (Gone || CreatedElsewhere(Key))
                     continue;
@@ -662,7 +667,6 @@ namespace dbc::studio
                 Node.Hidden = !Object.Visible || Object.Screen;
                 const glm::vec3 Extent = Object.Max - Object.Min;
                 Node.Extent = glm::vec3(std::max(Extent.x, 1.0f), std::max(Extent.y, 1.0f), std::max(Extent.z, 1.0f));
-                Node.Mat.Flags = DefaultObjectFlags(Capture.Profile);
                 Node.Mat.Texture = ImageText(Capture, Object.Image, Generated);
                 Document.Nodes.push_back(std::move(Node));
                 Result.Origins[Key] = OriginOf(Key, StateTransform{Object.Position, Object.Rotation, Object.Scale});

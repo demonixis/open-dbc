@@ -3,14 +3,10 @@
 #include <algorithm>
 #include <cctype>
 
-#include "language/language_catalogue.hpp"
-
 namespace dbc::studio
 {
     namespace scene
     {
-        namespace lang = dbc::language;
-
         IdSpace IdSpaceOf(NodeKind Kind)
         {
             switch (Kind)
@@ -77,38 +73,6 @@ namespace dbc::studio
 
         namespace
         {
-            lang::SymbolId CreatingSymbol(NodeKind Kind)
-            {
-                switch (Kind)
-                {
-                    case NodeKind::Cube:
-                        return lang::SymbolId::Command_MakeObjectCube;
-                    case NodeKind::Box:
-                        return lang::SymbolId::Command_MakeObjectBox;
-                    case NodeKind::Sphere:
-                        return lang::SymbolId::Command_MakeObjectSphere;
-                    case NodeKind::Cylinder:
-                        return lang::SymbolId::Command_MakeObjectCylinder;
-                    case NodeKind::Cone:
-                        return lang::SymbolId::Command_MakeObjectCone;
-                    case NodeKind::Plain:
-                        return lang::SymbolId::Command_MakeObjectPlain;
-                    case NodeKind::Triangle:
-                        return lang::SymbolId::Command_MakeObjectTriangle;
-                    case NodeKind::Model:
-                        return lang::SymbolId::Command_LoadObject;
-                    case NodeKind::Matrix:
-                        return lang::SymbolId::Command_MakeMatrix;
-                    case NodeKind::Terrain:
-                        return lang::SymbolId::Command_MakeTerrain;
-                    case NodeKind::Light:
-                        return lang::SymbolId::Command_MakeLight;
-                    case NodeKind::Sound:
-                        return lang::SymbolId::Command_Load3dsound;
-                }
-                return lang::SymbolId::Command_MakeObjectCube;
-            }
-
             // The number after the last '_', or nullopt when that suffix is not all digits.
             std::optional<int> NumberSuffix(const std::string& Text, std::size_t Underscore)
             {
@@ -123,29 +87,6 @@ namespace dbc::studio
             // About 200 MB of nodes, while a small level keeps hundreds of undo steps.
             constexpr std::size_t KMaxHistoryNodes = 500000;
         } // namespace
-
-        bool KindAvailable(NodeKind Kind, lang::LanguageProfile Profile)
-        {
-            return lang::SupportFor(lang::Symbol(CreatingSymbol(Kind)), Profile) == lang::SupportStatus::Implemented;
-        }
-
-        bool StaticAvailable(lang::LanguageProfile Profile)
-        {
-            return lang::SupportFor(lang::Symbol(lang::SymbolId::Command_MakeStaticObject), Profile) ==
-                   lang::SupportStatus::Implemented;
-        }
-
-        int OpaqueTransparency(lang::LanguageProfile Profile)
-        {
-            return Profile == lang::LanguageProfile::Dbc ? 1 : 0;
-        }
-
-        ObjectFlags DefaultObjectFlags(lang::LanguageProfile Profile)
-        {
-            ObjectFlags Flags;
-            Flags.Transparency = OpaqueTransparency(Profile);
-            return Flags;
-        }
 
         int SceneDocument::NextId(IdSpace Space) const
         {
@@ -213,7 +154,6 @@ namespace dbc::studio
             Node.Kind = Kind;
             Node.Id = NextId(IdSpaceOf(Kind));
             Node.Name = DefaultNodeName(Kind, Node.Id);
-            Node.Mat.Flags = DefaultObjectFlags(Profile);
             if (Kind == NodeKind::Light)
                 Node.Position = glm::vec3(0.0f, 50.0f, 0.0f);
             Nodes.push_back(std::move(Node));
@@ -243,8 +183,7 @@ namespace dbc::studio
         {
             return First.Kind == Second.Kind && First.Size == Second.Size && First.Extent == Second.Extent &&
                    First.Detail == Second.Detail && First.PlainOrientation == Second.PlainOrientation &&
-                   First.Corners == Second.Corners && First.Asset == Second.Asset && First.Static == Second.Static &&
-                   First.Mat == Second.Mat;
+                   First.Corners == Second.Corners && First.Asset == Second.Asset && First.Mat == Second.Mat;
         }
 
         std::string PaintedStem(const std::string& Name)
@@ -352,7 +291,6 @@ namespace dbc::studio
             if (Object)
             {
                 TakeAxes(Before.Scale, After.Scale, Target.Scale);
-                Take(Before.Static, After.Static, Target.Static);
             }
 
             if (Target.Kind == After.Kind)
@@ -381,12 +319,6 @@ namespace dbc::studio
                 Take(Before.Frames, After.Frames, Target.Frames);
                 Take(Before.Loop, After.Loop, Target.Loop);
                 Take(Before.Speed, After.Speed, Target.Speed);
-            }
-            // A static object no longer exists to animate.
-            if (Target.Static)
-            {
-                Target.Frames.reset();
-                Target.Speed.reset();
             }
 
             const Material& From = Before.Mat;

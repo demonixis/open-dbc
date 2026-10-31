@@ -264,7 +264,6 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 - [ ] Interactive UI coverage: `test_studio_scene_view` drives gizmo moves and
   snapping with simulated input; navigation, drag and drop, the other gizmos and
   the Inspector are checked by hand only.
-- [ ] Remove the Classic branches and tests once the view is reserved for DBPro.
 
 ## Towards 1.0
 

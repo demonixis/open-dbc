@@ -29,14 +29,13 @@ namespace dbc::studio
 {
     namespace panels
     {
-        // What the Scene view needs from the open project. It only exists when the
-        // project has a main .dba source to include the level from.
+        // What the Scene view needs from the open project. It only exists for a DBPro
+        // project with a main .dba source to include the level from.
         struct SceneProject
         {
             std::filesystem::path Root;
             std::filesystem::path AssetRoot;
             std::filesystem::path EntrySource;
-            dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
             // A .dbpro project, whose descriptor sets the display before the world settings run.
             bool HasDescriptor = false;
 

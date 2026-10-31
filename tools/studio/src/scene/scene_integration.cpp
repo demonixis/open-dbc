@@ -157,8 +157,7 @@ namespace dbc::studio
             }
 
             // Every file `Root` reaches through its #include lines, read with `Read`.
-            std::set<std::filesystem::path> IncludedFiles(const std::filesystem::path& Root,
-                                                          lang::LanguageProfile Profile, const SourceReader& Read)
+            std::set<std::filesystem::path> IncludedFiles(const std::filesystem::path& Root, const SourceReader& Read)
             {
                 std::set<std::filesystem::path> Included;
                 std::vector<std::filesystem::path> Pending{Root.lexically_normal()};
@@ -172,7 +171,7 @@ namespace dbc::studio
                     auto Source = std::make_shared<lang::SourceDocument>();
                     Source->LogicalPath = Current;
                     Source->Text = std::move(*Text);
-                    Source->Profile = Profile;
+                    Source->Profile = KSceneProfile;
                     for (const lang::IncludeDeclaration& Include : lang::LexAndParse(Source).Includes)
                     {
                         const std::filesystem::path Normal = interpreter::NormalizeBasicPath(Include.Path);
@@ -186,13 +185,12 @@ namespace dbc::studio
             }
         } // namespace
 
-        LinkResult LinkIntoMain(const std::string& MainText, lang::LanguageProfile Profile,
-                                const std::vector<MainLink>& Links)
+        LinkResult LinkIntoMain(const std::string& MainText, const std::vector<MainLink>& Links)
         {
             auto Source = std::make_shared<lang::SourceDocument>();
             Source->LogicalPath = "main.dba";
             Source->Text = MainText;
-            Source->Profile = Profile;
+            Source->Profile = KSceneProfile;
             const lang::Program Program = lang::LexAndParse(Source);
 
             const Header Layout = ReadHeader(MainText);
@@ -282,13 +280,12 @@ namespace dbc::studio
             return Result;
         }
 
-        std::string MoveInclude(const std::string& MainText, lang::LanguageProfile Profile, const std::string& From,
-                                const std::string& To)
+        std::string MoveInclude(const std::string& MainText, const std::string& From, const std::string& To)
         {
             auto Source = std::make_shared<lang::SourceDocument>();
             Source->LogicalPath = "main.dba";
             Source->Text = MainText;
-            Source->Profile = Profile;
+            Source->Profile = KSceneProfile;
             const lang::Program Program = lang::LexAndParse(Source);
 
             std::string Result = MainText;
@@ -306,19 +303,18 @@ namespace dbc::studio
         }
 
         bool SourceIncludes(const std::filesystem::path& Root, const std::filesystem::path& Target,
-                            lang::LanguageProfile Profile, const SourceReader& Read)
+                            const SourceReader& Read)
         {
-            return IncludedFiles(Root, Profile, Read).count(Target.lexically_normal()) != 0;
+            return IncludedFiles(Root, Read).count(Target.lexically_normal()) != 0;
         }
 
         LevelImports FindLevelImports(const std::filesystem::path& Main, const std::filesystem::path& LevelFolder,
-                                      const std::string& LevelName, lang::LanguageProfile Profile,
-                                      const SourceReader& Read)
+                                      const std::string& LevelName, const SourceReader& Read)
         {
             LevelImports Result;
             const std::filesystem::path Folder = LevelFolder.lexically_normal();
             const std::string Name = Upper(SanitizeLevelName(LevelName));
-            for (const std::filesystem::path& Path : IncludedFiles(Main, Profile, Read))
+            for (const std::filesystem::path& Path : IncludedFiles(Main, Read))
             {
                 const std::filesystem::path Relative = Path.lexically_relative(Folder);
                 if (Relative.empty() || *Relative.begin() == "..")

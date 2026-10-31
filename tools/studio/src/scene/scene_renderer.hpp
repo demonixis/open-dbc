@@ -114,10 +114,8 @@ namespace dbc::studio
             SDL_GPUShader* CreateShader(const unsigned char* Spirv, std::size_t SpirvSize, const unsigned char* Msl,
                                         std::size_t MslSize, SDL_GPUShaderStage Stage, Uint32 Samplers);
             bool CreatePipelines(std::string& Error);
-            std::string GeometryKey(const SceneNode& Node, const SceneDocument& Document,
-                                    const std::filesystem::path& AssetRoot) const;
-            Geometry& FindGeometry(const SceneNode& Node, const SceneDocument& Document,
-                                   const std::filesystem::path& AssetRoot);
+            std::string GeometryKey(const SceneNode& Node, const std::filesystem::path& AssetRoot) const;
+            Geometry& FindGeometry(const SceneNode& Node, const std::filesystem::path& AssetRoot);
             SDL_GPUTexture* FindTexture(const std::filesystem::path& Path);
             SDL_GPUTexture* PartTexture(Geometry& Entry, const MeshPart& Part, const std::filesystem::path& AssetRoot);
             void Release(Geometry& Entry);

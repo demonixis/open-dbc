@@ -79,7 +79,6 @@ namespace dbc::studio
 
         struct SceneCapture
         {
-            dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
             std::string Status;
             std::size_t Frames = 0;
             bool Truncated = false;
@@ -99,7 +98,8 @@ namespace dbc::studio
         };
 
         // `SourceRoot` resolves the relative source paths of a program image. Assets under `AssetRoot` become
-        // relative to it, as in a level; others stay absolute.
+        // relative to it, as in a level; others stay absolute. A capture of another language than the Scene
+        // view's is an error.
         bool ParseSceneCapture(const std::string& Text, const std::filesystem::path& SourceRoot,
                                const std::filesystem::path& AssetRoot, SceneCapture& Out, std::string& Error);
 

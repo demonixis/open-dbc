@@ -28,9 +28,8 @@ namespace dbc::studio
             PaintObject_ = Node;
             // The first frame after a new object has not loaded its mesh yet.
             const scene::CpuMesh* Mesh = Renderer_.Mesh(Node);
-            const scene::CpuMesh Built = Mesh == nullptr && Node.Kind != scene::NodeKind::Model
-                                             ? scene::BuildMesh(Node, Document_.Profile)
-                                             : scene::CpuMesh{};
+            const scene::CpuMesh Built =
+                Mesh == nullptr && Node.Kind != scene::NodeKind::Model ? scene::BuildMesh(Node) : scene::CpuMesh{};
             PaintMin_ = Mesh != nullptr ? Mesh->Min : Built.Min;
             PaintMax_ = Mesh != nullptr ? Mesh->Max : Built.Max;
         }
@@ -41,7 +40,6 @@ namespace dbc::studio
             Node.Kind = scene::NodeKind::Model;
             Node.Asset = Relative;
             Node.Name = dbc::PathToUtf8(dbc::PathFromUtf8(Relative).stem());
-            Node.Mat.Flags = scene::DefaultObjectFlags(Document_.Profile);
             PaintObject_ = Node;
             PaintMin_ = PaintMax_ = glm::vec3(0.0f);
             scene::CpuMesh Mesh;

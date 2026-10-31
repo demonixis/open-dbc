@@ -18,6 +18,9 @@ namespace dbc::studio
 {
     namespace scene
     {
+        // The language of every level: the frontend reads them with it, and the generator only writes its forms.
+        inline constexpr dbc::language::LanguageProfile KSceneProfile = dbc::language::LanguageProfile::DbPro;
+
         enum class NodeKind : std::uint8_t
         {
             Cube,
@@ -63,16 +66,11 @@ namespace dbc::studio
         const char* NodeKindLabel(NodeKind Kind);
         // "Cube 12": the name of a new or unnamed node, whatever the interface language.
         std::string DefaultNodeName(NodeKind Kind, int Id);
-        // False for kinds whose commands the profile cannot run (terrains in Classic).
-        bool KindAvailable(NodeKind Kind, dbc::language::LanguageProfile Profile);
-        // MAKE STATIC OBJECT, which only the Classic profile implements.
-        bool StaticAvailable(dbc::language::LanguageProfile Profile);
 
         // Packed 0x00RRGGBB, written as RGB(r, g, b).
         using Rgb = std::uint32_t;
 
-        // SET OBJECT flags. `Transparency` is the raw argument: its meaning differs
-        // between profiles (see OpaqueTransparency).
+        // SET OBJECT flags. `Transparency` is the raw argument, 0 for none.
         struct ObjectFlags
         {
             bool Wireframe = false;
@@ -86,11 +84,6 @@ namespace dbc::studio
             bool operator==(const ObjectFlags&) const = default;
         };
 
-        // The SET OBJECT transparency value that leaves black opaque: Classic reads
-        // 0 as "transparent black", Pro reads it as "no transparency".
-        int OpaqueTransparency(dbc::language::LanguageProfile Profile);
-        ObjectFlags DefaultObjectFlags(dbc::language::LanguageProfile Profile);
-
         struct Material
         {
             std::string Texture; // asset-relative path, empty for none
@@ -101,7 +94,6 @@ namespace dbc::studio
             std::optional<int> GhostMode;
             ObjectFlags Flags;
 
-            // Pro only.
             std::optional<Rgb> Diffuse;
             std::optional<Rgb> Ambience;
             std::optional<Rgb> Emissive;
@@ -125,8 +117,8 @@ namespace dbc::studio
 
             float Size = 10.0f;                  // cube edge, sphere diameter, cylinder and cone size
             glm::vec3 Extent{10.0f};             // box width/height/depth, plain width/height
-            std::optional<glm::ivec2> Detail;    // sphere rings and segments (Pro form)
-            std::optional<int> PlainOrientation; // Pro form
+            std::optional<glm::ivec2> Detail;    // sphere rings and segments
+            std::optional<int> PlainOrientation; // MAKE OBJECT PLAIN's fourth argument
             std::array<glm::vec3, 3> Corners{glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(10.0f, -10.0f, 0.0f),
                                              glm::vec3(-10.0f, -10.0f, 0.0f)};
 
@@ -163,10 +155,8 @@ namespace dbc::studio
             std::optional<glm::ivec2> Frames;
             bool Loop = true; // also a sound's LOOP SOUND rather than PLAY SOUND
             std::optional<int> Speed;
-            // Object: MAKE STATIC OBJECT then DELETE OBJECT, so it becomes fixed scenery.
-            bool Static = false;
-            // Object: placed by the paint tool. The Hierarchy folds these together, and Pro writes
-            // them with INSTANCE OBJECT of the first object that looks the same.
+            // Object: placed by the paint tool. The Hierarchy folds these together, and they are
+            // written with INSTANCE OBJECT of the first object that looks the same.
             bool Painted = false;
             // Read from a running program that hides this node or locks it to the screen: listed, not drawn.
             bool Hidden = false;
@@ -191,7 +181,7 @@ namespace dbc::studio
             std::optional<glm::vec3> DefaultLightRotation;
             std::optional<Rgb> DefaultLightColor;
 
-            // Pro: SET SHADOW POSITION mode (-1 for the fixed position, else a light).
+            // SET SHADOW POSITION mode (-1 for the fixed position, else a light).
             std::optional<int> ShadowMode;
             glm::vec3 ShadowPosition{0.0f, 100.0f, 0.0f};
 
@@ -209,7 +199,7 @@ namespace dbc::studio
         struct DisplaySettings
         {
             std::optional<glm::ivec3> DisplayMode; // width, height, depth
-            std::optional<int> Vsync;              // Pro four-argument SET DISPLAY MODE
+            std::optional<int> Vsync;              // SET DISPLAY MODE's fourth argument
             std::optional<bool> Windowed;          // SET WINDOW ON / OFF
             std::optional<glm::ivec2> WindowSize;
             std::optional<std::string> WindowTitle;
@@ -223,7 +213,6 @@ namespace dbc::studio
         struct SceneDocument
         {
             std::string Name; // level name, also the function suffix
-            dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc;
             std::array<int, KIdSpaceCount> IdBase{1000, 1000, 1, 1, 1, 1};
             Environment Env;
             DisplaySettings Display;

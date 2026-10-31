@@ -87,8 +87,7 @@ namespace dbc::studio
             }
 
             // Whether reading the expression again right away gives the same value: a function may not.
-            bool ReadsTheSameTwice(const lang::Expression& Value, const lang::Program& Parsed,
-                                   lang::LanguageProfile Profile)
+            bool ReadsTheSameTwice(const lang::Expression& Value, const lang::Program& Parsed)
             {
                 switch (Value.Kind)
                 {
@@ -103,7 +102,7 @@ namespace dbc::studio
                     case lang::ExpressionKind::CallOrIndex:
                     {
                         const bool IsFunction =
-                            lang::FindSymbol(Profile, lang::SymbolKind::Function, Value.Text) != nullptr ||
+                            lang::FindSymbol(KSceneProfile, lang::SymbolKind::Function, Value.Text) != nullptr ||
                             std::any_of(Parsed.Functions.begin(), Parsed.Functions.end(),
                                         [&](const lang::FunctionDeclaration& Function)
                                         { return Function.Name == Value.Text; });
@@ -116,7 +115,7 @@ namespace dbc::studio
                 }
                 return std::all_of(Value.Children.begin(), Value.Children.end(),
                                    [&](const std::unique_ptr<lang::Expression>& Child)
-                                   { return Child != nullptr && ReadsTheSameTwice(*Child, Parsed, Profile); });
+                                   { return Child != nullptr && ReadsTheSameTwice(*Child, Parsed); });
             }
 
             struct TextRange
@@ -207,12 +206,12 @@ namespace dbc::studio
                     [](const lang::Diagnostic& Value) { return Value.Severity == lang::DiagnosticSeverity::Error; }));
             }
 
-            lang::Program Parse(const std::string& Text, const std::string& LogicalPath, lang::LanguageProfile Profile)
+            lang::Program Parse(const std::string& Text, const std::string& LogicalPath)
             {
                 auto Source = std::make_shared<lang::SourceDocument>();
                 Source->LogicalPath = dbc::PathFromUtf8(LogicalPath);
                 Source->Text = Text;
-                Source->Profile = Profile;
+                Source->Profile = KSceneProfile;
                 return lang::LexAndParse(std::move(Source));
             }
 
@@ -376,11 +375,11 @@ namespace dbc::studio
             return Plan;
         }
 
-        PatchResult PatchSource(const std::string& Text, const std::string& LogicalPath, lang::LanguageProfile Profile,
+        PatchResult PatchSource(const std::string& Text, const std::string& LogicalPath,
                                 std::span<const SourceEdit> Edits)
         {
             PatchResult Result;
-            const lang::Program Parsed = Parse(Text, LogicalPath, Profile);
+            const lang::Program Parsed = Parse(Text, LogicalPath);
             std::vector<Change> Changes;
             Changes.reserve(Edits.size());
             CommandCount Expected;
@@ -431,7 +430,7 @@ namespace dbc::studio
                     return Result;
                 }
                 const std::string IdText = Text.substr(IdRange->Begin, IdRange->End - IdRange->Begin);
-                if (!ReadsTheSameTwice(Id, Parsed, Profile))
+                if (!ReadsTheSameTwice(Id, Parsed))
                 {
                     Result.Error =
                         Where +
@@ -465,7 +464,7 @@ namespace dbc::studio
                 Result.Text.replace(Value.Begin, Value.End - Value.Begin, Value.Text);
             }
             // A command whose arguments do not parse is no error at this stage, only an unknown command, so count them.
-            const lang::Program Edited = Parse(Result.Text, LogicalPath, Profile);
+            const lang::Program Edited = Parse(Result.Text, LogicalPath);
             CommandCount Found;
             Found.Add(Edited);
             if (ErrorCount(Edited) > ErrorCount(Parsed) || Found.Known != Expected.Known ||

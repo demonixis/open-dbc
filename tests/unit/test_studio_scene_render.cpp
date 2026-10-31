@@ -18,8 +18,6 @@
 #include <string>
 #include <vector>
 
-using dbc::language::LanguageProfile;
-
 using namespace dbc::studio;
 
 namespace
@@ -189,7 +187,7 @@ TEST_CASE("Vertex snapping finds the visible vertex nearest the mouse on screen"
     scene::SceneNode Box;
     Box.Kind = scene::NodeKind::Cube;
     Box.Size = 10.0f;
-    const scene::CpuMesh Mesh = scene::BuildMesh(Box, dbc::language::LanguageProfile::Dbc);
+    const scene::CpuMesh Mesh = scene::BuildMesh(Box);
     REQUIRE(!Mesh.Vertices.empty());
 
     // Looking along +Z from 30 units away, so the box's front face is at Z = -5.
@@ -329,7 +327,7 @@ TEST_CASE("Rays hit meshes through their bounds, flat ones included")
     scene::SceneNode Box;
     Box.Kind = scene::NodeKind::Cube;
     Box.Size = 10.0f;
-    const scene::CpuMesh Cube = scene::BuildMesh(Box, dbc::language::LanguageProfile::Dbc);
+    const scene::CpuMesh Cube = scene::BuildMesh(Box);
     const glm::mat4 Moved = glm::translate(glm::mat4(1.0f), glm::vec3(100.0f, 0.0f, 0.0f));
     const scene::Ray Along{glm::vec3(100.0f, 0.0f, -50.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
     const std::optional<float> Hit = scene::Intersect(Along, Cube, Moved);
@@ -343,7 +341,7 @@ TEST_CASE("Rays hit meshes through their bounds, flat ones included")
     scene::SceneNode Flat;
     Flat.Kind = scene::NodeKind::Plain;
     Flat.Extent = glm::vec3(20.0f, 20.0f, 0.0f);
-    const scene::CpuMesh Plain = scene::BuildMesh(Flat, dbc::language::LanguageProfile::Dbc);
+    const scene::CpuMesh Plain = scene::BuildMesh(Flat);
     const scene::Ray Head{glm::vec3(1.0f, 1.0f, -30.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
     REQUIRE(scene::Intersect(Head, Plain, glm::mat4(1.0f)).has_value());
     CHECK(*scene::Intersect(Head, Plain, glm::mat4(1.0f)) == doctest::Approx(30.0f));
@@ -416,25 +414,25 @@ TEST_CASE("Scene primitives keep the engine's sizes and tessellation")
     scene::SceneNode Node;
     Node.Kind = scene::NodeKind::Cube;
     Node.Size = 10.0f;
-    scene::CpuMesh Mesh = scene::BuildMesh(Node, LanguageProfile::Dbc);
+    scene::CpuMesh Mesh = scene::BuildMesh(Node);
     CHECK(Mesh.Vertices.size() == 36);
     CHECK(Mesh.Max.x == doctest::Approx(5.0f));
 
     Node.Kind = scene::NodeKind::Sphere;
     Node.Size = 20.0f;
-    Mesh = scene::BuildMesh(Node, LanguageProfile::Dbc);
+    Mesh = scene::BuildMesh(Node);
     CHECK(Mesh.Vertices.size() == 12 * 16 * 6);
     CHECK(Mesh.Max.y == doctest::Approx(10.0f));
 
     Node.Kind = scene::NodeKind::Cylinder;
-    CHECK(scene::BuildMesh(Node, LanguageProfile::Dbc).Vertices.size() == 30 * 4 * 3);
+    CHECK(scene::BuildMesh(Node).Vertices.size() == 30 * 4 * 3);
     Node.Kind = scene::NodeKind::Cone;
-    CHECK(scene::BuildMesh(Node, LanguageProfile::Dbc).Vertices.size() == 16 * 3);
+    CHECK(scene::BuildMesh(Node).Vertices.size() == 16 * 3);
 
     // The same UVs as MAKE OBJECT TRIANGLE: upright, not sheared by the corners' order.
     Node.Kind = scene::NodeKind::Triangle;
     Node.Corners = {glm::vec3(0.0f, 4.0f, 0.0f), glm::vec3(-4.0f, -3.0f, 0.0f), glm::vec3(4.0f, -3.0f, 0.0f)};
-    Mesh = scene::BuildMesh(Node, LanguageProfile::Dbc);
+    Mesh = scene::BuildMesh(Node);
     REQUIRE(Mesh.Vertices.size() == 3);
     CHECK(Mesh.Vertices[0].Uv.x == doctest::Approx(0.5f));
     CHECK(Mesh.Vertices[0].Uv.y == doctest::Approx(0.0f));
@@ -448,23 +446,21 @@ TEST_CASE("Scene primitives keep the engine's sizes and tessellation")
     Node.Depth = 50.0f;
     Node.XSegments = 4;
     Node.ZSegments = 2;
-    Mesh = scene::BuildMesh(Node, LanguageProfile::Dbc);
+    Mesh = scene::BuildMesh(Node);
     CHECK(Mesh.Vertices.size() == 4 * 2 * 6);
     CHECK(Mesh.Min.x == doctest::Approx(0.0f));
     CHECK(Mesh.Max.z == doctest::Approx(50.0f));
 
-    // A Classic plain faces -Z; a Pro plain's raw mesh faces +Z.
+    // A plain's raw mesh faces +Z; levels turn it with ROTATE OBJECT.
     Node.Kind = scene::NodeKind::Plain;
     Node.Extent = glm::vec3(10.0f, 10.0f, 0.0f);
-    CHECK(scene::BuildMesh(Node, LanguageProfile::Dbc).Vertices.front().Normal.z == doctest::Approx(-1.0f));
-    CHECK(scene::BuildMesh(Node, LanguageProfile::DbPro).Vertices.front().Normal.z == doctest::Approx(1.0f));
+    CHECK(scene::BuildMesh(Node).Vertices.front().Normal.z == doctest::Approx(1.0f));
 
     const scene::Ray Down{{0.0f, 100.0f, 0.0f}, {0.0f, -1.0f, 0.0f}};
     Node.Kind = scene::NodeKind::Cube;
     Node.Size = 10.0f;
     Node.Position = glm::vec3(0.0f, 20.0f, 0.0f);
-    const std::optional<float> Hit =
-        scene::Intersect(Down, scene::BuildMesh(Node, LanguageProfile::Dbc), scene::NodeWorld(Node));
+    const std::optional<float> Hit = scene::Intersect(Down, scene::BuildMesh(Node), scene::NodeWorld(Node));
     REQUIRE(Hit.has_value());
     CHECK(*Hit == doctest::Approx(75.0f));
 }
@@ -514,7 +510,6 @@ TEST_CASE("The Scene renderer draws a lit, textured level offscreen")
     REQUIRE(Target != nullptr);
 
     scene::SceneDocument Document;
-    Document.Profile = LanguageProfile::Dbc;
     Document.Env.Backdrop = 0x000040;
     scene::SceneNode& Crate = Document.Add(scene::NodeKind::Cube);
     Crate.Size = 40.0f;
@@ -609,7 +604,6 @@ TEST_CASE("Scene models keep their materials' textures and colours")
 
     // Dropped from the assets panel: the node names the model and nothing else.
     scene::SceneDocument Document;
-    Document.Profile = LanguageProfile::Dbc;
     scene::SceneNode& Model = Document.Add(scene::NodeKind::Model);
     Model.Asset = "models/pair.obj";
     Model.Mat.Flags.Lighting = false;
@@ -669,7 +663,6 @@ TEST_CASE("Scene models keep their materials' textures and colours")
 TEST_CASE("Scene shadows follow SET SHADOW SHADING ON and the shadow source")
 {
     scene::SceneDocument Document;
-    Document.Profile = LanguageProfile::DbPro;
     CHECK(scene::ShadowSource(Document) == glm::vec3(0.0f));
     scene::SceneNode& Lamp = Document.Add(scene::NodeKind::Light);
     Lamp.Position = glm::vec3(5.0f, 6.0f, 7.0f);
@@ -746,16 +739,6 @@ TEST_CASE("Scene shadows follow SET SHADOW SHADING ON and the shadow source")
         IMG_SavePNG(Image, (std::filesystem::path(TEST_OUTPUT_DIR) / "scene_shadow.png").string().c_str());
         SDL_DestroySurface(Image);
     }
-
-    // Classic levels have no SET SHADOW SHADING.
-    Document.Profile = LanguageProfile::Dbc;
-    const std::vector<Uint8> Classic = Draw(true);
-    Document.Profile = LanguageProfile::DbPro;
-    REQUIRE(Classic.size() == Plain.size());
-    int Changed = 0;
-    for (std::size_t Index = 0; Index < Plain.size(); Index += 4)
-        Changed += Classic[Index] + 20 < Plain[Index];
-    CHECK(Changed == 0);
 
     Renderer.Shutdown();
     SDL_DestroyGPUDevice(Gpu);

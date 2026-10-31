@@ -52,7 +52,7 @@ namespace
             const std::string CapturePath = (Root_ / "capture.json").string();
             const std::string Frames = std::to_string(SetupFrames + 1);
             const std::array<std::string_view, 11> Arguments{
-                "run",          SourcePath, "--dialect",       "dbc",       "--headless",
+                "run",          SourcePath, "--dialect",       "dbpro",     "--headless",
                 "--max-frames", Frames,     "--capture-scene", CapturePath, "--instruction-budget",
                 "2000000"};
             dbc::interpreter::CommandLineEnvironment Environment;
@@ -96,7 +96,7 @@ namespace
         const std::string File = dbc::GenericPathToUtf8(Source.lexically_normal());
         REQUIRE(Plan.Files.size() == 1);
         REQUIRE(Plan.Files.count(File) == 1);
-        const PatchResult Patch = PatchSource(ReadFile(Source), File, Edited.Profile, Plan.Files.at(File));
+        const PatchResult Patch = PatchSource(ReadFile(Source), File, Plan.Files.at(File));
         REQUIRE(Patch.Error.empty());
         std::ofstream Out(Source, std::ios::binary);
         Out << Patch.Text;
@@ -254,12 +254,24 @@ TEST_CASE("an unreadable capture is an error")
     CHECK_FALSE(Error.empty());
     CHECK_FALSE(ParseSceneCapture("{\"schema\":\"other\"}", "/root", "/root", Capture, Error));
     // Its shape comes from another process; a wrong one is ignored, never thrown.
-    CHECK(ParseSceneCapture("{\"schema\":\"opendbc-scene-capture\",\"version\":1,\"profile\":\"dbc\","
+    CHECK(ParseSceneCapture("{\"schema\":\"opendbc-scene-capture\",\"version\":1,\"profile\":\"dbpro\","
                             "\"calls\":[3,{\"a\":1},[99999]],\"objects\":{\"id\":1},\"lights\":[7]}",
                             "/root", "/root", Capture, Error));
     CHECK(Capture.Commands.empty());
     REQUIRE(Capture.Lights.size() == 1);
     CHECK(Capture.Lights.front().Id == 0);
+}
+
+TEST_CASE("a capture in another language than DBPro is an error that says so")
+{
+    SceneCapture Capture;
+    std::string Error;
+    CHECK_FALSE(ParseSceneCapture("{\"schema\":\"opendbc-scene-capture\",\"version\":1,\"profile\":\"dbc\"}", "/root",
+                                  "/root", Capture, Error));
+    CHECK(Error == "The Scene view reads DBPro programs only, and this one ran as DBC.");
+    CHECK_FALSE(ParseSceneCapture("{\"schema\":\"opendbc-scene-capture\",\"version\":1,\"profile\":\"qbasic\"}",
+                                  "/root", "/root", Capture, Error));
+    CHECK(Error == "The scene capture names an unknown dialect: qbasic");
 }
 
 TEST_CASE("an edit rewrites only its argument, or adds a statement after the creation")
@@ -391,7 +403,7 @@ TEST_CASE("an expression an edit replaces is reported")
     Edited.Find(IdSpace::Object, 1)->Position.x = 9.0f;
     Edited.Find(IdSpace::Object, 1)->Position.y = 8.0f;
     const PatchPlan Plan = PlanPatches(Read.Document, Edited, Read.Origins);
-    const PatchResult Patch = PatchSource(ReadFile(Source), File, Edited.Profile, Plan.Files.at(File));
+    const PatchResult Patch = PatchSource(ReadFile(Source), File, Plan.Files.at(File));
     REQUIRE(Patch.Error.empty());
     CHECK(Patch.Text.find("position object 1, 9, 8, 0\n") != std::string::npos);
     // A plain number needs no warning, even a negative one.
@@ -437,33 +449,32 @@ TEST_CASE("a one-line IF keeps the added statement, and line endings carry over"
 
     // Outside the IF, it would position an object that does not exist, and the run would fail.
     const std::string Text = "a = 1\nif a = 2 then make object cone 3, 4\n";
-    const PatchResult Inline = PatchSource(Text, "main.dba", dbc::language::LanguageProfile::Dbc, {&Edit, 1});
+    const PatchResult Inline = PatchSource(Text, "main.dba", {&Edit, 1});
     REQUIRE(Inline.Error.empty());
     const fs::path Source = Program.Write("main.dba", Inline.Text);
     Program.Run(Source);
     CHECK(Program.Capture.Status == "completed");
 
     const std::string Windows = "rem start\r\nmake object cone 3, 4 rem the cone\r\nsync\r\n";
-    const PatchResult Lines = PatchSource(Windows, "main.dba", dbc::language::LanguageProfile::Dbc, {&Edit, 1});
+    const PatchResult Lines = PatchSource(Windows, "main.dba", {&Edit, 1});
     REQUIRE(Lines.Error.empty());
     CHECK(Lines.Text == "rem start\r\nmake object cone 3, 4 rem the cone\r\n"
                         "position object 3, 1, 2, 3\r\nsync\r\n");
 
     // The added statement is spelled like the one it follows.
     const std::string Upper = "SYNC\nMAKE OBJECT CONE 3, 4\n";
-    const PatchResult Spelled = PatchSource(Upper, "main.dba", dbc::language::LanguageProfile::Dbc, {&Edit, 1});
+    const PatchResult Spelled = PatchSource(Upper, "main.dba", {&Edit, 1});
     REQUIRE(Spelled.Error.empty());
     CHECK(Spelled.Text == "SYNC\nMAKE OBJECT CONE 3, 4\nPOSITION OBJECT 3, 1, 2, 3\n");
 
     const std::string Last = "sync\nmake object cone 3, 4";
-    const PatchResult End = PatchSource(Last, "main.dba", dbc::language::LanguageProfile::Dbc, {&Edit, 1});
+    const PatchResult End = PatchSource(Last, "main.dba", {&Edit, 1});
     REQUIRE(End.Error.empty());
     CHECK(End.Text == "sync\nmake object cone 3, 4\nposition object 3, 1, 2, 3");
 }
 
 TEST_CASE("a source that no longer matches the capture is refused")
 {
-    constexpr auto Profile = dbc::language::LanguageProfile::Dbc;
     SourceEdit Edit;
     Edit.Line = 2;
     Edit.Column = 1;
@@ -471,27 +482,26 @@ TEST_CASE("a source that no longer matches the capture is refused")
     Edit.Argument = 1;
     Edit.Values = {4.0f};
     const std::string Moved = "make object cube 1, 5\nsync\nposition object 1, 1, 2, 3\n";
-    CHECK_FALSE(PatchSource(Moved, "main.dba", Profile, {&Edit, 1}).Error.empty());
+    CHECK_FALSE(PatchSource(Moved, "main.dba", {&Edit, 1}).Error.empty());
 
     Edit.Argument = 7;
     const std::string Short = "make object cube 1, 5\nposition object 1, 1, 2, 3\n";
-    CHECK_FALSE(PatchSource(Short, "main.dba", Profile, {&Edit, 1}).Error.empty());
+    CHECK_FALSE(PatchSource(Short, "main.dba", {&Edit, 1}).Error.empty());
 }
 
 TEST_CASE("an added statement repeats the number only if it reads the same twice")
 {
-    constexpr auto Profile = dbc::language::LanguageProfile::Dbc;
     const SourceEdit Edit =
         Addition(2, SymbolId::Command_MakeObjectCube, SymbolId::Command_PositionObject, {1.0f, 0.0f, 0.0f});
 
     const std::string Function = "sync\nmake object cube next_id(), 5\nfunction next_id()\n"
                                  "endfunction 1\n";
-    CHECK_FALSE(PatchSource(Function, "main.dba", Profile, {&Edit, 1}).Error.empty());
+    CHECK_FALSE(PatchSource(Function, "main.dba", {&Edit, 1}).Error.empty());
     const std::string Builtin = "sync\nmake object cube rnd(5) + 1, 5\n";
-    CHECK_FALSE(PatchSource(Builtin, "main.dba", Profile, {&Edit, 1}).Error.empty());
+    CHECK_FALSE(PatchSource(Builtin, "main.dba", {&Edit, 1}).Error.empty());
 
     const std::string Array = "dim ids(3)\nmake object cube ids(1) + 1, 5\n";
-    const PatchResult Patch = PatchSource(Array, "main.dba", Profile, {&Edit, 1});
+    const PatchResult Patch = PatchSource(Array, "main.dba", {&Edit, 1});
     REQUIRE(Patch.Error.empty());
     CHECK(Patch.Text == "dim ids(3)\nmake object cube ids(1) + 1, 5\nposition object ids(1) + 1, 1, 0, 0\n");
 }

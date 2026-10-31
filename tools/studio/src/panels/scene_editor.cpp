@@ -137,7 +137,7 @@ namespace dbc::studio
                 return;
             }
             Program_.reset();
-            scene::LevelReadResult Read = scene::ReadLevel(*Text, Name, Project_->Profile);
+            scene::LevelReadResult Read = scene::ReadLevel(*Text, Name);
             ReadErrors_.clear();
             const auto Report = [&](const std::vector<scene::ReadError>& Errors, const std::filesystem::path& Path)
             {
@@ -179,7 +179,6 @@ namespace dbc::studio
             Program_.reset();
             Document_ = {};
             Document_.Name = Clean;
-            Document_.Profile = Project_->Profile;
             Saved_ = Document_;
             ReadErrors_.clear();
             History_.Reset(Document_);
@@ -324,7 +323,7 @@ namespace dbc::studio
                     Host_.Log(TrFmt("Cannot read {0}", {File}), true);
                     return false;
                 }
-                scene::PatchResult Result = scene::PatchSource(*Text, File, Document_.Profile, Edits);
+                scene::PatchResult Result = scene::PatchSource(*Text, File, Edits);
                 if (!Result.Error.empty())
                 {
                     Host_.Log(Name + ", " + Result.Error, true);
@@ -391,8 +390,8 @@ namespace dbc::studio
             const auto Relative = [&](const std::filesystem::path& Path)
             { return dbc::GenericPathToUtf8(Path.lexically_relative(Main.parent_path())); };
 
-            const scene::LevelImports Imports = scene::FindLevelImports(
-                Main, Project_->Root / scene::KLevelFolder, Document_.Name, Project_->Profile, Host_.ReadSource);
+            const scene::LevelImports Imports =
+                scene::FindLevelImports(Main, Project_->Root / scene::KLevelFolder, Document_.Name, Host_.ReadSource);
             // Once the program has its level, which one it loads and when is its own choice: two
             // levels loaded in a row would also collide on their numbers.
             if (Imports.OtherLevel && !Imports.Level)
@@ -410,7 +409,7 @@ namespace dbc::studio
             const std::vector<scene::MainLink> Links = {
                 {Relative(WorldPath(Document_.Name)), scene::WorldFunctionName(Document_), Imports.World},
                 {Relative(LevelPath(Document_.Name)), scene::LevelFunctionName(Document_), Imports.Level}};
-            const scene::LinkResult Linked = scene::LinkIntoMain(*Text, Project_->Profile, Links);
+            const scene::LinkResult Linked = scene::LinkIntoMain(*Text, Links);
             if (!Linked.Changed)
                 return true;
             if (!Host_.WriteSource(Main, Linked.Text, false))
@@ -454,7 +453,7 @@ namespace dbc::studio
                 }
                 Host_.Log(TrFmt("Moved {0} to {1}", {dbc::PathToUtf8(Path.filename()), Relative(Target)}), false);
                 if (Before)
-                    Text = scene::MoveInclude(Text, Project_->Profile, Relative(Path), Relative(Target));
+                    Text = scene::MoveInclude(Text, Relative(Path), Relative(Target));
             }
             if (Before && Text != *Before && !Host_.WriteSource(Main, Text, false))
                 Host_.Log(TrFmt("Cannot update the main source {0}", {dbc::PathToUtf8(Main)}), true);
@@ -595,7 +594,7 @@ namespace dbc::studio
 
         void SceneEditor::Create(scene::NodeKind Kind, scene::LightKind Light)
         {
-            if (!Editable() || !scene::KindAvailable(Kind, Document_.Profile))
+            if (!Editable())
                 return;
             scene::SceneNode& Node = Document_.Add(Kind);
             // A matrix grows from its corner: centre it on the origin.
@@ -618,7 +617,7 @@ namespace dbc::studio
         void SceneEditor::CreateFromAsset(scene::NodeKind Kind, const std::string& Relative,
                                           std::optional<glm::vec3> At)
         {
-            if (!Editable() || !scene::KindAvailable(Kind, Document_.Profile))
+            if (!Editable())
                 return;
             scene::SceneNode& Node = Document_.Add(Kind);
             Node.Asset = Relative;
@@ -772,11 +771,8 @@ namespace dbc::studio
             {
                 if (ImGui::MenuItem(TrId("Matrix")))
                     Create(scene::NodeKind::Matrix);
-                const bool Terrain = scene::KindAvailable(scene::NodeKind::Terrain, Document_.Profile);
-                if (ImGui::MenuItem(TrId("Terrain"), nullptr, false, Terrain))
+                if (ImGui::MenuItem(TrId("Terrain")))
                     Create(scene::NodeKind::Terrain);
-                if (!Terrain && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                    ImGui::SetTooltip("%s", Tr("MAKE TERRAIN needs the Pro profile"));
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu(TrId("Light")))

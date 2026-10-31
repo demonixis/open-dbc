@@ -299,8 +299,7 @@ namespace dbc::studio
             return Color_;
         }
 
-        std::string SceneRenderer::GeometryKey(const SceneNode& Node, const SceneDocument& Document,
-                                               const std::filesystem::path& AssetRoot) const
+        std::string SceneRenderer::GeometryKey(const SceneNode& Node, const std::filesystem::path& AssetRoot) const
         {
             const auto F = [](float Value) { return std::to_string(Value); };
             switch (Node.Kind)
@@ -352,15 +351,13 @@ namespace dbc::studio
                               F(Node.Extent.y) + "," + F(Node.Extent.z);
             if (Node.Detail)
                 Key += "," + std::to_string(Node.Detail->x) + "," + std::to_string(Node.Detail->y);
-            if (Node.Kind == NodeKind::Plain)
-                Key += Document.Profile == dbc::language::LanguageProfile::Dbc ? ",classic" : ",pro";
             return Key;
         }
 
-        SceneRenderer::Geometry& SceneRenderer::FindGeometry(const SceneNode& Node, const SceneDocument& Document,
+        SceneRenderer::Geometry& SceneRenderer::FindGeometry(const SceneNode& Node,
                                                              const std::filesystem::path& AssetRoot)
         {
-            std::string Key = GeometryKey(Node, Document, AssetRoot);
+            std::string Key = GeometryKey(Node, AssetRoot);
             if (Node.Mat.TextureScale != glm::vec2(1.0f))
                 Key += ":uv" + std::to_string(Node.Mat.TextureScale.x) + "," + std::to_string(Node.Mat.TextureScale.y);
             auto Found = Geometry_.find(Key);
@@ -385,12 +382,12 @@ namespace dbc::studio
                         Errors_.push_back(TrFmt("Scene preview: cannot load {0}: {1}", {dbc::PathToUtf8(Path), Error}));
                     SceneNode Placeholder;
                     Placeholder.Kind = NodeKind::Cube;
-                    Entry.Mesh = BuildMesh(Placeholder, Document.Profile);
+                    Entry.Mesh = BuildMesh(Placeholder);
                 }
             }
             else
             {
-                Entry.Mesh = BuildMesh(Node, Document.Profile);
+                Entry.Mesh = BuildMesh(Node);
             }
             if (Node.Mat.TextureScale != glm::vec2(1.0f))
                 for (MeshVertex& Vertex : Entry.Mesh.Vertices)
@@ -573,7 +570,6 @@ namespace dbc::studio
             NodeGeometry_.clear();
 
             const Environment& Env = Document.Env;
-            const bool Pro = Document.Profile == dbc::language::LanguageProfile::DbPro;
             ViewProj_ = View.Projection * View.View;
             Clear_ = glm::vec4(ColorOf(Env.Backdrop.value_or(0x000000)), 1.0f);
 
@@ -627,7 +623,7 @@ namespace dbc::studio
                 Look Made;
                 Made.Node = &Node;
                 DrawItem Item;
-                Geometry& Entry = FindGeometry(Node, Document, AssetRoot);
+                Geometry& Entry = FindGeometry(Node, AssetRoot);
                 Made.Entry = &Entry;
                 Item.Mesh = &Entry;
                 if (Entry.Mesh.Vertices.empty())
@@ -637,12 +633,12 @@ namespace dbc::studio
                 const Material& Mat = Node.Mat;
                 Item.Fragment = Shared;
                 glm::vec3 Base = ColorOf(Mat.Color.value_or(0xFFFFFF));
-                if (Pro && Mat.Diffuse)
+                if (Mat.Diffuse)
                     Base = ColorOf(*Mat.Diffuse);
                 Item.Fragment.BaseColor = glm::vec4(Base, Mat.Ghost ? 0.5f : 1.0f);
-                if (Pro && Mat.Emissive)
+                if (Mat.Emissive)
                     Item.Fragment.Emissive = glm::vec4(ColorOf(*Mat.Emissive), 0.0f);
-                if (Pro && Mat.Specular)
+                if (Mat.Specular)
                     Item.Fragment.Specular = glm::vec4(ColorOf(*Mat.Specular), Mat.SpecularPower.value_or(10.0f));
                 if (!Mat.Flags.Fog)
                     Item.Fragment.Fog.w = 0.0f;
@@ -706,9 +702,9 @@ namespace dbc::studio
             // Ghosts last, so what is behind them is already drawn.
             std::stable_partition(Items_.begin(), Items_.end(), [](const DrawItem& Item) { return !Item.Blend; });
 
-            // SET SHADOW SHADING ON, which only Pro levels write.
+            // SET SHADOW SHADING ON.
             Shadows_.clear();
-            if (Stencil_ && Pro)
+            if (Stencil_)
             {
                 const glm::vec3 Light = ShadowSource(Document);
                 std::vector<glm::vec3> Volume;

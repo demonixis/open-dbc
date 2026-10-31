@@ -56,8 +56,6 @@ namespace dbc::studio
             class Emitter
             {
               public:
-                explicit Emitter(lang::LanguageProfile Profile) : Profile_(Profile) {}
-
                 void Line(const std::string& Text)
                 {
                     Out_ << std::string(Indent_ * 3, ' ') << Text << '\n';
@@ -66,7 +64,7 @@ namespace dbc::studio
                 void Command(SymbolId Id, std::initializer_list<std::string> Arguments = {})
                 {
                     // The generator only writes forms the profile accepts; tests bind every one.
-                    assert(lang::FindOverload(Id, Profile_, static_cast<int>(Arguments.size())) != nullptr);
+                    assert(lang::FindOverload(Id, KSceneProfile, static_cast<int>(Arguments.size())) != nullptr);
                     std::string Text(lang::Symbol(Id).CanonicalName);
                     bool First = true;
                     for (const std::string& Argument : Arguments)
@@ -100,8 +98,6 @@ namespace dbc::studio
                 }
 
               private:
-                // Only read by the overload assert, so unused in Release builds.
-                [[maybe_unused]] lang::LanguageProfile Profile_;
                 std::ostringstream Out_;
                 int Indent_ = 0;
             };
@@ -133,8 +129,7 @@ namespace dbc::studio
                 return IsMarker(Node.Kind) ? std::string() : Node.Mat.Texture;
             }
 
-            void WriteObject(Emitter& Out, const SceneNode& Node, const std::map<std::string, int>& Images,
-                             lang::LanguageProfile Profile)
+            void WriteObject(Emitter& Out, const SceneNode& Node, const std::map<std::string, int>& Images)
             {
                 const std::string Id = Integer(Node.Id);
                 switch (Node.Kind)
@@ -148,7 +143,7 @@ namespace dbc::studio
                                      NumberLiteral(Node.Extent.z)});
                         break;
                     case NodeKind::Sphere:
-                        if (Node.Detail && Profile == lang::LanguageProfile::DbPro)
+                        if (Node.Detail)
                             Out.Command(
                                 SymbolId::Command_MakeObjectSphere,
                                 {Id, NumberLiteral(Node.Size), Integer(Node.Detail->x), Integer(Node.Detail->y)});
@@ -162,7 +157,7 @@ namespace dbc::studio
                         Out.Command(SymbolId::Command_MakeObjectCone, {Id, NumberLiteral(Node.Size)});
                         break;
                     case NodeKind::Plain:
-                        if (Node.PlainOrientation && Profile == lang::LanguageProfile::DbPro)
+                        if (Node.PlainOrientation)
                             Out.Command(SymbolId::Command_MakeObjectPlain,
                                         {Id, NumberLiteral(Node.Extent.x), NumberLiteral(Node.Extent.y),
                                          Integer(*Node.PlainOrientation)});
@@ -189,7 +184,7 @@ namespace dbc::studio
 
                 if (Node.Position != glm::vec3(0.0f))
                     Out.Vector(SymbolId::Command_PositionObject, Node.Id, Node.Position);
-                // A Pro plain starts turned by 180 degrees, so its rotation is always
+                // A plain starts turned by 180 degrees, so its rotation is always
                 // written: the editor's angles are then exactly the runtime's.
                 if (Node.Rotation != glm::vec3(0.0f) || Node.Kind == NodeKind::Plain)
                     Out.Vector(SymbolId::Command_RotateObject, Node.Id, Node.Rotation);
@@ -208,7 +203,7 @@ namespace dbc::studio
                     else
                         Out.Command(SymbolId::Command_GhostObjectOn, {Id});
                 }
-                if (Mat.Flags != DefaultObjectFlags(Profile))
+                if (Mat.Flags != ObjectFlags{})
                 {
                     const ObjectFlags& F = Mat.Flags;
                     // SET OBJECT's first flag is "solid": 0 draws the wireframe.
@@ -217,8 +212,6 @@ namespace dbc::studio
                                  Integer(F.Filter ? 1 : 0), Integer(F.Lighting ? 1 : 0), Integer(F.Fog ? 1 : 0),
                                  Integer(F.Ambient ? 1 : 0)});
                 }
-                if (Profile != lang::LanguageProfile::DbPro)
-                    return;
                 if (Mat.Diffuse)
                     Out.Command(SymbolId::Command_SetObjectDiffuse, {Id, Color(*Mat.Diffuse)});
                 if (Mat.Ambience)
@@ -276,7 +269,7 @@ namespace dbc::studio
             }
 
             void WriteNode(Emitter& Out, const SceneNode& Node, const SceneNode* Original,
-                           const std::map<std::string, int>& Images, lang::LanguageProfile Profile)
+                           const std::map<std::string, int>& Images)
             {
                 Out.Line(std::string("REM @") + MetadataTag(Node.Kind) + " " + Integer(Node.Id) + " " +
                          Quoted(Node.Name) + (Node.Painted ? " " + std::string(KPaintedTag) : std::string()));
@@ -286,18 +279,12 @@ namespace dbc::studio
                     if (Original != nullptr)
                         WriteInstance(Out, Node, *Original);
                     else
-                        WriteObject(Out, Node, Images, Profile);
+                        WriteObject(Out, Node, Images);
                     if (Node.Speed)
                         Out.Command(SymbolId::Command_SetObjectSpeed, {Id, Integer(*Node.Speed)});
                     if (Node.Frames)
                         Out.Command(Node.Loop ? SymbolId::Command_LoopObject : SymbolId::Command_PlayObject,
                                     {Id, Integer(Node.Frames->x), Integer(Node.Frames->y)});
-                    if (Node.Static && StaticAvailable(Profile))
-                    {
-                        // The static copy replaces the object, as Classic programs build their scenery.
-                        Out.Command(SymbolId::Command_MakeStaticObject, {Id});
-                        Out.Command(SymbolId::Command_DeleteObject, {Id});
-                    }
                     return;
                 }
                 switch (Node.Kind)
@@ -362,7 +349,7 @@ namespace dbc::studio
                 }
             }
 
-            void WriteEnvironment(Emitter& Out, const Environment& Env, lang::LanguageProfile Profile)
+            void WriteEnvironment(Emitter& Out, const Environment& Env)
             {
                 if (Env.AmbientPercent)
                     Out.Command(SymbolId::Command_SetAmbientLight, {Integer(*Env.AmbientPercent)});
@@ -384,16 +371,16 @@ namespace dbc::studio
                     Out.Vector(SymbolId::Command_RotateLight, 0, *Env.DefaultLightRotation);
                 if (Env.DefaultLightColor)
                     Out.Command(SymbolId::Command_ColorLight, {"0", Color(*Env.DefaultLightColor)});
-                if (Env.ShadowMode && Profile == lang::LanguageProfile::DbPro)
+                if (Env.ShadowMode)
                     Out.Vector(SymbolId::Command_SetShadowPosition, *Env.ShadowMode, Env.ShadowPosition);
             }
 
-            void WriteDisplay(Emitter& Out, const DisplaySettings& Settings, lang::LanguageProfile Profile)
+            void WriteDisplay(Emitter& Out, const DisplaySettings& Settings)
             {
                 if (Settings.DisplayMode)
                 {
                     const glm::ivec3& M = *Settings.DisplayMode;
-                    if (Settings.Vsync && Profile == lang::LanguageProfile::DbPro)
+                    if (Settings.Vsync)
                         Out.Command(SymbolId::Command_SetDisplayMode,
                                     {Integer(M.x), Integer(M.y), Integer(M.z), Integer(*Settings.Vsync)});
                     else
@@ -544,11 +531,10 @@ namespace dbc::studio
             class LevelReader
             {
               public:
-                LevelReader(LevelReadResult& Result, lang::LanguageProfile Profile,
-                            std::set<std::string>* Skipped = nullptr, bool World = false)
-                    : Result_(Result), Profile_(Profile), Skipped_(Skipped), World_(World)
+                explicit LevelReader(LevelReadResult& Result, std::set<std::string>* Skipped = nullptr,
+                                     bool World = false)
+                    : Result_(Result), Skipped_(Skipped), World_(World)
                 {
-                    Result_.Document.Profile = Profile;
                 }
 
                 void Error(std::uint32_t Line, std::string Message)
@@ -561,7 +547,8 @@ namespace dbc::studio
                 void Call(const ReplayCall& Value)
                 {
                     const std::string Name(lang::Symbol(Value.Symbol).CanonicalName);
-                    if (lang::FindOverload(Value.Symbol, Profile_, static_cast<int>(Value.Arguments.size())) == nullptr)
+                    if (lang::FindOverload(Value.Symbol, KSceneProfile, static_cast<int>(Value.Arguments.size())) ==
+                        nullptr)
                     {
                         Skipped_->insert(Name);
                         return;
@@ -595,11 +582,11 @@ namespace dbc::studio
                         Args.push_back(*Arg);
                     }
                     const SymbolId Id = *Value.Builtin;
-                    if (lang::SupportFor(lang::Symbol(Id), Profile_) != lang::SupportStatus::Implemented ||
-                        lang::FindOverload(Id, Profile_, static_cast<int>(Args.size())) == nullptr)
+                    if (lang::SupportFor(lang::Symbol(Id), KSceneProfile) != lang::SupportStatus::Implemented ||
+                        lang::FindOverload(Id, KSceneProfile, static_cast<int>(Args.size())) == nullptr)
                     {
                         Error(Line, Value.Name + " is not available in this form for the " +
-                                        std::string(lang::ProfileName(Profile_)) + " profile");
+                                        std::string(lang::ProfileName(KSceneProfile)) + " profile");
                         return;
                     }
                     Line_ = Line;
@@ -609,10 +596,6 @@ namespace dbc::studio
 
                 void Finish(const Metadata& Meta)
                 {
-                    for (const SceneNode& Node : Result_.Document.Nodes)
-                        if (Node.Static && Deleted_.count(Node.Id) == 0)
-                            Error(StaticLines_[Node.Id], "MAKE STATIC OBJECT " + Integer(Node.Id) +
-                                                             " is followed by DELETE OBJECT " + Integer(Node.Id));
                     for (const auto& [Line, Entry] : Meta.Tags)
                     {
                         const auto& [Tag, Rest] = Entry;
@@ -726,7 +709,6 @@ namespace dbc::studio
                     Node.Kind = Kind;
                     Node.Id = Id;
                     Node.Name = DefaultNodeName(Kind, Id);
-                    Node.Mat.Flags = DefaultObjectFlags(Profile_);
                     // A sound plays only when PLAY SOUND or LOOP SOUND follows.
                     Node.PlayOnLoad = Kind != NodeKind::Sound;
                     // A running program may have deleted the number's previous owner.
@@ -1044,25 +1026,6 @@ namespace dbc::studio
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Mat.CastShadow = true;
                             break;
-                        case SymbolId::Command_MakeStaticObject:
-                            if (A.size() != 1)
-                            {
-                                Error(Line_, "MAKE STATIC OBJECT is written with the object alone");
-                                break;
-                            }
-                            if (SceneNode* Node = Object(I(A, 0)))
-                            {
-                                Node->Static = true;
-                                StaticLines_[Node->Id] = Line_;
-                            }
-                            break;
-                        case SymbolId::Command_DeleteObject:
-                            if (SceneNode* Node = Object(I(A, 0)))
-                            {
-                                if (!Node->Static || !Deleted_.insert(Node->Id).second)
-                                    Error(Line_, "DELETE OBJECT only follows MAKE STATIC OBJECT");
-                            }
-                            break;
                         case SymbolId::Command_SetObjectSpeed:
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Speed = I(A, 1);
@@ -1271,12 +1234,8 @@ namespace dbc::studio
                 }
 
                 LevelReadResult& Result_;
-                lang::LanguageProfile Profile_;
                 std::map<std::pair<IdSpace, int>, std::size_t> Index_;
                 std::map<int, std::string> Images_;
-                // Static objects, by number: where they were made and which were then deleted.
-                std::map<int, std::uint32_t> StaticLines_;
-                std::set<int> Deleted_;
                 // Set when replaying a program: nothing is an error, and this names what is not understood.
                 std::set<std::string>* Skipped_ = nullptr;
                 // Set when reading a world settings file: no nodes, and the display as well.
@@ -1317,12 +1276,12 @@ namespace dbc::studio
                 return &Declaration;
             }
 
-            lang::Program Parse(const std::string& Text, const std::string& LogicalName, lang::LanguageProfile Profile)
+            lang::Program Parse(const std::string& Text, const std::string& LogicalName)
             {
                 auto Source = std::make_shared<lang::SourceDocument>();
                 Source->LogicalPath = LogicalName;
                 Source->Text = Text;
-                Source->Profile = Profile;
+                Source->Profile = KSceneProfile;
                 return lang::LexAndParse(Source);
             }
         } // namespace
@@ -1338,8 +1297,7 @@ namespace dbc::studio
 
         std::string WriteLevel(const SceneDocument& Document)
         {
-            const lang::LanguageProfile Profile = Document.Profile;
-            Emitter Out(Profile);
+            Emitter Out;
             Out.Line("REM OpenDBC level. Edited by the Studio Scene view.");
             Out.Line("REM @level objects=" + Integer(Document.Base(IdSpace::Object)) + " images=" +
                      Integer(Document.Base(IdSpace::Image)) + " matrices=" + Integer(Document.Base(IdSpace::Matrix)) +
@@ -1360,8 +1318,7 @@ namespace dbc::studio
                 ++NextImage;
             }
 
-            // The Scene view never creates a kind the profile cannot run, and ReadLevel rejects one.
-            // Painted objects copy the first object that looks the same, in the profile that can.
+            // Painted objects copy the first object that looks the same.
             std::vector<const SceneNode*> Originals;
             for (const SceneNode& Node : Document.Nodes)
             {
@@ -1372,10 +1329,10 @@ namespace dbc::studio
                                                     [&](const SceneNode* Other) { return SameLook(*Other, Node); });
                     if (Found == Originals.end())
                         Originals.push_back(&Node);
-                    else if (Node.Painted && Profile == lang::LanguageProfile::DbPro)
+                    else if (Node.Painted)
                         Original = *Found;
                 }
-                WriteNode(Out, Node, Original, Images, Profile);
+                WriteNode(Out, Node, Original, Images);
             }
 
             Out.Pop();
@@ -1383,31 +1340,29 @@ namespace dbc::studio
             return Out.Take();
         }
 
-        LevelReadResult ReadLevel(const std::string& Text, const std::string& Name, lang::LanguageProfile Profile)
+        LevelReadResult ReadLevel(const std::string& Text, const std::string& Name)
         {
             LevelReadResult Result;
             Result.Document.Name = Name;
-            Result.Document.Profile = Profile;
             const std::string Function = LevelFunctionName(Result.Document);
-            const lang::Program Program = Parse(Text, Name + ".dba", Profile);
+            const lang::Program Program = Parse(Text, Name + ".dba");
             const lang::FunctionDeclaration* Declaration = SingleFunction(Program, Function, Result.Errors);
             if (Declaration == nullptr)
                 return Result;
 
-            LevelReader Reader(Result, Profile);
+            LevelReader Reader(Result);
             for (const lang::Statement& Value : Declaration->Body)
                 Reader.Statement(Value);
             Reader.Finish(ScanMetadata(Text));
             return Result;
         }
 
-        ReplayResult ReplayCalls(std::span<const ReplayCall> Calls, const std::string& Name,
-                                 lang::LanguageProfile Profile)
+        ReplayResult ReplayCalls(std::span<const ReplayCall> Calls, const std::string& Name)
         {
             LevelReadResult Level;
             Level.Document.Name = Name;
             ReplayResult Result;
-            LevelReader Reader(Level, Profile, &Result.Skipped);
+            LevelReader Reader(Level, &Result.Skipped);
             for (const ReplayCall& Value : Calls)
                 Reader.Call(Value);
             Result.Document = std::move(Level.Document);
@@ -1416,17 +1371,16 @@ namespace dbc::studio
 
         std::string WriteWorld(const SceneDocument& Document)
         {
-            const lang::LanguageProfile Profile = Document.Profile;
-            Emitter Out(Profile);
+            Emitter Out;
             Out.Line("REM OpenDBC world settings. Edited by the Studio Scene view.");
             Out.Line("FUNCTION " + WorldFunctionName(Document) + "()");
             Out.Push();
-            WriteDisplay(Out, Document.Display, Profile);
+            WriteDisplay(Out, Document.Display);
             const Environment& Env = Document.Env;
             // Before any MAKE OBJECT, which would otherwise move the camera.
             if (Env.UseCamera)
                 Out.Command(SymbolId::Command_AutocamOff);
-            WriteEnvironment(Out, Env, Profile);
+            WriteEnvironment(Out, Env);
             if (Env.UseCamera)
                 WriteCamera(Out, Env);
             Out.Pop();
@@ -1437,15 +1391,14 @@ namespace dbc::studio
         std::vector<ReadError> ReadWorld(const std::string& Text, SceneDocument& Document)
         {
             LevelReadResult Result;
-            const lang::LanguageProfile Profile = Document.Profile;
-            const lang::Program Program = Parse(Text, KWorldFileName, Profile);
+            const lang::Program Program = Parse(Text, KWorldFileName);
             const lang::FunctionDeclaration* Declaration =
                 SingleFunction(Program, WorldFunctionName(Document), Result.Errors);
             if (Declaration == nullptr)
                 return std::move(Result.Errors);
 
             Result.Document = std::move(Document);
-            LevelReader Reader(Result, Profile, nullptr, true);
+            LevelReader Reader(Result, nullptr, true);
             for (const lang::Statement& Value : Declaration->Body)
                 Reader.Statement(Value);
             Document = std::move(Result.Document);

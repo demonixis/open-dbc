@@ -134,16 +134,15 @@ namespace dbc::studio
                 }
             }
 
-            CpuMesh FromEngine(const dbc::Mesh& Source, bool Flip = false)
+            CpuMesh FromEngine(const dbc::Mesh& Source)
             {
                 CpuMesh Mesh;
                 const auto Vec = [](const dbc::Vec3& Value) { return glm::vec3(Value.X, Value.Y, Value.Z); };
                 for (std::size_t Index = 0; Index + 2 < Source.Geometry().Indices.size(); Index += 3)
                 {
-                    std::uint32_t Corner[3] = {Source.Geometry().Indices[Index], Source.Geometry().Indices[Index + 1],
-                                               Source.Geometry().Indices[Index + 2]};
-                    if (Flip)
-                        std::swap(Corner[1], Corner[2]);
+                    const std::uint32_t Corner[3] = {Source.Geometry().Indices[Index],
+                                                     Source.Geometry().Indices[Index + 1],
+                                                     Source.Geometry().Indices[Index + 2]};
                     MeshVertex Triangle[3];
                     for (int Side = 0; Side < 3; ++Side)
                     {
@@ -225,7 +224,7 @@ namespace dbc::studio
             }
         }
 
-        CpuMesh BuildMesh(const SceneNode& Node, dbc::language::LanguageProfile Profile)
+        CpuMesh BuildMesh(const SceneNode& Node)
         {
             CpuMesh Mesh;
             switch (Node.Kind)
@@ -248,9 +247,7 @@ namespace dbc::studio
                     Mesh = FromEngine(RendererSystem::MakeConeMesh(Node.Size * 0.5f, Node.Size, 16));
                     break;
                 case NodeKind::Plain:
-                    // A Classic plain is wound to face -Z.
-                    Mesh = FromEngine(RendererSystem::MakePlainMesh(Node.Extent.x, Node.Extent.y),
-                                      Profile == dbc::language::LanguageProfile::Dbc);
+                    Mesh = FromEngine(RendererSystem::MakePlainMesh(Node.Extent.x, Node.Extent.y));
                     break;
                 case NodeKind::Triangle:
                 {

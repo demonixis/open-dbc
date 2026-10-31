@@ -29,12 +29,10 @@ namespace
     // Cmd on macOS, where ImGui turns the Ctrl key's clicks into right clicks.
     constexpr ImGuiKey KCommandKey = ImGuiMod_Super;
 
-    scene::SceneDocument LevelOfCubes(const std::vector<glm::vec3>& Positions, float Size = KCubeSize,
-                                      dbc::language::LanguageProfile Profile = dbc::language::LanguageProfile::Dbc)
+    scene::SceneDocument LevelOfCubes(const std::vector<glm::vec3>& Positions, float Size = KCubeSize)
     {
         scene::SceneDocument Level;
         Level.Name = "Level";
-        Level.Profile = Profile;
         for (const glm::vec3& Position : Positions)
         {
             scene::SceneNode& Node = Level.Add(scene::NodeKind::Cube);
@@ -61,7 +59,7 @@ namespace
     {
       public:
         SceneViewDriver(const std::string& Name, const scene::SceneDocument& Level)
-            : Root_(std::filesystem::path(TEST_OUTPUT_DIR) / "scene_view" / Name), Profile_(Level.Profile)
+            : Root_(std::filesystem::path(TEST_OUTPUT_DIR) / "scene_view" / Name)
         {
             REQUIRE(SDL_Init(SDL_INIT_VIDEO));
             Gpu_ = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL, false, nullptr);
@@ -111,7 +109,6 @@ namespace
             Project.Root = Root_;
             Project.AssetRoot = Root_;
             Project.EntrySource = Root_ / "main.dba";
-            Project.Profile = Level.Profile;
             Editor_.SetProject(Project);
             Editor_.Activate();
             // Docking and the renderer settle over the first frames.
@@ -230,7 +227,7 @@ namespace
         // The level as a save writes it.
         std::vector<scene::SceneNode> SavedNodes()
         {
-            const scene::LevelReadResult Read = scene::ReadLevel(SavedText(), "Level", Profile_);
+            const scene::LevelReadResult Read = scene::ReadLevel(SavedText(), "Level");
             for (const scene::ReadError& Error : Read.Errors)
                 FAIL_CHECK(Error.Line << ": " << Error.Message);
             return Read.Document.Nodes;
@@ -318,7 +315,6 @@ namespace
         }
 
         std::filesystem::path Root_;
-        dbc::language::LanguageProfile Profile_;
         SDL_GPUDevice* Gpu_ = nullptr;
         panels::SceneEditor Editor_;
         bool LayoutBuilt_ = false;
@@ -463,9 +459,8 @@ TEST_CASE("A vertex drag is one undo step, however many vertices it lands on")
 
 TEST_CASE("The paint tool places one object on the grid, resting on the ground")
 {
-    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
     const glm::vec3 Source(0.0f, 15.0f, 0.0f);
-    SceneViewDriver Driver("paint_one", LevelOfCubes({Source}, KCubeSize, Pro));
+    SceneViewDriver Driver("paint_one", LevelOfCubes({Source}));
     Driver.Click(Source);
     Driver.Tap(ImGuiKey_B);
 
@@ -514,9 +509,8 @@ TEST_CASE("The paint tool places one object on the grid, resting on the ground")
 
 TEST_CASE("Several scatters its count over the radius with one click")
 {
-    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
     const glm::vec3 Source(-150.0f, 15.0f, 0.0f);
-    SceneViewDriver Driver("paint_several", LevelOfCubes({Source}, KCubeSize, Pro));
+    SceneViewDriver Driver("paint_several", LevelOfCubes({Source}));
     Driver.Click(Source);
     Driver.Tap(ImGuiKey_B);
     Driver.Tap(ImGuiKey_2);
@@ -537,10 +531,9 @@ TEST_CASE("Several scatters its count over the radius with one click")
 
 TEST_CASE("The brush fills up to its density, and Shift erases its copies")
 {
-    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
     const glm::vec3 Source(-150.0f, 15.0f, 0.0f);
     const glm::vec3 Other(40.0f, 15.0f, 30.0f);
-    SceneViewDriver Driver("paint_brush", LevelOfCubes({Source, Other}, KCubeSize, Pro));
+    SceneViewDriver Driver("paint_brush", LevelOfCubes({Source, Other}));
     Driver.Click(Source);
     Driver.Tap(ImGuiKey_B);
     Driver.Tap(ImGuiKey_3);
@@ -581,9 +574,8 @@ TEST_CASE("The brush fills up to its density, and Shift erases its copies")
 
 TEST_CASE("The paint tool lands on what lies under the mouse, and stops at its edge")
 {
-    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
     const glm::vec3 Source(-130.0f, 5.0f, 0.0f);
-    scene::SceneDocument Level = LevelOfCubes({Source}, 10.0f, Pro);
+    scene::SceneDocument Level = LevelOfCubes({Source}, 10.0f);
     // A wide table, its top at Y = 60.
     scene::SceneNode& Table = Level.Add(scene::NodeKind::Box);
     Table.Extent = glm::vec3(100.0f, 20.0f, 100.0f);
@@ -608,29 +600,10 @@ TEST_CASE("The paint tool lands on what lies under the mouse, and stops at its e
         CHECK(Nodes[Index].Position.y == doctest::Approx(65.0f));
 }
 
-TEST_CASE("Classic paints plain copies, without INSTANCE OBJECT")
-{
-    const glm::vec3 Source(0.0f, 15.0f, 0.0f);
-    SceneViewDriver Driver("paint_classic", LevelOfCubes({Source}));
-    Driver.Click(Source);
-    Driver.Tap(ImGuiKey_B);
-    Driver.Click(glm::vec3(60.0f, 0.0f, 40.0f));
-    Driver.Click(glm::vec3(-60.0f, 0.0f, 40.0f));
-
-    const std::string Text = Driver.SavedText();
-    CHECK(CountOf(Text, "INSTANCE OBJECT") == 0);
-    CHECK(CountOf(Text, "MAKE OBJECT CUBE") == 3);
-    const std::vector<scene::SceneNode> Nodes = Driver.SavedNodes();
-    REQUIRE(Nodes.size() == 3);
-    CHECK(Nodes[1].Painted);
-    CHECK(Nodes[2].Painted);
-}
-
 TEST_CASE("Painted objects fold into one Hierarchy row, whose click selects them all")
 {
-    const dbc::language::LanguageProfile Pro = dbc::language::LanguageProfile::DbPro;
     const glm::vec3 Source(-150.0f, 15.0f, 0.0f);
-    SceneViewDriver Driver("paint_hierarchy", LevelOfCubes({Source}, KCubeSize, Pro));
+    SceneViewDriver Driver("paint_hierarchy", LevelOfCubes({Source}));
     Driver.Click(Source);
     Driver.Tap(ImGuiKey_B);
     Driver.Click(glm::vec3(0.0f, 0.0f, 0.0f));

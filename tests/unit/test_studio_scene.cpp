@@ -13,8 +13,6 @@
 #include <optional>
 #include <string>
 
-using dbc::language::LanguageProfile;
-
 using namespace dbc::studio;
 
 namespace
@@ -26,12 +24,12 @@ namespace
         return std::string(std::istreambuf_iterator<char>(Stream), {});
     }
 
-    std::string BindErrors(const std::string& Text, LanguageProfile Profile)
+    std::string BindErrors(const std::string& Text)
     {
         auto Source = std::make_shared<dbc::language::SourceDocument>();
         Source->LogicalPath = "level.dba";
         Source->Text = Text;
-        Source->Profile = Profile;
+        Source->Profile = scene::KSceneProfile;
         const dbc::language::Program Program = dbc::language::Compile(Source);
         std::string Errors;
         for (const auto& Diagnostic : Program.Diagnostics)
@@ -40,11 +38,10 @@ namespace
         return Errors;
     }
 
-    scene::SceneDocument FullLevel(LanguageProfile Profile)
+    scene::SceneDocument FullLevel()
     {
         scene::SceneDocument Document;
         Document.Name = "First Level";
-        Document.Profile = Profile;
 
         scene::SceneNode& Cube = Document.Add(scene::NodeKind::Cube);
         Cube.Name = "Crate";
@@ -126,62 +123,48 @@ namespace
         Env.CameraFov = 60.0f;
         Env.CameraRange = glm::vec2(1.0f, 10000.0f);
 
-        if (Profile == LanguageProfile::DbPro)
-        {
-            // Add reallocates the nodes, so the references taken above no longer hold.
-            scene::SceneNode& Crate = Document.Nodes[0];
-            Crate.Mat.Specular = 0xFFFFFF;
-            Crate.Mat.SpecularPower = 32.0f;
-            Crate.Mat.Diffuse = 0xC0C0C0;
-            Crate.Mat.CastShadow = true;
-            Document.Nodes[1].Detail = glm::ivec2(24, 32);
-            Env.ShadowMode = -1;
-            Env.ShadowPosition = {100.0f, 300.0f, 0.0f};
-            scene::SceneNode& Hills = Document.Add(scene::NodeKind::Terrain);
-            Hills.Asset = "media/height.png";
-            Hills.Mat.Texture = "media/grass.png";
-            Hills.Position = {0.0f, -10.0f, 0.0f};
-        }
-        else
-        {
-            scene::SceneNode& Rock = Document.Add(scene::NodeKind::Box);
-            Rock.Extent = {20.0f, 10.0f, 20.0f};
-            Rock.Static = true;
-        }
+        // Add reallocates the nodes, so the references taken above no longer hold.
+        scene::SceneNode& Crate = Document.Nodes[0];
+        Crate.Mat.Specular = 0xFFFFFF;
+        Crate.Mat.SpecularPower = 32.0f;
+        Crate.Mat.Diffuse = 0xC0C0C0;
+        Crate.Mat.CastShadow = true;
+        Document.Nodes[1].Detail = glm::ivec2(24, 32);
+        Env.ShadowMode = -1;
+        Env.ShadowPosition = {100.0f, 300.0f, 0.0f};
+        scene::SceneNode& Hills = Document.Add(scene::NodeKind::Terrain);
+        Hills.Asset = "media/height.png";
+        Hills.Mat.Texture = "media/grass.png";
+        Hills.Position = {0.0f, -10.0f, 0.0f};
         return Document;
     }
 } // namespace
 
-TEST_CASE("Scene levels round-trip through the generated BASIC in both profiles")
+TEST_CASE("Scene levels round-trip through the generated BASIC")
 {
-    for (const LanguageProfile Profile : {LanguageProfile::Dbc, LanguageProfile::DbPro})
-    {
-        CAPTURE(dbc::language::ProfileName(Profile));
-        const scene::SceneDocument Document = FullLevel(Profile);
-        const std::string Text = scene::WriteLevel(Document);
-        const std::string World = scene::WriteWorld(Document);
-        CHECK(BindErrors(Text, Profile).empty());
-        CHECK(BindErrors(World, Profile).empty());
+    const scene::SceneDocument Document = FullLevel();
+    const std::string Text = scene::WriteLevel(Document);
+    const std::string World = scene::WriteWorld(Document);
+    CHECK(BindErrors(Text).empty());
+    CHECK(BindErrors(World).empty());
 
-        scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, Profile);
-        for (const scene::ReadError& Error : Read.Errors)
-            FAIL_CHECK(Error.Line << ": " << Error.Message);
-        for (const scene::ReadError& Error : scene::ReadWorld(World, Read.Document))
-            FAIL_CHECK(Error.Line << ": " << Error.Message);
-        CHECK(Read.Document == Document);
-        CHECK(scene::WriteLevel(Read.Document) == Text);
-        CHECK(scene::WriteWorld(Read.Document) == World);
-    }
+    scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
+    for (const scene::ReadError& Error : Read.Errors)
+        FAIL_CHECK(Error.Line << ": " << Error.Message);
+    for (const scene::ReadError& Error : scene::ReadWorld(World, Read.Document))
+        FAIL_CHECK(Error.Line << ": " << Error.Message);
+    CHECK(Read.Document == Document);
+    CHECK(scene::WriteLevel(Read.Document) == Text);
+    CHECK(scene::WriteWorld(Read.Document) == World);
 }
 
 namespace
 {
     // A model, then painted copies of it: `Copies` of them, each 10 units further along X.
-    scene::SceneDocument PaintedLevel(LanguageProfile Profile, int Copies)
+    scene::SceneDocument PaintedLevel(int Copies)
     {
         scene::SceneDocument Document;
         Document.Name = "Painted";
-        Document.Profile = Profile;
         scene::SceneNode& Tree = Document.Add(scene::NodeKind::Model);
         Tree.Name = "tree";
         Tree.Asset = "models/tree.x";
@@ -211,11 +194,11 @@ namespace
     }
 } // namespace
 
-TEST_CASE("Pro writes painted objects as instances of the first that looks the same")
+TEST_CASE("Painted objects are written as instances of the first that looks the same")
 {
-    const scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 3);
+    const scene::SceneDocument Document = PaintedLevel(3);
     const std::string Text = scene::WriteLevel(Document);
-    CHECK(BindErrors(Text, LanguageProfile::DbPro).empty());
+    CHECK(BindErrors(Text).empty());
     CHECK(CountOf(Text, "LOAD OBJECT") == 1);
     CHECK(CountOf(Text, "INSTANCE OBJECT") == 3);
     CHECK(Text.find("INSTANCE OBJECT 1001, 1000") != std::string::npos);
@@ -227,34 +210,16 @@ TEST_CASE("Pro writes painted objects as instances of the first that looks the s
     CHECK(Text.find("TEXTURE OBJECT 1001") == std::string::npos);
     CHECK(CountOf(Text, "LOAD IMAGE") == 1);
 
-    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
     for (const scene::ReadError& Error : Read.Errors)
         FAIL_CHECK(Error.Line << ": " << Error.Message);
     CHECK(Read.Document == Document);
     CHECK(scene::WriteLevel(Read.Document) == Text);
 }
 
-TEST_CASE("Classic has no INSTANCE OBJECT, so painted objects are written in full")
-{
-    const scene::SceneDocument Document = PaintedLevel(LanguageProfile::Dbc, 2);
-    const std::string Text = scene::WriteLevel(Document);
-    CHECK(BindErrors(Text, LanguageProfile::Dbc).empty());
-    CHECK(CountOf(Text, "INSTANCE OBJECT") == 0);
-    CHECK(CountOf(Text, "LOAD OBJECT") == 3);
-    CHECK(CountOf(Text, "TEXTURE OBJECT") == 3);
-    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::Dbc);
-    for (const scene::ReadError& Error : Read.Errors)
-        FAIL_CHECK(Error.Line << ": " << Error.Message);
-    CHECK(Read.Document == Document);
-
-    // A Pro level's instances stop a Classic project from editing it, as any Pro command does.
-    const std::string Pro = scene::WriteLevel(PaintedLevel(LanguageProfile::DbPro, 1));
-    CHECK_FALSE(scene::ReadLevel(Pro, Document.Name, LanguageProfile::Dbc).Ok());
-}
-
 TEST_CASE("A painted object is written in full once nothing earlier looks the same")
 {
-    scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 3);
+    scene::SceneDocument Document = PaintedLevel(3);
 
     // Without the original, the first copy takes its place.
     Document.Nodes.erase(Document.Nodes.begin());
@@ -262,7 +227,7 @@ TEST_CASE("A painted object is written in full once nothing earlier looks the sa
     CHECK(CountOf(Text, "LOAD OBJECT") == 1);
     CHECK(Text.find("LOAD OBJECT \"models/tree.x\", 1001") != std::string::npos);
     CHECK(Text.find("INSTANCE OBJECT 1002, 1001") != std::string::npos);
-    scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
     CHECK(Read.Ok());
     CHECK(Read.Document == Document);
 
@@ -272,14 +237,14 @@ TEST_CASE("A painted object is written in full once nothing earlier looks the sa
     CHECK(CountOf(Text, "LOAD OBJECT") == 2);
     CHECK(CountOf(Text, "INSTANCE OBJECT") == 1);
     CHECK(CountOf(Text, "LOAD IMAGE") == 2);
-    Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    Read = scene::ReadLevel(Text, Document.Name);
     CHECK(Read.Ok());
     CHECK(Read.Document == Document);
 }
 
 TEST_CASE("A painted copy keeps its own animation, which INSTANCE OBJECT does not start")
 {
-    scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 1);
+    scene::SceneDocument Document = PaintedLevel(1);
     Document.Nodes[0].Frames = glm::ivec2(1, 20);
     Document.Nodes[0].Speed = 40;
     Document.Nodes[1].Frames = glm::ivec2(5, 10);
@@ -287,7 +252,7 @@ TEST_CASE("A painted copy keeps its own animation, which INSTANCE OBJECT does no
     const std::string Text = scene::WriteLevel(Document);
     CHECK(CountOf(Text, "INSTANCE OBJECT") == 1);
     CHECK(Text.find("PLAY OBJECT 1001, 5, 10") != std::string::npos);
-    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
     for (const scene::ReadError& Error : Read.Errors)
         FAIL_CHECK(Error.Line << ": " << Error.Message);
     CHECK(Read.Document == Document);
@@ -295,9 +260,9 @@ TEST_CASE("A painted copy keeps its own animation, which INSTANCE OBJECT does no
 
 TEST_CASE("A level of painted objects reads every instance back")
 {
-    const scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 3000);
+    const scene::SceneDocument Document = PaintedLevel(3000);
     const std::string Text = scene::WriteLevel(Document);
-    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name, LanguageProfile::DbPro);
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
     CHECK(Read.Ok());
     REQUIRE(Read.Document.Nodes.size() == 3001);
     CHECK(Read.Document == Document);
@@ -312,7 +277,7 @@ TEST_CASE("Default node names do not depend on the interface")
     const scene::SceneNode& Light = Document.Add(scene::NodeKind::Light);
     CHECK(Light.Name == scene::DefaultNodeName(scene::NodeKind::Light, Light.Id));
 
-    const scene::LevelReadResult Read = scene::ReadLevel(scene::WriteLevel(Document), Document.Name, Document.Profile);
+    const scene::LevelReadResult Read = scene::ReadLevel(scene::WriteLevel(Document), Document.Name);
     REQUIRE(Read.Ok());
     REQUIRE(Read.Document.Nodes.size() == 1);
     CHECK(Read.Document.Nodes.front().Name == Light.Name);
@@ -340,7 +305,7 @@ TEST_CASE("Free numbers skip those in use, and painted names keep their stem")
 
 TEST_CASE("Two objects look the same whatever each sets for itself")
 {
-    const scene::SceneDocument Document = PaintedLevel(LanguageProfile::DbPro, 1);
+    const scene::SceneDocument Document = PaintedLevel(1);
     scene::SceneNode Copy = Document.Nodes[1];
     Copy.Frames = glm::ivec2(1, 2);
     Copy.Speed = 3;
@@ -356,7 +321,7 @@ TEST_CASE("Two objects look the same whatever each sets for itself")
 TEST_CASE("Scene history forgets its oldest states when they hold too many nodes")
 {
     // 1000 nodes a state, against a budget of 500 000: the first states go, undo still works.
-    scene::SceneDocument Document = PaintedLevel(LanguageProfile::Dbc, 999);
+    scene::SceneDocument Document = PaintedLevel(999);
     scene::SceneHistory History;
     History.Reset(Document);
     constexpr int KStates = 600;
@@ -376,35 +341,29 @@ TEST_CASE("Scene history forgets its oldest states when they hold too many nodes
 
     // A single huge state is never dropped.
     scene::SceneHistory Huge;
-    scene::SceneDocument Big = PaintedLevel(LanguageProfile::Dbc, 2000);
+    scene::SceneDocument Big = PaintedLevel(2000);
     Huge.Reset(Big);
     CHECK_FALSE(Huge.CanUndo());
 }
 
 TEST_CASE("The BASIC goldens run the generator's exact output")
 {
-    const std::filesystem::path Root = std::filesystem::path(TEST_SOURCE_DIR) / "tests/dba/scene";
-    const std::pair<const char*, LanguageProfile> Cases[] = {{"classic", LanguageProfile::Dbc},
-                                                             {"pro", LanguageProfile::DbPro}};
-    for (const auto& [Folder, Profile] : Cases)
-    {
-        CAPTURE(Folder);
-        const std::string Level = ReadText(Root / Folder / scene::LevelRelativePath("Golden"));
-        scene::LevelReadResult Read = scene::ReadLevel(Level, "Golden", Profile);
-        for (const scene::ReadError& Error : Read.Errors)
-            FAIL_CHECK(Error.Line << ": " << Error.Message);
-        CHECK(scene::WriteLevel(Read.Document) == Level);
+    const std::filesystem::path Root = std::filesystem::path(TEST_SOURCE_DIR) / "tests/dba/scene/pro";
+    const std::string Level = ReadText(Root / scene::LevelRelativePath("Golden"));
+    scene::LevelReadResult Read = scene::ReadLevel(Level, "Golden");
+    for (const scene::ReadError& Error : Read.Errors)
+        FAIL_CHECK(Error.Line << ": " << Error.Message);
+    CHECK(scene::WriteLevel(Read.Document) == Level);
 
-        const std::string World = ReadText(Root / Folder / scene::WorldRelativePath("Golden"));
-        for (const scene::ReadError& Error : scene::ReadWorld(World, Read.Document))
-            FAIL_CHECK(Error.Line << ": " << Error.Message);
-        CHECK(scene::WriteWorld(Read.Document) == World);
-    }
+    const std::string World = ReadText(Root / scene::WorldRelativePath("Golden"));
+    for (const scene::ReadError& Error : scene::ReadWorld(World, Read.Document))
+        FAIL_CHECK(Error.Line << ": " << Error.Message);
+    CHECK(scene::WriteWorld(Read.Document) == World);
 }
 
 TEST_CASE("Scene levels share one image per texture and use the reserved numbers")
 {
-    scene::SceneDocument Document = FullLevel(LanguageProfile::Dbc);
+    scene::SceneDocument Document = FullLevel();
     Document.Base(scene::IdSpace::Image) = 500;
     const std::string Text = scene::WriteLevel(Document);
     CHECK(Text.find("FUNCTION LoadLevel_First_Level()") != std::string::npos);
@@ -413,8 +372,8 @@ TEST_CASE("Scene levels share one image per texture and use the reserved numbers
     CHECK(Text.find("LOAD IMAGE \"media/crate.png\", 502") == std::string::npos);
     CHECK(Text.find("MAKE OBJECT CUBE 1000, 12.5") != std::string::npos);
     CHECK(Text.find("COLOR OBJECT 1000, RGB(255, 128, 0)") != std::string::npos);
-    // Wireframe is SET OBJECT's "solid" flag at 0; Classic writes 1 for opaque black.
-    CHECK(Text.find("SET OBJECT 1000, 0, 1, 1, 1, 1, 1, 1") != std::string::npos);
+    // Wireframe is SET OBJECT's "solid" flag at 0, and transparency 0 is opaque.
+    CHECK(Text.find("SET OBJECT 1000, 0, 0, 1, 1, 1, 1, 1") != std::string::npos);
     // The world settings run first, so nothing a level makes moves the camera.
     CHECK(Text.find("CAMERA") == std::string::npos);
     const std::string World = scene::WriteWorld(Document);
@@ -424,7 +383,8 @@ TEST_CASE("Scene levels share one image per texture and use the reserved numbers
     CHECK(Text.find("SET MATRIX HEIGHT 1, 0, 0, 0\n") != std::string::npos);
     CHECK(Text.find("SET MATRIX HEIGHT 1, 1, 1, 12.5\n") != std::string::npos);
     CHECK(Text.find("UPDATE MATRIX 1\n") > Text.find("SET MATRIX HEIGHT 1, 1, 1"));
-    CHECK(Text.find("SET OBJECT SPECULAR") == std::string::npos);
+    // An object at the default flags writes no SET OBJECT.
+    CHECK(Text.find("SET OBJECT 1001,") == std::string::npos);
 }
 
 TEST_CASE("Scene levels refuse statements they did not write")
@@ -435,7 +395,7 @@ TEST_CASE("Scene levels refuse statements they did not write")
                                "   POSITION OBJECT 1000, x, 0, 0\n"
                                "   POSITION OBJECT 1001, 0, 0, 0\n"
                                "ENDFUNCTION\n";
-    const scene::LevelReadResult Read = scene::ReadLevel(Edited, "Test", LanguageProfile::Dbc);
+    const scene::LevelReadResult Read = scene::ReadLevel(Edited, "Test");
     REQUIRE(Read.Errors.size() == 3);
     CHECK(Read.Errors[0].Line == 3);
     CHECK(Read.Errors[1].Line == 4);
@@ -445,57 +405,30 @@ TEST_CASE("Scene levels refuse statements they did not write")
                                  "   LOAD OBJECT \"walk.x\", 1000\n"
                                  "   LOOP OBJECT 1000\n"
                                  "ENDFUNCTION\n";
-    const scene::LevelReadResult Whole = scene::ReadLevel(Animated, "Test", LanguageProfile::Dbc);
+    const scene::LevelReadResult Whole = scene::ReadLevel(Animated, "Test");
     REQUIRE(Whole.Errors.size() == 1);
     CHECK(Whole.Errors[0].Line == 3);
 
-    CHECK_FALSE(scene::ReadLevel("PRINT 1\n", "Test", LanguageProfile::Dbc).Ok());
-    CHECK_FALSE(scene::ReadLevel("FUNCTION LoadLevel_Other()\nENDFUNCTION\n", "Test", LanguageProfile::Dbc).Ok());
+    CHECK_FALSE(scene::ReadLevel("PRINT 1\n", "Test").Ok());
+    CHECK_FALSE(scene::ReadLevel("FUNCTION LoadLevel_Other()\nENDFUNCTION\n", "Test").Ok());
 }
 
-TEST_CASE("Scene creation menus follow the profile's catalogue support")
+TEST_CASE("A level holding a command only Classic runs stays read-only, and says why")
 {
-    CHECK(scene::KindAvailable(scene::NodeKind::Cube, LanguageProfile::Dbc));
-    CHECK(scene::KindAvailable(scene::NodeKind::Matrix, LanguageProfile::Dbc));
-    CHECK(scene::KindAvailable(scene::NodeKind::Light, LanguageProfile::Dbc));
-    CHECK(scene::KindAvailable(scene::NodeKind::Sound, LanguageProfile::Dbc));
-    CHECK(scene::KindAvailable(scene::NodeKind::Sound, LanguageProfile::DbPro));
-    CHECK_FALSE(scene::KindAvailable(scene::NodeKind::Terrain, LanguageProfile::Dbc));
-    CHECK(scene::KindAvailable(scene::NodeKind::Terrain, LanguageProfile::DbPro));
+    const scene::LevelReadResult Read = scene::ReadLevel("FUNCTION LoadLevel_Test()\n"
+                                                         "   MAKE OBJECT CUBE 1000, 10\n"
+                                                         "   MAKE STATIC OBJECT 1000\n"
+                                                         "   DELETE OBJECT 1000\n"
+                                                         "ENDFUNCTION\n",
+                                                         "Test");
+    REQUIRE(Read.Errors.size() == 2);
+    CHECK(Read.Errors[0].Line == 3);
+    CHECK(Read.Errors[0].Message == "MAKE STATIC OBJECT is not available in this form for the DBPro profile");
+    CHECK(Read.Errors[1].Line == 4);
+    CHECK(Read.Errors[1].Message == "The Scene view does not edit DELETE OBJECT");
 
-    const std::string Terrain = "FUNCTION LoadLevel_Test()\n"
-                                "   MAKE TERRAIN 1, \"height.png\"\n"
-                                "ENDFUNCTION\n";
-    CHECK_FALSE(scene::ReadLevel(Terrain, "Test", LanguageProfile::Dbc).Ok());
-    CHECK(scene::ReadLevel(Terrain, "Test", LanguageProfile::DbPro).Ok());
-}
-
-TEST_CASE("Static objects are Classic scenery made from a deleted object")
-{
-    CHECK(scene::StaticAvailable(LanguageProfile::Dbc));
-    CHECK_FALSE(scene::StaticAvailable(LanguageProfile::DbPro));
-
-    scene::SceneDocument Document;
-    Document.Name = "Test";
-    Document.Profile = LanguageProfile::DbPro;
-    Document.Add(scene::NodeKind::Cube).Static = true;
-    CHECK(scene::WriteLevel(Document).find("STATIC") == std::string::npos);
-
-    const auto Read = [](const char* Body)
-    {
-        return scene::ReadLevel(std::string("FUNCTION LoadLevel_Test()\n   MAKE OBJECT CUBE 1000, 10\n") + Body +
-                                    "ENDFUNCTION\n",
-                                "Test", LanguageProfile::Dbc);
-    };
-    CHECK(Read("   MAKE STATIC OBJECT 1000\n   DELETE OBJECT 1000\n").Ok());
-    CHECK_FALSE(Read("   MAKE STATIC OBJECT 1000\n").Ok());
-    CHECK_FALSE(Read("   DELETE OBJECT 1000\n").Ok());
-    CHECK_FALSE(Read("   MAKE STATIC OBJECT 1000, 1\n   DELETE OBJECT 1000\n").Ok());
-    const std::string Pro = "FUNCTION LoadLevel_Test()\n"
-                            "   MAKE OBJECT CUBE 1000, 10\n"
-                            "   MAKE STATIC OBJECT 1000\n"
-                            "ENDFUNCTION\n";
-    CHECK_FALSE(scene::ReadLevel(Pro, "Test", LanguageProfile::DbPro).Ok());
+    // A command only DBPro runs is part of a level like any other.
+    CHECK(scene::ReadLevel("FUNCTION LoadLevel_Test()\n   MAKE TERRAIN 1, \"height.png\"\nENDFUNCTION\n", "Test").Ok());
 }
 
 TEST_CASE("Scene numbers fill gaps from each space's base")
@@ -541,11 +474,10 @@ TEST_CASE("Scene history undoes and redoes whole snapshots")
     CHECK_FALSE(History.CanRedo());
 }
 
-TEST_CASE("World settings round-trip the display and keep Pro-only forms out of Classic")
+TEST_CASE("World settings round-trip the display")
 {
     scene::SceneDocument Document;
     Document.Name = "Test";
-    Document.Profile = LanguageProfile::DbPro;
     scene::DisplaySettings& Settings = Document.Display;
     Settings.DisplayMode = glm::ivec3(1280, 720, 32);
     Settings.Vsync = 1;
@@ -556,24 +488,14 @@ TEST_CASE("World settings round-trip the display and keep Pro-only forms out of 
     Settings.SyncRate = 60;
     Settings.HideMouse = true;
 
-    const std::string Pro = scene::WriteWorld(Document);
-    CHECK(BindErrors(Pro, LanguageProfile::DbPro).empty());
-    CHECK(Pro.find("FUNCTION SetupWorld_Test()") != std::string::npos);
-    CHECK(Pro.find("SET DISPLAY MODE 1280, 720, 32, 1") != std::string::npos);
-    scene::SceneDocument ProRead;
-    ProRead.Name = "Test";
-    ProRead.Profile = LanguageProfile::DbPro;
-    CHECK(scene::ReadWorld(Pro, ProRead).empty());
-    CHECK(ProRead.Display == Settings);
-
-    Document.Profile = LanguageProfile::Dbc;
-    const std::string Classic = scene::WriteWorld(Document);
-    CHECK(BindErrors(Classic, LanguageProfile::Dbc).empty());
-    CHECK(Classic.find("SET DISPLAY MODE 1280, 720, 32\n") != std::string::npos);
-    scene::SceneDocument ClassicRead;
-    ClassicRead.Name = "Test";
-    CHECK(scene::ReadWorld(Classic, ClassicRead).empty());
-    CHECK_FALSE(ClassicRead.Display.Vsync.has_value());
+    const std::string World = scene::WriteWorld(Document);
+    CHECK(BindErrors(World).empty());
+    CHECK(World.find("FUNCTION SetupWorld_Test()") != std::string::npos);
+    CHECK(World.find("SET DISPLAY MODE 1280, 720, 32, 1") != std::string::npos);
+    scene::SceneDocument Read;
+    Read.Name = "Test";
+    CHECK(scene::ReadWorld(World, Read).empty());
+    CHECK(Read.Display == Settings);
 }
 
 TEST_CASE("World settings hold no node, and a level holds no display")
@@ -593,8 +515,7 @@ TEST_CASE("World settings hold no node, and a level holds no display")
     Wrong.Name = "Other";
     CHECK_FALSE(scene::ReadWorld("FUNCTION SetupWorld_Test()\nENDFUNCTION\n", Wrong).empty());
 
-    CHECK_FALSE(
-        scene::ReadLevel("FUNCTION LoadLevel_Test()\n   SYNC ON\nENDFUNCTION\n", "Test", LanguageProfile::Dbc).Ok());
+    CHECK_FALSE(scene::ReadLevel("FUNCTION LoadLevel_Test()\n   SYNC ON\nENDFUNCTION\n", "Test").Ok());
 }
 
 TEST_CASE("An older level's environment moves to the world settings when saved")
@@ -602,7 +523,7 @@ TEST_CASE("An older level's environment moves to the world settings when saved")
     scene::LevelReadResult Read =
         scene::ReadLevel("FUNCTION LoadLevel_Test()\n   AUTOCAM OFF\n   FOG ON\n   MAKE OBJECT CUBE 1000, 10\n"
                          "   POSITION CAMERA 0, 80, -200\nENDFUNCTION\n",
-                         "Test", LanguageProfile::Dbc);
+                         "Test");
     REQUIRE(Read.Ok());
     CHECK(Read.Document.Env.Fog);
     CHECK(Read.Document.Env.UseCamera);
@@ -620,24 +541,24 @@ TEST_CASE("Main sources get their includes on top, then the setup and level call
     const std::vector<scene::MainLink> Links = {{"levels/First/world_settings.dba", "SetupWorld_First"},
                                                 {"levels/First/First.dba", "LoadLevel_First"}};
     const std::string Main = "REM My game\r\n\r\nREM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n";
-    const scene::LinkResult Linked = scene::LinkIntoMain(Main, LanguageProfile::Dbc, Links);
+    const scene::LinkResult Linked = scene::LinkIntoMain(Main, Links);
     CHECK(Linked.Changed);
     CHECK(Linked.Text == "REM My game\r\n\r\n#include \"levels/First/world_settings.dba\"\r\n"
                          "#include \"levels/First/First.dba\"\r\n\r\n"
                          "SetupWorld_First()\r\nLoadLevel_First()\r\n\r\n"
                          "REM Display\r\nsync on\r\ndo\r\n   sync\r\nloop\r\n");
-    CHECK_FALSE(scene::LinkIntoMain(Linked.Text, LanguageProfile::Dbc, Links).Changed);
+    CHECK_FALSE(scene::LinkIntoMain(Linked.Text, Links).Changed);
 
     // A call the user moved is found where it is, and the next link's follows it.
     const std::string Moved = "#include \"levels/Cave/world_settings.dba\"\nprint 1\nSetupWorld_Cave()\nwait key\n";
     const std::vector<scene::MainLink> Second = {{"levels/Cave/world_settings.dba", "SetupWorld_Cave"},
                                                  {"levels\\Cave\\Cave.dba", "LoadLevel_Cave"}};
-    const scene::LinkResult Added = scene::LinkIntoMain(Moved, LanguageProfile::DbPro, Second);
+    const scene::LinkResult Added = scene::LinkIntoMain(Moved, Second);
     CHECK(Added.Text == "#include \"levels/Cave/world_settings.dba\"\n#include \"levels\\Cave\\Cave.dba\"\nprint 1\n"
                         "SetupWorld_Cave()\nLoadLevel_Cave()\nwait key\n");
 
     // An empty file gets the includes and the calls only.
-    CHECK(scene::LinkIntoMain("", LanguageProfile::Dbc, Links).Text ==
+    CHECK(scene::LinkIntoMain("", Links).Text ==
           "#include \"levels/First/world_settings.dba\"\n#include \"levels/First/First.dba\"\n\n"
           "SetupWorld_First()\nLoadLevel_First()\n");
 }
@@ -650,28 +571,28 @@ TEST_CASE("What a program already imports stays as it is")
     // Included but never called from here: the program loads it where it wants.
     const std::string Later =
         "#include \"levels/Cave/world_settings.dba\"\n#include \"LEVELS\\CAVE\\CAVE.DBA\"\nsync\n";
-    CHECK_FALSE(scene::LinkIntoMain(Later, LanguageProfile::Dbc, Links).Changed);
+    CHECK_FALSE(scene::LinkIntoMain(Later, Links).Changed);
 
     // Reached through another include, it needs neither a line nor a call.
     const std::vector<scene::MainLink> Reached = {{Links[0].IncludePath, Links[0].Function, true},
                                                   {Links[1].IncludePath, Links[1].Function, true}};
-    CHECK_FALSE(scene::LinkIntoMain("#include \"game.dba\"\nsync\n", LanguageProfile::Dbc, Reached).Changed);
+    CHECK_FALSE(scene::LinkIntoMain("#include \"game.dba\"\nsync\n", Reached).Changed);
 
     // World settings joining a level run right before it, after whatever comes first.
     const std::vector<scene::MainLink> WorldMissing = {{Links[0].IncludePath, Links[0].Function},
                                                        {Links[1].IncludePath, Links[1].Function, true}};
-    CHECK(scene::LinkIntoMain("#include \"levels/Cave/Cave.dba\"\n\nSetupGame()\nLoadLevel_Cave()\nsync\n",
-                              LanguageProfile::Dbc, WorldMissing)
-              .Text == "#include \"levels/Cave/Cave.dba\"\n#include \"levels/Cave/world_settings.dba\"\n\n"
-                       "SetupGame()\nSetupWorld_Cave()\nLoadLevel_Cave()\nsync\n");
+    CHECK(
+        scene::LinkIntoMain("#include \"levels/Cave/Cave.dba\"\n\nSetupGame()\nLoadLevel_Cave()\nsync\n", WorldMissing)
+            .Text == "#include \"levels/Cave/Cave.dba\"\n#include \"levels/Cave/world_settings.dba\"\n\n"
+                     "SetupGame()\nSetupWorld_Cave()\nLoadLevel_Cave()\nsync\n");
 }
 
 TEST_CASE("Moving an include keeps the rest of the main source")
 {
     const std::string Main = "REM Game\r\n#include \"LEVELS\\First.dba\" `the first\r\nprint 1\r\n";
-    CHECK(scene::MoveInclude(Main, LanguageProfile::Dbc, "levels/First.dba", "levels/First/First.dba") ==
+    CHECK(scene::MoveInclude(Main, "levels/First.dba", "levels/First/First.dba") ==
           "REM Game\r\n#include \"levels/First/First.dba\" `the first\r\nprint 1\r\n");
-    CHECK(scene::MoveInclude(Main, LanguageProfile::Dbc, "levels/Cave.dba", "levels/Cave/Cave.dba") == Main);
+    CHECK(scene::MoveInclude(Main, "levels/Cave.dba", "levels/Cave/Cave.dba") == Main);
 }
 
 TEST_CASE("A program's level imports are found through its includes")
@@ -689,7 +610,7 @@ TEST_CASE("A program's level imports are found through its includes")
         return Found == Files.end() ? std::nullopt : std::optional(Found->second);
     };
     const auto Find = [&](const char* Main, const char* Level)
-    { return scene::FindLevelImports(Main, "/game/levels", Level, LanguageProfile::Dbc, Read); };
+    { return scene::FindLevelImports(Main, "/game/levels", Level, Read); };
 
     const scene::LevelImports First = Find("/game/main.dba", "First");
     CHECK(First.Level);
@@ -770,8 +691,7 @@ TEST_CASE("Includes are followed through the files that hold them")
         const auto Found = Files.find(Path);
         return Found == Files.end() ? std::nullopt : std::optional(Found->second);
     };
-    const auto Includes = [&](const char* Target)
-    { return scene::SourceIncludes("/game/main.dba", Target, LanguageProfile::Dbc, Read); };
+    const auto Includes = [&](const char* Target) { return scene::SourceIncludes("/game/main.dba", Target, Read); };
     CHECK(Includes("/game/lib/world.dba"));
     CHECK(Includes("/game/lib/props.dba"));
     CHECK_FALSE(Includes("/game/other.dba"));

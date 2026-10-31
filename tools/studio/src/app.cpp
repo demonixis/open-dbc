@@ -891,7 +891,6 @@ namespace dbc::studio
         Project.AssetRoot =
             ResolvedProject_->AssetRoot.empty() ? ResolvedProject_->ProjectRoot : ResolvedProject_->AssetRoot;
         Project.EntrySource = ResolvedProject_->EntrySource;
-        Project.Profile = ResolvedProject_->Profile;
         Project.HasDescriptor = ResolvedProject_->DescriptorPath.has_value();
         Scene_.SetProject(std::move(Project));
     }
@@ -980,9 +979,8 @@ namespace dbc::studio
         const bool InProject = ResolvedProject_->DescriptorPath &&
                                std::any_of(Ordered.begin(), Ordered.end(), [&](const std::filesystem::path& Other)
                                            { return Other.lexically_normal() == Normal; });
-        return InProject ||
-                       scene::SourceIncludes(Entry, Normal, ResolvedProject_->Profile,
-                                             [this](const std::filesystem::path& Path) { return ReadSource(Path); })
+        return InProject || scene::SourceIncludes(Entry, Normal, [this](const std::filesystem::path& Path)
+                                                  { return ReadSource(Path); })
                    ? Entry
                    : Normal;
     }

@@ -42,11 +42,10 @@ namespace dbc::studio
         std::string WriteLevel(const SceneDocument& Document);
         // `Name` is the level name (the file stem); it must match the function. The environment is
         // accepted too, as older levels hold it: the next save moves it to the world settings.
-        LevelReadResult ReadLevel(const std::string& Text, const std::string& Name,
-                                  dbc::language::LanguageProfile Profile);
+        LevelReadResult ReadLevel(const std::string& Text, const std::string& Name);
         // The display and the environment.
         std::string WriteWorld(const SceneDocument& Document);
-        // Applies a world settings file over `Document`, whose name and profile it reads with.
+        // Applies a world settings file over `Document`, whose name it reads with.
         std::vector<ReadError> ReadWorld(const std::string& Text, SceneDocument& Document);
 
         // A command a program really ran, with its evaluated arguments.
@@ -72,8 +71,7 @@ namespace dbc::studio
 
         // The level a program's own calls amount to. Unlike ReadLevel it refuses nothing: a program may reuse
         // a number, and what no statement of a level can express is only named.
-        ReplayResult ReplayCalls(std::span<const ReplayCall> Calls, const std::string& Name,
-                                 dbc::language::LanguageProfile Profile);
+        ReplayResult ReplayCalls(std::span<const ReplayCall> Calls, const std::string& Name);
 
         // "levels/<name>/<name>.dba", relative to the project root.
         std::filesystem::path LevelRelativePath(const std::string& Name);

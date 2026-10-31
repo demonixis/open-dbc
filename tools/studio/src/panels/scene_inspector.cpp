@@ -19,11 +19,6 @@ namespace dbc::studio
     {
         namespace
         {
-            bool Pro(const scene::SceneDocument& Document)
-            {
-                return Document.Profile == dbc::language::LanguageProfile::DbPro;
-            }
-
             bool EditColor(const char* Label, scene::Rgb& Value)
             {
                 float Channels[3] = {((Value >> 16) & 0xFF) / 255.0f, ((Value >> 8) & 0xFF) / 255.0f,
@@ -253,23 +248,6 @@ namespace dbc::studio
                 if (ImGui::IsItemHovered())
                     ImGui::SetTooltip("%s", Tr("The object, matrix, terrain, light or sound number the code uses"));
             }
-            if (IsObject)
-            {
-                const bool Available = scene::StaticAvailable(Document_.Profile);
-                ImGui::BeginDisabled(!Available);
-                // A static object no longer exists to animate.
-                if (ImGui::Checkbox(TrId("Make Static Object"), &Node->Static) && Node->Static)
-                {
-                    Node->Frames.reset();
-                    Node->Speed.reset();
-                }
-                ImGui::EndDisabled();
-                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                    ImGui::SetTooltip("%s",
-                                      Tr(Available ? "MAKE STATIC OBJECT, then DELETE OBJECT: fixed scenery for the "
-                                                     "static collision commands; its number is free at run time"
-                                                   : "MAKE STATIC OBJECT is not implemented in the Pro profile"));
-            }
 
             Heading("Transform");
             // The one section a program's scene edits: each part has its own state, not the Inspector's.
@@ -337,13 +315,12 @@ namespace dbc::studio
                     break;
                 case scene::NodeKind::Sphere:
                     ImGui::DragFloat(TrId("Diameter"), &Node.Size, 0.25f, 0.01f, 100000.0f);
-                    if (Pro(Document_))
-                        Optional("Rings, segments", Node.Detail, glm::ivec2(12, 16),
-                                 [](glm::ivec2& Detail)
-                                 {
-                                     ImGui::DragInt2(TrId("Rings, segments"), &Detail.x, 0.25f, 3, 100);
-                                     Detail = glm::max(Detail, glm::ivec2(3));
-                                 });
+                    Optional("Rings, segments", Node.Detail, glm::ivec2(12, 16),
+                             [](glm::ivec2& Detail)
+                             {
+                                 ImGui::DragInt2(TrId("Rings, segments"), &Detail.x, 0.25f, 3, 100);
+                                 Detail = glm::max(Detail, glm::ivec2(3));
+                             });
                     break;
                 case scene::NodeKind::Cylinder:
                 case scene::NodeKind::Cone:
@@ -351,9 +328,8 @@ namespace dbc::studio
                     break;
                 case scene::NodeKind::Plain:
                     ImGui::DragFloat2(TrId("Width, height"), &Node.Extent.x, 0.25f, 0.01f, 100000.0f);
-                    if (Pro(Document_))
-                        Optional("Orientation", Node.PlainOrientation, 0,
-                                 [](int& Orientation) { ImGui::InputInt(TrId("Orientation"), &Orientation); });
+                    Optional("Orientation", Node.PlainOrientation, 0,
+                             [](int& Orientation) { ImGui::InputInt(TrId("Orientation"), &Orientation); });
                     break;
                 case scene::NodeKind::Triangle:
                     ImGui::DragFloat3(TrId("Corner 1"), &Node.Corners[0].x, 0.25f);
@@ -436,11 +412,6 @@ namespace dbc::studio
         void SceneEditor::DrawAnimation(scene::SceneNode& Node)
         {
             Heading("Animation");
-            if (Node.Static)
-            {
-                Hint(Tr("A static object does not animate."));
-                return;
-            }
             const scene::ModelAnimation* Info = ModelAnimationOf(Node.Asset);
             const bool HasClip = Info != nullptr && Info->Count > 0;
             if (!HasClip && !Node.Frames)
@@ -587,18 +558,9 @@ namespace dbc::studio
 
             scene::ObjectFlags& Flags = Mat.Flags;
             ImGui::Checkbox(TrId("Wireframe"), &Flags.Wireframe);
-            if (Pro(Document_))
-            {
-                ImGui::SliderInt(TrId("Transparency"), &Flags.Transparency, 0, 7);
-                if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("%s", Tr("SET OBJECT transparency mode; 0 draws black as black"));
-            }
-            else
-            {
-                bool Transparent = Flags.Transparency != scene::OpaqueTransparency(Document_.Profile);
-                if (ImGui::Checkbox(TrId("Black is transparent"), &Transparent))
-                    Flags.Transparency = Transparent ? 0 : scene::OpaqueTransparency(Document_.Profile);
-            }
+            ImGui::SliderInt(TrId("Transparency"), &Flags.Transparency, 0, 7);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s", Tr("SET OBJECT transparency mode; 0 draws black as black"));
             ImGui::Checkbox(TrId("Cull back faces"), &Flags.Cull);
             ImGui::SameLine();
             ImGui::Checkbox(TrId("Filter"), &Flags.Filter);
@@ -608,8 +570,6 @@ namespace dbc::studio
             ImGui::SameLine();
             ImGui::Checkbox(TrId("Ambient"), &Flags.Ambient);
 
-            if (!Pro(Document_))
-                return;
             OptionalColor("Diffuse", Mat.Diffuse, 0xFFFFFF);
             OptionalColor("Ambience", Mat.Ambience, 0xFFFFFF);
             OptionalColor("Emissive", Mat.Emissive, 0x000000);
@@ -694,45 +654,42 @@ namespace dbc::studio
                     OptionalFloat("Fog distance", Env.FogDistance, 3000.0f, 5.0f, 0.0f, 1000000.0f);
                 }
 
-                if (Pro(Document_))
+                Heading("Shadows");
+                bool Shadows = Env.ShadowMode.has_value();
+                if (ImGui::Checkbox(TrId("Shadow source"), &Shadows))
+                    Env.ShadowMode = Shadows ? std::optional<int>(-1) : std::nullopt;
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("%s",
+                                      Tr("SET SHADOW POSITION; objects cast with Casts a shadow in their material"));
+                if (Env.ShadowMode)
                 {
-                    Heading("Shadows");
-                    bool Shadows = Env.ShadowMode.has_value();
-                    if (ImGui::Checkbox(TrId("Shadow source"), &Shadows))
-                        Env.ShadowMode = Shadows ? std::optional<int>(-1) : std::nullopt;
-                    if (ImGui::IsItemHovered())
-                        ImGui::SetTooltip(
-                            "%s", Tr("SET SHADOW POSITION; objects cast with Casts a shadow in their material"));
-                    if (Env.ShadowMode)
+                    // Light 0 and missing lights sit at the origin, on the ground of most
+                    // levels, where every volume lies along the floor; the labels say so.
+                    const auto Label = [&](int Mode)
                     {
-                        // Light 0 and missing lights sit at the origin, on the ground of most
-                        // levels, where every volume lies along the floor; the labels say so.
-                        const auto Label = [&](int Mode)
-                        {
-                            if (Mode == -1)
-                                return std::string(Tr("Fixed position"));
-                            const scene::SceneNode* Light =
-                                Mode > 0 ? Document_.Find(scene::IdSpace::Light, Mode) : nullptr;
-                            if (Light != nullptr)
-                                return TrFmt("Light {0}: {1}", {std::to_string(Mode), Light->Name});
-                            return TrFmt("Light {0} (at the origin)", {std::to_string(Mode)});
-                        };
-                        if (ImGui::BeginCombo(TrId("Cast from"), Label(*Env.ShadowMode).c_str()))
-                        {
-                            std::vector<int> Modes = {-1, 0};
-                            for (const scene::SceneNode& Node : Document_.Nodes)
-                                if (Node.Kind == scene::NodeKind::Light)
-                                    Modes.push_back(Node.Id);
-                            if (std::find(Modes.begin(), Modes.end(), *Env.ShadowMode) == Modes.end())
-                                Modes.push_back(*Env.ShadowMode);
-                            for (const int Mode : Modes)
-                                if (ImGui::Selectable(Label(Mode).c_str(), Mode == *Env.ShadowMode))
-                                    Env.ShadowMode = Mode;
-                            ImGui::EndCombo();
-                        }
-                        if (*Env.ShadowMode == -1)
-                            ImGui::DragFloat3(TrId("Shadow position"), &Env.ShadowPosition.x, 0.5f);
+                        if (Mode == -1)
+                            return std::string(Tr("Fixed position"));
+                        const scene::SceneNode* Light =
+                            Mode > 0 ? Document_.Find(scene::IdSpace::Light, Mode) : nullptr;
+                        if (Light != nullptr)
+                            return TrFmt("Light {0}: {1}", {std::to_string(Mode), Light->Name});
+                        return TrFmt("Light {0} (at the origin)", {std::to_string(Mode)});
+                    };
+                    if (ImGui::BeginCombo(TrId("Cast from"), Label(*Env.ShadowMode).c_str()))
+                    {
+                        std::vector<int> Modes = {-1, 0};
+                        for (const scene::SceneNode& Node : Document_.Nodes)
+                            if (Node.Kind == scene::NodeKind::Light)
+                                Modes.push_back(Node.Id);
+                        if (std::find(Modes.begin(), Modes.end(), *Env.ShadowMode) == Modes.end())
+                            Modes.push_back(*Env.ShadowMode);
+                        for (const int Mode : Modes)
+                            if (ImGui::Selectable(Label(Mode).c_str(), Mode == *Env.ShadowMode))
+                                Env.ShadowMode = Mode;
+                        ImGui::EndCombo();
                     }
+                    if (*Env.ShadowMode == -1)
+                        ImGui::DragFloat3(TrId("Shadow position"), &Env.ShadowPosition.x, 0.5f);
                 }
 
                 Heading("Camera");
@@ -745,7 +702,7 @@ namespace dbc::studio
                 scene::DisplaySettings& Display = Document_.Display;
                 Optional("Display mode", Display.DisplayMode, glm::ivec3(800, 600, 32),
                          [](glm::ivec3& Mode) { ImGui::InputInt3(TrId("Width, height, depth"), &Mode.x); });
-                if (Pro(Document_) && Display.DisplayMode)
+                if (Display.DisplayMode)
                 {
                     bool Vsync = Display.Vsync.value_or(0) != 0;
                     if (ImGui::Checkbox(TrId("Vertical sync"), &Vsync))
