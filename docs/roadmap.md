@@ -37,8 +37,9 @@ Language:
 - [ ] Remove the VR forms and the `X/Y/Z VECTOR3` readers from Classic; `vr_tracking.dba`
   moves to DBPro.
 - [ ] Reserve the Scene view for DBPro.
-- [ ] Port to DBPro the common commands only Classic implements, such as `WAIT`,
-  `SET OBJECT FRAME`, `APPEND OBJECT` and `SCROLL OBJECT TEXTURE`.
+- [ ] Port to DBPro the common commands only Classic implements: `WAIT`,
+  `SET OBJECT FRAME`, `APPEND OBJECT`, `SCROLL OBJECT TEXTURE`,
+  `SET OBJECT COLLISION TO POLYGONS` and `SET GLOBAL COLLISION ON/OFF`.
 - [ ] Then default new projects to DBPro.
 
 Build and release:
@@ -78,17 +79,42 @@ Publication:
 ## DBPro parity
 
 The catalogue counts 923 of DBPro's 1,264 core commands and functions as implemented,
-against 719 of 748 in Classic; 116 exist in both profiles and run only in Classic.
+against 719 of 748 in Classic. The other 341 are sorted here by name only; confirm each
+one when it is picked up.
 
-- [ ] Audit the 341 missing forms: obsolete, covered by another form, or to port, such
-  as `SET CAMERA TO IMAGE`.
-- [ ] Multiplayer ([network.md](network.md)) and animations ([video.md](video.md)) in
-  DBPro. DLL commands stay unsupported there.
+152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access
+(89); raw memory and pointers, assembly shaders and DLLs (42); FTP and HTTP without TLS
+(21).
+
+To port, in order:
+
+- [ ] Render to texture, before the HDR target, which needs the same off-screen
+  rendering: `SET CAMERA TO IMAGE`, `DRAW TO CAMERA`, `SET CAMERA CLIP`, `TEXTURE SCREEN`
+  and `SET SCREEN EFFECT`.
+- [ ] Multiplayer ([network.md](network.md)), 35 of 37 forms already in Classic, and
+  animations ([video.md](video.md)), 16 of 21.
+- [ ] Common forms neither profile implements: `AUTOMATIC OBJECT COLLISION`,
+  `AUTOMATIC CAMERA COLLISION`, `EXCLUDE OBJECT ON/OFF`, `EXCLUDE LIMB ON/OFF`,
+  `ENABLE OBJECT ZBIAS`, `SET OBJECT MASK`, `MAKE FIRE PARTICLES`, `MAKE SNOW PARTICLES`
+  and `MAKE EMITTER`.
+- [ ] Advanced Terrain (16 forms), force feedback (11, all in Classic) and what remains
+  of the other gaps, such as `ADD LOD TO OBJECT` and `REDUCE MESH`.
+
+To rethink rather than port:
+
+- [ ] Static objects, portals and lightmaps (31 forms).
+- [ ] CSG (7 forms).
+
+Validation and scope:
+
 - [ ] More DBPro demos and qualified programs: 3 demos and 38 programs, against 6 and
   57 in Classic.
-- [ ] Decide whether to remove the DBPro extensions from the catalogue, with their
-  reference and audits: 1,270 commands and functions, some redundant, of which only
-  20 ODE ones run (on Jolt). OpenDBC's own commands would replace them.
+- [ ] Decide on the DBPro extensions after the research on DBPro. Proposal: remove Dark
+  Physics, Dark Dynamix and Cloth/Particles from the catalogue, with their reference and
+  audits (1,149 forms, none runs), and keep ODE (121 forms, 20 run on Jolt). Removed
+  forms need an explicit diagnostic: `PHY` and `DYN` by prefix, a list for Cloth/Particles,
+  whose names share none. The `AGENTS.md` rules on stable `SymbolId`s and diagnostics
+  would have to allow it.
 
 ## Modern features
 
@@ -105,8 +131,9 @@ Rendering:
 - [ ] Shadow maps alongside PBR: stencil volumes darken surfaces by a fixed 25 % and
   keep casters on the CPU path.
 - [ ] GTAO with normals rebuilt from depth, SMAA, and MSAA for VR.
-- [ ] Baked reflection and light probes: HDR cube textures, baked by the runner without
-  a window and loaded by a command.
+- [ ] Baked lightmaps, reflection and light probes, from one pipeline: the runner bakes
+  them without a window into files that commands load, with HDR cube textures for the
+  probes.
 - [ ] SSR when a game calls for it: normals and roughness in every pipeline, effects
   included.
 - [ ] TAA when a game calls for it: the CPU path has no previous-frame positions, so
@@ -117,12 +144,22 @@ Rendering:
 
 Studio:
 
+- [ ] Debugger, as the DBPro IDE had: breakpoints, stepping and variable inspection, with
+  the program running in its child process.
 - [ ] Normal maps generated from existing textures, then full PBR sets by heuristics
   with sliders: metalness cannot be derived from an albedo. No ML dependency.
 - [ ] 2D view for UI and HUD, written and read back as BASIC like levels, over a BASIC
   library using `TYPE` and `#CONSTANT`. The language has no callbacks, so an update
   function returns the widget clicked. Check the 2D commands first for nine-slice and
-  clipping.
+  clipping. Tilemaps come after the UI.
+
+Gameplay:
+
+- [ ] Physics commands on Jolt, which is already linked: rigid bodies, joints and
+  vehicles in one family that can replace the DBPro extensions.
+- [ ] Animation clips: cross-fades and blending between them.
+- [ ] Navigation: pathfinding over data baked in the Scene view. Weigh a dependency such
+  as Recast against a grid in a BASIC library.
 
 Network:
 
