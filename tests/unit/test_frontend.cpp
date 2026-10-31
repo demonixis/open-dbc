@@ -206,6 +206,35 @@ TEST_CASE("Classic IF lines mix block and inline forms")
               .HasErrors());
 }
 
+TEST_CASE("Classic runs whole blocks inside an inline THEN")
+{
+    const dbc::language::Program Classic =
+        dbc::language::Compile(Source("a=1\n"
+                                      "if a=1 then for f=1 to 3 : print f : next f\n"
+                                      "if a=1 then for f=1 to 3 : print f : next f : a=2\n"
+                                      "if a=1 then while a<3 : inc a : endwhile else a=9\n",
+                                      dbc::language::LanguageProfile::Dbc));
+    for (const auto& Diagnostic : Classic.Diagnostics)
+        INFO(dbc::language::FormatDiagnostic(*Classic.Source, Diagnostic));
+    CHECK_FALSE(Classic.HasErrors());
+    REQUIRE(Classic.Statements.size() == 4);
+    REQUIRE(Classic.Statements[1].Body.size() == 1);
+    CHECK(Classic.Statements[1].Body.front().Kind == dbc::language::StatementKind::For);
+    CHECK(Classic.Statements[2].Body.size() == 2);
+    CHECK(Classic.Statements[3].Body.front().Kind == dbc::language::StatementKind::While);
+    CHECK(Classic.Statements[3].ElseBody.size() == 1);
+    CHECK(dbc::vm::Lower(Classic).Success());
+
+    const dbc::language::Program Open = dbc::language::Compile(
+        Source("if 1=1 then for f=1 to 3 : print f\nprint 2\n", dbc::language::LanguageProfile::Dbc));
+    CHECK(HasCode(Open, "DBC1203"));
+    CHECK(Open.Statements.size() == 2);
+
+    CHECK(dbc::language::Compile(
+              Source("if 1=1 then for f=1 to 3 : print f : next f\n", dbc::language::LanguageProfile::DbPro))
+              .HasErrors());
+}
+
 TEST_CASE("REMSTART blocks are comments and must be closed")
 {
     const auto Open = Source("print 1\nremstart\nprint 2\n", dbc::language::LanguageProfile::Dbc);

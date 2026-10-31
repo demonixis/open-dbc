@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <limits>
 #include <set>
+#include <utility>
 
 namespace dbc::language::detail
 {
@@ -1529,6 +1530,47 @@ namespace dbc::language::detail
                 const DepthScope Scope(Depth_);
                 assert(Depth_ < KMaxNestingDepth); // RoomForBlock ran before the IF.
                 ++Depth_;
+                std::vector<Segment> Parts = SplitInlineBody(Tokens, Begin, End);
+                // Classic runs a whole block inside THEN: `if a then for i=1 to 3 : print i : next i`.
+                if (Source_.Profile == LanguageProfile::Dbc &&
+                    std::any_of(Parts.begin(), Parts.end(), [this](const Segment& Part) { return OpensBlock(Part); }))
+                    return ParseSegments(std::move(Parts));
+                for (Segment& Value : Parts)
+                {
+                    if (FirstIs(Value, "IF"))
+                    {
+                        const std::size_t Then = FindTopLevelWord(Value.Tokens, "THEN", 1);
+                        if (Then != Npos)
+                        {
+                            if (!RoomForBlock(Value.Span))
+                                break;
+                            Statement Nested;
+                            Nested.Kind = StatementKind::If;
+                            Nested.Span = Value.Span;
+                            Nested.Expressions.push_back(ParseExpression(Value.Tokens, 1, Then));
+                            Nested.Body = ParseInlineBlock(Value.Tokens, Then + 1, Value.Tokens.size());
+                            Result.push_back(std::move(Nested));
+                        }
+                        else
+                        {
+                            Result.push_back(ParseSimple(std::move(Value)));
+                        }
+                    }
+                    else
+                    {
+                        std::vector<Segment> Declarations;
+                        AppendDeclarationList(std::move(Value), Declarations);
+                        for (Segment& Declaration : Declarations)
+                            Result.push_back(ParseSimple(std::move(Declaration)));
+                    }
+                }
+                return Result;
+            }
+
+            std::vector<Segment> SplitInlineBody(const std::vector<Token>& Tokens, std::size_t Begin,
+                                                 std::size_t End) const
+            {
+                std::vector<Segment> Result;
                 std::size_t PartBegin = Begin;
                 int Depth = 0;
                 for (std::size_t Index = Begin; Index <= End; ++Index)
@@ -1547,36 +1589,24 @@ namespace dbc::language::detail
                     {
                         std::vector<Token> Part(Tokens.begin() + static_cast<std::ptrdiff_t>(PartBegin),
                                                 Tokens.begin() + static_cast<std::ptrdiff_t>(Index));
-                        Segment Value{std::move(Part), Merge(Tokens[PartBegin].Span, Tokens[Index - 1].Span), false};
-                        if (FirstIs(Value, "IF"))
-                        {
-                            const std::size_t Then = FindTopLevelWord(Value.Tokens, "THEN", 1);
-                            if (Then != Npos)
-                            {
-                                if (!RoomForBlock(Value.Span))
-                                    break;
-                                Statement Nested;
-                                Nested.Kind = StatementKind::If;
-                                Nested.Span = Value.Span;
-                                Nested.Expressions.push_back(ParseExpression(Value.Tokens, 1, Then));
-                                Nested.Body = ParseInlineBlock(Value.Tokens, Then + 1, Value.Tokens.size());
-                                Result.push_back(std::move(Nested));
-                            }
-                            else
-                            {
-                                Result.push_back(ParseSimple(std::move(Value)));
-                            }
-                        }
-                        else
-                        {
-                            std::vector<Segment> Declarations;
-                            AppendDeclarationList(std::move(Value), Declarations);
-                            for (Segment& Declaration : Declarations)
-                                Result.push_back(ParseSimple(std::move(Declaration)));
-                        }
+                        Result.push_back(
+                            {std::move(Part), Merge(Tokens[PartBegin].Span, Tokens[Index - 1].Span), false});
                     }
                     PartBegin = Index + 1;
                 }
+                return Result;
+            }
+
+            // Runs the block parser over an inline body, then restores the line's own segments.
+            std::vector<Statement> ParseSegments(std::vector<Segment> Parts)
+            {
+                std::swap(Segments_, Parts);
+                const std::size_t Position = std::exchange(Position_, 0);
+                std::vector<Statement> Result;
+                while (!AtEnd())
+                    Result.push_back(ParseStatement());
+                std::swap(Segments_, Parts);
+                Position_ = Position;
                 return Result;
             }
 
