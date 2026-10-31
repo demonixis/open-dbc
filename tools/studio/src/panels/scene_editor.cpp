@@ -219,6 +219,30 @@ namespace dbc::studio
             Camera_.Yaw = Document_.Env.CameraRotation.y;
         }
 
+        bool SceneEditor::ShowLevelOf(const std::filesystem::path& Source)
+        {
+            if (!Project_)
+                return false;
+            MoveOlderLevels();
+            const std::vector<std::string> Names = LevelNames();
+            std::error_code Error;
+            const auto Same = [&](const std::filesystem::path& Other)
+            { return std::filesystem::equivalent(Source, Other, Error); };
+            const auto Level = std::find_if(Names.begin(), Names.end(), [&](const std::string& Name)
+                                            { return Same(LevelPath(Name)) || Same(WorldPath(Name)); });
+            if (Level == Names.end() && (Names.empty() || !Same(Project_->EntrySource)))
+                return false;
+            // The main source keeps the level already open; a program's scene gives way to the first one.
+            const bool Keep = HasLevel_ && !Program_ && (Level == Names.end() || Document_.Name == *Level);
+            if (!Keep)
+            {
+                if (Dirty())
+                    Save();
+                OpenLevel(Level == Names.end() ? Names.front() : *Level);
+            }
+            return true;
+        }
+
         const std::filesystem::path* SceneEditor::ProgramSource() const
         {
             return Program_ ? &Program_->Source : nullptr;

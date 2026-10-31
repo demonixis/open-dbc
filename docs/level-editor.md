@@ -9,6 +9,11 @@ current mode's layout.
 The mode needs an open, writable project whose main source is a `.dba` file.
 Otherwise the switch is disabled and its tooltip says why.
 
+The switch shows the active tab. A level's file opens that level, and so does
+the main source of a project with levels; any other `.dba` opens as
+[any program](#any-program). Without a `.dba` tab, or while a program runs, it
+shows the current level, the first one, or a new `Level1`.
+
 ## Files
 
 A level is BASIC, and nothing else is stored. Each level has its own folder:
@@ -52,13 +57,16 @@ file.
 
 ## Any program
 
-**File → Open in Scene View**, or the same item in the Project panel's menu on a
-`.dba` file, shows what any program builds. The Studio runs it headless and
-silent with `--capture-scene`, for 30 seconds at most, and only on this request:
-like any run it executes the program ([security](SECURITY.md)). **Setup frames**
-says how many frames build the scene; what later frames set belongs to the game
-loop. **Refresh** runs it again. An included file is seen through the program
-including it, with only the nodes it creates.
+The Code | Scene switch, or **Open in Scene View** in the Project panel's menu on a
+`.dba` file, shows what any program builds, including a main source with levels
+when the menu asks. The Studio runs it headless and silent with `--capture-scene`,
+for 30 seconds at most. **Clicking Scene on such a tab therefore executes the
+program**, like any run ([security](SECURITY.md)); the mode changes when the
+capture ends, and an error leaves you in Code. Coming back to the program on show
+runs nothing unless its text changed. **Setup frames** says how many frames build
+the scene; what later frames set belongs to the game loop. **Refresh** runs it
+again. An included file is seen through the program including it, with only the
+nodes it creates.
 
 The banner lists what is left out: limbs, meshes, particles, vertex data, BSP
 worlds and `APPEND OBJECT`. Custom geometry shows as a box. Hidden and

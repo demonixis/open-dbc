@@ -6,7 +6,9 @@ Opening a `.dba` or `.dbpro` in OpenDBC and running it gives that program the
 rights of your user account. A program can launch other programs (`EXECUTE FILE`),
 load native plugins (`LOAD DLL`), open network connections and write files. Its
 file paths resolve under the project folder, but that is not a sandbox. Run only
-programs and plugins you trust, as you would any executable.
+programs and plugins you trust, as you would any executable. The Studio's Scene
+switch runs a program too, to read what it builds
+([scene view](level-editor.md#any-program)).
 
 Exported games carry the same rights on the player's machine.
 

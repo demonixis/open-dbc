@@ -125,6 +125,8 @@ namespace dbc::studio
         std::string SceneBlocker() const;
         void UpdateSceneProject();
         void SetMode(Mode Value);
+        // The Scene switch: shows the active source there, running it when it is not a level.
+        void ShowScene();
         void RunScene();
         // Reads what a program builds and shows it in the Scene mode. It runs the program, so only on request.
         void OpenInScene(const std::filesystem::path& Path);
@@ -220,6 +222,7 @@ namespace dbc::studio
         struct SceneCaptureRun
         {
             std::filesystem::path Source;
+            std::optional<std::string> SourceText;
             int SetupFrames = 1;
             std::string OnlyFile;
             std::filesystem::path Output;
@@ -228,6 +231,8 @@ namespace dbc::studio
         };
 
         std::optional<SceneCaptureRun> SceneCapture_;
+        // The text of the program on show in the Scene mode, when it was read.
+        std::optional<std::string> SceneProgramText_;
         // Generated textures of the scene on show, which the viewport keeps loading from here.
         std::filesystem::path SceneCaptureImages_;
         // Waits for the project's language to be chosen.

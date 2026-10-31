@@ -903,6 +903,28 @@ namespace dbc::studio
             Scene_.Activate();
     }
 
+    void App::ShowScene()
+    {
+        // The capture under way shows its scene when it ends.
+        if (SceneCapture_)
+            return;
+        const std::filesystem::path Source = Editor_.CurrentIsBasic() ? Editor_.CurrentPath() : std::filesystem::path();
+        if (Mode_ == Mode::Scene || !SceneBlocker().empty() || Source.empty() || ExecutionBusy_ ||
+            !Execution_.CanCaptureScene())
+        {
+            SetMode(Mode::Scene);
+            return;
+        }
+        std::error_code Error;
+        const std::filesystem::path* Shown = Scene_.ProgramSource();
+        const bool OnShow = Shown != nullptr && std::filesystem::equivalent(*Shown, Source, Error);
+        // Coming back to the program on show runs nothing, unless its text moved on.
+        if (OnShow ? ReadSource(Source) == SceneProgramText_ : Scene_.ShowLevelOf(Source))
+            SetMode(Mode::Scene);
+        else
+            OpenInScene(Source);
+    }
+
     std::optional<std::string> App::ReadSource(const std::filesystem::path& Path) const
     {
         if (std::optional<std::string> Buffer = Editor_.OpenText(Path))
@@ -1017,6 +1039,7 @@ namespace dbc::studio
         }
         SceneCaptureRun Run;
         Run.Source = Source;
+        Run.SourceText = ReadSource(Source);
         Run.SetupFrames = SetupFrames;
         if (Target != Source.lexically_normal())
             Run.OnlyFile = dbc::GenericPathToUtf8(Source.lexically_normal());
@@ -1088,6 +1111,7 @@ namespace dbc::studio
             Output_.Append(TrFmt("{0} stopped with an error: the scene shows what it had built.", {Name}),
                            panels::OutputPanel::Severity::Error);
         Scene_.OpenCapture(Run.Source, Capture, Run.SetupFrames, Run.OnlyFile);
+        SceneProgramText_ = Run.SourceText;
         std::filesystem::remove_all(SceneCaptureImages_, Ignored);
         SceneCaptureImages_ = std::move(Images);
         SetMode(Mode::Scene);
@@ -1484,7 +1508,7 @@ namespace dbc::studio
         if (Command && ImGui::IsKeyPressed(ImGuiKey_1, false))
             SetMode(Mode::Code);
         else if (Command && ImGui::IsKeyPressed(ImGuiKey_2, false))
-            SetMode(Mode::Scene);
+            ShowScene();
 
         if (Mode_ == Mode::Scene)
         {
@@ -1957,7 +1981,7 @@ namespace dbc::studio
             if (ImGui::MenuItem(TrId("Code##Mode"), "Ctrl+1", Mode_ == Mode::Code))
                 SetMode(Mode::Code);
             if (ImGui::MenuItem(TrId("Scene##Mode"), "Ctrl+2", Mode_ == Mode::Scene, Blocker.empty()))
-                SetMode(Mode::Scene);
+                ShowScene();
             if (!Blocker.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", Tr(Blocker.c_str()));
             ImGui::Separator();
@@ -2110,7 +2134,7 @@ namespace dbc::studio
         ImGui::SameLine();
         if (ModeButton("Scene", Mode_ == Mode::Scene, Blocker.empty(),
                        Blocker.empty() ? "Scene (Ctrl+2)" : Blocker.c_str()))
-            SetMode(Mode::Scene);
+            ShowScene();
 
         ImGui::EndChild();
         ImGui::PopStyleColor();

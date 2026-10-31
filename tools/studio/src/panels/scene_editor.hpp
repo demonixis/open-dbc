@@ -106,6 +106,15 @@ namespace dbc::studio
             // what the capture is limited to when that file is run through the program including it.
             void OpenCapture(const std::filesystem::path& Source, const scene::SceneCapture& Capture, int SetupFrames,
                              const std::string& OnlyFile);
+            // When `Source` is a level's file, or the main source of a project with levels, shows that
+            // level and returns true. Any other source is a program to capture.
+            bool ShowLevelOf(const std::filesystem::path& Source);
+
+            const std::string& LevelName() const
+            {
+                return Document_.Name;
+            }
+
             // The program shown instead of a level; nullptr when a level is open.
             const std::filesystem::path* ProgramSource() const;
 

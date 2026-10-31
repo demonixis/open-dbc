@@ -791,6 +791,46 @@ TEST_CASE("A program's scene replaces the level until a level is opened again")
     CHECK_FALSE(Driver.Editor().Dirty());
 }
 
+TEST_CASE("The Scene switch shows a level for its own files and the main source, and captures the rest")
+{
+    SceneViewDriver Driver("show_level_of", LevelOfCubes({glm::vec3(0.0f)}));
+    const std::filesystem::path Program = Driver.Root() / "tool.dba";
+    Driver.WriteFile("tool.dba", "print 1\n");
+    const std::filesystem::path Main = Driver.Root() / "main.dba";
+    CHECK_FALSE(Driver.Editor().ShowLevelOf(Program));
+
+    Driver.CreateLevel("Second");
+    const std::filesystem::path Level = Driver.Root() / scene::LevelRelativePath("Level");
+    const std::filesystem::path Second = Driver.Root() / scene::LevelRelativePath("Second");
+
+    // A level's own file opens it, and the main source keeps the one already open.
+    CHECK(Driver.Editor().ShowLevelOf(Level));
+    CHECK(Driver.Editor().LevelName() == "Level");
+    CHECK(Driver.Editor().ShowLevelOf(Second));
+    CHECK(Driver.Editor().LevelName() == "Second");
+    CHECK(Driver.Editor().ShowLevelOf(Main));
+    CHECK(Driver.Editor().LevelName() == "Second");
+    CHECK_FALSE(Driver.Editor().ShowLevelOf(Program));
+
+    // A program's scene gives way to the first level.
+    scene::SceneCapture Capture;
+    Capture.Status = "completed";
+    Driver.Editor().OpenCapture(Program, Capture, 1, {});
+    REQUIRE(Driver.Editor().ProgramSource() != nullptr);
+    CHECK(Driver.Editor().ShowLevelOf(Main));
+    CHECK(Driver.Editor().ProgramSource() == nullptr);
+    CHECK(Driver.Editor().LevelName() == "Level");
+}
+
+TEST_CASE("The Scene switch captures a main source when the project has no level")
+{
+    SceneViewDriver Driver("show_level_of_none", LevelOfCubes({}));
+    const std::filesystem::path Main = Driver.Root() / "main.dba";
+    std::error_code Error;
+    std::filesystem::remove_all(Driver.Root() / scene::KLevelFolder, Error);
+    CHECK_FALSE(Driver.Editor().ShowLevelOf(Main));
+}
+
 TEST_CASE("A gizmo move of a program's node rewrites its statement, and a locked axis stays put")
 {
     const glm::vec3 Spot(0.0f, 0.0f, 0.0f);
