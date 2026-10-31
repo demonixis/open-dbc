@@ -11548,3 +11548,129 @@ TEST_CASE("DBPro LOD models take over past their distance and emitters are plane
         CHECK(SizeX == doctest::Approx(40.0f));
     }
 }
+
+TEST_CASE("DBPro REDUCE MESH makes boxes of a mesh and CONVERT OBJECT FVF sets what its vertices carry")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    const auto Stored = [&](int MeshId) -> const dbc::MeshGeometry&
+    {
+        const std::vector<dbc::Mesh>* Meshes = Kernel.Objects().GetMeshes(MeshId);
+        REQUIRE(Meshes != nullptr);
+        REQUIRE(Meshes->size() == 1);
+        return Meshes->front().Geometry();
+    };
+
+    SUBCASE("a solid box stays one box of the same size, with its faces outwards")
+    {
+        REQUIRE(Command(SymbolId::Command_MakeObjectBox, {1, 30, 30, 30}));
+        REQUIRE(Command(SymbolId::Command_MakeMeshFromObject, {1, 1}));
+        REQUIRE(Command(SymbolId::Command_ReduceMesh, {1, 0, 0, 3, 3, 3}));
+        const dbc::MeshGeometry& Box = Stored(1);
+        CHECK(Box.Vertices.size() == 24);
+        CHECK(Box.Indices.size() == 36);
+        for (const dbc::Vec3& Vertex : Box.Vertices)
+        {
+            CHECK(std::abs(Vertex.X) == doctest::Approx(15.0f));
+            CHECK(std::abs(Vertex.Y) == doctest::Approx(15.0f));
+            CHECK(std::abs(Vertex.Z) == doctest::Approx(15.0f));
+        }
+        for (std::size_t Index = 0; Index + 2 < Box.Indices.size(); Index += 3)
+        {
+            const dbc::Vec3& A = Box.Vertices[Box.Indices[Index]];
+            const dbc::Vec3& B = Box.Vertices[Box.Indices[Index + 1]];
+            const dbc::Vec3& C = Box.Vertices[Box.Indices[Index + 2]];
+            const dbc::Vec3 Face = dbc::Vec3Cross(dbc::Vec3Sub(B, A), dbc::Vec3Sub(C, A));
+            CHECK(dbc::Vec3Dot(Face, Box.Normals[Box.Indices[Index]]) > 0.0f);
+            CHECK(dbc::Vec3Dot(A, Box.Normals[Box.Indices[Index]]) > 0.0f);
+        }
+    }
+
+    SUBCASE("a sphere loses its corners and keeps inside its bounds")
+    {
+        REQUIRE(Command(SymbolId::Command_MakeObjectSphere, {1, 100, 24, 24}));
+        const std::size_t Before = Kernel.Objects().GetObject(1)->Meshes.front().Geometry().Vertices.size();
+        REQUIRE(Command(SymbolId::Command_MakeMeshFromObject, {1, 1}));
+        REQUIRE(Command(SymbolId::Command_ReduceMesh, {1, 0, 0, 6, 6, 6}));
+        const dbc::MeshGeometry& Reduced = Stored(1);
+        CHECK(Reduced.Vertices.size() > 24);
+        CHECK(Reduced.Vertices.size() < Before);
+        bool ReachesTheCorner = false;
+        for (const dbc::Vec3& Vertex : Reduced.Vertices)
+        {
+            CHECK(std::abs(Vertex.X) <= doctest::Approx(50.1f));
+            CHECK(std::abs(Vertex.Y) <= doctest::Approx(50.1f));
+            CHECK(std::abs(Vertex.Z) <= doctest::Approx(50.1f));
+            ReachesTheCorner = ReachesTheCorner ||
+                               (std::abs(Vertex.X) > 49.0f && std::abs(Vertex.Y) > 49.0f && std::abs(Vertex.Z) > 49.0f);
+        }
+        CHECK_FALSE(ReachesTheCorner);
+    }
+
+    SUBCASE("limits, minimums and a missing mesh")
+    {
+        REQUIRE(Command(SymbolId::Command_MakeObjectCube, {1, 30}));
+        REQUIRE(Command(SymbolId::Command_MakeMeshFromObject, {1, 1}));
+        const std::size_t Before = Stored(1).Vertices.size();
+        const uint64_t Revision = Stored(1).Revision;
+        REQUIRE(Command(SymbolId::Command_ReduceMesh, {1, 0, 0, 51, 3, 3}));
+        CHECK(Stored(1).Revision == Revision);
+        CHECK(Stored(1).Vertices.size() == Before);
+        REQUIRE(Command(SymbolId::Command_ReduceMesh, {1, 0, 0, 0, 0, 0}));
+        CHECK(Stored(1).Vertices.size() == 24);
+        CHECK_FALSE(Command(SymbolId::Command_ReduceMesh, {9, 0, 0, 3, 3, 3}));
+        CHECK(Error.find("mesh 9") != std::string::npos);
+    }
+
+    SUBCASE("CONVERT OBJECT FVF adds and removes what a vertex carries")
+    {
+        REQUIRE(Command(SymbolId::Command_MakeObjectCube, {1, 30}));
+        const dbc::Object3D* Object = Kernel.Objects().GetObject(1);
+        REQUIRE(Object != nullptr);
+        const auto Geometry = [&]() -> const dbc::MeshGeometry& { return Object->Meshes.front().Geometry(); };
+        const std::size_t Count = Geometry().Vertices.size();
+        const std::vector<dbc::Vec3> Positions = Geometry().Vertices;
+        const std::vector<SDL_FPoint> Uvs = Geometry().Uvs;
+
+        // XYZ, normal and two sets of coordinates: the second starts at zero.
+        REQUIRE(Command(SymbolId::Command_ConvertObjectFvf, {1, 0x212}));
+        CHECK(Geometry().Normals.size() == Count);
+        CHECK(Geometry().Uvs.size() == Count);
+        REQUIRE(Geometry().UvStages.count(1) == 1);
+        CHECK(Geometry().UvStages.at(1).size() == Count);
+        CHECK(Geometry().UvStages.at(1)[0].x == 0.0f);
+
+        // XYZ and a diffuse colour only: no normals and no coordinates, the positions untouched.
+        REQUIRE(Command(SymbolId::Command_ConvertObjectFvf, {1, 0x042}));
+        CHECK(Geometry().Normals.empty());
+        CHECK(Geometry().Uvs.empty());
+        CHECK(Geometry().UvStages.empty());
+        CHECK(Geometry().DiffuseColors.size() == Count);
+        REQUIRE(Geometry().Vertices.size() == Positions.size());
+        CHECK(Geometry().Vertices[0].X == Positions[0].X);
+
+        // Formats a vertex here cannot hold are refused and change nothing.
+        for (const double Refused : {0x010, 0x004, 0x006, 0x022, 0x082, 0x902})
+        {
+            CHECK_FALSE(Command(SymbolId::Command_ConvertObjectFvf, {1, Refused}));
+            CHECK(Error.find("CONVERT OBJECT FVF") != std::string::npos);
+        }
+        CHECK(Geometry().DiffuseColors.size() == Count);
+        CHECK_FALSE(Command(SymbolId::Command_ConvertObjectFvf, {9, 0x152}));
+    }
+}

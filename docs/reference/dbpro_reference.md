@@ -93,7 +93,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `COLOR PARTICLES` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CONTROL CAMERA USING ARROWKEYS` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CONVERT MESH TO VERTEXDATA` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `CONVERT OBJECT FVF` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `CONVERT OBJECT FVF` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `COPY BITMAP` | Command | 2, 10 | number, number -> void; number, number, number, number, number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `COPY FILE` | Command | 2 | string, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `COPY MATRIX4` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -437,7 +437,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `READ WORD` | Command | 2 | number, integer output -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `RECENTER VR CAMERA` | Command | 0 | none -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `RECORD SOUND` | Command | 1-2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `REDUCE MESH` | Command | 6 | number, number, number, number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `REDUCE MESH` | Command | 6 | number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REMOVE FROM QUEUE` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REMOVE FROM STACK` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REMOVE LIMB` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |

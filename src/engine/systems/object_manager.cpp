@@ -3912,6 +3912,275 @@ namespace dbc
         NotifyObjectCreated(ObjectId);
     }
 
+    bool ObjectManager::ReduceMesh(int MeshId, int GridX, int GridY, int GridZ, std::string* Error)
+    {
+        const std::vector<Mesh>* Meshes = GetMeshes(MeshId);
+        if (!Meshes || Meshes->empty())
+        {
+            if (Error)
+                *Error = "REDUCE MESH requires existing mesh " + std::to_string(MeshId);
+            return false;
+        }
+        // DBPro's limit: a finer grid leaves the mesh as it was.
+        if (GridX > 50 || GridY > 50 || GridZ > 50)
+        {
+            DBC_LOG_WARN("REDUCE MESH left mesh {} unchanged: its grid is limited to 50 divisions", MeshId);
+            return true;
+        }
+        GridX = std::max(GridX, 3);
+        GridY = std::max(GridY, 1);
+        GridZ = std::max(GridZ, 3);
+
+        std::vector<std::array<Vec3, 3>> Triangles;
+        Vec3 Min{std::numeric_limits<float>::max(), std::numeric_limits<float>::max(),
+                 std::numeric_limits<float>::max()};
+        Vec3 Max{-Min.X, -Min.Y, -Min.Z};
+        for (const Mesh& Source : *Meshes)
+        {
+            const MeshGeometry& Geometry = Source.Geometry();
+            const auto Point = [&](uint32_t Index)
+            {
+                const Vec3& Value = Geometry.Vertices[Index];
+                const aiVector3D Moved = Geometry.BindTransform * aiVector3D(Value.X, Value.Y, Value.Z);
+                return Vec3{Moved.x, Moved.y, Moved.z};
+            };
+            const bool Indexed = !Geometry.Indices.empty();
+            const std::size_t Count = Indexed ? Geometry.Indices.size() : Geometry.Vertices.size();
+            const auto VertexAt = [&](std::size_t Corner)
+            { return Indexed ? Geometry.Indices[Corner] : static_cast<uint32_t>(Corner); };
+            for (std::size_t Corner = 0; Corner + 2 < Count; Corner += 3)
+            {
+                if (VertexAt(Corner) >= Geometry.Vertices.size() || VertexAt(Corner + 1) >= Geometry.Vertices.size() ||
+                    VertexAt(Corner + 2) >= Geometry.Vertices.size())
+                    continue;
+                Triangles.push_back(
+                    {Point(VertexAt(Corner)), Point(VertexAt(Corner + 1)), Point(VertexAt(Corner + 2))});
+                for (const Vec3& Value : Triangles.back())
+                {
+                    Min = {std::min(Min.X, Value.X), std::min(Min.Y, Value.Y), std::min(Min.Z, Value.Z)};
+                    Max = {std::max(Max.X, Value.X), std::max(Max.Y, Value.Y), std::max(Max.Z, Value.Z)};
+                }
+            }
+        }
+        if (Triangles.empty())
+            return true;
+
+        const float GapX = std::max((Max.X - Min.X) / static_cast<float>(GridX), 1.0f);
+        const float GapY = std::max((Max.Y - Min.Y) / static_cast<float>(GridY), 1.0f);
+        const float GapZ = std::max((Max.Z - Min.Z) / static_cast<float>(GridZ), 1.0f);
+
+        // A block of wood, chipped away along Z from both ends down to the surface the rays find.
+        enum : uint8_t
+        {
+            Carved,
+            Boxed,
+            Solid
+        };
+
+        std::vector<uint8_t> Blocks(static_cast<std::size_t>(GridX) * GridY * GridZ, Solid);
+        const auto Block = [&](int X, int Y, int Z) -> uint8_t&
+        { return Blocks[(static_cast<std::size_t>(Z) * GridY + Y) * GridX + X]; };
+        const float RayLength = (Max.Z - Min.Z) + 2.0f * GapZ;
+        for (const float Side : {1.0f, -1.0f})
+        {
+            const float StartZ = Side > 0.0f ? Min.Z - GapZ * 0.5f : Max.Z + GapZ * 0.5f;
+            for (int Y = 0; Y < GridY; ++Y)
+            {
+                for (int X = 0; X < GridX; ++X)
+                {
+                    int Depth = GridZ - 1;
+                    int Hits = 0;
+                    float DistanceSum = 0.0f;
+                    for (const int OffsetX : {-1, 0, 1})
+                    {
+                        for (const int OffsetY : {-1, 0, 1})
+                        {
+                            const Vec3 Origin{Min.X + (static_cast<float>(X) + 0.5f + OffsetX / 3.0f) * GapX,
+                                              Min.Y + (static_cast<float>(Y) + 0.5f + OffsetY / 3.0f) * GapY, StartZ};
+                            const Vec3 Direction{0.0f, 0.0f, Side * RayLength};
+                            float Nearest = std::numeric_limits<float>::max();
+                            for (const std::array<Vec3, 3>& Triangle : Triangles)
+                            {
+                                float Along = 0.0f;
+                                if (RayTriangleIntersect(Origin, Direction, Triangle[0], Triangle[1], Triangle[2],
+                                                         Along))
+                                    Nearest = std::min(Nearest, Along * RayLength);
+                            }
+                            if (Nearest == std::numeric_limits<float>::max())
+                                continue;
+                            if (Nearest > GapZ * 0.5f + 0.1f)
+                            {
+                                DistanceSum += Nearest - GapZ * 0.5f;
+                                ++Hits;
+                            }
+                            else
+                                Depth = -1;
+                        }
+                    }
+                    if (Hits > 0)
+                    {
+                        const float Average = DistanceSum / static_cast<float>(Hits) - 0.5f;
+                        Depth = std::min(Depth, static_cast<int>(Average / GapZ));
+                    }
+                    for (int Step = 0; Step <= Depth; ++Step)
+                        Block(X, Y, Side > 0.0f ? Step : GridZ - 1 - Step) = Carved;
+                }
+            }
+        }
+
+        Mesh Result;
+        MeshGeometry& Geometry = Result.EditGeometry();
+        const auto AppendFace = [&](const std::array<Vec3, 4>& Corners, const Vec3& Normal)
+        {
+            const uint32_t First = static_cast<uint32_t>(Geometry.Vertices.size());
+            constexpr std::array<SDL_FPoint, 4> FaceUvs{SDL_FPoint{0.0f, 0.0f}, SDL_FPoint{1.0f, 0.0f},
+                                                        SDL_FPoint{1.0f, 1.0f}, SDL_FPoint{0.0f, 1.0f}};
+            for (std::size_t Corner = 0; Corner < Corners.size(); ++Corner)
+            {
+                Geometry.Vertices.push_back(Corners[Corner]);
+                Geometry.Normals.push_back(Normal);
+                Geometry.Uvs.push_back(FaceUvs[Corner]);
+                Geometry.DiffuseColors.push_back(0xFFFFFFFFu);
+            }
+            for (const uint32_t Corner : {0u, 1u, 2u, 2u, 3u, 0u})
+                Geometry.Indices.push_back(First + Corner);
+        };
+        // Whether every block of a range is still whole, and whether one was carved or the range leaves the grid.
+        const auto AllSolid = [&](int X1, int X2, int Y1, int Y2, int Z1, int Z2)
+        {
+            if (X1 < 0 || Y1 < 0 || Z1 < 0 || X2 >= GridX || Y2 >= GridY || Z2 >= GridZ)
+                return false;
+            for (int Z = Z1; Z <= Z2; ++Z)
+                for (int Y = Y1; Y <= Y2; ++Y)
+                    for (int X = X1; X <= X2; ++X)
+                        if (Block(X, Y, Z) != Solid)
+                            return false;
+            return true;
+        };
+        const auto Exposed = [&](int X1, int X2, int Y1, int Y2, int Z1, int Z2)
+        {
+            if (X1 < 0 || Y1 < 0 || Z1 < 0 || X2 >= GridX || Y2 >= GridY || Z2 >= GridZ)
+                return true;
+            for (int Z = Z1; Z <= Z2; ++Z)
+                for (int Y = Y1; Y <= Y2; ++Y)
+                    for (int X = X1; X <= X2; ++X)
+                        if (Block(X, Y, Z) == Carved)
+                            return true;
+            return false;
+        };
+        for (int StartZ = 0; StartZ < GridZ; ++StartZ)
+        {
+            for (int StartY = 0; StartY < GridY; ++StartY)
+            {
+                for (int StartX = 0; StartX < GridX; ++StartX)
+                {
+                    if (Block(StartX, StartY, StartZ) != Solid)
+                        continue;
+                    int X1 = StartX, X2 = StartX, Y1 = StartY, Y2 = StartY, Z1 = StartZ, Z2 = StartZ;
+                    for (bool Grew = true; Grew;)
+                    {
+                        Grew = false;
+                        if (AllSolid(X1 - 1, X1 - 1, Y1, Y2, Z1, Z2))
+                            --X1, Grew = true;
+                        if (AllSolid(X2 + 1, X2 + 1, Y1, Y2, Z1, Z2))
+                            ++X2, Grew = true;
+                        if (AllSolid(X1, X2, Y1 - 1, Y1 - 1, Z1, Z2))
+                            --Y1, Grew = true;
+                        if (AllSolid(X1, X2, Y2 + 1, Y2 + 1, Z1, Z2))
+                            ++Y2, Grew = true;
+                        if (AllSolid(X1, X2, Y1, Y2, Z1 - 1, Z1 - 1))
+                            --Z1, Grew = true;
+                        if (AllSolid(X1, X2, Y1, Y2, Z2 + 1, Z2 + 1))
+                            ++Z2, Grew = true;
+                    }
+                    for (int Z = Z1; Z <= Z2; ++Z)
+                        for (int Y = Y1; Y <= Y2; ++Y)
+                            for (int X = X1; X <= X2; ++X)
+                                Block(X, Y, Z) = Boxed;
+
+                    const float Left = Min.X + static_cast<float>(X1) * GapX;
+                    const float Right = Min.X + static_cast<float>(X2 + 1) * GapX;
+                    const float Bottom = Min.Y + static_cast<float>(Y1) * GapY;
+                    const float Top = Min.Y + static_cast<float>(Y2 + 1) * GapY;
+                    const float Near = Min.Z + static_cast<float>(Z1) * GapZ;
+                    const float Far = Min.Z + static_cast<float>(Z2 + 1) * GapZ;
+                    // Faces go where DBPro's AddBoxToMesh puts them, each by the side it faces: its own caller
+                    // swaps the near and far flags, which leaves holes where a box meets carved blocks.
+                    if (Exposed(X1, X2, Y1, Y2, Z1 - 1, Z1 - 1))
+                        AppendFace(
+                            {Vec3{Left, Top, Near}, {Right, Top, Near}, {Right, Bottom, Near}, {Left, Bottom, Near}},
+                            {0.0f, 0.0f, -1.0f});
+                    if (Exposed(X1, X2, Y1, Y2, Z2 + 1, Z2 + 1))
+                        AppendFace({Vec3{Left, Top, Far}, {Left, Bottom, Far}, {Right, Bottom, Far}, {Right, Top, Far}},
+                                   {0.0f, 0.0f, 1.0f});
+                    if (Exposed(X1, X2, Y2 + 1, Y2 + 1, Z1, Z2))
+                        AppendFace({Vec3{Left, Top, Far}, {Right, Top, Far}, {Right, Top, Near}, {Left, Top, Near}},
+                                   {0.0f, 1.0f, 0.0f});
+                    if (Exposed(X1, X2, Y1 - 1, Y1 - 1, Z1, Z2))
+                        AppendFace({Vec3{Left, Bottom, Far},
+                                    {Left, Bottom, Near},
+                                    {Right, Bottom, Near},
+                                    {Right, Bottom, Far}},
+                                   {0.0f, -1.0f, 0.0f});
+                    if (Exposed(X2 + 1, X2 + 1, Y1, Y2, Z1, Z2))
+                        AppendFace(
+                            {Vec3{Right, Top, Near}, {Right, Top, Far}, {Right, Bottom, Far}, {Right, Bottom, Near}},
+                            {1.0f, 0.0f, 0.0f});
+                    if (Exposed(X1 - 1, X1 - 1, Y1, Y2, Z1, Z2))
+                        AppendFace({Vec3{Left, Top, Far}, {Left, Top, Near}, {Left, Bottom, Near}, {Left, Bottom, Far}},
+                                   {-1.0f, 0.0f, 0.0f});
+                }
+            }
+        }
+        StoreMesh(MeshId, std::move(Result));
+        return true;
+    }
+
+    bool ObjectManager::ConvertObjectFvf(int ObjectId, uint32_t Fvf, std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, "CONVERT OBJECT FVF", Error);
+        if (!Object)
+            return false;
+        constexpr uint32_t PositionMask = 0x000Eu;
+        constexpr uint32_t Position = 0x0002u;
+        constexpr uint32_t Normal = 0x0010u;
+        constexpr uint32_t Diffuse = 0x0040u;
+        constexpr uint32_t TextureMask = 0x0F00u;
+        // A vertex here has nowhere to keep blend weights, a point size or a specular colour.
+        if ((Fvf & PositionMask) != Position || (Fvf & ~(PositionMask | Normal | Diffuse | TextureMask)) != 0u ||
+            ((Fvf & TextureMask) >> 8u) > 8u)
+        {
+            if (Error)
+                *Error = "CONVERT OBJECT FVF supports positions, normals, diffuse colours and up to 8 texture stages";
+            return false;
+        }
+        const int Stages = static_cast<int>((Fvf & TextureMask) >> 8u);
+        for (Mesh& MeshValue : Object->Meshes)
+        {
+            MeshGeometry& Geometry = MeshValue.EditGeometry();
+            const std::size_t Count = Geometry.Vertices.size();
+            // What the format adds starts at zero, as in the clone DBPro asks Direct3D for; vertices without normals
+            // are lit by their faces and vertices without colours draw white.
+            if ((Fvf & Normal) == 0u)
+                Geometry.Normals.clear();
+            else
+                Geometry.Normals.resize(Count, Vec3{});
+            if ((Fvf & Diffuse) == 0u)
+                Geometry.DiffuseColors.clear();
+            else
+                Geometry.DiffuseColors.resize(Count, 0xFFFFFFFFu);
+            if (Stages == 0)
+                Geometry.Uvs.clear();
+            else
+                Geometry.Uvs.resize(Count, SDL_FPoint{});
+            std::erase_if(Geometry.UvStages, [&](const auto& Entry) { return Entry.first >= Stages; });
+            for (int Stage = 1; Stage < Stages; ++Stage)
+                Geometry.UvStages[Stage].resize(Count, SDL_FPoint{});
+        }
+        Object->TransformDirty = true;
+        return true;
+    }
+
     bool ObjectManager::MakeMeshFromObject(int MeshId, int ObjectId, int IgnoreMode, std::string* Error)
     {
         if (IgnoreMode != 0 && IgnoreMode != 1)

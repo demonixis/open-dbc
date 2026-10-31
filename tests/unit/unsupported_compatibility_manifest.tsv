@@ -177,7 +177,6 @@ dbpro	Function_CliptlvertsAvailable	Function	CLIPTLVERTS AVAILABLE	Target	core	d
 dbpro	Command_CloseImageblock	Command	CLOSE IMAGEBLOCK	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ColorperspectiveAvailable	Function	COLORPERSPECTIVE AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ColorwriteenableAvailable	Function	COLORWRITEENABLE AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ConvertObjectFvf	Command	CONVERT OBJECT FVF	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CopyMemory	Command	COPY MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CreateLightMaps	Command	CREATE LIGHT MAPS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CreatePixelShaderFromFile	Command	CREATE PIXEL SHADER FROM FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
@@ -251,7 +250,6 @@ dbpro	Function_PixelShaderExist	Function	PIXEL SHADER EXIST	Target	core	dbpro-re
 dbpro	Function_ProjectedtexturesAvailable	Function	PROJECTEDTEXTURES AVAILABLE	Target	text	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ReadFilemapString	Function	READ FILEMAP STRING	Study	file	dbpro-reference	exact-file-stream-semantics
 dbpro	Function_ReadFilemapValue	Function	READ FILEMAP VALUE	Study	file	dbpro-reference	exact-file-stream-semantics
-dbpro	Command_ReduceMesh	Command	REDUCE MESH	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_RenderafterflipAvailable	Function	RENDERAFTERFLIP AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_RenderwindowedAvailable	Function	RENDERWINDOWED AVAILABLE	Target	display	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_SeparatetexturememoriesAvailable	Function	SEPARATETEXTUREMEMORIES AVAILABLE	Target	text	dbpro-reference	engine-subsystem-and-oracle

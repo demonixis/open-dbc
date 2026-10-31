@@ -99,6 +99,8 @@ namespace dbc
         void MakeObjectTriangle(int ObjectId, float X1, float Y1, float Z1, float X2, float Y2, float Z2, float X3,
                                 float Y3, float Z3);
         bool MakeMeshFromObject(int MeshId, int ObjectId, int IgnoreMode = 0, std::string* Error = nullptr);
+        bool ReduceMesh(int MeshId, int GridX, int GridY, int GridZ, std::string* Error = nullptr);
+        bool ConvertObjectFvf(int ObjectId, uint32_t Fvf, std::string* Error = nullptr);
         void MakeObject(int ObjectId, int MeshId, int ImageId);
         bool MakeObjectFromLimb(int ObjectId, int SourceObjectId, int LimbId, int AllLimbs = 0,
                                 std::string* Error = nullptr);

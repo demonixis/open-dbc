@@ -1593,6 +1593,7 @@ dbpro	1218	1778	Function	CEIL	golden-output	test_dbpro_core.dba	8d62c939abc65069
 dbpro	1228	1788	Function	COMPARE CASE$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1229	1789	Function	CONTROL DEVICE INDEX	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
 dbpro	1230	1790	Command	CONVERT MESH TO VERTEXDATA	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
+dbpro	1231	1791	Command	CONVERT OBJECT FVF	engine-state	test_engine_builtins.cpp::DBPro REDUCE MESH makes boxes of a mesh and CONVERT OBJECT FVF sets what its vertices carry	-
 dbpro	1241	1801	Command	DELETE MEMBLOCK FROM OBJECT	engine-state	test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file	-
 dbpro	1245	1805	Function	DESKTOP HEIGHT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1246	1806	Function	DESKTOP WIDTH	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
@@ -1648,6 +1649,7 @@ dbpro	1358	1913	Command	PREVIOUS ARRAY INDEX	golden-output	test_dbpro_collection
 dbpro	1359	1914	Command	PRINTC	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1360	1915	Command	PROJECT VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	1362	1917	Function	READ BYTE FROM FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1365	1920	Command	REDUCE MESH	engine-state	test_engine_builtins.cpp::DBPro REDUCE MESH makes boxes of a mesh and CONVERT OBJECT FVF sets what its vertices carry	-
 dbpro	1366	1921	Command	REMOVE FROM QUEUE	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1367	1922	Command	REMOVE FROM STACK	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1370	1925	Function	REVERSE$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e

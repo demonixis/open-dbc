@@ -16,6 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 BLINN_PHONG_TEST = "test_engine_builtins.cpp::DBPro bump and cube mapping light objects through the Blinn-Phong path"
 CUSTOM_DATA_TEST = "test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file"
 LOD_TEST = "test_engine_builtins.cpp::DBPro LOD models take over past their distance and emitters are planes"
+REDUCE_TEST = (
+    "test_engine_builtins.cpp::DBPro REDUCE MESH makes boxes of a mesh and CONVERT OBJECT FVF sets what its vertices carry"
+)
 
 UNIT_WITNESSES = (
     ("dbc", "Command", "SET GAMMA", "set gamma 128, 255, 511\n",
@@ -204,6 +207,8 @@ UNIT_WITNESSES = (
      CUSTOM_DATA_TEST),
     ("dbpro", "Command", "ADD LOD TO OBJECT", "add lod to object 1, 2, 0, 500\n", "pixel-capture", LOD_TEST),
     ("dbpro", "Command", "MAKE EMITTER", "make emitter 1, 40\n", "engine-state", LOD_TEST),
+    ("dbpro", "Command", "REDUCE MESH", "reduce mesh 1, 0, 0, 5, 5, 5\n", "engine-state", REDUCE_TEST),
+    ("dbpro", "Command", "CONVERT OBJECT FVF", "convert object fvf 1, 338\n", "engine-state", REDUCE_TEST),
     ("dbpro", "Command", "TEXTURE OBJECT", "texture object 1, 1, 9\n", "texture-stage-pixel", BLINN_PHONG_TEST),
     ("dbpro", "Command", "TEXTURE OBJECT", "texture object 1, 1, 9, 0\n", "texture-stage-pixel", BLINN_PHONG_TEST),
     ("dbc", "Command", "TEXTURE OBJECT", "texture object 1, 9\n",
