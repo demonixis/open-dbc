@@ -21,6 +21,9 @@ First public release.
   capsules, cylinders, triangle meshes and static compounds, forces and surfaces,
   collision messages, rays, ball and hinge joints and a character controller.
 - Six demos and tutorials covering the 747 Classic help symbols, with CC0 assets.
+- Classic accepts the undocumented forms its shipped programs use, listed in
+  [architecture.md](docs/architecture.md#classic-forms-beyond-the-help). A MIDI file with
+  no bank and no rendered copy plays as a silent clip, with a warning.
 - DBPro's `SET BUMP MAPPING ON`, `SET CUBE MAPPING ON` and `SET OBJECT SPECULAR` draw
   through a Blinn-Phong path, with Fresnel reflections and mipmapped cubes; the stage
   forms of `TEXTURE OBJECT` work.

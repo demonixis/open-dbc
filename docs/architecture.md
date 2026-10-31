@@ -54,6 +54,25 @@ The parser, binder, compiler and AST destructors recurse once per nesting level;
 100 levels fit the 512 KB stack of a macOS secondary thread, where the Studio
 builds exports.
 
+## Classic forms beyond the help
+
+Shipped Classic programs rely on forms the help never documents. The Classic profile
+accepts them; the Pro profile keeps rejecting them.
+
+| Form | Meaning |
+| --- | --- |
+| `a => b`, `a =< b`, `a ! b`, `a & b` | `>=`, `<=`, `<>`, `AND` |
+| `x=1; y=2` | `;` ends an assignment; it stays a list mark in `PRINT` |
+| `if a : b : if c then d : endif` | a block `IF` holding an inline `IF`; `: endif` closes the block |
+| `if a then for i=1 to 3 : print i : next i` | a whole block inside `THEN` |
+| `sync=1`, `ink(a)=200` | a variable, or a `DIM`med array, may share a command's name |
+| `dim a(2)` twice | reallocates when the rank matches |
+| `int(x)` beside `dim int(9,9)` | the index count picks the function or the array |
+| `undim unknown(0)`, `f(x` at the end of a statement | ignored, closed; each logs a warning (`DBC2050`, `DBC1109`) |
+| `return` in a function | returns from a `GOSUB` inside that function |
+| `break` | ends the program |
+| `1000.0 / 0`, `read` past the last `DATA` | an infinity or NaN, the type's empty value |
+
 ## Catalogue
 
 `src/language/language_catalogue.inc` is the only list of commands, functions,
