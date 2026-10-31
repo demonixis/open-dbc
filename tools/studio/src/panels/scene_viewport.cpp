@@ -182,8 +182,9 @@ namespace dbc::studio
             }
             if (Hovered && Io.MouseWheel != 0.0f)
             {
-                // Dolly toward the pivot, slower when close.
-                Camera_.Distance = std::clamp(Camera_.Distance * (1.0f - Io.MouseWheel * 0.12f), 1.0f, 15000.0f);
+                // Dolly toward the pivot, slower when close. A power, so that the large deltas of a
+                // trackpad flick cannot take the distance through zero.
+                Camera_.Distance = std::clamp(Camera_.Distance * std::pow(0.88f, Io.MouseWheel), 1.0f, 15000.0f);
                 Camera_.Position = Pivot - Ahead * Camera_.Distance;
             }
         }

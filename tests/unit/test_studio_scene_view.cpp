@@ -400,6 +400,21 @@ TEST_CASE("A double-click on a painted group's row frames the group")
     CHECK(Driver.Frames(Copy));
 }
 
+TEST_CASE("A fast two-finger scroll zooms in, and the same scroll back out returns")
+{
+    SceneViewDriver Driver("scroll_zoom", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.MoveMouse(Driver.ScreenOf(glm::vec3(0.0f)));
+    const glm::vec3 Start = Driver.Editor().View().Eye;
+
+    ImGui::GetIO().AddMouseWheelEvent(0.0f, 30.0f);
+    Driver.Frame();
+    CHECK(glm::length(Driver.Editor().View().Eye - Start) > 150.0f);
+
+    ImGui::GetIO().AddMouseWheelEvent(0.0f, -30.0f);
+    Driver.Frame();
+    CHECK(glm::length(Driver.Editor().View().Eye - Start) < 0.01f);
+}
+
 TEST_CASE("The grid keys change the step moves land on")
 {
     const glm::vec3 Start(3.0f, 15.0f, 2.0f);
