@@ -22,7 +22,7 @@
   openblood2 and oxrsys. Exported games are signed by the export ([usage.md](usage.md#export)).
 - Yannick Comte owns the code. No DarkBASIC Classic content is published or
   linked; reused DBPro code comes from the MIT repository and keeps its notice.
-- Project assets are CC0. Version 0.4 ships with the current examples: six demos
+- Project assets are CC0. Version 0.5 ships with the current examples: six demos
   and tutorials covering the 747 Classic help symbols.
 - macOS releases target Apple Silicon only, exported games included: one binary per
   target, no universal build.
@@ -30,7 +30,7 @@
   `cmake/fetch_dependency.cmake`, no CI. AppStream and Flatpak wait until someone
   asks for them.
 
-## Before 0.4
+## Before 0.5
 
 Language:
 
@@ -68,7 +68,7 @@ Repository files:
 
 Publication:
 
-- [ ] Signed tag `v0.4.0`, release with `SHA256SUMS`; its notes say that multiplayer
+- [ ] Signed tag `v0.5.0`, release with `SHA256SUMS`; its notes say that multiplayer
   and animations are still Classic only.
 
 ## Code quality
@@ -118,7 +118,7 @@ Validation and scope:
 
 ## Modern features
 
-DBPro additions for after 0.4. Rendering comes in dependency order; the Studio and
+DBPro additions for after 0.5. Rendering comes in dependency order; the Studio and
 network work does not depend on it.
 
 Rendering:

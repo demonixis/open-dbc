@@ -24,7 +24,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"
     set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Oldest macOS release OpenDBC and its exports run on" FORCE)
 endif()
 
-project(OpenDBC VERSION 0.4.0 LANGUAGES C CXX)
+project(OpenDBC VERSION 0.5.0 LANGUAGES C CXX)
 
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL
     "Suppress deprecation warnings from pinned third-party CMake projects" FORCE)
