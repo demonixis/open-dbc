@@ -60,6 +60,10 @@ or UNC paths.
 **View > Theme** picks a dark or light theme or follows the system; the Studio
 starts dark.
 
+**Ctrl+=**, **Ctrl+-** and **Ctrl+0** (**Cmd** on macOS) enlarge, reduce and reset
+the code text in the View menu's **Text Size** items. **Edit > Editor Settings**
+sets it with **Text zoom**, and the Studio keeps it in its preferences.
+
 **F5** runs the active `.dba` tab, unsaved edits included; **Shift+F5** stops it.
 The Studio compiles the program, then runs it in `opendbc-runner`, a separate
 process with its own window, so a crash or hang in the program leaves the Studio

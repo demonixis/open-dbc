@@ -142,6 +142,8 @@ namespace dbc::studio
                 bool Open = true;
                 // What the markers show, kept so a change of theme can recolor them.
                 std::map<int, std::string> Errors;
+                // The code font size of the last render, to keep the same lines in view when it changes.
+                float RenderedFontSize = 0.0f;
             };
 
             void ApplyErrorMarkers(Document& Doc);

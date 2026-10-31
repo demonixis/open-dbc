@@ -44,6 +44,8 @@ namespace dbc::studio
         constexpr const char* KPanelSceneOutput = "Output##Scene";
         // The persisted setting and the --log-level values, shown verbatim: never translate them.
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
+        constexpr float KTextZoomStep = 1.1f;
+        constexpr Uint64 KTextZoomSaveDelayMs = 1000;
 
         enum class ToolIcon
         {
@@ -276,6 +278,7 @@ namespace dbc::studio
         RunOptions_.LogLevel = Settings_.LogLevel;
         RunOptions_.DebugOverlay = Settings_.DebugOverlay;
         Scene_.SetEditorSettings(Settings_.Editor);
+        Theme::CodeFontZoom = Settings_.Editor.TextZoom;
 
         IconGenerator_.SetLogHandler([this](const std::string& Message) { Output_.Append(Message); });
 
@@ -574,6 +577,12 @@ namespace dbc::studio
             {
                 ThemeChanged_ = true;
             }
+        }
+
+        if (TextZoomSaveAt_ != 0 && SDL_GetTicks() >= TextZoomSaveAt_)
+        {
+            TextZoomSaveAt_ = 0;
+            Settings_.Save();
         }
     }
 
@@ -1518,6 +1527,12 @@ namespace dbc::studio
             SetMode(Mode::Code);
         else if (Command && ImGui::IsKeyPressed(ImGuiKey_2, false))
             ShowScene();
+        else if (Command && (ImGui::IsKeyPressed(ImGuiKey_Equal) || ImGui::IsKeyPressed(ImGuiKey_KeypadAdd)))
+            SetTextZoom(Settings_.Editor.TextZoom * KTextZoomStep);
+        else if (Command && (ImGui::IsKeyPressed(ImGuiKey_Minus) || ImGui::IsKeyPressed(ImGuiKey_KeypadSubtract)))
+            SetTextZoom(Settings_.Editor.TextZoom / KTextZoomStep);
+        else if (Command && (ImGui::IsKeyPressed(ImGuiKey_0, false) || ImGui::IsKeyPressed(ImGuiKey_Keypad0, false)))
+            SetTextZoom(1.0f);
 
         if (Mode_ == Mode::Scene)
         {
@@ -1643,6 +1658,15 @@ namespace dbc::studio
             DBC_LOG_WARN("Cannot change the relative mouse mode: {}", SDL_GetError());
     }
 
+    void App::SetTextZoom(float Zoom)
+    {
+        Settings_.Editor.TextZoom =
+            std::clamp(Zoom, core::EditorSettings::KMinTextZoom, core::EditorSettings::KMaxTextZoom);
+        Theme::CodeFontZoom = Settings_.Editor.TextZoom;
+        // A slider or a gesture changes it on every event: only the last value reaches the disk.
+        TextZoomSaveAt_ = SDL_GetTicks() + KTextZoomSaveDelayMs;
+    }
+
     void App::DrawEditorSettings()
     {
         if (!ShowEditorSettings_)
@@ -1651,9 +1675,9 @@ namespace dbc::studio
         if (ImGui::Begin(TrId("Editor Settings"), &ShowEditorSettings_, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::PushItemWidth(ImGui::GetFontSize() * 14.0f);
+            constexpr ImGuiSliderFlags Flags = ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp;
             const auto Speed = [this](const char* Label, float& Value)
             {
-                constexpr ImGuiSliderFlags Flags = ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp;
                 if (ImGui::SliderFloat(Label, &Value, core::EditorSettings::KMinSpeed, core::EditorSettings::KMaxSpeed,
                                        "%.2f", Flags))
                     Scene_.SetEditorSettings(Settings_.Editor);
@@ -1662,6 +1686,10 @@ namespace dbc::studio
             };
             Speed(TrId("Scroll speed"), Settings_.Editor.ScrollSpeed);
             Speed(TrId("Camera speed"), Settings_.Editor.CameraSpeed);
+            float TextZoom = Settings_.Editor.TextZoom;
+            if (ImGui::SliderFloat(TrId("Text zoom"), &TextZoom, core::EditorSettings::KMinTextZoom,
+                                   core::EditorSettings::KMaxTextZoom, "%.2f", Flags))
+                SetTextZoom(TextZoom);
             ImGui::PopItemWidth();
         }
         ImGui::End();
@@ -2053,6 +2081,13 @@ namespace dbc::studio
                 else
                     BuildDefaultLayout(ImGui::GetID(KDockSpaceName));
             }
+            ImGui::Separator();
+            if (ImGui::MenuItem(TrId("Increase Text Size"), "Ctrl+="))
+                SetTextZoom(Settings_.Editor.TextZoom * KTextZoomStep);
+            if (ImGui::MenuItem(TrId("Decrease Text Size"), "Ctrl+-"))
+                SetTextZoom(Settings_.Editor.TextZoom / KTextZoomStep);
+            if (ImGui::MenuItem(TrId("Reset Text Size"), "Ctrl+0"))
+                SetTextZoom(1.0f);
             ImGui::Separator();
             if (ImGui::BeginMenu(TrId("Theme")))
             {

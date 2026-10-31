@@ -107,6 +107,7 @@ namespace dbc::studio
         void ShowProblems(const std::vector<toolchain::RunDiagnostic>& Diagnostics);
         void RunLauncherPath(const std::filesystem::path& Path);
         void StopRun();
+        void SetTextZoom(float Zoom);
         void DrawEditorSettings();
         // Hides and frees the pointer while the Scene camera flies, then puts it back.
         void UpdateFlightMouse();
@@ -171,6 +172,7 @@ namespace dbc::studio
         bool ShowMedia_ = true;
         bool ShowAbout_ = false;
         bool ShowEditorSettings_ = false;
+        Uint64 TextZoomSaveAt_ = 0;
         bool FlightMouse_ = false;
         float FlightMouseX_ = 0.0f;
         float FlightMouseY_ = 0.0f;

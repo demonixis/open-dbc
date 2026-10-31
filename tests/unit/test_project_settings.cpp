@@ -176,6 +176,22 @@ TEST_CASE("Studio preferences keep the Editor Settings speeds within their range
     CHECK(Wrong.Editor.ScrollSpeed == doctest::Approx(1.0f));
 }
 
+TEST_CASE("Studio preferences keep the text zoom within its range")
+{
+    std::string Error;
+    CHECK(core::Settings::Parse("{}", Error).Editor.TextZoom == doctest::Approx(1.0f));
+    CHECK(core::Settings::Parse(R"({"textZoom":1.5})", Error).Editor.TextZoom == doctest::Approx(1.5f));
+    CHECK(Error.empty());
+    CHECK(core::Settings::Parse(R"({"textZoom":0})", Error).Editor.TextZoom ==
+          doctest::Approx(core::EditorSettings::KMinTextZoom));
+    CHECK(core::Settings::Parse(R"({"textZoom":1e30})", Error).Editor.TextZoom ==
+          doctest::Approx(core::EditorSettings::KMaxTextZoom));
+    CHECK(Error.empty());
+
+    CHECK(core::Settings::Parse(R"({"textZoom":"large"})", Error).Editor.TextZoom == doctest::Approx(1.0f));
+    CHECK_FALSE(Error.empty());
+}
+
 TEST_CASE("Invalid project settings cannot replace the original descriptor")
 {
     TemporaryProject Project;

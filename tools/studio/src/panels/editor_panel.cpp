@@ -869,6 +869,13 @@ namespace dbc::studio
                         {
                             Completion_.BeforeEditor(*Doc.Editor, EditorId);
                         }
+                        const float FontSize = Theme::ZoomedCodeFontSize();
+                        if (Doc.RenderedFontSize != 0.0f && Doc.RenderedFontSize != FontSize)
+                        {
+                            const TextEditor::VisPos Top(static_cast<int>(Doc.Editor->GetFirstVisibleRow()), 0);
+                            Doc.Editor->ScrollToLine(Doc.Editor->VisPos2DocPos(Top).line, TextEditor::Scroll::alignTop);
+                        }
+                        Doc.RenderedFontSize = FontSize;
                         Theme::PushCodeFont();
                         Doc.Editor->Render("##editor", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None);
                         ImGui::PopFont();

@@ -91,6 +91,8 @@ namespace dbc::studio
                                               EditorSettings::KMinSpeed, EditorSettings::KMaxSpeed);
             S.Editor.CameraSpeed = std::clamp(Get<float>(J, "cameraSpeed", S.Editor.CameraSpeed, Error),
                                               EditorSettings::KMinSpeed, EditorSettings::KMaxSpeed);
+            S.Editor.TextZoom = std::clamp(Get<float>(J, "textZoom", S.Editor.TextZoom, Error),
+                                           EditorSettings::KMinTextZoom, EditorSettings::KMaxTextZoom);
             if (const auto Values = J.find("projectPathRemappings"); Values != J.end() && Values->is_object())
             {
                 for (const auto& [Key, Value] : Values->items())
@@ -160,6 +162,7 @@ namespace dbc::studio
             J["debugOverlay"] = DebugOverlay;
             J["scrollSpeed"] = Editor.ScrollSpeed;
             J["cameraSpeed"] = Editor.CameraSpeed;
+            J["textZoom"] = Editor.TextZoom;
             J["projectPathRemappings"] = ProjectPathRemappings;
             J["javaHome"] = JavaHome;
             J["androidSdk"] = AndroidSdk;

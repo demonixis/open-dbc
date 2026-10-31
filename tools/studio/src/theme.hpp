@@ -2,6 +2,7 @@
 
 #include <imgui.h>
 
+#include <cmath>
 #include <string_view>
 
 // The dark and light palettes share these names, and SetAppearance fills them. Both derive from
@@ -63,11 +64,18 @@ namespace dbc::studio
         // The fixed-pitch font TextEditor assumes. Null until AddFonts, which then keeps the current font.
         inline ImFont* CodeFont = nullptr;
         inline float CodeFontSize = 0.0f;
+        inline float CodeFontZoom = 1.0f;
+
+        // In whole pixels, so that a continuous zoom bakes few sizes of the font.
+        inline float ZoomedCodeFontSize()
+        {
+            return std::round(CodeFontSize * CodeFontZoom);
+        }
 
         // Pair with ImGui::PopFont.
         inline void PushCodeFont()
         {
-            ImGui::PushFont(CodeFont, CodeFontSize);
+            ImGui::PushFont(CodeFont, ZoomedCodeFontSize());
         }
     } // namespace Theme
 

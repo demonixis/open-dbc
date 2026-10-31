@@ -15,11 +15,15 @@ namespace dbc::studio
         {
             static constexpr float KMinSpeed = 0.1f;
             static constexpr float KMaxSpeed = 5.0f;
+            static constexpr float KMinTextZoom = 0.5f;
+            static constexpr float KMaxTextZoom = 4.0f;
 
             // The viewport's zoom under the wheel or two fingers.
             float ScrollSpeed = 1.0f;
             // The viewport camera's flight.
             float CameraSpeed = 1.0f;
+            // The size of the code font, in the editor and the panels that use it.
+            float TextZoom = 1.0f;
         };
 
         // Preferences use JSON in the per-user directory; ImGui persists window geometry and docking.
