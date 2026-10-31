@@ -268,6 +268,34 @@ TEST_CASE("Classic real division by zero follows the FPU, integer division still
     }
 }
 
+TEST_CASE("Classic READ past the end of DATA gives empty values")
+{
+    const auto Module = Compile("data 7\n"
+                                "read a\n"
+                                "read b\n"
+                                "read c#\n"
+                                "read d$\n"
+                                "print a\n"
+                                "print b\n"
+                                "print c#\n"
+                                "print d$\n",
+                                dbc::language::LanguageProfile::Dbc);
+    TestHost Host;
+    dbc::vm::ExecutionSession Session;
+    REQUIRE(Session.Prepare(Module, Host));
+    RunToCompletion(Session);
+    REQUIRE(Host.Output.size() == 4);
+    CHECK(Host.Output[0] == "7");
+    CHECK(Host.Output[1] == "0");
+    CHECK(Host.Output[3] == "");
+
+    const auto Professional = Compile("read a\n", dbc::language::LanguageProfile::DbPro);
+    TestHost ProfessionalHost;
+    dbc::vm::ExecutionSession ProfessionalSession;
+    REQUIRE(ProfessionalSession.Prepare(Professional, ProfessionalHost));
+    CHECK(ProfessionalSession.Tick(1000).State == dbc::vm::SessionState::Failed);
+}
+
 TEST_CASE("Arrays and UDT assignments preserve value semantics")
 {
     const auto Module = Compile("type Point\n"

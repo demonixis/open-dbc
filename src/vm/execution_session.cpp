@@ -766,7 +766,17 @@ namespace dbc::vm
             case OpCode::ReadData:
             {
                 if (DataCursor_ >= Bytecode_->Data.size())
-                    return Reject("READ has passed the end of DATA");
+                {
+                    if (Bytecode_->Profile != language::LanguageProfile::Dbc)
+                        return Reject("READ has passed the end of DATA");
+                    // Classic reads the type's empty value there: shoot_to_kill's last sprite relies on it.
+                    Value Empty;
+                    if (!DefaultValue(Instruction.ResultType, *Bytecode_, Empty, Error))
+                        return Reject(Error);
+                    Current.Stack.push_back(std::move(Empty));
+                    Advance();
+                    return true;
+                }
                 const DataValue& Item = Bytecode_->Data[DataCursor_];
                 Value Result;
                 if (Item.ValueType.Kind == language::TypeKind::Integer)
