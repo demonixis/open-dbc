@@ -1201,7 +1201,9 @@ namespace dbc::language::detail
                     Result.Kind = StatementKind::Exit;
                     return Result;
                 }
-                if (FirstIs(Value, "END"))
+                // Classic's undocumented BREAK left for the CLI, so a program ends there: Carrion Feast's last line.
+                if (FirstIs(Value, "END") ||
+                    (Source_.Profile == LanguageProfile::Dbc && FirstIs(Value, "BREAK") && Value.Tokens.size() == 1))
                 {
                     Result.Kind = StatementKind::End;
                     return Result;

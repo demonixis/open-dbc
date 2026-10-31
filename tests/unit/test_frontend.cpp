@@ -296,6 +296,17 @@ TEST_CASE("Classic tolerates the array and call slips its shipped programs conta
     CHECK(HasCode(Professional, "DBC1106"));
 }
 
+TEST_CASE("Classic BREAK ends the program")
+{
+    const dbc::language::Program Classic =
+        dbc::language::Compile(Source("if 1=1 then break\n", dbc::language::LanguageProfile::Dbc));
+    REQUIRE_FALSE(Classic.HasErrors());
+    REQUIRE(Classic.Statements.front().Body.size() == 1);
+    CHECK(Classic.Statements.front().Body.front().Kind == dbc::language::StatementKind::End);
+
+    CHECK(HasCode(dbc::language::Compile(Source("break 1\n", dbc::language::LanguageProfile::Dbc)), "DBC2014"));
+}
+
 TEST_CASE("A Classic function may GOSUB and RETURN from its own label")
 {
     const std::string Text = "function f()\n"
