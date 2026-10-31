@@ -34,7 +34,7 @@ size; `ODE SET BODY MASS` replaces that, and `ODE CREATE DYNAMIC BOX` takes a pe
 `ODE ADD FORCE` acts for the whole of the next update, with its point relative to the body's centre and in world axes,
 as in the plugin's last version; the older ODE plugin took a world position and multiplied the force by 10000.
 
-`ODE SET RESPONSE` mode 2 and the addition `ODE SET BODY KINEMATIC` make a body kinematic: gravity and forces no longer
+`ODE SET RESPONSE` mode 2 makes a body kinematic: gravity and forces no longer
 reach it, it follows its velocity and it pushes what it meets. Response mode 1 ignored `ODE CREATE STATIC UNIVERSE`'s
 mesh, which does not exist here, so it behaves like mode 0.
 
@@ -46,8 +46,7 @@ Each step adds a message for every pair of touching bodies that are awake, also 
 `ODE COLLISION MESSAGE EXISTS` clears the current message and says whether more wait; `ODE COLLISION GET MESSAGE` takes
 the newest. Up to 4096 wait unread, losing the oldest. Object A is a body that moves, the lower number of two that do,
 with its contact flag at 1; a static object B has a flag of 0 and no velocity. Velocities are from just before the step
-resolved the contact. The additions `ODE GET CONTACT POINT X/Y/Z`, `ODE GET CONTACT NORMAL X/Y/Z` and
-`ODE GET CONTACT DEPTH` give the point on A, the direction from A to B and the overlap, which is 0 before they touch.
+resolved the contact.
 The plugin also reported pairs whose bounds overlapped without a contact, with both flags at 0; these do not exist here.
 
 Two bodies bounce by the larger of their restitutions, which is on only while a body's surface mode says so:
@@ -117,9 +116,3 @@ Jolt counterpart. `ODE CREATE STATIC TERRAIN` and `ODE UPDATE STATIC TERRAIN` ta
 ADJUSTMENT X/Y/Z` reports a size limit that is not applied here, and `ODE CREATE TREE CYLINDER` has no definition in
 the plugin. The ragdoll forms with `ODE GET BODY TRAVEL DISTANCE X/Y/Z`, `ODE SET WATER LINE` and
 `ODE SET CHARACTER CONTROLLER` wait on the [roadmap](roadmap.md).
-
-## Additions
-
-These forms have no counterpart in the plugin: `ODE ADD TORQUE`, `ODE ADD IMPULSE`, `ODE SET BODY KINEMATIC`,
-`ODE SET BODY DAMPING`, `ODE GET BODY ANGULAR VELOCITY X/Y/Z`, `ODE GET CONTACT POINT X/Y/Z`,
-`ODE GET CONTACT NORMAL X/Y/Z` and `ODE GET CONTACT DEPTH`.

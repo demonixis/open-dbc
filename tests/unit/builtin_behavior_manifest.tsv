@@ -1796,17 +1796,3 @@ dbpro	1588	2161	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR built
 dbpro	1589	2163	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbpro	1590	2165	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbpro	1591	2167	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1592	2168	Command	ODE ADD TORQUE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1593	2169	Command	ODE ADD IMPULSE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1594	2170	Command	ODE SET BODY KINEMATIC	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
-dbpro	1595	2171	Command	ODE SET BODY DAMPING	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
-dbpro	1596	2172	Function	ODE GET BODY ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1597	2173	Function	ODE GET BODY ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1598	2174	Function	ODE GET BODY ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1599	2175	Function	ODE GET CONTACT POINT X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1600	2176	Function	ODE GET CONTACT POINT Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1601	2177	Function	ODE GET CONTACT POINT Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1602	2178	Function	ODE GET CONTACT NORMAL X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1603	2179	Function	ODE GET CONTACT NORMAL Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1604	2180	Function	ODE GET CONTACT NORMAL Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1605	2181	Function	ODE GET CONTACT DEPTH	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-

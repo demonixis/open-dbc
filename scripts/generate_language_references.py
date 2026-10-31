@@ -175,9 +175,7 @@ def build(profile: str, extensions: bool) -> str:
             "DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles forms are not in the catalogue: they fail to compile with `DBC2049`.",
         ]
     for kind, name, arity, signatures, status, provenance in sorted(entries, key=lambda row: (row[0], row[1])):
-        if name.startswith("ODE ") and provenance == "OpenDBC extension":
-            description = "OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract."
-        elif provenance == "OpenDBC extension" or (profile == "Dbc" and "OpenDBC extension" in provenance):
+        if provenance == "OpenDBC extension" or (profile == "Dbc" and "OpenDBC extension" in provenance):
             description = "Shared OpenDBC VR addition; see docs/vr.md for its observable contract."
         elif status == "Implemented":
             description = f"{product} {kind.lower()} implemented with an observable contract."

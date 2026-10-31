@@ -73,8 +73,7 @@ The forms of DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles are not in the c
 they stop at bind time with `DBC2049`, which names the plugin.
 
 Shared VR forms and the Classic `X/Y/Z VECTOR3` readers are the only additions to
-Classic ([vr.md](vr.md)). `DbPro` also takes OpenDBC's own forms, with multi-word names,
-such as the additions to the ODE family ([physics.md](physics.md)).
+Classic ([vr.md](vr.md)). `DbPro` also takes OpenDBC's own forms, with multi-word names.
 
 ## Engine
 

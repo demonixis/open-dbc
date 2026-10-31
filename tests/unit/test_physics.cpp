@@ -40,6 +40,47 @@ namespace
             return InvokeCommand(Context, Symbol, Values(Arguments), Error);
         }
 
+        // What the engine does beyond the ODE forms, which no command reaches yet.
+        bool AddTorque(int ObjectId, float X, float Y, float Z)
+        {
+            Error.clear();
+            return Kernel.Physics().AddTorque(ObjectId, X, Y, Z, &Error);
+        }
+
+        bool AddImpulse(int ObjectId, float X, float Y, float Z)
+        {
+            Error.clear();
+            return Kernel.Physics().AddImpulse(ObjectId, X, Y, Z, &Error);
+        }
+
+        bool SetBodyKinematic(int ObjectId, int Kinematic)
+        {
+            Error.clear();
+            return Kernel.Physics().SetBodyKinematic(ObjectId, Kinematic, &Error);
+        }
+
+        bool SetBodyDamping(int ObjectId, float Linear, float Angular)
+        {
+            Error.clear();
+            return Kernel.Physics().SetBodyDamping(ObjectId, Linear, Angular, &Error);
+        }
+
+        double AngularVelocity(int ObjectId, int Axis)
+        {
+            Error.clear();
+            float Output = 0.0f;
+            REQUIRE_MESSAGE(Kernel.Physics().AngularVelocity(Output, ObjectId, Axis, &Error), Error);
+            return Output;
+        }
+
+        const dbc::PhysicsCollisionMessage& Contact()
+        {
+            Error.clear();
+            const dbc::PhysicsCollisionMessage* Message = Kernel.Physics().CollisionMessage(&Error);
+            REQUIRE_MESSAGE(Message != nullptr, Error);
+            return *Message;
+        }
+
         double Read(SymbolId Symbol, std::initializer_list<double> Arguments = {})
         {
             Error.clear();
@@ -563,7 +604,7 @@ TEST_CASE("ODE boxes measure their objects or take explicit sizes")
             Scene.Kernel.Objects().MakeObjectCube(2, 2.0f);
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {2, -1, 0, Weight, -1, -1}));
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetGravity, {2, 0}));
-            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {2, 3, 0, 0}));
+            REQUIRE(Scene.AddImpulse(2, 3, 0, 0));
             return Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2});
         };
         CHECK(SpeedAfterPush(-1) == doctest::Approx(3.0));
@@ -662,7 +703,7 @@ TEST_CASE("ODE cylinders and capsules behave like their shapes")
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {3, 3, 0, 0}));
         Scene.Step(60);
         // Friction leaves two thirds of the push once it rolls without slipping, at speed over radius.
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityZ, {3}) == doctest::Approx(-1.0).epsilon(0.05));
+        CHECK(Scene.AngularVelocity(3, 2) == doctest::Approx(-1.0).epsilon(0.05));
         CHECK(Scene.X(3) > -8.0f);
     }
 
@@ -697,11 +738,11 @@ TEST_CASE("ODE cylinders and capsules behave like their shapes")
 
         // The program keeps turning what the object shows.
         Scene.Kernel.Objects().RotateObject(2, 0.0f, 120.0f, 0.0f);
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {2, 6, 0, 0}));
+        REQUIRE(Scene.AddImpulse(2, 6, 0, 0));
         Scene.Step(30);
         CHECK(Scene.X(2) > 0.5f);
         CHECK(Scene.Kernel.Objects().ObjectAngleY(2) == doctest::Approx(120.0f));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityZ, {2}) == doctest::Approx(0.0));
+        CHECK(Scene.AngularVelocity(2, 2) == doctest::Approx(0.0));
 
         CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicCapsule, {2, -1, 0}));
         CHECK(Scene.Error.find("scale modifier") != std::string::npos);
@@ -932,7 +973,7 @@ TEST_CASE("ODE forces act over the whole of one update")
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0 / 60.0}));
             CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityZ, {2}) ==
                   doctest::Approx(1.0).epsilon(0.01));
-            return Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityY, {2});
+            return Scene.AngularVelocity(2, 1);
         };
         CHECK(SpinAfter(0.0) == doctest::Approx(0.0));
         // Torque (1,0,0) x (0,0,60) over 1/60 s on a solid sphere of inertia 2/5.
@@ -944,13 +985,13 @@ TEST_CASE("ODE forces act over the whole of one update")
         OdeScene Scene;
         Scene.DynamicSphere(2, 0.0f);
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetGravity, {2, 0}));
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddTorque, {2, 6, -12, 24}));
+        REQUIRE(Scene.AddTorque(2, 6, -12, 24));
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0 / 6.0}));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityX, {2}) == doctest::Approx(2.5).epsilon(0.05));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityY, {2}) == doctest::Approx(-5.0).epsilon(0.05));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityZ, {2}) == doctest::Approx(10.0).epsilon(0.05));
+        CHECK(Scene.AngularVelocity(2, 0) == doctest::Approx(2.5).epsilon(0.05));
+        CHECK(Scene.AngularVelocity(2, 1) == doctest::Approx(-5.0).epsilon(0.05));
+        CHECK(Scene.AngularVelocity(2, 2) == doctest::Approx(10.0).epsilon(0.05));
 
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {2, 1, -2, 3}));
+        REQUIRE(Scene.AddImpulse(2, 1, -2, 3));
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2}) == doctest::Approx(1.0));
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityY, {2}) == doctest::Approx(-2.0));
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityZ, {2}) == doctest::Approx(3.0));
@@ -958,19 +999,19 @@ TEST_CASE("ODE forces act over the whole of one update")
 
     SUBCASE("All of them wake a sleeping body and refuse a static one")
     {
-        for (const SymbolId Form : {SymbolId::Command_ExtOdeAddTorque, SymbolId::Command_ExtOdeAddImpulse})
+        for (const bool Torque : {true, false})
         {
             OdeScene Scene;
             Scene.Floor();
             Scene.DynamicSphere(2, 1.1f);
             Scene.Step(600);
             REQUIRE(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityY, {2}) == doctest::Approx(0.0));
-            REQUIRE(Scene.Run(Form, {2, 1, 1, 1}));
+            REQUIRE((Torque ? Scene.AddTorque(2, 1, 1, 1) : Scene.AddImpulse(2, 1, 1, 1)));
             Scene.Step(5);
-            const double Moving = std::abs(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityY, {2})) +
+            const double Moving = std::abs(Scene.AngularVelocity(2, 1)) +
                                   std::abs(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2}));
             CHECK(Moving > 0.0);
-            CHECK_FALSE(Scene.Run(Form, {1, 1, 1, 1}));
+            CHECK_FALSE((Torque ? Scene.AddTorque(1, 1, 1, 1) : Scene.AddImpulse(1, 1, 1, 1)));
             CHECK(Scene.Error.find("is static") != std::string::npos);
         }
 
@@ -992,12 +1033,12 @@ TEST_CASE("ODE forces act over the whole of one update")
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetGravity, {2, 0}));
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyMass, {2, 4}));
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyMass, {2, 2}));
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {2, 3, 0, 0}));
+        REQUIRE(Scene.AddImpulse(2, 3, 0, 0));
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2}) == doctest::Approx(1.5));
         // Inertia follows: a torque now turns it half as fast as a mass of 1.
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddTorque, {2, 0, 60, 0}));
+        REQUIRE(Scene.AddTorque(2, 0, 60, 0));
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0 / 60.0}));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityY, {2}) == doctest::Approx(1.25).epsilon(0.05));
+        CHECK(Scene.AngularVelocity(2, 1) == doctest::Approx(1.25).epsilon(0.05));
 
         CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetBodyMass, {2, 0}));
         CHECK(Scene.Error.find("positive") != std::string::npos);
@@ -1016,7 +1057,7 @@ TEST_CASE("ODE bodies can leave the simulation's control")
         Scene.Kernel.Objects().MakeObjectBox(2, 2.0f, 4.0f, 8.0f);
         Scene.Kernel.Objects().PositionObject(2, -6.0f, 2.0f, 0.0f);
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {2}));
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyKinematic, {2, 1}));
+        REQUIRE(Scene.SetBodyKinematic(2, 1));
         Scene.DropSphere(3, 0.0f, 1.0f);
         Scene.Step(60);
         CHECK(Scene.X(2) == doctest::Approx(-6.0f));
@@ -1032,7 +1073,7 @@ TEST_CASE("ODE bodies can leave the simulation's control")
 
         // Back to dynamic: gravity takes over, with no velocity kept from before.
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyPosition, {2, 0, 20, 0}));
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyKinematic, {2, 0}));
+        REQUIRE(Scene.SetBodyKinematic(2, 0));
         Scene.Step(30);
         CHECK(Scene.Y(2) < 19.0f);
     }
@@ -1044,12 +1085,12 @@ TEST_CASE("ODE bodies can leave the simulation's control")
             OdeScene Scene;
             Scene.DynamicSphere(2, 0.0f);
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetGravity, {2, 0}));
-            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyDamping, {2, Linear, Angular}));
+            REQUIRE(Scene.SetBodyDamping(2, Linear, Angular));
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {2, 10, 0, 0}));
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetAngularVelocity, {2, 0, 10, 0}));
             Scene.Step(60);
             return std::pair<double, double>(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2}),
-                                             Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityY, {2}));
+                                             Scene.AngularVelocity(2, 1));
         };
         CHECK(SpeedAfter(0, 0).first == doctest::Approx(10.0));
         CHECK(SpeedAfter(0, 0).second == doctest::Approx(10.0));
@@ -1059,7 +1100,7 @@ TEST_CASE("ODE bodies can leave the simulation's control")
 
         OdeScene Scene;
         Scene.DynamicSphere(2, 0.0f);
-        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetBodyDamping, {2, -1, 0}));
+        CHECK_FALSE(Scene.SetBodyDamping(2, -1, 0));
         CHECK(Scene.Error.find("non-negative") != std::string::npos);
     }
 
@@ -1094,7 +1135,7 @@ TEST_CASE("ODE world settings reach the solver")
         {
             OdeScene Scene;
             Scene.DynamicSphere(2, 0.0f);
-            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyDamping, {2, 0, 0}));
+            REQUIRE(Scene.SetBodyDamping(2, 0, 0));
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetWorldStep, {Step}));
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0}));
             return -static_cast<double>(Scene.Y(2));
@@ -1225,12 +1266,12 @@ TEST_CASE("ODE collisions arrive as messages")
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBContact) == 0.0);
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAVelocityY) == doctest::Approx(-6.3).epsilon(0.05));
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBVelocityY) == 0.0);
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactPointX) == doctest::Approx(1.0).epsilon(0.01));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactPointY) == doctest::Approx(0.0).epsilon(0.05));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactNormalY) == doctest::Approx(-1.0));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactNormalX) == doctest::Approx(0.0));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactDepth) >= 0.0);
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactDepth) < 0.1);
+        CHECK(Scene.Contact().Point[0] == doctest::Approx(1.0).epsilon(0.01));
+        CHECK(Scene.Contact().Point[1] == doctest::Approx(0.0).epsilon(0.05));
+        CHECK(Scene.Contact().Normal[1] == doctest::Approx(-1.0));
+        CHECK(Scene.Contact().Normal[0] == doctest::Approx(0.0));
+        CHECK(Scene.Contact().Depth >= 0.0);
+        CHECK(Scene.Contact().Depth < 0.1);
     }
 
     SUBCASE("Two moving bodies each report their own motion, and depth grows with overlap")
@@ -1254,10 +1295,10 @@ TEST_CASE("ODE collisions arrive as messages")
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBVelocityX) == doctest::Approx(1.0));
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBAngularVelocityY) == doctest::Approx(3.0).epsilon(0.01));
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAAngularVelocityY) == doctest::Approx(0.0));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactNormalX) == doctest::Approx(-1.0));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactDepth) == doctest::Approx(0.5).epsilon(0.05));
+        CHECK(Scene.Contact().Normal[0] == doctest::Approx(-1.0));
+        CHECK(Scene.Contact().Depth == doctest::Approx(0.5).epsilon(0.05));
         // The point lies on object A.
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactPointX) == doctest::Approx(0.5).epsilon(0.05));
+        CHECK(Scene.Contact().Point[0] == doctest::Approx(0.5).epsilon(0.05));
 
         // Reading other axes reads other values.
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAVelocityY) == 0.0);
@@ -1268,8 +1309,8 @@ TEST_CASE("ODE collisions arrive as messages")
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAAngularVelocityZ) == 0.0);
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBAngularVelocityX) == 0.0);
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBAngularVelocityZ) == 0.0);
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactNormalZ) == doctest::Approx(0.0));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactPointZ) == doctest::Approx(0.0));
+        CHECK(Scene.Contact().Normal[2] == doctest::Approx(0.0));
+        CHECK(Scene.Contact().Point[2] == doctest::Approx(0.0));
     }
 
     SUBCASE("A pair reports once a step, newest first, and reading empties the stack")
@@ -1311,7 +1352,7 @@ TEST_CASE("ODE collisions arrive as messages")
         REQUIRE(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0);
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
         // The plate reaches half a unit below the box's face.
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactDepth) > 0.4);
+        CHECK(Scene.Contact().Depth > 0.4);
         CHECK(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 0.0);
     }
 
@@ -1350,7 +1391,7 @@ TEST_CASE("ODE collisions arrive as messages")
                 Scene.Kernel.Objects().MakeObjectSphere(ObjectId, 2.0f, 8, 8);
                 Scene.Kernel.Objects().PositionObject(ObjectId, Side == 0 ? 0.0f : 1.8f, 0.0f, Z);
                 REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicSphere, {static_cast<double>(ObjectId)}));
-                REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyDamping, {static_cast<double>(ObjectId), 0, 0}));
+                REQUIRE(Scene.SetBodyDamping(static_cast<double>(ObjectId), 0, 0));
             }
             REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyMass, {10.0 + 2.0 * Pair, 1000}));
         }
@@ -1435,7 +1476,7 @@ TEST_CASE("ODE contact surfaces bounce only when asked to")
         OdeScene Scene;
         Scene.Floor();
         Scene.DropSphere(2, 0.0f, 5.0f);
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyDamping, {2, 0, 0}));
+        REQUIRE(Scene.SetBodyDamping(2, 0, 0));
         Configure(Scene);
         float Highest = 0.0f;
         bool Landed = false;
@@ -1667,13 +1708,13 @@ TEST_CASE("ODE rays find the first surface they meet")
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2}) == 0.0);
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0 / 60.0}));
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2}) == doctest::Approx(1.0).epsilon(0.01));
-        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityY, {2}) == doctest::Approx(0.0));
+        CHECK(Scene.AngularVelocity(2, 1) == doctest::Approx(0.0));
 
         // Off the centre it also spins the body, and static bodies only report the hit.
         Scene.DropSphere(3, 0.0f, 20.0f);
         REQUIRE(Scene.Read(SymbolId::Function_ExtOdeRayForce, {-5, 20.5, 0, 5, 20.5, 0, 60}) == 1.0);
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0 / 60.0}));
-        CHECK(std::abs(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityZ, {3})) > 0.5);
+        CHECK(std::abs(Scene.AngularVelocity(3, 2)) > 0.5);
 
         Scene.Kernel.Objects().MakeObjectCube(4, 2.0f);
         Scene.Kernel.Objects().PositionObject(4, 0.0f, 40.0f, 0.0f);
@@ -1755,7 +1796,7 @@ TEST_CASE("ODE joints hold bodies together")
                         Scene.Error);
         // Pushing along the axis moves nothing; a ball joint would swing out of the plane.
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetWorldGravity, {0.0, 0.0, 0.0}));
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {3, 0.0, 0.0, 5.0}));
+        REQUIRE(Scene.AddImpulse(3, 0.0, 0.0, 5.0));
         Scene.Step(30);
         // Free, it would have gone 2.5. On so long a lever the solver brings it back to within a degree before the
         // body comes to rest and goes to sleep.
@@ -1764,7 +1805,7 @@ TEST_CASE("ODE joints hold bodies together")
         CHECK(std::abs(Scene.Z(3)) < 0.1f);
         CHECK(Scene.X(3) == doctest::Approx(5.0f).epsilon(0.02));
         // Across the axis it turns freely around the pin.
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {3, 0.0, -4.0, 0.0}));
+        REQUIRE(Scene.AddImpulse(3, 0.0, -4.0, 0.0));
         Scene.Step(30);
         CHECK(Scene.Y(3) < 19.0f);
         CHECK(std::abs(Scene.Z(3)) < 0.1f);
@@ -2404,7 +2445,7 @@ TEST_CASE("ODE character controllers share the world with bodies")
         OdeScene Scene;
         Scene.Kernel.Objects().MakeObjectBox(3, 20.0f, 1.0f, 20.0f);
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {3}));
-        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyKinematic, {3, 1}));
+        REQUIRE(Scene.SetBodyKinematic(3, 1));
         MakeCharacter(Scene, 2, 0.0f, 1.5f, 0.0f);
         Scene.Step(5);
         REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {3, 2.0, 0.0, 0.0}));
@@ -2494,7 +2535,7 @@ TEST_CASE("ODE character controllers share the world with bodies")
         MakeCharacter(Scene, 2, 0.0f, 5.0f, 0.0f);
         CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {2, 1.0, 0.0, 0.0}));
         CHECK(Scene.Error.find("character controller of object 2") != std::string::npos);
-        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeAddImpulse, {2, 1.0, 0.0, 0.0}));
+        CHECK_FALSE(Scene.AddImpulse(2, 1.0, 0.0, 0.0));
         CHECK(Scene.Error.find("character controller of object 2") != std::string::npos);
         Scene.DynamicSphere(3, 5.0f);
         CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCreateBallJoint, {1, 2, 3, 0.0, 0.0, 0.0}));

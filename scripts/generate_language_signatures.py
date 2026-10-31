@@ -131,13 +131,6 @@ PROFILE_PARAMETER_SPECS = {
     ("DbPro", "IS VR CONTROLLER TRACKED"): "I",
     ("DbPro", "SET VR PREVIEW MODE"): "I",
     ("DbPro", "SET VR CAMERA HEIGHT"): "R",
-    ("DbPro", "ODE ADD TORQUE"): "I,R,R,R",
-    ("DbPro", "ODE ADD IMPULSE"): "I,R,R,R",
-    ("DbPro", "ODE SET BODY KINEMATIC"): "I,I",
-    ("DbPro", "ODE SET BODY DAMPING"): "I,R,R",
-    ("DbPro", "ODE GET BODY ANGULAR VELOCITY X"): "I",
-    ("DbPro", "ODE GET BODY ANGULAR VELOCITY Y"): "I",
-    ("DbPro", "ODE GET BODY ANGULAR VELOCITY Z"): "I",
 
     ("Dbc", "CALL DLL"): "N,S,A,A,A,A,A,A,A,A,A",
     ("Dbc", "CREATE NET GAME"): "S,S,N,N",
