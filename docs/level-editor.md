@@ -160,7 +160,7 @@ sets only X. Names and numbers stay per node.
 | Ctrl/Cmd or Shift + left click | Add to or remove from the selection; in the Hierarchy, Shift selects the rows from the active node |
 | Ctrl/Cmd+A | Select every node |
 | Q W E R | View, move, rotate, scale tools |
-| F | Frame the selection |
+| F, from any Scene panel | Frame the selection |
 | G | Align the selection to the grid |
 | - and = | Smaller or larger grid step: 1, 2.5, 5, 10, 25... |
 | Hold Ctrl/Cmd during a drag | Invert snapping |

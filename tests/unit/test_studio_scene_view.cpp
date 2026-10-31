@@ -160,6 +160,14 @@ namespace
             return Min + glm::vec2((Ndc.x + 1.0f) * 0.5f, (1.0f - Ndc.y) * 0.5f) * Size;
         }
 
+        // Whether the camera, at its starting angle, looks straight at a point from close by.
+        bool Frames(const glm::vec3& Point) const
+        {
+            const glm::vec3 ToPoint = Point - Editor_.View().Eye;
+            const glm::vec3 Ahead = scene::LightDirection(glm::vec3(20.0f, 0.0f, 0.0f));
+            return glm::length(ToPoint) < 60.0f && glm::dot(glm::normalize(ToPoint), Ahead) > 0.999f;
+        }
+
         void MoveMouse(const glm::vec2& At)
         {
             ImGui::GetIO().AddMousePosEvent(At.x, At.y);
@@ -344,6 +352,27 @@ TEST_CASE("A gizmo move lands on the grid by default, and the command key invert
     const glm::vec3 Free = Driver.SavedPositions().at(0);
     CHECK(Free.x > Moved.x);
     CHECK(!IsMultipleOf(Free.x, 10.0f));
+}
+
+TEST_CASE("F frames the selection whichever Scene panel has the focus")
+{
+    const glm::vec3 Near(0.0f);
+    const glm::vec3 Far(600.0f, 10.0f, 300.0f);
+    SceneViewDriver Driver("frame_key", LevelOfCubes({Near, Far}));
+
+    const glm::vec3 Start = Driver.Editor().View().Eye;
+    Driver.Tap(ImGuiKey_F);
+    CHECK(glm::length(Driver.Editor().View().Eye - Start) == doctest::Approx(0.0f));
+
+    Driver.Click(Near);
+    Driver.Tap(ImGuiKey_F);
+    CHECK(Driver.Frames(Near));
+
+    // A click in the Hierarchy leaves the focus there.
+    Driver.ClickHierarchyRow(1);
+    CHECK_FALSE(Driver.Frames(Far));
+    Driver.Tap(ImGuiKey_F);
+    CHECK(Driver.Frames(Far));
 }
 
 TEST_CASE("The grid keys change the step moves land on")

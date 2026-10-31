@@ -870,8 +870,6 @@ namespace dbc::studio
                     PaintMode_ = PaintMode::Several;
                 else if (Tool_ == Tool::Paint && ImGui::IsKeyPressed(ImGuiKey_3, false))
                     PaintMode_ = PaintMode::Brush;
-                else if (ImGui::IsKeyPressed(ImGuiKey_F, false))
-                    FrameSelection();
                 else if (ImGui::IsKeyPressed(ImGuiKey_G, false))
                     AlignSelectionToGrid();
                 else if (ImGui::IsKeyPressed(ImGuiKey_Minus, false))

@@ -832,6 +832,8 @@ namespace dbc::studio
             else if (!Command &&
                      (ImGui::IsKeyPressed(ImGuiKey_Delete, false) || ImGui::IsKeyPressed(ImGuiKey_Backspace, false)))
                 DeleteSelected();
+            else if (!Command && !Navigating_ && ImGui::IsKeyPressed(ImGuiKey_F, false))
+                FrameSelection();
         }
 
         void SceneEditor::BuildDefaultLayout(ImGuiID DockspaceId, const char* OutputPanel)

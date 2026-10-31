@@ -124,6 +124,12 @@ namespace dbc::studio
             // Records the viewport's offscreen pass, before the ImGui pass samples it.
             void RecordGpu(SDL_GPUCommandBuffer* Commands);
 
+            // What the viewport showed when it last drew.
+            const scene::ViewParameters& View() const
+            {
+                return View_;
+            }
+
           private:
             struct Selection
             {
