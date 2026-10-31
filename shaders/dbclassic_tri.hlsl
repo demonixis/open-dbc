@@ -111,6 +111,16 @@ cbuffer TextureStageUniforms : register(b1, space3)
     int4 stages[8];
 };
 
+// Surface maps only (stages[0].z == 4). Stages 4 to 7 hold the normal, specular, emissive and reflection maps.
+cbuffer MaterialUniforms : register(b2, space3)
+{
+    float4 view_to_world[3];
+    // x normal strength, y reflection amount, z reflection Fresnel, w cube mip levels (0: no reflection).
+    float4 material_params;
+    // x normal layers, then whether the specular, emissive and reflection maps exist.
+    int4 material_maps;
+};
+
 Varyings VSMain(VertexInput input)
 {
     Varyings output;
@@ -192,6 +202,15 @@ float3 specular_light(float3 N, float3 L, float3 V, float3 light_color, float sp
     return light_color * spec * 0.15;
 }
 
+// The specular term of surface maps, normalised so that a tighter highlight is brighter rather than dimmer. The light
+// colour already folds in the pi that diffuse_light leaves out.
+float3 blinn_phong_light(float3 N, float3 L, float3 V, float3 light_color, float spec_power)
+{
+    float3 H = normalize(L + V);
+    float spec = (spec_power + 8.0) / 8.0 * pow(max(dot(N, H), 0.0), spec_power) * max(dot(N, L), 0.0);
+    return light_color * spec;
+}
+
 float4 sample_2d_stage(int stage, float2 uv)
 {
     if (stage == 0) return tex0.Sample(sampler0, uv);
@@ -249,6 +268,162 @@ float3 apply_fog(float3 result, float3 view_pos)
         result = lerp(result, srgb_to_linear(fog_color_dist.rgb), fog_f);
     }
     return result;
+}
+
+// Adds every light's diffuse and specular at a point, in view space.
+void gather_lights(float3 N, float3 V, float3 view_pos, float spec_power, float fade, bool normalised_specular,
+                   inout float3 lighting, inout float3 specular)
+{
+    // Directional light (affected by fade)
+    if (dir_light_color.a > 0.0)
+    {
+        float3 L = normalize(-dir_light_direction.xyz);
+        float3 light_color = srgb_to_linear(dir_light_color.rgb);
+        lighting += diffuse_light(N, L, light_color) * fade;
+        specular += (normalised_specular ? blinn_phong_light(N, L, V, light_color, spec_power)
+                                         : specular_light(N, L, V, light_color, spec_power)) * fade;
+    }
+
+    // Point lights (affected by fade)
+    int num_point = light_counts.x;
+    for (int i = 0; i < num_point; ++i)
+    {
+        float4 pos_range = point_lights[i * 2];
+        float4 color = point_lights[i * 2 + 1];
+
+        float3 to_light = pos_range.xyz - view_pos;
+        float dist = length(to_light);
+        float range = pos_range.w;
+
+        if (dist < range)
+        {
+            float3 L = to_light / max(dist, 0.0001);
+            float atten = clamp(1.0 - dist / range, 0.0, 1.0);
+            atten *= atten;
+            float3 light_color = srgb_to_linear(color.rgb);
+            lighting += diffuse_light(N, L, light_color) * atten * fade;
+            specular += (normalised_specular ? blinn_phong_light(N, L, V, light_color, spec_power)
+                                             : specular_light(N, L, V, light_color, spec_power)) * atten * fade;
+        }
+    }
+
+    // Spot lights (affected by fade)
+    int num_spot = light_counts.y;
+    for (int j = 0; j < num_spot; ++j)
+    {
+        float4 pos_range = spot_lights[j * 3];
+        float4 dir_inner = spot_lights[j * 3 + 1];
+        float4 color_outer = spot_lights[j * 3 + 2];
+
+        float3 to_light = pos_range.xyz - view_pos;
+        float dist = length(to_light);
+        float range = pos_range.w;
+
+        if (dist < range)
+        {
+            float3 L = to_light / max(dist, 0.0001);
+            float cos_angle = dot(-L, normalize(dir_inner.xyz));
+            float cos_inner = dir_inner.w;
+            float cos_outer = color_outer.a;
+
+            float spot_f = clamp((cos_angle - cos_outer) / max(cos_inner - cos_outer, 0.0001), 0.0, 1.0);
+            float atten = clamp(1.0 - dist / range, 0.0, 1.0);
+            atten *= atten;
+
+            float3 light_color = srgb_to_linear(color_outer.rgb);
+            lighting += diffuse_light(N, L, light_color) * atten * spot_f * fade;
+            specular += (normalised_specular ? blinn_phong_light(N, L, V, light_color, spec_power)
+                                             : specular_light(N, L, V, light_color, spec_power)) *
+                        atten * spot_f * fade;
+        }
+    }
+}
+
+// Undoes the sRGB decoding that sampling applied: a normal map's texels are data, not colour.
+float3 srgb_encode(float3 c)
+{
+    const float3 low = c * 12.92;
+    const float3 high = 1.055 * pow(max(c, 0.0), 1.0 / 2.4) - 0.055;
+    return float3(c.x <= 0.0031308 ? low.x : high.x, c.y <= 0.0031308 ? low.y : high.y,
+                  c.z <= 0.0031308 ? low.z : high.z);
+}
+
+// Bends N by a tangent-space normal, with a frame from the screen derivatives of the position and the coordinates, so
+// that meshes need no tangents. Green follows +V, the DirectX convention of the existing bump maps.
+float3 perturb_normal(float3 N, float3 view_pos, float2 uv, float3 tangent_normal)
+{
+    const float3 dp1 = ddx(view_pos);
+    const float3 dp2 = ddy(view_pos);
+    const float2 duv1 = ddx(uv);
+    const float2 duv2 = ddy(uv);
+    const float3 dp2perp = cross(dp2, N);
+    const float3 dp1perp = cross(N, dp1);
+    const float3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+    const float3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+    const float size = max(dot(T, T), dot(B, B));
+    if (size <= 1e-20)
+        return N;
+    // These are the gradients of U and V times the signed screen area, whichever way the axes turn.
+    const float inverse = (dot(N, cross(dp1, dp2)) < 0.0 ? -1.0 : 1.0) / sqrt(size);
+    return normalize(tangent_normal.x * T * inverse + tangent_normal.y * B * inverse + tangent_normal.z * N);
+}
+
+// Blinn-Phong with normal, specular, emissive and reflection maps and a cube map's reflection. N and V are normalised.
+float4 shade_surface_maps(Varyings input, float4 tex_color, float3 N, float3 V, float fade)
+{
+    if (material_maps.x > 0)
+    {
+        float3 tangent_normal = srgb_encode(tex4.Sample(sampler4, input.aux_uv3).rgb) * 2.0 - 1.0;
+        if (material_maps.x > 1)
+        {
+            const float3 second = srgb_encode(tex4.Sample(sampler4, input.aux_uv4).rgb) * 2.0 - 1.0;
+            tangent_normal = float3(tangent_normal.xy + second.xy, tangent_normal.z * second.z);
+        }
+        tangent_normal.xy *= material_params.x;
+        N = perturb_normal(N, input.view_pos, input.aux_uv3, normalize(tangent_normal));
+    }
+
+    float spec_power = max(input.box_br.a, 1.0);
+    float3 spec_color = srgb_to_linear(input.box_br.rgb);
+    const bool no_specular_color = dot(spec_color, spec_color) <= 0.0;
+    if (material_maps.y != 0)
+    {
+        // Alpha scales the power, so that an opaque map leaves SET OBJECT SPECULAR POWER as it is.
+        const float4 specular_map = tex5.Sample(sampler5, input.uv);
+        spec_color = (no_specular_color ? 1.0 : spec_color) * specular_map.rgb;
+        spec_power = max(spec_power * specular_map.a, 1.0);
+    }
+    else if (no_specular_color)
+    {
+        // What a dielectric reflects, since a normal map shows little without a highlight.
+        spec_color = 0.04;
+    }
+
+    float3 lighting = srgb_to_linear(ambient_color.rgb) * ambient_color.a * srgb_to_linear(input.box_tr.rgb);
+    float3 specular = 0.0;
+    gather_lights(N, V, input.view_pos, spec_power, fade, true, lighting, specular);
+
+    float3 result = tex_color.rgb * clamp(lighting, 0.0, max(2.0, 2.0 * fade));
+    if (material_params.w > 0.0)
+    {
+        const float grazing = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 5.0);
+        float reflectance = material_params.y + (1.0 - material_params.y) * material_params.z * grazing;
+        if (material_maps.w != 0)
+            reflectance *= tex7.Sample(sampler7, input.uv).r;
+        const float3 view_reflection = reflect(-V, N);
+        const float3 world_reflection =
+            float3(dot(view_to_world[0].xyz, view_reflection), dot(view_to_world[1].xyz, view_reflection),
+                   dot(view_to_world[2].xyz, view_reflection));
+        // From the sharpest level at the highest power that makes sense down to the broadest at power 1.
+        const float level = (material_params.w - 1.0) * (1.0 - clamp(log2(spec_power) / 11.0, 0.0, 1.0));
+        result = lerp(result, cube_tex.SampleLevel(cube_sampler, world_reflection, level).rgb, reflectance);
+    }
+
+    result += specular * spec_color;
+    result += srgb_to_linear(input.box_bl.rgb);
+    if (material_maps.z != 0)
+        result += tex6.Sample(sampler6, input.uv).rgb;
+    return float4(linear_to_srgb(apply_fog(result, input.view_pos)), tex_color.a);
 }
 
 float4 PSMain(Varyings input) : SV_Target0
@@ -328,6 +503,10 @@ float4 PSMain(Varyings input) : SV_Target0
 
     N = N / normal_mag;
     float3 V = normalize(-input.view_pos);
+    if (built_in_effect == 4)
+    {
+        return shade_surface_maps(input, tex_color, N, V, fade);
+    }
     if (built_in_effect == 1)
     {
         float3 T = input.cube_direction - N * dot(input.cube_direction, N);
@@ -349,65 +528,7 @@ float4 PSMain(Varyings input) : SV_Target0
     float3 lighting = srgb_to_linear(ambient_color.rgb) * ambient_color.a * srgb_to_linear(input.box_tr.rgb);
     float3 specular = 0.0;
 
-    // Directional light (affected by fade)
-    if (dir_light_color.a > 0.0)
-    {
-        float3 L = normalize(-dir_light_direction.xyz);
-        float3 light_color = srgb_to_linear(dir_light_color.rgb);
-        lighting += diffuse_light(N, L, light_color) * fade;
-        specular += specular_light(N, L, V, light_color, spec_power) * fade;
-    }
-
-    // Point lights (affected by fade)
-    int num_point = light_counts.x;
-    for (int i = 0; i < num_point; ++i)
-    {
-        float4 pos_range = point_lights[i * 2];
-        float4 color = point_lights[i * 2 + 1];
-
-        float3 to_light = pos_range.xyz - input.view_pos;
-        float dist = length(to_light);
-        float range = pos_range.w;
-
-        if (dist < range)
-        {
-            float3 L = to_light / max(dist, 0.0001);
-            float atten = clamp(1.0 - dist / range, 0.0, 1.0);
-            atten *= atten;
-            float3 light_color = srgb_to_linear(color.rgb);
-            lighting += diffuse_light(N, L, light_color) * atten * fade;
-            specular += specular_light(N, L, V, light_color, spec_power) * atten * fade;
-        }
-    }
-
-    // Spot lights (affected by fade)
-    int num_spot = light_counts.y;
-    for (int j = 0; j < num_spot; ++j)
-    {
-        float4 pos_range = spot_lights[j * 3];
-        float4 dir_inner = spot_lights[j * 3 + 1];
-        float4 color_outer = spot_lights[j * 3 + 2];
-
-        float3 to_light = pos_range.xyz - input.view_pos;
-        float dist = length(to_light);
-        float range = pos_range.w;
-
-        if (dist < range)
-        {
-            float3 L = to_light / max(dist, 0.0001);
-            float cos_angle = dot(-L, normalize(dir_inner.xyz));
-            float cos_inner = dir_inner.w;
-            float cos_outer = color_outer.a;
-
-            float spot_f = clamp((cos_angle - cos_outer) / max(cos_inner - cos_outer, 0.0001), 0.0, 1.0);
-            float atten = clamp(1.0 - dist / range, 0.0, 1.0);
-            atten *= atten;
-
-            float3 light_color = srgb_to_linear(color_outer.rgb);
-            lighting += diffuse_light(N, L, light_color) * atten * spot_f * fade;
-            specular += specular_light(N, L, V, light_color, spec_power) * atten * spot_f * fade;
-        }
-    }
+    gather_lights(N, V, input.view_pos, spec_power, fade, false, lighting, specular);
 
     // Lighting applied in linear space (allow overbright for fade > 1)
     float3 result = albedo * clamp(lighting, 0.0, max(2.0, 2.0 * fade));

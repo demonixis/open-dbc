@@ -733,6 +733,7 @@ namespace dbc
                 SDL_GPUGraphicsPipeline* BoundPipeline = nullptr;
                 // A mesh leaves its buffers and transforms bound until a batch of shared vertices needs them back.
                 bool MeshStateBound = false;
+                bool MaterialUniformsBound = false;
                 const auto RestoreSharedState = [&]
                 {
                     SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
@@ -859,6 +860,33 @@ namespace dbc
                         }
                         StageUniforms.Stages[0][2] = Batch.Style.BuiltInEffect;
                         SDL_PushGPUFragmentUniformData(Cmd, 1, &StageUniforms, sizeof(StageUniforms));
+
+                        // Read for surface maps only, but the shader's slot must hold something.
+                        const bool SurfaceMaps = Batch.Style.BuiltInEffect == 4;
+                        if (SurfaceMaps || !MaterialUniformsBound)
+                        {
+                            GpuMaterialUniforms Material{};
+                            if (SurfaceMaps)
+                            {
+                                // The rotation's inverse is its transpose, mirrored reflection views included.
+                                for (int Row = 0; Row < 3; ++Row)
+                                    for (int Column = 0; Column < 3; ++Column)
+                                        Material.ViewToWorld[Row][Column] = View.WorldToView[Row][Column];
+                                Material.Params[0] = Batch.Style.NormalStrength;
+                                Material.Params[1] = Batch.Style.ReflectionAmount;
+                                Material.Params[2] = Batch.Style.ReflectionFresnel;
+                                Material.Params[3] = Batch.CubeTexture ? Batch.Style.CubeLevels : 0.0f;
+                                // A deleted image leaves its binding empty.
+                                Material.Maps[0] = !Batch.AuxiliaryTextures[3]   ? 0
+                                                   : Batch.Style.TwoNormalLayers ? 2
+                                                                                 : 1;
+                                Material.Maps[1] = Batch.AuxiliaryTextures[4] ? 1 : 0;
+                                Material.Maps[2] = Batch.AuxiliaryTextures[5] ? 1 : 0;
+                                Material.Maps[3] = Batch.AuxiliaryTextures[6] ? 1 : 0;
+                            }
+                            SDL_PushGPUFragmentUniformData(Cmd, 2, &Material, sizeof(Material));
+                            MaterialUniformsBound = true;
+                        }
                     }
 
                     // The reflection mask writes no colour, but its fragment shader samples like any other.

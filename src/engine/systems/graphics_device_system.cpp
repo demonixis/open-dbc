@@ -270,7 +270,7 @@ namespace dbc
     }
 
     [[nodiscard]] SDL_GPUTexture* GraphicsDeviceSystem::CreateGpuCubeTextureFromSurfaces(
-        const std::array<SDL_Surface*, 6>& Surfaces)
+        const std::array<SDL_Surface*, 6>& Surfaces, Uint32* MipLevels)
     {
         if (!GpuDevice_ || !Surfaces[0] || Surfaces[0]->w <= 0)
             return nullptr;
@@ -328,6 +328,14 @@ namespace dbc
         TextureInfo.height = static_cast<Uint32>(Side);
         TextureInfo.layer_count_or_depth = 6;
         TextureInfo.num_levels = 1;
+        // Generating mipmaps renders into the texture, which the device may not allow for this format.
+        if (MipLevels && SDL_GPUTextureSupportsFormat(GpuDevice_, TextureInfo.format, TextureInfo.type,
+                                                      SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET))
+        {
+            TextureInfo.usage |= SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+            while ((Side >> TextureInfo.num_levels) > 0)
+                ++TextureInfo.num_levels;
+        }
         TextureInfo.sample_count = SDL_GPU_SAMPLECOUNT_1;
         SDL_GPUTexture* CubeTexture = SDL_CreateGPUTexture(GpuDevice_, &TextureInfo);
         if (!CubeTexture)
@@ -399,6 +407,8 @@ namespace dbc
             SDL_UploadToGPUTexture(CopyPass, &SourceInfo, &DestinationRegion, false);
         }
         SDL_EndGPUCopyPass(CopyPass);
+        if (TextureInfo.num_levels > 1)
+            SDL_GenerateMipmapsForGPUTexture(CommandBuffer, CubeTexture);
         if (!Pending.Submit())
         {
             SDL_ReleaseGPUTransferBuffer(GpuDevice_, Transfer);
@@ -406,6 +416,8 @@ namespace dbc
             return nullptr;
         }
         SDL_ReleaseGPUTransferBuffer(GpuDevice_, Transfer);
+        if (MipLevels)
+            *MipLevels = TextureInfo.num_levels;
         return CubeTexture;
     }
 
@@ -1144,7 +1156,7 @@ namespace dbc
         }
 
         SDL_GPUShader* VertexShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_VERTEX, 0, 2);
-        SDL_GPUShader* FragmentShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_FRAGMENT, 9, 2);
+        SDL_GPUShader* FragmentShader = CreateEngineShader("dbclassic_tri", SDL_GPU_SHADERSTAGE_FRAGMENT, 9, 3);
 
         if (!VertexShader || !FragmentShader)
         {

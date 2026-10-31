@@ -121,8 +121,17 @@ namespace dbc
             Hash = Mix(Hash, static_cast<uint32_t>(Style.TextureMipModes[Stage]) |
                                  (Style.TextureCubeModes[Stage] ? uint64_t{1} << 32 : 0u));
         }
-        return Mix(Hash, static_cast<uint32_t>(Style.BuiltInEffect) |
+        Hash = Mix(Hash, static_cast<uint32_t>(Style.BuiltInEffect) |
                              static_cast<uint64_t>(static_cast<uint32_t>(Style.EffectId)) << 32);
+        if (Style.BuiltInEffect == 4)
+        {
+            Hash = Mix(Hash, std::bit_cast<uint32_t>(Style.NormalStrength) |
+                                 static_cast<uint64_t>(std::bit_cast<uint32_t>(Style.ReflectionAmount)) << 32);
+            Hash = Mix(Hash, std::bit_cast<uint32_t>(Style.ReflectionFresnel) |
+                                 static_cast<uint64_t>(std::bit_cast<uint32_t>(Style.CubeLevels)) << 32);
+            Hash = Mix(Hash, Style.TwoNormalLayers ? 1u : 0u);
+        }
+        return Hash;
     }
 
     uint32_t DrawStateHash(const Triangle& TriangleValue, uint32_t StyleHash)

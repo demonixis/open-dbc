@@ -79,6 +79,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CIRCLE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLEAR CAMERA VIEW` | Command | 1-2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLEAR ENTRY BUFFER` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `CLEAR OBJECT MAPS` | Command | 1 | number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `CLONE OBJECT` | Command | 2-3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLONE SOUND` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLONE SPRITE` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -114,6 +115,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DELETE BITMAP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE BSP` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE CAMERA` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `DELETE CUBE MAP` | Command | 1 | number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `DELETE DIRECTORY` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE DLL` | Command | 1 | number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE EFFECT` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -264,6 +266,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `LOAD BITMAP` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD BSP` | Command | 2 | string, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD CDMUSIC` | Command | 2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD CUBE MAP` | Command | 2 | string, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `LOAD DLL` | Command | 2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD DVD ANIMATION` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD EFFECT` | Command | 3-4 | string, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -287,6 +290,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `MAKE ARRAY FROM MEMBLOCK` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE BITMAP FROM MEMBLOCK` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE CAMERA` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `MAKE CUBE MAP` | Command | 7 | number, number, number, number, number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `MAKE DIRECTORY` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE EMITTER` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE FILE` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -556,9 +560,14 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET LIGHT RANGE` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET LIGHT TO OBJECT ORIENTATION` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET LIGHT TO OBJECT POSITION` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET LIMB CUBE MAP` | Command | 4-5 | number, number, number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET LIMB EFFECT` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET LIMB EMISSIVE MAP` | Command | 3 | number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
+| `SET LIMB NORMAL MAP` | Command | 3-4 | number, number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET LIMB NORMALS` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET LIMB REFLECTION MAP` | Command | 3 | number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET LIMB SMOOTHING` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET LIMB SPECULAR MAP` | Command | 3 | number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET MATRIX` | Command | 8 | number, number, number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET MATRIX HEIGHT` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET MATRIX NORMAL` | Command | 6 | number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -581,10 +590,12 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET OBJECT COLLISION TO BOXES` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT COLLISION TO POLYGONS` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT COLLISION TO SPHERES` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET OBJECT CUBE MAP` | Command | 3-4 | number, number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET OBJECT CULL` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT DIFFUSE` | Command | 2-3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT EFFECT` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT EMISSIVE` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET OBJECT EMISSIVE MAP` | Command | 2 | number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET OBJECT FILTER` | Command | 2-3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT FOG` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT FOV` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -592,12 +603,17 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET OBJECT INTERPOLATION` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT LIGHT` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT MASK` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET OBJECT NORMAL MAP` | Command | 2-3 | number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
+| `SET OBJECT NORMAL MAP SCALE` | Command | 3, 5 | number, number, number -> void; number, number, number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
+| `SET OBJECT NORMAL MAP SCROLL` | Command | 3, 5 | number, number, number -> void; number, number, number, number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET OBJECT NORMALS` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT RADIUS` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET OBJECT REFLECTION MAP` | Command | 2 | number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET OBJECT ROTATION XYZ` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT ROTATION ZYX` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT SMOOTHING` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT SPECULAR` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET OBJECT SPECULAR MAP` | Command | 2 | number, number -> void | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `SET OBJECT SPECULAR POWER` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT SPEED` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT TEXTURE` | Command | 3-4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -856,6 +872,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CONTROLKEY` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `COS` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `CREATE NET PLAYER` | Function | 1 | number -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `CUBE MAP EXIST` | Function | 1 | number -> integer | Implemented | OpenDBC extension | OpenDBC surface maps addition; see docs/rendering.md for its observable contract. |
 | `CUBEMAP AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `CULLCCW AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `CULLCW AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |

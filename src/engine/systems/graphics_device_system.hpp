@@ -51,7 +51,8 @@ namespace dbc
         // surface of its size.
         [[nodiscard]] bool UpdateGpuTextureFromSurface(SDL_GPUTexture* Texture, SDL_Surface* Surface,
                                                        std::span<const SDL_Rect> Areas);
-        [[nodiscard]] SDL_GPUTexture* CreateGpuCubeTextureFromSurfaces(const std::array<SDL_Surface*, 6>& Surfaces);
+        [[nodiscard]] SDL_GPUTexture* CreateGpuCubeTextureFromSurfaces(const std::array<SDL_Surface*, 6>& Surfaces,
+                                                                       Uint32* MipLevels = nullptr);
 
         // --- GPU pipeline lifecycle ---
 

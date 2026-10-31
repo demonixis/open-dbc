@@ -1696,3 +1696,22 @@ dbpro	1588	2161	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR built
 dbpro	1589	2163	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbpro	1590	2165	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbpro	1591	2167	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1592	2168	Command	SET OBJECT NORMAL MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1593	2169	Command	SET OBJECT SPECULAR MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1594	2170	Command	SET OBJECT EMISSIVE MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1595	2171	Command	SET OBJECT REFLECTION MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1596	2172	Command	SET OBJECT CUBE MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1597	2173	Command	SET LIMB NORMAL MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1598	2174	Command	SET LIMB SPECULAR MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1599	2175	Command	SET LIMB EMISSIVE MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1600	2176	Command	SET LIMB REFLECTION MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1601	2177	Command	SET LIMB CUBE MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1602	2178	Command	SET OBJECT NORMAL MAP SCROLL	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1602	2179	Command	SET OBJECT NORMAL MAP SCROLL	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1603	2180	Command	SET OBJECT NORMAL MAP SCALE	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1603	2181	Command	SET OBJECT NORMAL MAP SCALE	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1604	2182	Command	CLEAR OBJECT MAPS	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1605	2183	Command	MAKE CUBE MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1606	2184	Command	LOAD CUBE MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1607	2185	Command	DELETE CUBE MAP	surface-map-pixel	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-
+dbpro	1608	2186	Function	CUBE MAP EXIST	surface-map-state	test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path	-

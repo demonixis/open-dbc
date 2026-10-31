@@ -102,6 +102,42 @@ near caps are drawn apart with a depth bias. Sides and far caps have none: where
 shadow falls does not change. A volume can also reach past the far plane, so volumes
 clamp their depth instead of clipping it, which would leave them open.
 
+## Surface maps
+
+DBPro adds a Blinn-Phong path beside the fixed-function one, which it leaves
+untouched for objects that do not ask for it.
+
+| Command | Effect |
+| --- | --- |
+| `SET OBJECT NORMAL MAP obj, img[, strength#]` | Tangent-space normals, DirectX green (it follows V). |
+| `SET OBJECT SPECULAR MAP obj, img` | RGB tints the highlight, alpha scales `SET OBJECT SPECULAR POWER`. |
+| `SET OBJECT EMISSIVE MAP obj, img` | Added after lighting. |
+| `SET OBJECT REFLECTION MAP obj, img` | Red masks the reflection. |
+| `SET OBJECT CUBE MAP obj, cube, amount#[, fresnel#]` | Reflects `cube`: `amount#` head-on, rising towards 1 at grazing angles as far as `fresnel#` says. |
+| `SET OBJECT NORMAL MAP SCROLL obj, u#, v#[, u2#, v2#]` | Offsets, and with four values a second layer; call it each frame to animate water. |
+| `SET OBJECT NORMAL MAP SCALE obj, u#, v#[, u2#, v2#]` | Tiling relative to the base coordinates. |
+| `CLEAR OBJECT MAPS obj` | Back to the fixed-function path. |
+| `MAKE CUBE MAP cube, +x, -x, +y, -y, +z, -z` | From six images. |
+| `LOAD CUBE MAP file$, cube` | From a 4:3 cross around +Z or a 6:1 strip in that order. |
+| `DELETE CUBE MAP cube`, `CUBE MAP EXIST(cube)` | |
+
+The `SET LIMB ... MAP obj, limb, ...` forms set one limb. Image or cube 0 removes
+one map, and a mesh left without any goes back to the fixed-function path.
+
+- Maps live in texture stages 4 to 7 and leave stages 1 to 3 to light and detail
+  maps. `SET BUMP MAPPING`, cartoon and rainbow shading win over them, and an
+  object locked to the screen ignores them. An object with maps is always lit.
+- Meshes need no tangents: the frame comes from screen derivatives, and a
+  non-uniform scale flattens the relief along the stretched axis, as it should.
+- A black `SET OBJECT SPECULAR` and no specular map reflect 4 % of the light, so
+  that a normal map shows. The highlight is normalised by `(power + 8) / 8`.
+- The cube's mip level follows the specular power, from sharp at 2048 to its
+  broadest at 1. Levels are box filtered, not convolved.
+- Images are sRGB, so normal maps are re-encoded before decoding; filtering happens
+  in linear light, which only shows on hard edges of a map.
+- Meshes with one normal layer at its plain coordinates stay on the GPU path and
+  instance; a scrolled, scaled or two-layer normal map draws through triangles.
+
 ## Where frame time goes
 
 On the CPU path, time grows with visible triangles, not objects: clipping and

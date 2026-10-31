@@ -1315,6 +1315,30 @@ UNIT_WITNESSES += (
      "test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively"),
 )
 
+SURFACE_MAPS_TEST = "test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path"
+SURFACE_MAP_WITNESSES = [
+    ("dbpro", "Command", "SET OBJECT NORMAL MAP", 'set object normal map 1, 2, 0.5\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET OBJECT SPECULAR MAP", 'set object specular map 1, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET OBJECT EMISSIVE MAP", 'set object emissive map 1, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET OBJECT REFLECTION MAP", 'set object reflection map 1, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET OBJECT CUBE MAP", 'set object cube map 1, 1, 0.5, 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET LIMB NORMAL MAP", 'set limb normal map 1, 0, 2, 0.5\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET LIMB SPECULAR MAP", 'set limb specular map 1, 0, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET LIMB EMISSIVE MAP", 'set limb emissive map 1, 0, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET LIMB REFLECTION MAP", 'set limb reflection map 1, 0, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET LIMB CUBE MAP", 'set limb cube map 1, 0, 1, 0.5, 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET OBJECT NORMAL MAP SCROLL", 'set object normal map scroll 1, 0.5, 0.5, 0.25, 0.25\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET OBJECT NORMAL MAP SCALE", 'set object normal map scale 1, 2, 2, 3, 3\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "CLEAR OBJECT MAPS", 'clear object maps 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "MAKE CUBE MAP", 'make cube map 1, 1, 2, 3, 4, 5, 6\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "LOAD CUBE MAP", 'load cube map "sky.png", 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "DELETE CUBE MAP", 'delete cube map 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET OBJECT NORMAL MAP SCROLL", 'set object normal map scroll 1, 0.5, 0.5\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Command", "SET OBJECT NORMAL MAP SCALE", 'set object normal map scale 1, 2, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
+    ("dbpro", "Function", "CUBE MAP EXIST", "print cube map exist(1)\n", "surface-map-state", SURFACE_MAPS_TEST),
+]
+UNIT_WITNESSES += tuple(SURFACE_MAP_WITNESSES)
+
 ODE_RIGID_BODY_TEST = (
     "test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend"
 )

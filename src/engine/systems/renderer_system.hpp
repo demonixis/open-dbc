@@ -35,6 +35,9 @@ namespace dbc
         GpuMeshInstance Instance{};
         bool Cull = true;
         SDL_GPUTexture* Texture = nullptr;
+        // Surface maps.
+        std::array<SDL_GPUTexture*, 7> AuxiliaryTextures{};
+        SDL_GPUTexture* CubeTexture = nullptr;
         SurfaceStyle Style{};
         uint32_t StyleHash = 0;
     };

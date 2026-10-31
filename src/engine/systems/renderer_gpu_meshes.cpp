@@ -10,7 +10,7 @@ namespace dbc
     [[nodiscard]] bool SameGpuMeshDraw(const GpuMeshDraw& A, const GpuMeshDraw& B)
     {
         return A.Geometry == B.Geometry && A.Texture == B.Texture && A.Cull == B.Cull && A.StyleHash == B.StyleHash &&
-               A.Style == B.Style;
+               A.AuxiliaryTextures == B.AuxiliaryTextures && A.CubeTexture == B.CubeTexture && A.Style == B.Style;
     }
 
     // Brings together the draws that one instanced call can make. Their order is otherwise free: GPU meshes are
@@ -18,18 +18,25 @@ namespace dbc
     void GroupGpuMeshDraws(std::vector<GpuMeshDraw>& Draws)
     {
         // Compact keys are sorted, then each draw moves once, along the cycles of the permutation.
-        using Key = std::tuple<uint64_t, uint32_t, bool, uintptr_t, std::size_t>;
+        using Key = std::tuple<uint64_t, uint32_t, bool, uintptr_t, uintptr_t, std::size_t>;
         std::vector<Key> Keys(Draws.size());
         for (std::size_t Index = 0; Index < Draws.size(); ++Index)
         {
             const GpuMeshDraw& Draw = Draws[Index];
-            Keys[Index] = {Draw.Geometry->Revision, Draw.StyleHash, Draw.Cull,
-                           reinterpret_cast<uintptr_t>(Draw.Texture), Index};
+            uintptr_t Maps = reinterpret_cast<uintptr_t>(Draw.CubeTexture);
+            for (const SDL_GPUTexture* Texture : Draw.AuxiliaryTextures)
+                Maps = Maps * 31 + reinterpret_cast<uintptr_t>(Texture);
+            Keys[Index] = {Draw.Geometry->Revision,
+                           Draw.StyleHash,
+                           Draw.Cull,
+                           reinterpret_cast<uintptr_t>(Draw.Texture),
+                           Maps,
+                           Index};
         }
         std::sort(Keys.begin(), Keys.end());
         std::vector<std::size_t> Source(Draws.size());
         for (std::size_t Position = 0; Position < Keys.size(); ++Position)
-            Source[Position] = std::get<4>(Keys[Position]);
+            Source[Position] = std::get<5>(Keys[Position]);
         for (std::size_t Start = 0; Start < Source.size(); ++Start)
         {
             if (Source[Start] == Start)
@@ -160,6 +167,8 @@ namespace dbc
                 // Like CPU triangles, an untextured mesh draws with the white texture.
                 Batch.Texture = Draw.Texture ? Draw.Texture : WhiteGpuTexture(Kernel_);
                 Batch.Style = Draw.Style;
+                Batch.AuxiliaryTextures = Draw.AuxiliaryTextures;
+                Batch.CubeTexture = Draw.CubeTexture;
                 Batch.MeshDraw = &Draw;
                 Batch.FirstInstance = static_cast<Uint32>(First);
                 Batch.InstanceCount = static_cast<Uint32>(End - First);

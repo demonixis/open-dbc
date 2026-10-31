@@ -16,3 +16,5 @@ First public release.
 - Classic multiplayer over ENet, native plugins through `LOAD DLL`, DBPro BSP
   worlds, Classic animations and desktop VR through OpenXR.
 - Six demos and tutorials covering the 747 Classic help symbols, with CC0 assets.
+- DBPro surface maps: a Blinn-Phong path with normal, specular, emissive and
+  reflection maps and mipmapped cube maps.
