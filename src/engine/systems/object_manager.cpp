@@ -1538,7 +1538,16 @@ namespace dbc
             AnimationSet.AppendEnd();
             Result.AppendBlock(DboRootAnimationSet, AnimationSet);
             DboBuffer CustomData;
-            CustomData.AppendU32(0u);
+            if (Object.CustomData.empty())
+                CustomData.AppendU32(0u);
+            else
+            {
+                // DBPro's layout: the size of what follows, the block's token, the bytes and a terminator.
+                CustomData.AppendU32(static_cast<uint32_t>(Object.CustomData.size() + 8u));
+                CustomData.AppendU32(DboObjectCustomData);
+                CustomData.AppendBytes(Object.CustomData.data(), Object.CustomData.size());
+                CustomData.AppendU32(0u);
+            }
             Result.AppendBlock(DboObjectCustomData, CustomData);
             Result.AppendEnd();
             {
@@ -1863,6 +1872,16 @@ namespace dbc
                     DboReader Payload(Reader.Data(), Reader.Position(), End);
                     if (!DecodeDboFrame(Payload, aiMatrix4x4{}, Result.Meshes, Error))
                         return false;
+                }
+                else if (Code == DboObjectCustomData && Size >= 12u)
+                {
+                    DboReader Payload(Reader.Data(), Reader.Position(), End);
+                    const uint32_t CustomSize = Payload.ReadU32();
+                    if (CustomSize >= 8u && CustomSize <= Size - 4u && Payload.ReadU32() == DboObjectCustomData)
+                    {
+                        const auto First = Data.begin() + static_cast<std::ptrdiff_t>(Payload.Position());
+                        Result.CustomData.assign(First, First + static_cast<std::ptrdiff_t>(CustomSize - 8u));
+                    }
                 }
                 Reader.Seek(End);
             }
@@ -4144,6 +4163,7 @@ namespace dbc
         Object3D Dst = NewObjectState();
         // Deep-copy all mesh data.
         Dst.Meshes = Src.Meshes;
+        Dst.Lods = Src.Lods;
         // Copy transform.
         Dst.PosX = Src.PosX;
         Dst.PosY = Src.PosY;
@@ -7144,6 +7164,56 @@ namespace dbc
             LimbId < static_cast<int>(Object.LimbTransforms.size()))
             Object.LimbTransforms[static_cast<std::size_t>(LimbId)].Hidden = true;
         Object.TransformDirty = true;
+        return true;
+    }
+
+    bool ObjectManager::SetObjectCustomData(int ObjectId, std::vector<uint8_t> Data, const char* Command,
+                                            std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, Command, Error);
+        if (!Object)
+            return false;
+        Object->CustomData = std::move(Data);
+        return true;
+    }
+
+    const std::vector<uint8_t>* ObjectManager::ObjectCustomData(int ObjectId, const char* Command,
+                                                                std::string* Error) const
+    {
+        const Object3D* Object = RequireObject(ObjectId, Command, Error);
+        return Object ? &Object->CustomData : nullptr;
+    }
+
+    bool ObjectManager::AddLodToObject(int ObjectId, int LodObjectId, int Level, float Distance, std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, "ADD LOD TO OBJECT", Error);
+        if (!Object)
+            return false;
+        const Object3D* LodObject = RequireObject(LodObjectId, "ADD LOD TO OBJECT", Error);
+        if (!LodObject)
+            return false;
+        // Level 2 is DBPro's undocumented camera-facing quad.
+        if (Level != 0 && Level != 1)
+        {
+            if (Error)
+                *Error = "ADD LOD TO OBJECT level must be zero or one";
+            return false;
+        }
+        // Bones name nodes of the model they were loaded with, which a program deletes after this call.
+        const auto HasBones = [](const Mesh& Value) { return !Value.Geometry().BoneNodes.empty(); };
+        if (std::any_of(Object->Meshes.begin(), Object->Meshes.end(), HasBones) ||
+            std::any_of(LodObject->Meshes.begin(), LodObject->Meshes.end(), HasBones))
+        {
+            if (Error)
+                *Error = "ADD LOD TO OBJECT does not support animated objects";
+            return false;
+        }
+        ObjectLod Lod;
+        Lod.Distance = Distance;
+        Lod.Geometries.reserve(LodObject->Meshes.size());
+        for (const Mesh& Value : LodObject->Meshes)
+            Lod.Geometries.push_back(Value.SharedGeometry());
+        Object->Lods[static_cast<std::size_t>(Level)] = std::move(Lod);
         return true;
     }
 

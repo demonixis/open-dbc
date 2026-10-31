@@ -162,7 +162,8 @@ namespace dbc
             if (const auto Mode = MeshValue.TextureStageCoordinateModes.find(Stage);
                 Mode != MeshValue.TextureStageCoordinateModes.end())
                 Surface.CoordinateModes[Index] = Mode->second;
-            if (const auto Uvs = MeshValue.Geometry().UvStages.find(Stage); Uvs != MeshValue.Geometry().UvStages.end())
+            if (const auto Uvs = MeshValue.DrawGeometry().UvStages.find(Stage);
+                Uvs != MeshValue.DrawGeometry().UvStages.end())
                 Surface.StageUvs[Index] = &Uvs->second;
         }
         return Surface;
@@ -225,6 +226,18 @@ namespace dbc
         return std::max(std::abs((E1.z * E2.y - E2.z * E1.y) / Area), std::abs((E2.z * E1.x - E1.z * E2.x) / Area));
     }
 
+    // ADD LOD TO OBJECT: the last level whose distance the camera is past draws, each view choosing for itself.
+    void SelectObjectLod(Object3D& Object, float Distance)
+    {
+        const ObjectLod* Chosen = nullptr;
+        for (const ObjectLod& Lod : Object.Lods)
+            if (!Lod.Geometries.empty() && Distance > Lod.Distance)
+                Chosen = &Lod;
+        for (std::size_t Index = 0; Index < Object.Meshes.size(); ++Index)
+            Object.Meshes[Index].LodGeometry =
+                Chosen && Index < Chosen->Geometries.size() ? Chosen->Geometries[Index] : nullptr;
+    }
+
     // Whether an object draws opaque triangles whose result depends on their place among the other objects' opaque
     // triangles, ordered by depth: drawing meshes from GPU buffers apart from them would change it.
     [[nodiscard]] bool ObjectsNeedDepthOrder(EngineKernel& K)
@@ -255,7 +268,7 @@ namespace dbc
     [[nodiscard]] bool AppendGpuMeshDraw(EngineKernel& K, const Object3D& Object, const Mesh& MeshValue,
                                          const MeshWorldTransform& ToWorld, std::vector<GpuMeshDraw>& Draws)
     {
-        const MeshGeometry& Geometry = MeshValue.Geometry();
+        const MeshGeometry& Geometry = MeshValue.DrawGeometry();
         const std::size_t VertexCount = Geometry.Vertices.size();
         if (!Geometry.Uvs.empty() && Geometry.Uvs.size() != VertexCount)
             return false;
@@ -285,11 +298,11 @@ namespace dbc
             Surface.BlendAdditive || (Surface.CubeGpuTexture && !Surface.BlinnPhong) || Style.EffectId != 0 ||
             Style.ReflectionSurface || Set(Surface.AuxiliaryGpuTextures, Surface.BlinnPhong ? 1 : 0) ||
             Set(CoordinateModes) || Set(Style.TextureCubeModes) || Set(Style.TextureBlendModes, 1) ||
-            !K.Renderer().PrepareGpuMesh(MeshValue.SharedGeometry()))
+            !K.Renderer().PrepareGpuMesh(MeshValue.SharedDrawGeometry()))
             return false;
 
         GpuMeshDraw Draw;
-        Draw.Geometry = MeshValue.SharedGeometry();
+        Draw.Geometry = MeshValue.SharedDrawGeometry();
         GpuMeshInstance& Instance = Draw.Instance;
         const glm::mat3 Normal =
             FaceNormals ? glm::transpose(glm::inverse(glm::mat3(World))) * (Determinant < 0.0f ? -1.0f : 1.0f)
@@ -375,6 +388,11 @@ namespace dbc
                     return;
                 if (Scene)
                     ++Scene->VisibleObjects;
+                if (!Object.Lods[0].Geometries.empty() || !Object.Lods[1].Geometries.empty())
+                {
+                    const Vec3 Origin = dbc::WorldObjectOrigin(K, Object);
+                    SelectObjectLod(Object, std::hypot(Origin.X - Camera.X, Origin.Y - Camera.Y, Origin.Z - Camera.Z));
+                }
 
                 // ── Frustum culling (sphere test) ────────────────────────────────────
                 // Skip objects whose bounding sphere lies entirely outside the view frustum.
@@ -487,7 +505,7 @@ namespace dbc
                     if (GpuObject && BonePalette.empty() &&
                         AppendGpuMeshDraw(K, Object, MeshValue, ToWorld, Scene->MeshDraws))
                         continue;
-                    const MeshGeometry& Geometry = MeshValue.Geometry();
+                    const MeshGeometry& Geometry = MeshValue.DrawGeometry();
                     std::vector<Vec3> SkinnedPositions;
                     std::vector<Vec3> SkinnedNormals;
                     std::vector<uint8_t> SkinnedVertices;

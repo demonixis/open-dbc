@@ -11354,3 +11354,197 @@ TEST_CASE("DBO frame traversal handles deep input and rejects truncated data bef
     std::error_code CleanupError;
     std::filesystem::remove(Path, CleanupError);
 }
+
+TEST_CASE("DBPro memblocks travel with objects through a DBO file")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Number = [](double Value) { return BuiltinValue::FromNumber(Value); };
+    const auto Run = [&](SymbolId Symbol, std::vector<BuiltinValue> Arguments)
+    {
+        Error.clear();
+        return InvokeCommand(Context, Symbol, std::move(Arguments), Error);
+    };
+    const auto Get = [&](int Memblock, int Object)
+    {
+        Error.clear();
+        BuiltinValue Result;
+        return InvokeFunction(Context, SymbolId::Function_GetMemblockFromObject, {Number(Memblock), Number(Object)},
+                              Result, Error);
+    };
+    const auto Read = [&](SymbolId Symbol, std::vector<BuiltinValue> Arguments)
+    {
+        BuiltinValue Result;
+        REQUIRE_MESSAGE(InvokeFunction(Context, Symbol, std::move(Arguments), Result, Error), Error);
+        int Value = 0;
+        REQUIRE(Result.AsInt(Value, &Error));
+        return Value;
+    };
+    const auto Bytes = [&](int Memblock)
+    {
+        std::vector<uint8_t> Data;
+        if (Read(SymbolId::Function_MemblockExist, {Number(Memblock)}) == 0)
+            return Data;
+        const int Size = Read(SymbolId::Function_MemblockSize, {Number(Memblock)});
+        for (int Position = 0; Position < Size; ++Position)
+            Data.push_back(
+                static_cast<uint8_t>(Read(SymbolId::Function_MemblockByte, {Number(Memblock), Number(Position)})));
+        return Data;
+    };
+
+    REQUIRE(Run(SymbolId::Command_MakeObjectCube, {Number(1), Number(10)}));
+    REQUIRE(Run(SymbolId::Command_MakeMemblock, {Number(1), Number(3)}));
+    REQUIRE(Run(SymbolId::Command_WriteMemblockByte, {Number(1), Number(0), Number(25)}));
+    REQUIRE(Run(SymbolId::Command_WriteMemblockByte, {Number(1), Number(2), Number(100)}));
+    const std::vector<uint8_t> Written{25, 0, 100};
+
+    // Nothing added yet: the memblock is left as it was.
+    REQUIRE(Get(1, 1));
+    CHECK(Bytes(1) == Written);
+
+    REQUIRE(Run(SymbolId::Command_AddMemblockToObject, {Number(1), Number(1)}));
+    REQUIRE(Get(2, 1));
+    CHECK(Bytes(2) == Written);
+    REQUIRE(Run(SymbolId::Command_GetMemblockFromObject, {Number(5), Number(1)}));
+    CHECK(Bytes(5) == Written);
+
+    const std::filesystem::path Path = std::filesystem::temp_directory_path() /
+                                       ("opendbc-custom-data-" + std::to_string(SDL_GetPerformanceCounter()) + ".dbo");
+    REQUIRE(Run(SymbolId::Command_SaveObject, {BuiltinValue::FromString(dbc::PathToUtf8(Path)), Number(1)}));
+    REQUIRE(Run(SymbolId::Command_LoadObject, {BuiltinValue::FromString(dbc::PathToUtf8(Path)), Number(2)}));
+    REQUIRE(Get(3, 2));
+    CHECK(Bytes(3) == Written);
+
+    // A saved object without any keeps none.
+    REQUIRE(Run(SymbolId::Command_DeleteMemblockFromObject, {Number(1)}));
+    REQUIRE(Get(4, 1));
+    CHECK(Bytes(4).empty());
+    REQUIRE(Run(SymbolId::Command_SaveObject, {BuiltinValue::FromString(dbc::PathToUtf8(Path)), Number(1)}));
+    REQUIRE(Run(SymbolId::Command_DeleteObject, {Number(2)}));
+    REQUIRE(Run(SymbolId::Command_LoadObject, {BuiltinValue::FromString(dbc::PathToUtf8(Path)), Number(2)}));
+    REQUIRE(Get(4, 2));
+    CHECK(Bytes(4).empty());
+
+    CHECK_FALSE(Run(SymbolId::Command_AddMemblockToObject, {Number(9), Number(1)}));
+    CHECK(Error.find("memblock 9") != std::string::npos);
+    CHECK_FALSE(Run(SymbolId::Command_AddMemblockToObject, {Number(1), Number(9)}));
+    CHECK_FALSE(Get(1, 9));
+    CHECK_FALSE(Run(SymbolId::Command_DeleteMemblockFromObject, {Number(9)}));
+    std::error_code CleanupError;
+    std::filesystem::remove(Path, CleanupError);
+}
+
+TEST_CASE("DBPro LOD models take over past their distance and emitters are planes")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    // Brightness of the frame's centre and of a point near its corner.
+    const auto Pixels = [&]()
+    {
+        Kernel.Renderer().RenderScene();
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        std::array<Uint8, 4> Middle{};
+        std::array<Uint8, 4> Corner{};
+        REQUIRE(SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Middle[0], &Middle[1], &Middle[2],
+                                     &Middle[3]));
+        REQUIRE(SDL_ReadSurfacePixel(Capture, Capture->w / 8, Capture->h / 8, &Corner[0], &Corner[1], &Corner[2],
+                                     &Corner[3]));
+        SDL_DestroySurface(Capture);
+        return std::pair<int, int>{Middle[0], Corner[0]};
+    };
+    REQUIRE(Command(SymbolId::Command_BackdropOn, {}));
+    REQUIRE(Command(SymbolId::Command_ColorBackdrop, {0}));
+
+    // The full model fills the frame, level 0 covers its centre, level 1 is out of sight.
+    REQUIRE(Command(SymbolId::Command_MakeObjectBox, {1, 400, 400, 1}));
+    REQUIRE(Command(SymbolId::Command_MakeObjectBox, {2, 20, 20, 1}));
+    REQUIRE(Command(SymbolId::Command_MakeObjectBox, {3, 0.01, 0.01, 0.01}));
+    REQUIRE(Command(SymbolId::Command_SetObjectLight, {1, 0}));
+    REQUIRE(Command(SymbolId::Command_PositionObject, {1, 0, 0, 100}));
+    REQUIRE(Command(SymbolId::Command_HideObject, {2}));
+    REQUIRE(Command(SymbolId::Command_HideObject, {3}));
+
+    const auto [FullMiddle, FullCorner] = Pixels();
+    CHECK(FullMiddle > 200);
+    CHECK(FullCorner > 200);
+
+    SUBCASE("each level draws beyond its distance, and only draws")
+    {
+        REQUIRE(Command(SymbolId::Command_AddLodToObject, {1, 2, 0, 50}));
+        REQUIRE(Command(SymbolId::Command_AddLodToObject, {1, 3, 1, 150}));
+        // Its source can go: the geometry stays with the object.
+        REQUIRE(Command(SymbolId::Command_DeleteObject, {2}));
+        REQUIRE(Command(SymbolId::Command_DeleteObject, {3}));
+
+        auto [MiddleLod0, CornerLod0] = Pixels();
+        CHECK(MiddleLod0 > 200);
+        CHECK(CornerLod0 == 0);
+
+        REQUIRE(Command(SymbolId::Command_PositionObject, {1, 0, 0, 30}));
+        auto [MiddleFull, CornerFull] = Pixels();
+        CHECK(MiddleFull > 200);
+        CHECK(CornerFull > 200);
+
+        REQUIRE(Command(SymbolId::Command_PositionObject, {1, 0, 0, 200}));
+        auto [MiddleLod1, CornerLod1] = Pixels();
+        CHECK(MiddleLod1 == 0);
+        CHECK(CornerLod1 == 0);
+
+        // A clone carries its levels.
+        REQUIRE(Command(SymbolId::Command_CloneObject, {4, 1}));
+        REQUIRE(Command(SymbolId::Command_HideObject, {1}));
+        REQUIRE(Command(SymbolId::Command_SetObjectLight, {4, 0}));
+        REQUIRE(Command(SymbolId::Command_PositionObject, {4, 0, 0, 100}));
+        auto [MiddleClone, CornerClone] = Pixels();
+        CHECK(MiddleClone > 200);
+        CHECK(CornerClone == 0);
+    }
+
+    SUBCASE("a bad level and missing objects are reported")
+    {
+        CHECK_FALSE(Command(SymbolId::Command_AddLodToObject, {1, 2, 2, 50}));
+        CHECK(Error.find("level") != std::string::npos);
+        CHECK_FALSE(Command(SymbolId::Command_AddLodToObject, {9, 2, 0, 50}));
+        CHECK_FALSE(Command(SymbolId::Command_AddLodToObject, {1, 9, 0, 50}));
+    }
+
+    SUBCASE("MAKE EMITTER makes a plane of its size")
+    {
+        REQUIRE(Command(SymbolId::Command_MakeEmitter, {5, 40}));
+        REQUIRE(Kernel.Objects().ObjectExist(5) == 1);
+        BuiltinValue Result;
+        REQUIRE_MESSAGE(
+            InvokeFunction(Context, SymbolId::Function_ObjectSizeX, {BuiltinValue::FromNumber(5)}, Result, Error),
+            Error);
+        float SizeX = 0.0f;
+        REQUIRE(Result.AsFloat(SizeX, &Error));
+        CHECK(SizeX == doctest::Approx(40.0f));
+    }
+}

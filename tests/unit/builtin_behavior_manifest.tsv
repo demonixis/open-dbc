@@ -709,21 +709,21 @@ dbc	1104	1727	Function	WRAPVALUE	golden-output	test_math.dba	fbc34ac7b482ab61efa
 dbc	1106	1730	Function	X VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbc	1109	1734	Function	Y VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbc	1111	1737	Function	Z VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1449	2002	Function	GET REGISTRY	registry-file-state	test_engine_builtins.cpp::Classic registry commands persist values in the user's registry file	-
-dbc	1578	2140	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1579	2142	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1580	2144	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1581	2146	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1582	2148	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1583	2150	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1584	2152	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1585	2154	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1586	2156	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1587	2158	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1588	2160	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1589	2162	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1590	2164	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	1591	2166	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1450	2003	Function	GET REGISTRY	registry-file-state	test_engine_builtins.cpp::Classic registry commands persist values in the user's registry file	-
+dbc	1579	2141	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1580	2143	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1581	2145	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1582	2147	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1583	2149	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1584	2151	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1585	2153	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1586	2155	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1587	2157	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1588	2159	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1589	2161	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1590	2163	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1591	2165	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1592	2167	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbpro	0	1	Command	ADD LIMB	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	1	2	Command	ADD MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	2	3	Command	ADD MESH TO VERTEXDATA	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
@@ -1568,6 +1568,8 @@ dbpro	1109	1735	Function	Y VECTOR3	golden-output	test_dbpro_matrix.dba	30249d63a
 dbpro	1110	1736	Function	Y VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	1111	1738	Function	Z VECTOR3	golden-output	test_dbpro_matrix.dba	30249d63af2c68ea4bd5e89b776ddc8b417c3da3efe3e2ea7615212e0196b210
 dbpro	1112	1739	Function	Z VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1180	1742	Command	ADD LOD TO OBJECT	pixel-capture	test_engine_builtins.cpp::DBPro LOD models take over past their distance and emitters are planes	-
+dbpro	1181	1743	Command	ADD MEMBLOCK TO OBJECT	engine-state	test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file	-
 dbpro	1185	1747	Command	ADD TO QUEUE	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1186	1748	Command	ADD TO STACK	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1189	1751	Function	AMBIENT LIGHT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
@@ -1591,6 +1593,7 @@ dbpro	1218	1778	Function	CEIL	golden-output	test_dbpro_core.dba	8d62c939abc65069
 dbpro	1228	1788	Function	COMPARE CASE$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1229	1789	Function	CONTROL DEVICE INDEX	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
 dbpro	1230	1790	Command	CONVERT MESH TO VERTEXDATA	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
+dbpro	1241	1801	Command	DELETE MEMBLOCK FROM OBJECT	engine-state	test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file	-
 dbpro	1245	1805	Function	DESKTOP HEIGHT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1246	1806	Function	DESKTOP WIDTH	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1248	1808	Command	DISABLE OBJECT ZBIAS	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
@@ -1615,6 +1618,7 @@ dbpro	1274	1831	Function	FIRST TOKEN$	golden-output	test_dbpro_display_image_tex
 dbpro	1276	1832	Function	FLOOR	golden-output	test_dbpro_core.dba	8d62c939abc65069a90e348b81888038410b08ddf81ef5c642ada8634a676b3d
 dbpro	1288	1844	Function	GET KEY STATE	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbpro	1289	1845	Function	GET MAXIMUM LIGHTS	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
+dbpro	1295	1851	Function	GET MEMBLOCK FROM OBJECT	engine-state	test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file	-
 dbpro	1305	1861	Function	GET VERTEXDATA DIFFUSE	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	1306	1862	Function	GET VERTEXDATA NORMALS X	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	1307	1863	Function	GET VERTEXDATA NORMALS Y	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
@@ -1624,175 +1628,177 @@ dbpro	1310	1866	Function	GET VERTEXDATA POSITION Y	engine-state	test_engine_buil
 dbpro	1311	1867	Function	GET VERTEXDATA POSITION Z	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	1313	1869	Function	GET VERTEXDATA U	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	1314	1870	Function	GET VERTEXDATA V	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
-dbpro	1315	1871	Command	HIDE OBJECT BOUNDS	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
-dbpro	1319	1875	Function	IMAGE FILE EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
-dbpro	1321	1876	Function	JOYSTICK INFORMATION	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
-dbpro	1322	1877	Function	LIMB COLLISION	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
-dbpro	1323	1878	Function	LIMB HIT	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
-dbpro	1324	1879	Function	LIMB NAME$	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
-dbpro	1329	1884	Command	MAKE FILE FROM MEMBLOCK	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
-dbpro	1332	1887	Command	MAKE OBJECT PLANE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
-dbpro	1338	1893	Function	MUSIC SPEED	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
-dbpro	1339	1894	Function	MUSIC VOLUME	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
-dbpro	1340	1895	Function	MYDOCDIR$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
-dbpro	1342	1897	Command	NEXT ARRAY INDEX	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
-dbpro	1343	1898	Function	NEXT TOKEN$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
-dbpro	1349	1904	Command	PERFORM CHECKLIST FOR ONSCREEN OBJECTS	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
-dbpro	1357	1912	Command	PREVIOUS ARRAY INDEX	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
-dbpro	1358	1913	Command	PRINTC	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
-dbpro	1359	1914	Command	PROJECT VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	1361	1916	Function	READ BYTE FROM FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
-dbpro	1365	1920	Command	REMOVE FROM QUEUE	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
-dbpro	1366	1921	Command	REMOVE FROM STACK	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
-dbpro	1369	1924	Function	REVERSE$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
-dbpro	1370	1925	Command	SCALE LISTENER	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
-dbpro	1375	1930	Command	SET BITMAP FORMAT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
-dbpro	1378	1933	Command	SET CAMERA CLIP	camera-image-pixel	test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane	-
-dbpro	1380	1935	Command	SET CONTROL DEVICE INDEX	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
-dbpro	1381	1936	Command	SET EFFECT CONSTANT BOOLEAN	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
-dbpro	1382	1937	Command	SET EFFECT CONSTANT FLOAT	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
-dbpro	1383	1938	Command	SET EFFECT CONSTANT INTEGER	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
-dbpro	1384	1939	Command	SET EFFECT CONSTANT MATRIX	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
-dbpro	1385	1940	Command	SET EFFECT CONSTANT VECTOR	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
-dbpro	1386	1941	Command	SET GLOBAL SHADOW COLOR	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
-dbpro	1387	1942	Command	SET GLOBAL SHADOW SHADES	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
-dbpro	1388	1943	Command	SET GLOBAL SHADOWS OFF	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
-dbpro	1389	1944	Command	SET GLOBAL SHADOWS ON	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
-dbpro	1390	1945	Command	SET JOYSTICK DEADZONE	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
-dbpro	1391	1946	Command	SET KEY STATE TOGGLE	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
-dbpro	1392	1947	Command	SET LIMB NORMALS	geometry-render	test_engine_builtins.cpp::DBPro object and limb normal commands rewrite rendered geometry	-
-dbpro	1393	1948	Command	SET OBJECT FOV	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
-dbpro	1394	1949	Command	SET OBJECT MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
-dbpro	1399	1954	Command	SET SHADOW LIGHT	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
-dbpro	1400	1955	Command	SET SPRITE IMAGE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
-dbpro	1401	1956	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
-dbpro	1401	1957	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
-dbpro	1407	1963	Command	SET VECTOR3 TO LIGHT ROTATION	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
-dbpro	1408	1964	Command	SET VECTOR3 TO PARTICLES POSITION	golden-output	test_dbpro_particles.dba	01780cf8a7f8a174688214d2c82b1ac3bc1813ca951650ca8e84851b6c2ebba0
-dbpro	1409	1965	Command	SET VECTOR3 TO PARTICLES ROTATION	golden-output	test_dbpro_particles.dba	01780cf8a7f8a174688214d2c82b1ac3bc1813ca951650ca8e84851b6c2ebba0
-dbpro	1414	1970	Command	SKIP BYTES	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
-dbpro	1415	1971	Function	SOUND PAN	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
-dbpro	1416	1972	Function	SOUND SPEED	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
-dbpro	1417	1973	Function	SPRITE FRAME	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
-dbpro	1418	1974	Function	SPRITE PRIORITY	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
-dbpro	1419	1975	Function	SPRITE VISIBLE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
-dbpro	1424	1979	Command	SYNC MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
-dbpro	1435	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
-dbpro	1438	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
-dbpro	1440	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
-dbpro	1442	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
-dbpro	1450	2004	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1451	2005	Command	ODE ADD STATIC OBJECT BOX	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
-dbpro	1452	2006	Command	ODE COLLISION GET MESSAGE	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1453	2007	Command	ODE CONTROL CHARACTER CONTROLLER	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
-dbpro	1454	2008	Command	ODE CREATE BALL JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
-dbpro	1455	2009	Command	ODE CREATE CHARACTER CONTROLLER	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
-dbpro	1456	2010	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1456	2011	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1456	2012	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1456	2013	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1457	2014	Command	ODE CREATE DYNAMIC BOX MANUAL	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1458	2015	Command	ODE CREATE DYNAMIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
-dbpro	1459	2016	Command	ODE CREATE DYNAMIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
-dbpro	1460	2017	Command	ODE CREATE DYNAMIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1461	2018	Command	ODE CREATE DYNAMIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1462	2019	Command	ODE CREATE HINGE JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
-dbpro	1462	2020	Command	ODE CREATE HINGE JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
-dbpro	1464	2023	Command	ODE CREATE STATIC BOX	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1465	2024	Command	ODE CREATE STATIC BOX LIMB	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1466	2025	Command	ODE CREATE STATIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
-dbpro	1467	2026	Command	ODE CREATE STATIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
-dbpro	1468	2027	Command	ODE CREATE STATIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1470	2029	Command	ODE CREATE STATIC TERRAIN MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1471	2030	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1471	2031	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1471	2032	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1472	2033	Command	ODE CREATE STATIC TRIANGLE MESH LIMB	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1475	2036	Command	ODE DESTROY OBJECT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1477	2038	Command	ODE END	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1478	2039	Command	ODE END STATIC OBJECT	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
-dbpro	1479	2040	Command	ODE SET ACTIVE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1480	2041	Command	ODE SET ANGULAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1481	2042	Command	ODE SET BODY FRICTION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1482	2043	Command	ODE SET BODY MASS	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1483	2044	Command	ODE SET BODY POSITION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1484	2045	Command	ODE SET BODY ROTATION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1486	2047	Command	ODE SET CONTACT	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1487	2048	Command	ODE SET CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1488	2049	Command	ODE SET CONTACT BOUNCE VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1489	2050	Command	ODE SET CONTACT FDIR1	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1497	2058	Command	ODE SET CONTACT VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1498	2059	Command	ODE SET ENABLED	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1499	2060	Command	ODE SET GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1500	2061	Command	ODE SET HINGE JOINT LIMIT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
-dbpro	1501	2062	Command	ODE SET LINEAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1503	2064	Command	ODE SET RAY CAST	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1504	2065	Command	ODE SET RESPONSE	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
-dbpro	1505	2066	Command	ODE SET STEP MODE	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1508	2069	Command	ODE SET WORLD ERP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1509	2070	Command	ODE SET WORLD GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1510	2071	Command	ODE SET WORLD QUICK STEP NUM ITERATIONS	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1511	2072	Command	ODE SET WORLD STEP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1512	2073	Command	ODE SETSURFACE MODE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1517	2078	Command	ODE SETSURFACE MODE CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1525	2086	Command	ODE START	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1526	2087	Command	ODE START STATIC OBJECT	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
-dbpro	1527	2088	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1527	2089	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1529	2091	Function	ODE COLLISION MESSAGE EXISTS	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1530	2092	Function	ODE CREATE SWINGDOOR HINGE	jolt-rigid-body	test_physics.cpp::ODE swing door hinges hold a body to the world	-
-dbpro	1534	2096	Function	ODE GET BODY HEIGHT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1535	2097	Function	ODE GET BODY LINEAR VELOCITY X	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1536	2098	Function	ODE GET BODY LINEAR VELOCITY Y	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1537	2099	Function	ODE GET BODY LINEAR VELOCITY Z	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1541	2103	Function	ODE GET CHARACTER CONTROLLER DUCKING	jolt-rigid-body	test_physics.cpp::ODE character controllers duck under what they cannot pass	-
-dbpro	1542	2104	Function	ODE GET CHARACTER FALL DISTANCE	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
-dbpro	1543	2105	Function	ODE GET CHARACTER HIT FLOOR	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
-dbpro	1544	2106	Function	ODE GET OBJECT A	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1545	2107	Function	ODE GET OBJECT A ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1546	2108	Function	ODE GET OBJECT A ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1547	2109	Function	ODE GET OBJECT A ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1548	2110	Function	ODE GET OBJECT A CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1549	2111	Function	ODE GET OBJECT A VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1550	2112	Function	ODE GET OBJECT A VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1551	2113	Function	ODE GET OBJECT A VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1552	2114	Function	ODE GET OBJECT B	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1553	2115	Function	ODE GET OBJECT B ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1554	2116	Function	ODE GET OBJECT B ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1555	2117	Function	ODE GET OBJECT B ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1556	2118	Function	ODE GET OBJECT B CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1557	2119	Function	ODE GET OBJECT B VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1558	2120	Function	ODE GET OBJECT B VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1559	2121	Function	ODE GET OBJECT B VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1560	2122	Function	ODE GET RAY COLLISION X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1561	2123	Function	ODE GET RAY COLLISION Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1562	2124	Function	ODE GET RAY COLLISION Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1563	2125	Function	ODE GET RAY NORMAL X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1564	2126	Function	ODE GET RAY NORMAL Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1565	2127	Function	ODE GET RAY NORMAL Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1566	2128	Function	ODE GET RAY OBJECT HIT	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1567	2129	Function	ODE RAY	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1568	2130	Function	ODE RAY CAST	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1569	2131	Function	ODE RAY FORCE	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1570	2132	Function	ODE RAY TERRAIN	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1571	2133	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	1572	2134	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	1573	2135	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	1574	2136	Function	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	1575	2137	Function	MAKE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	1576	2138	Function	MAKE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	1577	2139	Function	LIMB TEXTURE NAME	object-geometry-texture-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
-dbpro	1578	2141	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1579	2143	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1580	2145	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1581	2147	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1582	2149	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1583	2151	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1584	2153	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1585	2155	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1586	2157	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1587	2159	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1588	2161	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1589	2163	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1590	2165	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	1591	2167	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1315	1871	Command	GET MEMBLOCK FROM OBJECT	engine-state	test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file	-
+dbpro	1316	1872	Command	HIDE OBJECT BOUNDS	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
+dbpro	1320	1876	Function	IMAGE FILE EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1322	1877	Function	JOYSTICK INFORMATION	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
+dbpro	1323	1878	Function	LIMB COLLISION	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
+dbpro	1324	1879	Function	LIMB HIT	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
+dbpro	1325	1880	Function	LIMB NAME$	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1329	1884	Command	MAKE EMITTER	engine-state	test_engine_builtins.cpp::DBPro LOD models take over past their distance and emitters are planes	-
+dbpro	1330	1885	Command	MAKE FILE FROM MEMBLOCK	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1333	1888	Command	MAKE OBJECT PLANE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
+dbpro	1339	1894	Function	MUSIC SPEED	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbpro	1340	1895	Function	MUSIC VOLUME	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbpro	1341	1896	Function	MYDOCDIR$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1343	1898	Command	NEXT ARRAY INDEX	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
+dbpro	1344	1899	Function	NEXT TOKEN$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1350	1905	Command	PERFORM CHECKLIST FOR ONSCREEN OBJECTS	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1358	1913	Command	PREVIOUS ARRAY INDEX	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
+dbpro	1359	1914	Command	PRINTC	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1360	1915	Command	PROJECT VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1362	1917	Function	READ BYTE FROM FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1366	1921	Command	REMOVE FROM QUEUE	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
+dbpro	1367	1922	Command	REMOVE FROM STACK	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
+dbpro	1370	1925	Function	REVERSE$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1371	1926	Command	SCALE LISTENER	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbpro	1376	1931	Command	SET BITMAP FORMAT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1379	1934	Command	SET CAMERA CLIP	camera-image-pixel	test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane	-
+dbpro	1381	1936	Command	SET CONTROL DEVICE INDEX	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
+dbpro	1382	1937	Command	SET EFFECT CONSTANT BOOLEAN	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
+dbpro	1383	1938	Command	SET EFFECT CONSTANT FLOAT	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
+dbpro	1384	1939	Command	SET EFFECT CONSTANT INTEGER	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
+dbpro	1385	1940	Command	SET EFFECT CONSTANT MATRIX	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
+dbpro	1386	1941	Command	SET EFFECT CONSTANT VECTOR	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
+dbpro	1387	1942	Command	SET GLOBAL SHADOW COLOR	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
+dbpro	1388	1943	Command	SET GLOBAL SHADOW SHADES	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
+dbpro	1389	1944	Command	SET GLOBAL SHADOWS OFF	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
+dbpro	1390	1945	Command	SET GLOBAL SHADOWS ON	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
+dbpro	1391	1946	Command	SET JOYSTICK DEADZONE	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
+dbpro	1392	1947	Command	SET KEY STATE TOGGLE	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
+dbpro	1393	1948	Command	SET LIMB NORMALS	geometry-render	test_engine_builtins.cpp::DBPro object and limb normal commands rewrite rendered geometry	-
+dbpro	1394	1949	Command	SET OBJECT FOV	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1395	1950	Command	SET OBJECT MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1400	1955	Command	SET SHADOW LIGHT	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
+dbpro	1401	1956	Command	SET SPRITE IMAGE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	1402	1957	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	1402	1958	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	1408	1964	Command	SET VECTOR3 TO LIGHT ROTATION	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
+dbpro	1409	1965	Command	SET VECTOR3 TO PARTICLES POSITION	golden-output	test_dbpro_particles.dba	01780cf8a7f8a174688214d2c82b1ac3bc1813ca951650ca8e84851b6c2ebba0
+dbpro	1410	1966	Command	SET VECTOR3 TO PARTICLES ROTATION	golden-output	test_dbpro_particles.dba	01780cf8a7f8a174688214d2c82b1ac3bc1813ca951650ca8e84851b6c2ebba0
+dbpro	1415	1971	Command	SKIP BYTES	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1416	1972	Function	SOUND PAN	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbpro	1417	1973	Function	SOUND SPEED	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbpro	1418	1974	Function	SPRITE FRAME	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	1419	1975	Function	SPRITE PRIORITY	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	1420	1976	Function	SPRITE VISIBLE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	1425	1980	Command	SYNC MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1436	1991	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
+dbpro	1439	1994	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1441	1996	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
+dbpro	1443	1997	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1451	2005	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1452	2006	Command	ODE ADD STATIC OBJECT BOX	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
+dbpro	1453	2007	Command	ODE COLLISION GET MESSAGE	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1454	2008	Command	ODE CONTROL CHARACTER CONTROLLER	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
+dbpro	1455	2009	Command	ODE CREATE BALL JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
+dbpro	1456	2010	Command	ODE CREATE CHARACTER CONTROLLER	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
+dbpro	1457	2011	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1457	2012	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1457	2013	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1457	2014	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1458	2015	Command	ODE CREATE DYNAMIC BOX MANUAL	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1459	2016	Command	ODE CREATE DYNAMIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1460	2017	Command	ODE CREATE DYNAMIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1461	2018	Command	ODE CREATE DYNAMIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1462	2019	Command	ODE CREATE DYNAMIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1463	2020	Command	ODE CREATE HINGE JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
+dbpro	1463	2021	Command	ODE CREATE HINGE JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
+dbpro	1465	2024	Command	ODE CREATE STATIC BOX	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1466	2025	Command	ODE CREATE STATIC BOX LIMB	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1467	2026	Command	ODE CREATE STATIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1468	2027	Command	ODE CREATE STATIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1469	2028	Command	ODE CREATE STATIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1471	2030	Command	ODE CREATE STATIC TERRAIN MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1472	2031	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1472	2032	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1472	2033	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1473	2034	Command	ODE CREATE STATIC TRIANGLE MESH LIMB	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1476	2037	Command	ODE DESTROY OBJECT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1478	2039	Command	ODE END	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1479	2040	Command	ODE END STATIC OBJECT	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
+dbpro	1480	2041	Command	ODE SET ACTIVE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1481	2042	Command	ODE SET ANGULAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1482	2043	Command	ODE SET BODY FRICTION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1483	2044	Command	ODE SET BODY MASS	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1484	2045	Command	ODE SET BODY POSITION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1485	2046	Command	ODE SET BODY ROTATION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1487	2048	Command	ODE SET CONTACT	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1488	2049	Command	ODE SET CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1489	2050	Command	ODE SET CONTACT BOUNCE VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1490	2051	Command	ODE SET CONTACT FDIR1	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1498	2059	Command	ODE SET CONTACT VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1499	2060	Command	ODE SET ENABLED	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1500	2061	Command	ODE SET GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1501	2062	Command	ODE SET HINGE JOINT LIMIT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
+dbpro	1502	2063	Command	ODE SET LINEAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1504	2065	Command	ODE SET RAY CAST	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1505	2066	Command	ODE SET RESPONSE	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
+dbpro	1506	2067	Command	ODE SET STEP MODE	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1509	2070	Command	ODE SET WORLD ERP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1510	2071	Command	ODE SET WORLD GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1511	2072	Command	ODE SET WORLD QUICK STEP NUM ITERATIONS	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1512	2073	Command	ODE SET WORLD STEP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1513	2074	Command	ODE SETSURFACE MODE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1518	2079	Command	ODE SETSURFACE MODE CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1526	2087	Command	ODE START	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1527	2088	Command	ODE START STATIC OBJECT	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
+dbpro	1528	2089	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1528	2090	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1530	2092	Function	ODE COLLISION MESSAGE EXISTS	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1531	2093	Function	ODE CREATE SWINGDOOR HINGE	jolt-rigid-body	test_physics.cpp::ODE swing door hinges hold a body to the world	-
+dbpro	1535	2097	Function	ODE GET BODY HEIGHT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1536	2098	Function	ODE GET BODY LINEAR VELOCITY X	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1537	2099	Function	ODE GET BODY LINEAR VELOCITY Y	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1538	2100	Function	ODE GET BODY LINEAR VELOCITY Z	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1542	2104	Function	ODE GET CHARACTER CONTROLLER DUCKING	jolt-rigid-body	test_physics.cpp::ODE character controllers duck under what they cannot pass	-
+dbpro	1543	2105	Function	ODE GET CHARACTER FALL DISTANCE	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
+dbpro	1544	2106	Function	ODE GET CHARACTER HIT FLOOR	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
+dbpro	1545	2107	Function	ODE GET OBJECT A	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1546	2108	Function	ODE GET OBJECT A ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1547	2109	Function	ODE GET OBJECT A ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1548	2110	Function	ODE GET OBJECT A ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1549	2111	Function	ODE GET OBJECT A CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1550	2112	Function	ODE GET OBJECT A VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1551	2113	Function	ODE GET OBJECT A VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1552	2114	Function	ODE GET OBJECT A VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1553	2115	Function	ODE GET OBJECT B	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1554	2116	Function	ODE GET OBJECT B ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1555	2117	Function	ODE GET OBJECT B ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1556	2118	Function	ODE GET OBJECT B ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1557	2119	Function	ODE GET OBJECT B CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1558	2120	Function	ODE GET OBJECT B VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1559	2121	Function	ODE GET OBJECT B VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1560	2122	Function	ODE GET OBJECT B VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1561	2123	Function	ODE GET RAY COLLISION X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1562	2124	Function	ODE GET RAY COLLISION Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1563	2125	Function	ODE GET RAY COLLISION Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1564	2126	Function	ODE GET RAY NORMAL X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1565	2127	Function	ODE GET RAY NORMAL Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1566	2128	Function	ODE GET RAY NORMAL Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1567	2129	Function	ODE GET RAY OBJECT HIT	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1568	2130	Function	ODE RAY	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1569	2131	Function	ODE RAY CAST	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1570	2132	Function	ODE RAY FORCE	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1571	2133	Function	ODE RAY TERRAIN	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1572	2134	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1573	2135	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1574	2136	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1575	2137	Function	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1576	2138	Function	MAKE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1577	2139	Function	MAKE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1578	2140	Function	LIMB TEXTURE NAME	object-geometry-texture-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
+dbpro	1579	2142	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1580	2144	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1581	2146	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1582	2148	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1583	2150	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1584	2152	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1585	2154	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1586	2156	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1587	2158	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1588	2160	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1589	2162	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1590	2164	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1591	2166	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1592	2168	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-

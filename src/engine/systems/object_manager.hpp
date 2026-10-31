@@ -103,6 +103,11 @@ namespace dbc
         bool MakeObjectFromLimb(int ObjectId, int SourceObjectId, int LimbId, int AllLimbs = 0,
                                 std::string* Error = nullptr);
         bool AddLimb(int ObjectId, int LimbId, int SourceMeshId, std::string* Error = nullptr);
+        bool AddLodToObject(int ObjectId, int LodObjectId, int Level, float Distance, std::string* Error = nullptr);
+        bool SetObjectCustomData(int ObjectId, std::vector<uint8_t> Data, const char* Command,
+                                 std::string* Error = nullptr);
+        [[nodiscard]] const std::vector<uint8_t>* ObjectCustomData(int ObjectId, const char* Command,
+                                                                   std::string* Error = nullptr) const;
         bool RemoveLimb(int ObjectId, int LimbId, std::string* Error = nullptr);
         void CloneObject(int DestId, int SourceId);
         void InstanceObject(int DestId, int SourceId);

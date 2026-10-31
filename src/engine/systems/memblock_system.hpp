@@ -60,6 +60,8 @@ namespace dbc
         bool MakeMeshFromMemblock(int MeshId, int MemblockNum, std::string* Error = nullptr);
         bool ChangeMeshFromMemblock(int MeshId, int MemblockNum, std::string* Error = nullptr);
         bool MakeMemblockFromMesh(int MemblockNum, int MeshId, std::string* Error = nullptr);
+        bool AddMemblockToObject(int MemblockNum, int ObjectId, std::string* Error = nullptr);
+        bool GetMemblockFromObject(int MemblockNum, int ObjectId, std::string* Error = nullptr);
         bool ChangeMesh(int ObjId, int LimbId, int MeshId, std::string* Error = nullptr);
 
         // Memblock <-> Bitmap/Image conversions (12-byte header + RGB565/RGBA pixel data)

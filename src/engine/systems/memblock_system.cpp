@@ -1249,6 +1249,30 @@ namespace dbc
                ReplaceMemblock(MemblockNum, std::move(Encoded), Error);
     }
 
+    bool MemblockSystem::AddMemblockToObject(int MemblockNum, int ObjectId, std::string* Error)
+    {
+        const std::vector<uint8_t>* Data = GetMemblock(MemblockNum);
+        if (!Data)
+        {
+            if (Error)
+                *Error = "ADD MEMBLOCK TO OBJECT requires existing memblock " + std::to_string(MemblockNum);
+            return false;
+        }
+        return Kernel_.Objects().SetObjectCustomData(ObjectId, *Data, "ADD MEMBLOCK TO OBJECT", Error);
+    }
+
+    bool MemblockSystem::GetMemblockFromObject(int MemblockNum, int ObjectId, std::string* Error)
+    {
+        if (!ValidateMemblockNumber(MemblockNum, Error))
+            return false;
+        const std::vector<uint8_t>* Data =
+            Kernel_.Objects().ObjectCustomData(ObjectId, "GET MEMBLOCK FROM OBJECT", Error);
+        if (!Data)
+            return false;
+        // An object without custom data leaves the memblock as it was, as in DBPro.
+        return Data->empty() || ReplaceMemblock(MemblockNum, *Data, Error);
+    }
+
     bool MemblockSystem::EncodeMesh(std::vector<uint8_t>& Output, int MeshId, const char* Command, std::string* Error)
     {
         const std::vector<Mesh>* Meshes = Kernel_.Objects().GetMeshes(MeshId);

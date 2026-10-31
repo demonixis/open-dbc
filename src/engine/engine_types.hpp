@@ -252,10 +252,22 @@ namespace dbc
         float LimbScaleX = 1.0f;
         float LimbScaleY = 1.0f;
         float LimbScaleZ = 1.0f;
+        // ADD LOD TO OBJECT: what the current view draws instead. Collision and queries keep the record's geometry.
+        std::shared_ptr<const MeshGeometry> LodGeometry;
 
         [[nodiscard]] const MeshGeometry& Geometry() const
         {
             return *Geometry_;
+        }
+
+        [[nodiscard]] const MeshGeometry& DrawGeometry() const
+        {
+            return LodGeometry ? *LodGeometry : *Geometry_;
+        }
+
+        [[nodiscard]] std::shared_ptr<const MeshGeometry> SharedDrawGeometry() const
+        {
+            return LodGeometry ? LodGeometry : Geometry_;
         }
 
         // The geometry to change, detached first when another record shares it; its revision changes. A
@@ -332,9 +344,19 @@ namespace dbc
         std::unordered_map<std::string, const aiNodeAnim*> Channels;
     };
 
+    // ADD LOD TO OBJECT: past this distance from the camera, each mesh draws the geometry at its index.
+    struct ObjectLod
+    {
+        float Distance = 0.0f;
+        std::vector<std::shared_ptr<const MeshGeometry>> Geometries;
+    };
+
     struct Object3D
     {
         std::vector<Mesh> Meshes;
+        std::array<ObjectLod, 2> Lods;
+        // ADD MEMBLOCK TO OBJECT: bytes that travel with the object, through SAVE OBJECT too.
+        std::vector<uint8_t> CustomData;
         float PosX = 0.0f;
         float PosY = 0.0f;
         float PosZ = 0.0f;
