@@ -9,6 +9,7 @@
 #include "core/i18n.hpp"
 #include "scene/scene_geometry.hpp"
 #include "scene/scene_integration.hpp"
+#include "theme.hpp"
 
 namespace dbc::studio
 {
@@ -875,7 +876,7 @@ namespace dbc::studio
         {
             if (ReadErrors_.empty())
                 return;
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Text, Theme::Error);
             ImGui::TextWrapped(
                 "%s", TrFmt("Read-only: {0} has lines the Scene view did not write.", {Document_.Name}).c_str());
             for (const std::string& Error : ReadErrors_)

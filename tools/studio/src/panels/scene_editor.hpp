@@ -87,6 +87,9 @@ namespace dbc::studio
             // Called when the Scene mode is shown: opens a level if none is.
             void Activate();
 
+            // Thumbnails show the theme's panel color around their model, so a change redraws them.
+            void ApplyTheme();
+
             // Asks for a name, then creates the level and saves it. Needs the Scene mode, which draws the popup.
             void RequestNewLevel()
             {

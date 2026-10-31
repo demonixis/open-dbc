@@ -367,7 +367,7 @@ namespace dbc::studio
                 case scene::NodeKind::Terrain:
                     AssetField("Heightmap", Node.Asset, core::MediaKind::Image);
                     if (Node.Asset.empty())
-                        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "%s",
+                        ImGui::TextColored(ImColor(Theme::Error), "%s",
                                            Tr("A terrain needs a square heightmap image."));
                     DrawTerrainHeightmap(Node);
                     break;
@@ -397,7 +397,7 @@ namespace dbc::studio
                 case scene::NodeKind::Sound:
                     AssetField("Sound file", Node.Asset, core::MediaKind::Audio);
                     if (Node.Asset.empty())
-                        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.4f, 1.0f), "%s", Tr("A 3D sound needs a sound file."));
+                        ImGui::TextColored(ImColor(Theme::Error), "%s", Tr("A 3D sound needs a sound file."));
                     ImGui::Checkbox(TrId("Play on load"), &Node.PlayOnLoad);
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("%s",

@@ -67,31 +67,28 @@ namespace dbc::studio
 
         // Maps the studio theme onto the editor palette so code colors match the
         // rest of the window.
-        const TextEditor::Palette& EditorPalette()
+        TextEditor::Palette EditorPalette()
         {
-            static const TextEditor::Palette KPalette = []
-            {
-                TextEditor::Palette P = TextEditor::GetDarkPalette();
-                const auto Set = [&P](TextEditor::Color Slot, ImU32 Color) { P[static_cast<size_t>(Slot)] = Color; };
+            TextEditor::Palette P = Theme::Current == Theme::Appearance::Light ? TextEditor::GetLightPalette()
+                                                                               : TextEditor::GetDarkPalette();
+            const auto Set = [&P](TextEditor::Color Slot, ImU32 Color) { P[static_cast<size_t>(Slot)] = Color; };
 
-                Set(TextEditor::Color::text, Theme::Text);
-                Set(TextEditor::Color::keyword, Theme::Control);
-                Set(TextEditor::Color::declaration, Theme::Keyword);
-                Set(TextEditor::Color::number, Theme::Number);
-                Set(TextEditor::Color::string, Theme::String);
-                Set(TextEditor::Color::punctuation, Theme::Text);
-                Set(TextEditor::Color::preprocessor, Theme::Control);
-                Set(TextEditor::Color::identifier, Theme::Identifier);
-                Set(TextEditor::Color::knownIdentifier, Theme::Keyword);
-                Set(TextEditor::Color::comment, Theme::Comment);
-                Set(TextEditor::Color::background, Theme::Background);
-                Set(TextEditor::Color::cursor, Theme::Text);
-                Set(TextEditor::Color::selection, Theme::Selection);
-                Set(TextEditor::Color::lineNumber, Theme::LineNumber);
-                Set(TextEditor::Color::currentLineNumber, Theme::Text);
-                return P;
-            }();
-            return KPalette;
+            Set(TextEditor::Color::text, Theme::Text);
+            Set(TextEditor::Color::keyword, Theme::Control);
+            Set(TextEditor::Color::declaration, Theme::Keyword);
+            Set(TextEditor::Color::number, Theme::Number);
+            Set(TextEditor::Color::string, Theme::String);
+            Set(TextEditor::Color::punctuation, Theme::Text);
+            Set(TextEditor::Color::preprocessor, Theme::Control);
+            Set(TextEditor::Color::identifier, Theme::Identifier);
+            Set(TextEditor::Color::knownIdentifier, Theme::Keyword);
+            Set(TextEditor::Color::comment, Theme::Comment);
+            Set(TextEditor::Color::background, Theme::Background);
+            Set(TextEditor::Color::cursor, Theme::Text);
+            Set(TextEditor::Color::selection, Theme::Selection);
+            Set(TextEditor::Color::lineNumber, Theme::LineNumber);
+            Set(TextEditor::Color::currentLineNumber, Theme::Text);
+            return P;
         }
 
         void EditorPanel::ConfigureEditor(TextEditor& Editor, dbc::language::LanguageProfile Profile) const
@@ -716,21 +713,37 @@ namespace dbc::studio
                 return;
             }
 
-            TextEditor* Editor = (*It)->Editor.get();
-            Editor->ClearMarkers();
-            for (const auto& [Line, Message] : Errors)
-            {
-                // Diagnostic lines are 1-based, markers are 0-based.
-                const size_t Index = (Line > 0) ? static_cast<size_t>(Line - 1) : 0;
-                Editor->AddMarker(Index, Theme::Error, Theme::ErrorLine, Message, Message);
-            }
+            (*It)->Errors = Errors;
+            ApplyErrorMarkers(**It);
         }
 
         void EditorPanel::ClearErrorMarkers()
         {
-            if (TextEditor* Editor = CurrentEditor())
+            if (HasDocument())
             {
-                Editor->ClearMarkers();
+                Documents_[Current_]->Errors.clear();
+                Documents_[Current_]->Editor->ClearMarkers();
+            }
+        }
+
+        void EditorPanel::ApplyErrorMarkers(Document& Doc)
+        {
+            Doc.Editor->ClearMarkers();
+            for (const auto& [Line, Message] : Doc.Errors)
+            {
+                // Diagnostic lines are 1-based, markers are 0-based.
+                const size_t Index = (Line > 0) ? static_cast<size_t>(Line - 1) : 0;
+                Doc.Editor->AddMarker(Index, Theme::Error, Theme::ErrorLine, Message, Message);
+            }
+        }
+
+        void EditorPanel::ApplyTheme()
+        {
+            for (const std::unique_ptr<Document>& Doc : Documents_)
+            {
+                Doc->Editor->SetPalette(EditorPalette());
+                // Markers hold their colors.
+                ApplyErrorMarkers(*Doc);
             }
         }
 

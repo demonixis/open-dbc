@@ -300,11 +300,11 @@ namespace dbc::studio
                     }
                     for (const dbc::language::ProjectDiagnostic& Diagnostic : DbproProject_->Diagnostics)
                     {
-                        const ImVec4 Color = Diagnostic.Severity == dbc::language::ProjectDiagnosticSeverity::Error
-                                                 ? ImVec4(1.0f, 0.35f, 0.35f, 1.0f)
-                                                 : ImVec4(1.0f, 0.75f, 0.3f, 1.0f);
+                        const ImU32 Color = Diagnostic.Severity == dbc::language::ProjectDiagnosticSeverity::Error
+                                                ? Theme::Error
+                                                : Theme::Warning;
                         ImGui::TextColored(
-                            Color, "%s",
+                            ImColor(Color), "%s",
                             TrFmt("Line {0}: {1}", {std::to_string(Diagnostic.Line), Diagnostic.Message}).c_str());
                     }
                     ImGui::EndTabItem();

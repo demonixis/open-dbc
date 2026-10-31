@@ -204,6 +204,17 @@ TEST_CASE("Studio settings keep export tools and per-project export folders")
     CHECK_FALSE(Error.empty());
 }
 
+TEST_CASE("Studio settings keep the theme, dark by default")
+{
+    std::string Error;
+    CHECK(core::Settings::Parse("{}", Error).Theme == "dark");
+    CHECK(core::Settings::Parse(R"({"theme":"light"})", Error).Theme == "light");
+    CHECK(Error.empty());
+
+    core::Settings::Parse(R"({"theme":3})", Error);
+    CHECK_FALSE(Error.empty());
+}
+
 TEST_CASE("code signing identities are read from security find-identity")
 {
     const std::vector<toolchain::SigningIdentity> Identities = toolchain::ParseSigningIdentities(

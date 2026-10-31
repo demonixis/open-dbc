@@ -89,19 +89,23 @@ namespace dbc::studio
             // Opens the bar above the current tab, on the selection or the word at the cursor if any.
             void OpenFind(bool Replace);
             void CloseFind();
+
             bool FindVisible() const
             {
                 return FindVisible_;
             }
+
             bool FindReplacing() const
             {
                 return FindVisible_ && FindReplacing_;
             }
+
             // The last search had no match.
             bool FindFailed() const
             {
                 return FindFailed_;
             }
+
             // Searches for Text from where the last search began, as typing into the bar does.
             void SetFindText(const std::string& Text);
             void SetReplaceText(const std::string& Text);
@@ -119,6 +123,9 @@ namespace dbc::studio
             void SetErrorMarkers(const std::filesystem::path& Path, const std::map<int, std::string>& Errors);
             void ClearErrorMarkers();
 
+            // Recolors the open documents after a change of theme.
+            void ApplyTheme();
+
           private:
             struct Document
             {
@@ -131,7 +138,11 @@ namespace dbc::studio
                 core::TextFormat Format;
                 size_t SavedUndoIndex = 0;
                 bool Open = true;
+                // What the markers show, kept so a change of theme can recolor them.
+                std::map<int, std::string> Errors;
             };
+
+            void ApplyErrorMarkers(Document& Doc);
 
             void AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile, bool Basic,
                              const std::string& Text, const core::TextFormat& Format = {});

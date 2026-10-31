@@ -82,6 +82,7 @@ namespace dbc::studio
             S.LastFile = Get<std::string>(J, "lastFile", S.LastFile, Error);
             S.LogLevel = Get<std::string>(J, "logLevel", S.LogLevel, Error);
             S.Language = Get<std::string>(J, "language", S.Language, Error);
+            S.Theme = Get<std::string>(J, "theme", S.Theme, Error);
             S.DebugOverlay = Get<bool>(J, "debugOverlay", S.DebugOverlay, Error);
             if (const auto Values = J.find("projectPathRemappings"); Values != J.end() && Values->is_object())
             {
@@ -148,6 +149,7 @@ namespace dbc::studio
             J["lastFile"] = LastFile;
             J["logLevel"] = LogLevel;
             J["language"] = Language;
+            J["theme"] = Theme;
             J["debugOverlay"] = DebugOverlay;
             J["projectPathRemappings"] = ProjectPathRemappings;
             J["javaHome"] = JavaHome;

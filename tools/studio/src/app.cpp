@@ -265,6 +265,7 @@ namespace dbc::studio
             });
 
         Settings_ = core::Settings::Load();
+        ApplyTheme();
         SettingsLoaded_ = true;
         ApplyLanguage();
         Status_ = Tr("Ready");
@@ -393,7 +394,7 @@ namespace dbc::studio
             IniPath_ = dbc::PathToUtf8((core::paths::PrefDir() / "studio-layout.ini"));
             Io.IniFilename = IniPath_.c_str();
 
-            Theme::Apply(Scale_ * core::platform::UiScaleHint());
+            Theme::ApplyMetrics(Scale_ * core::platform::UiScaleHint());
             ImGui::GetStyle().FontScaleDpi = Scale_ * core::platform::UiScaleHint();
             Theme::AddFonts();
         }
@@ -564,6 +565,10 @@ namespace dbc::studio
                      Event.window.windowID == SDL_GetWindowID(Window_))
             {
                 RequestQuit();
+            }
+            else if (Event.type == SDL_EVENT_SYSTEM_THEME_CHANGED && Settings_.Theme == "auto")
+            {
+                ThemeChanged_ = true;
             }
         }
     }
@@ -1154,12 +1159,24 @@ namespace dbc::studio
             core::TranslateImGuiStrings();
     }
 
+    void App::ApplyTheme()
+    {
+        Theme::SetAppearance(Theme::ResolveAppearance(Settings_.Theme, SDL_GetSystemTheme() == SDL_SYSTEM_THEME_LIGHT));
+        Editor_.ApplyTheme();
+        Scene_.ApplyTheme();
+    }
+
     void App::DrawFrame()
     {
         if (LanguageChanged_)
         {
             LanguageChanged_ = false;
             ApplyLanguage();
+        }
+        if (ThemeChanged_)
+        {
+            ThemeChanged_ = false;
+            ApplyTheme();
         }
 
         ImGui_ImplSDLGPU3_NewFrame();
@@ -1891,6 +1908,24 @@ namespace dbc::studio
                     BuildDefaultLayout(ImGui::GetID(KDockSpaceName));
             }
             ImGui::Separator();
+            if (ImGui::BeginMenu(TrId("Theme")))
+            {
+                const auto Choose = [this](const char* Value)
+                {
+                    Settings_.Theme = Value;
+                    Settings_.Save();
+                    ThemeChanged_ = true;
+                };
+                if (ImGui::MenuItem(TrId("Automatic"), nullptr, Settings_.Theme == "auto"))
+                    Choose("auto");
+                ImGui::Separator();
+                if (ImGui::MenuItem(TrC("theme|Dark"), nullptr,
+                                    Settings_.Theme != "auto" && Settings_.Theme != "light"))
+                    Choose("dark");
+                if (ImGui::MenuItem(TrC("theme|Light"), nullptr, Settings_.Theme == "light"))
+                    Choose("light");
+                ImGui::EndMenu();
+            }
             if (ImGui::BeginMenu(TrId("Language")))
             {
                 const auto Choose = [this](const std::string& Code)

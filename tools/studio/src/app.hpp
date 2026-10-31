@@ -57,6 +57,7 @@ namespace dbc::studio
         void PollEvents();
         void DrawFrame();
         void ApplyLanguage();
+        void ApplyTheme();
         void RenderFrame();
 
         void DrawDockSpace();
@@ -230,6 +231,7 @@ namespace dbc::studio
         dbc::interpreter::ProjectResolveResult PendingResolution_;
         // Applied between frames: what TrId returned must outlive the frame that asked for it.
         bool LanguageChanged_ = false;
+        bool ThemeChanged_ = false;
         bool ResolutionPopupRequested_ = false;
         bool DialectLocked_ = false;
         std::filesystem::path PendingResolveTarget_;
