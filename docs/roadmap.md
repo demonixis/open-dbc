@@ -139,8 +139,9 @@ Studio:
 
 Gameplay:
 
-- [ ] Physics commands on Jolt, which is already linked: rigid bodies, joints and
-  vehicles in one family that can replace the DBPro extensions.
+- [ ] More physics on Jolt ([physics.md](physics.md)): vehicles, ragdolls, heightfield
+  terrains and the character's water line. Decide what replaces the ODE terrain forms,
+  which take a memory pointer.
 - [ ] Animation clips: cross-fades and blending between them.
 - [ ] Navigation: pathfinding over data baked in the Scene view. Weigh a dependency such
   as Recast against a grid in a BASIC library.

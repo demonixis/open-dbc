@@ -73,13 +73,15 @@ The forms of DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles are not in the c
 they stop at bind time with `DBC2049`, which names the plugin.
 
 Shared VR forms and the Classic `X/Y/Z VECTOR3` readers are the only additions to
-the historical profiles ([vr.md](vr.md)).
+Classic ([vr.md](vr.md)). `DbPro` also takes OpenDBC's own forms, with multi-word names,
+such as the additions to the ODE family ([physics.md](physics.md)).
 
 ## Engine
 
 `EngineKernel` owns audio, cameras, window, diagnostics, 2D, files, GPU device,
 images, input, lights, matrices, DBPro BSP worlds, memblocks, network, objects, physics
-(Jolt for the ODE core), renderer, sprites, text, video and VR. Engine shaders are HLSL
+(Jolt behind the ODE forms, [physics.md](physics.md)), renderer, sprites, text, video and
+VR. Engine shaders are HLSL
 that the pinned DXC compiles to SPIR-V, then SDL_shadercross to MSL, as the Studio
 does for effects; the engine loads whichever the GPU device accepts and never
 transpiles at run time. After `cmake --preset shader-verify`, the

@@ -1,24 +1,52 @@
-rem DBPro ODE rigid-body core through the portable physics backend
+rem DBPro ODE forms through the Jolt backend: a stack of mixed shapes on a static triangle mesh
 sync on : sync rate 0
 autocam off
 
 make object box 1, 40.0, 2.0, 40.0
 position object 1, 0.0, -1.0, 0.0
-make object sphere 2, 1.0
-position object 2, 0.0, 5.0, 0.0
+make object box 2, 4.0, 1.0, 4.0
+position object 2, 0.0, 0.6, 0.0
+make object cylinder 3, 2.0
+position object 3, 0.0, 2.2, 0.0
+make object box 4, 3.0, 1.0, 3.0
+position object 4, 0.0, 3.8, 0.0
+make object sphere 5, 1.0
+position object 5, 0.0, 4.8, 0.0
+make object box 6, 1.0, 2.0, 1.0
+position object 6, 8.0, 3.0, 0.0
 
 ode start
-ode create static box 1
-ode create dynamic sphere 2
-ode set world gravity 0.0, -20.0, 0.0
-for step = 1 to 90
+ode create static triangle mesh 1
+ode create dynamic box 2
+ode create dynamic cylinder 3
+ode create dynamic box 4
+ode create dynamic sphere 5
+ode create dynamic capsule 6, 1.0, 0.0
+for step = 1 to 120
     ode update
 next step
 
-print "RESTING="; (object position y(2) > 0.4 and object position y(2) < 0.7)
-print "HEIGHT="; ode get body height(2)
+print "STACKED="; (object position y(2) > 0.4 and object position y(2) < 0.6 and object position y(5) > 4.3 and object position y(5) < 4.7)
+print "CAPSULE="; (object position y(6) > 0.9 and object position y(6) < 1.2)
+print "HEIGHT="; ode get body height(5)
+
+meshTouched = 0
+pairTouched = 0
+while ode collision message exists()
+    ode collision get message
+    if ode get object b() = 1 then meshTouched = 1
+    if ode get object a() = 4 and ode get object b() = 5 then pairTouched = 1
+endwhile
+print "CONTACTS="; meshTouched; " "; pairTouched
+
+print "TOP="; ode ray(0.0, 20.0, 0.0, 0.0, -20.0, 0.0, 2); " "; ode get ray object hit()
+print "TOP Y="; (ode get ray collision y() > 4.8 and ode get ray collision y() < 5.2)
+print "MESH="; ode ray(15.0, 20.0, 15.0, 15.0, -20.0, 15.0, 2); " "; ode get ray object hit()
+print "MESH NORMAL="; (ode get ray normal y() > 0.99)
+
 ode destroy object 2
 ode end
-delete object 1
-delete object 2
+for id = 1 to 6
+    delete object id
+next id
 end

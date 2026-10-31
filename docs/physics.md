@@ -99,8 +99,8 @@ value of exactly 1 lowers the capsule to 52 in 70, and it stands again when ther
 The object's X rotation is 1 on the ground and 0 otherwise, as in the plugin, and its other angles stay the program's.
 `ODE GET CHARACTER HIT FLOOR` is 1 once after a landing, where the plugin gave a value of the floor's mesh that does not
 exist here. `ODE GET CHARACTER FALL DISTANCE` is half the height fallen, once. Body forms that act through forces and
-velocities report an error on a character; `ODE SET BODY POSITION` moves it. Object motion is not smoothed as the plugin
-did, and water forms are absent.
+velocities report an error on a character; `ODE SET BODY POSITION` moves it. Its object follows it without the
+smoothing the plugin added.
 
 ## Solver
 
@@ -108,6 +108,15 @@ did, and water forms are absent.
 velocity iterations, with 2 as the minimum because friction needs them. `ODE SET STEP MODE 1` stands for ODE's exact
 solver, which has no Jolt counterpart, with at least 50 velocity and 10 position iterations. These settings last until
 the next `ODE START`.
+
+## Not supported
+
+These forms keep their diagnostic. `ODE SET WORLD CFM`, `ODE CREATE STATIC UNIVERSE`, and the second friction, soft,
+slip, motion and approximation modes of `ODE SET CONTACT` and `ODE SETSURFACE MODE` belong to ODE's solver and have no
+Jolt counterpart. `ODE CREATE STATIC TERRAIN` and `ODE UPDATE STATIC TERRAIN` take a memory pointer. `ODE GET BODY
+ADJUSTMENT X/Y/Z` reports a size limit that is not applied here, and `ODE CREATE TREE CYLINDER` has no definition in
+the plugin. The ragdoll forms with `ODE GET BODY TRAVEL DISTANCE X/Y/Z`, `ODE SET WATER LINE` and
+`ODE SET CHARACTER CONTROLLER` wait on the [roadmap](roadmap.md).
 
 ## Additions
 

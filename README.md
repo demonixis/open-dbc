@@ -57,6 +57,7 @@ ctest --preset default
 | Commands and their support state, per profile | [docs/reference/](docs/reference/) |
 | Desktop VR | [docs/vr.md](docs/vr.md) |
 | DBPro BSP worlds | [docs/bsp.md](docs/bsp.md) |
+| Physics through the DBPro ODE forms | [docs/physics.md](docs/physics.md) |
 | Classic animations (video) | [docs/video.md](docs/video.md) |
 | Classic multiplayer | [docs/network.md](docs/network.md) |
 | Native plugins (Classic DLLs) | [docs/plugins.md](docs/plugins.md) |

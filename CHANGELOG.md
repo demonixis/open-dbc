@@ -17,6 +17,9 @@ First public release.
   `opendbc-runner`.
 - Classic multiplayer over ENet, native plugins through `LOAD DLL`, DBPro BSP
   worlds, Classic animations and desktop VR through OpenXR.
+- Physics on Jolt through the DBPro ODE forms, stepped at a fixed rate: boxes, spheres,
+  capsules, cylinders, triangle meshes and static compounds, forces and surfaces,
+  collision messages, rays, ball and hinge joints and a character controller.
 - Six demos and tutorials covering the 747 Classic help symbols, with CC0 assets.
 - DBPro's `SET BUMP MAPPING ON`, `SET CUBE MAPPING ON` and `SET OBJECT SPECULAR` draw
   through a Blinn-Phong path, with Fresnel reflections and mipmapped cubes; the stage

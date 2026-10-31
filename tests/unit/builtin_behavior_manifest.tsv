@@ -901,11 +901,11 @@ dbpro	245	390	Command	MAKE MEMBLOCK FROM SOUND	audio-state	test_engine_builtins.
 dbpro	246	392	Command	MAKE MESH FROM MEMBLOCK	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	247	394	Command	MAKE MESH FROM OBJECT	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	248	396	Command	MAKE OBJECT	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
-dbpro	249	398	Command	MAKE OBJECT BOX	golden-output	test_dbpro_ode.dba	5c0e09a81e122d36e251eccc7c1e203415714c9de8f853b968f65d8a59f10c28
+dbpro	249	398	Command	MAKE OBJECT BOX	golden-output	test_dbpro_ode.dba	45390f1f45ede03039ec6628bb4e994586585373fc324f53330419be9fbb20d1
 dbpro	250	400	Command	MAKE OBJECT COLLISION BOX	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	251	402	Command	MAKE OBJECT CONE	golden-output	test_object_advanced.dba	a5831b0f84b45b0e83cf54f251a0fa2abe1c626c6ce0f9ba15373a55620fedda
 dbpro	252	404	Command	MAKE OBJECT CUBE	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6
-dbpro	253	406	Command	MAKE OBJECT CYLINDER	golden-output	test_object_advanced.dba	a5831b0f84b45b0e83cf54f251a0fa2abe1c626c6ce0f9ba15373a55620fedda
+dbpro	253	406	Command	MAKE OBJECT CYLINDER	golden-output	test_dbpro_ode.dba	45390f1f45ede03039ec6628bb4e994586585373fc324f53330419be9fbb20d1
 dbpro	254	407	Command	MAKE OBJECT FROM LIMB	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	256	409	Command	MAKE OBJECT PLAIN	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	257	411	Command	MAKE OBJECT SPHERE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
@@ -1467,7 +1467,7 @@ dbpro	985	1539	Function	OBJECT INTERPOLATION	engine-state	test_engine_builtins.c
 dbpro	986	1541	Function	OBJECT LOOPING	golden-output	test_dbpro_object_animation.dba	e8ef6eab45c8ec5c12919390583cec4a5445600db8d0a58d78a1f3c29c80b8ca
 dbpro	987	1543	Function	OBJECT PLAYING	golden-output	test_dbpro_object_animation.dba	e8ef6eab45c8ec5c12919390583cec4a5445600db8d0a58d78a1f3c29c80b8ca
 dbpro	988	1545	Function	OBJECT POSITION X	golden-output	test_object_advanced.dba	a5831b0f84b45b0e83cf54f251a0fa2abe1c626c6ce0f9ba15373a55620fedda
-dbpro	989	1547	Function	OBJECT POSITION Y	golden-output	test_dbpro_ode.dba	5c0e09a81e122d36e251eccc7c1e203415714c9de8f853b968f65d8a59f10c28
+dbpro	989	1547	Function	OBJECT POSITION Y	golden-output	test_dbpro_ode.dba	45390f1f45ede03039ec6628bb4e994586585373fc324f53330419be9fbb20d1
 dbpro	990	1549	Function	OBJECT POSITION Z	golden-output	test_object_advanced.dba	a5831b0f84b45b0e83cf54f251a0fa2abe1c626c6ce0f9ba15373a55620fedda
 dbpro	991	1551	Function	OBJECT SCREEN X	projection-state	test_engine_builtins.cpp::Portable object visibility and GPU capability queries preserve DBPro semantics	-
 dbpro	992	1553	Function	OBJECT SCREEN Y	projection-state	test_engine_builtins.cpp::Portable object visibility and GPU capability queries preserve DBPro semantics	-
