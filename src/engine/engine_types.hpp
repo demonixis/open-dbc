@@ -224,30 +224,6 @@ namespace dbc
         uint64_t Revision = 0;
     };
 
-    // SET OBJECT NORMAL MAP and the commands beside it: a mesh that has these is drawn by the Blinn-Phong path.
-    struct MeshSurfaceMaps
-    {
-        int NormalImage = 0;
-        int SpecularImage = 0;
-        int EmissiveImage = 0;
-        int ReflectionImage = 0;
-        int CubeMap = 0;
-        float NormalStrength = 1.0f;
-        float ReflectionAmount = 0.0f;
-        float ReflectionFresnel = 1.0f;
-        // The normal map's coordinates are the base ones times the scale plus the offset, for up to two layers.
-        bool TwoNormalLayers = false;
-        std::array<SDL_FPoint, 2> NormalScale{SDL_FPoint{1.0f, 1.0f}, SDL_FPoint{1.0f, 1.0f}};
-        std::array<SDL_FPoint, 2> NormalScroll{};
-    };
-
-    // MAKE CUBE MAP and LOAD CUBE MAP: a mipmapped cube texture that surface maps reflect.
-    struct CubeMap
-    {
-        std::shared_ptr<SDL_GPUTexture> Texture;
-        Uint32 Levels = 1;
-    };
-
     // A limb's record: its geometry, shared by copies until one edits it, and the state that belongs to the
     // object that owns the record.
     struct Mesh
@@ -260,7 +236,6 @@ namespace dbc
         std::unordered_map<int, int> TextureStageCoordinateModes;
         std::unordered_map<int, bool> TextureStageCubeModes;
         int BuiltInEffect = 0; // 1 = bump, 2 = cartoon, 3 = rainbow
-        std::optional<MeshSurfaceMaps> Maps;
         int EffectId = -1;
         int SourceMeshIndex = -1;
         bool Visible = true;
@@ -382,6 +357,8 @@ namespace dbc
         int TextureImageId = 0;
         int EffectId = 0;
         std::shared_ptr<SDL_GPUTexture> CubeGpuTexture{};
+        // Mip levels of the cube, what the Blinn-Phong path blurs its reflection with.
+        Uint32 CubeLevels = 1;
         bool Playing = false;
         bool Looping = false;
         bool HasPlayRange = false;
@@ -626,11 +603,7 @@ namespace dbc
         bool ReflectionOverlay = false;
         bool Backdrop = false;
         bool ShadowOverlay = false;
-        // Surface maps (BuiltInEffect 4): what the Blinn-Phong path takes beside its textures.
-        bool TwoNormalLayers = false;
-        float NormalStrength = 1.0f;
-        float ReflectionAmount = 0.0f;
-        float ReflectionFresnel = 1.0f;
+        // Blinn-Phong path (BuiltInEffect 4): the mip levels of the cube it reflects.
         float CubeLevels = 0.0f;
 
         bool operator==(const SurfaceStyle& Other) const
@@ -641,10 +614,7 @@ namespace dbc
                    TextureCubeModes == Other.TextureCubeModes && BuiltInEffect == Other.BuiltInEffect &&
                    EffectId == Other.EffectId && ReflectionSurface == Other.ReflectionSurface &&
                    ReflectionPass == Other.ReflectionPass && ReflectionOverlay == Other.ReflectionOverlay &&
-                   Backdrop == Other.Backdrop && ShadowOverlay == Other.ShadowOverlay &&
-                   TwoNormalLayers == Other.TwoNormalLayers && NormalStrength == Other.NormalStrength &&
-                   ReflectionAmount == Other.ReflectionAmount && ReflectionFresnel == Other.ReflectionFresnel &&
-                   CubeLevels == Other.CubeLevels;
+                   Backdrop == Other.Backdrop && ShadowOverlay == Other.ShadowOverlay && CubeLevels == Other.CubeLevels;
         }
     };
 
@@ -802,16 +772,14 @@ namespace dbc
 
     static_assert(sizeof(GpuTextureStageUniforms) == 128, "texture-stage UBO size mismatch");
 
-    // Pushed for surface maps only; MaterialUniforms in the shader.
+    // Pushed for the Blinn-Phong path only; MaterialUniforms in the shader.
     struct GpuMaterialUniforms
     {
         float ViewToWorld[3][4]{};
-        // Normal strength, reflection amount, reflection Fresnel, cube mip levels (0: no reflection).
+        // Whether stage 1 holds a normal map, cube mip levels (0: no reflection), then padding.
         float Params[4]{};
-        // Normal layers, then whether the specular, emissive and reflection maps exist.
-        int32_t Maps[4]{};
     };
 
-    static_assert(sizeof(GpuMaterialUniforms) == 80, "material UBO size mismatch");
+    static_assert(sizeof(GpuMaterialUniforms) == 64, "material UBO size mismatch");
 
 } // namespace dbc

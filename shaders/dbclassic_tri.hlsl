@@ -111,14 +111,12 @@ cbuffer TextureStageUniforms : register(b1, space3)
     int4 stages[8];
 };
 
-// Surface maps only (stages[0].z == 4). Stages 4 to 7 hold the normal, specular, emissive and reflection maps.
+// Blinn-Phong only (stages[0].z == 4). Stage 1 holds the normal map.
 cbuffer MaterialUniforms : register(b2, space3)
 {
     float4 view_to_world[3];
-    // x normal strength, y reflection amount, z reflection Fresnel, w cube mip levels (0: no reflection).
+    // x whether there is a normal map, y cube mip levels (0: no reflection).
     float4 material_params;
-    // x normal layers, then whether the specular, emissive and reflection maps exist.
-    int4 material_maps;
 };
 
 Varyings VSMain(VertexInput input)
@@ -202,7 +200,7 @@ float3 specular_light(float3 N, float3 L, float3 V, float3 light_color, float sp
     return light_color * spec * 0.15;
 }
 
-// The specular term of surface maps, normalised so that a tighter highlight is brighter rather than dimmer. The light
+// The specular term of the Blinn-Phong path, normalised so that a tighter highlight is brighter rather than dimmer. The light
 // colour already folds in the pi that diffuse_light leaves out.
 float3 blinn_phong_light(float3 N, float3 L, float3 V, float3 light_color, float spec_power)
 {
@@ -368,61 +366,45 @@ float3 perturb_normal(float3 N, float3 view_pos, float2 uv, float3 tangent_norma
     return normalize(tangent_normal.x * T * inverse + tangent_normal.y * B * inverse + tangent_normal.z * N);
 }
 
-// Blinn-Phong with normal, specular, emissive and reflection maps and a cube map's reflection. N and V are normalised.
-float4 shade_surface_maps(Varyings input, float4 tex_color, float3 N, float3 V, float fade)
+// Blinn-Phong with stage 1's normal map and a cube's reflection. N and V are normalised. The specular colour is the
+// surface's reflectance head on, which Schlick's approximation raises at grazing angles as far as its gloss allows.
+// Below 2%, which no real surface reflects, it shadows the grazing reflection too.
+float4 shade_blinn_phong(Varyings input, float4 tex_color, float3 N, float3 V, float fade)
 {
-    if (material_maps.x > 0)
+    if (material_params.x != 0.0)
     {
-        float3 tangent_normal = srgb_encode(tex4.Sample(sampler4, input.aux_uv3).rgb) * 2.0 - 1.0;
-        if (material_maps.x > 1)
-        {
-            const float3 second = srgb_encode(tex4.Sample(sampler4, input.aux_uv4).rgb) * 2.0 - 1.0;
-            tangent_normal = float3(tangent_normal.xy + second.xy, tangent_normal.z * second.z);
-        }
-        tangent_normal.xy *= material_params.x;
-        N = perturb_normal(N, input.view_pos, input.aux_uv3, normalize(tangent_normal));
+        const float3 tangent_normal = srgb_encode(tex1.Sample(sampler1, input.aux_uv0).rgb) * 2.0 - 1.0;
+        N = perturb_normal(N, input.view_pos, input.aux_uv0, normalize(tangent_normal));
     }
 
-    float spec_power = max(input.box_br.a, 1.0);
+    const float spec_power = max(input.box_br.a, 1.0);
     float3 spec_color = srgb_to_linear(input.box_br.rgb);
-    const bool no_specular_color = dot(spec_color, spec_color) <= 0.0;
-    if (material_maps.y != 0)
-    {
-        // Alpha scales the power, so that an opaque map leaves SET OBJECT SPECULAR POWER as it is.
-        const float4 specular_map = tex5.Sample(sampler5, input.uv);
-        spec_color = (no_specular_color ? 1.0 : spec_color) * specular_map.rgb;
-        spec_power = max(spec_power * specular_map.a, 1.0);
-    }
-    else if (no_specular_color)
-    {
-        // What a dielectric reflects, since a normal map shows little without a highlight.
+    // What a dielectric reflects, since a normal map shows little without a highlight.
+    if (dot(spec_color, spec_color) <= 0.0)
         spec_color = 0.04;
-    }
 
     float3 lighting = srgb_to_linear(ambient_color.rgb) * ambient_color.a * srgb_to_linear(input.box_tr.rgb);
     float3 specular = 0.0;
     gather_lights(N, V, input.view_pos, spec_power, fade, true, lighting, specular);
 
     float3 result = tex_color.rgb * clamp(lighting, 0.0, max(2.0, 2.0 * fade));
-    if (material_params.w > 0.0)
+    if (material_params.y > 0.0)
     {
+        // From the sharpest level at the highest power that makes sense down to the broadest at power 1.
+        const float gloss = clamp(log2(spec_power) / 11.0, 0.0, 1.0);
         const float grazing = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 5.0);
-        float reflectance = material_params.y + (1.0 - material_params.y) * material_params.z * grazing;
-        if (material_maps.w != 0)
-            reflectance *= tex7.Sample(sampler7, input.uv).r;
+        const float grazing_limit = gloss * clamp(50.0 * max(spec_color.r, max(spec_color.g, spec_color.b)), 0.0, 1.0);
+        const float3 reflectance = spec_color + max(grazing_limit - spec_color, 0.0) * grazing;
         const float3 view_reflection = reflect(-V, N);
         const float3 world_reflection =
             float3(dot(view_to_world[0].xyz, view_reflection), dot(view_to_world[1].xyz, view_reflection),
                    dot(view_to_world[2].xyz, view_reflection));
-        // From the sharpest level at the highest power that makes sense down to the broadest at power 1.
-        const float level = (material_params.w - 1.0) * (1.0 - clamp(log2(spec_power) / 11.0, 0.0, 1.0));
+        const float level = (material_params.y - 1.0) * (1.0 - gloss);
         result = lerp(result, cube_tex.SampleLevel(cube_sampler, world_reflection, level).rgb, reflectance);
     }
 
     result += specular * spec_color;
     result += srgb_to_linear(input.box_bl.rgb);
-    if (material_maps.z != 0)
-        result += tex6.Sample(sampler6, input.uv).rgb;
     return float4(linear_to_srgb(apply_fog(result, input.view_pos)), tex_color.a);
 }
 
@@ -505,7 +487,7 @@ float4 PSMain(Varyings input) : SV_Target0
     float3 V = normalize(-input.view_pos);
     if (built_in_effect == 4)
     {
-        return shade_surface_maps(input, tex_color, N, V, fade);
+        return shade_blinn_phong(input, tex_color, N, V, fade);
     }
     if (built_in_effect == 1)
     {

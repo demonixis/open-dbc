@@ -39,6 +39,20 @@ namespace dbc
 
     namespace
     {
+        // A normal map starts on the base coordinates. Moving it apart takes a set of its own, as DBPro's bump effect
+        // gives every mesh.
+        void GiveBumpCoordinates(Mesh& MeshValue, int Stage)
+        {
+            if (Stage != 1 || MeshValue.BuiltInEffect != 1)
+                return;
+            MeshValue.TextureStageCoordinateModes[1] = 0;
+            if (!MeshValue.Geometry().UvStages.contains(1))
+            {
+                const std::vector<SDL_FPoint> BaseUvs = MeshValue.Geometry().Uvs;
+                MeshValue.EditGeometry().UvStages[1] = BaseUvs;
+            }
+        }
+
         [[nodiscard]] AnimationClip MakeAnimationClip(const aiAnimation* Anim, int StartFrame)
         {
             AnimationClip Clip{};
@@ -2673,6 +2687,7 @@ namespace dbc
             Result.TextureImageId = Source.TextureImageId;
             Result.EffectId = Source.EffectId;
             Result.CubeGpuTexture = Source.CubeGpuTexture;
+            Result.CubeLevels = Source.CubeLevels;
             Result.LockToScreen = Source.LockToScreen;
             Result.Ghosted = Source.Ghosted;
             Result.GhostMode = Source.GhostMode;
@@ -4149,6 +4164,7 @@ namespace dbc
         Dst.TexScrollV = Src.TexScrollV;
         Dst.TextureImageId = Src.TextureImageId;
         Dst.CubeGpuTexture = Src.CubeGpuTexture;
+        Dst.CubeLevels = Src.CubeLevels;
         // Copy flags.
         Dst.LockToScreen = Src.LockToScreen;
         Dst.Ghosted = Src.Ghosted;
@@ -5730,6 +5746,40 @@ namespace dbc
         It->second.TextureImageId = ImageId;
     }
 
+    bool ObjectManager::TextureObject(int ObjectId, int Stage, int ImageId, std::string* Error)
+    {
+        Object3D* ObjectPointer = RequireObject(ObjectId, "TEXTURE OBJECT", Error);
+        if (!ObjectPointer)
+            return false;
+        if (Stage < 0 || Stage > 7)
+        {
+            if (Error)
+                *Error = "TEXTURE OBJECT stage must be between zero and seven";
+            return false;
+        }
+        if (ImageId != 0 && Kernel_.ImageStoreRef().ImageExist(ImageId) == 0)
+        {
+            if (Error)
+                *Error = "TEXTURE OBJECT requires existing image " + std::to_string(ImageId);
+            return false;
+        }
+        if (Stage == 0)
+        {
+            TextureObject(ObjectId, ImageId);
+            return true;
+        }
+        for (Mesh& MeshValue : ObjectPointer->Meshes)
+        {
+            if (ImageId == 0)
+                MeshValue.TextureStageImageIds.erase(Stage);
+            else
+                MeshValue.TextureStageImageIds[Stage] = ImageId;
+            MeshValue.TextureStageCubeModes.erase(Stage);
+        }
+        ObjectPointer->TransformDirty = true;
+        return true;
+    }
+
     bool ObjectManager::SetObjectTexture(int ObjectId, int Stage, int AddressMode, int MipMode, std::string* Error)
     {
         Object3D* ObjectPointer = RequireObject(ObjectId, "SET OBJECT TEXTURE", Error);
@@ -5905,13 +5955,16 @@ namespace dbc
             }
             Surfaces[Index] = CubeImage->Surface;
         }
-        SDL_GPUTexture* CubeTexture = Kernel_.Gpu().CreateGpuCubeTextureFromSurfaces(Surfaces);
+        // Blinn-Phong blurs its reflection along the mips.
+        Uint32 Levels = 1;
+        SDL_GPUTexture* CubeTexture = Kernel_.Gpu().CreateGpuCubeTextureFromSurfaces(Surfaces, &Levels);
         if (!CubeTexture)
         {
             if (Error)
                 *Error = "SET CUBE MAPPING ON could not create the cube texture";
             return false;
         }
+        Object.CubeLevels = Levels;
         SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
         Object.CubeGpuTexture = std::shared_ptr<SDL_GPUTexture>(CubeTexture,
                                                                 [Device](SDL_GPUTexture* Texture)
@@ -5921,6 +5974,9 @@ namespace dbc
                                                                 });
         for (Mesh& MeshValue : Object.Meshes)
         {
+            // Stage 1 keeps the normal map, which the Blinn-Phong path reflects the cube around.
+            if (MeshValue.BuiltInEffect == 1)
+                continue;
             MeshValue.TextureStageImageIds.erase(1);
             MeshValue.TextureStageBlendModes[1] = 4;
             MeshValue.TextureStageCoordinateModes[1] = 2;
@@ -5951,317 +6007,9 @@ namespace dbc
             MeshValue.BuiltInEffect = 1;
             MeshValue.EffectId = -1;
         }
-        Object.CubeGpuTexture.reset();
         Object.EffectId = 0;
         Object.TransformDirty = true;
         return true;
-    }
-
-    bool ObjectManager::SetSurfaceMap(int ObjectId, int LimbId, SurfaceMap Map, int ImageId, const char* Command,
-                                      std::string* Error, float NormalStrength)
-    {
-        Object3D* ObjectPointer = RequireObject(ObjectId, Command, Error);
-        if (!ObjectPointer)
-            return false;
-        if (ImageId < 0 || (ImageId != 0 && Kernel_.ImageStoreRef().ImageExist(ImageId) == 0))
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires existing image " + std::to_string(ImageId);
-            return false;
-        }
-        if (!std::isfinite(NormalStrength) || NormalStrength < 0.0f)
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires a strength that is not negative";
-            return false;
-        }
-        const auto Apply = [&](Mesh& MeshValue)
-        {
-            MeshSurfaceMaps Maps = MeshValue.Maps.value_or(MeshSurfaceMaps{});
-            switch (Map)
-            {
-                case SurfaceMap::Normal:
-                    Maps.NormalImage = ImageId;
-                    Maps.NormalStrength = NormalStrength;
-                    break;
-                case SurfaceMap::Specular:
-                    Maps.SpecularImage = ImageId;
-                    break;
-                case SurfaceMap::Emissive:
-                    Maps.EmissiveImage = ImageId;
-                    break;
-                case SurfaceMap::Reflection:
-                    Maps.ReflectionImage = ImageId;
-                    break;
-            }
-            MeshValue.Maps = Maps;
-            if (!Maps.NormalImage && !Maps.SpecularImage && !Maps.EmissiveImage && !Maps.ReflectionImage &&
-                !Maps.CubeMap)
-                MeshValue.Maps.reset();
-        };
-        if (LimbId < 0)
-            std::for_each(ObjectPointer->Meshes.begin(), ObjectPointer->Meshes.end(), Apply);
-        else if (Mesh* Limb = Kernel_.Renderer().FindLimbMesh(*ObjectPointer, LimbId))
-            Apply(*Limb);
-        else
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires existing limb " + std::to_string(LimbId);
-            return false;
-        }
-        ObjectPointer->TransformDirty = true;
-        return true;
-    }
-
-    bool ObjectManager::SetSurfaceCubeMap(int ObjectId, int LimbId, int CubeMapId, float Amount, float Fresnel,
-                                          const char* Command, std::string* Error)
-    {
-        Object3D* ObjectPointer = RequireObject(ObjectId, Command, Error);
-        if (!ObjectPointer)
-            return false;
-        if (CubeMapId < 0 || (CubeMapId != 0 && CubeMapExist(CubeMapId) == 0))
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires existing cube map " + std::to_string(CubeMapId);
-            return false;
-        }
-        if (!(Amount >= 0.0f && Amount <= 1.0f) || !(Fresnel >= 0.0f && Fresnel <= 1.0f))
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires an amount and a Fresnel term from 0 to 1";
-            return false;
-        }
-        const auto Apply = [&](Mesh& MeshValue)
-        {
-            MeshSurfaceMaps Maps = MeshValue.Maps.value_or(MeshSurfaceMaps{});
-            Maps.CubeMap = CubeMapId;
-            Maps.ReflectionAmount = Amount;
-            Maps.ReflectionFresnel = Fresnel;
-            MeshValue.Maps = Maps;
-            if (!Maps.NormalImage && !Maps.SpecularImage && !Maps.EmissiveImage && !Maps.ReflectionImage &&
-                !Maps.CubeMap)
-                MeshValue.Maps.reset();
-        };
-        if (LimbId < 0)
-            std::for_each(ObjectPointer->Meshes.begin(), ObjectPointer->Meshes.end(), Apply);
-        else if (Mesh* Limb = Kernel_.Renderer().FindLimbMesh(*ObjectPointer, LimbId))
-            Apply(*Limb);
-        else
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires existing limb " + std::to_string(LimbId);
-            return false;
-        }
-        ObjectPointer->TransformDirty = true;
-        return true;
-    }
-
-    bool ObjectManager::SetNormalMapScroll(int ObjectId, std::span<const SDL_FPoint> Layers, std::string* Error)
-    {
-        constexpr const char* Command = "SET OBJECT NORMAL MAP SCROLL";
-        Object3D* ObjectPointer = RequireObject(ObjectId, Command, Error);
-        if (!ObjectPointer)
-            return false;
-        bool Found = false;
-        for (Mesh& MeshValue : ObjectPointer->Meshes)
-        {
-            if (!MeshValue.Maps || MeshValue.Maps->NormalImage == 0)
-                continue;
-            Found = true;
-            std::copy(Layers.begin(), Layers.end(), MeshValue.Maps->NormalScroll.begin());
-            MeshValue.Maps->TwoNormalLayers = MeshValue.Maps->TwoNormalLayers || Layers.size() > 1;
-        }
-        if (!Found)
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires an object with a normal map";
-            return false;
-        }
-        ObjectPointer->TransformDirty = true;
-        return true;
-    }
-
-    bool ObjectManager::SetNormalMapScale(int ObjectId, std::span<const SDL_FPoint> Layers, std::string* Error)
-    {
-        constexpr const char* Command = "SET OBJECT NORMAL MAP SCALE";
-        Object3D* ObjectPointer = RequireObject(ObjectId, Command, Error);
-        if (!ObjectPointer)
-            return false;
-        bool Found = false;
-        for (Mesh& MeshValue : ObjectPointer->Meshes)
-        {
-            if (!MeshValue.Maps || MeshValue.Maps->NormalImage == 0)
-                continue;
-            Found = true;
-            std::copy(Layers.begin(), Layers.end(), MeshValue.Maps->NormalScale.begin());
-            MeshValue.Maps->TwoNormalLayers = MeshValue.Maps->TwoNormalLayers || Layers.size() > 1;
-        }
-        if (!Found)
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires an object with a normal map";
-            return false;
-        }
-        ObjectPointer->TransformDirty = true;
-        return true;
-    }
-
-    bool ObjectManager::ClearObjectMaps(int ObjectId, std::string* Error)
-    {
-        Object3D* ObjectPointer = RequireObject(ObjectId, "CLEAR OBJECT MAPS", Error);
-        if (!ObjectPointer)
-            return false;
-        for (Mesh& MeshValue : ObjectPointer->Meshes)
-            MeshValue.Maps.reset();
-        ObjectPointer->TransformDirty = true;
-        return true;
-    }
-
-    bool ObjectManager::MakeCubeMap(int CubeMapId, const std::array<int, 6>& ImageIds, std::string* Error)
-    {
-        constexpr const char* Command = "MAKE CUBE MAP";
-        if (CubeMapId <= 0 || CubeMaps_.contains(CubeMapId))
-        {
-            if (Error)
-                *Error =
-                    std::string(Command) + " requires a free cube map number above 0, not " + std::to_string(CubeMapId);
-            return false;
-        }
-        std::array<SDL_Surface*, 6> Surfaces{};
-        for (std::size_t Index = 0; Index < ImageIds.size(); ++Index)
-        {
-            const Image* Face = ImageIds[Index] > 0 ? Kernel_.ImageStoreRef().GetImage(ImageIds[Index]) : nullptr;
-            if (!Face || !Face->Surface)
-            {
-                if (Error)
-                    *Error = std::string(Command) + " requires existing image " + std::to_string(ImageIds[Index]);
-                return false;
-            }
-            Surfaces[Index] = Face->Surface;
-        }
-        if (!Kernel_.Core().EnsureInitialized())
-        {
-            if (Error)
-                *Error = std::string(Command) + " could not initialize the GPU renderer";
-            return false;
-        }
-        return AddCubeMap(CubeMapId, Surfaces, Command, Error);
-    }
-
-    bool ObjectManager::LoadCubeMap(const std::string& Path, int CubeMapId, std::string* Error)
-    {
-        constexpr const char* Command = "LOAD CUBE MAP";
-        if (CubeMapId <= 0 || CubeMaps_.contains(CubeMapId))
-        {
-            if (Error)
-                *Error =
-                    std::string(Command) + " requires a free cube map number above 0, not " + std::to_string(CubeMapId);
-            return false;
-        }
-        if (!Kernel_.Core().EnsureInitialized())
-        {
-            if (Error)
-                *Error = std::string(Command) + " could not initialize the GPU renderer";
-            return false;
-        }
-        std::string Resolved;
-        if (!ImageStore::ResolveAssetPath(Resolved, Path, Error))
-            return false;
-        using SurfacePointer = std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)>;
-        const SurfacePointer Loaded(LoadSurface(Resolved), SDL_DestroySurface);
-        if (!Loaded)
-        {
-            if (Error)
-                *Error = std::string(Command) + " failed for " + Path + ": " + SDL_GetError();
-            return false;
-        }
-        // Column and row of +X, -X, +Y, -Y, +Z, -Z. The cross unfolds the cube around +Z, seen from inside.
-        const bool Cross = Loaded->w * 3 == Loaded->h * 4;
-        const bool Strip = Loaded->w == Loaded->h * 6;
-        if ((!Cross && !Strip) || Loaded->h <= 0)
-        {
-            if (Error)
-                *Error = std::string(Command) + " requires a 4:3 cross or a 6:1 strip, not " +
-                         std::to_string(Loaded->w) + "x" + std::to_string(Loaded->h);
-            return false;
-        }
-        static constexpr std::array<std::array<int, 2>, 6> CrossCells{
-            std::array<int, 2>{2, 1}, {0, 1}, {1, 0}, {1, 2}, {1, 1}, {3, 1}};
-        const int Side = Cross ? Loaded->w / 4 : Loaded->h;
-        std::vector<SurfacePointer> Faces;
-        std::array<SDL_Surface*, 6> Surfaces{};
-        for (std::size_t Face = 0; Face < Surfaces.size(); ++Face)
-        {
-            SDL_Rect Cell{static_cast<int>(Face) * Side, 0, Side, Side};
-            if (Cross)
-            {
-                Cell.x = CrossCells[Face][0] * Side;
-                Cell.y = CrossCells[Face][1] * Side;
-            }
-            Faces.emplace_back(SDL_CreateSurface(Side, Side, SDL_PIXELFORMAT_RGBA32), SDL_DestroySurface);
-            if (!Faces.back() || !SDL_SetSurfaceBlendMode(Loaded.get(), SDL_BLENDMODE_NONE) ||
-                !SDL_BlitSurface(Loaded.get(), &Cell, Faces.back().get(), nullptr))
-            {
-                if (Error)
-                    *Error = std::string(Command) + " failed for " + Path + ": " + SDL_GetError();
-                return false;
-            }
-            Surfaces[Face] = Faces.back().get();
-        }
-        return AddCubeMap(CubeMapId, Surfaces, Command, Error);
-    }
-
-    bool ObjectManager::AddCubeMap(int CubeMapId, const std::array<SDL_Surface*, 6>& Faces, const char* Command,
-                                   std::string* Error)
-    {
-        Uint32 Levels = 1;
-        SDL_GPUTexture* Texture = Kernel_.Gpu().CreateGpuCubeTextureFromSurfaces(Faces, &Levels);
-        if (!Texture)
-        {
-            if (Error)
-                *Error = std::string(Command) + " could not create the cube texture: " + SDL_GetError();
-            return false;
-        }
-        SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
-        CubeMap& Added = CubeMaps_[CubeMapId];
-        Added.Levels = Levels;
-        Added.Texture = std::shared_ptr<SDL_GPUTexture>(Texture,
-                                                        [Device](SDL_GPUTexture* Value)
-                                                        {
-                                                            if (Device && Value)
-                                                                SDL_ReleaseGPUTexture(Device, Value);
-                                                        });
-        return true;
-    }
-
-    bool ObjectManager::DeleteCubeMap(int CubeMapId, std::string* Error)
-    {
-        if (CubeMaps_.erase(CubeMapId) == 0)
-        {
-            if (Error)
-                *Error = "DELETE CUBE MAP requires existing cube map " + std::to_string(CubeMapId);
-            return false;
-        }
-        // The cached scene must not bind the released texture.
-        ForEachObject(
-            [&](int, Object3D& Object)
-            {
-                for (const Mesh& MeshValue : Object.Meshes)
-                    if (MeshValue.Maps && MeshValue.Maps->CubeMap == CubeMapId)
-                        Object.TransformDirty = true;
-            });
-        return true;
-    }
-
-    int ObjectManager::CubeMapExist(int CubeMapId) const
-    {
-        return CubeMaps_.contains(CubeMapId) ? 1 : 0;
-    }
-
-    const CubeMap* ObjectManager::FindCubeMap(int CubeMapId) const
-    {
-        const auto Found = CubeMaps_.find(CubeMapId);
-        return Found != CubeMaps_.end() ? &Found->second : nullptr;
     }
 
     bool ObjectManager::SetCartoonShadingOn(int ObjectId, int ShadeImageId, int EdgeImageId, std::string* Error)
@@ -6712,6 +6460,7 @@ namespace dbc
             return false;
         for (Mesh& MeshValue : ObjectPointer->Meshes)
         {
+            GiveBumpCoordinates(MeshValue, Stage);
             if (!MeshValue.Geometry().UvStages.contains(Stage))
                 continue;
             for (SDL_FPoint& Uv : MeshValue.EditGeometry().UvStages.at(Stage))
@@ -6762,8 +6511,11 @@ namespace dbc
                     Uv.y *= V;
                 }
             }
-            else if (MeshValue.Geometry().UvStages.contains(Stage))
+            else
             {
+                GiveBumpCoordinates(MeshValue, Stage);
+                if (!MeshValue.Geometry().UvStages.contains(Stage))
+                    continue;
                 for (SDL_FPoint& Uv : MeshValue.EditGeometry().UvStages.at(Stage))
                 {
                     Uv.x *= U;

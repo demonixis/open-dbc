@@ -863,28 +863,20 @@ namespace dbc
                         StageUniforms.Stages[0][2] = Batch.Style.BuiltInEffect;
                         SDL_PushGPUFragmentUniformData(Cmd, 1, &StageUniforms, sizeof(StageUniforms));
 
-                        // Read for surface maps only, but the shader's slot must hold something.
-                        const bool SurfaceMaps = Batch.Style.BuiltInEffect == 4;
-                        if (SurfaceMaps || !MaterialUniformsBound)
+                        // Read by Blinn-Phong only, but the shader's slot must hold something.
+                        const bool BlinnPhong = Batch.Style.BuiltInEffect == 4;
+                        if (BlinnPhong || !MaterialUniformsBound)
                         {
                             GpuMaterialUniforms Material{};
-                            if (SurfaceMaps)
+                            if (BlinnPhong)
                             {
                                 // The rotation's inverse is its transpose, mirrored reflection views included.
                                 for (int Row = 0; Row < 3; ++Row)
                                     for (int Column = 0; Column < 3; ++Column)
                                         Material.ViewToWorld[Row][Column] = View.WorldToView[Row][Column];
-                                Material.Params[0] = Batch.Style.NormalStrength;
-                                Material.Params[1] = Batch.Style.ReflectionAmount;
-                                Material.Params[2] = Batch.Style.ReflectionFresnel;
-                                Material.Params[3] = Batch.CubeTexture ? Batch.Style.CubeLevels : 0.0f;
                                 // A deleted image leaves its binding empty.
-                                Material.Maps[0] = !Batch.AuxiliaryTextures[3]   ? 0
-                                                   : Batch.Style.TwoNormalLayers ? 2
-                                                                                 : 1;
-                                Material.Maps[1] = Batch.AuxiliaryTextures[4] ? 1 : 0;
-                                Material.Maps[2] = Batch.AuxiliaryTextures[5] ? 1 : 0;
-                                Material.Maps[3] = Batch.AuxiliaryTextures[6] ? 1 : 0;
+                                Material.Params[0] = Batch.AuxiliaryTextures[0] ? 1.0f : 0.0f;
+                                Material.Params[1] = Batch.CubeTexture ? Batch.Style.CubeLevels : 0.0f;
                             }
                             SDL_PushGPUFragmentUniformData(Cmd, 2, &Material, sizeof(Material));
                             MaterialUniformsBound = true;

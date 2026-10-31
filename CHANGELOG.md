@@ -18,8 +18,9 @@ First public release.
 - Classic multiplayer over ENet, native plugins through `LOAD DLL`, DBPro BSP
   worlds, Classic animations and desktop VR through OpenXR.
 - Six demos and tutorials covering the 747 Classic help symbols, with CC0 assets.
-- DBPro surface maps: a Blinn-Phong path with normal, specular, emissive and
-  reflection maps and mipmapped cube maps.
+- DBPro's `SET BUMP MAPPING ON`, `SET CUBE MAPPING ON` and `SET OBJECT SPECULAR` draw
+  through a Blinn-Phong path, with Fresnel reflections and mipmapped cubes; the stage
+  forms of `TEXTURE OBJECT` work.
 - DBPro cameras draw to images and clip at a plane; objects can be excluded, masked
   per camera, and given their own field of view and depth bias.
 - DBPro automatic collision for objects and cameras, fire and snow particles, and

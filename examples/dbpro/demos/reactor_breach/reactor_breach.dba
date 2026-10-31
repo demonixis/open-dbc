@@ -47,6 +47,7 @@ rem Object numbers
 #constant OBJ_BOLT 60
 #constant OBJ_PICKUP 80
 #constant OBJ_BLOB 90
+#constant OBJ_SHINY 110
 
 type Room
    x1 as float
@@ -309,9 +310,13 @@ function load_media()
    load image "textures/floor_normal.jpg", 31
    load image "textures/ceiling_normal.jpg", 32
    load image "textures/machine_normal.jpg", 33
-   load image "textures/floor_specular.jpg", 34
-   load image "textures/drone_emissive.jpg", 35
-   load cube map "textures/room_cube.jpg", 1
+   rem The room's cube, in the order SET CUBE MAPPING ON takes: +X, -X, +Y, -Y, +Z, -Z
+   load image "textures/room_cube_px.jpg", 40
+   load image "textures/room_cube_nx.jpg", 41
+   load image "textures/room_cube_py.jpg", 42
+   load image "textures/room_cube_ny.jpg", 43
+   load image "textures/room_cube_pz.jpg", 44
+   load image "textures/room_cube_nz.jpg", 45
    rem A plain red image for the damage flash.
    ink rgb(255, 20, 10), 0 : box 0, 0, 16, 16 : get image 20, 0, 0, 16, 16
 
@@ -350,23 +355,25 @@ function build_world()
       unlock vertexdata
    next limb
    scale object texture OBJ_LEVEL, 0, LEVEL_TILING, LEVEL_TILING
-   rem Stage 1 modulates by two: mid grey in the lightmap leaves a surface as painted.
-   set blend mapping on OBJ_LEVEL, 1, 1, 0, 5
+   rem Stage 1 holds each limb's normal map. Stage 2 modulates by two, on the coordinates
+   rem of stage 1's set: mid grey in the lightmap leaves a surface as painted.
+   set bump mapping on OBJ_LEVEL, 30
+   set blend mapping on OBJ_LEVEL, 2, 1, 11, 5
 
-   rem Each limb holds one material. The floor's bright plates shine and reflect the room.
+   rem Each limb holds one material. Floors and machines reflect the room, which takes
+   rem an object of their own: bump and cube mapping belong to an object.
+   shiny = OBJ_SHINY
    for limb = 0 to checklist quantity() - 1
       name$ = lower$(limb texture name(OBJ_LEVEL, limb))
-      if instr(name$, "wall") > 0 then set limb normal map OBJ_LEVEL, limb, 30
-      if instr(name$, "ceiling") > 0 then set limb normal map OBJ_LEVEL, limb, 32
-      if instr(name$, "machine") > 0
-         set limb normal map OBJ_LEVEL, limb, 33
-         set limb cube map OBJ_LEVEL, limb, 1, 0.1, 0.6
-      endif
-      if instr(name$, "floor") > 0
-         set limb normal map OBJ_LEVEL, limb, 31
-         set limb specular map OBJ_LEVEL, limb, 34
-         set limb reflection map OBJ_LEVEL, limb, 34
-         set limb cube map OBJ_LEVEL, limb, 1, 0.16, 0.8
+      if instr(name$, "ceiling") > 0 then texture limb OBJ_LEVEL, limb, 1, 32
+      if instr(name$, "machine") > 0 or instr(name$, "floor") > 0
+         if instr(name$, "floor") > 0 then texture limb OBJ_LEVEL, limb, 1, 31 else texture limb OBJ_LEVEL, limb, 1, 33
+         make object from limb shiny, OBJ_LEVEL, limb
+         exclude limb on OBJ_LEVEL, limb
+         set cube mapping on shiny, 40, 41, 42, 43, 44, 45
+         set object specular shiny, rgb(80, 80, 84)
+         set object specular power shiny, 60
+         inc shiny
       endif
    next limb
 
@@ -385,7 +392,7 @@ function build_world()
    scale object OBJ_GLASS, 100, 210, 100
    position object OBJ_GLASS, corex#, 35, corez#
    texture object OBJ_GLASS, 8
-   set object cube map OBJ_GLASS, 1, 0.3
+   set cube mapping on OBJ_GLASS, 40, 41, 42, 43, 44, 45
    ghost object on OBJ_GLASS
    set object light OBJ_GLASS, 0
    make object cylinder OBJ_ENERGY, 13
@@ -422,7 +429,7 @@ function build_world()
       position object OBJ_CRATE + i, crates(i).x, s# / 2, crates(i).z
       yrotate object OBJ_CRATE + i, crates(i).yaw
       texture object OBJ_CRATE + i, 4
-      set object normal map OBJ_CRATE + i, 5
+      set bump mapping on OBJ_CRATE + i, 5
       set object ambience OBJ_CRATE + i, rgb(130, 130, 140)
       set object specular OBJ_CRATE + i, rgb(255, 255, 255)
       set object specular power OBJ_CRATE + i, 24
@@ -444,10 +451,9 @@ function build_world()
       d = OBJ_DRONE + i
       load object "models/drone.x", d
       set object ambience d, rgb(90, 92, 105)
-      set object specular d, rgb(255, 240, 220)
+      set object specular d, rgb(81, 76, 70)
       set object specular power d, 30
-      set object emissive map d, 35
-      set object cube map d, 1, 0.08, 0.6
+      set cube mapping on d, 40, 41, 42, 43, 44, 45
       set object speed d, 30
       set object interpolation d, 25
       make object sphere OBJ_HALO + i, 5

@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <map>
 #include <memory>
-#include <span>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -199,6 +198,7 @@ namespace dbc
 
         // ── Texture / appearance ─────────────────────────────────────────
         void TextureObject(int ObjectId, int ImageId);
+        bool TextureObject(int ObjectId, int Stage, int ImageId, std::string* Error = nullptr);
         bool SetObjectTexture(int ObjectId, int Stage, int AddressMode, int MipMode, std::string* Error = nullptr);
         bool SetLightMappingOn(int ObjectId, int ImageId, int ReverseStageMode = 0, std::string* Error = nullptr);
         bool SetDetailMappingOn(int ObjectId, int ImageId, std::string* Error = nullptr);
@@ -211,29 +211,6 @@ namespace dbc
         bool SetRainbowShadingOn(int ObjectId, int ImageId, std::string* Error = nullptr);
         bool SetReflectionShadingOn(int ObjectId, std::string* Error = nullptr);
         bool SetShadowShadingOn(int ObjectId, std::string* Error = nullptr);
-        // Surface maps. A limb of -1 means every mesh of the object; image or cube map 0 removes that map, and a
-        // mesh left without any goes back to the fixed-function path.
-        enum class SurfaceMap
-        {
-            Normal,
-            Specular,
-            Emissive,
-            Reflection
-        };
-        bool SetSurfaceMap(int ObjectId, int LimbId, SurfaceMap Map, int ImageId, const char* Command,
-                           std::string* Error = nullptr, float NormalStrength = 1.0f);
-        bool SetSurfaceCubeMap(int ObjectId, int LimbId, int CubeMapId, float Amount, float Fresnel,
-                               const char* Command, std::string* Error = nullptr);
-        // The normal map's second layer exists once a command has named it.
-        bool SetNormalMapScroll(int ObjectId, std::span<const SDL_FPoint> Layers, std::string* Error = nullptr);
-        bool SetNormalMapScale(int ObjectId, std::span<const SDL_FPoint> Layers, std::string* Error = nullptr);
-        bool ClearObjectMaps(int ObjectId, std::string* Error = nullptr);
-        bool MakeCubeMap(int CubeMapId, const std::array<int, 6>& ImageIds, std::string* Error = nullptr);
-        // A 4:3 horizontal cross or a 6:1 strip in the order +X, -X, +Y, -Y, +Z, -Z.
-        bool LoadCubeMap(const std::string& Path, int CubeMapId, std::string* Error = nullptr);
-        bool DeleteCubeMap(int CubeMapId, std::string* Error = nullptr);
-        [[nodiscard]] int CubeMapExist(int CubeMapId) const;
-        [[nodiscard]] const CubeMap* FindCubeMap(int CubeMapId) const;
         bool SetShadowShadingOn(int ObjectId, int MeshId, int ShadowRange, int UseShader, std::string* Error = nullptr);
         bool SetShadowShadingOff(int ObjectId, std::string* Error = nullptr);
         bool SetShadingOff(int ObjectId, std::string* Error = nullptr);
@@ -484,9 +461,6 @@ namespace dbc
         std::unordered_map<int, AutomaticCollider> AutomaticObjects_;
         std::unordered_map<int, AutomaticCollider> AutomaticCameras_;
         std::unordered_map<int, Object3D> Objects_;
-        std::unordered_map<int, CubeMap> CubeMaps_;
-        bool AddCubeMap(int CubeMapId, const std::array<SDL_Surface*, 6>& Faces, const char* Command,
-                        std::string* Error);
         std::vector<Object3D> StaticObjects_;
         std::unordered_set<int> AttachedStaticObjectIds_;
         std::unordered_map<int, std::vector<Mesh>> Meshes_;

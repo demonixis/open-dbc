@@ -13,6 +13,8 @@ from basic_profiles import load_test_profiles
 
 ROOT = Path(__file__).resolve().parents[1]
 
+BLINN_PHONG_TEST = "test_engine_builtins.cpp::DBPro bump and cube mapping light objects through the Blinn-Phong path"
+
 UNIT_WITNESSES = (
     ("dbc", "Command", "SET GAMMA", "set gamma 128, 255, 511\n",
      "pixel-capture", "test_engine_builtins.cpp::Classic gamma and mipmap modes drive final pixels and sampler state"),
@@ -192,6 +194,8 @@ UNIT_WITNESSES = (
      "engine-state", "test_engine_builtins.cpp::Object texture scale and SET OBJECT defaults match BASIC semantics"),
     ("dbc", "Command", "SCALE OBJECT", "scale object 1, 125, 75, 50\n",
      "engine-state", "test_engine_builtins.cpp::Object texture scale and SET OBJECT defaults match BASIC semantics"),
+    ("dbpro", "Command", "TEXTURE OBJECT", "texture object 1, 1, 9\n", "texture-stage-pixel", BLINN_PHONG_TEST),
+    ("dbpro", "Command", "TEXTURE OBJECT", "texture object 1, 1, 9, 0\n", "texture-stage-pixel", BLINN_PHONG_TEST),
     ("dbc", "Command", "TEXTURE OBJECT", "texture object 1, 9\n",
      "engine-state", "test_engine_builtins.cpp::Object texture scale and SET OBJECT defaults match BASIC semantics"),
     ("dbc", "Command", "SET OBJECT", "set object 1, 0, 0, 1\n",
@@ -1314,30 +1318,6 @@ UNIT_WITNESSES += (
     ("dbpro", "Command", "WAIT", "wait 1\n", "vm-state",
      "test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively"),
 )
-
-SURFACE_MAPS_TEST = "test_engine_builtins.cpp::DBPro surface maps light objects through the Blinn-Phong path"
-SURFACE_MAP_WITNESSES = [
-    ("dbpro", "Command", "SET OBJECT NORMAL MAP", 'set object normal map 1, 2, 0.5\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET OBJECT SPECULAR MAP", 'set object specular map 1, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET OBJECT EMISSIVE MAP", 'set object emissive map 1, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET OBJECT REFLECTION MAP", 'set object reflection map 1, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET OBJECT CUBE MAP", 'set object cube map 1, 1, 0.5, 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET LIMB NORMAL MAP", 'set limb normal map 1, 0, 2, 0.5\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET LIMB SPECULAR MAP", 'set limb specular map 1, 0, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET LIMB EMISSIVE MAP", 'set limb emissive map 1, 0, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET LIMB REFLECTION MAP", 'set limb reflection map 1, 0, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET LIMB CUBE MAP", 'set limb cube map 1, 0, 1, 0.5, 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET OBJECT NORMAL MAP SCROLL", 'set object normal map scroll 1, 0.5, 0.5, 0.25, 0.25\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET OBJECT NORMAL MAP SCALE", 'set object normal map scale 1, 2, 2, 3, 3\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "CLEAR OBJECT MAPS", 'clear object maps 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "MAKE CUBE MAP", 'make cube map 1, 1, 2, 3, 4, 5, 6\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "LOAD CUBE MAP", 'load cube map "sky.png", 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "DELETE CUBE MAP", 'delete cube map 1\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET OBJECT NORMAL MAP SCROLL", 'set object normal map scroll 1, 0.5, 0.5\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Command", "SET OBJECT NORMAL MAP SCALE", 'set object normal map scale 1, 2, 2\n', "surface-map-pixel", SURFACE_MAPS_TEST),
-    ("dbpro", "Function", "CUBE MAP EXIST", "print cube map exist(1)\n", "surface-map-state", SURFACE_MAPS_TEST),
-]
-UNIT_WITNESSES += tuple(SURFACE_MAP_WITNESSES)
 
 OBJECT_SELECTION_TEST = "test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects"
 UNIT_WITNESSES += (

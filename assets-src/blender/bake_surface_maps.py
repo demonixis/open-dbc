@@ -1,13 +1,13 @@
-"""Derive the surface maps of the DBPro demos: normal, specular, emissive and cube maps.
+"""Derive the normal maps and cube faces of the DBPro demos.
 
 Run from the repository root, after the demos' own bakes:
     /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup \
         --python assets-src/blender/bake_surface_maps.py
 
-Normal maps treat a texture's brightness as height; the water is tiling filtered noise. Cube
-maps are procedural skies and rooms in the demos' colours, written as 6:1 strips in the order
-+X, -X, +Y, -Y, +Z, -Z for LOAD CUBE MAP. The outputs are recorded in examples/ASSETS.tsv by
-scripts/audit_example_assets.py --refresh.
+Normal maps treat a texture's brightness as height; the water is tiling filtered noise. Cubes are
+procedural skies and rooms in the demos' colours, with one file per face for SET CUBE MAPPING ON,
+which takes them in the order +X, -X, +Y, -Y, +Z, -Z. The outputs are recorded in
+examples/ASSETS.tsv by scripts/audit_example_assets.py --refresh.
 """
 
 import sys
@@ -21,7 +21,7 @@ import bake_textures as bt  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 DEMOS = ROOT / "examples/dbpro/demos"
-CUBE_SIDE = 256
+CUBE_SIDE = 128
 RANDOM = np.random.default_rng(5150)
 
 
@@ -104,8 +104,9 @@ def cube_directions(side: int) -> list[np.ndarray]:
     return directions
 
 
-def save_cube(shade, path: Path) -> None:
-    save_linear(np.concatenate([shade(d) for d in cube_directions(CUBE_SIDE)], axis=1), path)
+def save_cube(shade, folder: Path, name: str) -> None:
+    for face, direction in zip(("px", "nx", "py", "ny", "pz", "nz"), cube_directions(CUBE_SIDE)):
+        save_linear(shade(direction), folder / f"{name}_{face}.jpg")
 
 
 def gradient(height: np.ndarray, stops) -> np.ndarray:
@@ -177,29 +178,20 @@ def main() -> None:
     bt.setup_bake_scene()
 
     rally = DEMOS / "dusk_rally/textures"
-    save_data(normals_of(water_height(512), 26.0), rally / "water_normal.jpg")
-    normal_from_texture(rally / "asphalt.jpg", rally / "asphalt_normal.jpg", 4.0)
-    save_cube(dusk_sky, rally / "sky_cube.jpg")
+    save_data(normals_of(water_height(512), 13.0), rally / "water_normal.jpg")
+    normal_from_texture(rally / "asphalt.jpg", rally / "asphalt_normal.jpg", 2.4)
+    save_cube(dusk_sky, rally, "sky_cube")
 
     gardens = DEMOS / "sky_gardens/textures"
     normal_from_texture(gardens / "wood.jpg", gardens / "wood_normal.jpg", 7.0)
-    save_cube(garden_sky, gardens / "sky_cube.jpg")
+    save_cube(garden_sky, gardens, "sky_cube")
 
     reactor = DEMOS / "reactor_breach/textures"
     normal_from_texture(reactor / "wall.jpg", reactor / "wall_normal.jpg", 7.0)
     normal_from_texture(reactor / "floor.jpg", reactor / "floor_normal.jpg", 6.0)
     normal_from_texture(reactor / "ceiling.jpg", reactor / "ceiling_normal.jpg", 7.0)
     normal_from_texture(reactor / "machine.jpg", reactor / "machine_normal.jpg", 6.0)
-    # Bright plates shine and reflect; worn, dark ones do not.
-    floor = brightness(load_rgb(reactor / "floor.jpg"))
-    shine = np.clip((floor - np.percentile(floor, 15.0)) / max(np.percentile(floor, 85.0) - np.percentile(floor, 15.0), 0.01),
-                    0.0, 1.0)
-    save_data(np.repeat(shine[:, :, None], 3, axis=2), reactor / "floor_specular.jpg")
-    # What is bright and coloured on the drone stays lit in the dark.
-    drone = load_rgb(reactor / "drone.jpg")
-    colourful = np.clip((drone.max(axis=2) - drone.min(axis=2) - 0.25) * 4.0, 0.0, 1.0)
-    save_data(drone * colourful[:, :, None], reactor / "drone_emissive.jpg")
-    save_cube(reactor_room, reactor / "room_cube.jpg")
+    save_cube(reactor_room, reactor, "room_cube")
 
 
 main()

@@ -34,7 +34,6 @@ struct type_MaterialUniforms
 {
     float4 view_to_world[3];
     float4 material_params;
-    int4 material_maps;
 };
 
 struct VSMesh_out

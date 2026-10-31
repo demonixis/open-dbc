@@ -111,41 +111,43 @@ numbered light moved there, or from the point when the number is negative, and a
 positive range replaces each object's. `SET GLOBAL SHADOWS OFF` stops drawing them
 without touching any object.
 
-## Surface maps
+## Blinn-Phong
 
-DBPro adds a Blinn-Phong path beside the fixed-function one, which it leaves
-untouched for objects that do not ask for it.
+DBPro's own commands draw through a Blinn-Phong path instead of the fixed-function
+one. An object that uses neither of the first two stays on the fixed-function path.
 
 | Command | Effect |
 | --- | --- |
-| `SET OBJECT NORMAL MAP obj, img[, strength#]` | Tangent-space normals, DirectX green (it follows V). |
-| `SET OBJECT SPECULAR MAP obj, img` | RGB tints the highlight, alpha scales `SET OBJECT SPECULAR POWER`. |
-| `SET OBJECT EMISSIVE MAP obj, img` | Added after lighting. |
-| `SET OBJECT REFLECTION MAP obj, img` | Red masks the reflection. |
-| `SET OBJECT CUBE MAP obj, cube, amount#[, fresnel#]` | Reflects `cube`: `amount#` head-on, rising towards 1 at grazing angles as far as `fresnel#` says. |
-| `SET OBJECT NORMAL MAP SCROLL obj, u#, v#[, u2#, v2#]` | Offsets, and with four values a second layer; call it each frame to animate water. |
-| `SET OBJECT NORMAL MAP SCALE obj, u#, v#[, u2#, v2#]` | Tiling relative to the base coordinates. |
-| `CLEAR OBJECT MAPS obj` | Back to the fixed-function path. |
-| `MAKE CUBE MAP cube, +x, -x, +y, -y, +z, -z` | From six images. |
-| `LOAD CUBE MAP file$, cube` | From a 4:3 cross around +Z or a 6:1 strip in that order. |
-| `DELETE CUBE MAP cube`, `CUBE MAP EXIST(cube)` | |
+| `SET BUMP MAPPING ON obj, img` | Stage 1 holds a tangent-space normal map, DirectX green (it follows V). |
+| `SET CUBE MAPPING ON obj, +x, -x, +y, -y, +z, -z` | With a specular colour, reflects the cube. Without one it multiplies, as in DBPro. |
+| `SET OBJECT SPECULAR obj, colour` | The highlight's colour and what the surface reflects head on: 56 is a linear 4 %, as water. |
+| `SET OBJECT SPECULAR POWER obj, power` | Sharpness of the highlight and of the reflection, and how strong it gets at grazing angles. |
+| `SCROLL` / `SCALE OBJECT TEXTURE obj, 1, u#, v#` | Move the normal map alone, on coordinates of its own; scroll each frame to animate water. |
+| `TEXTURE OBJECT obj, 1, img`, `TEXTURE LIMB obj, limb, 1, img` | Change the normal map, per limb with the latter. |
+| `SET OBJECT EMISSIVE obj, colour` | Added after lighting. |
 
-The `SET LIMB ... MAP obj, limb, ...` forms set one limb. Image or cube 0 removes
-one map, and a mesh left without any goes back to the fixed-function path.
-
-- Maps live in texture stages 4 to 7 and leave stages 1 to 3 to light and detail
-  maps. `SET BUMP MAPPING`, cartoon and rainbow shading win over them, and an
-  object locked to the screen ignores them. An object with maps is always lit.
+- Bump and cube mapping both belong to stage 1 in DBPro, where the later command
+  wins; here they combine, in either order. Other stages keep working: a lightmap
+  goes to stage 2 with `SET BLEND MAPPING ON obj, 2, img, 11, 5`, and an object
+  takes part of a mesh with `MAKE OBJECT FROM LIMB` and `EXCLUDE LIMB ON` when only
+  some limbs should reflect.
 - Meshes need no tangents: the frame comes from screen derivatives, and a
   non-uniform scale flattens the relief along the stretched axis, as it should.
-- A black `SET OBJECT SPECULAR` and no specular map reflect 4 % of the light, so
-  that a normal map shows. The highlight is normalised by `(power + 8) / 8`.
-- The cube's mip level follows the specular power, from sharp at 2048 to its
-  broadest at 1. Levels are box filtered, not convolved.
+- A bump mapped object with a black `SET OBJECT SPECULAR` reflects 4 %, so that its
+  normal map shows. The highlight is normalised by `(power + 8) / 8`.
+- Reflectance follows Schlick from the specular colour up to a gloss of
+  `log2(power) / 11`. Below 2 %, which no real surface reflects, the colour shadows
+  the grazing reflection too, so scaling it dims a reflection: at nightfall in
+  `dusk_rally`, for one.
+- The cube's mip level follows the same gloss, from sharp at power 2048 to its
+  broadest at 1. Levels are box filtered, not convolved. Each `SET CUBE MAPPING ON`
+  makes a cube, which clones share.
 - Images are sRGB, so normal maps are re-encoded before decoding; filtering happens
   in linear light, which only shows on hard edges of a map.
-- Meshes with one normal layer at its plain coordinates stay on the GPU path and
-  instance; a scrolled, scaled or two-layer normal map draws through triangles.
+- An object locked to the screen keeps the fixed-function path, with a bump map
+  still lit per pixel. Effects, cartoon and rainbow shading win over this path.
+- Meshes whose normal map keeps the base coordinates stay on the GPU path and
+  instance; one scrolled or scaled apart draws through triangles.
 
 ## Cameras and images
 

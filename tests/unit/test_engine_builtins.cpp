@@ -10394,7 +10394,7 @@ TEST_CASE("DBPro fire rises and snow falls through a box")
     Kernel.Renderer().RenderScene(false);
 }
 
-TEST_CASE("DBPro surface maps light objects through the Blinn-Phong path")
+TEST_CASE("DBPro bump and cube mapping light objects through the Blinn-Phong path")
 {
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("test", 32, 32));
@@ -10420,11 +10420,10 @@ TEST_CASE("DBPro surface maps light objects through the Blinn-Phong path")
     constexpr int AwayFromU = 5;
     constexpr int TowardsV = 6;
     constexpr int AwayFromV = 7;
-    constexpr int Blue = 8;
     constexpr int LeftAwayRightTowards = 9;
     constexpr int FirstFace = 10;
     constexpr int DimFace = 16;
-    StoreColor(White, 255, 255, 255);
+    StoreColor(White, 255, 255, 255, 8);
     StoreColor(Black, 0, 0, 0);
     StoreColor(Flat, 128, 128, 255);
     // Tilted by 45 degrees: the components are 0.707 and 0, encoded.
@@ -10432,7 +10431,6 @@ TEST_CASE("DBPro surface maps light objects through the Blinn-Phong path")
     StoreColor(AwayFromU, 37, 128, 218);
     StoreColor(TowardsV, 128, 218, 218);
     StoreColor(AwayFromV, 128, 37, 218);
-    StoreColor(Blue, 0, 0, 255);
     {
         // Wide enough that the coordinates tested stay away from the filtered edges.
         SDL_Surface* Surface = SDL_CreateSurface(8, 2, SDL_PIXELFORMAT_RGBA32);
@@ -10496,272 +10494,229 @@ TEST_CASE("DBPro surface maps light objects through the Blinn-Phong path")
         SDL_DestroySurface(Capture);
         return Pixel;
     };
+    const auto CubeMapping = [&](int First, int Last)
+    {
+        return Command(SymbolId::Command_SetCubeMappingOn,
+                       {1, double(First), First + 1.0, First + 2.0, First + 3.0, First + 4.0, double(Last)});
+    };
     const dbc::Object3D* Object = Kernel.Objects().GetObject(1);
     REQUIRE(Object != nullptr);
     const dbc::Mesh& Mesh = Object->Meshes.front();
+    // At this power a highlight away from the mirror direction leaves no trace.
+    REQUIRE(Command(SymbolId::Command_SetObjectSpecularPower, {1, 2048}));
 
-    SUBCASE("the normal map bends the light the way its components say")
+    SUBCASE("SET BUMP MAPPING ON bends the light the way its normal map says")
     {
-        REQUIRE(Command(SymbolId::Command_SetObjectSpecularMap, {1, Black}));
         // Light from +X, where the face's U grows.
         LightDirection(-1.0f, 0.0f, 1.0f);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, Flat}));
+        const auto Unmapped = Center();
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, Flat}));
         const auto FlatPixel = Center();
         CHECK(FlatPixel[0] >= 200);
         CHECK(FlatPixel[0] <= 230);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, TowardsU}));
+        CHECK(std::abs(FlatPixel[0] - Unmapped[0]) <= 2);
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, TowardsU}));
         CHECK(Center()[0] >= 245);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, AwayFromU}));
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, AwayFromU}));
         CHECK(Center()[0] <= 16);
-        // No strength leaves the geometric normal.
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, AwayFromU, 0.0}));
-        CHECK(std::abs(Center()[0] - FlatPixel[0]) <= 2);
 
         // Light from -Y: green follows V, which grows down the image.
         LightDirection(0.0f, 1.0f, 1.0f);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, TowardsV}));
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, TowardsV}));
         CHECK(Center()[0] >= 245);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, AwayFromV}));
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, AwayFromV}));
         CHECK(Center()[0] <= 16);
 
-        // A flat normal without a highlight lights as the fixed-function path does.
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, Flat}));
-        const auto MappedFlat = Center();
-        REQUIRE(Command(SymbolId::Command_ClearObjectMaps, {1}));
-        CHECK_FALSE(Mesh.Maps.has_value());
-        CHECK(std::abs(Center()[0] - MappedFlat[0]) <= 2);
+        // Deleting the image takes the map away, and the surface is lit as a flat one.
+        LightDirection(-1.0f, 0.0f, 1.0f);
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, TowardsU}));
+        CHECK(Center()[0] >= 245);
+        REQUIRE(Command(SymbolId::Command_DeleteImage, {TowardsU}));
+        Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 5.0f);
+        CHECK(std::abs(Center()[0] - FlatPixel[0]) <= 2);
+
+        CHECK_FALSE(Command(SymbolId::Command_SetBumpMappingOn, {1, 99}));
+        CHECK(Error.find("requires existing image 99") != std::string::npos);
     }
 
     SUBCASE("meshes drawn from GPU buffers and from triangles shade alike")
     {
         LightDirection(-1.0f, 0.0f, 1.0f);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, TowardsU}));
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, TowardsU}));
         const auto Instanced = Center();
-        // A whole turn changes no texel but sends the mesh down the CPU path.
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMapScroll, {1, 1.0, 0.0}));
+        CHECK_FALSE(Mesh.Geometry().UvStages.contains(1));
+        // A whole turn changes no texel but gives the map coordinates of its own, which take the CPU path.
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 1, 1.0, 0.0}));
+        CHECK(Mesh.Geometry().UvStages.contains(1));
         const auto Triangles = Center();
         for (std::size_t Channel = 0; Channel < 3; ++Channel)
             CHECK(std::abs(Instanced[Channel] - Triangles[Channel]) <= 2);
     }
 
-    SUBCASE("the normal map's layers scroll and scale apart from the base coordinates")
+    SUBCASE("stage 1 of SCROLL and SCALE OBJECT TEXTURE moves the normal map apart from the base")
     {
-        REQUIRE(Command(SymbolId::Command_SetObjectSpecularMap, {1, Black}));
         LightDirection(-1.0f, 0.0f, 1.0f);
-        CHECK_FALSE(Command(SymbolId::Command_SetObjectNormalMapScroll, {1, 0.25, 0.0}));
-        CHECK(Error.find("requires an object with a normal map") != std::string::npos);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, LeftAwayRightTowards}));
-        // The middle of the face reads the base U of 0.5.
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMapScroll, {1, 0.25, 0.0}));
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, LeftAwayRightTowards}));
+        // Until then the map follows the base coordinates. The middle of the face reads U = 0.5.
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 0.25, 0.0}));
         CHECK(Center()[0] >= 245);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMapScroll, {1, 0.75, 0.0}));
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 0.5, 0.0}));
         CHECK(Center()[0] <= 16);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMapScroll, {1, 0.0, 0.0}));
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMapScale, {1, 0.5, 0.5}));
-        CHECK(Center()[0] <= 16);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMapScale, {1, 1.5, 1.5}));
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 0.25, 0.0}));
+
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 1, 0.25, 0.0}));
         CHECK(Center()[0] >= 245);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMapScale, {1, 1.0, 1.0}));
-        // Opposite layers cancel out: 0.707 is what the flat normal gives under this light.
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMapScroll, {1, 0.25, 0.0, 0.75, 0.0}));
-        REQUIRE(Mesh.Maps.has_value());
-        CHECK(Mesh.Maps->TwoNormalLayers);
-        CHECK(Center()[0] >= 200);
-        CHECK(Center()[0] <= 230);
+        // The base goes its own way now.
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 0.5, 0.0}));
+        CHECK(Center()[0] >= 245);
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 1, 0.5, 0.0}));
+        CHECK(Center()[0] <= 16);
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 1, -0.75, 0.0}));
+        REQUIRE(Command(SymbolId::Command_ScaleObjectTexture, {1, 1, 0.5, 0.5}));
+        CHECK(Center()[0] <= 16);
+        REQUIRE(Command(SymbolId::Command_ScaleObjectTexture, {1, 1, 3.0, 3.0}));
+        CHECK(Center()[0] >= 245);
     }
 
-    SUBCASE("specular and emissive maps add to the surface")
+    SUBCASE("TEXTURE OBJECT and TEXTURE LIMB change a mesh's normal map, the stage it sits in")
+    {
+        LightDirection(-1.0f, 0.0f, 1.0f);
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, Flat}));
+        REQUIRE(Command(SymbolId::Command_TextureObject, {1, 1, TowardsU}));
+        CHECK(Mesh.TextureStageImageIds.at(1) == TowardsU);
+        CHECK(Center()[0] >= 245);
+        REQUIRE(Command(SymbolId::Command_TextureObject, {1, 1, AwayFromU, 0}));
+        CHECK(Center()[0] <= 16);
+        REQUIRE(Command(SymbolId::Command_TextureLimb, {1, 0, 1, TowardsU}));
+        CHECK(Center()[0] >= 245);
+        REQUIRE(Command(SymbolId::Command_TextureObject, {1, 0, Black}));
+        CHECK(Object->TextureImageId == Black);
+        CHECK(Center()[0] <= 8);
+
+        CHECK_FALSE(Command(SymbolId::Command_TextureObject, {1, 8, White}));
+        CHECK(Error.find("between zero and seven") != std::string::npos);
+        CHECK_FALSE(Command(SymbolId::Command_TextureObject, {1, 1, 99}));
+        CHECK(Error.find("requires existing image 99") != std::string::npos);
+        CHECK_FALSE(Command(SymbolId::Command_TextureObject, {99, 1, White}));
+        CHECK(Error.find("requires existing object 99") != std::string::npos);
+    }
+
+    SUBCASE("SET OBJECT SPECULAR and EMISSIVE add to a bump mapped surface")
     {
         Kernel.Objects().TextureObject(1, Black);
         LightDirection(0.0f, 0.0f, 1.0f);
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, Flat}));
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, Flat}));
+        REQUIRE(Command(SymbolId::Command_SetObjectSpecularPower, {1, 10}));
         // A dielectric's 4% at the default power of 10.
         const auto Default = Center();
         CHECK(Default[0] >= 70);
         CHECK(Default[0] <= 100);
-        REQUIRE(Command(SymbolId::Command_SetObjectSpecularMap, {1, White}));
-        CHECK(Center()[0] >= 245);
-        REQUIRE(Command(SymbolId::Command_SetObjectSpecularMap, {1, 0}));
         REQUIRE(Command(SymbolId::Command_SetObjectSpecular, {1, 0xFF0000}));
         const auto Tinted = Center();
         CHECK(Tinted[0] >= 245);
         CHECK(Tinted[1] <= 8);
         REQUIRE(Command(SymbolId::Command_SetObjectSpecular, {1, 0}));
-        REQUIRE(Command(SymbolId::Command_SetObjectSpecularMap, {1, Black}));
-        CHECK(Center()[0] <= 8);
-        REQUIRE(Command(SymbolId::Command_SetObjectEmissiveMap, {1, Blue}));
+        REQUIRE(Command(SymbolId::Command_SetObjectEmissive, {1, 0x0000FF}));
         const auto Emissive = Center();
-        CHECK(Emissive[0] <= 8);
         CHECK(Emissive[2] >= 245);
-        REQUIRE(Command(SymbolId::Command_SetLimbEmissiveMap, {1, 0, 0}));
-        CHECK(Center()[2] <= 8);
-        // Deleting a map's image takes it away, like taking it off.
-        REQUIRE(Command(SymbolId::Command_SetLimbEmissiveMap, {1, 0, Blue}));
-        CHECK(Center()[2] >= 245);
-        REQUIRE(Command(SymbolId::Command_DeleteImage, {Blue}));
-        Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 5.0f);
-        CHECK(Center()[2] <= 8);
-        CHECK_FALSE(Command(SymbolId::Command_SetLimbEmissiveMap, {1, 99, White}));
-        CHECK(Error.find("requires existing limb 99") != std::string::npos);
     }
 
-    SUBCASE("a cube map reflects the world around the surface")
+    SUBCASE("a cube multiplies until SET OBJECT SPECULAR says the surface reflects it")
     {
-        Kernel.Objects().TextureObject(1, Black);
         LightDirection(0.0f, 0.0f, 1.0f);
-        REQUIRE(Command(SymbolId::Command_SetObjectSpecularMap, {1, Black}));
-        CHECK(Kernel.Objects().CubeMapExist(1) == 0);
-        CHECK_FALSE(Command(SymbolId::Command_SetObjectCubeMap, {1, 1, 1.0}));
-        CHECK(Error.find("requires existing cube map 1") != std::string::npos);
-        REQUIRE(Command(SymbolId::Command_MakeCubeMap,
-                        {1, FirstFace, FirstFace + 1, FirstFace + 2, FirstFace + 3, FirstFace + 4, FirstFace + 5}));
-        CHECK(Kernel.Objects().CubeMapExist(1) == 1);
-        REQUIRE(Kernel.Objects().FindCubeMap(1) != nullptr);
-        CHECK(Kernel.Objects().FindCubeMap(1)->Levels == 4);
-        CHECK_FALSE(Command(SymbolId::Command_MakeCubeMap,
-                            {1, FirstFace, FirstFace + 1, FirstFace + 2, FirstFace + 3, FirstFace + 4, FirstFace + 5}));
-        CHECK(Error.find("free cube map number") != std::string::npos);
-        CHECK_FALSE(Command(SymbolId::Command_SetObjectCubeMap, {1, 1, 1.5}));
-        CHECK(Error.find("from 0 to 1") != std::string::npos);
-
+        REQUIRE(CubeMapping(FirstFace, FirstFace + 5));
+        CHECK(Object->CubeLevels == 4);
         // The camera looks along +Z at a mirror facing it, so it sees the -Z face.
-        REQUIRE(Command(SymbolId::Command_SetObjectCubeMap, {1, 1, 1.0}));
+        const auto Multiplied = Center();
+        CHECK(Multiplied[0] <= 8);
+        CHECK(Multiplied[1] >= 245);
+        CHECK(Multiplied[2] >= 245);
+        Kernel.Objects().TextureObject(1, Black);
+        CHECK(Center()[1] <= 8);
+
+        // Lit from behind, so that no highlight shows.
+        LightDirection(0.0f, 0.0f, -1.0f);
+        REQUIRE(Command(SymbolId::Command_SetObjectSpecular, {1, 0xFFFFFF}));
         const auto Mirror = Center();
         CHECK(Mirror[0] <= 8);
         CHECK(Mirror[1] >= 245);
         CHECK(Mirror[2] >= 245);
-
-        // Head-on, a surface reflects only its amount.
-        REQUIRE(Command(SymbolId::Command_SetObjectCubeMap, {1, 1, 0.0, 1.0}));
-        CHECK(Center()[1] <= 8);
-
-        // The reflection map masks it.
-        REQUIRE(Command(SymbolId::Command_SetObjectCubeMap, {1, 1, 1.0}));
-        REQUIRE(Command(SymbolId::Command_SetObjectReflectionMap, {1, Black}));
-        CHECK(Center()[1] <= 8);
-        REQUIRE(Command(SymbolId::Command_SetObjectReflectionMap, {1, 0}));
 
         // The direction is a world one, whichever way the camera looks: here along +X, so the -X face shows.
         RequireEngineStatus([&](std::string& CameraError)
                             { return Kernel.Camera().RotateCamera(0.0f, 90.0f, 0.0f, &CameraError); });
         Kernel.Objects().PositionObject(1, 5.0f, 0.0f, 0.0f);
         Kernel.Objects().RotateObject(1, 0.0f, 90.0f, 0.0f);
-        LightDirection(1.0f, 0.0f, 0.0f);
+        LightDirection(-1.0f, 0.0f, 0.0f);
         const auto Turned = Center();
         CHECK(Turned[0] <= 8);
         CHECK(Turned[1] >= 245);
         CHECK(Turned[2] <= 8);
-        RequireEngineStatus([&](std::string& CameraError)
-                            { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &CameraError); });
-        Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 5.0f);
+    }
+
+    SUBCASE("the specular colour is the reflectance head on, and the power how sharp and strong it gets")
+    {
+        Kernel.Objects().TextureObject(1, Black);
+        LightDirection(0.0f, 0.0f, -1.0f);
+        REQUIRE(Command(SymbolId::Command_SetCubeMappingOn, {1, White, White, White, White, White, White}));
+        // sRGB 56 is a linear 0.04, what a dielectric reflects head on.
+        REQUIRE(Command(SymbolId::Command_SetObjectSpecular, {1, 0x383838}));
+        const auto HeadOn = Center();
+        CHECK(HeadOn[0] >= 45);
+        CHECK(HeadOn[0] <= 70);
+
+        // Seen at a grazing angle it reflects far more, if it is glossy enough.
+        Kernel.Objects().RotateObject(1, 0.0f, 80.0f, 0.0f);
+        CHECK(Center()[0] >= 130);
+        // Below 2 percent, which no real surface reflects, the colour shadows the reflection.
+        REQUIRE(Command(SymbolId::Command_SetObjectSpecular, {1, 0x0B0B0B}));
+        CHECK(Center()[0] <= 110);
+        REQUIRE(Command(SymbolId::Command_SetObjectSpecular, {1, 0x383838}));
+        REQUIRE(Command(SymbolId::Command_SetObjectSpecularPower, {1, 1}));
+        const auto Dull = Center();
+        CHECK(Dull[0] >= 45);
+        CHECK(Dull[0] <= 70);
         Kernel.Objects().RotateObject(1, 0.0f, 0.0f, 0.0f);
-        LightDirection(0.0f, 0.0f, 1.0f);
 
         // A low power reads the broad levels, which average the face.
-        REQUIRE(Command(SymbolId::Command_MakeCubeMap,
-                        {2, FirstFace, FirstFace + 1, FirstFace + 2, FirstFace + 3, FirstFace + 4, DimFace}));
-        REQUIRE(Command(SymbolId::Command_SetObjectCubeMap, {1, 2, 1.0}));
+        REQUIRE(Command(SymbolId::Command_SetObjectSpecular, {1, 0xFFFFFF}));
+        REQUIRE(CubeMapping(FirstFace, DimFace));
         REQUIRE(Command(SymbolId::Command_SetObjectSpecularPower, {1, 2048}));
         CHECK(Center()[0] >= 245);
         REQUIRE(Command(SymbolId::Command_SetObjectSpecularPower, {1, 1}));
         const auto Broad = Center();
         CHECK(Broad[0] >= 40);
         CHECK(Broad[0] <= 110);
-
-        // A deleted cube map stops reflecting, and its number is free again.
-        REQUIRE(Command(SymbolId::Command_DeleteCubeMap, {2}));
-        CHECK(Center()[0] <= 8);
-        CHECK_FALSE(Command(SymbolId::Command_DeleteCubeMap, {2}));
-        CHECK(Error.find("requires existing cube map 2") != std::string::npos);
-        CHECK(Kernel.Objects().CubeMapExist(2) == 0);
     }
 
-    SUBCASE("cube maps load from a cross or a strip")
+    SUBCASE("bump and cube mapping work together in either order")
     {
-        const std::filesystem::path Folder =
-            std::filesystem::temp_directory_path() / ("opendbc_cube_maps_" + std::to_string(SDL_GetTicksNS()));
-        std::filesystem::create_directories(Folder);
-        // Column and row of each face in the two layouts.
-        const auto Save = [&](const std::filesystem::path& Path, int Columns, int Rows,
-                              const std::array<std::array<int, 2>, 6>& Cells)
-        {
-            SDL_Surface* Surface = SDL_CreateSurface(Columns * 4, Rows * 4, SDL_PIXELFORMAT_RGBA32);
-            REQUIRE(Surface != nullptr);
-            REQUIRE(SDL_FillSurfaceRect(Surface, nullptr, SDL_MapSurfaceRGBA(Surface, 0, 0, 0, 255)));
-            for (std::size_t Face = 0; Face < 6; ++Face)
-            {
-                const SDL_Rect Rect{Cells[Face][0] * 4, Cells[Face][1] * 4, 4, 4};
-                const auto& Color = FaceColors[Face];
-                REQUIRE(SDL_FillSurfaceRect(Surface, &Rect,
-                                            SDL_MapSurfaceRGBA(Surface, Color[0], Color[1], Color[2], 255)));
-            }
-            REQUIRE(SDL_SaveBMP(Surface, dbc::PathToUtf8(Path).c_str()));
-            SDL_DestroySurface(Surface);
-        };
-        Save(Folder / "strip.bmp", 6, 1, {{{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}}});
-        Save(Folder / "cross.bmp", 4, 3, {{{2, 1}, {0, 1}, {1, 0}, {1, 2}, {1, 1}, {3, 1}}});
-        Save(Folder / "wrong.bmp", 5, 1, {{{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {4, 0}}});
-
-        const auto Load = [&](const std::string& Name, int Id)
-        {
-            Error.clear();
-            return InvokeCommand(
-                Context, SymbolId::Command_LoadCubeMap,
-                {BuiltinValue::FromString(dbc::PathToUtf8(Folder / Name)), BuiltinValue::FromNumber(Id)}, Error);
-        };
         Kernel.Objects().TextureObject(1, Black);
-        LightDirection(0.0f, 0.0f, 1.0f);
-        REQUIRE(Command(SymbolId::Command_SetObjectSpecularMap, {1, Black}));
-        for (const auto& [Name, Id] : {std::pair<std::string, int>{"strip.bmp", 1}, {"cross.bmp", 2}})
-        {
-            INFO(Name);
-            REQUIRE(Load(Name, Id));
-            REQUIRE(Command(SymbolId::Command_SetObjectCubeMap, {1, static_cast<double>(Id), 1.0}));
-            const auto Mirror = Center();
-            CHECK(Mirror[0] <= 8);
-            CHECK(Mirror[1] >= 245);
-            CHECK(Mirror[2] >= 245);
-        }
-        CHECK_FALSE(Load("wrong.bmp", 3));
-        CHECK(Error.find("4:3 cross or a 6:1 strip") != std::string::npos);
-        CHECK_FALSE(Load("missing.bmp", 3));
-        CHECK(Kernel.Objects().CubeMapExist(3) == 0);
+        LightDirection(0.0f, 0.0f, -1.0f);
+        REQUIRE(Command(SymbolId::Command_SetObjectSpecular, {1, 0xFFFFFF}));
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, TowardsU}));
+        REQUIRE(CubeMapping(FirstFace, FirstFace + 5));
+        CHECK(Mesh.TextureStageImageIds.at(1) == TowardsU);
+        // Tilted by 45 degrees, the mirror turns the camera's view to the +X face.
+        const auto Bent = Center();
+        CHECK(Bent[0] >= 245);
+        CHECK(Bent[1] <= 8);
+        CHECK(Bent[2] <= 8);
 
-        std::error_code CleanupError;
-        std::filesystem::remove_all(Folder, CleanupError);
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, Flat}));
+        CHECK(Object->CubeGpuTexture != nullptr);
+        const auto Straight = Center();
+        CHECK(Straight[0] <= 8);
+        CHECK(Straight[1] >= 245);
     }
 
-    SUBCASE("maps come off one by one, and built-in effects win")
+    SUBCASE("built-in effects win")
     {
-        CHECK_FALSE(Command(SymbolId::Command_SetObjectNormalMap, {1, 99}));
-        CHECK(Error.find("requires existing image 99") != std::string::npos);
-        CHECK_FALSE(Command(SymbolId::Command_SetObjectNormalMap, {1, Flat, -1.0}));
-        CHECK(Error.find("not negative") != std::string::npos);
-        CHECK_FALSE(Command(SymbolId::Command_SetObjectNormalMap, {99, Flat}));
-        CHECK(Error.find("requires existing object 99") != std::string::npos);
-
-        REQUIRE(Command(SymbolId::Command_SetLimbNormalMap, {1, 0, Flat, 0.5}));
-        REQUIRE(Mesh.Maps.has_value());
-        CHECK(Mesh.Maps->NormalImage == Flat);
-        CHECK(Mesh.Maps->NormalStrength == doctest::Approx(0.5f));
-        REQUIRE(Command(SymbolId::Command_SetLimbSpecularMap, {1, 0, Black}));
-        REQUIRE(Command(SymbolId::Command_SetLimbReflectionMap, {1, 0, White}));
-        REQUIRE(Command(SymbolId::Command_MakeCubeMap,
-                        {1, FirstFace, FirstFace + 1, FirstFace + 2, FirstFace + 3, FirstFace + 4, FirstFace + 5}));
-        REQUIRE(Command(SymbolId::Command_SetLimbCubeMap, {1, 0, 1, 0.25, 0.5}));
-        CHECK(Mesh.Maps->CubeMap == 1);
-        CHECK(Mesh.Maps->ReflectionAmount == doctest::Approx(0.25f));
-        CHECK(Mesh.Maps->ReflectionFresnel == doctest::Approx(0.5f));
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, 0}));
-        REQUIRE(Command(SymbolId::Command_SetObjectSpecularMap, {1, 0}));
-        REQUIRE(Command(SymbolId::Command_SetObjectReflectionMap, {1, 0}));
-        CHECK(Mesh.Maps.has_value());
-        REQUIRE(Command(SymbolId::Command_SetObjectCubeMap, {1, 0, 0.0}));
-        CHECK_FALSE(Mesh.Maps.has_value());
-
-        REQUIRE(Command(SymbolId::Command_SetObjectNormalMap, {1, Flat}));
+        LightDirection(0.0f, 0.0f, 1.0f);
+        REQUIRE(Command(SymbolId::Command_SetBumpMappingOn, {1, Flat}));
         const auto Mapped = Center();
-        REQUIRE(Command(SymbolId::Command_SetRainbowShadingOn, {1, Blue}));
+        StoreColor(20, 0, 0, 255);
+        REQUIRE(Command(SymbolId::Command_SetRainbowShadingOn, {1, 20}));
         const auto Rainbow = Center();
         CHECK(Rainbow[2] >= 240);
         CHECK(Rainbow[0] != Mapped[0]);

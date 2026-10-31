@@ -35,7 +35,7 @@ namespace dbc
         GpuMeshInstance Instance{};
         bool Cull = true;
         SDL_GPUTexture* Texture = nullptr;
-        // Surface maps.
+        // Blinn-Phong's normal map and cube.
         std::array<SDL_GPUTexture*, 7> AuxiliaryTextures{};
         SDL_GPUTexture* CubeTexture = nullptr;
         SurfaceStyle Style{};

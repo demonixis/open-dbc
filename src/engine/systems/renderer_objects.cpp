@@ -66,8 +66,8 @@ namespace dbc
         uint32_t StyleHash = 0;
         std::array<int, 8> CoordinateModes{};
         std::array<const std::vector<SDL_FPoint>*, 8> StageUvs{};
-        // The mesh's surface maps when they draw it: a built-in effect or a screen lock leaves them out.
-        const MeshSurfaceMaps* Maps = nullptr;
+        // Drawn by Blinn-Phong: a normal map in stage 1, a cube's reflection, or both.
+        bool BlinnPhong = false;
     };
 
     [[nodiscard]] ObjectMeshSurface ResolveObjectMeshSurface(EngineKernel& K, const Object3D& Object,
@@ -137,35 +137,23 @@ namespace dbc
         Surface.UsesVertexAlpha =
             Object.Ghosted || Object.Alpha < 0.999f || Object.AlphaMapping || Object.TransparentBlack;
         Surface.Style = BuildSurfaceStyle(Object, MeshValue);
-        if (MeshValue.Maps && MeshValue.BuiltInEffect == 0 && !Object.LockToScreen)
+        // SET BUMP MAPPING ON, or SET CUBE MAPPING ON on an object that SET OBJECT SPECULAR says reflects.
+        const bool Bump = MeshValue.BuiltInEffect == 1;
+        const bool Reflects = Surface.CubeGpuTexture && Object.UseLighting && (Object.SpecularColor & 0x00FFFFFFu) != 0;
+        Surface.BlinnPhong =
+            !Object.LockToScreen && (Bump || (Reflects && MeshValue.BuiltInEffect == 0 && Surface.Style.EffectId == 0));
+        if (Surface.BlinnPhong)
         {
-            Surface.Maps = &*MeshValue.Maps;
-            const MeshSurfaceMaps& Maps = *Surface.Maps;
             SurfaceStyle& Style = Surface.Style;
-            // Stages 4 to 7 hold the maps, which the shader's texture stage loop must skip.
-            const std::array<int, 4> Images{Maps.NormalImage, Maps.SpecularImage, Maps.EmissiveImage,
-                                            Maps.ReflectionImage};
-            for (std::size_t Map = 0; Map < Images.size(); ++Map)
-            {
-                const std::size_t Stage = Map + 4;
-                Image* MapImage = Images[Map] != 0 ? K.ImageStoreRef().GetImage(Images[Map]) : nullptr;
-                Surface.AuxiliaryGpuTextures[Stage - 1] =
-                    MapImage ? dbc::ImageGpuTexture(K, *MapImage, false) : nullptr;
-                Style.TextureBlendModes[Stage] = 0;
-                Style.TextureCubeModes[Stage] = false;
-                Style.TextureAddressModes[Stage] = 0;
-                Style.TextureMipModes[Stage] = 2;
-            }
             Style.BuiltInEffect = 4;
-            Style.TwoNormalLayers = Maps.TwoNormalLayers;
-            Style.NormalStrength = Maps.NormalStrength;
-            Style.ReflectionAmount = Maps.ReflectionAmount;
-            Style.ReflectionFresnel = Maps.ReflectionFresnel;
-            if (const CubeMap* Cube = K.Objects().FindCubeMap(Maps.CubeMap))
+            // The reflection takes the place of the stage that multiplies by the cube.
+            if (Style.TextureCubeModes[1])
             {
-                Surface.CubeGpuTexture = Cube->Texture.get();
-                Style.CubeLevels = static_cast<float>(Cube->Levels);
+                Style.TextureBlendModes[1] = 0;
+                Style.TextureCubeModes[1] = false;
             }
+            if (Surface.CubeGpuTexture)
+                Style.CubeLevels = static_cast<float>(Object.CubeLevels);
         }
         Surface.StyleHash = SurfaceStyleHash(Surface.Style);
         for (int Stage = 0; Stage < 8; ++Stage)
@@ -269,12 +257,7 @@ namespace dbc
     {
         const MeshGeometry& Geometry = MeshValue.Geometry();
         const std::size_t VertexCount = Geometry.Vertices.size();
-        if (MeshValue.BuiltInEffect != 0 || (!Geometry.Uvs.empty() && Geometry.Uvs.size() != VertexCount))
-            return false;
-        // Instances take no normal map coordinates of their own.
-        if (const std::optional<MeshSurfaceMaps>& Maps = MeshValue.Maps;
-            Maps && (Maps->TwoNormalLayers || Maps->NormalScale[0].x != 1.0f || Maps->NormalScale[0].y != 1.0f ||
-                     Maps->NormalScroll[0].x != 0.0f || Maps->NormalScroll[0].y != 0.0f))
+        if (!Geometry.Uvs.empty() && Geometry.Uvs.size() != VertexCount)
             return false;
         // Without vertex normals each triangle is lit by its world face normal, which the inverse transpose
         // takes from the object-space one up to the sign of the determinant.
@@ -290,14 +273,18 @@ namespace dbc
             return std::any_of(std::next(Values.begin(), static_cast<std::ptrdiff_t>(First)), Values.end(),
                                [](const auto& Value) { return Value != std::decay_t<decltype(Value)>{}; });
         };
-        // Surface maps are bindings of the instanced draw; the stages below them are not.
-        const bool LowerStages =
-            std::any_of(Surface.AuxiliaryGpuTextures.begin(), Surface.AuxiliaryGpuTextures.begin() + 3,
-                        [](const SDL_GPUTexture* Texture) { return Texture != nullptr; });
-        if (Surface.BlendTransparent || Surface.BlendAdditive || (Surface.CubeGpuTexture && !Surface.Maps) ||
-            Style.EffectId != 0 || Style.ReflectionSurface ||
-            (Surface.Maps ? LowerStages : Set(Surface.AuxiliaryGpuTextures)) || Set(Surface.CoordinateModes) ||
-            Set(Style.TextureCubeModes) || Set(Style.TextureBlendModes, 1) ||
+        // Blinn-Phong's normal map and cube are bindings of the instanced draw, and instances take the base
+        // coordinates: what stage 1 asks for until the map moves apart from them, and what the cube's stage no longer
+        // uses.
+        std::array<int, 8> CoordinateModes = Surface.CoordinateModes;
+        if (Surface.BlinnPhong && (CoordinateModes[1] == 2 || CoordinateModes[1] == 3))
+            CoordinateModes[1] = 0;
+        else if (Surface.BlinnPhong && CoordinateModes[1] == 0 && Surface.StageUvs[1])
+            return false;
+        if ((MeshValue.BuiltInEffect != 0 && !Surface.BlinnPhong) || Surface.BlendTransparent ||
+            Surface.BlendAdditive || (Surface.CubeGpuTexture && !Surface.BlinnPhong) || Style.EffectId != 0 ||
+            Style.ReflectionSurface || Set(Surface.AuxiliaryGpuTextures, Surface.BlinnPhong ? 1 : 0) ||
+            Set(CoordinateModes) || Set(Style.TextureCubeModes) || Set(Style.TextureBlendModes, 1) ||
             !K.Renderer().PrepareGpuMesh(MeshValue.SharedGeometry()))
             return false;
 
@@ -315,7 +302,7 @@ namespace dbc
                 Instance.Normal[Row][Column] = Normal[Column][Row];
         }
         Instance.Normal[0][3] = std::max(Object.FadeNormalScale, 0.015f);
-        Instance.Normal[1][3] = Object.UseLighting || Surface.Maps ? 1.0f : 0.0f;
+        Instance.Normal[1][3] = Object.UseLighting || Surface.BlinnPhong ? 1.0f : 0.0f;
         Instance.Normal[2][3] = FaceNormals || K.Renderer().NormalizeNormals() ? 1.0f : 0.0f;
         // As AppendGpuTriangle scales the corner colours by the diffuse material.
         Instance.ColorScale[0] = Surface.Color.r * PackedChannel(Style.DiffuseColor, 16u);
@@ -337,7 +324,7 @@ namespace dbc
         std::copy(std::begin(BoxBl), std::end(BoxBl), Instance.BoxBl);
         Draw.Cull = Object.Cull;
         Draw.Texture = Surface.GpuTexture;
-        if (Surface.Maps)
+        if (Surface.BlinnPhong)
         {
             Draw.AuxiliaryTextures = Surface.AuxiliaryGpuTextures;
             Draw.CubeTexture = Surface.CubeGpuTexture;
@@ -538,8 +525,7 @@ namespace dbc
                     // Resolved by the first visible triangle, so a mesh that shows none loads no texture.
                     std::optional<ObjectMeshSurface> Surface;
                     const bool VertexNormals = Geometry.Normals.size() == VertexCount;
-                    const bool Lit =
-                        Object.UseLighting || MeshValue.BuiltInEffect != 0 || (MeshValue.Maps && !Object.LockToScreen);
+                    const bool Lit = Object.UseLighting || MeshValue.BuiltInEffect != 0;
                     const auto ReflectionDirection = [&](const Vec3& WorldPoint, const Vec3& WorldNormal)
                     {
                         const Vec3 Incident = Vec3Normalize(
@@ -623,17 +609,6 @@ namespace dbc
                         for (int Stage = 1; Stage < 8; ++Stage)
                             Corner.AuxiliaryUvs[static_cast<std::size_t>(Stage - 1)] =
                                 ResolveStageUv(Index, Stage, Corner.Uv, WorldNormal, Reflection);
-                        if (Surface->Maps)
-                        {
-                            // Beside the other maps, which all take the base coordinates in the shader.
-                            for (std::size_t Layer = 0; Layer < 2; ++Layer)
-                                Corner.AuxiliaryUvs[3 + Layer] =
-                                    SDL_FPoint{Corner.Uv.x * Surface->Maps->NormalScale[Layer].x +
-                                                   Surface->Maps->NormalScroll[Layer].x,
-                                               Corner.Uv.y * Surface->Maps->NormalScale[Layer].y +
-                                                   Surface->Maps->NormalScroll[Layer].y};
-                        }
-
                         if (MeshValue.BuiltInEffect == 2)
                         {
                             const Vec3 Normal = Vec3Normalize(WorldNormal);
@@ -741,7 +716,7 @@ namespace dbc
                         Vec3 ShaderDirection0 = C0.Direction;
                         Vec3 ShaderDirection1 = C1.Direction;
                         Vec3 ShaderDirection2 = C2.Direction;
-                        if (MeshValue.BuiltInEffect == 1)
+                        if (MeshValue.BuiltInEffect == 1 && !Surface->BlinnPhong)
                         {
                             const Vec3 Edge1 = Vec3Sub(V1, V0);
                             const Vec3 Edge2 = Vec3Sub(V2, V0);
