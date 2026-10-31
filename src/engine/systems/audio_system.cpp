@@ -18,15 +18,19 @@
 #include <array>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <limits>
 #include <new>
+#include <system_error>
+#include <vector>
 
 namespace
 {
     constexpr int KMaximumAudioNumber = 65535;
+    constexpr std::size_t KSilentMidiFrames = 2205; // 50 ms at 44100 Hz, so LOOP MUSIC stays cheap.
 
     template <typename T> T ReadLittleEndian(const std::uint8_t* Data)
     {
@@ -1689,6 +1693,23 @@ namespace dbc
             if (MIX_Audio* Audio = MIX_LoadAudio(Mixer_, CandidateString.c_str(), false))
             {
                 DBC_LOG_INFO("LoadMusic fallback: {} -> {}", RequestedPath, CandidateString);
+                return Audio;
+            }
+        }
+
+        // No bank ships, so a MIDI with no rendered copy plays as a clip that ends at once. The program keeps
+        // running: `MUSIC PLAYING()` falls back to 0 and the MUSIC commands behave as usual.
+        std::error_code ExistsError;
+        if (fs::exists(BasePath, ExistsError))
+        {
+            const SDL_AudioSpec Spec = {SDL_AUDIO_S16, 2, 44100};
+            const std::vector<std::int16_t> Silence(KSilentMidiFrames * Spec.channels, 0);
+            if (MIX_Audio* Audio =
+                    MIX_LoadRawAudio(Mixer_, Silence.data(), Silence.size() * sizeof(std::int16_t), &Spec))
+            {
+                DBC_LOG_WARN("LOAD MUSIC plays '{}' as silence: no MIDI bank ships. Put a .mp3 or .wav of the same "
+                             "name next to it to hear it.",
+                             RequestedPath);
                 return Audio;
             }
         }

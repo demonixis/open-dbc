@@ -4891,6 +4891,23 @@ TEST_CASE("Portable sound music 3D audio and memblocks preserve DBPro state")
     REQUIRE(Kernel.Audio().DeleteMusic(1, &AudioError));
     CHECK(ReadEngineNumber<int>([&](std::string& Error, int& Output)
                                 { return Kernel.Audio().MusicExist(Output, 1, &Error); }) == 0);
+
+    // A MIDI that no bank can decode still loads and plays, so the program keeps running.
+    const std::filesystem::path Midi = std::filesystem::temp_directory_path() / "opendbc-silent-midi.mid";
+    {
+        std::ofstream Output(Midi, std::ios::binary);
+        const char Header[] = "MThd\0\0\0\6\0\0\0\1\0\x60MTrk\0\0\0\4\0\xFF\x2F\0";
+        Output.write(Header, sizeof(Header) - 1);
+    }
+    REQUIRE(Kernel.Audio().LoadMusic(Midi.string(), 9, &AudioError));
+    REQUIRE(Kernel.Audio().PlayMusic(9, &AudioError));
+    REQUIRE(Kernel.Audio().LoopMusic(9, &AudioError));
+    CHECK(ReadEngineNumber<int>([&](std::string& Error, int& Output)
+                                { return Kernel.Audio().MusicLooping(Output, 9, &Error); }) == 1);
+    REQUIRE(Kernel.Audio().DeleteMusic(9, &AudioError));
+    std::filesystem::remove(Midi);
+    std::string MissingError;
+    CHECK_FALSE(Kernel.Audio().LoadMusic(Midi.string(), 9, &MissingError));
 }
 
 TEST_CASE("DarkBASIC scan codes retain the complete DirectInput key layout")
