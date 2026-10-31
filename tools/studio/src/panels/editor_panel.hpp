@@ -144,6 +144,8 @@ namespace dbc::studio
                 std::map<int, std::string> Errors;
                 // The code font size of the last render, to keep the same lines in view when it changes.
                 float RenderedFontSize = 0.0f;
+                // Identifies the document in the order the tab bar keeps.
+                ImGuiID TabId = 0;
             };
 
             void ApplyErrorMarkers(Document& Doc);
@@ -160,6 +162,10 @@ namespace dbc::studio
             Document* Find(const std::filesystem::path& Path) const;
             static bool IsDirty(const Document& Doc);
             void DrawCloseConfirm();
+            void DrawTabMenu(const Document& Doc);
+            std::vector<const Document*> TabsRightOf(const Document& Doc) const;
+            void CloseQueuedTabs();
+            void EraseDocument(size_t Index);
             void HandleFindShortcuts();
             void DrawFindBar(TextEditor& Editor);
             void SearchFromAnchor();
@@ -171,6 +177,8 @@ namespace dbc::studio
             const Document* SelectRequest_ = nullptr;
             int UntitledCount_ = 0;
             int PendingClose_ = -1;
+            // Closed one by one: a tab with unsaved changes asks first, and Cancel drops the rest.
+            std::vector<const Document*> TabsToClose_;
             std::vector<std::string> Notices_;
 
             // The widget's own find window has a replace row and gives Enter back to the text,

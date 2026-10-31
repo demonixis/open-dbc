@@ -99,6 +99,151 @@ TEST_CASE("Studio editor tabs take generated text as an undoable edit")
     std::filesystem::remove_all(Root, Error);
 }
 
+TEST_CASE("Studio editor tabs close from their context menu, in the order on screen")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-tab-menu";
+    std::error_code Error;
+    std::filesystem::remove_all(Root, Error);
+    std::filesystem::create_directories(Root, Error);
+    REQUIRE_FALSE(Error);
+    const std::vector<std::filesystem::path> Files = {Root / "a.dba", Root / "b.dba", Root / "c.dba", Root / "d.dba"};
+    for (const std::filesystem::path& File : Files)
+        std::ofstream(File) << "print 1\n";
+
+    ImGui::CreateContext();
+    ImGuiIO& Io = ImGui::GetIO();
+    Io.DisplaySize = ImVec2(1000.0f, 600.0f);
+    Io.IniFilename = nullptr;
+    Io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+
+    {
+        dba::Reference Reference;
+        dba::CommandDatabase Commands;
+        Commands.Build(Reference);
+        panels::EditorPanel Editor;
+        Editor.Initialize(&Commands);
+
+        const auto Frame = [&]
+        {
+            ImGui::NewFrame();
+            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+            ImGui::SetNextWindowSize(Io.DisplaySize);
+            ImGui::Begin("Editor");
+            Editor.Draw();
+            ImGui::End();
+            ImGui::Render();
+        };
+        const auto Frames = [&]
+        {
+            for (int Index = 0; Index < 4; ++Index)
+                Frame();
+        };
+        const auto Click = [&](ImVec2 Position, int Button)
+        {
+            Io.AddMousePosEvent(Position.x, Position.y);
+            Frames();
+            Io.AddMouseButtonEvent(Button, true);
+            Frames();
+            Io.AddMouseButtonEvent(Button, false);
+            Frames();
+        };
+        const auto Bar = [] { return GImGui->TabBars.GetByIndex(0); };
+        const auto OpenAll = [&]
+        {
+            for (const std::filesystem::path& File : Files)
+            {
+                REQUIRE(Editor.Open(File));
+                Frames();
+            }
+        };
+        // Right-clicks the tab at this place on screen and picks that row of its menu.
+        const auto Pick = [&](int Tab, int Row)
+        {
+            const ImGuiTabItem& Item = Bar()->Tabs[Tab];
+            Click(ImVec2(Bar()->BarRect.Min.x + Item.Offset + Item.Width * 0.3f, Bar()->BarRect.GetCenter().y), 1);
+            REQUIRE(GImGui->OpenPopupStack.Size == 1);
+            const ImGuiWindow* Menu = GImGui->OpenPopupStack.back().Window;
+            REQUIRE(Menu != nullptr);
+            const float Padding = ImGui::GetStyle().WindowPadding.y;
+            const float RowHeight = (Menu->Size.y - Padding * 2.0f) / 3.0f;
+            Click(ImVec2(Menu->Pos.x + Menu->Size.x * 0.5f, Menu->Pos.y + Padding + RowHeight * (Row + 0.5f)), 0);
+            Frames();
+        };
+        const auto IsOpen = [&](int Index) { return Editor.OpenText(Files[Index]).has_value(); };
+        // The buttons of the unsaved changes prompt, in a row under its line of text.
+        const auto ClickPrompt = [&](int Button)
+        {
+            REQUIRE(GImGui->OpenPopupStack.Size == 1);
+            const ImGuiWindow* Prompt = GImGui->OpenPopupStack.back().Window;
+            REQUIRE(Prompt != nullptr);
+            const ImGuiStyle& Style = ImGui::GetStyle();
+            const auto Width = [&](const char* Label)
+            { return ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f; };
+            float X = Prompt->DC.CursorStartPos.x;
+            const float Widths[] = {Width("Save"), Width("Discard"), Width("Cancel")};
+            for (int Index = 0; Index < Button; ++Index)
+                X += Widths[Index] + Style.ItemSpacing.x;
+            const float Y = Prompt->DC.CursorStartPos.y + ImGui::GetTextLineHeight() + Style.ItemSpacing.y * 2.0f +
+                            ImGui::GetFrameHeight() * 0.5f;
+            Click(ImVec2(X + Widths[Button] * 0.5f, Y), 0);
+        };
+
+        OpenAll();
+        REQUIRE(Bar()->Tabs.Size == 4);
+
+        // Dragged to the end: a c d b. The tabs on the right of c are d and b, not only d.
+        ImGui::TabBarQueueReorder(Bar(), &Bar()->Tabs[1], 2);
+        Frames();
+        Pick(1, 2);
+        CHECK(IsOpen(0));
+        CHECK_FALSE(IsOpen(1));
+        CHECK(IsOpen(2));
+        CHECK_FALSE(IsOpen(3));
+
+        Pick(1, 0);
+        CHECK(IsOpen(0));
+        CHECK_FALSE(IsOpen(2));
+
+        // Nothing is on the right of the last tab, so that row does nothing.
+        Pick(0, 2);
+        CHECK(IsOpen(0));
+        Click(ImVec2(500.0f, 400.0f), 0);
+
+        Pick(0, 1);
+        CHECK_FALSE(IsOpen(0));
+
+        // Close All stops at unsaved changes: Cancel keeps that tab and the ones after it.
+        OpenAll();
+        REQUIRE(Editor.ReplaceText(Files[1], "print 2\n", false));
+        Frames();
+        Pick(0, 1);
+        CHECK_FALSE(IsOpen(0));
+        CHECK(IsOpen(1));
+        CHECK(IsOpen(2));
+        CHECK(IsOpen(3));
+        ClickPrompt(2);
+        Frames();
+        CHECK(GImGui->OpenPopupStack.Size == 0);
+        CHECK(IsOpen(1));
+        CHECK(IsOpen(2));
+        CHECK(IsOpen(3));
+        CHECK(Editor.AnyDirty());
+
+        // Discard goes on with the rest.
+        Pick(0, 1);
+        CHECK(IsOpen(1));
+        ClickPrompt(1);
+        Frames();
+        CHECK_FALSE(IsOpen(1));
+        CHECK_FALSE(IsOpen(2));
+        CHECK_FALSE(IsOpen(3));
+        CHECK_FALSE(Editor.AnyDirty());
+    }
+
+    ImGui::DestroyContext();
+    std::filesystem::remove_all(Root, Error);
+}
+
 TEST_CASE("Studio editor brings an already open tab to the front when it is opened again")
 {
     const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-focus";

@@ -10,6 +10,7 @@
 #include <utility>
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include "dba/command_database.hpp"
 #include "dba/language.hpp"
@@ -782,11 +783,8 @@ namespace dbc::studio
 
             const auto Erase = [this]
             {
-                if (SelectRequest_ == Documents_[PendingClose_].get())
-                    SelectRequest_ = nullptr;
-                Documents_.erase(Documents_.begin() + PendingClose_);
+                EraseDocument(static_cast<size_t>(PendingClose_));
                 PendingClose_ = -1;
-                Current_ = Documents_.empty() ? -1 : std::min(Current_, static_cast<int>(Documents_.size()) - 1);
                 ImGui::CloseCurrentPopup();
             };
 
@@ -799,6 +797,7 @@ namespace dbc::studio
                 else
                 {
                     // Needs a destination: keep the tab and let the user use Save As.
+                    TabsToClose_.clear();
                     PendingClose_ = -1;
                     ImGui::CloseCurrentPopup();
                 }
@@ -812,6 +811,7 @@ namespace dbc::studio
             if (ImGui::Button(TrId("Cancel")))
             {
                 Documents_[PendingClose_]->Open = true;
+                TabsToClose_.clear();
                 PendingClose_ = -1;
                 ImGui::CloseCurrentPopup();
             }
@@ -819,8 +819,73 @@ namespace dbc::studio
             ImGui::EndPopup();
         }
 
+        void EditorPanel::DrawTabMenu(const Document& Doc)
+        {
+            if (!ImGui::BeginPopupContextItem())
+                return;
+            if (ImGui::MenuItem(TrId("Close")))
+                TabsToClose_ = {&Doc};
+            if (ImGui::MenuItem(TrId("Close All")))
+            {
+                TabsToClose_.clear();
+                for (const std::unique_ptr<Document>& Open : Documents_)
+                    TabsToClose_.push_back(Open.get());
+            }
+            const std::vector<const Document*> Right = TabsRightOf(Doc);
+            if (ImGui::MenuItem(TrId("Close to the Right"), nullptr, false, !Right.empty()))
+                TabsToClose_ = Right;
+            ImGui::EndPopup();
+        }
+
+        std::vector<const EditorPanel::Document*> EditorPanel::TabsRightOf(const Document& Doc) const
+        {
+            // The tabs can be dragged, so the order on screen is the tab bar's and not Documents_'.
+            std::vector<const Document*> Right;
+            bool Passed = false;
+            for (const ImGuiTabItem& Tab : ImGui::GetCurrentTabBar()->Tabs)
+            {
+                if (!Passed)
+                {
+                    Passed = Tab.ID == Doc.TabId;
+                    continue;
+                }
+                const auto Found = std::find_if(Documents_.begin(), Documents_.end(),
+                                                [&](const std::unique_ptr<Document>& D) { return D->TabId == Tab.ID; });
+                if (Found != Documents_.end())
+                    Right.push_back(Found->get());
+            }
+            return Right;
+        }
+
+        void EditorPanel::CloseQueuedTabs()
+        {
+            while (PendingClose_ < 0 && !TabsToClose_.empty())
+            {
+                const Document* Next = TabsToClose_.front();
+                TabsToClose_.erase(TabsToClose_.begin());
+                const auto Found = std::find_if(Documents_.begin(), Documents_.end(),
+                                                [&](const std::unique_ptr<Document>& D) { return D.get() == Next; });
+                if (Found == Documents_.end())
+                    continue;
+                const size_t Index = static_cast<size_t>(Found - Documents_.begin());
+                if (IsDirty(**Found))
+                    PendingClose_ = static_cast<int>(Index);
+                else
+                    EraseDocument(Index);
+            }
+        }
+
+        void EditorPanel::EraseDocument(size_t Index)
+        {
+            if (SelectRequest_ == Documents_[Index].get())
+                SelectRequest_ = nullptr;
+            Documents_.erase(Documents_.begin() + static_cast<long>(Index));
+            Current_ = Documents_.empty() ? -1 : std::min(Current_, static_cast<int>(Documents_.size()) - 1);
+        }
+
         void EditorPanel::Draw()
         {
+            CloseQueuedTabs();
             if (Documents_.empty())
             {
                 ImGui::TextDisabled("%s", Tr("No file open. Use File > Open, or pick one in the Project panel."));
@@ -853,7 +918,10 @@ namespace dbc::studio
                         ImGui::SetWindowFocus();
                         Doc.Editor->SetFocus();
                     }
-                    if (ImGui::BeginTabItem(Label.c_str(), &Doc.Open, Flags))
+                    const bool Selected = ImGui::BeginTabItem(Label.c_str(), &Doc.Open, Flags);
+                    Doc.TabId = ImGui::GetItemID();
+                    DrawTabMenu(Doc);
+                    if (Selected)
                     {
                         Current_ = static_cast<int>(I);
 
@@ -894,11 +962,7 @@ namespace dbc::studio
                         }
                         else
                         {
-                            if (SelectRequest_ == &Doc)
-                                SelectRequest_ = nullptr;
-                            Documents_.erase(Documents_.begin() + static_cast<long>(I));
-                            Current_ =
-                                Documents_.empty() ? -1 : std::min(Current_, static_cast<int>(Documents_.size()) - 1);
+                            EraseDocument(I);
                             break;
                         }
                     }

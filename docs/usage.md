@@ -65,6 +65,9 @@ text under the pointer in the editor or the Output panel. The **View** menu does
 same with **Ctrl+=**, **Ctrl+-** and **Ctrl+0** (**Cmd** on macOS), and **Edit >
 Editor Settings** with **Text zoom**. The Studio keeps the zoom in its preferences.
 
+Right-clicking an editor tab closes it, every tab or the tabs on its right. A tab
+with unsaved changes asks first, and **Cancel** keeps it and the tabs still to close.
+
 **F5** runs the active `.dba` tab, unsaved edits included; **Shift+F5** stops it.
 The Studio compiles the program, then runs it in `opendbc-runner`, a separate
 process with its own window, so a crash or hang in the program leaves the Studio
