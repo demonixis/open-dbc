@@ -1375,6 +1375,17 @@ UNIT_WITNESSES += (
     ("dbpro", "Command", "SET SHADOW LIGHT", "set shadow light 1, 10, 0, 0, 200\n", "global-shadow-pixel", GLOBAL_SHADOW_TEST),
 )
 
+AUTOMATIC_COLLISION_TEST = "test_engine_builtins.cpp::DBPro automatic collision stops and slides objects and cameras"
+VOLUME_PARTICLES_TEST = "test_engine_builtins.cpp::DBPro fire rises and snow falls through a box"
+UNIT_WITNESSES += (
+    ("dbpro", "Command", "AUTOMATIC OBJECT COLLISION", "automatic object collision 2, 1, 1\n", "automatic-collision-state", AUTOMATIC_COLLISION_TEST),
+    ("dbpro", "Command", "AUTOMATIC CAMERA COLLISION", "automatic camera collision 0, 1, 1\n", "automatic-collision-state", AUTOMATIC_COLLISION_TEST),
+    ("dbpro", "Command", "AUTOMATIC CAMERA COLLISION", "automatic camera collision 0, 1, 1, 1\n", "automatic-collision-state", AUTOMATIC_COLLISION_TEST),
+    ("dbpro", "Command", "CALCULATE AUTOMATIC COLLISION", "calculate automatic collision\n", "automatic-collision-state", AUTOMATIC_COLLISION_TEST),
+    ("dbpro", "Command", "MAKE FIRE PARTICLES", "make fire particles 1, 0, 100, 10, 20, 30, 2, 8, 2\n", "volume-particles-state", VOLUME_PARTICLES_TEST),
+    ("dbpro", "Command", "MAKE SNOW PARTICLES", "make snow particles 2, 0, 100, -10, 20, 30, 8, 8, 8\n", "volume-particles-state", VOLUME_PARTICLES_TEST),
+)
+
 ODE_RIGID_BODY_TEST = (
     "test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend"
 )

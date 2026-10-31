@@ -66,7 +66,7 @@ dbpro/tutorials/basic3d/basic3d2.dba|dbpro|bind|DBC2043
 dbpro/tutorials/basic3d/basic3d3.dba|dbpro|verified|-
 dbpro/tutorials/basic3d/basic3d4.dba|dbpro|verified|-
 dbpro/tutorials/basic3d/basic3d5.dba|dbpro|bind|DBC2043
-dbpro/tutorials/basic3d/basic3d6.dba|dbpro|bind|DBC2043
+dbpro/tutorials/basic3d/basic3d6.dba|dbpro|verified|-
 dbpro/tutorials/basic3d/basic3d7.dba|dbpro|verified|-
 dbpro/tutorials/basic3d/basic3d8.dba|dbpro|verified|-
 dbpro/tutorials/basic3d/basic3d9.dba|dbpro|verified|-

@@ -10247,6 +10247,153 @@ TEST_CASE("DBPro sets the colour, the shades and the light of every shadow")
     }
 }
 
+TEST_CASE("DBPro automatic collision stops and slides objects and cameras")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    dbc::ObjectManager& Objects = Kernel.Objects();
+    // A wall with its near face at z = 4.5, facing the collider.
+    Objects.MakeObjectBox(1, 100.0f, 100.0f, 1.0f);
+    Objects.PositionObject(1, 0.0f, 0.0f, 5.0f);
+    Objects.MakeObjectBox(2, 1.0f, 1.0f, 1.0f);
+    Objects.PositionObject(2, 0.0f, 0.0f, 0.0f);
+
+    SUBCASE("a sliding object stops at the wall and keeps moving along it")
+    {
+        REQUIRE(Command(SymbolId::Command_AutomaticObjectCollision, {2, 1, 1}));
+        Objects.PositionObject(2, 3.0f, 0.0f, 10.0f);
+        REQUIRE(Command(SymbolId::Command_CalculateAutomaticCollision, {}));
+        const dbc::Object3D* Mover = Objects.GetObject(2);
+        CHECK(Mover->PosZ == doctest::Approx(3.5f).epsilon(0.02));
+        CHECK(Mover->PosX > 0.5f);
+        // Free of the wall, it moves as it is told.
+        Objects.PositionObject(2, 1.0f, 2.0f, 1.0f);
+        REQUIRE(Command(SymbolId::Command_CalculateAutomaticCollision, {}));
+        CHECK(Mover->PosX == doctest::Approx(1.0f));
+        CHECK(Mover->PosZ == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("response zero goes back to the last free position")
+    {
+        REQUIRE(Command(SymbolId::Command_AutomaticObjectCollision, {2, 1, 0}));
+        Objects.PositionObject(2, 3.0f, 0.0f, 10.0f);
+        REQUIRE(Command(SymbolId::Command_CalculateAutomaticCollision, {}));
+        CHECK(Objects.GetObject(2)->PosX == doctest::Approx(0.0f));
+        CHECK(Objects.GetObject(2)->PosZ == doctest::Approx(0.0f));
+    }
+
+    SUBCASE("the wall lets it through when collision is off, or when it is no longer automatic")
+    {
+        REQUIRE(Command(SymbolId::Command_AutomaticObjectCollision, {2, 1, 1}));
+        Objects.GetObject(1)->CollisionEnabled = false;
+        Objects.PositionObject(2, 0.0f, 0.0f, 10.0f);
+        REQUIRE(Command(SymbolId::Command_CalculateAutomaticCollision, {}));
+        CHECK(Objects.GetObject(2)->PosZ == doctest::Approx(10.0f));
+        Objects.GetObject(1)->CollisionEnabled = true;
+        REQUIRE(Command(SymbolId::Command_AutomaticObjectCollision, {2, 0, 1}));
+        Objects.PositionObject(2, 0.0f, 0.0f, 0.0f);
+        REQUIRE(Command(SymbolId::Command_CalculateAutomaticCollision, {}));
+        CHECK(Objects.GetObject(2)->PosZ == doctest::Approx(0.0f));
+    }
+
+    SUBCASE("a camera collides the same way, at each SYNC too")
+    {
+        Kernel.Camera().SetAutoCamOff();
+        // The camera starts free: the small box would hold it where it stands.
+        Objects.PositionObject(2, 50.0f, 0.0f, 0.0f);
+        RequireEngineStatus([&](std::string& CameraError)
+                            { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &CameraError); });
+        REQUIRE(Command(SymbolId::Command_AutomaticCameraCollision, {0, 1, 1}));
+        RequireEngineStatus([&](std::string& CameraError)
+                            { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 10.0f, &CameraError); });
+        REQUIRE(Kernel.Core().EnsureInitialized());
+        Kernel.Renderer().RenderScene(false);
+        CHECK(Kernel.Camera().PositionZ() == doctest::Approx(3.5f).epsilon(0.02));
+        REQUIRE(Command(SymbolId::Command_AutomaticCameraCollision, {0, 1, 1, 1}));
+        CHECK_FALSE(Command(SymbolId::Command_AutomaticCameraCollision, {9, 1, 1}));
+    }
+
+    CHECK_FALSE(Command(SymbolId::Command_AutomaticObjectCollision, {9, 1, 1}));
+}
+
+TEST_CASE("DBPro fire rises and snow falls through a box")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    dbc::ObjectManager& Objects = Kernel.Objects();
+
+    REQUIRE(Command(SymbolId::Command_MakeFireParticles, {1, 0, 100, 10, 20, 30, 2, 8, 2}));
+    REQUIRE(Command(SymbolId::Command_MakeSnowParticles, {2, 0, 100, -10, 20, 30, 8, 8, 8}));
+    for (int Frame = 0; Frame < 120; ++Frame)
+        Objects.UpdateParticles();
+
+    const dbc::ParticleEmitter* Fire = nullptr;
+    const dbc::ParticleEmitter* Snow = nullptr;
+    Objects.ForEachParticles(
+        [&](int Id, const dbc::ParticleEmitter& Emitter)
+        {
+            if (Id == 1)
+                Fire = &Emitter;
+            else if (Id == 2)
+                Snow = &Emitter;
+        });
+    REQUIRE(Fire != nullptr);
+    REQUIRE(Snow != nullptr);
+    REQUIRE_FALSE(Fire->Particles.empty());
+    REQUIRE_FALSE(Snow->Particles.empty());
+    CHECK(Fire->PosX == doctest::Approx(10.0f));
+    for (const dbc::ParticleInstance& Particle : Fire->Particles)
+    {
+        const float WorldX = Particle.Position.X * Fire->Radius;
+        const float WorldY = Particle.Position.Y * Fire->Radius;
+        // Half the box's width, and what the sideways drift adds over a life.
+        CHECK(std::abs(WorldX) <= 2.5f);
+        CHECK(WorldY >= 0.0f);
+        CHECK(WorldY <= 8.5f);
+        CHECK(Particle.Velocity.Y > 0.0f);
+    }
+    for (const dbc::ParticleInstance& Particle : Snow->Particles)
+    {
+        CHECK(std::abs(Particle.Position.X * Snow->Radius) <= 5.5f);
+        CHECK(std::abs(Particle.Position.Y * Snow->Radius) <= 4.5f);
+        CHECK(Particle.Velocity.Y < 0.0f);
+    }
+    CHECK_FALSE(Command(SymbolId::Command_MakeFireParticles, {3, 0, 100, 0, 0, 0, 0, 8, 2}));
+    CHECK_FALSE(Command(SymbolId::Command_MakeSnowParticles, {2, 0, 100, 0, 0, 0, 8, 8, 8}));
+
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    Kernel.Renderer().RenderScene(false);
+}
+
 TEST_CASE("DBPro surface maps light objects through the Blinn-Phong path")
 {
     dbc::EngineKernel Kernel;

@@ -111,8 +111,19 @@ namespace dbc
         bool Spark = false;
     };
 
+    // A stream sprays from a point under gravity. Fire and snow fill a box instead.
+    enum class ParticleKind
+    {
+        Stream,
+        Fire,
+        Snow
+    };
+
     struct ParticleEmitter
     {
+        ParticleKind Kind = ParticleKind::Stream;
+        // Fire and snow: the box's sides, in units of Radius.
+        Vec3 Volume{};
         int ImageId = 0;
         int FlushSize = 1;
         float Radius = 1.0f;

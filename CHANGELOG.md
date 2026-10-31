@@ -22,3 +22,5 @@ First public release.
   reflection maps and mipmapped cube maps.
 - DBPro cameras draw to images and clip at a plane; objects can be excluded, masked
   per camera, and given their own field of view and depth bias.
+- DBPro automatic collision for objects and cameras, fire and snow particles, and
+  global shadow colour, shades and light.

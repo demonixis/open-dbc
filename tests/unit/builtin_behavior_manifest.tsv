@@ -733,6 +733,8 @@ dbpro	5	6	Command	ADD VECTOR4	golden-output	test_vector.dba	4908758f1cdc4d8f1477
 dbpro	9	10	Command	APPEND OBJECT	engine-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	12	15	Command	AUTOCAM OFF	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	13	17	Command	AUTOCAM ON	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
+dbpro	14	18	Command	AUTOMATIC CAMERA COLLISION	automatic-collision-state	test_engine_builtins.cpp::DBPro automatic collision stops and slides objects and cameras	-
+dbpro	15	19	Command	AUTOMATIC OBJECT COLLISION	automatic-collision-state	test_engine_builtins.cpp::DBPro automatic collision stops and slides objects and cameras	-
 dbpro	16	21	Command	BACKDROP OFF	render-state	test_engine_builtins.cpp::Portable backdrops and linear fog preserve profile semantics	-
 dbpro	17	23	Command	BACKDROP ON	render-state	test_engine_builtins.cpp::Portable backdrops and linear fog preserve profile semantics	-
 dbpro	18	24	Command	BCC VECTOR2	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
@@ -885,6 +887,7 @@ dbpro	231	365	Command	MAKE BITMAP FROM MEMBLOCK	golden-output	test_dbpro_display
 dbpro	232	366	Command	MAKE CAMERA	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	233	368	Command	MAKE DIRECTORY	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	234	370	Command	MAKE FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	235	371	Command	MAKE FIRE PARTICLES	volume-particles-state	test_engine_builtins.cpp::DBPro fire rises and snow falls through a box	-
 dbpro	236	373	Command	MAKE IMAGE FROM MEMBLOCK	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	237	375	Command	MAKE LIGHT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	238	377	Command	MAKE MATRIX	golden-output	test_dbpro_matrix.dba	30249d63af2c68ea4bd5e89b776ddc8b417c3da3efe3e2ea7615212e0196b210
@@ -909,6 +912,7 @@ dbpro	257	411	Command	MAKE OBJECT SPHERE	engine-state	test_engine_builtins.cpp::
 dbpro	257	412	Command	MAKE OBJECT SPHERE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	259	415	Command	MAKE OBJECT TRIANGLE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	260	416	Command	MAKE PARTICLES	golden-output	test_dbpro_particles.dba	01780cf8a7f8a174688214d2c82b1ac3bc1813ca951650ca8e84851b6c2ebba0
+dbpro	261	417	Command	MAKE SNOW PARTICLES	volume-particles-state	test_engine_builtins.cpp::DBPro fire rises and snow falls through a box	-
 dbpro	262	419	Command	MAKE SOUND FROM MEMBLOCK	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	263	421	Command	MAKE STATIC COLLISION BOX	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	265	424	Command	MAKE TERRAIN	golden-output	test_dbpro_terrain.dba	41da670a2b8be5fcd73eb30733fa91c021f414378e052ccd9b77bd32673b3310
@@ -1580,6 +1584,7 @@ dbpro	1203	1765	Command	ARRAY INSERT AT ELEMENT	golden-output	test_dbpro_collect
 dbpro	1204	1766	Command	ARRAY INSERT AT TOP	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1208	1769	Command	BUILD REFLECTION MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	1209	1770	Command	BUILD ROTATION AXIS MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1212	1772	Command	CALCULATE AUTOMATIC COLLISION	automatic-collision-state	test_engine_builtins.cpp::DBPro automatic collision stops and slides objects and cameras	-
 dbpro	1213	1773	Command	CALCULATE OBJECT BOUNDS	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1216	1776	Function	CAMERA EXIST	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	1218	1778	Function	CEIL	golden-output	test_dbpro_core.dba	8d62c939abc65069a90e348b81888038410b08ddf81ef5c642ada8634a676b3d

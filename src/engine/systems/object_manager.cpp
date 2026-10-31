@@ -2,6 +2,7 @@
 #include "camera_system.hpp"
 #include "collision_math.hpp"
 #include "core_system.hpp"
+#include "ellipsoid_collision.hpp"
 #include "engine_kernel.hpp"
 #include "graphics_device_system.hpp"
 #include "image_store.hpp"
@@ -2909,6 +2910,8 @@ namespace dbc
         constexpr std::size_t ParticleLimit = 2048;
         constexpr std::size_t TotalLimit = ParticleLimit * 4;
         constexpr float Pi = 3.14159265358979323846f;
+        // In simulated seconds, at most half a second for fire and snow alike: SET PARTICLE LIFE scales it.
+        constexpr float VolumeFadeRate = 2.0f;
         for (auto& [Id, Emitter] : Particles_)
         {
             (void)Id;
@@ -2933,7 +2936,9 @@ namespace dbc
             {
                 const float Age = Emitter.SimulationTime - Particle.BirthTime;
                 const float Gravity = Particle.Spark ? -Emitter.Gravity : -(Emitter.Gravity * 2.0f);
-                Particle.Fade = std::max(0.0f, Particle.Fade - Step * (Particle.Spark ? 2.25f : 0.25f));
+                const float FadeRate =
+                    Particle.Spark ? 2.25f : (Emitter.Kind == ParticleKind::Stream ? 0.25f : VolumeFadeRate);
+                Particle.Fade = std::max(0.0f, Particle.Fade - Step * FadeRate);
                 Particle.Position.X = Particle.InitialPosition.X + Particle.InitialVelocity.X * Age;
                 Particle.Position.Y =
                     Particle.InitialPosition.Y + Particle.InitialVelocity.Y * Age + 0.5f * Gravity * Age * Age;
@@ -2972,8 +2977,13 @@ namespace dbc
             }
 
             std::erase_if(
-                Emitter.Particles, [&Emitter](const ParticleInstance& Particle)
-                { return Particle.Fade <= 0.0f || (Emitter.FloorEnabled != 0 && Particle.Position.Y < 0.0f); });
+                Emitter.Particles,
+                [&Emitter](const ParticleInstance& Particle)
+                {
+                    // Snow leaves through the bottom of its box, with time still to live.
+                    return Particle.Fade <= 0.0f || (Emitter.FloorEnabled != 0 && Particle.Position.Y < 0.0f) ||
+                           (Emitter.Kind == ParticleKind::Snow && Particle.Position.Y < -Emitter.Volume.Y * 0.5f);
+                });
             Emitter.Particles.insert(Emitter.Particles.end(), Sparks.begin(), Sparks.end());
 
             const std::size_t LiveParticles = static_cast<std::size_t>(
@@ -2986,10 +2996,27 @@ namespace dbc
                 const float Azimuth = RandomUnit() * Pi * 2.0f;
                 const float Elevation = RandomUnit() * Pi * 0.25f;
                 ParticleInstance Particle;
-                Particle.InitialPosition = Emitter.EmissionPosition;
-                Particle.InitialVelocity.X = std::cos(Azimuth) * std::sin(Elevation) * 2.5f;
-                Particle.InitialVelocity.Z = std::sin(Azimuth) * std::sin(Elevation) * 2.5f;
-                Particle.InitialVelocity.Y = std::cos(Elevation) * RandomUnit() * Emitter.EmissionVelocity;
+                if (Emitter.Kind == ParticleKind::Stream)
+                {
+                    Particle.InitialPosition = Emitter.EmissionPosition;
+                    Particle.InitialVelocity.X = std::cos(Azimuth) * std::sin(Elevation) * 2.5f;
+                    Particle.InitialVelocity.Z = std::sin(Azimuth) * std::sin(Elevation) * 2.5f;
+                    Particle.InitialVelocity.Y = std::cos(Elevation) * RandomUnit() * Emitter.EmissionVelocity;
+                }
+                else
+                {
+                    const bool Fire = Emitter.Kind == ParticleKind::Fire;
+                    Particle.InitialPosition = {(RandomUnit() - 0.5f) * Emitter.Volume.X,
+                                                Fire ? 0.0f : Emitter.Volume.Y * 0.5f,
+                                                (RandomUnit() - 0.5f) * Emitter.Volume.Z};
+                    // Snow starts anywhere in the box while the box fills, and at its top once it is full.
+                    if (!Fire && Emitter.SimulationTime < Emitter.Volume.Y / Emitter.EmissionVelocity)
+                        Particle.InitialPosition.Y = (RandomUnit() - 0.5f) * Emitter.Volume.Y;
+                    const float Drift = Emitter.EmissionVelocity * 0.2f;
+                    Particle.InitialVelocity = {(RandomUnit() - 0.5f) * Drift,
+                                                Emitter.EmissionVelocity * (Fire ? 0.6f + RandomUnit() * 0.4f : -1.0f),
+                                                (RandomUnit() - 0.5f) * Drift};
+                }
                 Particle.Position = Particle.InitialPosition;
                 Particle.Velocity = Particle.InitialVelocity;
                 Particle.Diffuse = Emitter.EmissionColor;
@@ -9116,6 +9143,34 @@ namespace dbc
         return true;
     }
 
+    bool ObjectManager::MakeVolumeParticles(ParticleKind Kind, int ParticleId, int ImageId, int Frequency, float X,
+                                            float Y, float Z, float Width, float Height, float Depth,
+                                            const char* Command, std::string* Error)
+    {
+        if (!(Width > 0.0f && Height > 0.0f && Depth > 0.0f) || !std::isfinite(Width) || !std::isfinite(Height) ||
+            !std::isfinite(Depth))
+        {
+            if (Error)
+                *Error = std::string(Command) + " requires a positive width, height and depth";
+            return false;
+        }
+        const float Radius = std::max({Width, Height, Depth});
+        if (!MakeParticles(ParticleId, ImageId, Frequency, Radius, Error))
+            return false;
+        ParticleEmitter& Emitter = Particles_.at(ParticleId);
+        Emitter.Kind = Kind;
+        Emitter.Volume = {Width / Radius, Height / Radius, Depth / Radius};
+        Emitter.PosX = X;
+        Emitter.PosY = Y;
+        Emitter.PosZ = Z;
+        // Fire and snow cross the box in the half second they live, and fall under no gravity of their own.
+        Emitter.EmissionVelocity = Emitter.Volume.Y * 2.0f;
+        Emitter.Gravity = 0.0f;
+        Emitter.FloorEnabled = 0;
+        Kernel_.Camera().AutoPosition(X, Y, Z, Radius);
+        return true;
+    }
+
     bool ObjectManager::DeleteParticles(int ParticleId, std::string* Error)
     {
         auto* CheckedParticles1 = RequireParticles(ParticleId, "DELETE PARTICLES", Error);
@@ -9396,14 +9451,124 @@ namespace dbc
         return true;
     }
 
-    void ObjectManager::AutomaticObjectCollision(int ObjectId, float Radius, int /*response*/)
+    bool ObjectManager::AutomaticObjectCollision(int ObjectId, float Radius, int Response, std::string* Error)
     {
-        auto* Obj = GetObject(ObjectId);
-        if (!Obj)
+        Object3D* Object = RequireObject(ObjectId, "AUTOMATIC OBJECT COLLISION", Error);
+        if (!Object)
+            return false;
+        if (Radius <= 0.0f)
+        {
+            AutomaticObjects_.erase(ObjectId);
+            return true;
+        }
+        Object->CollisionEnabled = true;
+        AutomaticObjects_[ObjectId] = {Vec3{Object->PosX, Object->PosY, Object->PosZ}, Radius, Response};
+        return true;
+    }
+
+    bool ObjectManager::AutomaticCameraCollision(int CameraId, float Radius, int Response, std::string* Error)
+    {
+        CameraSystem& Camera = Kernel_.Camera();
+        if (Camera.CameraExist(CameraId) == 0)
+        {
+            if (Error)
+                *Error = "AUTOMATIC CAMERA COLLISION requires existing camera " + std::to_string(CameraId);
+            return false;
+        }
+        if (Radius <= 0.0f)
+        {
+            AutomaticCameras_.erase(CameraId);
+            return true;
+        }
+        Vec3 Position{};
+        if (!Camera.PositionX(Position.X, CameraId, Error) || !Camera.PositionY(Position.Y, CameraId, Error) ||
+            !Camera.PositionZ(Position.Z, CameraId, Error))
+            return false;
+        AutomaticCameras_[CameraId] = {Position, Radius, Response};
+        return true;
+    }
+
+    void ObjectManager::CalculateAutomaticCollision()
+    {
+        if (AutomaticObjects_.empty() && AutomaticCameras_.empty())
             return;
-        Obj->CollisionEnabled = true;
-        if (Radius > 0.0f)
-            Obj->BoundingRadius = Radius;
+        std::vector<SlideTriangle> Triangles;
+        // The triangles of the objects near the sweep, in world space; Self is the collider's own object, if any.
+        const auto GatherTriangles = [&](int Self, const Vec3& From, const Vec3& To, float Radius)
+        {
+            Triangles.clear();
+            const Vec3 Middle{(From.X + To.X) * 0.5f, (From.Y + To.Y) * 0.5f, (From.Z + To.Z) * 0.5f};
+            const Vec3 Half{(To.X - From.X) * 0.5f, (To.Y - From.Y) * 0.5f, (To.Z - From.Z) * 0.5f};
+            const float Reach = std::sqrt(Vec3Dot(Half, Half)) + Radius;
+            for (auto& [Id, Object] : Objects_)
+            {
+                if (Id == Self || !(GlobalCollisionEnabled_ || Object.CollisionEnabled) || Object.LockToScreen)
+                    continue;
+                const Vec3 Origin = Kernel_.Renderer().WorldObjectOrigin(Object);
+                const Vec3 Away{Origin.X - Middle.X, Origin.Y - Middle.Y, Origin.Z - Middle.Z};
+                const float Near =
+                    Reach + RenderBoundingRadius(Object) *
+                                std::max({std::abs(Object.ScaleX), std::abs(Object.ScaleY), std::abs(Object.ScaleZ)});
+                if (Vec3Dot(Away, Away) > Near * Near)
+                    continue;
+                for (const Mesh& MeshValue : Object.Meshes)
+                {
+                    const MeshGeometry& Geometry = MeshValue.Geometry();
+                    for (std::size_t Index = 0; Index + 2 < Geometry.Indices.size(); Index += 3)
+                    {
+                        const uint32_t I0 = Geometry.Indices[Index];
+                        const uint32_t I1 = Geometry.Indices[Index + 1];
+                        const uint32_t I2 = Geometry.Indices[Index + 2];
+                        if (I0 >= Geometry.Vertices.size() || I1 >= Geometry.Vertices.size() ||
+                            I2 >= Geometry.Vertices.size())
+                            continue;
+                        Triangles.push_back(MakeSlideTriangle(
+                            Kernel_.Renderer().WorldMeshPoint(Object, MeshValue, Geometry.Vertices[I0]),
+                            Kernel_.Renderer().WorldMeshPoint(Object, MeshValue, Geometry.Vertices[I1]),
+                            Kernel_.Renderer().WorldMeshPoint(Object, MeshValue, Geometry.Vertices[I2])));
+                    }
+                }
+            }
+        };
+        const auto Resolve = [&](AutomaticCollider& Collider, int Self, const Vec3& Position)
+        {
+            const Vec3 Radii{Collider.Radius, Collider.Radius, Collider.Radius};
+            GatherTriangles(Self, Collider.LastPosition, Position, Collider.Radius);
+            const EllipsoidSlideResult Slide = SlideEllipsoid(Triangles, Collider.LastPosition, Position, Radii);
+            return !Slide.Clipped ? Position : Collider.Response == 0 ? Collider.LastPosition : Slide.Position;
+        };
+        for (auto It = AutomaticObjects_.begin(); It != AutomaticObjects_.end();)
+        {
+            const auto Object = Objects_.find(It->first);
+            if (Object == Objects_.end())
+            {
+                It = AutomaticObjects_.erase(It);
+                continue;
+            }
+            const Vec3 Position{Object->second.PosX, Object->second.PosY, Object->second.PosZ};
+            const Vec3 Free = Resolve(It->second, It->first, Position);
+            if (Free.X != Position.X || Free.Y != Position.Y || Free.Z != Position.Z)
+                PositionObject(It->first, Free.X, Free.Y, Free.Z);
+            It->second.LastPosition = Free;
+            ++It;
+        }
+        CameraSystem& Camera = Kernel_.Camera();
+        for (auto It = AutomaticCameras_.begin(); It != AutomaticCameras_.end();)
+        {
+            Vec3 Position{};
+            if (Camera.CameraExist(It->first) == 0 || !Camera.PositionX(Position.X, It->first) ||
+                !Camera.PositionY(Position.Y, It->first) || !Camera.PositionZ(Position.Z, It->first))
+            {
+                It = AutomaticCameras_.erase(It);
+                continue;
+            }
+            const Vec3 Free = Resolve(It->second, 0, Position);
+            if ((Free.X != Position.X || Free.Y != Position.Y || Free.Z != Position.Z) &&
+                !Camera.PositionCamera(It->first, Free.X, Free.Y, Free.Z))
+                DBC_LOG_WARN("Automatic collision could not place camera {}", It->first);
+            It->second.LastPosition = Free;
+            ++It;
+        }
     }
 
     float ObjectManager::ObjectCollisionRadius(int ObjectId)

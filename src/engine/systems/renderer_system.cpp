@@ -1682,6 +1682,7 @@ namespace dbc
     {
         // As in DBPro's SYNC: BSP collisions resolve before drawing and record their next start after.
         Kernel_.BspWorld().ResolveCollisions();
+        Kernel_.Objects().CalculateAutomaticCollision();
         Kernel_.Video().PaintFrames();
         bool Rendered = false;
         if (Kernel_.Vr().Enabled())

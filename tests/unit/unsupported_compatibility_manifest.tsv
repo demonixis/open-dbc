@@ -1,7 +1,5 @@
 profile	symbol_id	kind	name	disposition	family	proof	prerequisite
 dbpro	Command_AttachObjectToStatic	Command	ATTACH OBJECT TO STATIC	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_AutomaticCameraCollision	Command	AUTOMATIC CAMERA COLLISION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_AutomaticObjectCollision	Command	AUTOMATIC OBJECT COLLISION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_BuildTerrain	Command	BUILD TERRAIN	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
 dbpro	Command_CallDll	Command	CALL DLL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Cd	Command	CD	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -51,9 +49,7 @@ dbpro	Command_LoadStaticObjects	Command	LOAD STATIC OBJECTS	Study	3d	dbc-help,db
 dbpro	Command_LoadTerrain	Command	LOAD TERRAIN	Study	core	dbpro-reference,legacy-unverified	typed-load-errors
 dbpro	Command_LockBackbuffer	Command	LOCK BACKBUFFER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_LoopAnimation	Command	LOOP ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
-dbpro	Command_MakeFireParticles	Command	MAKE FIRE PARTICLES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_MakeObjectTerrain	Command	MAKE OBJECT TERRAIN	Target	3d	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
-dbpro	Command_MakeSnowParticles	Command	MAKE SNOW PARTICLES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_MakeStaticObject	Command	MAKE STATIC OBJECT	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_NetMessageBitmap	Command	NET MESSAGE BITMAP	Target	display	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_NetMessageImage	Command	NET MESSAGE IMAGE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -171,7 +167,6 @@ dbpro	Function_AntialiasAvailable	Function	ANTIALIAS AVAILABLE	Target	core	dbpro
 dbpro	Function_BlitsystolocalAvailable	Function	BLITSYSTOLOCAL AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Break	Command	BREAK	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_BuildStaticPortals	Command	BUILD STATIC PORTALS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_CalculateAutomaticCollision	Command	CALCULATE AUTOMATIC COLLISION	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_CalibrategammaAvailable	Function	CALIBRATEGAMMA AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CallDllX	Command	CALL DLL X	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_CanMakeFile	Function	CAN MAKE FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle

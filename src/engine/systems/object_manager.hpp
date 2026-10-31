@@ -296,7 +296,12 @@ namespace dbc
         int CheckLimbLink(int ObjectId, int LimbId);
         void DeleteAllObjects();
         bool SetObjectTransparency(int ObjectId, int Mode, std::string* Error = nullptr);
-        void AutomaticObjectCollision(int ObjectId, float Radius, int Response);
+        // Each SYNC, or CALCULATE AUTOMATIC COLLISION, sweeps a sphere from where the object or camera last stood to
+        // where it stands now, through every other object with collision on. Response 0 returns it to the last free
+        // position, any other slides it. A radius of zero or less turns it off.
+        bool AutomaticObjectCollision(int ObjectId, float Radius, int Response, std::string* Error = nullptr);
+        bool AutomaticCameraCollision(int CameraId, float Radius, int Response, std::string* Error = nullptr);
+        void CalculateAutomaticCollision();
         float ObjectCollisionRadius(int ObjectId);
         float ObjectCollisionCenterX(int ObjectId);
         float ObjectCollisionCenterY(int ObjectId);
@@ -311,6 +316,10 @@ namespace dbc
 
         // ── DBPro particles ─────────────────────────────────────────────
         bool MakeParticles(int ParticleId, int ImageId, int Frequency, float Radius, std::string* Error = nullptr);
+        // Fire rises from the middle of the box's base at X, Y, Z; snow falls through the box around it.
+        bool MakeVolumeParticles(ParticleKind Kind, int ParticleId, int ImageId, int Frequency, float X, float Y,
+                                 float Z, float Width, float Height, float Depth, const char* Command,
+                                 std::string* Error = nullptr);
         bool DeleteParticles(int ParticleId, std::string* Error = nullptr);
         bool PositionParticles(int ParticleId, float X, float Y, float Z, std::string* Error = nullptr);
         bool RotateParticles(int ParticleId, float X, float Y, float Z, std::string* Error = nullptr);
@@ -464,6 +473,16 @@ namespace dbc
         void ShareLoadedGeometry(const std::string& Path, std::size_t MeshIndex, Mesh& Loaded);
 
         EngineKernel& Kernel_;
+
+        struct AutomaticCollider
+        {
+            Vec3 LastPosition{};
+            float Radius = 0.0f;
+            int Response = 0;
+        };
+
+        std::unordered_map<int, AutomaticCollider> AutomaticObjects_;
+        std::unordered_map<int, AutomaticCollider> AutomaticCameras_;
         std::unordered_map<int, Object3D> Objects_;
         std::unordered_map<int, CubeMap> CubeMaps_;
         bool AddCubeMap(int CubeMapId, const std::array<SDL_Surface*, 6>& Faces, const char* Command,

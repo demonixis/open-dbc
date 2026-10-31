@@ -463,6 +463,13 @@ namespace dbc
                                          -WorldVelocity.Y * 0.04f / static_cast<float>(Steps),
                                          -WorldVelocity.Z * 0.04f / static_cast<float>(Steps)};
                     SDL_FColor Color = Particle.Diffuse;
+                    // Fire cools from yellow through red to nothing, which additive blending shows as fading out.
+                    if (Emitter.Kind == ParticleKind::Fire)
+                    {
+                        Color.r *= Particle.Fade;
+                        Color.g *= Particle.Fade * Particle.Fade;
+                        Color.b *= Particle.Fade * Particle.Fade * Particle.Fade * Particle.Fade;
+                    }
 
                     for (int StepIndex = 0; StepIndex < Steps; ++StepIndex)
                     {

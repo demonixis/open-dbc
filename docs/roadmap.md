@@ -83,15 +83,10 @@ one when it is picked up.
 
 To port, in order:
 
-- [ ] Render to texture, before the HDR target, which needs the same off-screen
-  rendering: `SET CAMERA TO IMAGE`, `DRAW TO CAMERA`, `SET CAMERA CLIP`, `TEXTURE SCREEN`
-  and `SET SCREEN EFFECT`.
+- [ ] `TEXTURE SCREEN` and `SET SCREEN EFFECT`, before the HDR target.
 - [ ] Multiplayer ([network.md](network.md)), 35 of 37 forms already in Classic, and
   animations ([video.md](video.md)), 16 of 21.
-- [ ] Common forms neither profile implements: `AUTOMATIC OBJECT COLLISION`,
-  `AUTOMATIC CAMERA COLLISION`, `EXCLUDE OBJECT ON/OFF`, `EXCLUDE LIMB ON/OFF`,
-  `ENABLE OBJECT ZBIAS`, `SET OBJECT MASK`, `MAKE FIRE PARTICLES`, `MAKE SNOW PARTICLES`
-  and `MAKE EMITTER`.
+- [ ] `MAKE EMITTER`.
 - [ ] Advanced Terrain (16 forms), force feedback (11, all in Classic) and what remains
   of the other gaps, such as `ADD LOD TO OBJECT` and `REDUCE MESH`.
 
