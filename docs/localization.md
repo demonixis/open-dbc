@@ -57,7 +57,7 @@ a "bouchon de compatibilité" and Build is "Génération".
 
 To add a language, copy `fr.json` to `<code>.json` and translate it. `fr.json`
 defines the audited keys and is the catalogue the placeholder test reads, so extend
-both to the new file. The default font and its Noto Sans fallback cover Latin
+both to the new file. Roboto, Cousine and their Noto Sans fallback cover Latin
 scripts; check `Theme::AddFonts` for any other.
 
 ## Audit

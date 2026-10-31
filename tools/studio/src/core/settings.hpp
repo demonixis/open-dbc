@@ -18,6 +18,8 @@ namespace dbc::studio
             std::string LogLevel = "debug";
             // "auto" follows the system; anything else is a language code.
             std::string Language = "auto";
+            // "auto" follows the system, otherwise "dark" or "light".
+            std::string Theme = "dark";
             bool DebugOverlay = false;
             std::map<std::string, std::string> ProjectPathRemappings;
 

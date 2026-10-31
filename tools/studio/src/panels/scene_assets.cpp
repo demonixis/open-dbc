@@ -41,6 +41,11 @@ namespace dbc::studio
             ThumbnailRendererReady_.reset();
         }
 
+        void SceneEditor::ApplyTheme()
+        {
+            ReleaseThumbnails();
+        }
+
         bool SceneEditor::RenderModelThumbnail(const core::MediaFile& File, core::GpuImage& Out)
         {
             std::string Error;

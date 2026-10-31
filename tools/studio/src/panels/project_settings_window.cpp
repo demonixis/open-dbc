@@ -3,6 +3,7 @@
 #include "engine/systems/log.hpp"
 #include "interpreter/atomic_file.hpp"
 #include "path_utf8.hpp"
+#include "theme.hpp"
 
 #include <algorithm>
 #include <array>
@@ -119,7 +120,7 @@ namespace dbc::studio
 
             bool Saved = false;
 
-            ImGui::SetNextWindowSize(ImVec2(720.0f, 560.0f), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2(920.0f, 560.0f), ImGuiCond_FirstUseEver);
             if (!ImGui::Begin(TrId("Project Settings"), &Open_))
             {
                 ImGui::End();
@@ -288,19 +289,22 @@ namespace dbc::studio
 
                 if (DbproProject_ && ImGui::BeginTabItem(TrId("DBPro Source")))
                 {
-                    if (ImGui::InputTextMultiline("##dbpro-raw", RawProject_.data(), RawProject_.size(),
-                                                  ImVec2(-1.0f, -80.0f)))
+                    Theme::PushCodeFont();
+                    const bool RawEdited = ImGui::InputTextMultiline("##dbpro-raw", RawProject_.data(),
+                                                                     RawProject_.size(), ImVec2(-1.0f, -80.0f));
+                    ImGui::PopFont();
+                    if (RawEdited)
                     {
                         DbproProject_ = dbc::language::ParseDbProProject(DbproProject_->LogicalPath,
                                                                          std::string(RawProject_.data()));
                     }
                     for (const dbc::language::ProjectDiagnostic& Diagnostic : DbproProject_->Diagnostics)
                     {
-                        const ImVec4 Color = Diagnostic.Severity == dbc::language::ProjectDiagnosticSeverity::Error
-                                                 ? ImVec4(1.0f, 0.35f, 0.35f, 1.0f)
-                                                 : ImVec4(1.0f, 0.75f, 0.3f, 1.0f);
+                        const ImU32 Color = Diagnostic.Severity == dbc::language::ProjectDiagnosticSeverity::Error
+                                                ? Theme::Error
+                                                : Theme::Warning;
                         ImGui::TextColored(
-                            Color, "%s",
+                            ImColor(Color), "%s",
                             TrFmt("Line {0}: {1}", {std::to_string(Diagnostic.Line), Diagnostic.Message}).c_str());
                     }
                     ImGui::EndTabItem();

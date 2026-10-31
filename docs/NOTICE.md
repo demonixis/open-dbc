@@ -18,6 +18,8 @@ sponsored by The Game Creators Ltd or Dark Basic Software Limited.
 | `examples/dbpro/tutorials/`, `examples/dbpro/Hello World/` | Help examples from the [pinned Dark-Basic-Pro snapshot](https://github.com/Dark-Basic-Software-Limited/Dark-Basic-Pro/tree/af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9) | MIT, © 1999-2015 The Game Creators Ltd; see [Dark-Basic-Pro-LICENSE.md](../licenses/Dark-Basic-Pro-LICENSE.md) |
 | DBO block codes in `src/engine/systems/object_manager.cpp`; DBPro extension inventory in `scripts/data/` and the catalogue | Same DBPro snapshot | MIT, as above; the licence ships with every binary |
 | `src/engine/noto_sans_regular_ttf.hpp` | Noto Sans Regular, embedded as a byte array | SIL Open Font License; see [NotoSans-LICENSE.md](../licenses/NotoSans-LICENSE.md) |
+| Studio fonts, embedded at build time from the pinned Dear ImGui's `misc/fonts` | Roboto Medium | Apache License 2.0, © 2011 Google Inc.; see [Roboto-LICENSE.md](../licenses/Roboto-LICENSE.md) |
+| Same | Cousine Regular | SIL Open Font License, © 2010 Google Corporation; see [Cousine-LICENSE.md](../licenses/Cousine-LICENSE.md) |
 
 Build dependencies (SDL3, SDL3_image, SDL3_mixer, SDL3_ttf, SDL3_shadercross with DXC
 and SPIRV-Cross, Assimp, GLM, spdlog, unordered_dense, ENet, Jolt Physics, Dear ImGui,

@@ -227,7 +227,7 @@ TEST_CASE("Debug builds offer the pseudo-locale over every catalogue key")
 }
 #endif
 
-TEST_CASE("The interface font keeps ImGui's default and covers French typography")
+TEST_CASE("The interface font is Roboto and covers French typography")
 {
     ImGui::CreateContext();
     ImGuiIO& Io = ImGui::GetIO();
@@ -238,9 +238,34 @@ TEST_CASE("The interface font keeps ImGui's default and covers French typography
 
     ImFont* Font = ImGui::GetFont();
     REQUIRE(Font->Sources.Size == 2);
-    CHECK(std::string_view(Font->Sources[0]->Name).starts_with("Proggy"));
+    CHECK(std::string_view(Font->Sources[0]->Name).starts_with("Roboto"));
     for (const unsigned int Glyph : {0xE9u, 0xE7u, 0xC9u, 0x153u, 0x2019u, 0x2026u, 0x2014u, 0xA0u, 0x202Fu})
         CHECK(Font->IsGlyphInFont(static_cast<ImWchar>(Glyph)));
+
+    ImGui::Render();
+    ImGui::DestroyContext();
+}
+
+TEST_CASE("The code font keeps a fixed pitch and covers French typography")
+{
+    ImGui::CreateContext();
+    ImGuiIO& Io = ImGui::GetIO();
+    Io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+    Io.DisplaySize = ImVec2(800.0f, 600.0f);
+    Theme::AddFonts();
+    ImGui::NewFrame();
+
+    REQUIRE(Theme::CodeFont != nullptr);
+    CHECK(std::string_view(Theme::CodeFont->Sources[0]->Name).starts_with("Cousine"));
+    Theme::PushCodeFont();
+    const float Width = ImGui::CalcTextSize("#").x;
+    CHECK(Width > 0.0f);
+    // TextEditor measures "#" and lays every glyph on that grid.
+    for (const char* Text : {"i", "W", "\xC3\xA9", "\xC5\x93", "\xE2\x80\x99"})
+        CHECK(ImGui::CalcTextSize(Text).x == doctest::Approx(Width));
+    // Cousine has no ellipsis: this one comes from the fallback.
+    CHECK(Theme::CodeFont->IsGlyphInFont(0x2026u));
+    ImGui::PopFont();
 
     ImGui::Render();
     ImGui::DestroyContext();
