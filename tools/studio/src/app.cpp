@@ -6,6 +6,7 @@
 #include <array>
 #include <cctype>
 #include <cfloat>
+#include <cmath>
 #include <fstream>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlgpu3.h>
@@ -560,7 +561,7 @@ namespace dbc::studio
         SDL_Event Event;
         while (SDL_PollEvent(&Event))
         {
-            if (Mode_ != Mode::Scene || !Scene_.HandleEvent(Event))
+            if (!HandleTextZoom(Event) && (Mode_ != Mode::Scene || !Scene_.HandleEvent(Event)))
                 ImGui_ImplSDL3_ProcessEvent(&Event);
             Execution_.HandleEvent(Event);
 
@@ -1667,6 +1668,20 @@ namespace dbc::studio
         TextZoomSaveAt_ = SDL_GetTicks() + KTextZoomSaveDelayMs;
     }
 
+    bool App::HandleTextZoom(const SDL_Event& Event)
+    {
+        if (!CodeTextHovered_)
+            return false;
+        if (Event.type == SDL_EVENT_PINCH_UPDATE)
+            SetTextZoom(Settings_.Editor.TextZoom * Event.pinch.scale);
+        // Cmd too: macOS can keep Ctrl and the wheel for its own screen zoom.
+        else if (Event.type == SDL_EVENT_MOUSE_WHEEL && (SDL_GetModState() & (SDL_KMOD_CTRL | SDL_KMOD_GUI)) != 0)
+            SetTextZoom(Settings_.Editor.TextZoom * std::pow(KTextZoomStep, Event.wheel.y));
+        else
+            return false;
+        return true;
+    }
+
     void App::DrawEditorSettings()
     {
         if (!ShowEditorSettings_)
@@ -1697,11 +1712,13 @@ namespace dbc::studio
 
     void App::DrawPanels()
     {
+        CodeTextHovered_ = false;
         if (Mode_ == Mode::Scene)
         {
             Scene_.DrawPanels();
             if (ImGui::Begin(TrId(KPanelSceneOutput)))
                 Output_.Draw();
+            CodeTextHovered_ = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
             ImGui::End();
         }
         else
@@ -1761,6 +1778,7 @@ namespace dbc::studio
         ImGui::Begin(TrId(KPanelEditor), nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         EditorDockId_ = ImGui::GetWindowDockID();
         Editor_.Draw();
+        CodeTextHovered_ = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
         ImGui::End();
 
         if (ShowOutput_)
@@ -1768,6 +1786,7 @@ namespace dbc::studio
             ImGui::Begin(TrId(KPanelOutput), &ShowOutput_);
             OutputDockId_ = ImGui::GetWindowDockID();
             Output_.Draw();
+            CodeTextHovered_ = CodeTextHovered_ || ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
             ImGui::End();
         }
 

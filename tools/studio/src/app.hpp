@@ -108,6 +108,8 @@ namespace dbc::studio
         void RunLauncherPath(const std::filesystem::path& Path);
         void StopRun();
         void SetTextZoom(float Zoom);
+        // A pinch, or the wheel with Ctrl or Cmd, over a panel of code text. True when it took the event.
+        bool HandleTextZoom(const SDL_Event& Event);
         void DrawEditorSettings();
         // Hides and frees the pointer while the Scene camera flies, then puts it back.
         void UpdateFlightMouse();
@@ -173,6 +175,8 @@ namespace dbc::studio
         bool ShowAbout_ = false;
         bool ShowEditorSettings_ = false;
         Uint64 TextZoomSaveAt_ = 0;
+        // From the last frame, which is what the pointer was over when the events of this one arrived.
+        bool CodeTextHovered_ = false;
         bool FlightMouse_ = false;
         float FlightMouseX_ = 0.0f;
         float FlightMouseY_ = 0.0f;
