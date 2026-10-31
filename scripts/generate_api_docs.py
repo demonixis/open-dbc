@@ -82,7 +82,7 @@ CATEGORIES: "OrderedDict[str, dict]" = OrderedDict(
         ("animation", {"title": "Animations & video", "group": "Media",
                        "blurb": "AVI video and animation playback."}),
         ("music", {"title": "Music & CD", "group": "Media",
-                   "blurb": "Music playback; MIDI requires a configured host synthesizer or a same-stem MP3/WAV fallback."}),
+                   "blurb": "Music playback; MIDI renders through a built-in General MIDI bank unless a same-stem MP3/WAV sits beside it."}),
         ("sound", {"title": "Sounds", "group": "Media",
                    "blurb": "Sound effects, 3D sounds, recording, EAX."}),
         ("input", {"title": "Input devices", "group": "Input & system",

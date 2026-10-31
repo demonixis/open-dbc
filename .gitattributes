@@ -43,6 +43,9 @@ CMakeLists.txt text
 *.wav binary
 *.mp3 binary
 *.mid binary
+*.sf2 binary
+# This patch must keep the CRLF lines of the header it applies to.
+cmake/patches/tinysoundfont-filter-gain.patch -text
 *.avi binary
 *.abc binary
 # 3D Models

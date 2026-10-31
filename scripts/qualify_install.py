@@ -27,7 +27,14 @@ SHADER_NAMES = tuple(
     for format in ("spv", "msl")
     for stage in ("vert", "frag")
 ) + ("dbclassic_mesh.vert.spv", "dbclassic_mesh.vert.msl")
-REQUIRED_LICENSES = ("LICENSE", "Dark-Basic-Pro-LICENSE.md", "MuseScore-General-SoundFont-LICENSE.md", "RapidJSON.txt")
+REQUIRED_LICENSES = (
+    "LICENSE",
+    "Dark-Basic-Pro-LICENSE.md",
+    "MuseScore-General-SoundFont-LICENSE.md",
+    "RapidJSON.txt",
+    "VintageDreamsWaves-COPYRIGHT.txt",
+    "TinySoundFont.txt",
+)
 
 
 def execute(command: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:

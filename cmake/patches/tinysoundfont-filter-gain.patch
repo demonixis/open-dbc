@@ -1,0 +1,13 @@
+diff --git a/tsf.h b/tsf.h
+index a81f25d..3d14c15 100644
+--- a/tsf.h
++++ b/tsf.h
+@@ -1648,6 +1648,8 @@ TSFDEF int tsf_note_on(tsf* f, int preset_index, int key, float vel)
+ 		voice->lowpass.QInv = 1.0 / TSF_POW(10.0, (lowpassFilterQDB / 20.0));
+ 		voice->lowpass.z1 = voice->lowpass.z2 = 0;
+ 		voice->lowpass.active = (lowpassFc < 0.499f);
++		// Resonance must not raise the overall level, or high-Q patches clip. FluidSynth compensates likewise.
++		if (voice->lowpass.active) voice->noteGainDB -= lowpassFilterQDB / 2.0f;
+ 		if (voice->lowpass.active) tsf_voice_lowpass_setup(&voice->lowpass, lowpassFc);
+ 
+ 		// Setup LFO filters.

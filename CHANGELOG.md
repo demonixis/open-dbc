@@ -22,8 +22,9 @@ First public release.
   collision messages, rays, ball and hinge joints and a character controller.
 - Six demos and tutorials covering the 747 Classic help symbols, with CC0 assets.
 - Classic accepts the undocumented forms its shipped programs use, listed in
-  [architecture.md](docs/architecture.md#classic-forms-beyond-the-help). A MIDI file with
-  no bank and no rendered copy plays as a silent clip, with a warning.
+  [architecture.md](docs/architecture.md#classic-forms-beyond-the-help).
+- `LOAD MUSIC` renders MIDI files through a built-in General MIDI bank, the same on every
+  platform and in exported games.
 - DBPro's `SET BUMP MAPPING ON`, `SET CUBE MAPPING ON` and `SET OBJECT SPECULAR` draw
   through a Blinn-Phong path, with Fresnel reflections and mipmapped cubes; the stage
   forms of `TEXTURE OBJECT` work.

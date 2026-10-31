@@ -3,6 +3,7 @@
 #include "engine_kernel.hpp"
 #include "image_store.hpp"
 #include "log.hpp"
+#include "midi_renderer.hpp"
 #include "path_utf8.hpp"
 
 #if __has_include(<SDL3_mixer/SDL_mixer.h>)
@@ -23,6 +24,7 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <memory>
 #include <new>
 #include <system_error>
 #include <vector>
@@ -1697,21 +1699,24 @@ namespace dbc
             }
         }
 
-        // No bank ships, so a MIDI with no rendered copy plays as a clip that ends at once. The program keeps
-        // running: `MUSIC PLAYING()` falls back to 0 and the MUSIC commands behave as usual.
-        std::error_code ExistsError;
-        if (fs::exists(BasePath, ExistsError))
+        std::size_t FileSize = 0;
+        const std::unique_ptr<void, decltype(&SDL_free)> File(SDL_LoadFile(Resolved.c_str(), &FileSize), &SDL_free);
+        if (File)
         {
-            const SDL_AudioSpec Spec = {SDL_AUDIO_S16, 2, 44100};
-            const std::vector<std::int16_t> Silence(KSilentMidiFrames * Spec.channels, 0);
-            if (MIX_Audio* Audio =
-                    MIX_LoadRawAudio(Mixer_, Silence.data(), Silence.size() * sizeof(std::int16_t), &Spec))
+            std::vector<std::int16_t> Pcm;
+            std::string RenderError;
+            if (!RenderMidiToPcm(Pcm, File.get(), FileSize, &RenderError))
             {
-                DBC_LOG_WARN("LOAD MUSIC plays '{}' as silence: no MIDI bank ships. Put a .mp3 or .wav of the same "
-                             "name next to it to hear it.",
-                             RequestedPath);
-                return Audio;
+                // A MIDI that cannot be read plays as a clip that ends at once, so the program keeps running:
+                // `MUSIC PLAYING()` falls back to 0 and the MUSIC commands behave as usual.
+                DBC_LOG_WARN("LOAD MUSIC plays '{}' as silence: {}. Put a .mp3 or .wav of the same name next to it "
+                             "to hear it.",
+                             RequestedPath, RenderError);
+                Pcm.assign(KSilentMidiFrames * 2, 0);
             }
+            const SDL_AudioSpec Spec = {SDL_AUDIO_S16, 2, KMidiRenderRate};
+            if (MIX_Audio* Audio = MIX_LoadRawAudio(Mixer_, Pcm.data(), Pcm.size() * sizeof(std::int16_t), &Spec))
+                return Audio;
         }
 
         if (!FirstError.empty())

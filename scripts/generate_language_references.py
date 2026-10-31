@@ -39,7 +39,7 @@ SURFACES = {
 PUBLIC_NOTES = {
     ("APPEND OBJECT", "DBC + DBPro"): "APPEND OBJECT Filename$, ObjectId, StartFrame loads animation data relative to the execution asset root; both slash styles are accepted, StartFrame must be non-negative and animation channels must match the destination object.",
     ("LOAD OBJECT", "DBC"): "Loads relative to the execution asset root; both forward slashes and historical Windows backslashes are accepted.",
-    ("LOAD MUSIC", "DBC + DBPro"): "OpenDBC does not ship a general MIDI bank. A failed .mid/.midi load tries a same-stem .mp3 and then .wav, and otherwise plays a silent clip with a logged warning; project MIDI music ships with deterministic MP3 fallbacks.",
+    ("LOAD MUSIC", "DBC + DBPro"): "A .mid/.midi file plays a same-stem .mp3 or .wav when one sits beside it, and otherwise renders at load through the built-in General MIDI bank; one that cannot be read plays as a silent clip with a logged warning.",
     ("LOAD SOUND", "DBC"): "Accepts Filename$, SoundId and an optional historical priority hint. The priority value is retained for source compatibility and has no portable backend effect.",
     ("SET DISPLAY MODE", "DBC"): "Accepts Width, Height and optional Depth; omitting Depth selects the logical 32-bit mode.",
     ("SET OBJECT COLLISION TO POLYGONS", "DBC + DBPro"): "Uses current world-space mesh geometry for narrow-phase collision. Sliding feedback remains available to an explicit non-rotating collision box colliding with that polygonal object.",
@@ -503,8 +503,9 @@ def render_open_dbc_reference() -> str:
          "and key names ignore ASCII case."),
         "- `3DBLIT AVAILABLE()` returns 1: every GPU draws 2D during 3D at full speed.",
         "- Native pointers never cross into the VM; `GET MEMBLOCK PTR()` returns a [plugin address](../plugins.md#memblock-addresses).",
-        ("- No MIDI bank ships: a failed `.mid` load tries the same name as `.mp3`, then `.wav` "
-         "(`scripts/generate_dbc_midi_fallbacks.py`), and otherwise plays a silent clip with a logged warning."),
+        ("- `LOAD MUSIC` renders a `.mid` at load with TinySoundFont and a built-in General MIDI bank, unless the same "
+         "name exists as `.mp3` or `.wav` (`scripts/generate_dbc_midi_fallbacks.py`). A file it cannot read plays a "
+         "silent clip with a logged warning."),
         ("- Control-device commands use raw SDL joysticks. Missing rumble or haptic capabilities are no-ops; "
          "supported effects keep independent lifecycle-managed slots."), "",
     ]

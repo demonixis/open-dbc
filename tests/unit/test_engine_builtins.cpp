@@ -13,6 +13,7 @@
 #include "engine/systems/log.hpp"
 #include "engine/systems/matrix_manager.hpp"
 #include "engine/systems/memblock_system.hpp"
+#include "engine/systems/midi_renderer.hpp"
 #include "engine/systems/object_manager.hpp"
 #include "engine/systems/physics_system.hpp"
 #include "engine/systems/platform_io.hpp"
@@ -4892,7 +4893,7 @@ TEST_CASE("Portable sound music 3D audio and memblocks preserve DBPro state")
     CHECK(ReadEngineNumber<int>([&](std::string& Error, int& Output)
                                 { return Kernel.Audio().MusicExist(Output, 1, &Error); }) == 0);
 
-    // A MIDI that no bank can decode still loads and plays, so the program keeps running.
+    // A MIDI with nothing to render still loads and plays, so the program keeps running.
     const std::filesystem::path Midi = std::filesystem::temp_directory_path() / "opendbc-silent-midi.mid";
     {
         std::ofstream Output(Midi, std::ios::binary);
@@ -4908,6 +4909,137 @@ TEST_CASE("Portable sound music 3D audio and memblocks preserve DBPro state")
     std::filesystem::remove(Midi);
     std::string MissingError;
     CHECK_FALSE(Kernel.Audio().LoadMusic(Midi.string(), 9, &MissingError));
+}
+
+namespace
+{
+    // One track at 480 ticks per beat and the default 120 BPM, so 480 ticks last 500 ms.
+    std::vector<unsigned char> MakeMidi(std::initializer_list<unsigned char> Events)
+    {
+        std::vector<unsigned char> File = {
+            'M', 'T', 'h',  'd', 0,   0,   0,   6, 0, 0, 0,
+            1,   1,   0xE0, 'M', 'T', 'r', 'k', 0, 0, 0, static_cast<unsigned char>(Events.size())};
+        File.insert(File.end(), Events);
+        return File;
+    }
+
+    constexpr unsigned char KHalfSecond[] = {0x83, 0x60};
+
+    std::vector<std::int16_t> RenderMidi(const std::vector<unsigned char>& File)
+    {
+        std::vector<std::int16_t> Pcm;
+        std::string Error;
+        REQUIRE_MESSAGE(dbc::RenderMidiToPcm(Pcm, File.data(), File.size(), &Error), Error);
+        return Pcm;
+    }
+
+    int PeakOf(const std::vector<std::int16_t>& Pcm, std::size_t FirstFrame, std::size_t EndFrame)
+    {
+        int Peak = 0;
+        for (std::size_t Index = FirstFrame * 2; Index < std::min(EndFrame * 2, Pcm.size()); ++Index)
+            Peak = std::max(Peak, std::abs(static_cast<int>(Pcm[Index])));
+        return Peak;
+    }
+} // namespace
+
+TEST_CASE("A MIDI file renders through the built-in bank at its own timing")
+{
+    const auto Pcm = RenderMidi(
+        MakeMidi({0x00, 0x90, 60, 100, KHalfSecond[0], KHalfSecond[1], 0x80, 60, 0, 0x00, 0xFF, 0x2F, 0x00}));
+    REQUIRE(Pcm.size() % 2 == 0);
+    CHECK(Pcm.size() / 2 >= 22050);
+    CHECK(Pcm.size() / 2 <= 22050 + 3 * dbc::KMidiRenderRate + 64);
+    CHECK(PeakOf(Pcm, 0, 22050) > 500);
+    // The release tail ends where it turns silent, so LOOP MUSIC restarts soon after the file's end.
+    if (Pcm.size() / 2 > 22050)
+        CHECK(PeakOf(Pcm, Pcm.size() / 2 - 1, Pcm.size() / 2) > 0);
+
+    // A rest before the note stays silent, and a set tempo stretches it.
+    const auto Rest = RenderMidi(MakeMidi(
+        {0x00, 0xFF,           0x51,           0x03, 0x0F, 0x42, 0x40, KHalfSecond[0], KHalfSecond[1], 0x90, 60,
+         100,  KHalfSecond[0], KHalfSecond[1], 0x80, 60,   0,    0x00, 0xFF,           0x2F,           0x00}));
+    CHECK(PeakOf(Rest, 0, 44000) == 0);
+    CHECK(PeakOf(Rest, 44200, 88200) > 500);
+    CHECK(Rest.size() / 2 >= 88200);
+
+    // An end of track past the last note keeps the file's length, which LOOP MUSIC needs.
+    const auto Trailing = RenderMidi(
+        MakeMidi({0x00, 0x90, 60, 100, 0x10, 0x80, 60, 0, KHalfSecond[0], KHalfSecond[1], 0xFF, 0x2F, 0x00}));
+    CHECK(Trailing.size() / 2 >= 22050);
+}
+
+TEST_CASE("A MIDI file selects General MIDI programs and the drum channel")
+{
+    const auto Note = [](unsigned char Program)
+    {
+        return RenderMidi(MakeMidi({0x00, 0xC0, Program, 0x00, 0x90, 60, 100, KHalfSecond[0], KHalfSecond[1], 0x80, 60,
+                                    0, 0x00, 0xFF, 0x2F, 0x00}));
+    };
+    CHECK(Note(0) != Note(80));
+
+    const auto Drum = RenderMidi(
+        MakeMidi({0x00, 0x99, 36, 100, KHalfSecond[0], KHalfSecond[1], 0x89, 36, 0, 0x00, 0xFF, 0x2F, 0x00}));
+    CHECK(PeakOf(Drum, 0, 22050) > 500);
+
+    // Notes left on at the end of the file are released rather than cut.
+    const auto Held = RenderMidi(MakeMidi({0x00, 0x90, 60, 100, KHalfSecond[0], KHalfSecond[1], 0xFF, 0x2F, 0x00}));
+    CHECK(PeakOf(Held, 0, 22050) > 500);
+}
+
+TEST_CASE("A MIDI file that cannot be rendered fails with a reason")
+{
+    const auto Rejects = [](const std::vector<unsigned char>& File, const std::string& Reason)
+    {
+        std::vector<std::int16_t> Pcm;
+        std::string Error;
+        CHECK_FALSE(dbc::RenderMidiToPcm(Pcm, File.data(), File.size(), &Error));
+        CHECK(Error.find(Reason) != std::string::npos);
+    };
+    Rejects({'n', 'o', 't', ' ', 'm', 'i', 'd', 'i'}, "not a Standard MIDI File");
+    Rejects(MakeMidi({0x00, 0xFF, 0x2F, 0x00}), "holds no events");
+
+    auto NoTimeBase = MakeMidi({0x00, 0x90, 60, 100, 0x00, 0xFF, 0x2F, 0x00});
+    NoTimeBase[12] = NoTimeBase[13] = 0;
+    Rejects(NoTimeBase, "header");
+
+    // The slowest tempo and the longest delay claim ten hours.
+    Rejects(MakeMidi({0x00, 0xFF, 0x51, 0x03, 0xFF, 0xFF, 0xFF, 0xBF, 0xFF, 0x7F, 0x90, 60, 100}), "20 minutes");
+
+    // Every truncation either renders or fails cleanly.
+    const auto Whole =
+        MakeMidi({0x00, 0xC0, 5,   0x00, 0x90, 60, 100, KHalfSecond[0], KHalfSecond[1], 0xE0, 0,   64, 0x00,
+                  0xB0, 7,    100, 0x00, 0x80, 60, 0,   0x00,           0xFF,           0x2F, 0x00});
+    for (std::size_t Size = 0; Size < Whole.size(); ++Size)
+    {
+        std::vector<std::int16_t> Pcm;
+        std::string Error;
+        if (dbc::RenderMidiToPcm(Pcm, Whole.data(), Size, &Error))
+            CHECK_FALSE(Pcm.empty());
+        else
+            CHECK_FALSE(Error.empty());
+    }
+}
+
+TEST_CASE("LOAD MUSIC plays a MIDI file for its full length")
+{
+    const auto Midi = MakeMidi({0x00, 0x90, 60, 100, 0xA5, 0x40, 0x80, 60, 0, 0x00, 0xFF, 0x2F, 0x00});
+    const std::filesystem::path Path = std::filesystem::temp_directory_path() / "opendbc-rendered-midi.mid";
+    {
+        std::ofstream Output(Path, std::ios::binary);
+        Output.write(reinterpret_cast<const char*>(Midi.data()), static_cast<std::streamsize>(Midi.size()));
+    }
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("rendered-midi", 16, 16));
+    std::string AudioError;
+    REQUIRE(Kernel.Audio().LoadMusic(Path.string(), 1, &AudioError));
+    REQUIRE(Kernel.Audio().PlayMusic(1, &AudioError));
+    // A silent stand-in would have ended by now.
+    SDL_Delay(200);
+    CHECK(ReadEngineNumber<int>([&](std::string& Error, int& Output)
+                                { return Kernel.Audio().MusicPlaying(Output, 1, &Error); }) == 1);
+    REQUIRE(Kernel.Audio().DeleteMusic(1, &AudioError));
+    std::error_code CleanupError;
+    std::filesystem::remove(Path, CleanupError);
 }
 
 TEST_CASE("DarkBASIC scan codes retain the complete DirectInput key layout")

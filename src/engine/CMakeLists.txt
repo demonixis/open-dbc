@@ -6,6 +6,7 @@ add_library(dbc_engine STATIC
   systems/file_io_system.cpp
   systems/camera_system.cpp
   systems/audio_system.cpp
+  systems/midi_renderer.cpp
   systems/input_system.cpp
   systems/matrix_manager.cpp
   systems/terrain_mesh.cpp
@@ -61,6 +62,27 @@ target_link_libraries(dbc_engine
 
 target_include_directories(dbc_engine PRIVATE ${PROJECT_SOURCE_DIR}/sdk)
 target_include_directories(dbc_engine PUBLIC ${PROJECT_SOURCE_DIR}/src)
+
+# The General MIDI bank LOAD MUSIC renders with, embedded so the Studio and every exported runner have it.
+set(DBC_MIDI_BANK_DIR "${PROJECT_SOURCE_DIR}/resources/midi")
+set(DBC_MIDI_BANK_FILE VintageDreamsWaves-v2.sf2)
+set(DBC_MIDI_BANK_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated/midi_bank.inc")
+add_custom_command(
+  OUTPUT "${DBC_MIDI_BANK_INCLUDE}"
+  COMMAND ${CMAKE_COMMAND} -DOUTPUT=${DBC_MIDI_BANK_INCLUDE} -DSOURCE_DIR=${DBC_MIDI_BANK_DIR}
+          -DFILES=${DBC_MIDI_BANK_FILE} -DARRAY=KMidiBankFiles
+          -P "${PROJECT_SOURCE_DIR}/cmake/embed_files.cmake"
+  DEPENDS "${DBC_MIDI_BANK_DIR}/${DBC_MIDI_BANK_FILE}" "${PROJECT_SOURCE_DIR}/cmake/embed_files.cmake"
+  COMMENT "Embed the MIDI bank"
+  VERBATIM)
+add_custom_target(dbc_midi_bank DEPENDS "${DBC_MIDI_BANK_INCLUDE}")
+add_dependencies(dbc_engine dbc_midi_bank)
+target_include_directories(dbc_engine PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+target_include_directories(dbc_engine SYSTEM PRIVATE "${tinysoundfont_SOURCE_DIR}")
+if(NOT MSVC)
+  # Unoptimized, a four-minute tune takes ten seconds to render, which stalls LOAD MUSIC in Debug builds.
+  set_source_files_properties(systems/midi_renderer.cpp PROPERTIES COMPILE_OPTIONS "-O2")
+endif()
 
 add_dependencies(dbc_engine opendbc_shaders)
 dbc_enable_warnings(dbc_engine)

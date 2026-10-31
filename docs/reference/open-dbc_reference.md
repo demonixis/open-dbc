@@ -15,5 +15,5 @@ OpenDBC preserves historical Classic and Professional behavior and adds an opt-i
 - Classic `WRITE TO REGISTRY` and `GET REGISTRY` keep their values in `registry.json` in the user's OpenDBC storage folder (SDL's preference path) instead of the Windows registry; folder and key names ignore ASCII case.
 - `3DBLIT AVAILABLE()` returns 1: every GPU draws 2D during 3D at full speed.
 - Native pointers never cross into the VM; `GET MEMBLOCK PTR()` returns a [plugin address](../plugins.md#memblock-addresses).
-- No MIDI bank ships: a failed `.mid` load tries the same name as `.mp3`, then `.wav` (`scripts/generate_dbc_midi_fallbacks.py`), and otherwise plays a silent clip with a logged warning.
+- `LOAD MUSIC` renders a `.mid` at load with TinySoundFont and a built-in General MIDI bank, unless the same name exists as `.mp3` or `.wav` (`scripts/generate_dbc_midi_fallbacks.py`). A file it cannot read plays a silent clip with a logged warning.
 - Control-device commands use raw SDL joysticks. Missing rumble or haptic capabilities are no-ops; supported effects keep independent lifecycle-managed slots.

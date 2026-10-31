@@ -15,6 +15,7 @@
 #include "engine/systems/image_store.hpp"
 #include "engine/systems/log.hpp"
 #include "engine/systems/memblock_system.hpp"
+#include "engine/systems/midi_renderer.hpp"
 #include "engine/systems/object_manager.hpp"
 #include "engine/systems/renderer_system.hpp"
 #include "interpreter/program_image.hpp"
@@ -310,6 +311,16 @@ namespace
         return true;
     }
 
+    bool RunMidi(std::span<const std::uint8_t> Input)
+    {
+        // A longer file only renders for longer, up to the watchdog, without reaching more of the parser.
+        constexpr std::size_t MaximumSize = 4096;
+        if (Input.size() > MaximumSize)
+            return false;
+        std::vector<std::int16_t> Pcm;
+        return dbc::RenderMidiToPcm(Pcm, Input.data(), Input.size(), nullptr);
+    }
+
     bool RunObject(std::span<const std::uint8_t>)
     {
         dbc::ObjectManager& Objects = Kernel->Objects();
@@ -487,6 +498,17 @@ namespace
         return Seeds;
     }
 
+    // A program change, a note with a bend and a controller, and an end of track.
+    std::vector<Bytes> MidiSeeds()
+    {
+        const Bytes Header{'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 0, 0, 1, 1, 0xE0, 'M', 'T', 'r', 'k', 0, 0, 0, 23};
+        const Bytes Track{0x00, 0xC0, 5,   0x00, 0x90, 60, 100, 0x60, 0xE0, 0,    64,  0x00,
+                          0xB0, 7,    100, 0x60, 0x80, 60, 0,   0x00, 0xFF, 0x2F, 0x00};
+        Bytes Seed = Header;
+        Seed.insert(Seed.end(), Track.begin(), Track.end());
+        return {Seed};
+    }
+
     struct Target
     {
         std::string_view Name;
@@ -507,6 +529,7 @@ namespace
             {"image", ".obc", {".dba"}, false, false, false, RunProgramImage, ImageSeedFromSource, nullptr},
             {"dds", ".dds", {".dds"}, false, true, false, RunPicture, nullptr, DdsSeeds},
             {"wav", ".wav", {".wav"}, false, true, false, RunSound, nullptr, nullptr},
+            {"midi", ".mid", {".mid"}, false, false, false, RunMidi, nullptr, MidiSeeds},
             {"dbo", ".dbo", {".x", ".dbo"}, false, true, false, RunObject, ObjectSeedFromModel, nullptr},
             {"memblock-classic", ".bin", {}, false, true, true, RunMemblock, nullptr, MemblockSeeds},
             {"memblock-pro", ".bin", {}, false, true, false, RunMemblock, nullptr, MemblockSeeds},

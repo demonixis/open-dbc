@@ -285,8 +285,8 @@ set(SDLMIXER_VENDORED ON CACHE BOOL "" FORCE)
 set(SDLMIXER_SAMPLES OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_INSTALL OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_WAVE ON CACHE BOOL "" FORCE)
-set(SDLMIXER_MIDI ON CACHE BOOL "" FORCE)
-set(SDLMIXER_MIDI_TIMIDITY ON CACHE BOOL "" FORCE)
+# TinySoundFont renders MIDI in LOAD MUSIC, the same on every machine.
+set(SDLMIXER_MIDI OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_AIFF OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_AU OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_FLAC OFF CACHE BOOL "" FORCE)
@@ -312,6 +312,18 @@ opendbc_fetch_dependency(SDL3_mixer
                 -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
 )
 FetchContent_MakeAvailable(SDL3_mixer)
+
+# Header-only, with no CMake project of its own.
+opendbc_fetch_dependency(TinySoundFont
+  https://github.com/schellingb/TinySoundFont.git
+  853a0a171759f1ddba0de1442133a75912bbeffa
+  PATCH_COMMAND ${CMAKE_COMMAND}
+                -DOPENDBC_GIT_EXECUTABLE=${GIT_EXECUTABLE}
+                -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
+                -DOPENDBC_PATCH_FILE=${CMAKE_SOURCE_DIR}/cmake/patches/tinysoundfont-filter-gain.patch
+                -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
+)
+FetchContent_MakeAvailable(TinySoundFont)
 
 set(SDLTTF_VENDORED ON CACHE BOOL "" FORCE)
 set(SDLTTF_SAMPLES OFF CACHE BOOL "" FORCE)

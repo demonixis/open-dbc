@@ -93,8 +93,8 @@ set(OPENDBC_THIRD_PARTY_LICENSES
     "${sdl3_SOURCE_DIR}/LICENSE.txt|SDL3.txt"
     "${sdl3_image_SOURCE_DIR}/LICENSE.txt|SDL3_image.txt"
     "${sdl3_mixer_SOURCE_DIR}/LICENSE.txt|SDL3_mixer.txt"
-    "${sdl3_mixer_SOURCE_DIR}/src/timidity/COPYING|Timidity.txt"
     "${sdl3_mixer_SOURCE_DIR}/src/dr_libs/LICENSE|dr_mp3.txt"
+    "${tinysoundfont_SOURCE_DIR}/LICENSE|TinySoundFont.txt"
     "${sdl3_ttf_SOURCE_DIR}/LICENSE.txt|SDL3_ttf.txt"
     "${sdl3_ttf_SOURCE_DIR}/external/freetype/docs/FTL.TXT|FreeType.txt"
     "${assimp_SOURCE_DIR}/LICENSE|Assimp.txt"
@@ -409,7 +409,8 @@ set(OPENDBC_REPOSITORY_LICENSES
     "${CMAKE_SOURCE_DIR}/licenses/NotoSans-LICENSE.md"
     "${CMAKE_SOURCE_DIR}/licenses/Roboto-LICENSE.md"
     "${CMAKE_SOURCE_DIR}/licenses/Cousine-LICENSE.md"
-    "${CMAKE_SOURCE_DIR}/licenses/stb_image-LICENSE.md")
+    "${CMAKE_SOURCE_DIR}/licenses/stb_image-LICENSE.md"
+    "${CMAKE_SOURCE_DIR}/licenses/VintageDreamsWaves-COPYRIGHT.txt")
 if(APPLE)
     set_source_files_properties(${OPENDBC_REFERENCE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_source_files_properties("${CMAKE_SOURCE_DIR}/docs/NOTICE.md" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
