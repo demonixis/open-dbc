@@ -71,7 +71,7 @@ nodes it creates.
 The banner lists what is left out: limbs, meshes, particles, vertex data, BSP
 worlds and `APPEND OBJECT`. Custom geometry shows as a box. Hidden and
 screen-locked objects are dimmed in the Hierarchy and not drawn; a row's tooltip
-gives its source line, and a double-click opens it.
+gives its source line, and **Show in Code** in the Inspector opens it.
 
 Only transforms change. **Ctrl+S** writes them to the source:
 
@@ -160,7 +160,7 @@ sets only X. Names and numbers stay per node.
 | Ctrl/Cmd or Shift + left click | Add to or remove from the selection; in the Hierarchy, Shift selects the rows from the active node |
 | Ctrl/Cmd+A | Select every node |
 | Q W E R | View, move, rotate, scale tools |
-| F, from any Scene panel | Frame the selection |
+| F, from any Scene panel, or a double-click on a Hierarchy row | Frame the selection |
 | G | Align the selection to the grid |
 | - and = | Smaller or larger grid step: 1, 2.5, 5, 10, 25... |
 | Hold Ctrl/Cmd during a drag | Invert snapping |

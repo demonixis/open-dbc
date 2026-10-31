@@ -375,6 +375,31 @@ TEST_CASE("F frames the selection whichever Scene panel has the focus")
     CHECK(Driver.Frames(Far));
 }
 
+TEST_CASE("A double-click on a Hierarchy row frames it, where a click only selects")
+{
+    const glm::vec3 Far(600.0f, 10.0f, 300.0f);
+    SceneViewDriver Driver("frame_row", LevelOfCubes({glm::vec3(0.0f), Far}));
+    Driver.ClickHierarchyRow(1);
+    CHECK_FALSE(Driver.Frames(Far));
+    Driver.ClickHierarchyRow(1);
+    CHECK(Driver.Frames(Far));
+}
+
+TEST_CASE("A double-click on a painted group's row frames the group")
+{
+    const glm::vec3 Source(-150.0f, 15.0f, 0.0f);
+    SceneViewDriver Driver("frame_group", LevelOfCubes({Source}));
+    Driver.Click(Source);
+    Driver.Tap(ImGuiKey_B);
+    Driver.Click(glm::vec3(0.0f));
+    const glm::vec3 Copy = Driver.SavedNodes().at(1).Position;
+
+    Driver.ClickHierarchyRow(1);
+    CHECK_FALSE(Driver.Frames(Copy));
+    Driver.ClickHierarchyRow(1);
+    CHECK(Driver.Frames(Copy));
+}
+
 TEST_CASE("The grid keys change the step moves land on")
 {
     const glm::vec3 Start(3.0f, 15.0f, 2.0f);

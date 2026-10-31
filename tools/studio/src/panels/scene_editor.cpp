@@ -946,9 +946,9 @@ namespace dbc::studio
                 if (Node.Hidden)
                     ImGui::PopStyleColor();
                 const scene::NodeOrigin* Origin = OriginOf(Node);
-                if (Origin != nullptr && !Origin->Creator.File.empty() && ImGui::IsItemHovered() &&
-                    ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && Host_.ShowSource)
-                    Host_.ShowSource(dbc::PathFromUtf8(Origin->Creator.File), Origin->Creator.Line);
+                // The first click has already selected the row.
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    FrameSelection();
                 if (Clicked)
                 {
                     const ImGuiIO& Io = ImGui::GetIO();
@@ -1030,6 +1030,8 @@ namespace dbc::studio
                     CameraSelected_ = false;
                     for (const scene::SceneNode* Member : *Group)
                         Selection_.push_back(Selection{scene::IdSpaceOf(Member->Kind), Member->Id});
+                    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                        FrameSelection();
                 }
                 if (Open)
                 {
@@ -1051,6 +1053,8 @@ namespace dbc::studio
                     Selection_.clear();
                     CameraSelected_ = true;
                 }
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    FrameSelection();
             }
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsAnyItemHovered())
                 Select(nullptr);
