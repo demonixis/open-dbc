@@ -39,10 +39,12 @@ namespace dbc::studio
             // HLSL effects open as plain text: highlighted, but without BASIC
             // completion, outline or Run.
             static bool IsEffectSource(const std::filesystem::path& Path);
+            // A .dbpro or any JSON file: plain text, like an effect.
+            static bool IsProjectData(const std::filesystem::path& Path);
             static bool CanOpen(const std::filesystem::path& Path);
 
             // Opens the file, focusing an already open tab if there is one.
-            // Returns false when the file cannot be read or is neither BASIC nor an effect.
+            // Returns false when the file cannot be read or CanOpen refuses it.
             bool Open(const std::filesystem::path& Path);
             void NewFile();
 
@@ -151,7 +153,7 @@ namespace dbc::studio
             // Replaces the whole text as one undoable edit, which leaves the tab dirty.
             static void SetBufferText(Document& Doc, const std::string& Text);
             void ConfigureEditor(TextEditor& Editor, dbc::language::LanguageProfile Profile) const;
-            void ConfigureEffectEditor(TextEditor& Editor) const;
+            void ConfigureTextEditor(TextEditor& Editor, const std::filesystem::path& Path) const;
             bool WriteDocument(Document& Doc, const std::filesystem::path& Path);
             Document* Find(const std::filesystem::path& Path) const;
             static bool IsDirty(const Document& Doc);

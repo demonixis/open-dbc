@@ -171,7 +171,8 @@ namespace dbc::studio
 
         constexpr const char* KDbaFilter = "dba;dbpro";
         constexpr const char* KHlslFilter = "fx;hlsl";
-        constexpr const char* KOpenFilter = "dba;dbpro;fx;hlsl";
+        constexpr const char* KOpenFilter = "dba;dbpro;json;fx;hlsl";
+        constexpr const char* KProjectFilter = "dbpro;json";
 
         // Opens the folder holding Path in Finder, Explorer or the desktop's file manager.
         void RevealInFileManager(const std::filesystem::path& Path)
@@ -258,7 +259,7 @@ namespace dbc::studio
             [this](const std::filesystem::path& Path)
             {
                 if (panels::AssetPreview::KindOf(Path) == panels::AssetPreview::Kind::None &&
-                    !panels::EditorPanel::CanOpen(Path))
+                    (!panels::EditorPanel::CanOpen(Path) || dbc::language::IsDbProProject(Path)))
                     Status_ = TrFmt("No preview for {0}", {dbc::PathToUtf8(Path.filename())});
                 else
                     OpenFile(Path);
@@ -587,14 +588,14 @@ namespace dbc::studio
         Running_ = false;
     }
 
-    void App::OpenFolder(const std::filesystem::path& Folder)
+    bool App::OpenFolder(const std::filesystem::path& Folder)
     {
         core::ProjectSettings LoadedSettings = core::ProjectSettings::Load(Folder);
         if (!LoadedSettings.LoadError.empty())
         {
             Status_ = LoadedSettings.LoadError;
             Output_.Append(Status_, panels::OutputPanel::Severity::Error);
-            return;
+            return false;
         }
         DialectLocked_ = false;
         Project_.SetRoot(Folder);
@@ -605,9 +606,11 @@ namespace dbc::studio
         if (!PreviousFolder.empty() && dbc::PathFromUtf8(PreviousFolder) != Folder)
             Settings_.LastFile.clear();
         Settings_.Save();
-        if (!ResolveWorkspace(Folder, InitialProfile_))
+        const bool Resolved = ResolveWorkspace(Folder, InitialProfile_);
+        if (!Resolved)
             Status_ = ResolutionMessage(PendingResolution_);
         InitialProfile_.reset();
+        return Resolved;
     }
 
     void App::OpenFile(const std::filesystem::path& File)
@@ -645,7 +648,11 @@ namespace dbc::studio
             Status_ = dbc::PathToUtf8(File.filename());
             return;
         }
+        OpenInEditor(File);
+    }
 
+    void App::OpenInEditor(const std::filesystem::path& File)
+    {
         if (Project_.Root().empty() && dbc::language::IsLanguageSource(File))
             OpenFolder(File.parent_path());
 
@@ -657,22 +664,71 @@ namespace dbc::studio
             return;
         }
 
-        Settings_.LastFile = dbc::PathToUtf8(File);
-
-        Settings_.Save();
+        // The next launch reopens this through OpenFile, which would load a .dbpro as the project.
+        if (!dbc::language::IsDbProProject(File))
+        {
+            Settings_.LastFile = dbc::PathToUtf8(File);
+            Settings_.Save();
+        }
 
         Status_ = dbc::PathToUtf8(File.filename());
+    }
+
+    void App::OpenProject(const std::filesystem::path& File)
+    {
+        if (dbc::language::IsDbProProject(File))
+        {
+            OpenFile(File);
+        }
+        else if (File == core::ProjectSettings::FilePath(File.parent_path()))
+        {
+            if (OpenFolder(File.parent_path()) && ResolvedProject_)
+                OpenFile(ResolvedProject_->EntrySource);
+        }
+        else
+        {
+            Status_ = TrFmt("{0} is not a project file", {dbc::PathToUtf8(File.filename())});
+            Output_.Append(Status_, panels::OutputPanel::Severity::Error);
+        }
     }
 
     void App::ShowOpenFileDialog()
     {
         const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
-        Dialog_.OpenFile(Window_, Start, Tr("DBA source or HLSL effect"), KOpenFilter,
+        Dialog_.OpenFile(Window_, Start, Tr("Source, project or effect file"), KOpenFilter,
+                         [this](const std::string& Path)
+                         {
+                             if (Path.empty())
+                                 return;
+                             // Loading a project is Open Project's job: here a .dbpro is a text to read.
+                             const std::filesystem::path File = dbc::PathFromUtf8(Path);
+                             if (dbc::language::IsDbProProject(File))
+                                 OpenInEditor(File);
+                             else
+                                 OpenFile(File);
+                         });
+    }
+
+    void App::ShowOpenProjectDialog()
+    {
+        const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
+        Dialog_.OpenFile(Window_, Start, Tr("DBPro or OpenDBC project"), KProjectFilter,
                          [this](const std::string& Path)
                          {
                              if (!Path.empty())
-                                 OpenFile(dbc::PathFromUtf8(Path));
+                                 OpenProject(dbc::PathFromUtf8(Path));
                          });
+    }
+
+    void App::ShowOpenFolderDialog()
+    {
+        const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
+        Dialog_.OpenFolder(Window_, Start,
+                           [this](const std::string& Path)
+                           {
+                               if (!Path.empty())
+                                   OpenFolder(dbc::PathFromUtf8(Path));
+                           });
     }
 
     TextEditor* App::SnippetTarget()
@@ -1084,7 +1140,14 @@ namespace dbc::studio
 
         const std::string Start = Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
         const bool Basic = Editor_.CurrentIsBasic();
-        Dialog_.SaveFile(Window_, Start, Tr(Basic ? "DBA source" : "HLSL effect"), Basic ? KDbaFilter : KHlslFilter,
+        const bool Effect = panels::EditorPanel::IsEffectSource(Editor_.CurrentPath());
+        Dialog_.SaveFile(Window_, Start,
+                         Tr(Basic    ? "DBA source"
+                            : Effect ? "HLSL effect"
+                                     : "Project or JSON file"),
+                         Basic    ? KDbaFilter
+                         : Effect ? KHlslFilter
+                                  : KProjectFilter,
                          [this](const std::string& Path)
                          {
                              if (Path.empty())
@@ -1458,6 +1521,16 @@ namespace dbc::studio
             else
                 Editor_.NewFile();
         }
+        else if constexpr (core::platform::HasNativeFileDialog())
+        {
+            if (ImGui::IsKeyPressed(ImGuiKey_O, false))
+            {
+                if (Io.KeyShift)
+                    ShowOpenFolderDialog();
+                else
+                    ShowOpenFileDialog();
+            }
+        }
     }
 
     void App::DrawDockSpace()
@@ -1674,29 +1747,23 @@ namespace dbc::studio
                 ImGui::SetTooltip("%s", Tr(LevelBlocker.c_str()));
             }
 
+            ImGui::Separator();
+
             // SDL_dialog has no UIKit backend, and mobile has no freeform file
             // system to browse anyway: there the Project panel is the only way in.
             if constexpr (core::platform::HasNativeFileDialog())
             {
-                if (ImGui::MenuItem(TrId("Open File..."), "Ctrl+O"))
+                if (ImGui::MenuItem(TrId("Open..."), "Ctrl+O"))
                 {
                     ShowOpenFileDialog();
                 }
-                if (ImGui::MenuItem(TrId("Open in Scene View"), nullptr, false,
-                                    Execution_.CanCaptureScene() && !ExecutionBusy_ && Editor_.CurrentIsBasic()))
+                if (ImGui::MenuItem(TrId("Open Project...")))
                 {
-                    OpenInScene(Editor_.CurrentPath());
+                    ShowOpenProjectDialog();
                 }
                 if (ImGui::MenuItem(TrId("Open Folder..."), "Ctrl+Shift+O"))
                 {
-                    const std::string Start =
-                        Project_.Root().empty() ? std::string() : dbc::PathToUtf8(Project_.Root());
-                    Dialog_.OpenFolder(Window_, Start,
-                                       [this](const std::string& Path)
-                                       {
-                                           if (!Path.empty())
-                                               OpenFolder(dbc::PathFromUtf8(Path));
-                                       });
+                    ShowOpenFolderDialog();
                 }
             }
 
@@ -2020,7 +2087,7 @@ namespace dbc::studio
         if constexpr (core::platform::HasNativeFileDialog())
         {
             ImGui::SameLine();
-            if (ToolbarButton("##open", ToolIcon::Open, true, "Open File..."))
+            if (ToolbarButton("##open", ToolIcon::Open, true, "Open..."))
                 ShowOpenFileDialog();
         }
         ImGui::SameLine();

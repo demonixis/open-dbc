@@ -29,6 +29,8 @@ TEST_CASE("Studio editor opens HLSL effects as plain text tabs")
     CHECK(panels::EditorPanel::CanOpen(Root / "bump.FX"));
     CHECK(panels::EditorPanel::CanOpen(Root / "shader.hlsl"));
     CHECK(panels::EditorPanel::CanOpen(Root / "main.dba"));
+    CHECK(panels::EditorPanel::CanOpen(Root / "game.dbpro"));
+    CHECK(panels::EditorPanel::CanOpen(Root / ".opendbc-project.json"));
     CHECK_FALSE(panels::EditorPanel::CanOpen(Root / "notes.txt"));
 
     dba::Reference Reference;
@@ -49,6 +51,16 @@ TEST_CASE("Studio editor opens HLSL effects as plain text tabs")
     REQUIRE(Editor.Open(Root / "main.dba"));
     CHECK(Editor.CurrentIsBasic());
     CHECK_FALSE(Editor.SaveCurrentAs(Root / "main.fx"));
+
+    // A descriptor is a text like an effect: never part of a BASIC run, nor saved under another kind's name.
+    std::ofstream(Root / "game.dbpro") << "[Project]\n";
+    REQUIRE(Editor.Open(Root / "game.dbpro"));
+    CHECK_FALSE(Editor.CurrentIsBasic());
+    CHECK(Editor.CurrentEditor()->GetText().find("[Project]") != std::string::npos);
+    CHECK_FALSE(Editor.SaveCurrentAs(Root / "game.dba"));
+    CHECK_FALSE(Editor.SaveCurrentAs(Root / "game.fx"));
+    CHECK(Editor.SaveCurrentAs(Root / "copy.dbpro"));
+    CHECK(Editor.SaveCurrentAs(Root / "copy.json"));
 
     std::filesystem::remove_all(Root, Error);
 }

@@ -78,6 +78,12 @@ copies the unsaved tabs, untitled ones included, to the `recovery` folder of its
 preferences directory; it never writes your files until you save. After a crash
 it offers to restore those tabs, and a normal quit deletes the copies.
 
+**File → Open…** (Ctrl+O) opens a source, effect, `.dbpro` or JSON file in a tab,
+as text for the last two. **File → Open Project…** loads a `.dbpro` or an
+`.opendbc-project.json`, and **File → Open Folder…** (Ctrl+Shift+O) a folder, as a
+project. macOS's file dialog hides `.opendbc-project.json` until you press
+Cmd+Shift+.; Open Folder on its folder does the same.
+
 **File → New Project…** (Ctrl+Shift+N) creates a folder holding `main.dba`,
 from an empty main loop or a basic 1280×720 scene. A DBPro project also gets a
 historical `.dbpro` descriptor; a DBC project gets an `.opendbc-project.json`

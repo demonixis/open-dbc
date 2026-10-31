@@ -75,9 +75,16 @@ namespace dbc::studio
         void BuildDefaultLayout(ImGuiID DockspaceId);
         void HandleShortcuts();
 
-        void OpenFolder(const std::filesystem::path& Folder);
+        // False when the folder cannot load, or its language still needs an answer.
+        bool OpenFolder(const std::filesystem::path& Folder);
         void OpenFile(const std::filesystem::path& File);
+        // As a text tab, whatever the file is: OpenFile is what loads a .dbpro as the project.
+        void OpenInEditor(const std::filesystem::path& File);
+        // A .dbpro or an .opendbc-project.json.
+        void OpenProject(const std::filesystem::path& File);
         void ShowOpenFileDialog();
+        void ShowOpenProjectDialog();
+        void ShowOpenFolderDialog();
         // The current tab when snippets can be inserted into it, else nullptr.
         TextEditor* SnippetTarget();
         void InsertSnippet(const core::Snippet& Value);

@@ -137,9 +137,12 @@ namespace dbc::studio
                 });
         }
 
-        void EditorPanel::ConfigureEffectEditor(TextEditor& Editor) const
+        void EditorPanel::ConfigureTextEditor(TextEditor& Editor, const std::filesystem::path& Path) const
         {
-            Editor.SetLanguage(TextEditor::Language::Hlsl());
+            if (IsEffectSource(Path))
+                Editor.SetLanguage(TextEditor::Language::Hlsl());
+            else if (LowerExtension(Path) == ".json")
+                Editor.SetLanguage(TextEditor::Language::Json());
             Editor.SetPalette(EditorPalette());
             Editor.SetTabSize(4);
             Editor.SetInsertSpacesOnTabs(true);
@@ -156,9 +159,14 @@ namespace dbc::studio
             return Extension == ".fx" || Extension == ".hlsl";
         }
 
+        bool EditorPanel::IsProjectData(const std::filesystem::path& Path)
+        {
+            return dbc::language::IsDbProProject(Path) || LowerExtension(Path) == ".json";
+        }
+
         bool EditorPanel::CanOpen(const std::filesystem::path& Path)
         {
-            return dbc::language::IsLanguageSource(Path) || IsEffectSource(Path);
+            return dbc::language::IsLanguageSource(Path) || IsEffectSource(Path) || IsProjectData(Path);
         }
 
         void EditorPanel::AddDocument(std::filesystem::path Path, dbc::language::LanguageProfile Profile, bool Basic,
@@ -175,7 +183,7 @@ namespace dbc::studio
             if (Basic)
                 ConfigureEditor(*Doc->Editor, Profile);
             else
-                ConfigureEffectEditor(*Doc->Editor);
+                ConfigureTextEditor(*Doc->Editor, Doc->Path);
             Doc->Editor->SetText(Text);
             Doc->SavedUndoIndex = Doc->Editor->GetUndoIndex();
 
@@ -383,7 +391,10 @@ namespace dbc::studio
         bool EditorPanel::WriteDocument(Document& Doc, const std::filesystem::path& Path)
         {
             // A tab keeps its kind: a BASIC buffer cannot be saved as an effect or the reverse.
-            if (Doc.Basic ? !dbc::language::IsLanguageSource(Path) : !IsEffectSource(Path))
+            const bool SameKind = Doc.Basic                  ? dbc::language::IsLanguageSource(Path)
+                                  : IsEffectSource(Doc.Path) ? IsEffectSource(Path)
+                                                             : IsProjectData(Path);
+            if (!SameKind)
             {
                 return false;
             }
