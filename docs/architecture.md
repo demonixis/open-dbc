@@ -69,6 +69,9 @@ Each callable has a per-profile state:
 | Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, CD audio, the Windows folder and obsolete hardware switches |
 | Unsupported | Rejected at bind time with `DBC2043` |
 
+The forms of DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles are not in the catalogue:
+they stop at bind time with `DBC2049`, which names the plugin.
+
 Shared VR forms and the Classic `X/Y/Z VECTOR3` readers are the only additions to
 the historical profiles ([vr.md](vr.md)).
 
@@ -127,7 +130,7 @@ Generated files are never edited by hand; each has a `--check` gate:
 
 `scripts/data/` also holds the audit inputs:
 
-- per-symbol provenance for Classic, DBPro and the DBPro extensions;
+- per-symbol provenance for Classic, DBPro and ODE;
 - the digests of removed DarkBASIC files, which must never return;
 - the MIDI fallback list and the DBPro project inventory;
 - the [Studio literals](localization.md#audit) that stay untranslated.

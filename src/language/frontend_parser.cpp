@@ -1258,6 +1258,10 @@ namespace dbc::language::detail
                         break;
                     }
                 }
+                // A removed form that starts like a command, such as SET OBJECT AS VEHICLE BODY, is not that command.
+                if (Descriptor && Words > NameWords &&
+                    !RemovedPhysicsPlugin(Canonical(JoinWords(Value.Tokens, 0, Words))).empty())
+                    Descriptor = nullptr;
                 if (!Descriptor)
                 {
                     Result.Name = Words == 0 ? std::string{} : JoinWords(Value.Tokens, 0, Words);

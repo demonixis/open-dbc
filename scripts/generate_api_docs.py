@@ -97,12 +97,6 @@ CATEGORIES: "OrderedDict[str, dict]" = OrderedDict(
                          "blurb": "Multiplayer sessions, network messages and FTP."}),
         ("ode", {"title": "ODE extension", "group": "Extensions",
                  "blurb": "ODE physics (Open Dynamics Engine) integrated with DBPro."}),
-        ("cloth", {"title": "3D Cloth & Particles extension", "group": "Extensions",
-                   "blurb": "3D cloth and particles."}),
-        ("darkphysics", {"title": "DarkPHYSICS extension", "group": "Extensions",
-                         "blurb": "PhysX physics: rigid bodies, fluids, cloth, ragdolls."}),
-        ("darkdynamix", {"title": "Dark Dynamix extension", "group": "Extensions",
-                         "blurb": "NVIDIA PhysX physics (Dark Dynamix surface)."}),
         ("mobile", {"title": "OpenDBC New (mobile)", "group": "Extensions",
                     "blurb": "Documented mobile additions for the future DbcNew/DbProNew profiles (signatures to recover)."}),
     ]
@@ -110,9 +104,6 @@ CATEGORIES: "OrderedDict[str, dict]" = OrderedDict(
 
 SURFACE_CATEGORY = {
     "ODE": "ode",
-    "3D Cloth & Particles": "cloth",
-    "DarkPHYSICS": "darkphysics",
-    "Dark Dynamix": "darkdynamix",
     "OpenDBC New / Mobile": "mobile",
 }
 

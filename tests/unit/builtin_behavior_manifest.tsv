@@ -710,20 +710,20 @@ dbc	1106	1730	Function	X VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins ex
 dbc	1109	1734	Function	Y VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbc	1111	1737	Function	Z VECTOR3	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbc	1449	2002	Function	GET REGISTRY	registry-file-state	test_engine_builtins.cpp::Classic registry commands persist values in the user's registry file	-
-dbc	2727	3468	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2728	3470	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2729	3472	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2730	3474	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2731	3476	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2732	3478	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2733	3480	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2734	3482	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2735	3484	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2736	3486	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2737	3488	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2738	3490	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2739	3492	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbc	2740	3494	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1578	2140	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1579	2142	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1580	2144	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1581	2146	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1582	2148	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1583	2150	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1584	2152	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1585	2154	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1586	2156	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1587	2158	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1588	2160	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1589	2162	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1590	2164	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbc	1591	2166	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
 dbpro	0	1	Command	ADD LIMB	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	1	2	Command	ADD MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	2	3	Command	ADD MESH TO VERTEXDATA	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
@@ -1642,45 +1642,45 @@ dbpro	1435	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and 
 dbpro	1438	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1440	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbpro	1442	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
-dbpro	2609	3345	Command	ODE CREATE DYNAMIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2613	3351	Command	ODE CREATE STATIC BOX	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2617	3355	Command	ODE CREATE STATIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2624	3364	Command	ODE DESTROY OBJECT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2626	3366	Command	ODE END	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2628	3368	Command	ODE SET ACTIVE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2629	3369	Command	ODE SET ANGULAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2630	3370	Command	ODE SET BODY FRICTION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2632	3372	Command	ODE SET BODY POSITION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2633	3373	Command	ODE SET BODY ROTATION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2647	3387	Command	ODE SET ENABLED	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2648	3388	Command	ODE SET GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2650	3390	Command	ODE SET LINEAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2658	3398	Command	ODE SET WORLD GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2674	3414	Command	ODE START	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2676	3416	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2676	3417	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2683	3424	Function	ODE GET BODY HEIGHT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2684	3425	Function	ODE GET BODY LINEAR VELOCITY X	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2685	3426	Function	ODE GET BODY LINEAR VELOCITY Y	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2686	3427	Function	ODE GET BODY LINEAR VELOCITY Z	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	2720	3461	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2721	3462	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2722	3463	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2723	3464	Function	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2724	3465	Function	MAKE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2725	3466	Function	MAKE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2726	3467	Function	LIMB TEXTURE NAME	object-geometry-texture-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
-dbpro	2727	3469	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2728	3471	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2729	3473	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2730	3475	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2731	3477	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2732	3479	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2733	3481	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2734	3483	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2735	3485	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2736	3487	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2737	3489	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2738	3491	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2739	3493	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
-dbpro	2740	3495	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1460	2017	Command	ODE CREATE DYNAMIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1464	2023	Command	ODE CREATE STATIC BOX	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1468	2027	Command	ODE CREATE STATIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1475	2036	Command	ODE DESTROY OBJECT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1477	2038	Command	ODE END	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1479	2040	Command	ODE SET ACTIVE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1480	2041	Command	ODE SET ANGULAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1481	2042	Command	ODE SET BODY FRICTION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1483	2044	Command	ODE SET BODY POSITION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1484	2045	Command	ODE SET BODY ROTATION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1498	2059	Command	ODE SET ENABLED	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1499	2060	Command	ODE SET GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1501	2062	Command	ODE SET LINEAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1509	2070	Command	ODE SET WORLD GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1525	2086	Command	ODE START	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1527	2088	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1527	2089	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1534	2096	Function	ODE GET BODY HEIGHT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1535	2097	Function	ODE GET BODY LINEAR VELOCITY X	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1536	2098	Function	ODE GET BODY LINEAR VELOCITY Y	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1537	2099	Function	ODE GET BODY LINEAR VELOCITY Z	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1571	2133	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1572	2134	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1573	2135	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1574	2136	Function	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1575	2137	Function	MAKE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1576	2138	Function	MAKE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1577	2139	Function	LIMB TEXTURE NAME	object-geometry-texture-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
+dbpro	1578	2141	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1579	2143	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1580	2145	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1581	2147	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1582	2149	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1583	2151	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1584	2153	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1585	2155	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1586	2157	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1587	2159	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1588	2161	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1589	2163	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1590	2165	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-
+dbpro	1591	2167	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles	-

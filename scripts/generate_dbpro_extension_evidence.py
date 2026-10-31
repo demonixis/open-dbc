@@ -27,44 +27,11 @@ SOURCES = {
         "Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC",
         "0e6eb1563e3f9489b98c77158b520080c3c027a0c42136a7960dac6fa11ca232",
     ),
-    "cloth-keywords": (
-        "Dark Basic Public Shared/Official Plugins/3D Cloth & Particles/Install/Keywords/Physics.ini",
-        "d569e7290f90a68eaf8d177e66fa347d49bee5d2d9f81441851a4526a71c29b8",
-    ),
-    "cloth-exports": (
-        "Dark Basic Public Shared/Official Plugins/3D Cloth & Particles/Code/DBProPhysicsMaster/DBProPhysicsMaster.rc",
-        "9de8906f1ddbdc23b60240393775343a472e9d713e9405b04444b6d560219834",
-    ),
-    "darkphysics-exports": (
-        "Dark Basic Public Shared/Official Plugins/DarkPHYSICS/DarkPHYSICS/DLL/DLL2.rc",
-        "ba0bd72da090c4dabda6962e9dc5a2a8c56de603d9824489e41d63300711cea8",
-    ),
-    "dynamix-commands": (
-        "Dark Basic Public Shared/Official Plugins/Dark Dynamix/Docs/Commands.ini",
-        "4b542cd5d9829a9bb19b9bd5045acf4dadbdfaade84793977ba4bc1edcda5222",
-    ),
-    "dynamix-exports": (
-        "Dark Basic Public Shared/Official Plugins/Dark Dynamix/Project files/Physics Dark Basic/Include/Physics.rc",
-        "d6b210e93b715bc484e7b3a4d361fded0d23e10bb45875c57ea0d6f62e9a3852",
-    ),
 }
 
-SURFACE_BITS = {"Ode": 16, "ClothParticles": 32, "DarkPhysics": 64, "DarkDynamix": 128}
-SURFACE_PREFIXES = {"Ode": "ODE ", "DarkPhysics": "PHY ", "DarkDynamix": "DYN "}
+SURFACE_BITS = {"Ode": 16}
+SURFACE_PREFIXES = {"Ode": "ODE "}
 TYPE_CODES = {"D": "I", "L": "I", "F": "R", "S": "S"}
-DYNAMIX_ALIASES = {
-    "DYN CLOTH ATTACH TO CORE": "DYN CLOTH MESH ATTACH TO CORE",
-    "DYN EMITTER GET VELOCITY MAGNITUDE": "DYN EMITTER GET VELOCITY MAGNOTUDE",
-    "DYN FLUID GET EXTERNAL ACCELERATION": "DYN FLUID GET EXTRNAL ACCELERATION",
-    "DYN FLUID GET RANDOM ANGLE": "DYN EMITTER GET RANDOM ANGLE",
-    "DYN FLUID SET RANDOM ANGLE": "DYN EMITTER SET RANDOM ANGLE",
-    "DYN SOFT BODY GET FLAGS": "DYN SODT BODY GET FLAGS",
-}
-DYNAMIX_DOCUMENTED_ONLY = {
-    "DYN ADD SHAPES": (("Function", "Integer", "I"),),
-    "DYN GET PARAMETER": (("Function", "Real", "I"),),
-    "DYN SET LIMB": (("Command", "Void", "I,I,I"),),
-}
 
 
 @dataclass(frozen=True, order=True)
@@ -101,7 +68,7 @@ def IdentifierPart(Value: str) -> str:
 def SymbolIdFor(Surface: str, Kind: str, Name: str) -> str:
     Prefix = SURFACE_PREFIXES.get(Surface, "")
     LocalName = Name[len(Prefix):] if Prefix and Name.startswith(Prefix) else Name
-    SurfacePart = {"Ode": "Ode", "ClothParticles": "Cloth", "DarkPhysics": "Phy", "DarkDynamix": "Dyn"}[Surface]
+    SurfacePart = {"Ode": "Ode"}[Surface]
     return f"{Kind}_Ext{SurfacePart}{IdentifierPart(LocalName)}"
 
 
@@ -169,38 +136,11 @@ def BuildEvidence(DbProRoot: Path) -> list[Overload]:
         AddRows(Result, "Ode", Name, OdeExports[Name], Name,
                 {"ode-exports"} | ({"ode-keywords"} if Name in OdeKeywords else set()))
 
-    ClothKeywords = ParseKeywords(DbProRoot / SOURCES["cloth-keywords"][0])
-    ClothExports = ParseExports(DbProRoot / SOURCES["cloth-exports"][0])
-    Require(ClothKeywords <= set(ClothExports), "Cloth keyword inventory contains names absent from its export table")
-    for Name in sorted(ClothExports):
-        AddRows(Result, "ClothParticles", Name, ClothExports[Name], Name,
-                {"cloth-exports"} | ({"cloth-keywords"} if Name in ClothKeywords else set()))
-
-    PhysicsExports = ParseExports(DbProRoot / SOURCES["darkphysics-exports"][0])
-    for Name in sorted(PhysicsExports):
-        AddRows(Result, "DarkPhysics", Name, PhysicsExports[Name], Name, {"darkphysics-exports"})
-
-    DynamixCommands = ParseKeywords(DbProRoot / SOURCES["dynamix-commands"][0])
-    DynamixExports = ParseExports(DbProRoot / SOURCES["dynamix-exports"][0])
-    ReverseAliases = {Value: Key for Key, Value in DYNAMIX_ALIASES.items()}
-    for Name in sorted(DynamixCommands | set(DynamixExports)):
-        SourceName = DYNAMIX_ALIASES.get(Name, Name)
-        Signatures = set(DynamixExports.get(SourceName, set()))
-        if Name in DYNAMIX_DOCUMENTED_ONLY:
-            Signatures.update(DYNAMIX_DOCUMENTED_ONLY[Name])
-        Require(bool(Signatures), f"No typed signature evidence for Dark Dynamix command: {Name}")
-        CanonicalName = ReverseAliases.get(Name, Name)
-        Sources = ({"dynamix-commands"} if Name in DynamixCommands else set()) | \
-                  ({"dynamix-exports"} if Name in DynamixExports or SourceName in DynamixExports else set())
-        AddRows(Result, "DarkDynamix", Name, Signatures, CanonicalName, Sources)
-
     Counts = defaultdict(set)
     for Row in Result:
         Counts[Row.Surface].add(Row.Name)
-    Require({Surface: len(Names) for Surface, Names in Counts.items()} == {
-        "Ode": 121, "ClothParticles": 157, "DarkPhysics": 491, "DarkDynamix": 435,
-    }, "DBPro extension public spelling totals drifted")
-    Require(len(set().union(*Counts.values())) == 1204, "DBPro extension public spelling union drifted")
+    Require({Surface: len(Names) for Surface, Names in Counts.items()} == {"Ode": 121},
+            "DBPro extension public spelling totals drifted")
     Require(len({(Row.SymbolId, Row.AcceptedCount, Row.ReturnType, Row.Parameters) for Row in Result}) == len(Result),
             "Duplicate DBPro extension overload evidence")
     return sorted(Result)
@@ -253,7 +193,7 @@ def UpdateCatalogue(Rows: list[Overload], Check: bool) -> None:
     Current = CATALOGUE.read_text(encoding="utf-8")
     ImplementedProfiles = {}
     for Match in re.finditer(r"DBC_CATALOGUE\(([^,]+),.*?, ([0-9]+), ([0-9]+)\)$", Current, re.MULTILINE):
-        if int(Match.group(3)) & 0xF0:
+        if int(Match.group(3)) & SURFACE_BITS["Ode"]:
             ImplementedProfiles[Match.group(1)] = int(Match.group(2))
     Region = CatalogueRegion(Rows, ImplementedProfiles).rstrip()
     if BEGIN in Current:

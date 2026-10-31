@@ -521,6 +521,26 @@ TEST_CASE("Professional does not inherit Classic bare user-function statement sy
     CHECK(HasCode(Program, "DBC2013"));
 }
 
+TEST_CASE("Forms of the removed physics plugins name their plugin")
+{
+    const auto Diagnosed = [](const char* Text)
+    {
+        const dbc::language::Program Program =
+            dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro, "dbpro-removed-physics.dba"));
+        REQUIRE(HasCode(Program, "DBC2049"));
+        return Program.Diagnostics.front().Message;
+    };
+    CHECK(Diagnosed("phy make rigid body dynamic box 1\n").find("DarkPHYSICS") != std::string::npos);
+    CHECK(Diagnosed("dyn start\n").find("Dark Dynamix") != std::string::npos);
+    CHECK(Diagnosed("x = dyn get gravity x()\n").find("Dark Dynamix") != std::string::npos);
+    CHECK(Diagnosed("make cloth 1\n").find("3D Cloth & Particles") != std::string::npos);
+    CHECK(Diagnosed("set object as vehicle body 1, 2\n").find("3D Cloth & Particles") != std::string::npos);
+
+    const dbc::language::Program Ode =
+        dbc::language::Compile(Source("ode start\n", dbc::language::LanguageProfile::DbPro, "dbpro-ode.dba"));
+    CHECK_FALSE(Ode.HasErrors());
+}
+
 TEST_CASE("Binder selects typed builtin overloads and rejects incompatible arguments")
 {
     const dbc::language::Program Valid =

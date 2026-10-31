@@ -119,7 +119,8 @@ namespace dbc::language
                     AppendEvidence(Evidence, Seen, LanguageProfile::Dbc, DialectEvidenceKind::Symbol, Diagnostic.Span,
                                    Diagnostic.Message, Path);
                 }
-                else if ((Diagnostic.Code == "DBC2014" || Diagnostic.Code == "DBC2036") &&
+                else if ((Diagnostic.Code == "DBC2014" || Diagnostic.Code == "DBC2036" ||
+                          Diagnostic.Code == "DBC2049") &&
                          CompiledProfile == LanguageProfile::Dbc)
                 {
                     AppendEvidence(Evidence, Seen, LanguageProfile::DbPro, DialectEvidenceKind::Symbol, Diagnostic.Span,

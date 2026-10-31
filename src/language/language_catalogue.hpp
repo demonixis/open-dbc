@@ -72,18 +72,12 @@ namespace dbc::language
         OpenDbcExtension = 4,
         LegacyUnverified = 8,
         OdeExtension = 16,
-        ClothParticlesExtension = 32,
-        DarkPhysicsExtension = 64,
-        DarkDynamixExtension = 128,
     };
 
     enum class CompatibilitySurface : std::uint8_t
     {
         Core,
         Ode,
-        ClothParticles,
-        DarkPhysics,
-        DarkDynamix,
     };
 
     enum class SymbolId : std::uint16_t
@@ -180,6 +174,9 @@ namespace dbc::language
     const SymbolDescriptor* FindLongestCommandPrefix(LanguageProfile Profile, std::string_view Text);
     // The most words any command's name has, which bounds the search for a name at the start of a line.
     std::size_t LongestCommandWords();
+    // The plugin a form removed from the catalogue came from, empty for any other name. The name may run on
+    // into the words of the form's arguments, which the parser cannot tell apart.
+    std::string_view RemovedPhysicsPlugin(std::string_view CanonicalName);
     bool AvailableIn(const SymbolDescriptor& Descriptor, LanguageProfile Profile);
     SupportStatus SupportFor(const SymbolDescriptor& Descriptor, LanguageProfile Profile);
     CompatibilityStubPolicy StubPolicyFor(const SymbolDescriptor& Descriptor, LanguageProfile Profile);

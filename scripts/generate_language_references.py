@@ -35,9 +35,6 @@ ROW_FIELDS = (
 )
 SURFACES = {
     16: "ODE",
-    32: "3D Cloth & Particles",
-    64: "DarkPHYSICS",
-    128: "Dark Dynamix",
 }
 PUBLIC_NOTES = {
     ("APPEND OBJECT", "DBC"): "APPEND OBJECT Filename$, ObjectId, StartFrame loads animation data relative to the execution asset root; both slash styles are accepted, StartFrame must be non-negative and animation channels must match the destination object.",
@@ -131,7 +128,7 @@ def build(profile: str, extensions: bool) -> str:
                             int(match.group(counts_index), 16))
         implemented = runtime_status(symbol, int(match.group(4)), int(match.group(11)), bit)
         evidence = int(match.group(12))
-        is_extension = bool(evidence & 0xF0)
+        is_extension = bool(evidence & 16)
         if is_extension != extensions:
             continue
         provenance = []
@@ -145,12 +142,6 @@ def build(profile: str, extensions: bool) -> str:
             provenance.append("legacy unverified")
         if evidence & 16:
             provenance.append("ODE extension")
-        if evidence & 32:
-            provenance.append("3D Cloth & Particles extension")
-        if evidence & 64:
-            provenance.append("DarkPHYSICS extension")
-        if evidence & 128:
-            provenance.append("Dark Dynamix extension")
         signatures = []
         for signature in by_symbol[symbol]:
             signatures.append(f"{parameter_text(signature[6])} -> {RETURN_NAMES[signature[5]]}")
@@ -180,9 +171,8 @@ def build(profile: str, extensions: bool) -> str:
     ]
     if extensions:
         lines[4:4] = [
-            "The extension surfaces are always available in the `DbPro` profile and share one portable physics architecture.",
-            "The implemented ODE rigid-body core uses the pinned Jolt backend; remaining forms retain explicit diagnostics.",
-            "Retired catalogue identifiers remain reserved; active extension forms use newly appended stable identifiers.",
+            "The ODE commands are always available in the `DbPro` profile and run on the pinned Jolt backend; remaining forms retain explicit diagnostics.",
+            "DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles forms are not in the catalogue: they fail to compile with `DBC2049`.",
         ]
     for kind, name, arity, signatures, status, provenance in sorted(entries, key=lambda row: (row[0], row[1])):
         if provenance == "OpenDBC extension" or (profile == "Dbc" and "OpenDBC extension" in provenance):
@@ -206,9 +196,6 @@ def provenance_text(evidence: int) -> str:
         (4, "OpenDBC extension"),
         (8, "legacy unverified"),
         (16, "ODE extension"),
-        (32, "3D Cloth & Particles extension"),
-        (64, "DarkPHYSICS extension"),
-        (128, "Dark Dynamix extension"),
     ):
         if evidence & bit:
             values.append(label)

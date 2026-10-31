@@ -109,12 +109,6 @@ Validation and scope:
 
 - [ ] More DBPro demos and qualified programs: 3 demos and 38 programs, against 6 and
   57 in Classic.
-- [ ] Decide on the DBPro extensions after the research on DBPro. Proposal: remove Dark
-  Physics, Dark Dynamix and Cloth/Particles from the catalogue, with their reference and
-  audits (1,149 forms, none runs), and keep ODE (121 forms, 20 run on Jolt). Removed
-  forms need an explicit diagnostic: `PHY` and `DYN` by prefix, a list for Cloth/Particles,
-  whose names share none. The `AGENTS.md` rules on stable `SymbolId`s and diagnostics
-  would have to allow it.
 
 ## Modern features
 

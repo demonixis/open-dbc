@@ -16,7 +16,7 @@ def is_video(name: str) -> bool:
 
 
 def family(name: str) -> str:
-    if name.startswith(("ODE ", "PHY ", "DYN ")):
+    if name.startswith("ODE "):
         return "physics"
     if "FTP" in name:
         return "ftp"
@@ -77,12 +77,6 @@ def evidence(mask: int) -> str:
         names.append("legacy-unverified")
     if mask & 16:
         names.append("ode-extension")
-    if mask & 32:
-        names.append("cloth-particles-extension")
-    if mask & 64:
-        names.append("darkphysics-extension")
-    if mask & 128:
-        names.append("dark-dynamix-extension")
     return ",".join(names) or "none"
 
 
@@ -94,7 +88,7 @@ def generate() -> str:
         available = int(match[4])
         implemented = int(match[11])
         proof = evidence(int(match[12]))
-        extension = bool(int(match[12]) & 0xF0)
+        extension = bool(int(match[12]) & 16)
         for profile, bit in (("dbc", 1), ("dbpro", 2)):
             if not available & bit or implemented & bit:
                 continue

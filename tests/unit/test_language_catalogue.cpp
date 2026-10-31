@@ -113,7 +113,7 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
             CHECK(dbc::language::SupportFor(Descriptor, LanguageProfile::DbPro) == SupportStatus::Unsupported);
         }
     }
-    CHECK(ExtensionSymbols == 1270);
+    CHECK(ExtensionSymbols == 121);
     CHECK(ImplementedExtensionSymbols == 20);
 
     CHECK(dbc::language::Symbol(SymbolId::Command_OdeStart).Kind == SymbolKind::Reserved);
@@ -123,24 +123,20 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
     CHECK(dbc::language::HasEvidence(ActiveOde, EvidenceSource::OdeExtension));
 }
 
-TEST_CASE("Extension evidence retains command function and same-arity type overloads")
+TEST_CASE("Removed physics plugins are named by their prefixes and forms")
 {
-    const auto* Command =
-        dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Command, "DYN COOK CONVEX MESH");
-    const auto* Function =
-        dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Function, "DYN COOK CONVEX MESH");
-    REQUIRE(Command != nullptr);
-    REQUIRE(Function != nullptr);
-    CHECK(Command->Id != Function->Id);
-
-    const auto* Convex =
-        dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Command, "PHY MAKE RIGID BODY STATIC CONVEX");
-    REQUIRE(Convex != nullptr);
-    const auto Calls = dbc::language::Overloads(Convex->Id, LanguageProfile::DbPro, 2);
-    REQUIRE(Calls.size() == 2);
-    REQUIRE(Calls[0]->Parameters.size() == 2);
-    REQUIRE(Calls[1]->Parameters.size() == 2);
-    CHECK(Calls[0]->Parameters[1].ValueType != Calls[1]->Parameters[1].ValueType);
+    using dbc::language::RemovedPhysicsPlugin;
+    CHECK(RemovedPhysicsPlugin("PHY MAKE RIGID BODY STATIC CONVEX") == "DarkPHYSICS");
+    CHECK(RemovedPhysicsPlugin("PHYSX") == "DarkPHYSICS");
+    CHECK(RemovedPhysicsPlugin("DYN COOK CONVEX MESH") == "Dark Dynamix");
+    CHECK(RemovedPhysicsPlugin("MAKE CLOTH") == "3D Cloth & Particles");
+    CHECK(RemovedPhysicsPlugin("MAKE CLOTH CURTAIN") == "3D Cloth & Particles");
+    CHECK(RemovedPhysicsPlugin("SET OBJECT AS VEHICLE BODY") == "3D Cloth & Particles");
+    CHECK(RemovedPhysicsPlugin("ODE START").empty());
+    CHECK(RemovedPhysicsPlugin("SET OBJECT").empty());
+    CHECK(RemovedPhysicsPlugin("PHYSICAL").empty());
+    CHECK(dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Command, "PHY MAKE RIGID BODY STATIC CONVEX") ==
+          nullptr);
 }
 
 TEST_CASE("DBPro math value creation and deletion retain command and integer function forms")

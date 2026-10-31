@@ -553,7 +553,8 @@ namespace dbc::language::detail
                             BindExpression(*Expression);
                         return;
                     }
-                    Error("DBC2013", "Unknown command '" + Canonical(Value.Name) + "'", Value.Span);
+                    if (!ReportRemovedPhysics(Canonical(Value.Name), Value.Span))
+                        Error("DBC2013", "Unknown command '" + Canonical(Value.Name) + "'", Value.Span);
                     for (auto& Expression : Value.Expressions)
                         BindExpression(*Expression);
                     return;
@@ -1008,7 +1009,8 @@ namespace dbc::language::detail
                             BindExpression(*Argument);
                         return Value.ResolvedType = {TypeKind::Error, {}};
                     }
-                    Error("DBC2035", "Unknown function or array '" + Name + "'", Value.Span);
+                    if (!ReportRemovedPhysics(Name, Value.Span))
+                        Error("DBC2035", "Unknown function or array '" + Name + "'", Value.Span);
                     for (auto& Argument : Value.Children)
                         BindExpression(*Argument);
                     return Value.ResolvedType = {TypeKind::Error, {}};
@@ -1170,6 +1172,18 @@ namespace dbc::language::detail
             {
                 if (!Value.IsNumeric() && Value.Kind != TypeKind::Error)
                     Error("DBC2042", "Condition must be numeric or boolean", Span);
+            }
+
+            bool ReportRemovedPhysics(const std::string& Name, SourceSpan Span)
+            {
+                const std::string_view Plugin = RemovedPhysicsPlugin(Name);
+                if (Plugin.empty())
+                    return false;
+                Error("DBC2049",
+                      "'" + Name + "' comes from " + std::string(Plugin) +
+                          ", which OpenDBC does not implement; use the ODE commands",
+                      Span);
+                return true;
             }
 
             void CheckSupport(const SymbolDescriptor& Descriptor, SourceSpan Span)

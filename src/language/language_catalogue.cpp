@@ -24,12 +24,6 @@ namespace
         using dbc::language::EvidenceSource;
         if ((Evidence & static_cast<std::uint8_t>(EvidenceSource::OdeExtension)) != 0)
             return CompatibilitySurface::Ode;
-        if ((Evidence & static_cast<std::uint8_t>(EvidenceSource::ClothParticlesExtension)) != 0)
-            return CompatibilitySurface::ClothParticles;
-        if ((Evidence & static_cast<std::uint8_t>(EvidenceSource::DarkPhysicsExtension)) != 0)
-            return CompatibilitySurface::DarkPhysics;
-        if ((Evidence & static_cast<std::uint8_t>(EvidenceSource::DarkDynamixExtension)) != 0)
-            return CompatibilitySurface::DarkDynamix;
         return CompatibilitySurface::Core;
     }
 
@@ -321,6 +315,26 @@ namespace dbc::language
         const auto& Index = SymbolIndex();
         const auto It = Index.find(LookupKey(Profile, Kind, Spelling));
         return It == Index.end() ? nullptr : It->second;
+    }
+
+    std::string_view RemovedPhysicsPlugin(std::string_view CanonicalName)
+    {
+        if (CanonicalName.starts_with("PHY ") || CanonicalName == "PHYSX")
+            return "DarkPHYSICS";
+        if (CanonicalName.starts_with("DYN "))
+            return "Dark Dynamix";
+        static constexpr std::string_view ClothForms[] = {
+#include "removed_physics_forms.inc"
+        };
+        for (std::string_view Name = CanonicalName;;)
+        {
+            if (std::binary_search(std::begin(ClothForms), std::end(ClothForms), Name))
+                return "3D Cloth & Particles";
+            const std::size_t Space = Name.rfind(' ');
+            if (Space == std::string_view::npos)
+                return {};
+            Name = Name.substr(0, Space);
+        }
     }
 
     std::size_t LongestCommandWords()
