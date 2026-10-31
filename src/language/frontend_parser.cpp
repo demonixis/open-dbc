@@ -562,7 +562,10 @@ namespace dbc::language::detail
         class Parser
         {
           public:
-            explicit Parser(Program& Value) : Program_(Value), Source_(*Value.Source), Segments_(BuildSegments()) {}
+            explicit Parser(Program& Value)
+                : Program_(Value), Source_(*Value.Source), Segments_(BuildSegments()), ArrayNames_(FindArrayNames())
+            {
+            }
 
             void Run()
             {
@@ -635,6 +638,17 @@ namespace dbc::language::detail
                         return true;
                 }
                 return false;
+            }
+
+            std::set<std::string> FindArrayNames() const
+            {
+                std::set<std::string> Result;
+                for (const Segment& Value : Segments_)
+                {
+                    if (FirstIs(Value, "DIM") && Value.Tokens.size() > 1 && Value.Tokens[1].Kind == TokenKind::Word)
+                        Result.insert(Canonical(Lexeme(Source_, Value.Tokens[1].Span)));
+                }
+                return Result;
             }
 
             std::vector<Segment> BuildSegments()
@@ -1135,6 +1149,8 @@ namespace dbc::language::detail
                     Result.Name = Canonical(Lexeme(Source_, Value.Tokens.front().Span));
                     return Result;
                 }
+                if (AssignsToCommandName(Value))
+                    return ParseAssignment(Value);
                 if (FirstIs(Value, "DIM"))
                     return ParseDeclaration(Value, StorageClass::Dim, 1);
                 if (FirstIs(Value, "LOCAL"))
@@ -1203,14 +1219,8 @@ namespace dbc::language::detail
                     return ParseDeclaration(Value, StorageClass::Dim, 0);
                 }
 
-                const std::size_t Equal = FindTopLevel(Value.Tokens, TokenKind::Equal, 0);
-                if (Equal != Npos)
-                {
-                    Result.Kind = StatementKind::Assignment;
-                    Result.Expressions.push_back(ParseExpression(Value.Tokens, 0, Equal));
-                    Result.Expressions.push_back(ParseExpression(Value.Tokens, Equal + 1, Value.Tokens.size()));
-                    return Result;
-                }
+                if (FindTopLevel(Value.Tokens, TokenKind::Equal, 0) != Npos)
+                    return ParseAssignment(Value);
                 if (Value.Tokens.size() > 1 && Value.Tokens.front().Kind == TokenKind::Word &&
                     Value.Tokens[1].Kind == TokenKind::LeftParen)
                 {
@@ -1228,6 +1238,33 @@ namespace dbc::language::detail
                     return Result;
                 }
                 return ParseCommand(Value);
+            }
+
+            // Classic lets a variable or an array share a command's name: `sync=1`, `dir=rnd(4)`, `ink(a)=200`.
+            bool AssignsToCommandName(const Segment& Value) const
+            {
+                if (Source_.Profile != LanguageProfile::Dbc || Value.Tokens.size() < 3 ||
+                    Value.Tokens.front().Kind != TokenKind::Word)
+                    return false;
+                if (Value.Tokens[1].Kind == TokenKind::Equal)
+                    return true;
+                if (Value.Tokens[1].Kind != TokenKind::LeftParen ||
+                    !ArrayNames_.contains(Canonical(Lexeme(Source_, Value.Tokens.front().Span))))
+                    return false;
+                const std::size_t Close = MatchingRightParen(Value.Tokens, 1);
+                return Close != Npos && Close + 1 < Value.Tokens.size() &&
+                       Value.Tokens[Close + 1].Kind == TokenKind::Equal;
+            }
+
+            Statement ParseAssignment(const Segment& Value)
+            {
+                Statement Result;
+                Result.Span = Value.Span;
+                const std::size_t Equal = FindTopLevel(Value.Tokens, TokenKind::Equal, 0);
+                Result.Kind = StatementKind::Assignment;
+                Result.Expressions.push_back(ParseExpression(Value.Tokens, 0, Equal));
+                Result.Expressions.push_back(ParseExpression(Value.Tokens, Equal + 1, Value.Tokens.size()));
+                return Result;
             }
 
             Statement ParseDeclaration(const Segment& Value, StorageClass Storage, std::size_t NameIndex)
@@ -1741,6 +1778,7 @@ namespace dbc::language::detail
             Program& Program_;
             const SourceDocument& Source_;
             std::vector<Segment> Segments_;
+            std::set<std::string> ArrayNames_;
             std::size_t Position_ = 0;
             std::size_t Depth_ = 0;
         };

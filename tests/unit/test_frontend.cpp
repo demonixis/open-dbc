@@ -235,6 +235,34 @@ TEST_CASE("Classic runs whole blocks inside an inline THEN")
               .HasErrors());
 }
 
+TEST_CASE("A Classic variable or array may share a command's name")
+{
+    const dbc::language::Program Classic = dbc::language::Compile(Source("sync=0 : dir=rnd(4)\n"
+                                                                         "if sync=0 and dir>=0 then sync=1\n"
+                                                                         "sync\n"
+                                                                         "dim ink(3)\n"
+                                                                         "ink(1)=200\n"
+                                                                         "ink rgb(ink(1),0,0),0\n",
+                                                                         dbc::language::LanguageProfile::Dbc));
+    for (const auto& Diagnostic : Classic.Diagnostics)
+        INFO(dbc::language::FormatDiagnostic(*Classic.Source, Diagnostic));
+    CHECK_FALSE(Classic.HasErrors());
+    REQUIRE(Classic.Statements.size() == 7);
+    CHECK(Classic.Statements[0].Kind == dbc::language::StatementKind::Assignment);
+    CHECK(Classic.Statements[3].Kind == dbc::language::StatementKind::Command);
+    CHECK(Classic.Statements[5].Kind == dbc::language::StatementKind::Assignment);
+    CHECK(Classic.Statements[6].Kind == dbc::language::StatementKind::Command);
+    CHECK(dbc::vm::Lower(Classic).Success());
+
+    // A parenthesised first argument still calls the command when no such array exists.
+    const dbc::language::Program Command =
+        dbc::language::Compile(Source("print (1)=1\n", dbc::language::LanguageProfile::Dbc));
+    REQUIRE_FALSE(Command.HasErrors());
+    CHECK(Command.Statements.front().Kind == dbc::language::StatementKind::Command);
+
+    CHECK(dbc::language::Compile(Source("sync=1\n", dbc::language::LanguageProfile::DbPro)).HasErrors());
+}
+
 TEST_CASE("REMSTART blocks are comments and must be closed")
 {
     const auto Open = Source("print 1\nremstart\nprint 2\n", dbc::language::LanguageProfile::Dbc);
