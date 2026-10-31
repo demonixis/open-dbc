@@ -353,6 +353,15 @@ namespace dbc
         bool ScaleLimbTexture(int ObjectId, int LimbId, float U, float V, std::string* Error = nullptr);
         bool ScaleLimbTexture(int ObjectId, int LimbId, int Stage, float U, float V, std::string* Error = nullptr);
         bool HideLimb(int ObjectId, int LimbId, std::string* Error = nullptr);
+        bool SetObjectExcluded(int ObjectId, bool Excluded, const char* Command, std::string* Error = nullptr);
+        bool SetLimbExcluded(int ObjectId, int LimbId, bool Excluded, const char* Command,
+                             std::string* Error = nullptr);
+        bool SetObjectCameraMask(int ObjectId, int Mask, std::string* Error = nullptr);
+        bool SetObjectFov(int ObjectId, float Degrees, std::string* Error = nullptr);
+        bool EnableObjectDepthBias(int ObjectId, float Slope, float Constant, std::string* Error = nullptr);
+        bool DisableObjectDepthBias(int ObjectId, std::string* Error = nullptr);
+        bool CalculateObjectBounds(int ObjectId, std::string* Error = nullptr);
+        bool LimbName(std::string& Output, int ObjectId, int LimbId, std::string* Error = nullptr) const;
         bool ShowLimb(int ObjectId, int LimbId, std::string* Error = nullptr);
         float LimbAngleX(int ObjectId, int LimbId);
         float LimbAngleY(int ObjectId, int LimbId);

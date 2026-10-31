@@ -125,7 +125,10 @@ namespace dbc
         std::vector<int> Ids;
         Ids.reserve(Cameras_.size());
         for (const auto& [Id, Camera] : Cameras_)
-            Ids.push_back(Id);
+            if (Id >= 32 || ((SyncMask_ >> Id) & 1u) != 0)
+                Ids.push_back(Id);
+        if (Ids.empty())
+            Ids.push_back(0);
         std::sort(Ids.begin(), Ids.end());
         return Ids;
     }

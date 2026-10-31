@@ -68,7 +68,6 @@ dbpro	Command_PerformChecklistForNetSessions	Command	PERFORM CHECKLIST FOR NET S
 dbpro	Command_PerformCsgDifference	Command	PERFORM CSG DIFFERENCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformCsgIntersection	Command	PERFORM CSG INTERSECTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformCsgUnion	Command	PERFORM CSG UNION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_PickObject	Command	PICK OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PlaceAnimation	Command	PLACE ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Command_PlayAnimation	Command	PLAY ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Command_PlayAnimationToImage	Command	PLAY ANIMATION TO IMAGE	Deferred	video	dbpro-reference	media-backend
@@ -174,7 +173,6 @@ dbpro	Function_BlitsystolocalAvailable	Function	BLITSYSTOLOCAL AVAILABLE	Target	
 dbpro	Command_Break	Command	BREAK	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_BuildStaticPortals	Command	BUILD STATIC PORTALS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CalculateAutomaticCollision	Command	CALCULATE AUTOMATIC COLLISION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_CalculateObjectBounds	Command	CALCULATE OBJECT BOUNDS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_CalibrategammaAvailable	Function	CALIBRATEGAMMA AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CallDllX	Command	CALL DLL X	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_CanMakeFile	Function	CAN MAKE FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
@@ -202,16 +200,10 @@ dbpro	Command_DeleteMemory	Command	DELETE MEMORY	Target	memory	dbpro-reference	e
 dbpro	Command_DeletePixelShader	Command	DELETE PIXEL SHADER	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteStaticObject	Command	DELETE STATIC OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DestroyTerrain	Command	DESTROY TERRAIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_DisableObjectZbias	Command	DISABLE OBJECT ZBIAS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DitherAvailable	Function	DITHER AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DrawToCamera	Command	DRAW TO CAMERA	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DrawToScreen	Command	DRAW TO SCREEN	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_EnableObjectZbias	Command	ENABLE OBJECT ZBIAS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExcludeFromImageblock	Command	EXCLUDE FROM IMAGEBLOCK	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExcludeLimbOff	Command	EXCLUDE LIMB OFF	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExcludeLimbOn	Command	EXCLUDE LIMB ON	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExcludeObjectOff	Command	EXCLUDE OBJECT OFF	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExcludeObjectOn	Command	EXCLUDE OBJECT ON	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExecutableRunning	Function	EXECUTABLE RUNNING	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExecuteExecutable	Function	EXECUTE EXECUTABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_FillMemory	Command	FILL MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
@@ -245,7 +237,6 @@ dbpro	Function_GetVertexdataPtr	Function	GET VERTEXDATA PTR	Target	core	dbpro-re
 dbpro	Command_HttpConnect	Command	HTTP CONNECT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_HttpDisconnect	Command	HTTP DISCONNECT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_HttpRequestData	Function	HTTP REQUEST DATA	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_LimbName	Function	LIMB NAME$	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_LoadIcon	Function	LOAD ICON	Study	core	dbpro-reference	typed-load-errors
 dbpro	Command_LockPixels	Command	LOCK PIXELS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_MakeArrayFromMemblock	Command	MAKE ARRAY FROM MEMBLOCK	Target	memory	dbpro-reference	engine-subsystem-and-oracle
@@ -263,7 +254,6 @@ dbpro	Function_NonpowtexturesAvailable	Function	NONPOWTEXTURES AVAILABLE	Target	
 dbpro	Function_OnlysquaretexturesAvailable	Function	ONLYSQUARETEXTURES AVAILABLE	Target	text	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_OpenImageblock	Command	OPEN IMAGEBLOCK	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformChecklistForImageblockFiles	Command	PERFORM CHECKLIST FOR IMAGEBLOCK FILES	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_PerformChecklistForOnscreenObjects	Command	PERFORM CHECKLIST FOR ONSCREEN OBJECTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformCsgClip	Command	PERFORM CSG CLIP	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformCsgDifferenceOnVertexdata	Command	PERFORM CSG DIFFERENCE ON VERTEXDATA	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformCsgIntersectionOnVertexdata	Command	PERFORM CSG INTERSECTION ON VERTEXDATA	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -289,8 +279,6 @@ dbpro	Command_SetGlobalShadowColor	Command	SET GLOBAL SHADOW COLOR	Target	core	d
 dbpro	Command_SetGlobalShadowShades	Command	SET GLOBAL SHADOW SHADES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGlobalShadowsOff	Command	SET GLOBAL SHADOWS OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGlobalShadowsOn	Command	SET GLOBAL SHADOWS ON	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectFov	Command	SET OBJECT FOV	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectMask	Command	SET OBJECT MASK	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetPixelShaderOff	Command	SET PIXEL SHADER OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetPixelShaderOn	Command	SET PIXEL SHADER ON	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetPixelShaderTexture	Command	SET PIXEL SHADER TEXTURE	Target	text	dbpro-reference	engine-subsystem-and-oracle
@@ -308,7 +296,6 @@ dbpro	Command_SetVertexShaderVector	Command	SET VERTEX SHADER VECTOR	Target	core
 dbpro	Function_StaticRaycast	Function	STATIC RAYCAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_StaticVolume	Function	STATIC VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_StopExecutable	Command	STOP EXECUTABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SyncMask	Command	SYNC MASK	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SyncSleep	Command	SYNC SLEEP	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_TextureScreen	Command	TEXTURE SCREEN	Target	display	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TexturesystemmemoryAvailable	Function	TEXTURESYSTEMMEMORY AVAILABLE	Target	text	dbpro-reference	engine-subsystem-and-oracle

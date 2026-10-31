@@ -1,3 +1,4 @@
+#include "camera_system.hpp"
 #include "core_system.hpp"
 #include "engine_kernel.hpp"
 #include "image_store.hpp"
@@ -203,6 +204,39 @@ namespace dbc
         return false;
     }
 
+    // Moves a corner along its line of sight until its [0, 1] depth has changed by Bias: where it lands on the screen
+    // does not change, so the projection need not know.
+    [[nodiscard]] Vec3 DepthBiasedPoint(const Vec3& Point, float Bias, const glm::mat4& Projection)
+    {
+        if (Point.Z <= 0.0f)
+            return Point;
+        // Depth is A + B / z with B negative, so the bias acts on B / z alone.
+        const float B = Projection[3][2];
+        const float Biased = B / Point.Z + Bias;
+        if (!(Biased < 0.0f))
+            return Point;
+        const float Scale = B / Biased / Point.Z;
+        return Vec3{Point.X * Scale, Point.Y * Scale, Point.Z * Scale};
+    }
+
+    // The steepest change of depth per pixel across a triangle, which a slope-scaled bias multiplies.
+    [[nodiscard]] float TriangleDepthSlope(const Vec3& V0, const Vec3& V1, const Vec3& V2, const RenderView& View)
+    {
+        if (V0.Z <= 0.0f || V1.Z <= 0.0f || V2.Z <= 0.0f)
+            return 0.0f;
+        const glm::vec2 Half(static_cast<float>(View.PhysicalWidth) * View.Projection[0][0] * 0.5f,
+                             static_cast<float>(View.PhysicalHeight) * View.Projection[1][1] * 0.5f);
+        const auto OnScreen = [&](const Vec3& V)
+        { return glm::vec3(V.X / V.Z * Half.x, V.Y / V.Z * Half.y, View.Projection[3][2] / V.Z); };
+        const glm::vec3 A = OnScreen(V0);
+        const glm::vec3 E1 = OnScreen(V1) - A;
+        const glm::vec3 E2 = OnScreen(V2) - A;
+        const float Area = E1.x * E2.y - E2.x * E1.y;
+        if (std::abs(Area) < 1e-6f)
+            return 0.0f;
+        return std::max(std::abs((E1.z * E2.y - E2.z * E1.y) / Area), std::abs((E2.z * E1.x - E1.z * E2.x) / Area));
+    }
+
     // Whether an object draws opaque triangles whose result depends on their place among the other objects' opaque
     // triangles, ordered by depth: drawing meshes from GPU buffers apart from them would change it.
     [[nodiscard]] bool ObjectsNeedDepthOrder(EngineKernel& K)
@@ -347,7 +381,10 @@ namespace dbc
             {
                 if (Scene)
                     ++Scene->Objects;
-                if (!Object.Visible)
+                if (!Object.Visible || Object.Excluded)
+                    return;
+                if (const int CameraId = K.Camera().CurrentCameraId();
+                    CameraId >= 0 && CameraId < 32 && ((Object.CameraMask >> CameraId) & 1u) == 0)
                     return;
                 if (Scene)
                     ++Scene->VisibleObjects;
@@ -355,7 +392,7 @@ namespace dbc
                 // ── Frustum culling (sphere test) ────────────────────────────────────
                 // Skip objects whose bounding sphere lies entirely outside the view frustum.
                 // lock_to_screen objects live in screen-space and are never culled.
-                if (!Object.LockToScreen &&
+                if (!Object.LockToScreen && Object.ViewFov == 0.0f &&
                     (!K.Objects().IsStaticRenderObject(Id) || K.Objects().StaticOcclusionEnabled()))
                 {
                     const float MaxScale =
@@ -423,13 +460,18 @@ namespace dbc
                 const Vec3 EyePoint = Object.LockToScreen ? Vec3{0.0f, 0.0f, 0.0f} : Camera;
                 // Opaque, depth-tested objects in the world, outside any glue chain, with no reflection. Casting a
                 // shadow does not matter: volumes come from the whole mesh, not from what is drawn.
-                const bool GpuObject = GpuMeshes && Scene && AlphaPhase < 0 && !Object.LockToScreen &&
-                                       Object.GluedTargetObject <= 0 && Object.Alpha >= 0.999f &&
-                                       !Object.AlphaMapping && !Object.TransparentBlack && Object.DepthTest &&
-                                       Object.DepthWrite && !Object.ReflectionShading;
+                const bool GpuObject =
+                    GpuMeshes && Scene && AlphaPhase < 0 && !Object.LockToScreen && Object.GluedTargetObject <= 0 &&
+                    Object.Alpha >= 0.999f && !Object.AlphaMapping && !Object.TransparentBlack && Object.DepthTest &&
+                    Object.DepthWrite && !Object.ReflectionShading && Object.ViewFov == 0.0f && !Object.DepthBiased;
+                // Scaling x and y in view space lands a vertex where a projection with that field of view would.
+                const float FovScale =
+                    Object.ViewFov > 0.0f ? std::tan(glm::radians(std::clamp(K.Camera().Fov(), 10.0f, 170.0f)) * 0.5f) /
+                                                std::tan(glm::radians(Object.ViewFov) * 0.5f)
+                                          : 1.0f;
                 for (const Mesh& MeshValue : Object.Meshes)
                 {
-                    if (!MeshValue.Visible)
+                    if (!MeshValue.Visible || MeshValue.Excluded)
                     {
                         continue;
                     }
@@ -489,6 +531,8 @@ namespace dbc
                         WorldPositions[Vertex] = World;
                         ViewPositions[Vertex] =
                             Object.LockToScreen ? World : dbc::WorldToViewPoint(K, World.X, World.Y, World.Z);
+                        ViewPositions[Vertex].X *= FovScale;
+                        ViewPositions[Vertex].Y *= FovScale;
                     }
 
                     // Resolved by the first visible triangle, so a mesh that shows none loads no texture.
@@ -807,11 +851,18 @@ namespace dbc
                             Vertex.Color = Corner.Color;
                             return Vertex;
                         };
+                        const float Bias = Object.DepthBiased
+                                               ? Object.DepthBiasConstant +
+                                                     Object.DepthBiasSlope * TriangleDepthSlope(V0, V1, V2, View)
+                                               : 0.0f;
+                        const auto Biased = [&](const Vec3& Point)
+                        { return Bias != 0.0f ? DepthBiasedPoint(Point, Bias, View.Projection) : Point; };
                         dbc::AppendClippedViewTriangle(
-                            K, ViewCorner(V0, C0, ShaderDirection0), ViewCorner(V1, C1, ShaderDirection1),
-                            ViewCorner(V2, C2, ShaderDirection2), Surface->GpuTexture, Surface->BlendTransparent,
-                            WorldTris, Surface->BlendAdditive, Surface->Style, AlphaPhase, VeryEarly, DepthBias, -1, 0,
-                            Object.DepthWrite, Object.DepthTest, Surface->AuxiliaryGpuTextures, Surface->CubeGpuTexture,
+                            K, ViewCorner(Biased(V0), C0, ShaderDirection0),
+                            ViewCorner(Biased(V1), C1, ShaderDirection1), ViewCorner(Biased(V2), C2, ShaderDirection2),
+                            Surface->GpuTexture, Surface->BlendTransparent, WorldTris, Surface->BlendAdditive,
+                            Surface->Style, AlphaPhase, VeryEarly, DepthBias, -1, 0, Object.DepthWrite,
+                            Object.DepthTest, Surface->AuxiliaryGpuTextures, Surface->CubeGpuTexture,
                             Surface->StyleHash);
                     }
                 }

@@ -956,6 +956,7 @@ dbpro	342	500	Command	PERFORM CHECKLIST FOR FILES	golden-output	test_dbpro_file_
 dbpro	343	502	Command	PERFORM CHECKLIST FOR FONTS	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	344	504	Command	PERFORM CHECKLIST FOR GRAPHICS CARDS	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	348	512	Command	PERFORM CHECKLIST FOR OBJECT LIMBS	checklist-state	test_engine_builtins.cpp::Portable limb checklist colour and texture transforms preserve stage semantics	-
+dbpro	352	516	Command	PICK OBJECT	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	353	517	Command	PICK SCREEN	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	354	519	Command	PITCH CAMERA DOWN	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	355	521	Command	PITCH CAMERA UP	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
@@ -1578,6 +1579,7 @@ dbpro	1203	1765	Command	ARRAY INSERT AT ELEMENT	golden-output	test_dbpro_collect
 dbpro	1204	1766	Command	ARRAY INSERT AT TOP	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1208	1769	Command	BUILD REFLECTION MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	1209	1770	Command	BUILD ROTATION AXIS MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1213	1773	Command	CALCULATE OBJECT BOUNDS	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1216	1776	Function	CAMERA EXIST	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	1218	1778	Function	CEIL	golden-output	test_dbpro_core.dba	8d62c939abc65069a90e348b81888038410b08ddf81ef5c642ada8634a676b3d
 dbpro	1228	1788	Function	COMPARE CASE$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
@@ -1585,13 +1587,19 @@ dbpro	1229	1789	Function	CONTROL DEVICE INDEX	input-device	test_engine_builtins.
 dbpro	1230	1790	Command	CONVERT MESH TO VERTEXDATA	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	1245	1805	Function	DESKTOP HEIGHT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1246	1806	Function	DESKTOP WIDTH	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1248	1808	Command	DISABLE OBJECT ZBIAS	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1249	1809	Command	DISABLE OBJECT ZREAD	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
 dbpro	1250	1810	Command	DISABLE OBJECT ZWRITE	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
 dbpro	1254	1812	Command	DRAW SPRITES FIRST	render-order	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1255	1813	Command	DRAW SPRITES LAST	render-order	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1259	1816	Command	EMPTY ARRAY	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
+dbpro	1260	1817	Command	ENABLE OBJECT ZBIAS	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1261	1818	Command	ENABLE OBJECT ZREAD	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
 dbpro	1262	1819	Command	ENABLE OBJECT ZWRITE	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
+dbpro	1264	1821	Command	EXCLUDE LIMB OFF	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1265	1822	Command	EXCLUDE LIMB ON	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1266	1823	Command	EXCLUDE OBJECT OFF	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1267	1824	Command	EXCLUDE OBJECT ON	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1271	1828	Function	FIND FIRST CHAR$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1272	1829	Function	FIND LAST CHAR$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1273	1830	Function	FIND SUB STRING$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
@@ -1613,6 +1621,7 @@ dbpro	1319	1875	Function	IMAGE FILE EXIST	golden-output	test_dbpro_display_image
 dbpro	1321	1876	Function	JOYSTICK INFORMATION	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
 dbpro	1322	1877	Function	LIMB COLLISION	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	1323	1878	Function	LIMB HIT	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
+dbpro	1324	1879	Function	LIMB NAME$	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1329	1884	Command	MAKE FILE FROM MEMBLOCK	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	1332	1887	Command	MAKE OBJECT PLANE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	1338	1893	Function	MUSIC SPEED	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -1620,6 +1629,7 @@ dbpro	1339	1894	Function	MUSIC VOLUME	audio-state	test_engine_builtins.cpp::Port
 dbpro	1340	1895	Function	MYDOCDIR$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	1342	1897	Command	NEXT ARRAY INDEX	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1343	1898	Function	NEXT TOKEN$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1349	1904	Command	PERFORM CHECKLIST FOR ONSCREEN OBJECTS	object-selection-state	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1357	1912	Command	PREVIOUS ARRAY INDEX	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1358	1913	Command	PRINTC	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1359	1914	Command	PROJECT VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
@@ -1638,6 +1648,8 @@ dbpro	1385	1940	Command	SET EFFECT CONSTANT VECTOR	effect-control	test_shader_co
 dbpro	1390	1945	Command	SET JOYSTICK DEADZONE	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
 dbpro	1391	1946	Command	SET KEY STATE TOGGLE	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbpro	1392	1947	Command	SET LIMB NORMALS	geometry-render	test_engine_builtins.cpp::DBPro object and limb normal commands rewrite rendered geometry	-
+dbpro	1393	1948	Command	SET OBJECT FOV	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1394	1949	Command	SET OBJECT MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1400	1955	Command	SET SPRITE IMAGE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1401	1956	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1401	1957	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
@@ -1650,6 +1662,7 @@ dbpro	1416	1972	Function	SOUND SPEED	audio-state	test_engine_builtins.cpp::Porta
 dbpro	1417	1973	Function	SPRITE FRAME	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1418	1974	Function	SPRITE PRIORITY	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1419	1975	Function	SPRITE VISIBLE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	1424	1979	Command	SYNC MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1435	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
 dbpro	1438	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1440	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-

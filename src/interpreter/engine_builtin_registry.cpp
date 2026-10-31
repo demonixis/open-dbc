@@ -988,6 +988,42 @@ namespace dbc::interpreter::detail
             }
         }
 
+        bool PerformChecklistForOnscreenObjects(BuiltinContext& Context, int CameraId, std::string* Error = nullptr)
+        {
+            CameraSystem& Camera = Context.Kernel->Camera();
+            if (Camera.CameraExist(CameraId) == 0)
+            {
+                if (Error)
+                    *Error =
+                        "PERFORM CHECKLIST FOR ONSCREEN OBJECTS requires existing camera " + std::to_string(CameraId);
+                return false;
+            }
+            std::vector<int> Ids;
+            Context.Kernel->Objects().ForEachObject(
+                [&](int Id, const Object3D& Object)
+                {
+                    if (Object.Visible && !Object.Excluded)
+                        Ids.push_back(Id);
+                });
+            std::sort(Ids.begin(), Ids.end());
+            Context.Checklist.clear();
+            for (const int Id : Ids)
+            {
+                int InScreen = 0;
+                const int Previous = Camera.SelectRenderCamera(CameraId);
+                const bool Read = Context.Kernel->Objects().ObjectInScreen(InScreen, Id, Error);
+                Camera.SelectRenderCamera(Previous);
+                if (!Read)
+                    return false;
+                if (InScreen == 0)
+                    continue;
+                ChecklistItem Item;
+                Item.A = Id;
+                Context.Checklist.push_back(std::move(Item));
+            }
+            return true;
+        }
+
         bool PerformChecklistForObjectLimbs(BuiltinContext& Context, int ObjectId, std::string* Error = nullptr)
         {
             const Object3D* Object = Context.Kernel->Objects().GetObject(ObjectId);

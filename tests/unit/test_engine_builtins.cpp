@@ -9917,6 +9917,144 @@ TEST_CASE("Music fallback is limited to same-stem MIDI alternatives")
     std::filesystem::remove_all(Root, CleanupError);
 }
 
+TEST_CASE("DBPro chooses what each camera and SYNC draws, and how an object projects")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 64, 64));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+    Kernel.Lights().SetAmbientLight(0x00FFFFFF);
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    const auto PixelAt = [&](float Fx, float Fy)
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        std::array<Uint8, 4> Pixel{};
+        REQUIRE(SDL_ReadSurfacePixel(Capture, static_cast<int>(static_cast<float>(Capture->w) * Fx),
+                                     static_cast<int>(static_cast<float>(Capture->h) * Fy), &Pixel[0], &Pixel[1],
+                                     &Pixel[2], &Pixel[3]));
+        SDL_DestroySurface(Capture);
+        return Pixel;
+    };
+    const auto Red = [&](float Fx = 0.5f, float Fy = 0.5f) { return PixelAt(Fx, Fy)[0] > 128; };
+
+    Kernel.Objects().MakeObjectBox(1, 2.0f, 2.0f, 0.1f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 5.0f);
+    Kernel.Objects().SetObjectLight(1, 0);
+    Kernel.Objects().ColorObject(1, 0x00FF0000);
+    REQUIRE(Red());
+
+    SUBCASE("excluded objects and limbs leave the render lists but keep their state")
+    {
+        REQUIRE(Command(SymbolId::Command_ExcludeObjectOn, {1}));
+        CHECK_FALSE(Red());
+        CHECK(Kernel.Objects().GetObject(1)->Visible);
+        REQUIRE(Command(SymbolId::Command_ExcludeObjectOff, {1}));
+        CHECK(Red());
+        REQUIRE(Command(SymbolId::Command_ExcludeLimbOn, {1, 0}));
+        CHECK_FALSE(Red());
+        REQUIRE(Command(SymbolId::Command_ExcludeLimbOff, {1, 0}));
+        CHECK(Red());
+        CHECK_FALSE(Command(SymbolId::Command_ExcludeLimbOn, {1, 9}));
+        CHECK_FALSE(Command(SymbolId::Command_ExcludeObjectOn, {2}));
+    }
+
+    SUBCASE("object masks and the sync mask name cameras by bit")
+    {
+        RequireEngineStatus([&](std::string& CameraError) { return Kernel.Camera().MakeCamera(1, &CameraError); });
+        RequireEngineStatus([&](std::string& CameraError)
+                            { return Kernel.Camera().PositionCamera(1, 0.0f, 0.0f, 0.0f, &CameraError); });
+        RequireEngineStatus([&](std::string& CameraError) { return Kernel.Camera().DisableBackdrop(1, &CameraError); });
+        // Camera zero alone draws it.
+        REQUIRE(Command(SymbolId::Command_SetObjectMask, {1, 1}));
+        CHECK(Red());
+        // Camera one alone draws it, over a camera zero that does not.
+        REQUIRE(Command(SymbolId::Command_SetObjectMask, {1, 2}));
+        CHECK(Red());
+        REQUIRE(Command(SymbolId::Command_SyncMask, {1}));
+        CHECK_FALSE(Red());
+        REQUIRE(Command(SymbolId::Command_SyncMask, {2}));
+        CHECK(Red());
+        // No camera left: camera zero still draws, so the 2D layer reaches the screen.
+        REQUIRE(Command(SymbolId::Command_SyncMask, {0}));
+        CHECK(Kernel.Camera().ScreenCameraIds() == std::vector<int>{0});
+        CHECK_FALSE(Red());
+    }
+
+    SUBCASE("an object's own field of view replaces the camera's for it alone")
+    {
+        // A two-unit box five units away ends well inside the screen at the default field of view.
+        CHECK_FALSE(Red(0.85f));
+        REQUIRE(Command(SymbolId::Command_SetObjectFov, {1, 15}));
+        CHECK(Red(0.85f));
+        REQUIRE(Command(SymbolId::Command_SetObjectFov, {1, 0}));
+        CHECK_FALSE(Red(0.85f));
+        CHECK_FALSE(Command(SymbolId::Command_SetObjectFov, {1, 200}));
+    }
+
+    SUBCASE("a depth bias brings a surface through the one in front of it")
+    {
+        Kernel.Objects().MakeObjectBox(2, 2.0f, 2.0f, 0.1f);
+        Kernel.Objects().PositionObject(2, 0.0f, 0.0f, 5.5f);
+        Kernel.Objects().SetObjectLight(2, 0);
+        Kernel.Objects().ColorObject(2, 0x000000FF);
+        REQUIRE(Red());
+        REQUIRE(Command(SymbolId::Command_EnableObjectZbias, {2, 0, -0.01}));
+        CHECK_FALSE(Red());
+        CHECK(PixelAt(0.5f, 0.5f)[2] > 128);
+        // The bias changes the depth, not where the surface lands on the screen.
+        CHECK_FALSE(Red(0.85f));
+        CHECK(PixelAt(0.85f, 0.5f)[2] < 128);
+        REQUIRE(Command(SymbolId::Command_DisableObjectZbias, {2}));
+        CHECK(Red());
+    }
+
+    SUBCASE("bounds, limb names, the onscreen checklist and the pick")
+    {
+        REQUIRE(Command(SymbolId::Command_CalculateObjectBounds, {1}));
+        CHECK(Kernel.Objects().GetObject(1)->BoundingRadius > 1.0f);
+
+        REQUIRE(Command(SymbolId::Command_PerformChecklistForOnscreenObjects, {0}));
+        REQUIRE(Context.Checklist.size() == 1);
+        CHECK(Context.Checklist[0].A == 1);
+        Kernel.Objects().PositionObject(1, 0.0f, 0.0f, -50.0f);
+        REQUIRE(Command(SymbolId::Command_PerformChecklistForOnscreenObjects, {0}));
+        CHECK(Context.Checklist.empty());
+        Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 5.0f);
+        REQUIRE(Command(SymbolId::Command_ExcludeObjectOn, {1}));
+        REQUIRE(Command(SymbolId::Command_PerformChecklistForOnscreenObjects, {0}));
+        CHECK(Context.Checklist.empty());
+        REQUIRE(Command(SymbolId::Command_ExcludeObjectOff, {1}));
+
+        BuiltinValue Name;
+        REQUIRE(InvokeFunction(Context, SymbolId::Function_LimbName,
+                               {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0)}, Name, Error));
+        CHECK(Name.AsString().empty());
+        CHECK_FALSE(InvokeFunction(Context, SymbolId::Function_LimbName,
+                                   {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(9)}, Name, Error));
+
+        REQUIRE(Command(SymbolId::Command_PickObject, {static_cast<double>(Kernel.Core().WindowWidth() / 2),
+                                                       static_cast<double>(Kernel.Core().WindowHeight() / 2), 1, 1}));
+        CHECK(Kernel.Objects().GetPickDistance() > 0.0f);
+    }
+}
+
 TEST_CASE("DBPro surface maps light objects through the Blinn-Phong path")
 {
     dbc::EngineKernel Kernel;

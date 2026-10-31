@@ -26,8 +26,15 @@ namespace dbc
             return CurrentCameraId_;
         }
 
-        // Every camera draws to the screen at SYNC, camera zero first and the others by number.
+        // The cameras SYNC MASK leaves draw to the screen at SYNC, camera zero first and the others by number.
+        // A mask that leaves none keeps camera zero, so that the 2D layer still reaches the screen.
         [[nodiscard]] std::vector<int> ScreenCameraIds() const;
+
+        void SetSyncMask(int Mask)
+        {
+            SyncMask_ = static_cast<unsigned int>(Mask);
+        }
+
         // Lets the renderer read an existing camera through the current-camera accessors without
         // marking it dirty; it returns the previous current camera, which the renderer restores.
         int SelectRenderCamera(int CameraId);
@@ -231,6 +238,7 @@ namespace dbc
         EngineKernel& Kernel_;
         std::unordered_map<int, CameraState> Cameras_;
         int CurrentCameraId_ = 0;
+        unsigned int SyncMask_ = 0xFFFFFFFFu;
         bool AutoCamEnabled_ = true;
     };
 

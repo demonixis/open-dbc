@@ -253,6 +253,7 @@ namespace dbc
         int EffectId = -1;
         int SourceMeshIndex = -1;
         bool Visible = true;
+        bool Excluded = false; // EXCLUDE LIMB
         bool TextureUsesMaterialColor = false;
         SDL_FColor MaterialColor{1.0f, 1.0f, 1.0f, 1.0f};
         SDL_FColor LimbTint{1.0f, 1.0f, 1.0f, 1.0f}; // COLOR LIMB
@@ -384,6 +385,16 @@ namespace dbc
         bool CollisionAabbExplicit = false;
         bool CollisionBoxRotates = false;
         bool Visible = true;
+        // EXCLUDE OBJECT: out of every render list, while HIDE OBJECT's state stays its own.
+        bool Excluded = false;
+        // SET OBJECT MASK: the cameras that draw it, one bit per camera from camera zero.
+        uint32_t CameraMask = 0xFFFFFFFFu;
+        // SET OBJECT FOV, in degrees; zero takes the camera's.
+        float ViewFov = 0.0f;
+        // ENABLE OBJECT ZBIAS, in the units of the [0, 1] depth buffer.
+        bool DepthBiased = false;
+        float DepthBiasSlope = 0.0f;
+        float DepthBiasConstant = 0.0f;
         bool Wireframe = false;
         bool TransparentBlack = false;
         int TransparencyMode = -1;

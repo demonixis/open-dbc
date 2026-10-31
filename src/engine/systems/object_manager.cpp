@@ -7368,6 +7368,109 @@ namespace dbc
         return true;
     }
 
+    bool ObjectManager::SetObjectExcluded(int ObjectId, bool Excluded, const char* Command, std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, Command, Error);
+        if (!Object)
+            return false;
+        Object->Excluded = Excluded;
+        Object->TransformDirty = true;
+        return true;
+    }
+
+    bool ObjectManager::SetLimbExcluded(int ObjectId, int LimbId, bool Excluded, const char* Command,
+                                        std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, Command, Error);
+        if (!Object || !RequireLimb(*Object, ObjectId, LimbId, Command, Error))
+            return false;
+        ForEachLimbMesh(*Object, LimbId, [&](Mesh& MeshValue) { MeshValue.Excluded = Excluded; });
+        Object->TransformDirty = true;
+        return true;
+    }
+
+    bool ObjectManager::SetObjectCameraMask(int ObjectId, int Mask, std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, "SET OBJECT MASK", Error);
+        if (!Object)
+            return false;
+        Object->CameraMask = static_cast<uint32_t>(Mask);
+        Object->TransformDirty = true;
+        return true;
+    }
+
+    bool ObjectManager::SetObjectFov(int ObjectId, float Degrees, std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, "SET OBJECT FOV", Error);
+        if (!Object)
+            return false;
+        if (!(Degrees == 0.0f || (Degrees >= 1.0f && Degrees <= 179.0f)))
+        {
+            if (Error)
+                *Error = "SET OBJECT FOV takes 0 for the camera's field of view, or 1 to 179 degrees";
+            return false;
+        }
+        Object->ViewFov = Degrees;
+        Object->TransformDirty = true;
+        return true;
+    }
+
+    bool ObjectManager::EnableObjectDepthBias(int ObjectId, float Slope, float Constant, std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, "ENABLE OBJECT ZBIAS", Error);
+        if (!Object)
+            return false;
+        if (!std::isfinite(Slope) || !std::isfinite(Constant))
+        {
+            if (Error)
+                *Error = "ENABLE OBJECT ZBIAS requires finite values";
+            return false;
+        }
+        Object->DepthBiased = true;
+        Object->DepthBiasSlope = Slope;
+        Object->DepthBiasConstant = Constant;
+        Object->TransformDirty = true;
+        return true;
+    }
+
+    bool ObjectManager::DisableObjectDepthBias(int ObjectId, std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, "DISABLE OBJECT ZBIAS", Error);
+        if (!Object)
+            return false;
+        Object->DepthBiased = false;
+        Object->TransformDirty = true;
+        return true;
+    }
+
+    bool ObjectManager::CalculateObjectBounds(int ObjectId, std::string* Error)
+    {
+        Object3D* Object = RequireObject(ObjectId, "CALCULATE OBJECT BOUNDS", Error);
+        if (!Object)
+            return false;
+        RecalculateObjectBounds(*Object);
+        return true;
+    }
+
+    bool ObjectManager::LimbName(std::string& Output, int ObjectId, int LimbId, std::string* Error) const
+    {
+        const Object3D* Object = GetObject(ObjectId);
+        if (!Object)
+        {
+            if (Error)
+                *Error = "LIMB NAME$ requires existing object " + std::to_string(ObjectId);
+            return false;
+        }
+        if (!RequireLimb(*Object, ObjectId, LimbId, "LIMB NAME$", Error))
+            return false;
+        // A limb made by a command rather than loaded from a model has no node, so no name.
+        const aiNode* Node = LimbId < static_cast<int>(Object->LimbNodes.size())
+                                 ? Object->LimbNodes[static_cast<std::size_t>(LimbId)]
+                                 : nullptr;
+        Output = Node ? Node->mName.C_Str() : "";
+        return true;
+    }
+
     bool ObjectManager::ShowLimb(int ObjectId, int LimbId, std::string* Error)
     {
         Object3D* ObjectPointer = RequireObject(ObjectId, "SHOW LIMB", Error);

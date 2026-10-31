@@ -63,7 +63,7 @@ namespace dbc
         K.Objects().ForEachObject(
             [&](int Id, const Object3D& Object)
             {
-                if (!Object.Visible || !Object.ShadowShading || Object.ShadowRange <= 0.0f)
+                if (!Object.Visible || Object.Excluded || !Object.ShadowShading || Object.ShadowRange <= 0.0f)
                     return;
                 // A locked object lives on the screen, not in the world: only a shadow mesh of its own casts.
                 if (Object.LockToScreen && Object.ShadowMeshes.empty())
@@ -83,7 +83,7 @@ namespace dbc
                 for (const Mesh& MeshValue : Meshes)
                 {
                     Caster.Revisions.push_back(MeshValue.Geometry().Revision);
-                    if (!MeshValue.Visible)
+                    if (!MeshValue.Visible || MeshValue.Excluded)
                         continue;
                     if (!Object.CachedNodeGlobals.empty() && MeshValue.SourceMeshIndex >= 0)
                     {

@@ -1339,6 +1339,23 @@ SURFACE_MAP_WITNESSES = [
 ]
 UNIT_WITNESSES += tuple(SURFACE_MAP_WITNESSES)
 
+OBJECT_SELECTION_TEST = "test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects"
+UNIT_WITNESSES += (
+    ("dbpro", "Command", "EXCLUDE OBJECT ON", "exclude object on 1\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "EXCLUDE OBJECT OFF", "exclude object off 1\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "EXCLUDE LIMB ON", "exclude limb on 1, 0\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "EXCLUDE LIMB OFF", "exclude limb off 1, 0\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "SET OBJECT MASK", "set object mask 1, 2\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "SYNC MASK", "sync mask 2\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "SET OBJECT FOV", "set object fov 1, 15\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "ENABLE OBJECT ZBIAS", "enable object zbias 1, 0, -0.01\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "DISABLE OBJECT ZBIAS", "disable object zbias 1\n", "object-selection-pixel", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "CALCULATE OBJECT BOUNDS", "calculate object bounds 1\n", "object-selection-state", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "PERFORM CHECKLIST FOR ONSCREEN OBJECTS", "perform checklist for onscreen objects 0\n", "object-selection-state", OBJECT_SELECTION_TEST),
+    ("dbpro", "Function", "LIMB NAME$", "print limb name$(1, 0)\n", "object-selection-state", OBJECT_SELECTION_TEST),
+    ("dbpro", "Command", "PICK OBJECT", "pick object 32, 32, 1, 1\n", "object-selection-state", OBJECT_SELECTION_TEST),
+)
+
 ODE_RIGID_BODY_TEST = (
     "test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend"
 )
