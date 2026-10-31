@@ -173,10 +173,12 @@ namespace dbc::studio
                 ImGui::PushID(static_cast<int>(I));
                 ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(ColorFor(EntryValue.Level)));
 
+                Theme::PushCodeFont();
                 if (ImGui::Selectable(EntryValue.Text.c_str(), IsSelected(I)))
                 {
                     Select(I, ImGui::GetIO().KeyShift);
                 }
+                ImGui::PopFont();
 
                 ImGui::PopStyleColor();
 

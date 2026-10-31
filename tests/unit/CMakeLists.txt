@@ -59,7 +59,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/locales.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/theme.cpp
     )
-    add_dependencies(test_studio_i18n opendbc_studio_locales)
+    add_dependencies(test_studio_i18n opendbc_studio_locales opendbc_studio_fonts)
     target_include_directories(test_studio_i18n PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
                                ${CMAKE_BINARY_DIR}/tools/studio/generated)
     target_compile_definitions(test_studio_i18n PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -127,7 +127,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/scene/scene_renderer.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/theme.cpp
     )
-    add_dependencies(test_studio_scene_view opendbc_scene_shaders opendbc_studio_locales)
+    add_dependencies(test_studio_scene_view opendbc_scene_shaders opendbc_studio_locales opendbc_studio_fonts)
     target_include_directories(test_studio_scene_view PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src
                                ${CMAKE_BINARY_DIR}/tools/studio/generated)
     target_compile_definitions(test_studio_scene_view PRIVATE TEST_OUTPUT_DIR="${CMAKE_BINARY_DIR}/tests")

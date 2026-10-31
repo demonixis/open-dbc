@@ -3,6 +3,7 @@
 #include "engine/systems/log.hpp"
 #include "interpreter/atomic_file.hpp"
 #include "path_utf8.hpp"
+#include "theme.hpp"
 
 #include <algorithm>
 #include <array>
@@ -288,8 +289,11 @@ namespace dbc::studio
 
                 if (DbproProject_ && ImGui::BeginTabItem(TrId("DBPro Source")))
                 {
-                    if (ImGui::InputTextMultiline("##dbpro-raw", RawProject_.data(), RawProject_.size(),
-                                                  ImVec2(-1.0f, -80.0f)))
+                    Theme::PushCodeFont();
+                    const bool RawEdited = ImGui::InputTextMultiline("##dbpro-raw", RawProject_.data(),
+                                                                     RawProject_.size(), ImVec2(-1.0f, -80.0f));
+                    ImGui::PopFont();
+                    if (RawEdited)
                     {
                         DbproProject_ = dbc::language::ParseDbProProject(DbproProject_->LogicalPath,
                                                                          std::string(RawProject_.data()));

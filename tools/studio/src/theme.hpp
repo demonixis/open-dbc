@@ -40,8 +40,18 @@ namespace dbc::studio
         // `scale` is the display content scale used to bake sizes.
         void Apply(float Scale);
 
-        // Call once the style's font scale is set, which decides the size of ImGui's default font.
+        // Adds Roboto as the interface font and Cousine as the code font.
         void AddFonts();
+
+        // The fixed-pitch font TextEditor assumes. Null until AddFonts, which then keeps the current font.
+        inline ImFont* CodeFont = nullptr;
+        inline float CodeFontSize = 0.0f;
+
+        // Pair with ImGui::PopFont.
+        inline void PushCodeFont()
+        {
+            ImGui::PushFont(CodeFont, CodeFontSize);
+        }
     } // namespace Theme
 
 } // namespace dbc::studio

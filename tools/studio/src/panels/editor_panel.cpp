@@ -845,7 +845,9 @@ namespace dbc::studio
                         {
                             Completion_.BeforeEditor(*Doc.Editor, EditorId);
                         }
+                        Theme::PushCodeFont();
                         Doc.Editor->Render("##editor", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None);
+                        ImGui::PopFont();
                         if (Doc.Basic)
                         {
                             Completion_.AfterEditor(*Doc.Editor, Doc.Profile, EditorId);

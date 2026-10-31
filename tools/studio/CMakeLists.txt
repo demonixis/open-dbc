@@ -21,6 +21,7 @@ add_library(imgui STATIC
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlgpu3.cpp
+    ${imgui_SOURCE_DIR}/misc/freetype/imgui_freetype.cpp
 )
 
 target_include_directories(imgui SYSTEM PUBLIC
@@ -28,7 +29,9 @@ target_include_directories(imgui SYSTEM PUBLIC
     ${imgui_SOURCE_DIR}/backends
 )
 
-target_link_libraries(imgui PUBLIC SDL3::SDL3)
+# FreeType, already built for SDL3_ttf, renders small text more sharply than stb_truetype at 100% scale.
+target_compile_definitions(imgui PUBLIC IMGUI_ENABLE_FREETYPE)
+target_link_libraries(imgui PUBLIC SDL3::SDL3 PRIVATE freetype)
 
 # --- ImGuiColorTextEdit (goossens fork) ------------------------------------
 # Syntax-highlighting code editor widget: markers, squigglies, autocomplete,
@@ -363,6 +366,22 @@ add_custom_command(
 add_custom_target(opendbc_studio_locales DEPENDS "${STUDIO_LOCALE_INCLUDE}")
 add_dependencies(opendbc opendbc_studio_locales)
 
+# The interface and code fonts, from the pinned Dear ImGui.
+set(STUDIO_FONT_DIR "${imgui_SOURCE_DIR}/misc/fonts")
+set(STUDIO_FONT_FILES Roboto-Medium.ttf Cousine-Regular.ttf)
+set(STUDIO_FONT_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated/studio_fonts.inc")
+add_custom_command(
+    OUTPUT "${STUDIO_FONT_INCLUDE}"
+    COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_FONT_INCLUDE} -DSOURCE_DIR=${STUDIO_FONT_DIR}
+            "-DFILES=${STUDIO_FONT_FILES}" -DARRAY=KStudioFontFiles
+            -P "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+    DEPENDS "${STUDIO_FONT_DIR}/Roboto-Medium.ttf" "${STUDIO_FONT_DIR}/Cousine-Regular.ttf"
+            "${CMAKE_CURRENT_LIST_DIR}/cmake/embed_files.cmake"
+    COMMENT "Embed the Studio fonts"
+    VERBATIM)
+add_custom_target(opendbc_studio_fonts DEPENDS "${STUDIO_FONT_INCLUDE}")
+add_dependencies(opendbc opendbc_studio_fonts)
+
 target_link_libraries(opendbc PRIVATE
     dbc_interpreter
     imgui_texteditor
@@ -388,6 +407,8 @@ set(OPENDBC_REPOSITORY_LICENSES
     "${CMAKE_SOURCE_DIR}/licenses/Gradle-wrapper-LICENSE.txt"
     "${CMAKE_SOURCE_DIR}/licenses/MuseScore-General-SoundFont-LICENSE.md"
     "${CMAKE_SOURCE_DIR}/licenses/NotoSans-LICENSE.md"
+    "${CMAKE_SOURCE_DIR}/licenses/Roboto-LICENSE.md"
+    "${CMAKE_SOURCE_DIR}/licenses/Cousine-LICENSE.md"
     "${CMAKE_SOURCE_DIR}/licenses/stb_image-LICENSE.md")
 if(APPLE)
     set_source_files_properties(${OPENDBC_REFERENCE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)

@@ -1,10 +1,53 @@
 #include "theme.hpp"
 #include "engine/fallback_font.hpp"
 
+#include <misc/freetype/imgui_freetype.h>
+
+#include <cstdio>
+#include <span>
+#include <string_view>
+#include <utility>
+
+// Defines KStudioFontFiles from Dear ImGui's misc/fonts.
+#include "studio_fonts.inc"
+
 namespace dbc::studio
 {
     namespace
     {
+        constexpr float KInterfaceFontSize = 15.0f;
+        constexpr float KCodeFontSize = 14.0f;
+
+        // The data lives as long as the process: the atlas neither frees nor writes it.
+        ImFont* AddFont(std::span<const unsigned char> Data, float Size, ImFontConfig Config)
+        {
+            Config.FontDataOwnedByAtlas = false;
+            return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(Data.data()),
+                                                              static_cast<int>(Data.size()), Size, &Config);
+        }
+
+        ImFont* AddEmbeddedFont(std::string_view File, float Size)
+        {
+            for (const auto& [Name, Bytes] : KStudioFontFiles)
+            {
+                if (Name != File)
+                    continue;
+                ImFontConfig Config;
+                std::snprintf(Config.Name, sizeof(Config.Name), "%.*s", static_cast<int>(File.size()), File.data());
+                return AddFont(std::span(reinterpret_cast<const unsigned char*>(Bytes.data()), Bytes.size()), Size,
+                               Config);
+            }
+            return nullptr;
+        }
+
+        // Noto Sans, already embedded for the engine, supplies what the font before it lacks.
+        void MergeFallback(float Size)
+        {
+            ImFontConfig Config;
+            Config.MergeMode = true;
+            AddFont(dbc::FallbackFontData(), Size, Config);
+        }
+
         ImVec4 Col(ImU32 C)
         {
             return ImGui::ColorConvertU32ToFloat4(C);
@@ -22,17 +65,16 @@ namespace dbc::studio
     {
         void AddFonts()
         {
-            // ImGui's default font stops at Latin-1. Noto Sans behind it supplies what that lacks, such
-            // as the French œ, ’ and …, without changing how the rest of the text looks.
-            ImGuiIO& Io = ImGui::GetIO();
-            Io.Fonts->AddFontDefault();
-            ImFontConfig Fallback;
-            Fallback.MergeMode = true;
-            Fallback.FontDataOwnedByAtlas = false;
-            const std::span<const unsigned char> FontData = dbc::FallbackFontData();
-            // Not owned by the atlas, so ImGui neither frees nor writes it.
-            Io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(FontData.data()),
-                                           static_cast<int>(FontData.size()), 0.0f, &Fallback);
+            ImGui::GetIO().Fonts->FontLoaderFlags = ImGuiFreeTypeLoaderFlags_LightHinting;
+            ImGui::GetStyle().FontSizeBase = KInterfaceFontSize;
+
+            // The first font added is ImGui's default.
+            AddEmbeddedFont("Roboto-Medium.ttf", KInterfaceFontSize);
+            MergeFallback(KInterfaceFontSize);
+
+            CodeFont = AddEmbeddedFont("Cousine-Regular.ttf", KCodeFontSize);
+            CodeFontSize = KCodeFontSize;
+            MergeFallback(KCodeFontSize);
         }
 
         void Apply(float Scale)

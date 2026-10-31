@@ -142,8 +142,10 @@ namespace dbc::studio
                     ImGui::PopStyleColor();
                 }
                 // Read-only, so the buffer is never written through.
+                Theme::PushCodeFont();
                 ImGui::InputTextMultiline("##preview", Value.Body.data(), Value.Body.size() + 1, ImVec2(-1.0f, -Footer),
                                           ImGuiInputTextFlags_ReadOnly);
+                ImGui::PopFont();
             }
             else
             {
