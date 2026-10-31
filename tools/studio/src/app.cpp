@@ -1629,9 +1629,10 @@ namespace dbc::studio
     {
         if (!ShowEditorSettings_)
             return;
-        ImGui::SetNextWindowSize(ImVec2(460.0f, 110.0f), ImGuiCond_FirstUseEver);
-        if (ImGui::Begin(TrId("Editor Settings"), &ShowEditorSettings_))
+        // Fits its labels, whose length changes with the language.
+        if (ImGui::Begin(TrId("Editor Settings"), &ShowEditorSettings_, ImGuiWindowFlags_AlwaysAutoResize))
         {
+            ImGui::PushItemWidth(ImGui::GetFontSize() * 14.0f);
             const auto Speed = [this](const char* Label, float& Value)
             {
                 constexpr ImGuiSliderFlags Flags = ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp;
@@ -1643,6 +1644,7 @@ namespace dbc::studio
             };
             Speed(TrId("Scroll speed"), Settings_.Editor.ScrollSpeed);
             Speed(TrId("Camera speed"), Settings_.Editor.CameraSpeed);
+            ImGui::PopItemWidth();
         }
         ImGui::End();
     }
