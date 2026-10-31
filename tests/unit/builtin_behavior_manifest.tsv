@@ -1649,11 +1649,16 @@ dbpro	1382	1937	Command	SET EFFECT CONSTANT FLOAT	effect-control	test_shader_com
 dbpro	1383	1938	Command	SET EFFECT CONSTANT INTEGER	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
 dbpro	1384	1939	Command	SET EFFECT CONSTANT MATRIX	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
 dbpro	1385	1940	Command	SET EFFECT CONSTANT VECTOR	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
+dbpro	1386	1941	Command	SET GLOBAL SHADOW COLOR	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
+dbpro	1387	1942	Command	SET GLOBAL SHADOW SHADES	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
+dbpro	1388	1943	Command	SET GLOBAL SHADOWS OFF	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
+dbpro	1389	1944	Command	SET GLOBAL SHADOWS ON	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
 dbpro	1390	1945	Command	SET JOYSTICK DEADZONE	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
 dbpro	1391	1946	Command	SET KEY STATE TOGGLE	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbpro	1392	1947	Command	SET LIMB NORMALS	geometry-render	test_engine_builtins.cpp::DBPro object and limb normal commands rewrite rendered geometry	-
 dbpro	1393	1948	Command	SET OBJECT FOV	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1394	1949	Command	SET OBJECT MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1399	1954	Command	SET SHADOW LIGHT	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
 dbpro	1400	1955	Command	SET SPRITE IMAGE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1401	1956	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1401	1957	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-

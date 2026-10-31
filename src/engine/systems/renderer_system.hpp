@@ -203,6 +203,12 @@ namespace dbc
         [[nodiscard]] Vec3 ReflectWorldPoint(const Vec3& Point) const;
         [[nodiscard]] Vec3 ReflectWorldDirection(const Vec3& Direction) const;
         void SetShadowPosition(int Mode, float X, float Y, float Z);
+        // Casts from a light moved there, or from the point when LightId is negative; a positive range replaces
+        // every object's own.
+        bool SetShadowLight(int LightId, float X, float Y, float Z, float Range, std::string* Error = nullptr);
+        void SetGlobalShadows(bool Enabled);
+        void SetGlobalShadowColor(int Red, int Green, int Blue, int Alpha);
+        bool SetGlobalShadowShades(int Shades, std::string* Error = nullptr);
 
         [[nodiscard]] int ShadowPositionMode() const
         {
@@ -399,6 +405,12 @@ namespace dbc
         Vec3 ReflectionNormal_{0.0f, 1.0f, 0.0f};
         bool ReflectionViewEnabled_ = false;
         int ShadowPositionMode_ = 0;
+        bool GlobalShadows_ = true;
+        // What a shadow lays over the frame, once per shadow overlapping there up to the number of shades.
+        SDL_FColor GlobalShadowColor_{0.0f, 0.0f, 0.0f, 64.0f / 255.0f};
+        int GlobalShadowShades_ = 1;
+        float ShadowLightRange_ = 0.0f;
+        float ShadowCasterRange_ = 0.0f;
         Vec3 ShadowPosition_{};
         bool HasCachedTris_ = false;
         bool LastFrameShowedWorld_ = false;

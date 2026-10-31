@@ -55,9 +55,10 @@ namespace dbc
     {
         EngineKernel& K = Kernel_;
         const Vec3 Light = WorldShadowLight(K);
-        const bool LightMoved =
-            Light.X != ShadowCasterLight_.X || Light.Y != ShadowCasterLight_.Y || Light.Z != ShadowCasterLight_.Z;
+        const bool LightMoved = Light.X != ShadowCasterLight_.X || Light.Y != ShadowCasterLight_.Y ||
+                                Light.Z != ShadowCasterLight_.Z || ShadowLightRange_ != ShadowCasterRange_;
         ShadowCasterLight_ = Light;
+        ShadowCasterRange_ = ShadowLightRange_;
         ++ShadowCasterWalk_;
         bool Changed = false;
         K.Objects().ForEachObject(
@@ -93,7 +94,8 @@ namespace dbc
                             continue;
                     }
                     WorldMeshVertices(Object, MeshValue, ShadowWorldVertices_);
-                    ExtrudeShadowMesh(ShadowTopologyOf(MeshValue), ShadowWorldVertices_, Light, Object.ShadowRange,
+                    ExtrudeShadowMesh(ShadowTopologyOf(MeshValue), ShadowWorldVertices_, Light,
+                                      ShadowLightRange_ > 0.0f ? ShadowLightRange_ : Object.ShadowRange,
                                       ShadowLitFaces_, Caster.Vertices, Caster.NearCapIndices, Caster.Indices);
                 }
                 ++Current_.ShadowCastersExtruded;

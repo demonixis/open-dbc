@@ -102,6 +102,15 @@ near caps are drawn apart with a depth bias. Sides and far caps have none: where
 shadow falls does not change. A volume can also reach past the far plane, so volumes
 clamp their depth instead of clipping it, which would leave them open.
 
+## Shadow settings
+
+DBPro's `SET GLOBAL SHADOW COLOR r, g, b, a` replaces the darkening of shadow volumes
+(black at alpha 64), and `SET GLOBAL SHADOW SHADES n` lays it once more for each
+overlap up to `n` shadows. `SET SHADOW LIGHT light, x#, y#, z#, range#` casts from a
+numbered light moved there, or from the point when the number is negative, and a
+positive range replaces each object's. `SET GLOBAL SHADOWS OFF` stops drawing them
+without touching any object.
+
 ## Surface maps
 
 DBPro adds a Blinn-Phong path beside the fixed-function one, which it leaves

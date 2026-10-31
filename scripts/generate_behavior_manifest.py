@@ -1366,6 +1366,15 @@ UNIT_WITNESSES += (
     ("dbpro", "Command", "DRAW TO SCREEN", "draw to screen\n", "camera-image-state", CAMERA_IMAGE_TEST),
 )
 
+GLOBAL_SHADOW_TEST = "test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow"
+UNIT_WITNESSES += (
+    ("dbpro", "Command", "SET GLOBAL SHADOWS ON", "set global shadows on\n", "global-shadow-pixel", GLOBAL_SHADOW_TEST),
+    ("dbpro", "Command", "SET GLOBAL SHADOWS OFF", "set global shadows off\n", "global-shadow-pixel", GLOBAL_SHADOW_TEST),
+    ("dbpro", "Command", "SET GLOBAL SHADOW COLOR", "set global shadow color 255, 0, 0, 255\n", "global-shadow-pixel", GLOBAL_SHADOW_TEST),
+    ("dbpro", "Command", "SET GLOBAL SHADOW SHADES", "set global shadow shades 2\n", "global-shadow-pixel", GLOBAL_SHADOW_TEST),
+    ("dbpro", "Command", "SET SHADOW LIGHT", "set shadow light 1, 10, 0, 0, 200\n", "global-shadow-pixel", GLOBAL_SHADOW_TEST),
+)
+
 ODE_RIGID_BODY_TEST = (
     "test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend"
 )

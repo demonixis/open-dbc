@@ -1402,8 +1402,9 @@ namespace dbc
             ShadowOverlayInfo.depth_stencil_state.enable_stencil_test = true;
             ShadowOverlayInfo.depth_stencil_state.compare_mask = 0xFF;
             ShadowOverlayInfo.depth_stencil_state.write_mask = 0;
-            ShadowOverlayInfo.depth_stencil_state.front_stencil_state = {
-                SDL_GPU_STENCILOP_KEEP, SDL_GPU_STENCILOP_KEEP, SDL_GPU_STENCILOP_KEEP, SDL_GPU_COMPAREOP_NOT_EQUAL};
+            ShadowOverlayInfo.depth_stencil_state.front_stencil_state = {SDL_GPU_STENCILOP_KEEP, SDL_GPU_STENCILOP_KEEP,
+                                                                         SDL_GPU_STENCILOP_KEEP,
+                                                                         SDL_GPU_COMPAREOP_LESS_OR_EQUAL};
             ShadowOverlayInfo.depth_stencil_state.back_stencil_state =
                 ShadowOverlayInfo.depth_stencil_state.front_stencil_state;
             GpuShadowOverlayPipeline_ = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &ShadowOverlayInfo);

@@ -10156,6 +10156,97 @@ TEST_CASE("DBPro cameras draw to images and clip at a plane")
     }
 }
 
+TEST_CASE("DBPro sets the colour, the shades and the light of every shadow")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 64, 64));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE(Kernel.Gpu().SupportsStencil());
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    const auto Center = [&]()
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        std::array<Uint8, 4> Pixel{};
+        REQUIRE(
+            SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
+        SDL_DestroySurface(Capture);
+        return Pixel;
+    };
+    // A white wall, and two boxes on the line from a light at the side to the middle of the wall: the camera sees
+    // the shadow at the centre of the screen and neither box.
+    Kernel.Objects().MakeObjectBox(1, 60.0f, 60.0f, 0.1f);
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 20.0f);
+    REQUIRE(Kernel.Objects().SetObjectLight(1, 0));
+    Kernel.Objects().ColorObject(1, 0x00FFFFFF);
+    for (const int Id : {2, 3})
+    {
+        Kernel.Objects().MakeObjectBox(Id, 2.0f, 2.0f, 2.0f);
+        Kernel.Objects().PositionObject(Id, Id == 2 ? 5.0f : 2.5f, 0.0f, Id == 2 ? 10.0f : 15.0f);
+    }
+    REQUIRE(Kernel.Objects().SetShadowShadingOn(2));
+    REQUIRE(Command(SymbolId::Command_SetShadowLight, {-1, 10.0, 0.0, 0.0, 200.0}));
+    REQUIRE(Command(SymbolId::Command_SetGlobalShadowsOff, {}));
+    const int Clear = Center()[0];
+    REQUIRE(Clear > 200);
+    REQUIRE(Command(SymbolId::Command_SetGlobalShadowsOn, {}));
+    const int Default = Center()[0];
+    CHECK(std::abs(Default - Clear * 191 / 255) <= 8);
+
+    SUBCASE("the colour replaces the default darkening")
+    {
+        REQUIRE(Command(SymbolId::Command_SetGlobalShadowColor, {255, 0, 0, 255}));
+        const auto Red = Center();
+        CHECK(Red[0] > 200);
+        CHECK(Red[1] < 30);
+    }
+
+    SUBCASE("shades darken what several shadows overlap")
+    {
+        REQUIRE(Command(SymbolId::Command_SetGlobalShadowColor, {0, 0, 0, 128}));
+        const int One = Center()[0];
+        CHECK(One < Clear * 3 / 4);
+        // A second caster changes nothing until there is a second shade to show it.
+        REQUIRE(Kernel.Objects().SetShadowShadingOn(3));
+        CHECK(std::abs(Center()[0] - One) <= 2);
+        REQUIRE(Command(SymbolId::Command_SetGlobalShadowShades, {2}));
+        CHECK(Center()[0] < One * 3 / 4);
+        // Without the second caster the second shade has nothing to darken.
+        REQUIRE(Kernel.Objects().SetShadowShadingOff(3));
+        CHECK(std::abs(Center()[0] - One) <= 2);
+        CHECK_FALSE(Command(SymbolId::Command_SetGlobalShadowShades, {0}));
+    }
+
+    SUBCASE("the light can be a numbered light, moved there")
+    {
+        RequireEngineStatus([&](std::string& LightError) { return Kernel.Lights().MakeLight(1, &LightError); });
+        // Moved aside, the shadow leaves the centre.
+        REQUIRE(Command(SymbolId::Command_SetShadowLight, {1, -10.0, 0.0, 0.0, 200.0}));
+        CHECK(Kernel.Lights().LightPositionX(1) == doctest::Approx(-10.0f));
+        CHECK(Center()[0] == Clear);
+        REQUIRE(Command(SymbolId::Command_SetShadowLight, {1, 10.0, 0.0, 0.0, 200.0}));
+        CHECK(std::abs(Center()[0] - Default) <= 2);
+        CHECK_FALSE(Command(SymbolId::Command_SetShadowLight, {40, 10.0, 0.0, 0.0, 200.0}));
+    }
+}
+
 TEST_CASE("DBPro surface maps light objects through the Blinn-Phong path")
 {
     dbc::EngineKernel Kernel;

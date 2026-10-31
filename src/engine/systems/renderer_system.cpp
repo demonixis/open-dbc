@@ -8,6 +8,7 @@
 #include "gpu_command_buffer.hpp"
 #include "graphics_device_system.hpp"
 #include "image_store.hpp"
+#include "light_manager.hpp"
 #include "log.hpp"
 #include "matrix_manager.hpp"
 #include "object_manager.hpp"
@@ -358,7 +359,7 @@ namespace dbc
         Current_.VisibleObjects += Scene.VisibleObjects;
         Current_.CulledObjects += Scene.CulledObjects;
 
-        const bool HasShadow = ShadowVolumeIndexCount_ != 0;
+        const bool HasShadow = ShadowVolumeIndexCount_ != 0 && GlobalShadows_;
         const Uint64 ConvertStart = SDL_GetPerformanceCounter();
         Current_.BuildMilliseconds += TicksToMilliseconds(ConvertStart - BuildStart - OrderTicks);
         Current_.OrderMilliseconds += TicksToMilliseconds(OrderTicks);
@@ -501,7 +502,8 @@ namespace dbc
                 OverlayStyle.ShadowOverlay = Shadow;
                 dbc::AppendGpuQuad(K, Vertices, Batches, WhiteGpuTexture(K), 0.0f, 0.0f,
                                    static_cast<float>(View.LogicalWidth), static_cast<float>(View.LogicalHeight),
-                                   SDL_FColor{0.0f, 0.0f, 0.0f, 64.0f / 255.0f}, 0.0f, true, true, OverlayStyle);
+                                   Shadow ? GlobalShadowColor_ : SDL_FColor{0.0f, 0.0f, 0.0f, 64.0f / 255.0f}, 0.0f,
+                                   true, true, OverlayStyle);
             };
             if (HasReflection)
                 AppendDarkening(false);
@@ -1124,8 +1126,14 @@ namespace dbc
                     SDL_PushGPUVertexUniformData(Cmd, 1, &IdentityModelView[0][0], sizeof(glm::mat4));
                     BindSharedVertices(Pass);
                 }
-                DrawBatches(K.Gpu().ShadowOverlayPipeline(), K.Gpu().ShadowOverlayPipeline(), OrthoUbo,
-                            [](const GpuBatch& Batch) { return Batch.Style.ShadowOverlay; });
+                // Each shade darkens what that many shadows overlap, counted by the stencil.
+                for (int Shade = 1; Shade <= GlobalShadowShades_; ++Shade)
+                {
+                    SDL_SetGPUStencilReference(Pass, static_cast<Uint8>(Shade));
+                    DrawBatches(K.Gpu().ShadowOverlayPipeline(), K.Gpu().ShadowOverlayPipeline(), OrthoUbo,
+                                [](const GpuBatch& Batch) { return Batch.Style.ShadowOverlay; });
+                }
+                SDL_SetGPUStencilReference(Pass, 0);
                 if ((Frame.HudLast || K.Draw().IsDrawToFront()))
                     DrawScreen2d();
             }
@@ -1890,6 +1898,41 @@ namespace dbc
         const float Projection = 2.0f * Vec3Dot(Direction, ReflectionNormal_);
         return Vec3{Direction.X - ReflectionNormal_.X * Projection, Direction.Y - ReflectionNormal_.Y * Projection,
                     Direction.Z - ReflectionNormal_.Z * Projection};
+    }
+
+    bool RendererSystem::SetShadowLight(int LightId, float X, float Y, float Z, float Range, std::string* Error)
+    {
+        if (LightId >= 0 && !Kernel_.Lights().PositionLight(LightId, X, Y, Z, Error))
+            return false;
+        SetShadowPosition(LightId >= 0 ? LightId : -1, X, Y, Z);
+        ShadowLightRange_ = std::max(Range, 0.0f);
+        return true;
+    }
+
+    void RendererSystem::SetGlobalShadows(bool Enabled)
+    {
+        GlobalShadows_ = Enabled;
+        InvalidateTriCache();
+    }
+
+    void RendererSystem::SetGlobalShadowColor(int Red, int Green, int Blue, int Alpha)
+    {
+        const auto Unit = [](int Value) { return static_cast<float>(std::clamp(Value, 0, 255)) / 255.0f; };
+        GlobalShadowColor_ = SDL_FColor{Unit(Red), Unit(Green), Unit(Blue), Unit(Alpha)};
+        InvalidateTriCache();
+    }
+
+    bool RendererSystem::SetGlobalShadowShades(int Shades, std::string* Error)
+    {
+        if (Shades < 1 || Shades > 16)
+        {
+            if (Error)
+                *Error = "SET GLOBAL SHADOW SHADES takes 1 to 16 shades";
+            return false;
+        }
+        GlobalShadowShades_ = Shades;
+        InvalidateTriCache();
+        return true;
     }
 
     void RendererSystem::SetShadowPosition(int Mode, float X, float Y, float Z)
