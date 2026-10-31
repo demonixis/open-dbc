@@ -173,6 +173,8 @@ load_media:
    load image "textures/fern.png", 8
    load image "textures/seed_icon.png", 9
    load image "textures/rock_normal.jpg", 10
+   load image "textures/wood_normal.jpg", 11
+   load cube map "textures/sky_cube.jpg", 1
 
    rem Sky dome around the camera, seen from inside
    make object sphere 3, 3200, 16, 12
@@ -304,7 +306,7 @@ build_level:
             scale object o, r# * 100, (r# * 0.6 + 2.0) * 100, r# * 100
             yrotate object o, rnd(359)
             scale object texture o, r# / 3.0, r# / 3.0
-            set bump mapping on o, 10
+            set object normal map o, 10
             add_solid(2, x#, z#, r#, r#, y# - 1.5, y#, o)
             scatter_ferns(x#, y#, z#, r#)
          endcase
@@ -322,7 +324,7 @@ build_level:
             position object o, x#, y# + h# / 2, z#
             texture object o, 4
             scale object texture o, 2, h# / 4
-            set bump mapping on o, 5
+            set object normal map o, 5
             add_solid(2, x#, z#, r#, r#, y#, y# + h#, o)
          endcase
          case "mover"
@@ -360,7 +362,7 @@ build_level:
             clone object o, 901
             show object o
             position object o, x#, y#, z#
-            set bump mapping on o, 5
+            set object normal map o, 5
             cull_add(o, x#, z#, 180)
             add_solid(1, x# - 3.5, z#, 0.7, 0.7, y#, y# + 7.0, 0)
             add_solid(1, x# + 3.5, z#, 0.7, 0.7, y#, y# + 7.0, 0)
@@ -409,7 +411,7 @@ build_level:
             show object o
             rem The dais is sunk to a single step
             position object o, x#, y# - 0.4, z#
-            set bump mapping on o, 5
+            set object normal map o, 5
             set object specular o, rgb(255, 220, 160)
             set object specular power o, 18
             shrineX# = x# : shrineY# = y# + 0.4 : shrineZ# = z#
@@ -424,7 +426,7 @@ build_level:
             scale object o, 260, 260, 260
             position object o, x#, y# + 5.0, z#
             set object emissive o, rgb(60, 60, 60)
-            set sphere mapping on o, 1
+            set object cube map o, 1, 0.6
             shrineCrystal = o
             position light 5, x#, y# + 6.0, z#
          endcase
@@ -1022,7 +1024,8 @@ function make_block(x#, y#, z#, w#, h#, d#, image)
       next v
    next b
    unlock vertexdata
-   if image = 4 then set bump mapping on o, 5
+   if image = 4 then set object normal map o, 5
+   if image = 7 then set object normal map o, 11
    set object specular o, rgb(70, 60, 50)
    set object specular power o, 8
 endfunction o
@@ -1036,7 +1039,7 @@ function add_seed(x#, y#, z#, m)
    set object emissive o, rgb(40, 160, 120)
    set object specular o, rgb(255, 255, 255)
    set object specular power o, 40
-   set sphere mapping on o, 1
+   set object cube map o, 1, 0.5
    h = new_object()
    make object plain h, 3.2, 3.2
    texture object h, 6

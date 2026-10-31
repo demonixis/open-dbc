@@ -257,6 +257,9 @@ build_world:
    load image "textures/flare_red.jpg", 7
    load image "textures/barrier_bump.jpg", 8
    load image "textures/rock_bump.jpg", 9
+   load image "textures/water_normal.jpg", 20
+   load image "textures/asphalt_normal.jpg", 21
+   load cube map "textures/sky_cube.jpg", 1
    for c = 1 to CARS : load image "textures/car_" + str$(c) + ".jpg", 10 + c : next c
 
    rem The sky dome follows the camera; nightfall darkens it through its vertex colours
@@ -282,17 +285,23 @@ build_world:
    texture object OBJ_SEA, 4
    scale object texture OBJ_SEA, 150, 150
    set object specular OBJ_SEA, rgb(255, 210, 160)
-   set object specular power OBJ_SEA, 60
-   set blend mapping on OBJ_SEA, 1, 5, 2, 7
+   set object specular power OBJ_SEA, 180
+   rem Two layers of ripples drift across each other and bend the sky's reflection
+   set object normal map OBJ_SEA, 20, 0.5
+   set object normal map scale OBJ_SEA, 1.0, 1.0, 0.31, 0.31
+   set object cube map OBJ_SEA, 1, 0.04
 
    rem One model holds the whole circuit: its limbs become separate objects so hidden chunks are culled
    load object "models/circuit.x", OBJ_CIRCUIT
    for c = 0 to 15
       make object from limb OBJ_ROAD + c, OBJ_CIRCUIT, c + 1
       make object from limb OBJ_WALL + c, OBJ_CIRCUIT, c + 17
-      set bump mapping on OBJ_WALL + c, 8
+      set object normal map OBJ_WALL + c, 8
+      set object normal map OBJ_ROAD + c, 21, 0.6
       set object specular OBJ_ROAD + c, rgb(70, 60, 50)
       set object specular power OBJ_ROAD + c, 20
+      rem Asphalt shines only at grazing angles, towards the low sun
+      set object cube map OBJ_ROAD + c, 1, 0.0, 0.35
    next c
    delete object OBJ_CIRCUIT
 
@@ -350,7 +359,7 @@ build_world:
          position object o, x#, -0.6, z#
          rotate object o, rnd(20), rnd(359), rnd(20)
          s = 250 + rnd(350) : scale object o, s, s * 0.8, s
-         set bump mapping on o, 9
+         set object normal map o, 9
          inc n
       endif
    next j
@@ -363,7 +372,7 @@ build_world:
       position object o, 15 + cos(a#) * r#, -2.0, 30 + sin(a#) * r#
       yrotate object o, a# * 3
       scale object o, w# * 100, h# * 100, w# * 80
-      set bump mapping on o, 9
+      set object normal map o, 9
    next j
 
    rem Additive glows: two pools reused every frame for car lamps and street lamps
@@ -427,8 +436,9 @@ build_cars:
       if i = 1 then load object "models/car.x", o else clone object o, OBJ_CAR
       texture limb o, 0, 10 + i
       set object specular o, rgb(255, 245, 230)
-      set object specular power o, 30
-      set blend mapping on o, 1, 5, 1, 7
+      set object specular power o, 64
+      rem Only the paint reflects: the tyres are the next limb
+      set limb cube map o, 0, 1, 0.08
       set shadow shading on o, 1, 14, 0
       load object "models/car_lamps.x", OBJ_CARLAMPS + i - 1
       set object light OBJ_CARLAMPS + i - 1, 0
@@ -627,6 +637,8 @@ update_lights:
    if abs(tod - skytod#) > 0.01 then gosub tint_sky
    set shadow position -1, camera position x() + sunx * 900, suny * 900, camera position z() + sunz * 900
    scroll limb texture OBJ_SEA, 0, 0.0004, 0.0002
+   seaflow# = seaflow# + 0.0007
+   set object normal map scroll OBJ_SEA, seaflow#, seaflow# * 0.4, 0.0 - seaflow# * 0.3, seaflow# * 0.7
 
    rem Headlights: a spot per car, aimed at the road ahead
    for i = 1 to CARS
@@ -681,6 +693,15 @@ tint_sky:
       set vertexdata diffuse v, rgb(r# * 255, g# * 255, b# * 255) - 16777216
    next v
    unlock vertexdata
+   rem The cube map holds the dusk sky, so what reflects it dims as that sky does
+   fade# = 1.0 - tod * 0.8
+   set object cube map OBJ_SEA, 1, 0.04 * fade#, fade#
+   for c = 0 to 15
+      set object cube map OBJ_ROAD + c, 1, 0.0, 0.35 * fade#
+   next c
+   for i = 1 to CARS
+      set limb cube map cars(i).obj, 0, 1, 0.08 * fade#, fade#
+   next i
 return
 
 update_sounds:

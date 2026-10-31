@@ -305,6 +305,13 @@ function load_media()
    load image "textures/cell.jpg", 10
    load image "textures/eye.jpg", 11
    load image "textures/blob.png", 12
+   load image "textures/wall_normal.jpg", 30
+   load image "textures/floor_normal.jpg", 31
+   load image "textures/ceiling_normal.jpg", 32
+   load image "textures/machine_normal.jpg", 33
+   load image "textures/floor_specular.jpg", 34
+   load image "textures/drone_emissive.jpg", 35
+   load cube map "textures/room_cube.jpg", 1
    rem A plain red image for the damage flash.
    ink rgb(255, 20, 10), 0 : box 0, 0, 16, 16 : get image 20, 0, 0, 16, 16
 
@@ -346,6 +353,23 @@ function build_world()
    rem Stage 1 modulates by two: mid grey in the lightmap leaves a surface as painted.
    set blend mapping on OBJ_LEVEL, 1, 1, 0, 5
 
+   rem Each limb holds one material. The floor's bright plates shine and reflect the room.
+   for limb = 0 to checklist quantity() - 1
+      name$ = lower$(limb texture name(OBJ_LEVEL, limb))
+      if instr(name$, "wall") > 0 then set limb normal map OBJ_LEVEL, limb, 30
+      if instr(name$, "ceiling") > 0 then set limb normal map OBJ_LEVEL, limb, 32
+      if instr(name$, "machine") > 0
+         set limb normal map OBJ_LEVEL, limb, 33
+         set limb cube map OBJ_LEVEL, limb, 1, 0.1, 0.6
+      endif
+      if instr(name$, "floor") > 0
+         set limb normal map OBJ_LEVEL, limb, 31
+         set limb specular map OBJ_LEVEL, limb, 34
+         set limb reflection map OBJ_LEVEL, limb, 34
+         set limb cube map OBJ_LEVEL, limb, 1, 0.16, 0.8
+      endif
+   next limb
+
    rem The baked light carries the room lighting: full white ambient shows it as
    rem baked, the dim directional light only gives the props some shape.
    set ambient light 100
@@ -361,7 +385,7 @@ function build_world()
    scale object OBJ_GLASS, 100, 210, 100
    position object OBJ_GLASS, corex#, 35, corez#
    texture object OBJ_GLASS, 8
-   set sphere mapping on OBJ_GLASS, 8
+   set object cube map OBJ_GLASS, 1, 0.3
    ghost object on OBJ_GLASS
    set object light OBJ_GLASS, 0
    make object cylinder OBJ_ENERGY, 13
@@ -398,7 +422,7 @@ function build_world()
       position object OBJ_CRATE + i, crates(i).x, s# / 2, crates(i).z
       yrotate object OBJ_CRATE + i, crates(i).yaw
       texture object OBJ_CRATE + i, 4
-      set bump mapping on OBJ_CRATE + i, 5
+      set object normal map OBJ_CRATE + i, 5
       set object ambience OBJ_CRATE + i, rgb(130, 130, 140)
       set object specular OBJ_CRATE + i, rgb(255, 255, 255)
       set object specular power OBJ_CRATE + i, 24
@@ -422,6 +446,8 @@ function build_world()
       set object ambience d, rgb(90, 92, 105)
       set object specular d, rgb(255, 240, 220)
       set object specular power d, 30
+      set object emissive map d, 35
+      set object cube map d, 1, 0.08, 0.6
       set object speed d, 30
       set object interpolation d, 25
       make object sphere OBJ_HALO + i, 5
