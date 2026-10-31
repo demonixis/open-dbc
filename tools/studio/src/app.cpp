@@ -91,7 +91,7 @@ namespace dbc::studio
                 case ToolIcon::Open:
                 {
                     const ImVec2 Folder[] = {At(2, 4), At(6, 4), At(7.5f, 5.5f), At(14, 5.5f), At(14, 13), At(2, 13)};
-                    Draw->AddPolyline(Folder, 6, Tint(Theme::String), ImDrawFlags_Closed, Thickness);
+                    Draw->AddPolyline(Folder, 6, Tint(Theme::Folder), ImDrawFlags_Closed, Thickness);
                     break;
                 }
                 case ToolIcon::Save:

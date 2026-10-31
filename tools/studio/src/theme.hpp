@@ -27,6 +27,7 @@ namespace dbc::studio
         inline ImU32 Selection = 0;
         inline ImU32 Accent = 0;
         inline ImU32 AccentHover = 0;
+        inline ImU32 Folder = 0;
 
         // Text
         inline ImU32 Text = 0;

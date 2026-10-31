@@ -57,6 +57,9 @@ or UNC paths.
 
 ## Studio
 
+**View > Theme** picks a dark or light theme or follows the system; the Studio
+starts dark.
+
 **F5** runs the active `.dba` tab, unsaved edits included; **Shift+F5** stops it.
 The Studio compiles the program, then runs it in `opendbc-runner`, a separate
 process with its own window, so a crash or hang in the program leaves the Studio
