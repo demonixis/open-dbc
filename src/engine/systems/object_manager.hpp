@@ -100,6 +100,17 @@ namespace dbc
                                 float Y3, float Z3);
         bool MakeMeshFromObject(int MeshId, int ObjectId, int IgnoreMode = 0, std::string* Error = nullptr);
         bool ReduceMesh(int MeshId, int GridX, int GridY, int GridZ, std::string* Error = nullptr);
+        bool MakeObjectTerrain(int ObjectId, std::string* Error = nullptr);
+        bool SetTerrainHeightmap(int ObjectId, std::string Path, std::string* Error = nullptr);
+        bool SetTerrainScale(int ObjectId, float X, float Y, float Z, std::string* Error = nullptr);
+        bool SetTerrainSplit(int ObjectId, int Split, std::string* Error = nullptr);
+        bool SetTerrainTiling(int ObjectId, float Tiling, std::string* Error = nullptr);
+        bool SetTerrainLight(int ObjectId, const Vec3& Direction, float Red, float Green, float Blue, float Scale,
+                             std::string* Error = nullptr);
+        bool SetTerrainTexture(int ObjectId, int BaseImage, int DetailImage, std::string* Error = nullptr);
+        bool BuildTerrain(int ObjectId, std::string* Error = nullptr);
+        void UpdateTerrains();
+        bool GetTerrainGroundHeight(float& Output, int ObjectId, float X, float Z, std::string* Error = nullptr) const;
         bool ConvertObjectFvf(int ObjectId, uint32_t Fvf, std::string* Error = nullptr);
         void MakeObject(int ObjectId, int MeshId, int ImageId);
         bool MakeObjectFromLimb(int ObjectId, int SourceObjectId, int LimbId, int AllLimbs = 0,
@@ -507,6 +518,7 @@ namespace dbc
         [[nodiscard]] Object3D NewObjectState() const;
         void NotifyObjectCreated(int ObjectId);
         Object3D* RequireObject(int ObjectId, const char* Command, std::string* Error = nullptr);
+        AdvancedTerrain* RequireTerrainSettings(int ObjectId, const char* Command, std::string* Error = nullptr);
         const Object3D* RequireObject(int ObjectId, const char* Command, std::string* Error = nullptr) const;
         ParticleEmitter* RequireParticles(int ParticleId, const char* Command, std::string* Error = nullptr);
         const ParticleEmitter* RequireParticles(int ParticleId, const char* Command,

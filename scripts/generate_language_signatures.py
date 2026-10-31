@@ -40,6 +40,7 @@ STRING_PARAMETERS = {
     "LOAD STATIC OBJECTS": {0},
     "LOAD 3DSOUND": {0},
     "MAKE TERRAIN": {1},
+    "SET TERRAIN HEIGHTMAP": {1},
     "SAVE SOUND": {0},
     "COPY FILE": {0, 1},
     "DELETE FILE": {0},

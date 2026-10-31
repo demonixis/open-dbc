@@ -16,6 +16,7 @@ add_library(dbc_engine STATIC
   fallback_font.cpp
   systems/image_store.cpp
   systems/object_manager.cpp
+  systems/object_terrain.cpp
   systems/physics_system.cpp
   systems/platform_io.cpp
   systems/text_system.cpp

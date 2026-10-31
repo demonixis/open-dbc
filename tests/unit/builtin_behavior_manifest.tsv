@@ -751,6 +751,7 @@ dbpro	28	37	Command	BUILD ORTHO LHMATRIX4	golden-output	test_matrix4.dba	f6fceb8
 dbpro	29	38	Command	BUILD ORTHO RHMATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	30	39	Command	BUILD PERSPECTIVE LHMATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	31	40	Command	BUILD PERSPECTIVE RHMATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	32	41	Command	BUILD TERRAIN	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	34	44	Command	CATMULLROM VECTOR2	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	35	45	Command	CATMULLROM VECTOR3	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	36	46	Command	CATMULLROM VECTOR4	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
@@ -910,6 +911,7 @@ dbpro	254	407	Command	MAKE OBJECT FROM LIMB	engine-state	test_engine_builtins.cp
 dbpro	256	409	Command	MAKE OBJECT PLAIN	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	257	411	Command	MAKE OBJECT SPHERE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	257	412	Command	MAKE OBJECT SPHERE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
+dbpro	258	413	Command	MAKE OBJECT TERRAIN	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	259	415	Command	MAKE OBJECT TRIANGLE	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	260	416	Command	MAKE PARTICLES	golden-output	test_dbpro_particles.dba	01780cf8a7f8a174688214d2c82b1ac3bc1813ca951650ca8e84851b6c2ebba0
 dbpro	261	417	Command	MAKE SNOW PARTICLES	volume-particles-state	test_engine_builtins.cpp::DBPro fire rises and snow falls through a box	-
@@ -1159,6 +1161,12 @@ dbpro	583	867	Command	SET SPRITE DIFFUSE	golden-output	test_dbpro_sprites_pro.db
 dbpro	584	868	Command	SET SPRITE FRAME	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	585	869	Command	SET SPRITE PRIORITY	render-order	test_engine_builtins.cpp::Sprite priority determines the renderer traversal order	-
 dbpro	586	870	Command	SET SPRITE TEXTURE COORD	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	590	876	Command	SET TERRAIN HEIGHTMAP	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
+dbpro	591	877	Command	SET TERRAIN LIGHT	pixel-capture	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
+dbpro	592	878	Command	SET TERRAIN SCALE	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
+dbpro	593	879	Command	SET TERRAIN SPLIT	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
+dbpro	594	880	Command	SET TERRAIN TEXTURE	pixel-capture	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
+dbpro	595	881	Command	SET TERRAIN TILING	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	596	883	Command	SET TEXT FONT	text-state	test_engine_builtins.cpp::Text compatibility commands and functions expose observable state in both profiles	-
 dbpro	597	885	Command	SET TEXT OPAQUE	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	598	887	Command	SET TEXT SIZE	text-state	test_engine_builtins.cpp::Text compatibility commands and functions expose observable state in both profiles	-
@@ -1337,6 +1345,7 @@ dbpro	836	1276	Function	GET STATIC COLLISION HIT	collision-state	test_engine_bui
 dbpro	837	1278	Function	GET STATIC COLLISION X	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	838	1280	Function	GET STATIC COLLISION Y	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	839	1282	Function	GET STATIC COLLISION Z	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
+dbpro	840	1283	Function	GET TERRAIN GROUND HEIGHT	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	841	1284	Function	GET TERRAIN HEIGHT	golden-output	test_dbpro_terrain.dba	41da670a2b8be5fcd73eb30733fa91c021f414378e052ccd9b77bd32673b3310
 dbpro	843	1287	Function	GET TIME$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	844	1288	Function	GET TOTAL TERRAIN HEIGHT	golden-output	test_dbpro_terrain.dba	41da670a2b8be5fcd73eb30733fa91c021f414378e052ccd9b77bd32673b3310
@@ -1685,6 +1694,7 @@ dbpro	1418	1974	Function	SPRITE FRAME	render-state	test_engine_builtins.cpp::DBP
 dbpro	1419	1975	Function	SPRITE PRIORITY	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1420	1976	Function	SPRITE VISIBLE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1425	1980	Command	SYNC MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1433	1988	Command	UPDATE TERRAIN	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	1436	1991	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
 dbpro	1439	1994	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1441	1996	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-

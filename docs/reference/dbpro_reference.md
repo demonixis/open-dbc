@@ -63,7 +63,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `BUILD REFLECTION MATRIX4` | Command | 5 | number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `BUILD ROTATION AXIS MATRIX4` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `BUILD STATIC PORTALS` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `BUILD TERRAIN` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `BUILD TERRAIN` | Command | 1 | number -> void | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional command implemented with an observable contract. |
 | `CALCULATE AUTOMATIC COLLISION` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CALCULATE OBJECT BOUNDS` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CALL DLL` | Command | 2-3 | number, number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -316,7 +316,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `MAKE OBJECT PLAIN` | Command | 3-4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE OBJECT PLANE` | Command | 3-4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE OBJECT SPHERE` | Command | 2, 4 | number, number -> void; number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `MAKE OBJECT TERRAIN` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE OBJECT TERRAIN` | Command | 1 | number -> void | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE OBJECT TRIANGLE` | Command | 10 | number, number, number, number, number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE PARTICLES` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE SNOW PARTICLES` | Command | 9 | number, number, number, number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -644,12 +644,12 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET STATIC PORTALS ON` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET STATIC SCORCH` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET STATIC UNIVERSE` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET TERRAIN HEIGHTMAP` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET TERRAIN LIGHT` | Command | 8 | number, number, number, number, number, number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET TERRAIN SCALE` | Command | 4 | number, number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET TERRAIN SPLIT` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET TERRAIN TEXTURE` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET TERRAIN TILING` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET TERRAIN HEIGHTMAP` | Command | 2 | number, string -> void | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional command implemented with an observable contract. |
+| `SET TERRAIN LIGHT` | Command | 8 | number, number, number, number, number, number, number, number -> void | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional command implemented with an observable contract. |
+| `SET TERRAIN SCALE` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional command implemented with an observable contract. |
+| `SET TERRAIN SPLIT` | Command | 2 | number, number -> void | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional command implemented with an observable contract. |
+| `SET TERRAIN TEXTURE` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional command implemented with an observable contract. |
+| `SET TERRAIN TILING` | Command | 2 | number, number -> void | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional command implemented with an observable contract. |
 | `SET TEXT FONT` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET TEXT OPAQUE` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET TEXT SIZE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -746,7 +746,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `UNLOCK PIXELS` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `UNLOCK VERTEXDATA` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `UPDATE MATRIX` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `UPDATE TERRAIN` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `UPDATE TERRAIN` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `VIEW MATRIX4` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `WAIT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `WAIT KEY` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -957,7 +957,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET STATIC COLLISION X` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET STATIC COLLISION Y` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET STATIC COLLISION Z` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `GET TERRAIN GROUND HEIGHT` | Function | 3 | number, number, number -> real | Unsupported (DBC2043) | DBPro snapshot, legacy unverified | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET TERRAIN GROUND HEIGHT` | Function | 3 | number, number, number -> real | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional function implemented with an observable contract. |
 | `GET TERRAIN HEIGHT` | Function | 3 | number, number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET TERRAIN SIZE` | Function | 1 | number -> real | Unsupported (DBC2043) | legacy unverified | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET TERRAIN X SIZE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |

@@ -351,10 +351,45 @@ namespace dbc
         std::vector<std::shared_ptr<const MeshGeometry>> Geometries;
     };
 
+    // MAKE OBJECT TERRAIN: the settings BUILD TERRAIN reads, then what it leaves behind.
+    struct AdvancedTerrain
+    {
+        struct Part
+        {
+            Vec3 Center;
+            float Radius = 0.0f;
+        };
+
+        std::string HeightmapPath;
+        float ScaleX = 1.0f;
+        float ScaleY = 1.0f;
+        float ScaleZ = 1.0f;
+        int Split = 1;
+        float Tiling = 1.0f;
+        bool Lit = false;
+        Vec3 LightDirection{};
+        float LightRed = 1.0f;
+        float LightGreen = 1.0f;
+        float LightBlue = 1.0f;
+        float LightScale = 1.0f;
+        int BaseImage = 0;
+        int DetailImage = 0;
+
+        int Width = 0;
+        int Depth = 0;
+        float CellWidth = 1.0f;
+        float CellDepth = 1.0f;
+        // One per pixel of the heightmap, from its bottom row, in the units of the object.
+        std::vector<float> Heights;
+        // A bounding sphere for each mesh of the object.
+        std::vector<Part> Parts;
+    };
+
     struct Object3D
     {
         std::vector<Mesh> Meshes;
         std::array<ObjectLod, 2> Lods;
+        std::shared_ptr<AdvancedTerrain> Terrain;
         // ADD MEMBLOCK TO OBJECT: bytes that travel with the object, through SAVE OBJECT too.
         std::vector<uint8_t> CustomData;
         float PosX = 0.0f;

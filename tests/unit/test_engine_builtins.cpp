@@ -11674,3 +11674,236 @@ TEST_CASE("DBPro REDUCE MESH makes boxes of a mesh and CONVERT OBJECT FVF sets w
         CHECK_FALSE(Command(SymbolId::Command_ConvertObjectFvf, {9, 0x152}));
     }
 }
+
+TEST_CASE("DBPro Advanced Terrain builds an object from a heightmap")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    Kernel.Camera().SetAutoCamOff();
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    const auto Ground = [&](double X, double Z)
+    {
+        BuiltinValue Result;
+        REQUIRE_MESSAGE(
+            InvokeFunction(Context, SymbolId::Function_GetTerrainGroundHeight,
+                           {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(X), BuiltinValue::FromNumber(Z)},
+                           Result, Error),
+            Error);
+        float Height = 0.0f;
+        REQUIRE(Result.AsFloat(Height, &Error));
+        return Height;
+    };
+    const auto Center = [&]()
+    {
+        Kernel.Renderer().RenderScene();
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        std::array<Uint8, 4> Pixel{};
+        REQUIRE(
+            SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
+        SDL_DestroySurface(Capture);
+        return Pixel;
+    };
+    const auto StoreColor = [&](int ImageId, Uint8 Red, Uint8 Green, Uint8 Blue)
+    {
+        SDL_Surface* Surface = SDL_CreateSurface(4, 4, SDL_PIXELFORMAT_RGBA32);
+        REQUIRE(Surface != nullptr);
+        REQUIRE(SDL_FillSurfaceRect(Surface, nullptr, SDL_MapSurfaceRGBA(Surface, Red, Green, Blue, 255)));
+        Kernel.ImageStoreRef().StoreImageFromSurface(ImageId, Surface);
+        SDL_DestroySurface(Surface);
+    };
+
+    // Eight by four pixels whose red grows with X, the other channels saying otherwise.
+    const std::filesystem::path Path = std::filesystem::temp_directory_path() /
+                                       ("opendbc-terrain-" + std::to_string(SDL_GetPerformanceCounter()) + ".bmp");
+    {
+        SDL_Surface* Map = SDL_CreateSurface(8, 4, SDL_PIXELFORMAT_RGBA32);
+        REQUIRE(Map != nullptr);
+        for (int Y = 0; Y < 4; ++Y)
+            for (int X = 0; X < 8; ++X)
+                REQUIRE(SDL_WriteSurfacePixel(Map, X, Y, static_cast<Uint8>(X * 10), 200, 200, 255));
+        REQUIRE(SDL_SaveBMP(Map, dbc::PathToUtf8(Path).c_str()));
+        SDL_DestroySurface(Map);
+    }
+    const auto UsePath = [&]()
+    {
+        Error.clear();
+        return InvokeCommand(Context, SymbolId::Command_SetTerrainHeightmap,
+                             {BuiltinValue::FromNumber(1), BuiltinValue::FromString(dbc::PathToUtf8(Path))}, Error);
+    };
+
+    REQUIRE(Command(SymbolId::Command_MakeObjectTerrain, {1}));
+    REQUIRE(Kernel.Objects().ObjectExist(1) == 1);
+    const dbc::Object3D* Object = Kernel.Objects().GetObject(1);
+    REQUIRE(Object != nullptr);
+
+    SUBCASE("the grid follows the map and the scale, split into meshes")
+    {
+        // Nothing to build from yet, and nothing to read.
+        CHECK_FALSE(Command(SymbolId::Command_BuildTerrain, {1}));
+        CHECK(Error.find("HEIGHTMAP") != std::string::npos);
+        BuiltinValue Unused;
+        CHECK_FALSE(InvokeFunction(
+            Context, SymbolId::Function_GetTerrainGroundHeight,
+            {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(0)}, Unused, Error));
+        CHECK(Error.find("built terrain") != std::string::npos);
+
+        REQUIRE(UsePath());
+        REQUIRE(Command(SymbolId::Command_SetTerrainScale, {1, 2, 0.5, 3}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainSplit, {1, 2}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainTiling, {1, 2}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+
+        REQUIRE(Object->Meshes.size() == 4);
+        std::size_t Indices = 0;
+        float MaxX = 0.0f;
+        float MaxZ = 0.0f;
+        for (const dbc::Mesh& Part : Object->Meshes)
+        {
+            Indices += Part.Geometry().Indices.size();
+            for (const dbc::Vec3& Vertex : Part.Geometry().Vertices)
+            {
+                MaxX = std::max(MaxX, Vertex.X);
+                MaxZ = std::max(MaxZ, Vertex.Z);
+                // Red only, by the height scale, and clamped past the last pixel.
+                const int Column = std::min(static_cast<int>(std::lround(Vertex.X / 2.0f)), 7);
+                CHECK(Vertex.Y == doctest::Approx(Column * 10 * 0.5f));
+            }
+            // Facing up, to be seen from above.
+            const dbc::MeshGeometry& Geometry = Part.Geometry();
+            const dbc::Vec3 Face = dbc::Vec3Cross(
+                dbc::Vec3Sub(Geometry.Vertices[Geometry.Indices[1]], Geometry.Vertices[Geometry.Indices[0]]),
+                dbc::Vec3Sub(Geometry.Vertices[Geometry.Indices[2]], Geometry.Vertices[Geometry.Indices[0]]));
+            CHECK(Face.Y > 0.0f);
+        }
+        CHECK(Indices == 8 * 4 * 6);
+        CHECK(MaxX == doctest::Approx(16.0f));
+        CHECK(MaxZ == doctest::Approx(12.0f));
+
+        // One repeat of the detail image every two cells, the base image once over everything.
+        const dbc::MeshGeometry& First = Object->Meshes.front().Geometry();
+        CHECK(First.UvStages.at(1)[2].x == doctest::Approx(1.0f));
+        CHECK(First.Uvs[4].x == doctest::Approx(0.5f));
+
+        CHECK(Ground(4, 3) == doctest::Approx(10.0f));
+        // Halfway between columns, and past both edges.
+        CHECK(Ground(5, 3) == doctest::Approx(12.5f));
+        CHECK(Ground(-100, 3) == doctest::Approx(0.0f));
+        CHECK(Ground(1000, 3) == doctest::Approx(35.0f));
+
+        // POSITION OBJECT and SCALE OBJECT apply to a terrain as to any object.
+        REQUIRE(Command(SymbolId::Command_PositionObject, {1, 100, 20, 200}));
+        CHECK(Ground(104, 203) == doctest::Approx(30.0f));
+        REQUIRE(Command(SymbolId::Command_ScaleObject, {1, 100, 200, 100}));
+        CHECK(Ground(104, 203) == doctest::Approx(40.0f));
+    }
+
+    SUBCASE("textures and light reach the frame")
+    {
+        constexpr int Base = 1;
+        constexpr int Detail = 2;
+        StoreColor(Base, 200, 100, 50);
+        StoreColor(Detail, 128, 128, 128);
+        REQUIRE(UsePath());
+        // Nearly flat, seen from straight above.
+        REQUIRE(Command(SymbolId::Command_SetTerrainScale, {1, 1, 0.01, 1}));
+        REQUIRE(Command(SymbolId::Command_PositionCamera, {4, 50, 2}));
+        REQUIRE(Command(SymbolId::Command_PointCamera, {4, 0, 2}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainTexture, {1, Base, 0}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+        const auto Plain = Center();
+        CHECK(std::abs(Plain[0] - 200) <= 2);
+        CHECK(std::abs(Plain[1] - 100) <= 2);
+
+        // Mid-grey detail leaves the base nearly as it is, and darker detail darkens it.
+        REQUIRE(Command(SymbolId::Command_SetTerrainTexture, {1, Base, Detail}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+        const auto Detailed = Center();
+        CHECK(std::abs(Detailed[0] - 188) <= 4);
+        CHECK(Detailed[1] < Plain[1]);
+        StoreColor(Detail, 64, 64, 64);
+        CHECK(Center()[0] < 110);
+        StoreColor(Detail, 128, 128, 128);
+
+        // Overhead, the light leaves the surface as it is; from below it darkens it entirely at intensity one, and
+        // intensity zero leaves only its colour.
+        REQUIRE(Command(SymbolId::Command_SetTerrainLight, {1, 0, -1, 0, 1, 1, 1, 1}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+        CHECK(std::abs(Center()[0] - Detailed[0]) <= 3);
+        REQUIRE(Command(SymbolId::Command_SetTerrainLight, {1, 0, 1, 0, 1, 1, 1, 1}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+        CHECK(Center()[0] <= 8);
+        REQUIRE(Command(SymbolId::Command_SetTerrainLight, {1, 0, 1, 0, 0.5, 1, 1, 0}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+        const auto Tinted = Center();
+        CHECK(Tinted[0] < Detailed[0] - 40);
+        CHECK(std::abs(Tinted[1] - Detailed[1]) <= 3);
+    }
+
+    SUBCASE("UPDATE TERRAIN hides the parts the camera cannot see")
+    {
+        REQUIRE(UsePath());
+        REQUIRE(Command(SymbolId::Command_SetTerrainScale, {1, 100, 1, 100}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainSplit, {1, 4}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+        REQUIRE(Object->Meshes.size() == 16);
+        const auto Shown = [&]()
+        {
+            return std::count_if(Object->Meshes.begin(), Object->Meshes.end(),
+                                 [](const dbc::Mesh& Part) { return Part.Visible; });
+        };
+        CHECK(Shown() == 16);
+        REQUIRE(Command(SymbolId::Command_PositionCamera, {50, 50, -2000}));
+        REQUIRE(Command(SymbolId::Command_RotateCamera, {0, 180, 0}));
+        REQUIRE(Command(SymbolId::Command_UpdateTerrain, {}));
+        CHECK(Shown() == 0);
+        REQUIRE(Command(SymbolId::Command_RotateCamera, {0, 0, 0}));
+        REQUIRE(Command(SymbolId::Command_UpdateTerrain, {}));
+        CHECK(Shown() > 0);
+        REQUIRE(Command(SymbolId::Command_PositionObject, {1, 0, 0, 0}));
+        REQUIRE(Command(SymbolId::Command_RotateObject, {1, 0, 30, 0}));
+        REQUIRE(Command(SymbolId::Command_RotateCamera, {0, 180, 0}));
+        REQUIRE(Command(SymbolId::Command_UpdateTerrain, {}));
+        CHECK(Shown() == 16);
+    }
+
+    SUBCASE("settings are checked, and only a terrain takes them")
+    {
+        CHECK_FALSE(Command(SymbolId::Command_SetTerrainScale, {1, 0, 1, 1}));
+        CHECK_FALSE(Command(SymbolId::Command_SetTerrainSplit, {1, 0}));
+        CHECK_FALSE(Command(SymbolId::Command_SetTerrainSplit, {1, 65}));
+        CHECK_FALSE(Command(SymbolId::Command_SetTerrainTiling, {1, 0}));
+        CHECK_FALSE(Command(SymbolId::Command_SetTerrainLight, {1, 0, 0, 0, 1, 1, 1, 1}));
+        CHECK_FALSE(Command(SymbolId::Command_SetTerrainTexture, {1, 9, 0}));
+        CHECK(Error.find("image 9") != std::string::npos);
+
+        REQUIRE(Command(SymbolId::Command_MakeObjectCube, {2, 1}));
+        CHECK_FALSE(Command(SymbolId::Command_SetTerrainSplit, {2, 4}));
+        CHECK(Error.find("MAKE OBJECT TERRAIN") != std::string::npos);
+        CHECK_FALSE(Command(SymbolId::Command_BuildTerrain, {9}));
+
+        // A deleted heightmap is reported when the terrain needs it.
+        const std::string Missing = dbc::PathToUtf8(Path) + ".missing";
+        REQUIRE(InvokeCommand(Context, SymbolId::Command_SetTerrainHeightmap,
+                              {BuiltinValue::FromNumber(1), BuiltinValue::FromString(Missing)}, Error));
+        CHECK_FALSE(Command(SymbolId::Command_BuildTerrain, {1}));
+        CHECK(Error.find("failed to load") != std::string::npos);
+    }
+    std::error_code CleanupError;
+    std::filesystem::remove(Path, CleanupError);
+}

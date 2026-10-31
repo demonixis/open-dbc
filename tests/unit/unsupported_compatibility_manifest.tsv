@@ -1,6 +1,5 @@
 profile	symbol_id	kind	name	disposition	family	proof	prerequisite
 dbpro	Command_AttachObjectToStatic	Command	ATTACH OBJECT TO STATIC	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BuildTerrain	Command	BUILD TERRAIN	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
 dbpro	Command_CallDll	Command	CALL DLL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Cd	Command	CD	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CreateNetGame	Command	CREATE NET GAME	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -49,7 +48,6 @@ dbpro	Command_LoadStaticObjects	Command	LOAD STATIC OBJECTS	Study	3d	dbc-help,db
 dbpro	Command_LoadTerrain	Command	LOAD TERRAIN	Study	core	dbpro-reference,legacy-unverified	typed-load-errors
 dbpro	Command_LockBackbuffer	Command	LOCK BACKBUFFER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_LoopAnimation	Command	LOOP ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
-dbpro	Command_MakeObjectTerrain	Command	MAKE OBJECT TERRAIN	Target	3d	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
 dbpro	Command_MakeStaticObject	Command	MAKE STATIC OBJECT	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_NetMessageBitmap	Command	NET MESSAGE BITMAP	Target	display	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_NetMessageImage	Command	NET MESSAGE IMAGE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -87,12 +85,6 @@ dbpro	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Target	core	dbc-help,dbp
 dbpro	Command_SetNetConnection	Command	SET NET CONNECTION	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOff	Command	SET STATIC OBJECTS WIREFRAME OFF	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOn	Command	SET STATIC OBJECTS WIREFRAME ON	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetTerrainHeightmap	Command	SET TERRAIN HEIGHTMAP	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
-dbpro	Command_SetTerrainLight	Command	SET TERRAIN LIGHT	Target	3d	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
-dbpro	Command_SetTerrainScale	Command	SET TERRAIN SCALE	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
-dbpro	Command_SetTerrainSplit	Command	SET TERRAIN SPLIT	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
-dbpro	Command_SetTerrainTexture	Command	SET TERRAIN TEXTURE	Target	text	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
-dbpro	Command_SetTerrainTiling	Command	SET TERRAIN TILING	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
 dbpro	Command_SetVertexShaderOff	Command	SET VERTEX SHADER OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetVertexShaderOn	Command	SET VERTEX SHADER ON	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_StopAnimation	Command	STOP ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
@@ -128,7 +120,6 @@ dbpro	Function_GetFtpProgress	Function	GET FTP PROGRESS	Never	ftp	dbc-help,dbpro
 dbpro	Function_GetFtpStatus	Function	GET FTP STATUS	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Function_GetMemblockPtr	Function	GET MEMBLOCK PTR	Target	memory	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetRegistryString	Function	GET REGISTRY$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetTerrainGroundHeight	Function	GET TERRAIN GROUND HEIGHT	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
 dbpro	Function_GetTerrainSize	Function	GET TERRAIN SIZE	Target	core	legacy-unverified	engine-subsystem-and-oracle
 dbpro	Function_NetGameExists	Function	NET GAME EXISTS	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NetGameLost	Function	NET GAME LOST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -282,7 +273,6 @@ dbpro	Function_TexturevideomemoryAvailable	Function	TEXTUREVIDEOMEMORY AVAILABLE
 dbpro	Function_TlvertexsystemmemoryAvailable	Function	TLVERTEXSYSTEMMEMORY AVAILABLE	Target	memory	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TlvertexvideomemoryAvailable	Function	TLVERTEXVIDEOMEMORY AVAILABLE	Target	memory	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_UnlockPixels	Command	UNLOCK PIXELS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_UpdateTerrain	Command	UPDATE TERRAIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_VertexShaderExist	Function	VERTEX SHADER EXIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_VolumemapAvailable	Function	VOLUMEMAP AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_WbufferAvailable	Function	WBUFFER AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
