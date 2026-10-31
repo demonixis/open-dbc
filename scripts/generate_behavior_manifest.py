@@ -1448,6 +1448,50 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ODE_MESSAGE_TEST = "test_physics.cpp::ODE collisions arrive as messages"
+ODE_SURFACE_TEST = "test_physics.cpp::ODE contact surfaces bounce only when asked to"
+ODE_RAY_TEST = "test_physics.cpp::ODE rays find the first surface they meet"
+
+UNIT_WITNESSES += tuple(
+    ("dbpro", Kind, Name, Code, "jolt-rigid-body", Test)
+    for Kind, Name, Code, Test in (
+        ("Function", "ODE COLLISION MESSAGE EXISTS", "value = ode collision message exists()\n", ODE_MESSAGE_TEST),
+        ("Command", "ODE COLLISION GET MESSAGE", "ode collision get message\n", ODE_MESSAGE_TEST),
+        ("Function", "ODE GET OBJECT A", "value = ode get object a()\n", ODE_MESSAGE_TEST),
+        ("Function", "ODE GET OBJECT B", "value = ode get object b()\n", ODE_MESSAGE_TEST),
+        ("Function", "ODE GET OBJECT A CONTACT", "value# = ode get object a contact()\n", ODE_MESSAGE_TEST),
+        ("Function", "ODE GET OBJECT B CONTACT", "value# = ode get object b contact()\n", ODE_MESSAGE_TEST),
+        *(("Function", f"ODE GET OBJECT {Which} VELOCITY {Axis}",
+           f"value# = ode get object {Which.lower()} velocity {Axis.lower()}()\n", ODE_MESSAGE_TEST)
+          for Which in "AB" for Axis in "XYZ"),
+        *(("Function", f"ODE GET OBJECT {Which} ANGULAR VELOCITY {Axis}",
+           f"value# = ode get object {Which.lower()} angular velocity {Axis.lower()}()\n", ODE_MESSAGE_TEST)
+          for Which in "AB" for Axis in "XYZ"),
+        *(("Function", f"ODE GET CONTACT POINT {Axis}", f"value# = ode get contact point {Axis.lower()}()\n",
+           ODE_MESSAGE_TEST) for Axis in "XYZ"),
+        *(("Function", f"ODE GET CONTACT NORMAL {Axis}", f"value# = ode get contact normal {Axis.lower()}()\n",
+           ODE_MESSAGE_TEST) for Axis in "XYZ"),
+        ("Function", "ODE GET CONTACT DEPTH", "value# = ode get contact depth()\n", ODE_MESSAGE_TEST),
+        ("Command", "ODE SET CONTACT", "ode set contact 2, 2, 1\n", ODE_SURFACE_TEST),
+        ("Command", "ODE SET CONTACT BOUNCE", "ode set contact bounce 2, 0.8\n", ODE_SURFACE_TEST),
+        ("Command", "ODE SET CONTACT BOUNCE VELOCITY", "ode set contact bounce velocity 2, 5.0\n", ODE_SURFACE_TEST),
+        ("Command", "ODE SET CONTACT FDIR1", "ode set contact fdir1 2, 0.5\n", ODE_SURFACE_TEST),
+        ("Command", "ODE SET CONTACT VELOCITY", "ode set contact velocity 2, 5.0\n", ODE_SURFACE_TEST),
+        ("Command", "ODE SETSURFACE MODE", "ode setsurface mode 2, 2, 1\n", ODE_SURFACE_TEST),
+        ("Command", "ODE SETSURFACE MODE CONTACT BOUNCE", "ode setsurface mode contact bounce 2, 1\n",
+         ODE_SURFACE_TEST),
+        ("Function", "ODE RAY", "value = ode ray(0.0, 30.0, 0.0, 0.0, -30.0, 0.0, 7)\n", ODE_RAY_TEST),
+        ("Function", "ODE RAY CAST", "value = ode ray cast(0, 0.0, 1.0, 0.0, 20.0, 1.0, 0.0)\n", ODE_RAY_TEST),
+        ("Function", "ODE RAY FORCE", "value = ode ray force(-5.0, 0.0, 0.0, 5.0, 0.0, 0.0, 60.0)\n", ODE_RAY_TEST),
+        ("Function", "ODE RAY TERRAIN", "value = ode ray terrain(0.0, 30.0, 0.0, 0.0, -30.0, 0.0)\n", ODE_RAY_TEST),
+        ("Function", "ODE GET RAY OBJECT HIT", "value = ode get ray object hit()\n", ODE_RAY_TEST),
+        *(("Function", f"ODE GET RAY COLLISION {Axis}", f"value# = ode get ray collision {Axis.lower()}()\n",
+           ODE_RAY_TEST) for Axis in "XYZ"),
+        *(("Function", f"ODE GET RAY NORMAL {Axis}", f"value# = ode get ray normal {Axis.lower()}()\n", ODE_RAY_TEST)
+          for Axis in "XYZ"),
+    )
+)
+
 
 UNIT_WITNESSES += tuple(
     (profile, kind, name, code, "xr-state-and-vector",

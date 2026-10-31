@@ -7,6 +7,22 @@ namespace dbc
 {
     class EngineKernel;
 
+    // One pair of bodies touching during one step. Object A moves; its normal points towards object B.
+    struct PhysicsCollisionMessage
+    {
+        int ObjectA = 0;
+        int ObjectB = 0;
+        float ContactA = 0.0f;
+        float ContactB = 0.0f;
+        float VelocityA[3]{};
+        float AngularVelocityA[3]{};
+        float VelocityB[3]{};
+        float AngularVelocityB[3]{};
+        float Point[3]{};
+        float Normal[3]{};
+        float Depth = 0.0f;
+    };
+
     class PhysicsSystem
     {
       public:
@@ -67,6 +83,13 @@ namespace dbc
         bool SetBodyKinematic(int ObjectId, int Kinematic, std::string* Error = nullptr);
         bool SetResponse(int ObjectId, int Mode, std::string* Error = nullptr);
         bool SetRayCast(int ObjectId, int Mode, std::string* Error = nullptr);
+        bool SetContactFriction(int ObjectId, float Friction, std::string* Error = nullptr);
+        bool SetContactBounce(int ObjectId, float Bounce, std::string* Error = nullptr);
+        bool SetContactBounceVelocity(int ObjectId, float Velocity, std::string* Error = nullptr);
+        bool SetContactVelocity(int ObjectId, float Velocity, std::string* Error = nullptr);
+        bool SetContact(int ObjectId, int Mode, int Value, std::string* Error = nullptr);
+        bool SetSurfaceBounce(int ObjectId, int State, std::string* Error = nullptr);
+        bool SetSurfaceMode(int ObjectId, int Mode, int State, std::string* Error = nullptr);
         bool SetGravity(int ObjectId, int Enabled, std::string* Error = nullptr);
         bool SetEnabled(int ObjectId, int Enabled, std::string* Error = nullptr);
         bool SetActive(int ObjectId, int Active, std::string* Error = nullptr);
@@ -76,6 +99,26 @@ namespace dbc
                       std::string* Error = nullptr);
         bool AddTorque(int ObjectId, float X, float Y, float Z, std::string* Error = nullptr);
         bool AddImpulse(int ObjectId, float X, float Y, float Z, std::string* Error = nullptr);
+
+        // Messages come out newest first. Asking whether one exists clears the current one, as in the plugin.
+        bool CollisionMessageExists(int& Output, std::string* Error = nullptr);
+        bool NextCollisionMessage(std::string* Error = nullptr);
+        [[nodiscard]] const PhysicsCollisionMessage* CollisionMessage(std::string* Error = nullptr) const;
+
+        // Mask combines 1 for terrain, 2 for objects and 4 for capsules.
+        bool Ray(int& Output, float X, float Y, float Z, float ToX, float ToY, float ToZ, int Mask,
+                 std::string* Error = nullptr);
+        // A positive object number limits the ray to that object's body; otherwise it can hit anything.
+        bool RayCast(int& Output, int ObjectId, float X, float Y, float Z, float ToX, float ToY, float ToZ,
+                     std::string* Error = nullptr);
+        bool RayTerrain(int& Output, float X, float Y, float Z, float ToX, float ToY, float ToZ,
+                        std::string* Error = nullptr);
+        // Whatever moving body the ray hits gets the force for its next update, along the ray.
+        bool RayForce(int& Output, float X, float Y, float Z, float ToX, float ToY, float ToZ, float Force,
+                      std::string* Error = nullptr);
+        [[nodiscard]] bool RayObjectHit(int& Output, std::string* Error = nullptr) const;
+        [[nodiscard]] bool RayCollision(float& Output, int Axis, std::string* Error = nullptr) const;
+        [[nodiscard]] bool RayNormal(float& Output, int Axis, std::string* Error = nullptr) const;
 
         [[nodiscard]] bool BodyHeight(float& Output, int ObjectId, std::string* Error = nullptr) const;
         [[nodiscard]] bool LinearVelocity(float& Output, int ObjectId, int Axis, std::string* Error = nullptr) const;

@@ -8,6 +8,7 @@
 #include <doctest/doctest.h>
 
 #include <SDL3/SDL_timer.h>
+#include <algorithm>
 #include <cmath>
 #include <initializer_list>
 #include <limits>
@@ -1194,5 +1195,510 @@ TEST_CASE("ODE world settings reach the solver")
         Scene.Step();
         CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityY, {2}) ==
               doctest::Approx(-9.81 / 60.0).epsilon(0.02));
+    }
+}
+
+TEST_CASE("ODE collisions arrive as messages")
+{
+    SUBCASE("A landing reports both objects, the moment of impact and where it happened")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        Scene.DropSphere(2, 1.0f, 3.0f);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 0.0);
+        Scene.Step(5);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 0.0);
+
+        // Falls 2 units in about 0.64 s, at about 6.3 units per second.
+        int Steps = 0;
+        while (Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 0.0)
+        {
+            Scene.Step();
+            REQUIRE(++Steps < 120);
+        }
+        CHECK(Steps + 5 == doctest::Approx(38).epsilon(0.1));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectA) == 2.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectB) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAContact) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBContact) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAVelocityY) == doctest::Approx(-6.3).epsilon(0.05));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBVelocityY) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactPointX) == doctest::Approx(1.0).epsilon(0.01));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactPointY) == doctest::Approx(0.0).epsilon(0.05));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactNormalY) == doctest::Approx(-1.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactNormalX) == doctest::Approx(0.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactDepth) >= 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactDepth) < 0.1);
+    }
+
+    SUBCASE("Two moving bodies each report their own motion, and depth grows with overlap")
+    {
+        OdeScene Scene;
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetWorldGravity, {0, 0, 0}));
+        Scene.DropSphere(7, 0.0f, 0.0f);
+        Scene.DropSphere(4, 1.5f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {4, -1, 0, 0}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {7, 1, 0, 0}));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetAngularVelocity, {7, 0, 3, 0}));
+        Scene.Step();
+        REQUIRE(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+        // The lower number is object A, and the normal points to object B.
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectA) == 4.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectB) == 7.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAContact) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBContact) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAVelocityX) == doctest::Approx(-1.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBVelocityX) == doctest::Approx(1.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBAngularVelocityY) == doctest::Approx(3.0).epsilon(0.01));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAAngularVelocityY) == doctest::Approx(0.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactNormalX) == doctest::Approx(-1.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactDepth) == doctest::Approx(0.5).epsilon(0.05));
+        // The point lies on object A.
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactPointX) == doctest::Approx(0.5).epsilon(0.05));
+
+        // Reading other axes reads other values.
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAVelocityY) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAVelocityZ) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBVelocityY) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBVelocityZ) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAAngularVelocityX) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectAAngularVelocityZ) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBAngularVelocityX) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectBAngularVelocityZ) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactNormalZ) == doctest::Approx(0.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactPointZ) == doctest::Approx(0.0));
+    }
+
+    SUBCASE("A pair reports once a step, newest first, and reading empties the stack")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        Scene.DropSphere(2, 0.0f, 1.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {3.0 / 60.0}));
+
+        std::vector<double> Heights;
+        while (Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0)
+        {
+            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+            Heights.push_back(Scene.Read(SymbolId::Function_ExtOdeGetObjectAVelocityY));
+            REQUIRE(Heights.size() < 10);
+        }
+        CHECK(Heights.size() == 3);
+
+        // Asking clears what was read, and reading past the end gives an empty message rather than a stale one.
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectA) == 0.0);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectA) == 0.0);
+
+        Scene.Step();
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectA) == 2.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectA) == 0.0);
+    }
+
+    SUBCASE("A compound body reports its deepest contact once")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        Scene.Kernel.Objects().MakeObjectCube(2, 2.0f);
+        Scene.Kernel.Objects().PositionObject(2, 0.0f, 1.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {2, -1, 1}));
+        Scene.Step();
+        REQUIRE(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+        // The plate reaches half a unit below the box's face.
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetContactDepth) > 0.4);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 0.0);
+    }
+
+    SUBCASE("Bodies at rest fall silent, and a mode 11 box still reports")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        Scene.DropSphere(2, 0.0f, 1.0f);
+        Scene.Step(600);
+        while (Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0)
+            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+        Scene.Step(10);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 0.0);
+
+        Scene.Kernel.Objects().MakeObjectCube(3, 2.0f);
+        Scene.Kernel.Objects().PositionObject(3, 8.0f, 2.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {3, -1, 11}));
+        Scene.Step(60);
+        REQUIRE(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectA) == 3.0);
+        CHECK(Scene.Y(3) < 1.0f);
+    }
+
+    SUBCASE("The stack keeps the newest messages when nobody reads it")
+    {
+        OdeScene Scene;
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetWorldGravity, {0, 0, 0}));
+        // Fifty overlapping pairs for one hundred steps are five thousand messages.
+        for (int Pair = 0; Pair < 50; ++Pair)
+        {
+            const float Z = 10.0f * static_cast<float>(Pair);
+            for (int Side = 0; Side < 2; ++Side)
+            {
+                const int ObjectId = 10 + 2 * Pair + Side;
+                Scene.Kernel.Objects().MakeObjectSphere(ObjectId, 2.0f, 8, 8);
+                Scene.Kernel.Objects().PositionObject(ObjectId, Side == 0 ? 0.0f : 1.8f, 0.0f, Z);
+                REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicSphere, {static_cast<double>(ObjectId)}));
+                REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyDamping, {static_cast<double>(ObjectId), 0, 0}));
+            }
+            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyMass, {10.0 + 2.0 * Pair, 1000}));
+        }
+        int Reports = 0;
+        for (int Step = 0; Step < 100; ++Step)
+        {
+            for (int Pair = 0; Pair < 50; ++Pair)
+            {
+                REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyPosition, {10.0 + 2.0 * Pair, 0, 0, 10.0 * Pair}));
+                REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyPosition, {11.0 + 2.0 * Pair, 1.8, 0, 10.0 * Pair}));
+            }
+            Scene.Step();
+        }
+        while (Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0)
+        {
+            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+            // Newest first: within a step, the highest pair comes out first.
+            if (Reports == 0)
+                CHECK(Scene.Read(SymbolId::Function_ExtOdeGetObjectA) == 108.0);
+            REQUIRE(++Reports <= 4096);
+        }
+        CHECK(Reports == 4096);
+    }
+
+    SUBCASE("The world's end takes its messages with it")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        Scene.DropSphere(2, 0.0f, 1.0f);
+        Scene.Step(2);
+        REQUIRE(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeStart));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 0.0);
+
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeEnd));
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+        CHECK(Scene.Error.find("ODE START") != std::string::npos);
+        BuiltinValue Result;
+        std::string Error;
+        CHECK_FALSE(InvokeFunction(Scene.Context, SymbolId::Function_ExtOdeGetObjectA, {}, Result, Error));
+        CHECK(Error.find("ODE START") != std::string::npos);
+        Error.clear();
+        CHECK_FALSE(InvokeFunction(Scene.Context, SymbolId::Function_ExtOdeCollisionMessageExists, {}, Result, Error));
+        CHECK(Error.find("ODE START") != std::string::npos);
+    }
+
+    SUBCASE("The same scene gives the same messages on every run")
+    {
+        const auto Pile = []
+        {
+            OdeScene Scene;
+            Scene.Floor();
+            for (int Index = 0; Index < 12; ++Index)
+            {
+                Scene.DropSphere(2 + Index, 0.2f * static_cast<float>(Index % 3),
+                                 2.0f + 2.2f * static_cast<float>(Index));
+            }
+            std::vector<double> Record;
+            for (int Step = 0; Step < 240; ++Step)
+            {
+                Scene.Step();
+                while (Scene.Read(SymbolId::Function_ExtOdeCollisionMessageExists) == 1.0)
+                {
+                    REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCollisionGetMessage));
+                    Record.push_back(Scene.Read(SymbolId::Function_ExtOdeGetObjectA));
+                    Record.push_back(Scene.Read(SymbolId::Function_ExtOdeGetObjectB));
+                }
+            }
+            return Record;
+        };
+        const std::vector<double> First = Pile();
+        CHECK(First.size() > 100);
+        CHECK(Pile() == First);
+    }
+}
+
+TEST_CASE("ODE contact surfaces bounce only when asked to")
+{
+    // How high a sphere comes back after falling 4 units onto the floor, at about 8.9 units per second.
+    const auto ReboundHeight = [](auto&& Configure)
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        Scene.DropSphere(2, 0.0f, 5.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyDamping, {2, 0, 0}));
+        Configure(Scene);
+        float Highest = 0.0f;
+        bool Landed = false;
+        for (int Step = 0; Step < 180; ++Step)
+        {
+            Scene.Step();
+            if (Scene.Y(2) < 1.1f)
+                Landed = true;
+            if (Landed)
+                Highest = std::max(Highest, Scene.Y(2) - 1.0f);
+        }
+        REQUIRE(Landed);
+        return Highest;
+    };
+
+    SUBCASE("The bounce needs its surface mode, as in the plugin")
+    {
+        CHECK(ReboundHeight([](OdeScene&) {}) < 0.2f);
+        CHECK(ReboundHeight([](OdeScene& Scene)
+                            { REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContactBounce, {2, 0.8})); }) < 0.2f);
+
+        const float Bouncing = ReboundHeight(
+            [](OdeScene& Scene)
+            {
+                REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContactBounce, {2, 0.8}));
+                REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetsurfaceModeContactBounce, {2, 1}));
+            });
+        // A restitution of 0.8 returns 0.64 of the height.
+        CHECK(Bouncing == doctest::Approx(0.64f * 4.0f).epsilon(0.1));
+
+        CHECK(ReboundHeight(
+                  [](OdeScene& Scene)
+                  {
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContactBounce, {2, 0.8}));
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetsurfaceModeContactBounce, {2, 1}));
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetsurfaceModeContactBounce, {2, 0}));
+                  }) < 0.2f);
+
+        // A static floor can carry the bounce too.
+        CHECK(ReboundHeight(
+                  [](OdeScene& Scene)
+                  {
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContactBounce, {1, 0.8}));
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetsurfaceModeContactBounce, {1, 1}));
+                  }) > 2.0f);
+    }
+
+    SUBCASE("The general forms reach the same settings")
+    {
+        CHECK(ReboundHeight(
+                  [](OdeScene& Scene)
+                  {
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContact, {2, 2, 1}));
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetsurfaceMode, {2, 2, 1}));
+                  }) == doctest::Approx(4.0f).epsilon(0.1));
+
+        OdeScene Scene;
+        Scene.DropSphere(2, 0.0f, 5.0f);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetContact, {2, 4, 1}));
+        CHECK(Scene.Error.find("no Jolt counterpart") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetsurfaceMode, {2, 0, 1}));
+        CHECK(Scene.Error.find("no Jolt counterpart") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetContactBounce, {2, 2}));
+        CHECK(Scene.Error.find("between 0 and 1") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetContactBounceVelocity, {2, -1}));
+        CHECK(Scene.Error.find("non-negative") != std::string::npos);
+        CHECK_FALSE(Scene.Run(SymbolId::Command_ExtOdeSetContactVelocity, {2, -1}));
+        CHECK(Scene.Error.find("non-negative") != std::string::npos);
+    }
+
+    SUBCASE("A body slower than its bounce velocity does not bounce")
+    {
+        const auto WithThreshold = [&](SymbolId Form, double Threshold)
+        {
+            return ReboundHeight(
+                [&](OdeScene& Scene)
+                {
+                    REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContactBounce, {2, 0.8}));
+                    REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetsurfaceModeContactBounce, {2, 1}));
+                    REQUIRE(Scene.Run(Form, {2, Threshold}));
+                });
+        };
+        CHECK(WithThreshold(SymbolId::Command_ExtOdeSetContactBounceVelocity, 5.0) > 1.5f);
+        CHECK(WithThreshold(SymbolId::Command_ExtOdeSetContactBounceVelocity, 20.0) < 0.2f);
+        CHECK(WithThreshold(SymbolId::Command_ExtOdeSetContactVelocity, 20.0) < 0.2f);
+
+        CHECK(ReboundHeight(
+                  [](OdeScene& Scene)
+                  {
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContact, {2, 2, 1}));
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetsurfaceModeContactBounce, {2, 1}));
+                      REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContact, {2, 3, 20}));
+                  }) < 0.2f);
+    }
+
+    SUBCASE("FDIR1 sets the friction of the contact, as the plugin's export does")
+    {
+        const auto SlideAfter = [](auto&& Configure)
+        {
+            OdeScene Scene;
+            Scene.Floor();
+            Scene.Kernel.Objects().MakeObjectCube(2, 2.0f);
+            Scene.Kernel.Objects().PositionObject(2, 0.0f, 1.0f, 0.0f);
+            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateDynamicBox, {2}));
+            Configure(Scene);
+            REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetLinearVelocity, {2, 4, 0, 0}));
+            Scene.Step(60);
+            return Scene.X(2);
+        };
+        const float Default = SlideAfter([](OdeScene&) {});
+        CHECK(SlideAfter([](OdeScene& Scene) { REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContactFdir1, {2, 0})); }) >
+              Default + 1.0f);
+        CHECK(SlideAfter([](OdeScene& Scene) { REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetContact, {2, 0, 0})); }) >
+              Default + 1.0f);
+    }
+}
+
+TEST_CASE("ODE rays find the first surface they meet")
+{
+    SUBCASE("The nearest of several hits gives its object, point and normal")
+    {
+        OdeScene Scene;
+        Scene.Floor();
+        Scene.Kernel.Objects().MakeObjectCube(2, 2.0f);
+        Scene.Kernel.Objects().PositionObject(2, 5.0f, 1.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {2}));
+        Scene.Kernel.Objects().MakeObjectCube(3, 2.0f);
+        Scene.Kernel.Objects().PositionObject(3, 9.0f, 1.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {3}));
+
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {0, 0, 1, 0, 20, 1, 0}) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayObjectHit) == 2.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayCollisionX) == doctest::Approx(4.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayCollisionY) == doctest::Approx(1.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayCollisionZ) == doctest::Approx(0.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayNormalX) == doctest::Approx(-1.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayNormalY) == doctest::Approx(0.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayNormalZ) == doctest::Approx(0.0));
+
+        // Coming from the other side, the other box and the opposite normal.
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {0, 20, 1, 0, 0, 1, 0}) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayObjectHit) == 3.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayCollisionX) == doctest::Approx(10.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayNormalX) == doctest::Approx(1.0));
+
+        // A ray stops at its end point.
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {0, 0, 1, 0, 3, 1, 0}) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayObjectHit) == 0.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {0, 0, 1, 0, 0, 1, 0}) == 0.0);
+    }
+
+    SUBCASE("An object number limits the ray to that body")
+    {
+        OdeScene Scene;
+        Scene.DropSphere(2, 5.0f, 0.0f);
+        Scene.DropSphere(3, 9.0f, 0.0f);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {3, 0, 0, 0, 20, 0, 0}) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayObjectHit) == 3.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayCollisionX) == doctest::Approx(8.0));
+        // Without a body, there is nothing to hit.
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {99, 0, 0, 0, 20, 0, 0}) == 0.0);
+    }
+
+    SUBCASE("Rays see where a body has moved to, and skip disabled bodies")
+    {
+        OdeScene Scene;
+        Scene.DropSphere(2, 5.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetBodyPosition, {2, 12, 0, 0}));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {0, 0, 0, 0, 20, 0, 0}) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayCollisionX) == doctest::Approx(11.0));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetEnabled, {2, 0}));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {0, 0, 0, 0, 20, 0, 0}) == 0.0);
+    }
+
+    SUBCASE("The mask picks terrain, objects and capsules")
+    {
+        OdeScene Scene;
+        Scene.Kernel.Objects().MakeObjectBox(1, 20.0f, 2.0f, 20.0f);
+        Scene.Kernel.Objects().PositionObject(1, 0.0f, -1.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticTerrainMesh, {1}));
+        Scene.Kernel.Objects().MakeObjectCube(2, 2.0f);
+        Scene.Kernel.Objects().PositionObject(2, 0.0f, 3.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {2}));
+        Scene.Kernel.Objects().MakeObjectBox(3, 2.0f, 6.0f, 2.0f);
+        Scene.Kernel.Objects().PositionObject(3, 0.0f, 9.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticCapsule, {3}));
+
+        const auto Downwards = [&](double Mask)
+        {
+            REQUIRE(Scene.Read(SymbolId::Function_ExtOdeRay, {0, 30, 0, 0, -30, 0, Mask}) == 1.0);
+            return Scene.Read(SymbolId::Function_ExtOdeGetRayObjectHit);
+        };
+        CHECK(Downwards(1) == 1.0);
+        CHECK(Downwards(2) == 2.0);
+        CHECK(Downwards(4) == 3.0);
+        CHECK(Downwards(3) == 2.0);
+        CHECK(Downwards(7) == 3.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRay, {0, 30, 0, 0, -30, 0, 8}) == 0.0);
+
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayTerrain, {0, 30, 0, 0, -30, 0}) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayObjectHit) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayCollisionY) == doctest::Approx(0.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayNormalY) == doctest::Approx(1.0));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayTerrain, {30, 30, 0, 30, -30, 0}) == 0.0);
+    }
+
+    SUBCASE("A ray starting inside a solid does not hit it, and a triangle answers from behind")
+    {
+        OdeScene Scene;
+        Scene.DropSphere(2, 0.0f, 0.0f);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayCast, {0, 0, 0, 0, 20, 0, 0}) == 0.0);
+
+        OdeScene Meshes;
+        Meshes.PlainFacingUp(1, 270.0f);
+        REQUIRE(Meshes.Run(SymbolId::Command_ExtOdeCreateStaticTriangleMesh, {1}));
+        CHECK(Meshes.Read(SymbolId::Function_ExtOdeRayCast, {0, 0, -5, 0, 0, 5, 0}) == 1.0);
+        CHECK(Meshes.Read(SymbolId::Function_ExtOdeGetRayNormalY) == doctest::Approx(-1.0));
+        CHECK(Meshes.Read(SymbolId::Function_ExtOdeRayCast, {0, 0, 5, 0, 0, -5, 0}) == 1.0);
+        CHECK(Meshes.Read(SymbolId::Function_ExtOdeGetRayNormalY) == doctest::Approx(1.0));
+    }
+
+    SUBCASE("A ray force pushes what it hits along the ray, from where it hits")
+    {
+        OdeScene Scene;
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeSetWorldGravity, {0, 0, 0}));
+        Scene.DropSphere(2, 0.0f, 0.0f);
+        REQUIRE(Scene.Read(SymbolId::Function_ExtOdeRayForce, {-5, 0, 0, 5, 0, 0, 60}) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayObjectHit) == 2.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2}) == 0.0);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0 / 60.0}));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyLinearVelocityX, {2}) == doctest::Approx(1.0).epsilon(0.01));
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityY, {2}) == doctest::Approx(0.0));
+
+        // Off the centre it also spins the body, and static bodies only report the hit.
+        Scene.DropSphere(3, 0.0f, 20.0f);
+        REQUIRE(Scene.Read(SymbolId::Function_ExtOdeRayForce, {-5, 20.5, 0, 5, 20.5, 0, 60}) == 1.0);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeUpdate, {1.0 / 60.0}));
+        CHECK(std::abs(Scene.Read(SymbolId::Function_ExtOdeGetBodyAngularVelocityZ, {3})) > 0.5);
+
+        Scene.Kernel.Objects().MakeObjectCube(4, 2.0f);
+        Scene.Kernel.Objects().PositionObject(4, 0.0f, 40.0f, 0.0f);
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeCreateStaticBox, {4}));
+        REQUIRE(Scene.Read(SymbolId::Function_ExtOdeRayForce, {-5, 40, 0, 5, 40, 0, 60}) == 1.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeGetRayObjectHit) == 4.0);
+        CHECK(Scene.Read(SymbolId::Function_ExtOdeRayForce, {-5, 80, 0, 5, 80, 0, 60}) == 0.0);
+    }
+
+    SUBCASE("Rays ask for a world and finite coordinates")
+    {
+        OdeScene Scene;
+        BuiltinValue Result;
+        std::string Error;
+        const auto Number = [](double Value) { return BuiltinValue::FromNumber(Value); };
+        CHECK_FALSE(InvokeFunction(Scene.Context, SymbolId::Function_ExtOdeRay,
+                                   {Number(1.0e300), Number(0), Number(0), Number(1), Number(0), Number(0), Number(7)},
+                                   Result, Error));
+        REQUIRE(Scene.Run(SymbolId::Command_ExtOdeEnd));
+        Error.clear();
+        CHECK_FALSE(InvokeFunction(Scene.Context, SymbolId::Function_ExtOdeRay,
+                                   {Number(0), Number(0), Number(0), Number(1), Number(0), Number(0), Number(7)},
+                                   Result, Error));
+        CHECK(Error == "ODE RAY requires ODE START");
+        Error.clear();
+        CHECK_FALSE(InvokeFunction(Scene.Context, SymbolId::Function_ExtOdeGetRayObjectHit, {}, Result, Error));
+        CHECK(Error == "ODE GET RAY OBJECT HIT requires ODE START");
     }
 }

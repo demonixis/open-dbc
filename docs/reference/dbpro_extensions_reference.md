@@ -19,7 +19,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 |---|---|---:|---|---|---|---|
 | `ODE ADD FORCE` | Command | 7 | integer, real, real, real, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE ADD STATIC OBJECT BOX` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE COLLISION GET MESSAGE` | Command | 0 | none -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE COLLISION GET MESSAGE` | Command | 0 | none -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE CONTROL CHARACTER CONTROLLER` | Command | 9 | integer, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE CREATE BALL JOINT` | Command | 6 | integer, integer, integer, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE CREATE CHARACTER CONTROLLER` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -53,10 +53,10 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ODE SET BODY POSITION` | Command | 4 | integer, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET BODY ROTATION` | Command | 4 | integer, real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET CHARACTER CONTROLLER` | Command | 8 | integer, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET CONTACT` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET CONTACT BOUNCE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET CONTACT BOUNCE VELOCITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET CONTACT FDIR1` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE SET CONTACT` | Command | 3 | integer, integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE SET CONTACT BOUNCE` | Command | 2 | integer, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE SET CONTACT BOUNCE VELOCITY` | Command | 2 | integer, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
+| `ODE SET CONTACT FDIR1` | Command | 2 | integer, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET CONTACT MOTION1` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SET CONTACT MOTION2` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SET CONTACT MU2` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -64,7 +64,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ODE SET CONTACT SLIP2` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SET CONTACT SOFT CFM` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SET CONTACT SOFT ERP` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SET CONTACT VELOCITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE SET CONTACT VELOCITY` | Command | 2 | integer, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET ENABLED` | Command | 2 | integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET GRAVITY` | Command | 2 | integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET HINGE JOINT LIMIT` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -79,12 +79,12 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ODE SET WORLD GRAVITY` | Command | 3 | real, real, real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET WORLD QUICK STEP NUM ITERATIONS` | Command | 1 | integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SET WORLD STEP` | Command | 1 | real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
-| `ODE SETSURFACE MODE` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE SETSURFACE MODE` | Command | 3 | integer, integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SETSURFACE MODE CONTACT APPROX0` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SETSURFACE MODE CONTACT APPROX1` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SETSURFACE MODE CONTACT APPROX11` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SETSURFACE MODE CONTACT APPROX12` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE SETSURFACE MODE CONTACT BOUNCE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ODE SETSURFACE MODE CONTACT BOUNCE` | Command | 2 | integer, integer -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE SETSURFACE MODE CONTACT MOTION1` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SETSURFACE MODE CONTACT MOTION2` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE SETSURFACE MODE CONTACT MU2` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -96,7 +96,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ODE START STATIC OBJECT` | Command | 1 | integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ODE UPDATE` | Command | 0-1 | none -> void; real -> void | Implemented | ODE extension | DarkBASIC Professional command implemented with an observable contract. |
 | `ODE UPDATE STATIC TERRAIN` | Command | 8 | integer, integer, integer, integer, integer, integer, integer, integer -> void | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ODE COLLISION MESSAGE EXISTS` | Function | 0 | none -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `ODE COLLISION MESSAGE EXISTS` | Function | 0 | none -> integer | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
 | `ODE CREATE SWINGDOOR HINGE` | Function | 5 | integer, real, real, real, real -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `ODE GET BODY ADJUSTMENT X` | Function | 1 | integer -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `ODE GET BODY ADJUSTMENT Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
@@ -111,30 +111,30 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ODE GET CHARACTER CONTROLLER DUCKING` | Function | 1 | integer -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `ODE GET CHARACTER FALL DISTANCE` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `ODE GET CHARACTER HIT FLOOR` | Function | 0 | none -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT A` | Function | 0 | none -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT A ANGULAR VELOCITY X` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT A ANGULAR VELOCITY Y` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT A ANGULAR VELOCITY Z` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT A CONTACT` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT A VELOCITY X` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT A VELOCITY Y` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT A VELOCITY Z` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT B` | Function | 0 | none -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT B ANGULAR VELOCITY X` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT B ANGULAR VELOCITY Y` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT B ANGULAR VELOCITY Z` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT B CONTACT` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT B VELOCITY X` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT B VELOCITY Y` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET OBJECT B VELOCITY Z` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET RAY COLLISION X` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET RAY COLLISION Y` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET RAY COLLISION Z` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET RAY NORMAL X` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET RAY NORMAL Y` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET RAY NORMAL Z` | Function | 0 | none -> real | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE GET RAY OBJECT HIT` | Function | 0 | none -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE RAY` | Function | 7 | real, real, real, real, real, real, integer -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE RAY CAST` | Function | 7 | integer, real, real, real, real, real, real -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE RAY FORCE` | Function | 7 | real, real, real, real, real, real, real -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `ODE RAY TERRAIN` | Function | 6 | real, real, real, real, real, real -> integer | Unsupported (DBC2043) | ODE extension | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `ODE GET OBJECT A` | Function | 0 | none -> integer | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT A ANGULAR VELOCITY X` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT A ANGULAR VELOCITY Y` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT A ANGULAR VELOCITY Z` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT A CONTACT` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT A VELOCITY X` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT A VELOCITY Y` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT A VELOCITY Z` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT B` | Function | 0 | none -> integer | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT B ANGULAR VELOCITY X` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT B ANGULAR VELOCITY Y` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT B ANGULAR VELOCITY Z` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT B CONTACT` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT B VELOCITY X` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT B VELOCITY Y` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET OBJECT B VELOCITY Z` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET RAY COLLISION X` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET RAY COLLISION Y` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET RAY COLLISION Z` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET RAY NORMAL X` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET RAY NORMAL Y` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET RAY NORMAL Z` | Function | 0 | none -> real | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE GET RAY OBJECT HIT` | Function | 0 | none -> integer | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE RAY` | Function | 7 | real, real, real, real, real, real, integer -> integer | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE RAY CAST` | Function | 7 | integer, real, real, real, real, real, real -> integer | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE RAY FORCE` | Function | 7 | real, real, real, real, real, real, real -> integer | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |
+| `ODE RAY TERRAIN` | Function | 6 | real, real, real, real, real, real -> integer | Implemented | ODE extension | DarkBASIC Professional function implemented with an observable contract. |

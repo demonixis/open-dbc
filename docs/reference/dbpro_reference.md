@@ -1157,6 +1157,13 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ODE GET BODY ANGULAR VELOCITY X` | Function | 1 | integer -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
 | `ODE GET BODY ANGULAR VELOCITY Y` | Function | 1 | integer -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
 | `ODE GET BODY ANGULAR VELOCITY Z` | Function | 1 | integer -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET CONTACT DEPTH` | Function | 0 | none -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET CONTACT NORMAL X` | Function | 0 | none -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET CONTACT NORMAL Y` | Function | 0 | none -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET CONTACT NORMAL Z` | Function | 0 | none -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET CONTACT POINT X` | Function | 0 | none -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET CONTACT POINT Y` | Function | 0 | none -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
+| `ODE GET CONTACT POINT Z` | Function | 0 | none -> real | Implemented | OpenDBC extension | OpenDBC addition to the ODE forms; see docs/physics.md for its observable contract. |
 | `ONLYSQUARETEXTURES AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `PARTICLES EXIST` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `PARTICLES POSITION X` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |

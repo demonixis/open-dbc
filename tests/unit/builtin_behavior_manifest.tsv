@@ -1682,6 +1682,7 @@ dbpro	1438	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_tex
 dbpro	1440	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbpro	1442	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	1450	2004	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1452	2006	Command	ODE COLLISION GET MESSAGE	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
 dbpro	1456	2010	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
 dbpro	1456	2011	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
 dbpro	1456	2012	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
@@ -1709,6 +1710,11 @@ dbpro	1481	2042	Command	ODE SET BODY FRICTION	jolt-rigid-body	test_engine_builti
 dbpro	1482	2043	Command	ODE SET BODY MASS	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
 dbpro	1483	2044	Command	ODE SET BODY POSITION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1484	2045	Command	ODE SET BODY ROTATION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1486	2047	Command	ODE SET CONTACT	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1487	2048	Command	ODE SET CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1488	2049	Command	ODE SET CONTACT BOUNCE VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1489	2050	Command	ODE SET CONTACT FDIR1	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1497	2058	Command	ODE SET CONTACT VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
 dbpro	1498	2059	Command	ODE SET ENABLED	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1499	2060	Command	ODE SET GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1501	2062	Command	ODE SET LINEAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
@@ -1719,13 +1725,43 @@ dbpro	1508	2069	Command	ODE SET WORLD ERP	jolt-rigid-body	test_physics.cpp::ODE 
 dbpro	1509	2070	Command	ODE SET WORLD GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1510	2071	Command	ODE SET WORLD QUICK STEP NUM ITERATIONS	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
 dbpro	1511	2072	Command	ODE SET WORLD STEP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1512	2073	Command	ODE SETSURFACE MODE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1517	2078	Command	ODE SETSURFACE MODE CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
 dbpro	1525	2086	Command	ODE START	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1527	2088	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1527	2089	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1529	2091	Function	ODE COLLISION MESSAGE EXISTS	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
 dbpro	1534	2096	Function	ODE GET BODY HEIGHT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1535	2097	Function	ODE GET BODY LINEAR VELOCITY X	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1536	2098	Function	ODE GET BODY LINEAR VELOCITY Y	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
 dbpro	1537	2099	Function	ODE GET BODY LINEAR VELOCITY Z	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1544	2106	Function	ODE GET OBJECT A	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1545	2107	Function	ODE GET OBJECT A ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1546	2108	Function	ODE GET OBJECT A ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1547	2109	Function	ODE GET OBJECT A ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1548	2110	Function	ODE GET OBJECT A CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1549	2111	Function	ODE GET OBJECT A VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1550	2112	Function	ODE GET OBJECT A VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1551	2113	Function	ODE GET OBJECT A VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1552	2114	Function	ODE GET OBJECT B	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1553	2115	Function	ODE GET OBJECT B ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1554	2116	Function	ODE GET OBJECT B ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1555	2117	Function	ODE GET OBJECT B ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1556	2118	Function	ODE GET OBJECT B CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1557	2119	Function	ODE GET OBJECT B VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1558	2120	Function	ODE GET OBJECT B VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1559	2121	Function	ODE GET OBJECT B VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1560	2122	Function	ODE GET RAY COLLISION X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1561	2123	Function	ODE GET RAY COLLISION Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1562	2124	Function	ODE GET RAY COLLISION Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1563	2125	Function	ODE GET RAY NORMAL X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1564	2126	Function	ODE GET RAY NORMAL Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1565	2127	Function	ODE GET RAY NORMAL Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1566	2128	Function	ODE GET RAY OBJECT HIT	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1567	2129	Function	ODE RAY	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1568	2130	Function	ODE RAY CAST	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1569	2131	Function	ODE RAY FORCE	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1570	2132	Function	ODE RAY TERRAIN	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
 dbpro	1571	2133	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	1572	2134	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	1573	2135	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
@@ -1754,3 +1790,10 @@ dbpro	1595	2171	Command	ODE SET BODY DAMPING	jolt-rigid-body	test_physics.cpp::O
 dbpro	1596	2172	Function	ODE GET BODY ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
 dbpro	1597	2173	Function	ODE GET BODY ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
 dbpro	1598	2174	Function	ODE GET BODY ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1599	2175	Function	ODE GET CONTACT POINT X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1600	2176	Function	ODE GET CONTACT POINT Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1601	2177	Function	ODE GET CONTACT POINT Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1602	2178	Function	ODE GET CONTACT NORMAL X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1603	2179	Function	ODE GET CONTACT NORMAL Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1604	2180	Function	ODE GET CONTACT NORMAL Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1605	2181	Function	ODE GET CONTACT DEPTH	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-

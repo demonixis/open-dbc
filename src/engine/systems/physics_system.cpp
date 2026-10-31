@@ -3,6 +3,7 @@
 #include "../engine_math.hpp"
 #include "core_system.hpp"
 #include "engine_kernel.hpp"
+#include "log.hpp"
 #include "object_manager.hpp"
 #include "renderer_system.hpp"
 
@@ -15,6 +16,11 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyLock.h>
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
+#include <Jolt/Physics/Collision/ContactListener.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
+#include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
@@ -29,6 +35,7 @@
 #include <SDL3/SDL_timer.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cfloat>
 #include <cmath>
 #include <cstdint>
@@ -46,6 +53,17 @@ namespace dbc
         constexpr JPH::ObjectLayer NonMovingLayer = 0;
         constexpr JPH::ObjectLayer MovingLayer = 1;
         constexpr JPH::ObjectLayer DisabledLayer = 2;
+
+        // The categories of ODE RAY's mask.
+        constexpr int RayCategoryTerrain = 1;
+        constexpr int RayCategoryObject = 2;
+        constexpr int RayCategoryCapsule = 4;
+        constexpr int RayCategoryAny = RayCategoryTerrain | RayCategoryObject | RayCategoryCapsule;
+
+        // Both are fixed when the world starts, so a step never allocates for its contacts. The first holds what one
+        // step reports and the second what the program has not read yet, which loses the oldest when full.
+        constexpr std::uint32_t MaximumStepContacts = 8192;
+        constexpr std::uint32_t MaximumCollisionMessages = 4096;
 
         constexpr float DefaultStepSeconds = 1.0f / 60.0f;
         constexpr float MinimumStepSeconds = 1.0f / 1000.0f;
@@ -242,7 +260,7 @@ namespace dbc
         }
     } // namespace
 
-    struct PhysicsSystem::Impl
+    struct PhysicsSystem::Impl final : JPH::ContactListener
     {
         struct BodyRecord
         {
@@ -256,6 +274,11 @@ namespace dbc
             bool KinematicRequested = false;
             bool PseudoStatic = false;
             bool HasPendingForce = false;
+            int RayCategory = RayCategoryObject;
+            bool BounceEnabled = false;
+            float Bounce = 0.0f;
+            float BounceVelocity = 0.0f;
+            float Restitution = 0.0f;
             JPH::Vec3 PendingForce = JPH::Vec3::sZero();
             JPH::Vec3 PendingTorque = JPH::Vec3::sZero();
 
@@ -270,6 +293,7 @@ namespace dbc
             bool Dynamic = false;
             bool Sensor = false;
             bool LockRotation = false;
+            int RayCategory = RayCategoryObject;
             float Mass = DefaultMass;
             float Friction = DefaultFriction;
             float Restitution = 0.0f;
@@ -300,6 +324,15 @@ namespace dbc
             World = std::make_unique<JPH::PhysicsSystem>();
             World->Init(65536, 0, 65536, 10240, BroadPhase, ObjectVsBroadPhaseFilter, ObjectLayerPairFilter);
             World->SetGravity(JPH::Vec3(0.0f, -9.81f, 0.0f));
+            World->SetContactListener(this);
+            StepContacts = std::make_unique<PhysicsCollisionMessage[]>(MaximumStepContacts);
+            CollisionMessages = std::make_unique<PhysicsCollisionMessage[]>(MaximumCollisionMessages);
+            StepContactCount.store(0, std::memory_order_relaxed);
+            CollisionMessageHead = 0;
+            CollisionMessageCount = 0;
+            CurrentMessage = {};
+            ContactOverflowLogged = false;
+            LastRay = {};
             const JPH::PhysicsSettings& Defaults = World->GetPhysicsSettings();
             PositionCorrection = Defaults.mBaumgarte;
             VelocitySteps = static_cast<int>(Defaults.mNumVelocitySteps);
@@ -325,6 +358,8 @@ namespace dbc
             Records.clear();
             Started = false;
             World.reset();
+            StepContacts.reset();
+            CollisionMessages.reset();
             Jobs.reset();
             TempAllocator.reset();
         }
@@ -508,6 +543,8 @@ namespace dbc
             if (const auto Existing = Records.find(ObjectId); Existing != Records.end())
                 DestroyRecord(Existing);
 
+            // Map nodes do not move, so workers can reach the record through the body during a step.
+            BodyRecord& Record = Records[ObjectId];
             JPH::BodyCreationSettings Settings(Shape.GetPtr(), Options.Position, Options.Rotation,
                                                Options.Dynamic ? JPH::EMotionType::Dynamic : JPH::EMotionType::Static,
                                                Options.Dynamic ? MovingLayer : NonMovingLayer);
@@ -516,6 +553,7 @@ namespace dbc
             Settings.mLinearDamping = DefaultLinearDamping;
             Settings.mAngularDamping = DefaultAngularDamping;
             Settings.mIsSensor = Options.Sensor;
+            Settings.mUserData = reinterpret_cast<JPH::uint64>(&Record);
             if (Options.Dynamic)
             {
                 // Mass does not follow the volume, so a force means the same on bodies of any size.
@@ -530,14 +568,16 @@ namespace dbc
                 Settings, Options.Dynamic ? JPH::EActivation::Activate : JPH::EActivation::DontActivate);
             if (BodyId.IsInvalid())
             {
+                Records.erase(ObjectId);
                 Fail(Error, std::string(Command) + " exhausted the physics body pool");
                 return nullptr;
             }
-            BodyRecord& Record = Records[ObjectId];
             Record.ObjectId = ObjectId;
             Record.Id = BodyId;
             Record.Moving = Options.Dynamic;
             Record.ZyxRotation = Object.UseZyxRotation;
+            Record.RayCategory = Options.RayCategory;
+            Record.Restitution = Options.Restitution;
             return &Record;
         }
 
@@ -615,6 +655,7 @@ namespace dbc
                                    Center.GetZ());
             BodyOptions Options = OptionsAt(*Object, Dynamic);
             Options.LockRotation = true;
+            Options.RayCategory = RayCategoryCapsule;
             BodyRecord* Record =
                 AddBody(ObjectId, *Object, Command,
                         OffsetShape(new JPH::CapsuleShape(Size.HalfHeight, Size.Radius), Offset), Options, Error);
@@ -624,7 +665,8 @@ namespace dbc
             return true;
         }
 
-        bool CreateStaticMesh(int ObjectId, int Limb, float ScalingPercent, const char* Command, std::string* Error)
+        bool CreateStaticMesh(int ObjectId, int Limb, float ScalingPercent, int RayCategory, const char* Command,
+                              std::string* Error)
         {
             const Object3D* Object = RequireObject(ObjectId, Command, Error);
             ObjectGeometry Geometry;
@@ -650,7 +692,9 @@ namespace dbc
             if (Result.HasError())
                 return Fail(Error, std::string(Command) + " could not build a mesh from object " +
                                        std::to_string(ObjectId) + ": " + Result.GetError().c_str());
-            return AddBody(ObjectId, *Object, Command, Result.Get(), OptionsAt(*Object, false), Error) != nullptr;
+            BodyOptions Options = OptionsAt(*Object, false);
+            Options.RayCategory = RayCategory;
+            return AddBody(ObjectId, *Object, Command, Result.Get(), Options, Error) != nullptr;
         }
 
         // Jolt does not simulate moving triangle meshes; a hull keeps the object's outline without its hollows.
@@ -711,6 +755,184 @@ namespace dbc
                 Interface.SetLinearAndAngularVelocity(Record.Id, JPH::Vec3::sZero(), JPH::Vec3::sZero());
         }
 
+        void ApplyBounce(const BodyRecord& Record)
+        {
+            Bodies().SetRestitution(Record.Id, Record.BounceEnabled ? Record.Bounce : Record.Restitution);
+        }
+
+        static const BodyRecord& RecordOf(const JPH::Body& Body)
+        {
+            return *reinterpret_cast<const BodyRecord*>(Body.GetUserData());
+        }
+
+        // Runs on Jolt's workers: it reads what cannot change during a step, and takes its slot atomically.
+        void RecordContact(const JPH::Body& First, const JPH::Body& Second, const JPH::ContactManifold& Manifold)
+        {
+            const std::uint32_t Slot = StepContactCount.fetch_add(1, std::memory_order_relaxed);
+            if (Slot >= MaximumStepContacts)
+                return;
+
+            const BodyRecord& FirstRecord = RecordOf(First);
+            const BodyRecord& SecondRecord = RecordOf(Second);
+            // The plugin's object A is a body that moves; among two of them, the lower number keeps it repeatable.
+            const bool Swap =
+                First.IsStatic() != Second.IsStatic() ? First.IsStatic() : SecondRecord.ObjectId < FirstRecord.ObjectId;
+            const JPH::Body& A = Swap ? Second : First;
+            const JPH::Body& B = Swap ? First : Second;
+
+            const auto Store = [](float* Output, JPH::Vec3Arg Value)
+            {
+                Output[0] = Value.GetX();
+                Output[1] = Value.GetY();
+                Output[2] = Value.GetZ();
+            };
+            PhysicsCollisionMessage& Message = StepContacts[Slot];
+            Message.ObjectA = RecordOf(A).ObjectId;
+            Message.ObjectB = RecordOf(B).ObjectId;
+            Message.ContactA = A.IsStatic() ? 0.0f : 1.0f;
+            Message.ContactB = B.IsStatic() ? 0.0f : 1.0f;
+            Store(Message.VelocityA, A.GetLinearVelocity());
+            Store(Message.AngularVelocityA, A.GetAngularVelocity());
+            Store(Message.VelocityB, B.GetLinearVelocity());
+            Store(Message.AngularVelocityB, B.GetAngularVelocity());
+
+            // Jolt's normal runs from its first body to its second.
+            Store(Message.Normal, Swap ? -Manifold.mWorldSpaceNormal : Manifold.mWorldSpaceNormal);
+            // A speculative contact has not touched yet; its negative depth is how far it has to go.
+            Message.Depth = std::max(Manifold.mPenetrationDepth, 0.0f);
+            const JPH::uint PointCount = Manifold.mRelativeContactPointsOn1.size();
+            JPH::Vec3 Sum = JPH::Vec3::sZero();
+            for (JPH::uint Index = 0; Index < PointCount; ++Index)
+                Sum += JPH::Vec3(Swap ? Manifold.GetWorldSpaceContactPointOn2(Index)
+                                      : Manifold.GetWorldSpaceContactPointOn1(Index));
+            Store(Message.Point, Sum / static_cast<float>(std::max<JPH::uint>(PointCount, 1)));
+        }
+
+        // Jolt's own threshold is global, while the plugin gives each body one.
+        static void ApplyBounceThreshold(const JPH::Body& First, const JPH::Body& Second,
+                                         const JPH::ContactManifold& Manifold, JPH::ContactSettings& Settings)
+        {
+            const BodyRecord& FirstRecord = RecordOf(First);
+            const BodyRecord& SecondRecord = RecordOf(Second);
+            const float Threshold = std::max(FirstRecord.BounceEnabled ? FirstRecord.BounceVelocity : 0.0f,
+                                             SecondRecord.BounceEnabled ? SecondRecord.BounceVelocity : 0.0f);
+            if (Threshold <= 0.0f || Settings.mCombinedRestitution <= 0.0f)
+                return;
+            const JPH::RVec3 Point = Manifold.GetWorldSpaceContactPointOn1(0);
+            const JPH::Vec3 Relative = First.GetPointVelocity(Point) - Second.GetPointVelocity(Point);
+            if (Relative.Dot(Manifold.mWorldSpaceNormal) < Threshold)
+                Settings.mCombinedRestitution = 0.0f;
+        }
+
+        void OnContactAdded(const JPH::Body& First, const JPH::Body& Second, const JPH::ContactManifold& Manifold,
+                            JPH::ContactSettings& Settings) override
+        {
+            ApplyBounceThreshold(First, Second, Manifold, Settings);
+            RecordContact(First, Second, Manifold);
+        }
+
+        void OnContactPersisted(const JPH::Body& First, const JPH::Body& Second, const JPH::ContactManifold& Manifold,
+                                JPH::ContactSettings& Settings) override
+        {
+            ApplyBounceThreshold(First, Second, Manifold, Settings);
+            RecordContact(First, Second, Manifold);
+        }
+
+        // Workers report in any order and may report a pair for several of its sub-shapes. Sorting makes the outcome
+        // repeatable, and leaves the deepest contact of each pair first.
+        void CollectStepContacts()
+        {
+            const std::uint32_t Reported = StepContactCount.exchange(0, std::memory_order_relaxed);
+            const std::uint32_t Count = std::min(Reported, MaximumStepContacts);
+            if (Reported > MaximumStepContacts && !ContactOverflowLogged)
+            {
+                DBC_LOG_WARN("ODE: a step reported {} contacts; collision messages keep the first {}", Reported,
+                             MaximumStepContacts);
+                ContactOverflowLogged = true;
+            }
+            const auto Order = [](const PhysicsCollisionMessage& Left, const PhysicsCollisionMessage& Right)
+            {
+                if (Left.ObjectA != Right.ObjectA)
+                    return Left.ObjectA < Right.ObjectA;
+                if (Left.ObjectB != Right.ObjectB)
+                    return Left.ObjectB < Right.ObjectB;
+                if (Left.Depth != Right.Depth)
+                    return Left.Depth > Right.Depth;
+                return std::lexicographical_compare(Left.Point, Left.Point + 3, Right.Point, Right.Point + 3);
+            };
+            std::sort(StepContacts.get(), StepContacts.get() + Count, Order);
+            for (std::uint32_t Index = 0; Index < Count; ++Index)
+            {
+                if (Index > 0 && StepContacts[Index].ObjectA == StepContacts[Index - 1].ObjectA &&
+                    StepContacts[Index].ObjectB == StepContacts[Index - 1].ObjectB)
+                    continue;
+                CollisionMessages[CollisionMessageHead] = StepContacts[Index];
+                CollisionMessageHead = (CollisionMessageHead + 1) % MaximumCollisionMessages;
+                CollisionMessageCount = std::min(CollisionMessageCount + 1, MaximumCollisionMessages);
+            }
+        }
+
+        // What a ray may hit; workers play no part, so it runs on the program's thread.
+        class RayBodyFilter final : public JPH::BodyFilter
+        {
+          public:
+            RayBodyFilter(int Mask, int OnlyObjectId) : Mask_(Mask), OnlyObjectId_(OnlyObjectId) {}
+
+            bool ShouldCollideLocked(const JPH::Body& Body) const override
+            {
+                const BodyRecord& Record = RecordOf(Body);
+                if (!Record.Enabled)
+                    return false;
+                return OnlyObjectId_ > 0 ? Record.ObjectId == OnlyObjectId_ : (Mask_ & Record.RayCategory) != 0;
+            }
+
+          private:
+            int Mask_;
+            int OnlyObjectId_;
+        };
+
+        BodyRecord* CastRay(const char* Command, float X, float Y, float Z, float ToX, float ToY, float ToZ, int Mask,
+                            int OnlyObjectId, std::string* Error, bool* Failed)
+        {
+            *Failed = !RequireStarted(Command, Error) || !ValidateFinite({X, Y, Z, ToX, ToY, ToZ}, Command, Error);
+            if (*Failed)
+                return nullptr;
+            LastRay.ObjectId = 0;
+            const JPH::RVec3 Origin(X, Y, Z);
+            const JPH::Vec3 Direction(ToX - X, ToY - Y, ToZ - Z);
+            if (Direction.IsNearZero())
+                return nullptr;
+
+            // As with the plugin's Bullet rays, a ray starting inside a convex shape does not hit it, and a triangle
+            // answers from both sides.
+            JPH::RayCastSettings Settings;
+            Settings.mTreatConvexAsSolid = false;
+            Settings.mBackFaceModeTriangles = JPH::EBackFaceMode::CollideWithBackFaces;
+            const JPH::RRayCast Ray(Origin, Direction);
+            JPH::ClosestHitCollisionCollector<JPH::CastRayCollector> Collector;
+            World->GetNarrowPhaseQueryNoLock().CastRay(Ray, Settings, Collector, {}, {},
+                                                       RayBodyFilter(Mask, OnlyObjectId));
+            if (!Collector.HadHit())
+                return nullptr;
+
+            const JPH::BodyLockRead Lock(World->GetBodyLockInterfaceNoLock(), Collector.mHit.mBodyID);
+            if (!Lock.Succeeded())
+                return nullptr;
+            const JPH::Body& Body = Lock.GetBody();
+            const JPH::RVec3 Point = Ray.GetPointOnRay(Collector.mHit.mFraction);
+            JPH::Vec3 Normal = Body.GetWorldSpaceSurfaceNormal(Collector.mHit.mSubShapeID2, Point);
+            if (Normal.Dot(Direction) > 0.0f)
+                Normal = -Normal;
+            auto* Record = reinterpret_cast<BodyRecord*>(Body.GetUserData());
+            LastRay.ObjectId = Record->ObjectId;
+            for (int Axis = 0; Axis < 3; ++Axis)
+            {
+                LastRay.Point[Axis] = static_cast<float>(Point[Axis]);
+                LastRay.Normal[Axis] = Normal[Axis];
+            }
+            return Record;
+        }
+
         void ApplyPhysicsSettings()
         {
             JPH::PhysicsSettings Settings = World->GetPhysicsSettings();
@@ -745,6 +967,7 @@ namespace dbc
                     World->Update(StepSeconds, 1, TempAllocator.get(), Jobs.get());
                 if (UpdateError != JPH::EPhysicsUpdateError::None)
                     return Fail(Error, "ODE UPDATE exhausted a Jolt simulation buffer");
+                CollectStepContacts();
                 AccumulatedSeconds = std::max(AccumulatedSeconds - StepSeconds, 0.0f);
             }
             SyncObjects(AccumulatedSeconds);
@@ -797,6 +1020,21 @@ namespace dbc
         int PositionSteps = 0;
         bool ExactStepMode = false;
         bool AnyPendingForce = false;
+        std::unique_ptr<PhysicsCollisionMessage[]> StepContacts;
+        std::atomic<std::uint32_t> StepContactCount{0};
+        std::unique_ptr<PhysicsCollisionMessage[]> CollisionMessages;
+        std::uint32_t CollisionMessageHead = 0;
+        std::uint32_t CollisionMessageCount = 0;
+        PhysicsCollisionMessage CurrentMessage;
+        bool ContactOverflowLogged = false;
+
+        struct
+        {
+            int ObjectId = 0;
+            float Point[3]{};
+            float Normal[3]{};
+        } LastRay;
+
         Uint64 LastUpdateNanoseconds = 0;
         Uint64 LastPresentTicks = 0;
         bool Started = false;
@@ -983,18 +1221,20 @@ namespace dbc
 
     bool PhysicsSystem::CreateStaticTriangleMesh(int ObjectId, int Limb, int ScalingPercent, std::string* Error)
     {
-        return Impl_->CreateStaticMesh(ObjectId, Limb, static_cast<float>(ScalingPercent),
+        return Impl_->CreateStaticMesh(ObjectId, Limb, static_cast<float>(ScalingPercent), RayCategoryObject,
                                        "ODE CREATE STATIC TRIANGLE MESH", Error);
     }
 
     bool PhysicsSystem::CreateStaticTriangleMeshLimb(int ObjectId, int Limb, std::string* Error)
     {
-        return Impl_->CreateStaticMesh(ObjectId, Limb, 100.0f, "ODE CREATE STATIC TRIANGLE MESH LIMB", Error);
+        return Impl_->CreateStaticMesh(ObjectId, Limb, 100.0f, RayCategoryObject,
+                                       "ODE CREATE STATIC TRIANGLE MESH LIMB", Error);
     }
 
     bool PhysicsSystem::CreateStaticTerrainMesh(int ObjectId, std::string* Error)
     {
-        return Impl_->CreateStaticMesh(ObjectId, -1, 100.0f, "ODE CREATE STATIC TERRAIN MESH", Error);
+        return Impl_->CreateStaticMesh(ObjectId, -1, 100.0f, RayCategoryTerrain, "ODE CREATE STATIC TERRAIN MESH",
+                                       Error);
     }
 
     bool PhysicsSystem::CreateStaticSphere(int ObjectId, std::string* Error)
@@ -1217,6 +1457,88 @@ namespace dbc
         return true;
     }
 
+    bool PhysicsSystem::SetContactFriction(int ObjectId, float Friction, std::string* Error)
+    {
+        // The plugin's export of this name sets the friction coefficient, not a friction direction.
+        Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, "ODE SET CONTACT FDIR1", Error);
+        if (!Record || !ValidateFinite({Friction}, "ODE SET CONTACT FDIR1", Error))
+            return false;
+        if (Friction < 0.0f)
+            return Fail(Error, "ODE SET CONTACT FDIR1 requires a non-negative value");
+        Impl_->Bodies().SetFriction(Record->Id, Friction);
+        return true;
+    }
+
+    bool PhysicsSystem::SetContactBounce(int ObjectId, float Bounce, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, "ODE SET CONTACT BOUNCE", Error);
+        if (!Record || !ValidateFinite({Bounce}, "ODE SET CONTACT BOUNCE", Error))
+            return false;
+        if (Bounce < 0.0f || Bounce > 1.0f)
+            return Fail(Error, "ODE SET CONTACT BOUNCE requires a value between 0 and 1");
+        Record->Bounce = Bounce;
+        Impl_->ApplyBounce(*Record);
+        return true;
+    }
+
+    bool PhysicsSystem::SetContactBounceVelocity(int ObjectId, float Velocity, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, "ODE SET CONTACT BOUNCE VELOCITY", Error);
+        if (!Record || !ValidateFinite({Velocity}, "ODE SET CONTACT BOUNCE VELOCITY", Error))
+            return false;
+        if (Velocity < 0.0f)
+            return Fail(Error, "ODE SET CONTACT BOUNCE VELOCITY requires a non-negative value");
+        Record->BounceVelocity = Velocity;
+        return true;
+    }
+
+    bool PhysicsSystem::SetContactVelocity(int ObjectId, float Velocity, std::string* Error)
+    {
+        // The plugin exports this name with no definition behind it; the closest meaning it has is the bounce velocity.
+        Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, "ODE SET CONTACT VELOCITY", Error);
+        if (!Record || !ValidateFinite({Velocity}, "ODE SET CONTACT VELOCITY", Error))
+            return false;
+        if (Velocity < 0.0f)
+            return Fail(Error, "ODE SET CONTACT VELOCITY requires a non-negative value");
+        Record->BounceVelocity = Velocity;
+        return true;
+    }
+
+    bool PhysicsSystem::SetContact(int ObjectId, int Mode, int Value, std::string* Error)
+    {
+        switch (Mode)
+        {
+            case 0:
+                return SetContactFriction(ObjectId, static_cast<float>(Value), Error);
+            case 2:
+                return SetContactBounce(ObjectId, static_cast<float>(Value), Error);
+            case 3:
+                return SetContactBounceVelocity(ObjectId, static_cast<float>(Value), Error);
+            default:
+                return Fail(Error,
+                            "ODE SET CONTACT mode " + std::to_string(Mode) +
+                                " has no Jolt counterpart; modes 0 (friction), 2 (bounce) and 3 (bounce velocity) do");
+        }
+    }
+
+    bool PhysicsSystem::SetSurfaceBounce(int ObjectId, int State, std::string* Error)
+    {
+        Impl::BodyRecord* Record = Impl_->RequireBody(ObjectId, "ODE SETSURFACE MODE CONTACT BOUNCE", Error);
+        if (!Record)
+            return false;
+        Record->BounceEnabled = State != 0;
+        Impl_->ApplyBounce(*Record);
+        return true;
+    }
+
+    bool PhysicsSystem::SetSurfaceMode(int ObjectId, int Mode, int State, std::string* Error)
+    {
+        if (Mode != 2)
+            return Fail(Error, "ODE SETSURFACE MODE mode " + std::to_string(Mode) +
+                                   " has no Jolt counterpart; mode 2 (bounce) does");
+        return SetSurfaceBounce(ObjectId, State, Error);
+    }
+
     bool PhysicsSystem::SetGravity(int ObjectId, int Enabled, std::string* Error)
     {
         Impl::BodyRecord* Record = Impl_->RequireMovingBody(ObjectId, "ODE SET GRAVITY", Error);
@@ -1253,6 +1575,119 @@ namespace dbc
             Impl_->Bodies().ActivateBody(Record->Id);
         else
             Impl_->Bodies().DeactivateBody(Record->Id);
+        return true;
+    }
+
+    bool PhysicsSystem::CollisionMessageExists(int& Output, std::string* Error)
+    {
+        if (!Impl_->RequireStarted("ODE COLLISION MESSAGE EXISTS", Error))
+            return false;
+        Impl_->CurrentMessage = {};
+        Output = Impl_->CollisionMessageCount > 0 ? 1 : 0;
+        return true;
+    }
+
+    bool PhysicsSystem::NextCollisionMessage(std::string* Error)
+    {
+        if (!Impl_->RequireStarted("ODE COLLISION GET MESSAGE", Error))
+            return false;
+        Impl_->CurrentMessage = {};
+        if (Impl_->CollisionMessageCount == 0)
+            return true;
+        Impl_->CollisionMessageHead =
+            (Impl_->CollisionMessageHead + MaximumCollisionMessages - 1) % MaximumCollisionMessages;
+        --Impl_->CollisionMessageCount;
+        Impl_->CurrentMessage = Impl_->CollisionMessages[Impl_->CollisionMessageHead];
+        return true;
+    }
+
+    const PhysicsCollisionMessage* PhysicsSystem::CollisionMessage(std::string* Error) const
+    {
+        if (!Impl_->Started)
+        {
+            Fail(Error, "Reading an ODE collision message requires ODE START");
+            return nullptr;
+        }
+        return &Impl_->CurrentMessage;
+    }
+
+    bool PhysicsSystem::RayCast(int& Output, int ObjectId, float X, float Y, float Z, float ToX, float ToY, float ToZ,
+                                std::string* Error)
+    {
+        bool Failed = false;
+        // As in the plugin, a number without a body is a ray that hits nothing.
+        const bool Hit =
+            Impl_->CastRay("ODE RAY CAST", X, Y, Z, ToX, ToY, ToZ, RayCategoryAny, ObjectId, Error, &Failed);
+        Output = Hit ? 1 : 0;
+        return !Failed;
+    }
+
+    bool PhysicsSystem::Ray(int& Output, float X, float Y, float Z, float ToX, float ToY, float ToZ, int Mask,
+                            std::string* Error)
+    {
+        bool Failed = false;
+        const bool Hit = Impl_->CastRay("ODE RAY", X, Y, Z, ToX, ToY, ToZ, Mask, 0, Error, &Failed);
+        Output = Hit ? 1 : 0;
+        return !Failed;
+    }
+
+    bool PhysicsSystem::RayTerrain(int& Output, float X, float Y, float Z, float ToX, float ToY, float ToZ,
+                                   std::string* Error)
+    {
+        bool Failed = false;
+        const bool Hit =
+            Impl_->CastRay("ODE RAY TERRAIN", X, Y, Z, ToX, ToY, ToZ, RayCategoryTerrain, 0, Error, &Failed);
+        Output = Hit ? 1 : 0;
+        return !Failed;
+    }
+
+    bool PhysicsSystem::RayForce(int& Output, float X, float Y, float Z, float ToX, float ToY, float ToZ, float Force,
+                                 std::string* Error)
+    {
+        constexpr const char* Command = "ODE RAY FORCE";
+        if (!ValidateFinite({Force}, Command, Error))
+            return false;
+        bool Failed = false;
+        Impl::BodyRecord* Record = Impl_->CastRay(Command, X, Y, Z, ToX, ToY, ToZ, RayCategoryAny, 0, Error, &Failed);
+        Output = Record ? 1 : 0;
+        if (Failed)
+            return false;
+        if (Record && Record->Moving)
+        {
+            const JPH::Vec3 Push = Force * JPH::Vec3(ToX - X, ToY - Y, ToZ - Z).Normalized();
+            const JPH::RVec3 Center = Impl_->Bodies().GetCenterOfMassPosition(Record->Id);
+            const JPH::Vec3 Lever = JPH::Vec3(
+                JPH::RVec3(Impl_->LastRay.Point[0], Impl_->LastRay.Point[1], Impl_->LastRay.Point[2]) - Center);
+            Impl_->AddPendingForce(*Record, Push, Lever.Cross(Push));
+        }
+        return true;
+    }
+
+    bool PhysicsSystem::RayObjectHit(int& Output, std::string* Error) const
+    {
+        if (!Impl_->RequireStarted("ODE GET RAY OBJECT HIT", Error))
+            return false;
+        Output = Impl_->LastRay.ObjectId;
+        return true;
+    }
+
+    bool PhysicsSystem::RayCollision(float& Output, int Axis, std::string* Error) const
+    {
+        static constexpr const char* Commands[] = {"ODE GET RAY COLLISION X", "ODE GET RAY COLLISION Y",
+                                                   "ODE GET RAY COLLISION Z"};
+        if (!Impl_->RequireStarted(Commands[Axis], Error))
+            return false;
+        Output = Impl_->LastRay.Point[Axis];
+        return true;
+    }
+
+    bool PhysicsSystem::RayNormal(float& Output, int Axis, std::string* Error) const
+    {
+        static constexpr const char* Commands[] = {"ODE GET RAY NORMAL X", "ODE GET RAY NORMAL Y",
+                                                   "ODE GET RAY NORMAL Z"};
+        if (!Impl_->RequireStarted(Commands[Axis], Error))
+            return false;
+        Output = Impl_->LastRay.Normal[Axis];
         return true;
     }
 

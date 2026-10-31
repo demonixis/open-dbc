@@ -40,6 +40,34 @@ mesh, which does not exist here, so it behaves like mode 0.
 
 `ODE SET RAY CAST` switches a body's continuous collision detection, which is on by default.
 
+## Collisions
+
+Each step adds a message for every pair of touching bodies that are awake, also when they only are about to touch.
+`ODE COLLISION MESSAGE EXISTS` clears the current message and says whether more wait; `ODE COLLISION GET MESSAGE` takes
+the newest. Up to 4096 wait unread, losing the oldest. Object A is a body that moves, the lower number of two that do,
+with its contact flag at 1; a static object B has a flag of 0 and no velocity. Velocities are from just before the step
+resolved the contact. The additions `ODE GET CONTACT POINT X/Y/Z`, `ODE GET CONTACT NORMAL X/Y/Z` and
+`ODE GET CONTACT DEPTH` give the point on A, the direction from A to B and the overlap, which is 0 before they touch.
+The plugin also reported pairs whose bounds overlapped without a contact, with both flags at 0; these do not exist here.
+
+Two bodies bounce by the larger of their restitutions, which is on only while a body's surface mode says so:
+`ODE SETSURFACE MODE CONTACT BOUNCE id, 1` applies `ODE SET CONTACT BOUNCE`, and below a body's
+`ODE SET CONTACT BOUNCE VELOCITY` a contact does not bounce. Whatever is set, speeds under 1 unit per second do not
+bounce, for stability. `ODE SET CONTACT FDIR1` sets the friction, as the plugin's export of that name does, and
+`ODE SET CONTACT VELOCITY`, exported by the plugin without a definition, sets the bounce velocity. The general
+`ODE SET CONTACT` takes modes 0, 2 and 3 and `ODE SETSURFACE MODE` mode 2; the other modes have no Jolt counterpart and
+report an error.
+
+## Rays
+
+Each ray keeps its last hit for `ODE GET RAY COLLISION X/Y/Z`, `ODE GET RAY NORMAL X/Y/Z` and `ODE GET RAY OBJECT HIT`,
+which gives the object number on every form where the plugin often gave 0. A miss sets the object to 0 and leaves the
+point and normal. Rays skip disabled bodies and a convex shape they start inside, and meet triangles from both sides.
+
+Static terrain meshes count as terrain for `ODE RAY`'s mask (1), capsules as capsules (4) and the rest as objects (2).
+`ODE RAY CAST` tests one object's body, or all of them with object 0. `ODE RAY FORCE` adds a force along the ray at the
+hit point of a moving body, for its next update.
+
 ## Solver
 
 `ODE SET WORLD ERP` is Jolt's position correction per iteration, and `ODE SET WORLD QUICK STEP NUM ITERATIONS` its
@@ -50,4 +78,5 @@ the next `ODE START`.
 ## Additions
 
 These forms have no counterpart in the plugin: `ODE ADD TORQUE`, `ODE ADD IMPULSE`, `ODE SET BODY KINEMATIC`,
-`ODE SET BODY DAMPING` and `ODE GET BODY ANGULAR VELOCITY X/Y/Z`.
+`ODE SET BODY DAMPING`, `ODE GET BODY ANGULAR VELOCITY X/Y/Z`, `ODE GET CONTACT POINT X/Y/Z`,
+`ODE GET CONTACT NORMAL X/Y/Z` and `ODE GET CONTACT DEPTH`.
