@@ -433,7 +433,12 @@ namespace dbc
                 break;
             }
             if (static_cast<unsigned char>(Character) <= 13)
+            {
+                // CR LF ends one line, or text files from Windows tools would read as twice as many.
+                if (Character == '\r' && File->Stream.peek() == '\n')
+                    File->Stream.get(Character);
                 break;
+            }
             Result.push_back(Character);
         }
         {

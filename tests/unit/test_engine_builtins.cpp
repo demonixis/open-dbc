@@ -11198,6 +11198,37 @@ TEST_CASE("Binary float I/O rejects non-finite values and preserves failed read 
     CHECK(std::filesystem::remove(Path, CleanupError));
 }
 
+TEST_CASE("READ STRING takes CR LF as one line end")
+{
+    const auto Stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Path = std::filesystem::temp_directory_path() / ("opendbc-read-string-" + std::to_string(Stamp));
+    {
+        std::ofstream Out(Path, std::ios::binary);
+        Out << "first\r\n\r\nthird\nfourth\rfifth\r";
+    }
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("read-string", 16, 16));
+    std::string Error;
+    REQUIRE(Kernel.FileIO().OpenToRead(1, Path.string(), &Error));
+    for (const char* Expected : {"first", "", "third", "fourth", "fifth"})
+    {
+        std::string Line = "unset";
+        REQUIRE(Kernel.FileIO().FileReadString(Line, 1, &Error));
+        CHECK(Line == Expected);
+    }
+    int AtEnd = 1;
+    REQUIRE(Kernel.FileIO().FileEnd(AtEnd, 1, &Error));
+    CHECK(AtEnd == 0);
+    std::string Line = "unset";
+    REQUIRE(Kernel.FileIO().FileReadString(Line, 1, &Error));
+    CHECK(Line.empty());
+    REQUIRE(Kernel.FileIO().FileEnd(AtEnd, 1, &Error));
+    CHECK(AtEnd == 1);
+    REQUIRE(Kernel.FileIO().CloseFile(1, &Error));
+    std::error_code CleanupError;
+    CHECK(std::filesystem::remove(Path, CleanupError));
+}
+
 TEST_CASE("Optional engine diagnostics preserve failure status and output values")
 {
     dbc::EngineKernel Kernel;
