@@ -490,7 +490,8 @@ namespace dbc::language::detail
                         }
                         return;
                     case StatementKind::Return:
-                        if (CurrentFunction_)
+                        // A Classic function may GOSUB a label of its own; the VM rejects a RETURN with no GOSUB.
+                        if (CurrentFunction_ && Source_.Profile != LanguageProfile::Dbc)
                         {
                             Error("DBC2011", "RETURN cannot leave a FUNCTION; use EXITFUNCTION", Value.Span);
                         }
@@ -617,6 +618,18 @@ namespace dbc::language::detail
                 }
                 if (Convention == BuiltinConvention::Undim)
                 {
+                    // God's Tool undims `objects` after dimensioning `objects#`: Classic ignored that.
+                    if (Source_.Profile == LanguageProfile::Dbc && Value.Expressions.size() == 1 &&
+                        !FindVariable(ArrayKey(Canonical(Value.Expressions.front()->Text))))
+                    {
+                        AddWarning(Program_.Diagnostics, "DBC2050",
+                                   "UNDIM of unknown array '" + Canonical(Value.Expressions.front()->Text) +
+                                       "' has no effect",
+                                   Value.Span);
+                        Value.Kind = StatementKind::Expression;
+                        Value.Expressions.clear();
+                        return;
+                    }
                     BindArrayMarker(Value, false);
                     ValidateOverload(Selected, Value.Expressions, Value.Span);
                     return;
@@ -738,7 +751,10 @@ namespace dbc::language::detail
                                                  Value.ArrayRank == 0 && Value.Expressions.empty() &&
                                                  Iterator->second.ArrayRank == 0 &&
                                                  Iterator->second.ValueType == Value.DeclaredType;
-                    if (!GlobalReference)
+                    // Classic programs DIM an array again for each new level; the VM reallocates it.
+                    const bool ClassicRedim = Source_.Profile == LanguageProfile::Dbc && Value.ArrayRank != 0 &&
+                                              Iterator->second.ArrayRank == Value.ArrayRank;
+                    if (!GlobalReference && !ClassicRedim)
                     {
                         Duplicate("DBC2019", "Duplicate variable declaration '" + Name + "'", Value.Span,
                                   Iterator->second.Declaration);
@@ -942,7 +958,13 @@ namespace dbc::language::detail
             Type BindCallOrIndex(Expression& Value, bool LValue)
             {
                 const std::string Name = Canonical(Value.Text);
-                if (VariableSymbol* Variable = FindVariable(ArrayKey(Name)); Variable && Variable->ArrayRank != 0)
+                VariableSymbol* Variable = FindVariable(ArrayKey(Name));
+                // Cartography Shop dimensions `int(999,6)` and still calls `int(x)`: the indices decide.
+                if (Source_.Profile == LanguageProfile::Dbc && !LValue && Variable &&
+                    Variable->ArrayRank != Value.Children.size() &&
+                    (Functions_.contains(Name) || FindSymbol(Source_.Profile, SymbolKind::Function, Name)))
+                    Variable = nullptr;
+                if (Variable && Variable->ArrayRank != 0)
                 {
                     Value.Kind = ExpressionKind::Index;
                     Value.Reference = ReferenceKind::Array;

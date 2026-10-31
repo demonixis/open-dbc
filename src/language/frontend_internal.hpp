@@ -15,4 +15,5 @@ namespace dbc::language::detail
     bool IsWord(const SourceDocument& Source, const Token& Value, std::string_view Expected);
     SourceSpan Merge(SourceSpan First, SourceSpan Last);
     void AddError(std::vector<Diagnostic>& Diagnostics, std::string Code, std::string Message, SourceSpan Span);
+    void AddWarning(std::vector<Diagnostic>& Diagnostics, std::string Code, std::string Message, SourceSpan Span);
 } // namespace dbc::language::detail

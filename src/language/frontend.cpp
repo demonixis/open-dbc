@@ -30,7 +30,8 @@ namespace dbc::language
                                std::unordered_set<std::string>& Active)
         {
             Program Result = LexAndParse(std::move(Source));
-            if (!Result.Source || Result.HasErrors())
+            // A parse error must not hide the includes: every name they declare would look unknown.
+            if (!Result.Source)
                 return Result;
 
             const std::string Key = SourceKey(*Result.Source);
@@ -198,5 +199,10 @@ namespace dbc::language::detail
     void AddError(std::vector<Diagnostic>& Diagnostics, std::string Code, std::string Message, SourceSpan Span)
     {
         Diagnostics.push_back({std::move(Code), DiagnosticSeverity::Error, std::move(Message), Span, {}});
+    }
+
+    void AddWarning(std::vector<Diagnostic>& Diagnostics, std::string Code, std::string Message, SourceSpan Span)
+    {
+        Diagnostics.push_back({std::move(Code), DiagnosticSeverity::Warning, std::move(Message), Span, {}});
     }
 } // namespace dbc::language::detail

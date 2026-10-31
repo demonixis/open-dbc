@@ -263,6 +263,69 @@ TEST_CASE("A Classic variable or array may share a command's name")
     CHECK(dbc::language::Compile(Source("sync=1\n", dbc::language::LanguageProfile::DbPro)).HasErrors());
 }
 
+TEST_CASE("Classic tolerates the array and call slips its shipped programs contain")
+{
+    const dbc::language::Program Classic = dbc::language::Compile(Source("dim map(2,2)\n"
+                                                                         "dim map(3,3)\n"
+                                                                         "dim objects#(1,1)\n"
+                                                                         "undim objects(1,1)\n"
+                                                                         "dim int(2,2)\n"
+                                                                         "x=int(1.5)\n"
+                                                                         "int(1,1)=x\n"
+                                                                         "map(1,1)=abs(1\n",
+                                                                         dbc::language::LanguageProfile::Dbc));
+    for (const auto& Diagnostic : Classic.Diagnostics)
+        INFO(dbc::language::FormatDiagnostic(*Classic.Source, Diagnostic));
+    CHECK_FALSE(Classic.HasErrors());
+    CHECK(HasCode(Classic, "DBC2050"));
+    CHECK(HasCode(Classic, "DBC1109"));
+    CHECK(dbc::vm::Lower(Classic).Success());
+
+    const dbc::language::Program Redim =
+        dbc::language::Compile(Source("dim map(2)\ndim map(2,2)\n", dbc::language::LanguageProfile::Dbc));
+    CHECK(HasCode(Redim, "DBC2019"));
+
+    const dbc::language::Program Unknown =
+        dbc::language::Compile(Source("dim map(2,2)\nx=map(1)\n", dbc::language::LanguageProfile::Dbc));
+    CHECK(HasCode(Unknown, "DBC2031"));
+
+    const dbc::language::Program Professional = dbc::language::Compile(
+        Source("dim map(2)\ndim map(3)\nundim nothing(1)\nx=abs(1\n", dbc::language::LanguageProfile::DbPro));
+    CHECK(HasCode(Professional, "DBC2019"));
+    CHECK(HasCode(Professional, "DBC2048"));
+    CHECK(HasCode(Professional, "DBC1106"));
+}
+
+TEST_CASE("A Classic function may GOSUB and RETURN from its own label")
+{
+    const std::string Text = "function f()\n"
+                             "  gosub sub\n"
+                             "  exitfunction\n"
+                             "sub:\n"
+                             "  print 1\n"
+                             "return\n"
+                             "endfunction\n";
+    const dbc::language::Program Classic = dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::Dbc));
+    for (const auto& Diagnostic : Classic.Diagnostics)
+        INFO(dbc::language::FormatDiagnostic(*Classic.Source, Diagnostic));
+    REQUIRE_FALSE(Classic.HasErrors());
+    const dbc::vm::CompileResult Lowered = dbc::vm::Lower(Classic);
+    REQUIRE(Lowered.Success());
+    CHECK(dbc::vm::Verify(*Lowered.Bytecode).Success());
+
+    CHECK(HasCode(dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro)), "DBC2011"));
+}
+
+TEST_CASE("A parse error does not hide the names an include declares")
+{
+    const auto Loader = [](const dbc::language::SourceDocument& Parent, const std::filesystem::path& Path, std::string&)
+    { return Source("function shared()\nendfunction 1\n", Parent.Profile, Path.string()); };
+    const dbc::language::Program Program = dbc::language::Compile(
+        Source("#include \"shared.dba\"\nx = )\ny = shared()\n", dbc::language::LanguageProfile::Dbc), {}, Loader);
+    CHECK(Program.HasErrors());
+    CHECK_FALSE(HasCode(Program, "DBC2035"));
+}
+
 TEST_CASE("REMSTART blocks are comments and must be closed")
 {
     const auto Open = Source("print 1\nremstart\nprint 2\n", dbc::language::LanguageProfile::Dbc);

@@ -377,7 +377,15 @@ namespace dbc::language::detail
                         }
                         if (!Match(TokenKind::Comma))
                         {
-                            AddError(Diagnostics_, "DBC1106", "Expected ',' or ')' in argument list", Peek().Span);
+                            // Classic compiled a call left open at the end of its statement.
+                            if (AtEnd() && Source_.Profile == LanguageProfile::Dbc)
+                            {
+                                AddWarning(Diagnostics_, "DBC1109", "Missing ')' assumed at the end of the statement",
+                                           Tokens_.back().Span);
+                                break;
+                            }
+                            AddError(Diagnostics_, "DBC1106", "Expected ',' or ')' in argument list",
+                                     AtEnd() ? Tokens_.back().Span : Peek().Span);
                             while (!AtEnd() && Peek().Kind != TokenKind::RightParen)
                             {
                                 Advance();
