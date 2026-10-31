@@ -165,6 +165,47 @@ TEST_CASE("Classic accepts its historical operator spellings and DBPro does not"
     CHECK(dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro)).HasErrors());
 }
 
+TEST_CASE("Classic ends an assignment with a semicolon and keeps it as a PRINT list mark")
+{
+    const dbc::language::Program Classic = dbc::language::Compile(Source("a=1; b#=2.5; c=3;\n"
+                                                                         "dim d(2)\n"
+                                                                         "d(1)=4; zrotate camera 5\n"
+                                                                         "if a=1 then a=2; b#=3.5\n"
+                                                                         "print a;b#;\n",
+                                                                         dbc::language::LanguageProfile::Dbc));
+    for (const auto& Diagnostic : Classic.Diagnostics)
+        INFO(dbc::language::FormatDiagnostic(*Classic.Source, Diagnostic));
+    CHECK_FALSE(Classic.HasErrors());
+    REQUIRE(Classic.Statements.size() == 8);
+    REQUIRE(Classic.Statements[6].Body.size() == 2);
+    CHECK(Classic.Statements[7].Expressions.size() == 2);
+    CHECK(Classic.Statements[7].ContinuesPrint);
+
+    CHECK(dbc::language::Compile(Source("a=1; b=2\n", dbc::language::LanguageProfile::DbPro)).HasErrors());
+}
+
+TEST_CASE("Classic IF lines mix block and inline forms")
+{
+    const dbc::language::Program Classic =
+        dbc::language::Compile(Source("x=1 : y=2\n"
+                                      "if x=1 : y=3 : if y>2 then y=2 : endif\n"
+                                      "if y=2 : y=4 : if x=9 then x=0\n"
+                                      "if y=5 then y=6 : endif\n"
+                                      "if x=1 : if y=1 : y=2 : endif : if y=2 then y=3 : y=4 : endif\n",
+                                      dbc::language::LanguageProfile::Dbc));
+    for (const auto& Diagnostic : Classic.Diagnostics)
+        INFO(dbc::language::FormatDiagnostic(*Classic.Source, Diagnostic));
+    CHECK_FALSE(Classic.HasErrors());
+    REQUIRE(Classic.Statements.size() == 5);
+    CHECK(Classic.Statements[2].Body.size() == 2);
+    REQUIRE(Classic.Statements[3].Body.size() == 3);
+    // The inline IF on the block's last line keeps everything up to the ENDIF.
+    CHECK(Classic.Statements[3].Body[2].Body.size() == 1);
+
+    CHECK(dbc::language::Compile(Source("if a=1 : if b=1 then c=1 : endif\n", dbc::language::LanguageProfile::DbPro))
+              .HasErrors());
+}
+
 TEST_CASE("REMSTART blocks are comments and must be closed")
 {
     const auto Open = Source("print 1\nremstart\nprint 2\n", dbc::language::LanguageProfile::Dbc);

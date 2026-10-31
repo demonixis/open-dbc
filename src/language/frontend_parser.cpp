@@ -657,16 +657,20 @@ namespace dbc::language::detail
             {
                 if (Line.empty())
                     return;
-                const bool InlineIf = IsWord(Source_, Line.front(), "IF") && ContainsWord(Line, "THEN");
-                if (InlineIf)
+                std::size_t Begin = 0;
+                if (StartsInlineIf(Line))
                 {
-                    Result.push_back({Line, Merge(Line.front().Span, Line.back().Span), false, true});
-                    return;
+                    const std::size_t Endif = FindInlineEndif(Line);
+                    const std::size_t End = Endif == Npos ? Line.size() : Endif - 1;
+                    Result.push_back({std::vector<Token>(Line.begin(), Line.begin() + static_cast<std::ptrdiff_t>(End)),
+                                      Merge(Line.front().Span, Line[End - 1].Span), false, true});
+                    if (Endif == Npos)
+                        return;
+                    Begin = Endif;
                 }
 
-                std::size_t Begin = 0;
                 int Depth = 0;
-                for (std::size_t Index = 0; Index <= Line.size(); ++Index)
+                for (std::size_t Index = Begin; Index <= Line.size(); ++Index)
                 {
                     const bool End = Index == Line.size();
                     if (!End)
@@ -676,19 +680,62 @@ namespace dbc::language::detail
                         if (Line[Index].Kind == TokenKind::RightParen)
                             --Depth;
                     }
-                    const bool Split = !End && Depth == 0 && Line[Index].Kind == TokenKind::Colon;
+                    const bool Split = !End && Depth == 0 && IsStatementBreak(Line, Begin, Index);
                     if (!End && !Split)
                         continue;
                     if (Index > Begin)
                     {
                         std::vector<Token> Tokens(Line.begin() + static_cast<std::ptrdiff_t>(Begin),
                                                   Line.begin() + static_cast<std::ptrdiff_t>(Index));
-                        AppendDeclarationList(
-                            {std::move(Tokens), Merge(Line[Begin].Span, Line[Index - 1].Span), Split, Begin == 0},
-                            Result);
+                        AppendDeclarationList({std::move(Tokens), Merge(Line[Begin].Span, Line[Index - 1].Span),
+                                               Split && Line[Index].Kind == TokenKind::Colon, Begin == 0},
+                                              Result);
                     }
                     Begin = Index + 1;
                 }
+            }
+
+            bool StartsInlineIf(const std::vector<Token>& Line) const
+            {
+                if (!IsWord(Source_, Line.front(), "IF"))
+                    return false;
+                if (Source_.Profile != LanguageProfile::Dbc)
+                    return ContainsWord(Line, "THEN");
+                // Classic opens a block with `if a : ...` even when a later IF on the line has THEN.
+                const std::size_t Then = FindTopLevelWord(Line, "THEN", 1);
+                return Then != Npos && Then < FindTopLevel(Line, TokenKind::Colon, 1);
+            }
+
+            // Classic ends an inline IF at `: endif`, which closes the block around it:
+            // `if a : b=1 : if c then d=1 : endif`. The ENDIF is the next statement.
+            std::size_t FindInlineEndif(const std::vector<Token>& Line) const
+            {
+                if (Source_.Profile != LanguageProfile::Dbc)
+                    return Npos;
+                const std::size_t Endif = FindTopLevelWord(Line, "ENDIF", 1);
+                return Endif != Npos && Line[Endif - 1].Kind == TokenKind::Colon ? Endif : Npos;
+            }
+
+            // Classic also ends an assignment with ';': `x=1; y=2`. Everywhere else ';' stays a list mark.
+            bool IsStatementBreak(const std::vector<Token>& Tokens, std::size_t Begin, std::size_t Index) const
+            {
+                if (Tokens[Index].Kind == TokenKind::Colon)
+                    return true;
+                return Tokens[Index].Kind == TokenKind::Semicolon && Source_.Profile == LanguageProfile::Dbc &&
+                       StartsAssignment(Tokens, Begin, Index);
+            }
+
+            bool StartsAssignment(const std::vector<Token>& Tokens, std::size_t Begin, std::size_t End) const
+            {
+                if (Begin + 1 >= End || Tokens[Begin].Kind != TokenKind::Word)
+                    return false;
+                if (Tokens[Begin + 1].Kind == TokenKind::Equal)
+                    return true;
+                if (Tokens[Begin + 1].Kind != TokenKind::LeftParen ||
+                    FindLongestCommandPrefix(Source_.Profile, Lexeme(Source_, Tokens[Begin].Span)) != nullptr)
+                    return false;
+                const std::size_t Close = MatchingRightParen(Tokens, Begin + 1);
+                return Close != Npos && Close + 1 < End && Tokens[Close + 1].Kind == TokenKind::Equal;
             }
 
             // DBPro's GLOBAL and LOCAL declare every comma-separated name, each with its own optional
@@ -1494,7 +1541,7 @@ namespace dbc::language::detail
                         if (Tokens[Index].Kind == TokenKind::RightParen)
                             --Depth;
                     }
-                    if (!AtRangeEnd && !(Depth == 0 && Tokens[Index].Kind == TokenKind::Colon))
+                    if (!AtRangeEnd && !(Depth == 0 && IsStatementBreak(Tokens, PartBegin, Index)))
                         continue;
                     if (Index > PartBegin)
                     {
