@@ -235,6 +235,39 @@ TEST_CASE("Bare Classic zero-argument function statements lower and execute")
     CHECK(Host.Output.front() == "handled");
 }
 
+TEST_CASE("Classic real division by zero follows the FPU, integer division still fails")
+{
+    const std::string Text = "t = 0\n"
+                             "f# = 1000.0 / t\n"
+                             "print f# > 1000.0\n"
+                             "n# = 0.0 / t\n"
+                             "print n# = n#\n";
+    {
+        const auto Module = Compile(Text, dbc::language::LanguageProfile::Dbc);
+        TestHost Host;
+        dbc::vm::ExecutionSession Session;
+        REQUIRE(Session.Prepare(Module, Host));
+        RunToCompletion(Session);
+        REQUIRE(Host.Output.size() == 2);
+        CHECK(Host.Output[0] == "1");
+        CHECK(Host.Output[1] == "0");
+    }
+    {
+        const auto Module = Compile("t = 0\nn = 1 / t\n", dbc::language::LanguageProfile::Dbc);
+        TestHost Host;
+        dbc::vm::ExecutionSession Session;
+        REQUIRE(Session.Prepare(Module, Host));
+        CHECK(Session.Tick(1000).State == dbc::vm::SessionState::Failed);
+    }
+    {
+        const auto Module = Compile("t = 0\nf# = 1000.0 / t\n", dbc::language::LanguageProfile::DbPro);
+        TestHost Host;
+        dbc::vm::ExecutionSession Session;
+        REQUIRE(Session.Prepare(Module, Host));
+        CHECK(Session.Tick(1000).State == dbc::vm::SessionState::Failed);
+    }
+}
+
 TEST_CASE("Arrays and UDT assignments preserve value semantics")
 {
     const auto Module = Compile("type Point\n"

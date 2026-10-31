@@ -168,7 +168,7 @@ namespace dbc::vm
         }
 
         bool EvaluateBinary(BinaryOperation Operation, const language::Type& ResultType, const Value& Left,
-                            const Value& Right, Value& Result, std::string& Error)
+                            const Value& Right, language::LanguageProfile Profile, Value& Result, std::string& Error)
         {
             switch (Operation)
             {
@@ -304,7 +304,8 @@ namespace dbc::vm
                     Number = A * B;
                     break;
                 case BinaryOperation::Divide:
-                    if (B == 0.0)
+                    // Classic divided reals on the FPU: `1000.0/0` is an infinity, not an error.
+                    if (B == 0.0 && Profile != language::LanguageProfile::Dbc)
                         return RuntimeError(Error, "Division by zero");
                     Number = A / B;
                     break;
@@ -808,7 +809,7 @@ namespace dbc::vm
                 const Value Left = Pop();
                 Value Result;
                 if (!EvaluateBinary(static_cast<BinaryOperation>(Instruction.A), Instruction.ResultType, Left, Right,
-                                    Result, Error))
+                                    Bytecode_->Profile, Result, Error))
                     return Reject(Error);
                 Current.Stack.push_back(std::move(Result));
                 Advance();
