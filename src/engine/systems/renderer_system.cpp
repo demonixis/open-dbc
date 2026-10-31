@@ -865,9 +865,12 @@ namespace dbc
 
                         // Read by Blinn-Phong only, but the shader's slot must hold something.
                         const bool BlinnPhong = Batch.Style.BuiltInEffect == 4;
-                        if (BlinnPhong || !MaterialUniformsBound)
+                        const bool Stage1Scaled = Batch.Style.Stage1UvScale[0] != 0.0f;
+                        if (BlinnPhong || Stage1Scaled || !MaterialUniformsBound)
                         {
                             GpuMaterialUniforms Material{};
+                            Material.Params[2] = Batch.Style.Stage1UvScale[0];
+                            Material.Params[3] = Batch.Style.Stage1UvScale[1];
                             if (BlinnPhong)
                             {
                                 // The rotation's inverse is its transpose, mirrored reflection views included.
@@ -879,7 +882,8 @@ namespace dbc
                                 Material.Params[1] = Batch.CubeTexture ? Batch.Style.CubeLevels : 0.0f;
                             }
                             SDL_PushGPUFragmentUniformData(Cmd, 2, &Material, sizeof(Material));
-                            MaterialUniformsBound = true;
+                            // A scale must not reach the batches after this one.
+                            MaterialUniformsBound = !Stage1Scaled;
                         }
                     }
 

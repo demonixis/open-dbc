@@ -125,6 +125,9 @@ namespace dbc
                              static_cast<uint64_t>(static_cast<uint32_t>(Style.EffectId)) << 32);
         if (Style.BuiltInEffect == 4)
             Hash = Mix(Hash, std::bit_cast<uint32_t>(Style.CubeLevels));
+        if (Style.Stage1UvScale[0] != 0.0f)
+            Hash = Mix(Hash, std::bit_cast<uint32_t>(Style.Stage1UvScale[0]) |
+                                 static_cast<uint64_t>(std::bit_cast<uint32_t>(Style.Stage1UvScale[1])) << 32);
         return Hash;
     }
 

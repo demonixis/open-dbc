@@ -235,6 +235,8 @@ namespace dbc
         std::unordered_map<int, int> TextureStageBlendModes;
         std::unordered_map<int, int> TextureStageCoordinateModes;
         std::unordered_map<int, bool> TextureStageCubeModes;
+        // When UvStages[1] is the base coordinates times this, GPU meshes can draw stage 1 without them (0: it is not).
+        std::array<float, 2> Stage1UvScale{};
         int BuiltInEffect = 0; // 1 = bump, 2 = cartoon, 3 = rainbow
         int EffectId = -1;
         int SourceMeshIndex = -1;
@@ -662,6 +664,8 @@ namespace dbc
         bool ShadowOverlay = false;
         // Blinn-Phong path (BuiltInEffect 4): the mip levels of the cube it reflects.
         float CubeLevels = 0.0f;
+        // GPU meshes: what stage 1 multiplies the base coordinates by (0: stage 1 has its own).
+        std::array<float, 2> Stage1UvScale{};
 
         bool operator==(const SurfaceStyle& Other) const
         {
@@ -671,7 +675,8 @@ namespace dbc
                    TextureCubeModes == Other.TextureCubeModes && BuiltInEffect == Other.BuiltInEffect &&
                    EffectId == Other.EffectId && ReflectionSurface == Other.ReflectionSurface &&
                    ReflectionPass == Other.ReflectionPass && ReflectionOverlay == Other.ReflectionOverlay &&
-                   Backdrop == Other.Backdrop && ShadowOverlay == Other.ShadowOverlay && CubeLevels == Other.CubeLevels;
+                   Backdrop == Other.Backdrop && ShadowOverlay == Other.ShadowOverlay &&
+                   CubeLevels == Other.CubeLevels && Stage1UvScale == Other.Stage1UvScale;
         }
     };
 

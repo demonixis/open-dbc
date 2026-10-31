@@ -294,10 +294,14 @@ namespace dbc
             CoordinateModes[1] = 0;
         else if (Surface.BlinnPhong && CoordinateModes[1] == 0 && Surface.StageUvs[1])
             return false;
+        // Stage 1 at a multiple of the base coordinates, unless the object's texture transform would move it with them.
+        const bool Stage1Scaled = !Surface.BlinnPhong && MeshValue.Stage1UvScale[0] != 0.0f &&
+                                  Object.TexScaleU == 1.0f && Object.TexScaleV == 1.0f && Object.TexScrollU == 0.0f &&
+                                  Object.TexScrollV == 0.0f;
         if ((MeshValue.BuiltInEffect != 0 && !Surface.BlinnPhong) || Surface.BlendTransparent ||
             Surface.BlendAdditive || (Surface.CubeGpuTexture && !Surface.BlinnPhong) || Style.EffectId != 0 ||
-            Style.ReflectionSurface || Set(Surface.AuxiliaryGpuTextures, Surface.BlinnPhong ? 1 : 0) ||
-            Set(CoordinateModes) || Set(Style.TextureCubeModes) || Set(Style.TextureBlendModes, 1) ||
+            Style.ReflectionSurface || Set(Surface.AuxiliaryGpuTextures, Surface.BlinnPhong || Stage1Scaled ? 1 : 0) ||
+            Set(CoordinateModes) || Set(Style.TextureCubeModes) || Set(Style.TextureBlendModes, Stage1Scaled ? 2 : 1) ||
             !K.Renderer().PrepareGpuMesh(MeshValue.SharedDrawGeometry()))
             return false;
 
@@ -342,8 +346,17 @@ namespace dbc
             Draw.AuxiliaryTextures = Surface.AuxiliaryGpuTextures;
             Draw.CubeTexture = Surface.CubeGpuTexture;
         }
+        else if (Stage1Scaled)
+        {
+            Draw.AuxiliaryTextures = Surface.AuxiliaryGpuTextures;
+        }
         Draw.Style = Style;
         Draw.StyleHash = Surface.StyleHash;
+        if (Stage1Scaled)
+        {
+            Draw.Style.Stage1UvScale = MeshValue.Stage1UvScale;
+            Draw.StyleHash = SurfaceStyleHash(Draw.Style);
+        }
         Draws.push_back(std::move(Draw));
         return true;
     }

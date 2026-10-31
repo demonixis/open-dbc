@@ -11855,6 +11855,40 @@ TEST_CASE("DBPro Advanced Terrain builds an object from a heightmap")
         CHECK(std::abs(Tinted[1] - Detailed[1]) <= 3);
     }
 
+    SUBCASE("the detail image draws from GPU buffers as triangles draw it")
+    {
+        constexpr int Base = 1;
+        constexpr int Detail = 2;
+        StoreColor(Base, 200, 100, 50);
+        SDL_Surface* Checker = SDL_CreateSurface(4, 4, SDL_PIXELFORMAT_RGBA32);
+        REQUIRE(Checker != nullptr);
+        for (int Y = 0; Y < 4; ++Y)
+            for (int X = 0; X < 4; ++X)
+            {
+                const Uint8 Value = Y < 2 ? (X < 2 ? 255 : 40) : (X < 3 ? 90 : 170);
+                REQUIRE(SDL_WriteSurfacePixel(Checker, X, Y, Value, Value, Value, 255));
+            }
+        Kernel.ImageStoreRef().StoreImageFromSurface(Detail, Checker);
+        SDL_DestroySurface(Checker);
+        REQUIRE(UsePath());
+        REQUIRE(Command(SymbolId::Command_SetTerrainScale, {1, 1, 0.01, 1}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainSplit, {1, 2}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainTiling, {1, 3}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainTexture, {1, Base, Detail}));
+        REQUIRE(Command(SymbolId::Command_PositionCamera, {4, 6, 2}));
+        REQUIRE(Command(SymbolId::Command_PointCamera, {4, 0, 2}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+        const GpuMeshComparison Frames = CompareGpuMeshFrames(Kernel);
+        CHECK(Frames.GpuDraws == Object->Meshes.size());
+        CHECK(Frames.Covered > 1000);
+        CHECK(Frames.Different < Frames.Covered / 50);
+
+        // A scrolled texture would move the detail with the base, so the terrain goes back to triangles.
+        REQUIRE(Command(SymbolId::Command_ScrollObjectTexture, {1, 0.25, 0}));
+        Kernel.Renderer().RenderScene();
+        CHECK(Kernel.Renderer().CachedMeshDraws().empty());
+    }
+
     SUBCASE("UPDATE TERRAIN hides the parts the camera cannot see")
     {
         REQUIRE(UsePath());

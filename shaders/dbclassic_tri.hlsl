@@ -115,7 +115,8 @@ cbuffer TextureStageUniforms : register(b1, space3)
 cbuffer MaterialUniforms : register(b2, space3)
 {
     float4 view_to_world[3];
-    // x whether there is a normal map, y cube mip levels (0: no reflection).
+    // x whether there is a normal map, y cube mip levels (0: no reflection), zw what stage 1 multiplies its
+    // coordinates by (0: nothing).
     float4 material_params;
 };
 
@@ -442,6 +443,8 @@ float4 PSMain(Varyings input) : SV_Target0
             if (mode == 0) continue;
             if (mode == 1) break;
             float2 stage_uv = stage == 0 ? input.uv : aux_uv[stage - 1];
+            if (stage == 1 && material_params.z != 0.0)
+                stage_uv *= material_params.zw;
             float4 stage_sample = stages[stage].y != 0
                 ? cube_tex.Sample(cube_sampler, normalize(input.cube_direction))
                 : sample_2d_stage(stage, stage_uv);

@@ -108,8 +108,8 @@ namespace dbc
                     Geometry.Uvs.push_back({static_cast<float>(X) / static_cast<float>(Terrain.Width),
                                             1.0f - static_cast<float>(Z) / static_cast<float>(Terrain.Depth)});
                     // Tiling is the number of cells one repeat of the detail image covers.
-                    DetailUvs.push_back(
-                        {static_cast<float>(X) / Terrain.Tiling, static_cast<float>(Z) / Terrain.Tiling});
+                    DetailUvs.push_back({static_cast<float>(X) / Terrain.Tiling,
+                                         static_cast<float>(Terrain.Depth - Z) / Terrain.Tiling});
                 }
             }
             const uint32_t Stride = static_cast<uint32_t>(LastX - FirstX + 1);
@@ -280,6 +280,9 @@ namespace dbc
                     // Stages blend in linear light, where this is what doubling does to sRGB colours: mid-grey
                     // detail leaves the base nearly as it is.
                     Part.TextureStageBlendModes[1] = 6;
+                    // What the detail coordinates are to the base ones, for GPU meshes.
+                    Part.Stage1UvScale = {static_cast<float>(Terrain.Width) / Terrain.Tiling,
+                                          static_cast<float>(Terrain.Depth) / Terrain.Tiling};
                 }
 
                 Vec3 Min = Part.Geometry().Vertices.front();
