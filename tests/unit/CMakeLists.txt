@@ -204,6 +204,11 @@ target_compile_definitions(test_engine_builtins PRIVATE TEST_SOURCE_DIR="${CMAKE
 target_link_libraries(test_engine_builtins PRIVATE doctest_with_main dbc_interpreter)
 doctest_discover_tests(test_engine_builtins PROPERTIES LABELS "unit")
 
+# --- Test: Jolt physics through the ODE forms ---
+add_executable(test_physics test_physics.cpp)
+target_link_libraries(test_physics PRIVATE doctest_with_main dbc_interpreter)
+doctest_discover_tests(test_physics PROPERTIES LABELS "unit")
+
 if(WIN32)
     add_executable(test_video_decoder test_video_decoder_windows.cpp
                    ${CMAKE_SOURCE_DIR}/src/engine/systems/video_decoder_media_foundation.cpp)

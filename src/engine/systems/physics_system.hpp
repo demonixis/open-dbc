@@ -19,7 +19,14 @@ namespace dbc
         void Start();
         void End();
         [[nodiscard]] bool IsStarted() const;
-        bool Update(float Seconds = 1.0f / 60.0f, std::string* Error = nullptr);
+
+        // Without a duration: the real time since the last update if a frame was presented since, otherwise 1/60 s.
+        bool Update(std::string* Error = nullptr);
+        bool Update(float Seconds, std::string* Error = nullptr);
+
+        // Object deletion does not go through this system, so the DELETE OBJECT forms report it here.
+        void ObjectDeleted(int ObjectId);
+        void ObjectsDeleted(int FirstObjectId, int LastObjectId);
 
         bool CreateDynamicSphere(int ObjectId, std::string* Error = nullptr);
         bool CreateStaticBox(int ObjectId, std::string* Error = nullptr);
@@ -45,7 +52,6 @@ namespace dbc
       private:
         struct Impl;
 
-        EngineKernel& Kernel_;
         std::unique_ptr<Impl> Impl_;
     };
 } // namespace dbc
