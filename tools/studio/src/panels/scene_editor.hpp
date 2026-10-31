@@ -11,7 +11,9 @@
 #include <unordered_set>
 #include <vector>
 
+#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_gpu.h>
+#include <SDL3/SDL_scancode.h>
 #include <imgui.h>
 // After imgui.h, which it needs.
 #include <ImGuizmo.h>
@@ -60,6 +62,9 @@ namespace dbc::studio
             // Files moved without going through WriteSource.
             std::function<void()> FilesMoved;
         };
+
+        // The key at a physical position on the current layout, so that SDL_SCANCODE_W is Z on AZERTY.
+        ImGuiKey KeyAtPosition(SDL_Scancode Position);
 
         // The Scene mode: level files, selection, undo and the docked scene panels.
         class SceneEditor
@@ -128,6 +133,20 @@ namespace dbc::studio
             void SetEditorSettings(const core::EditorSettings& Value)
             {
                 EditorSettings_ = Value;
+            }
+
+            // A flight takes the pointer's motion to steer, while the app holds the pointer where
+            // it was. Returns whether the event is taken, so that ImGui does not see it.
+            bool HandleEvent(const SDL_Event& Event);
+
+            bool Flying() const
+            {
+                return Flying_;
+            }
+
+            bool ViewToolOn() const
+            {
+                return Tool_ == Tool::View;
             }
 
             // What the viewport showed when it last drew.
@@ -378,6 +397,11 @@ namespace dbc::studio
             bool UniformScale_ = false;
             bool LookThroughCamera_ = false;
             bool Navigating_ = false;
+            bool Flying_ = false;
+            // Whether the movement keys may fly once they are down.
+            bool FlyArmed_ = false;
+            // The pointer's motion since the camera last moved.
+            glm::vec2 FlySteer_{0.0f};
             core::EditorSettings EditorSettings_;
             bool GizmoActive_ = false;
             // Position and scale % when the gizmo drag began: snapping and uniform scale start from them.

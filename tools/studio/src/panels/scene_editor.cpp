@@ -832,7 +832,7 @@ namespace dbc::studio
             else if (!Command &&
                      (ImGui::IsKeyPressed(ImGuiKey_Delete, false) || ImGui::IsKeyPressed(ImGuiKey_Backspace, false)))
                 DeleteSelected();
-            else if (!Command && !Navigating_ && ImGui::IsKeyPressed(ImGuiKey_F, false))
+            else if (!Command && !Navigating_ && !Flying_ && ImGui::IsKeyPressed(ImGuiKey_F, false))
                 FrameSelection();
         }
 
@@ -858,6 +858,9 @@ namespace dbc::studio
 
         void SceneEditor::DrawPanels()
         {
+            // Only a viewport that draws keeps flying.
+            Flying_ = false;
+
             if (ImGui::Begin(TrId(KPanelHierarchy)))
                 DrawHierarchy();
             ImGui::End();

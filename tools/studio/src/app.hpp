@@ -108,6 +108,8 @@ namespace dbc::studio
         void RunLauncherPath(const std::filesystem::path& Path);
         void StopRun();
         void DrawEditorSettings();
+        // Hides and frees the pointer while the Scene camera flies, then puts it back.
+        void UpdateFlightMouse();
         void OpenBuildWindow();
         void DrawBuildWindow();
         toolchain::ArtifactExportRequest MakeBuildRequest() const;
@@ -169,6 +171,9 @@ namespace dbc::studio
         bool ShowMedia_ = true;
         bool ShowAbout_ = false;
         bool ShowEditorSettings_ = false;
+        bool FlightMouse_ = false;
+        float FlightMouseX_ = 0.0f;
+        float FlightMouseY_ = 0.0f;
         bool QuitRequested_ = false;
         bool QuitSaveInProgress_ = false;
 

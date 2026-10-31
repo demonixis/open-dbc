@@ -152,14 +152,15 @@ sets only X. Names and numbers stay per node.
 
 | Input | Action |
 | --- | --- |
-| Right drag, with W A S D, Q E (Shift: faster) | Look around and fly |
+| Hold Z Q S D over the viewport (W A S D on QWERTY) | Fly: the pointer steers; A and E (Q and E on QWERTY) go down and up, and Shift goes faster |
+| Right drag, with the same keys | Look around and fly |
 | Middle drag | Pan |
 | Alt + left drag | Orbit around the pivot |
 | Wheel | Move toward or away from the pivot |
 | Left click | Select (lights, sounds and the level camera by their icon) |
 | Ctrl/Cmd or Shift + left click | Add to or remove from the selection; in the Hierarchy, Shift selects the rows from the active node |
 | Ctrl/Cmd+A | Select every node |
-| Q W E R | View, move, rotate, scale tools |
+| Q W E R | View, move, rotate, scale tools; a key that also flies picks its tool when tapped |
 | F, from any Scene panel, or a double-click on a Hierarchy row | Frame the selection |
 | G | Align the selection to the grid |
 | - and = | Smaller or larger grid step: 1, 2.5, 5, 10, 25... |

@@ -223,6 +223,30 @@ namespace
             Button(false);
         }
 
+        glm::vec3 Eye() const
+        {
+            return Editor_.View().Eye;
+        }
+
+        // The view's third row: the engine's left-handed axes look along it.
+        glm::vec3 Ahead() const
+        {
+            const glm::mat4& View = Editor_.View().View;
+            return glm::vec3(View[0][2], View[1][2], View[2][2]);
+        }
+
+        // Moves the pointer as a captured mouse does; returns whether the editor took the motion.
+        bool Steer(const glm::vec2& Motion)
+        {
+            SDL_Event Event = {};
+            Event.type = SDL_EVENT_MOUSE_MOTION;
+            Event.motion.xrel = Motion.x;
+            Event.motion.yrel = Motion.y;
+            const bool Taken = Editor_.HandleEvent(Event);
+            Frame();
+            return Taken;
+        }
+
         std::string SavedText()
         {
             REQUIRE(Editor_.Save());
@@ -428,6 +452,137 @@ TEST_CASE("The scroll speed setting scales the viewport's zoom")
     Driver.Frame();
     // 190 units from the pivot, kept at 0.88 per notch.
     CHECK(glm::length(Driver.Editor().View().Eye - Start) == doctest::Approx(190.0f * (1.0f - 0.88f * 0.88f)));
+}
+
+TEST_CASE("Holding a movement key flies where the view looks, and the pointer steers")
+{
+    SceneViewDriver Driver("fly_keys", LevelOfCubes({glm::vec3(0.0f)}));
+    const ImGuiKey Forward = panels::KeyAtPosition(SDL_SCANCODE_W);
+    Driver.MoveMouse(Driver.ScreenOf(glm::vec3(0.0f)));
+    const glm::vec3 Start = Driver.Eye();
+    const glm::vec3 Ahead = Driver.Ahead();
+    CHECK_FALSE(Driver.Steer(glm::vec2(50.0f, 0.0f)));
+    CHECK(glm::dot(Driver.Ahead(), Ahead) == doctest::Approx(1.0f));
+
+    // Past a tap, since W also picks the Move tool on QWERTY.
+    Driver.Key(Forward, true);
+    Driver.Frame(20);
+    CHECK(Driver.Editor().Flying());
+    CHECK(glm::dot(glm::normalize(Driver.Eye() - Start), Ahead) > 0.999f);
+
+    CHECK(Driver.Steer(glm::vec2(200.0f, 0.0f)));
+    const glm::vec3 Steered = Driver.Ahead();
+    CHECK(glm::dot(Steered, Ahead) < 0.9f);
+    const glm::vec3 Before = Driver.Eye();
+    Driver.Frame(10);
+    CHECK(glm::dot(glm::normalize(Driver.Eye() - Before), Steered) > 0.999f);
+
+    Driver.Key(Forward, false);
+    CHECK_FALSE(Driver.Editor().Flying());
+    CHECK_FALSE(Driver.Steer(glm::vec2(50.0f, 0.0f)));
+    const glm::vec3 Stopped = Driver.Eye();
+    Driver.Frame(10);
+    CHECK(glm::length(Driver.Eye() - Stopped) == doctest::Approx(0.0f));
+}
+
+TEST_CASE("A right drag steers with the pointer too, and flies with the movement keys")
+{
+    SceneViewDriver Driver("fly_right_drag", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.MoveMouse(Driver.ScreenOf(glm::vec3(0.0f)));
+    const glm::vec3 Start = Driver.Eye();
+    const glm::vec3 Ahead = Driver.Ahead();
+
+    ImGui::GetIO().AddMouseButtonEvent(ImGuiMouseButton_Right, true);
+    Driver.Frame();
+    CHECK(Driver.Editor().Flying());
+    CHECK(Driver.Steer(glm::vec2(200.0f, 0.0f)));
+    CHECK(glm::dot(Driver.Ahead(), Ahead) < 0.9f);
+    CHECK(glm::length(Driver.Eye() - Start) == doctest::Approx(0.0f));
+
+    const ImGuiKey Back = panels::KeyAtPosition(SDL_SCANCODE_S);
+    Driver.Key(Back, true);
+    CHECK(glm::length(Driver.Eye() - Start) > 0.0f);
+    Driver.Key(Back, false);
+
+    ImGui::GetIO().AddMouseButtonEvent(ImGuiMouseButton_Right, false);
+    Driver.Frame();
+    CHECK_FALSE(Driver.Editor().Flying());
+}
+
+TEST_CASE("The camera speed setting scales a flight")
+{
+    SceneViewDriver Driver("fly_speed", LevelOfCubes({glm::vec3(0.0f)}));
+    Driver.MoveMouse(Driver.ScreenOf(glm::vec3(0.0f)));
+    const ImGuiKey Back = panels::KeyAtPosition(SDL_SCANCODE_S);
+    const auto Fly = [&]
+    {
+        const glm::vec3 Before = Driver.Eye();
+        Driver.Key(Back, true);
+        Driver.Frame(10);
+        Driver.Key(Back, false);
+        return glm::length(Driver.Eye() - Before);
+    };
+    const float Normal = Fly();
+    CHECK(Normal > 0.0f);
+
+    core::EditorSettings Settings;
+    Settings.CameraSpeed = 2.0f;
+    Driver.Editor().SetEditorSettings(Settings);
+    CHECK(Fly() == doctest::Approx(Normal * 2.0f).epsilon(0.01));
+}
+
+TEST_CASE("A movement key that also picks a tool does so when tapped, and flies when held")
+{
+    const glm::vec3 Center(0.0f, 15.0f, 0.0f);
+    SceneViewDriver Driver("fly_tool_key", LevelOfCubes({Center}));
+    Driver.Click(Center);
+
+    // W on QWERTY, which picks the Move tool; Q on AZERTY, which picks the View tool.
+    const bool Qwerty = panels::KeyAtPosition(SDL_SCANCODE_W) == ImGuiKey_W;
+    const ImGuiKey Both = Qwerty ? ImGuiKey_W : ImGuiKey_Q;
+    const ImGuiKey Other = Qwerty ? ImGuiKey_Q : ImGuiKey_W;
+    Driver.Tap(Other);
+    CHECK(Driver.Editor().ViewToolOn() == Qwerty);
+
+    const glm::vec3 Start = Driver.Eye();
+    Driver.Tap(Both);
+    CHECK(glm::length(Driver.Eye() - Start) == doctest::Approx(0.0f));
+    CHECK(Driver.Editor().ViewToolOn() != Qwerty);
+
+    Driver.Tap(Other);
+    Driver.Key(Both, true);
+    Driver.Frame(20);
+    CHECK(Driver.Editor().Flying());
+    CHECK(glm::length(Driver.Eye() - Start) > 0.0f);
+    Driver.Key(Both, false);
+    CHECK_FALSE(Driver.Editor().Flying());
+    CHECK(Driver.Editor().ViewToolOn() == Qwerty);
+}
+
+TEST_CASE("A movement key does not fly when pressed with a shortcut, or away from the viewport")
+{
+    SceneViewDriver Driver("fly_armed", LevelOfCubes({glm::vec3(0.0f)}));
+    const glm::vec2 Over = Driver.ScreenOf(glm::vec3(0.0f));
+    const ImGuiKey Back = panels::KeyAtPosition(SDL_SCANCODE_S);
+    Driver.MoveMouse(Over);
+    const glm::vec3 Start = Driver.Eye();
+
+    // Cmd+S, with Cmd released first.
+    Driver.Key(KCommandKey, true);
+    Driver.Key(Back, true);
+    Driver.Key(KCommandKey, false);
+    Driver.Frame(20);
+    CHECK_FALSE(Driver.Editor().Flying());
+    Driver.Key(Back, false);
+
+    Driver.MoveMouse(glm::vec2(1.0f, 1.0f));
+    Driver.Key(Back, true);
+    Driver.MoveMouse(Over);
+    Driver.Frame(20);
+    CHECK_FALSE(Driver.Editor().Flying());
+    Driver.Key(Back, false);
+
+    CHECK(glm::length(Driver.Eye() - Start) == doctest::Approx(0.0f));
 }
 
 TEST_CASE("The grid keys change the step moves land on")

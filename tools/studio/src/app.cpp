@@ -490,6 +490,7 @@ namespace dbc::studio
             }
 
             DrawFrame();
+            UpdateFlightMouse();
             RenderFrame();
         }
         // Quitting normally means every change was saved or deliberately discarded.
@@ -556,7 +557,8 @@ namespace dbc::studio
         SDL_Event Event;
         while (SDL_PollEvent(&Event))
         {
-            ImGui_ImplSDL3_ProcessEvent(&Event);
+            if (Mode_ != Mode::Scene || !Scene_.HandleEvent(Event))
+                ImGui_ImplSDL3_ProcessEvent(&Event);
             Execution_.HandleEvent(Event);
 
             if (Event.type == SDL_EVENT_QUIT)
@@ -1623,6 +1625,22 @@ namespace dbc::studio
         DrawStatusBar();
 
         ImGui::End();
+    }
+
+    void App::UpdateFlightMouse()
+    {
+        const bool Flying = Mode_ == Mode::Scene && Scene_.Flying();
+        if (Flying == FlightMouse_)
+            return;
+        FlightMouse_ = Flying;
+        // The flight's motion moves the position SDL would restore, so it is set back first.
+        if (Flying)
+            SDL_GetMouseState(&FlightMouseX_, &FlightMouseY_);
+        else
+            SDL_WarpMouseInWindow(Window_, FlightMouseX_, FlightMouseY_);
+        // Without it the pointer stays visible and stops at the screen's edges, but still steers.
+        if (!SDL_SetWindowRelativeMouseMode(Window_, Flying))
+            DBC_LOG_WARN("Cannot change the relative mouse mode: {}", SDL_GetError());
     }
 
     void App::DrawEditorSettings()

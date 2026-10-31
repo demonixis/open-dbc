@@ -4,13 +4,17 @@
 #include "path_utf8.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #include <ImGuizmo.h>
+#include <SDL3/SDL_keyboard.h>
 #include <glm/geometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui_internal.h>
 
 #include "core/i18n.hpp"
 #include "core/media_catalogue.hpp"
@@ -33,6 +37,19 @@ namespace dbc::studio
             constexpr float KIconRadius = 7.0f;
             // How far from the mouse a vertex drag reaches for a vertex to land on, in pixels.
             constexpr float KVertexReach = 40.0f;
+            // How long a key that both flies and picks a tool can be down and still be a tap.
+            constexpr float KToolTapSeconds = 0.18f;
+
+            bool IsToolKey(ImGuiKey Key)
+            {
+                return Key == ImGuiKey_Q || Key == ImGuiKey_W || Key == ImGuiKey_E || Key == ImGuiKey_R;
+            }
+
+            std::array<ImGuiKey, 4> MovementKeys()
+            {
+                return {KeyAtPosition(SDL_SCANCODE_W), KeyAtPosition(SDL_SCANCODE_A), KeyAtPosition(SDL_SCANCODE_S),
+                        KeyAtPosition(SDL_SCANCODE_D)};
+            }
 
             glm::vec3 Forward(float Yaw, float Pitch)
             {
@@ -126,6 +143,23 @@ namespace dbc::studio
             return View;
         }
 
+        ImGuiKey KeyAtPosition(SDL_Scancode Position)
+        {
+            const SDL_Keycode Key = SDL_GetKeyFromScancode(Position, SDL_KMOD_NONE, false);
+            if (Key >= SDLK_A && Key <= SDLK_Z)
+                return static_cast<ImGuiKey>(ImGuiKey_A + static_cast<int>(Key - SDLK_A));
+            // A layout with no letter there keeps the key of that name.
+            return static_cast<ImGuiKey>(ImGuiKey_A + static_cast<int>(Position - SDL_SCANCODE_A));
+        }
+
+        bool SceneEditor::HandleEvent(const SDL_Event& Event)
+        {
+            if (!Flying_ || Event.type != SDL_EVENT_MOUSE_MOTION)
+                return false;
+            FlySteer_ += glm::vec2(Event.motion.xrel, Event.motion.yrel);
+            return true;
+        }
+
         void SceneEditor::UpdateCamera(bool Hovered)
         {
             const ImGuiIO& Io = ImGui::GetIO();
@@ -137,32 +171,48 @@ namespace dbc::studio
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && !ImGui::IsMouseDown(ImGuiMouseButton_Middle) && !Orbit)
                 Navigating_ = false;
 
+            const bool LevelView = LookThroughCamera_ && Document_.Env.UseCamera;
+            const std::array<ImGuiKey, 4> MoveKeys = MovementKeys();
+            // Settled before the keys go down: the S left over from Cmd+S does not fly.
+            if (std::none_of(MoveKeys.begin(), MoveKeys.end(), [](ImGuiKey Key) { return ImGui::IsKeyDown(Key); }))
+                FlyArmed_ = Hovered && !LevelView && !Io.WantTextInput && !Io.KeyCtrl && !Io.KeySuper && !Io.KeyAlt &&
+                            !ImGui::IsAnyMouseDown();
+            const glm::vec2 Steer = std::exchange(FlySteer_, glm::vec2(0.0f));
+
             // The level camera view only moves with its own gizmo.
-            if (LookThroughCamera_ && Document_.Env.UseCamera)
+            if (LevelView)
                 return;
+
+            const auto Flies = [](ImGuiKey Key)
+            {
+                return ImGui::IsKeyDown(Key) &&
+                       (!IsToolKey(Key) || ImGui::GetKeyData(Key)->DownDuration >= KToolTapSeconds);
+            };
+            Flying_ = (FlyArmed_ && std::any_of(MoveKeys.begin(), MoveKeys.end(), Flies)) ||
+                      (Navigating_ && ImGui::IsMouseDown(ImGuiMouseButton_Right));
 
             const ImVec2 Delta = Io.MouseDelta;
             const glm::vec3 Ahead = Forward(Camera_.Yaw, Camera_.Pitch);
             const glm::vec3 Pivot = Camera_.Position + Ahead * Camera_.Distance;
-            if (Navigating_ && ImGui::IsMouseDown(ImGuiMouseButton_Right))
+            if (Flying_)
             {
-                // Fly: look around, and move with WASD while the button is held.
-                Camera_.Yaw += Delta.x * 0.25f;
-                Camera_.Pitch = std::clamp(Camera_.Pitch + Delta.y * 0.25f, -89.0f, 89.0f);
+                // Fly: the pointer steers, and the keys move where the view looks.
+                Camera_.Yaw += Steer.x * 0.25f;
+                Camera_.Pitch = std::clamp(Camera_.Pitch + Steer.y * 0.25f, -89.0f, 89.0f);
                 const glm::vec3 Look = Forward(Camera_.Yaw, Camera_.Pitch);
                 const glm::vec3 Right = RightOf(Camera_.Yaw);
                 glm::vec3 Move(0.0f);
-                if (ImGui::IsKeyDown(ImGuiKey_W))
+                if (ImGui::IsKeyDown(KeyAtPosition(SDL_SCANCODE_W)))
                     Move += Look;
-                if (ImGui::IsKeyDown(ImGuiKey_S))
+                if (ImGui::IsKeyDown(KeyAtPosition(SDL_SCANCODE_S)))
                     Move -= Look;
-                if (ImGui::IsKeyDown(ImGuiKey_D))
+                if (ImGui::IsKeyDown(KeyAtPosition(SDL_SCANCODE_D)))
                     Move += Right;
-                if (ImGui::IsKeyDown(ImGuiKey_A))
+                if (ImGui::IsKeyDown(KeyAtPosition(SDL_SCANCODE_A)))
                     Move -= Right;
-                if (ImGui::IsKeyDown(ImGuiKey_E))
+                if (ImGui::IsKeyDown(KeyAtPosition(SDL_SCANCODE_E)))
                     Move.y += 1.0f;
-                if (ImGui::IsKeyDown(ImGuiKey_Q))
+                if (ImGui::IsKeyDown(KeyAtPosition(SDL_SCANCODE_Q)))
                     Move.y -= 1.0f;
                 const float Speed =
                     std::max(Camera_.Distance, 20.0f) * (Io.KeyShift ? 3.0f : 1.0f) * EditorSettings_.CameraSpeed;
@@ -840,27 +890,39 @@ namespace dbc::studio
 
             const ImGuiIO& Io = ImGui::GetIO();
             UpdateCamera(Hovered);
+            // A flight has taken the pointer.
+            const bool Pointing = Hovered && !Flying_;
             ImDrawList* Draw = ImGui::GetWindowDrawList();
             DrawIcons(Draw);
-            const bool Painting = UpdatePaint(Hovered, Draw);
-            const bool VertexSnap = UpdateVertexSnap(Hovered, Draw);
+            const bool Painting = UpdatePaint(Pointing, Draw);
+            const bool VertexSnap = UpdateVertexSnap(Pointing, Draw);
+            ImGuizmo::Enable(!Flying_);
             if (!VertexSnap)
                 DrawGizmo();
 
-            if (Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt && !VertexSnap && !Painting &&
+            if (Pointing && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt && !VertexSnap && !Painting &&
                 !ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
                 PickAt(ImGui::GetMousePos(), Io.KeyCtrl || Io.KeySuper || Io.KeyShift);
 
-            // Tool keys apply while the viewport has focus and no button is navigating.
-            if (ImGui::IsWindowFocused() && !Navigating_ && !Io.WantTextInput && !Io.KeyCtrl && !Io.KeySuper)
+            // Tool keys apply while the viewport has focus and nothing is navigating.
+            if (ImGui::IsWindowFocused() && !Navigating_ && !Flying_ && !Io.WantTextInput && !Io.KeyCtrl &&
+                !Io.KeySuper)
             {
-                if (ImGui::IsKeyPressed(ImGuiKey_Q, false))
+                const std::array<ImGuiKey, 4> MoveKeys = MovementKeys();
+                const auto ToolKey = [&](ImGuiKey Key)
+                {
+                    if (std::find(MoveKeys.begin(), MoveKeys.end(), Key) == MoveKeys.end())
+                        return ImGui::IsKeyPressed(Key, false);
+                    // Also a movement key, so only a tap is for the tool.
+                    return ImGui::IsKeyReleased(Key) && ImGui::GetKeyData(Key)->DownDurationPrev < KToolTapSeconds;
+                };
+                if (ToolKey(ImGuiKey_Q))
                     Tool_ = Tool::View;
-                else if (ImGui::IsKeyPressed(ImGuiKey_W, false))
+                else if (ToolKey(ImGuiKey_W))
                     Tool_ = Tool::Move;
-                else if (ImGui::IsKeyPressed(ImGuiKey_E, false))
+                else if (ToolKey(ImGuiKey_E))
                     Tool_ = Tool::Rotate;
-                else if (ImGui::IsKeyPressed(ImGuiKey_R, false))
+                else if (ToolKey(ImGuiKey_R))
                     Tool_ = Tool::Scale;
                 else if (ImGui::IsKeyPressed(ImGuiKey_B, false))
                 {
