@@ -83,23 +83,10 @@
         ]
       },
       "set": {
-        "description": "OpenDBC desktop OpenXR addition shared by DBC and DBPro; not a historical DarkBASIC command.",
+        "description": "OpenDBC desktop OpenXR addition in DBPro; not a historical DarkBASIC command.",
         "notes": "See docs/vr.md for meter units, tracking, validation, defaults and unavailable-device behavior."
       },
       "expected_rows": 14
-    },
-    {
-      "match": {
-        "symbols": [
-          "X VECTOR3",
-          "Y VECTOR3",
-          "Z VECTOR3"
-        ]
-      },
-      "set": {
-        "notes": "Historical DBPro readers also available in Classic for Vector3 values written by the shared VR GET commands; readers alone do not request an XR device."
-      },
-      "expected_rows": 3
     }
   ],
   "additional_rows": [

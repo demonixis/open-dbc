@@ -32,11 +32,6 @@
 
 ## Before 0.5
 
-Language:
-
-- [ ] Remove the VR forms and the `X/Y/Z VECTOR3` readers from Classic; `vr_tracking.dba`
-  moves to DBPro.
-
 Build and release:
 
 - [ ] Linux AppImage on demand, built on an old glibc so that it starts on older
@@ -74,7 +69,7 @@ Publication:
 ## DBPro parity
 
 The catalogue counts 979 of DBPro's 1,264 core commands and functions as implemented,
-against 719 of 748 in Classic. The other 285 are sorted here by name only; confirm each
+against 702 of 731 in Classic. The other 285 are sorted here by name only; confirm each
 one when it is picked up.
 
 152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access

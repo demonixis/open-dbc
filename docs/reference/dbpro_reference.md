@@ -1273,12 +1273,12 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `WINDOW EXIST` | Function | 1 | string -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `WRAPVALUE` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `X VECTOR2` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `X VECTOR3` | Function | 1 | number -> real | Implemented | DBPro snapshot, OpenDBC extension | DarkBASIC Professional function implemented with an observable contract. |
+| `X VECTOR3` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `X VECTOR4` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `Y VECTOR2` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `Y VECTOR3` | Function | 1 | number -> real | Implemented | DBPro snapshot, OpenDBC extension | DarkBASIC Professional function implemented with an observable contract. |
+| `Y VECTOR3` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `Y VECTOR4` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `Z VECTOR3` | Function | 1 | number -> real | Implemented | DBPro snapshot, OpenDBC extension | DarkBASIC Professional function implemented with an observable contract. |
+| `Z VECTOR3` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `Z VECTOR4` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `ZBUFFER AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `ZFOG AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |

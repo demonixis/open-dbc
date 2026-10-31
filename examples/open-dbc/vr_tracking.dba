@@ -1,4 +1,4 @@
-rem OpenDBC desktop VR: run with --dialect dbc or --dialect dbpro.
+rem OpenDBC desktop VR.
 rem One world unit is one meter. No external assets are required.
 sync on
 sync rate 60

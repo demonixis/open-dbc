@@ -8,7 +8,7 @@ Programs that use no VR form keep the normal backend (Metal on macOS).
 
 ## BASIC forms
 
-Available in both `dbc` and `dbpro`; they add no profile.
+Available in `dbpro`; Classic reports them as unavailable.
 
 | Form | Contract |
 | --- | --- |
@@ -27,7 +27,7 @@ Available in both `dbc` and `dbpro`; they add no profile.
 | `SET VR CAMERA HEIGHT height` / `GET VR CAMERA HEIGHT()` | Extra height in metres (default `0`) |
 
 Hands are `0` left and `1` right. `GET` forms create or replace a Vector3, read
-with `X VECTOR3`, `Y VECTOR3`, `Z VECTOR3` (also available in Classic for this).
+with `X VECTOR3`, `Y VECTOR3`, `Z VECTOR3`.
 
 ## Behaviour
 
@@ -46,7 +46,7 @@ with `X VECTOR3`, `Y VECTOR3`, `Z VECTOR3` (also available in Classic for this).
 ## Example
 
 ```bash
-opendbc run examples/open-dbc/vr_tracking.dba --dialect dbc
+opendbc run examples/open-dbc/vr_tracking.dba --dialect dbpro
 ```
 
 V toggles VR, R recenters, T cycles the tracking space, P the preview, H/J

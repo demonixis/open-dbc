@@ -1543,8 +1543,8 @@ UNIT_WITNESSES += tuple(
 
 UNIT_WITNESSES += tuple(
     (profile, kind, name, code, "xr-state-and-vector",
-     "test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles")
-    for profile in ("dbc", "dbpro")
+     "test_vr.cpp::VR builtins expose poses and validate destination vectors")
+    for profile in ("dbpro",)
     for kind, name, code in (
         ('Command', 'SET VR ENABLED', 'set vr enabled 0\n'),
         ('Command', 'SET TRACKING SPACE', 'set tracking space 0\n'),
@@ -1561,12 +1561,6 @@ UNIT_WITNESSES += tuple(
         ('Command', 'SET VR CAMERA HEIGHT', 'set vr camera height 1.5\n'),
         ('Function', 'GET VR CAMERA HEIGHT', 'value = get vr camera height()\n'),
     )
-)
-UNIT_WITNESSES += tuple(
-    ("dbc", "Function", axis + " VECTOR3", "value = " + axis.lower() + " vector3(7)\n",
-     "xr-state-and-vector",
-     "test_vr.cpp::VR builtins expose shared poses and validate destination vectors in both profiles")
-    for axis in ("X", "Y", "Z")
 )
 
 

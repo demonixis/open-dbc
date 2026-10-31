@@ -93,4 +93,4 @@ dbpro/tutorials/world/world1.dba|dbpro|verified|-
 dbpro/tutorials/world/world2.dba|dbpro|verified|-
 open-dbc/interpreter_test.dba|dbc|verified|-
 open-dbc/maze_runner/maze_runner.dba|dbpro|verified|-
-open-dbc/vr_tracking.dba|dbc|verified|-
+open-dbc/vr_tracking.dba|dbpro|verified|-

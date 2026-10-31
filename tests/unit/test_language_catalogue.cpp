@@ -600,7 +600,7 @@ TEST_CASE("Every implemented profile overload has an observable behavior witness
     CHECK(Actual == Expected);
 }
 
-TEST_CASE("Shared VR forms have exact signatures without widening other Classic vector operations")
+TEST_CASE("VR forms are DBPro's, with exact signatures, and Classic has none of them")
 {
     using namespace dbc::language;
 
@@ -632,33 +632,32 @@ TEST_CASE("Shared VR forms have exact signatures without widening other Classic 
         {SymbolId::Command_SetVrCameraHeight, "SET VR CAMERA HEIGHT", SymbolKind::Command, 1, BuiltinValueType::Void},
         {SymbolId::Function_GetVrCameraHeight, "GET VR CAMERA HEIGHT", SymbolKind::Function, 0, BuiltinValueType::Real},
     };
-    for (const auto Profile : {LanguageProfile::Dbc, LanguageProfile::DbPro})
+    constexpr auto Profile = LanguageProfile::DbPro;
+    for (const auto& Form : Forms)
     {
-        for (const auto& Form : Forms)
-        {
-            CAPTURE(Form.Name);
-            const auto* Descriptor = FindSymbol(Profile, Form.Kind, Form.Name);
-            REQUIRE(Descriptor != nullptr);
-            CHECK(Descriptor->Id == Form.Id);
-            CHECK(SupportFor(*Descriptor, Profile) == SupportStatus::Implemented);
-            const auto Calls = Overloads(Form.Id, Profile);
-            REQUIRE(Calls.size() == 1);
-            CHECK(Calls[0]->SourceArity.Accepts(Form.Count));
-            CHECK_FALSE(Calls[0]->SourceArity.Accepts(Form.Count + 1));
-            CHECK(Calls[0]->ReturnType == Form.Result);
-            for (const auto& Parameter : Calls[0]->Parameters)
-                CHECK(Parameter.ValueType == (Form.Id == SymbolId::Command_SetVrCameraHeight
-                                                  ? BuiltinValueType::Real
-                                                  : BuiltinValueType::Integer));
-        }
-        for (const auto Id : {SymbolId::Function_XVector3, SymbolId::Function_YVector3, SymbolId::Function_ZVector3})
-        {
-            CHECK(SupportFor(Symbol(Id), Profile) == SupportStatus::Implemented);
-            const auto* Call = FindOverload(Id, Profile, 1);
-            REQUIRE(Call != nullptr);
-            CHECK(Call->ReturnType == BuiltinValueType::Real);
-            CHECK(Call->Parameters[0].ValueType == BuiltinValueType::Numeric);
-        }
+        CAPTURE(Form.Name);
+        CHECK(FindSymbol(LanguageProfile::Dbc, Form.Kind, Form.Name) == nullptr);
+        const auto* Descriptor = FindSymbol(Profile, Form.Kind, Form.Name);
+        REQUIRE(Descriptor != nullptr);
+        CHECK(Descriptor->Id == Form.Id);
+        CHECK(SupportFor(*Descriptor, Profile) == SupportStatus::Implemented);
+        const auto Calls = Overloads(Form.Id, Profile);
+        REQUIRE(Calls.size() == 1);
+        CHECK(Calls[0]->SourceArity.Accepts(Form.Count));
+        CHECK_FALSE(Calls[0]->SourceArity.Accepts(Form.Count + 1));
+        CHECK(Calls[0]->ReturnType == Form.Result);
+        for (const auto& Parameter : Calls[0]->Parameters)
+            CHECK(Parameter.ValueType == (Form.Id == SymbolId::Command_SetVrCameraHeight ? BuiltinValueType::Real
+                                                                                         : BuiltinValueType::Integer));
+    }
+    for (const auto Id : {SymbolId::Function_XVector3, SymbolId::Function_YVector3, SymbolId::Function_ZVector3})
+    {
+        CHECK(SupportFor(Symbol(Id), Profile) == SupportStatus::Implemented);
+        CHECK(FindSymbol(LanguageProfile::Dbc, SymbolKind::Function, Symbol(Id).CanonicalName) == nullptr);
+        const auto* Call = FindOverload(Id, Profile, 1);
+        REQUIRE(Call != nullptr);
+        CHECK(Call->ReturnType == BuiltinValueType::Real);
+        CHECK(Call->Parameters[0].ValueType == BuiltinValueType::Numeric);
     }
     CHECK(FindSymbol(LanguageProfile::Dbc, SymbolKind::Command, "MAKE VECTOR3") == nullptr);
 }

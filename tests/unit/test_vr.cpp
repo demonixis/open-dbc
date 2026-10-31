@@ -373,80 +373,77 @@ TEST_CASE("VR rig composes locomotion and preserves physical height and last tra
     CHECK(dbc::VrTracking::Letterbox(0, 0, 100, 100, 200, 100) == glm::vec4(0, 25, 100, 50));
 }
 
-TEST_CASE("VR builtins expose shared poses and validate destination vectors in both profiles")
+TEST_CASE("VR builtins expose poses and validate destination vectors")
 {
-    for (auto Profile : {LanguageProfile::Dbc, LanguageProfile::DbPro})
+    FakeXr Fake;
+    auto& Kernel = Fake.Kernel;
+    auto& State = dbc::VrSystemTestAccess::Get(Kernel.Vr());
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Id, std::initializer_list<double> Values)
     {
-        FakeXr Fake;
-        auto& Kernel = Fake.Kernel;
-        auto& State = dbc::VrSystemTestAccess::Get(Kernel.Vr());
-        BuiltinContext Context;
-        Context.Kernel = &Kernel;
-        Context.Profile = Profile;
-        std::string Error;
-        const auto Command = [&](SymbolId Id, std::initializer_list<double> Values)
-        {
-            std::vector<BuiltinValue> Arguments;
-            for (double Value : Values)
-                Arguments.push_back(BuiltinValue::FromNumber(Value));
-            REQUIRE_MESSAGE(InvokeCommand(Context, Id, Arguments, Error), Error);
-        };
-        const auto Query = [&](SymbolId Id, std::initializer_list<double> Values = {})
-        {
-            std::vector<BuiltinValue> Arguments;
-            for (double Value : Values)
-                Arguments.push_back(BuiltinValue::FromNumber(Value));
-            BuiltinValue Result;
-            REQUIRE_MESSAGE(InvokeFunction(Context, Id, Arguments, Result, Error), Error);
-            return Result.Number;
-        };
-        CHECK(Query(SymbolId::Function_IsVrSupported) == 1);
-        Command(SymbolId::Command_SetVrEnabled, {1});
-        CHECK(Query(SymbolId::Function_IsVrEnabled) == 1);
-        Command(SymbolId::Command_SetVrCameraHeight, {0.5});
-        CHECK(Query(SymbolId::Function_GetVrCameraHeight) == 0.5);
-        Command(SymbolId::Command_SetVrPreviewMode, {2});
-        CHECK(State.Preview == VrPreviewMode::Right);
-        Command(SymbolId::Command_SetTrackingSpace, {1});
-        CHECK(State.Tracking.Space == VrTrackingSpace::LocalFloor);
-        const auto Physical = glm::translate(glm::mat4(1), glm::vec3(1, 2, 3));
-        State.Tracking.Update(0, Physical, true);
-        State.Tracking.Update(1, Physical, true);
-        State.Tracking.Update(2, Physical, true);
-        CHECK(Query(SymbolId::Function_IsVrHeadTracked) == 1);
-        CHECK(Query(SymbolId::Function_IsVrControllerTracked, {0}) == 1);
-        Context.Vectors4[7] = {9, 9, 9, 9};
-        Command(SymbolId::Command_GetVrHeadPosition, {7});
-        CHECK(Context.Vectors4.count(7) == 0);
-        CHECK(Query(SymbolId::Function_XVector3, {7}) == 1);
-        CHECK(Query(SymbolId::Function_YVector3, {7}) == 2.5);
-        CHECK(Query(SymbolId::Function_ZVector3, {7}) == 3);
-        Command(SymbolId::Command_GetVrRotation, {7});
-        CHECK(Context.Vectors.at(7) == std::array<float, 3>{0, 0, 0});
-        Command(SymbolId::Command_GetVrControllerPosition, {1, 7});
-        CHECK(Context.Vectors.at(7)[2] == 3);
-        Command(SymbolId::Command_GetVrControllerRotation, {0, 7});
-        CHECK(Context.Vectors.at(7)[1] == 0);
-        Command(SymbolId::Command_RecenterVrCamera, {});
-        Command(SymbolId::Command_GetVrHeadPosition, {7});
-        CHECK(Context.Vectors.at(7)[0] == 0);
-        CHECK(Context.Vectors.at(7)[1] == 2.5);
-        for (auto Id :
-             {SymbolId::Command_SetVrEnabled, SymbolId::Command_SetTrackingSpace, SymbolId::Command_SetVrPreviewMode})
-            CHECK_FALSE(InvokeCommand(Context, Id, {BuiltinValue::FromNumber(99)}, Error));
-        CHECK_FALSE(InvokeCommand(Context, SymbolId::Command_GetVrControllerPosition,
-                                  {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(7)}, Error));
-        CHECK_FALSE(InvokeCommand(Context, SymbolId::Command_GetVrHeadPosition, {BuiltinValue::FromNumber(0)}, Error));
-        CHECK_FALSE(Kernel.Vr().SetCameraHeight(std::numeric_limits<float>::infinity(), &Error));
-        CHECK(Context.Vectors.at(7)[1] == 2.5);
-        Command(SymbolId::Command_SetVrEnabled, {0});
-        CHECK(Query(SymbolId::Function_IsVrEnabled) == 0);
-        CHECK(Query(SymbolId::Function_IsVrHeadTracked) == 0);
-        State.Supported = false;
-        Command(SymbolId::Command_SetVrEnabled, {1});
-        CHECK(Query(SymbolId::Function_IsVrEnabled) == 0);
-        CHECK(Query(SymbolId::Function_IsVrSupported) == 0);
-    }
+        std::vector<BuiltinValue> Arguments;
+        for (double Value : Values)
+            Arguments.push_back(BuiltinValue::FromNumber(Value));
+        REQUIRE_MESSAGE(InvokeCommand(Context, Id, Arguments, Error), Error);
+    };
+    const auto Query = [&](SymbolId Id, std::initializer_list<double> Values = {})
+    {
+        std::vector<BuiltinValue> Arguments;
+        for (double Value : Values)
+            Arguments.push_back(BuiltinValue::FromNumber(Value));
+        BuiltinValue Result;
+        REQUIRE_MESSAGE(InvokeFunction(Context, Id, Arguments, Result, Error), Error);
+        return Result.Number;
+    };
+    CHECK(Query(SymbolId::Function_IsVrSupported) == 1);
+    Command(SymbolId::Command_SetVrEnabled, {1});
+    CHECK(Query(SymbolId::Function_IsVrEnabled) == 1);
+    Command(SymbolId::Command_SetVrCameraHeight, {0.5});
+    CHECK(Query(SymbolId::Function_GetVrCameraHeight) == 0.5);
+    Command(SymbolId::Command_SetVrPreviewMode, {2});
+    CHECK(State.Preview == VrPreviewMode::Right);
+    Command(SymbolId::Command_SetTrackingSpace, {1});
+    CHECK(State.Tracking.Space == VrTrackingSpace::LocalFloor);
+    const auto Physical = glm::translate(glm::mat4(1), glm::vec3(1, 2, 3));
+    State.Tracking.Update(0, Physical, true);
+    State.Tracking.Update(1, Physical, true);
+    State.Tracking.Update(2, Physical, true);
+    CHECK(Query(SymbolId::Function_IsVrHeadTracked) == 1);
+    CHECK(Query(SymbolId::Function_IsVrControllerTracked, {0}) == 1);
+    Context.Vectors4[7] = {9, 9, 9, 9};
+    Command(SymbolId::Command_GetVrHeadPosition, {7});
+    CHECK(Context.Vectors4.count(7) == 0);
+    CHECK(Query(SymbolId::Function_XVector3, {7}) == 1);
+    CHECK(Query(SymbolId::Function_YVector3, {7}) == 2.5);
+    CHECK(Query(SymbolId::Function_ZVector3, {7}) == 3);
+    Command(SymbolId::Command_GetVrRotation, {7});
+    CHECK(Context.Vectors.at(7) == std::array<float, 3>{0, 0, 0});
+    Command(SymbolId::Command_GetVrControllerPosition, {1, 7});
+    CHECK(Context.Vectors.at(7)[2] == 3);
+    Command(SymbolId::Command_GetVrControllerRotation, {0, 7});
+    CHECK(Context.Vectors.at(7)[1] == 0);
+    Command(SymbolId::Command_RecenterVrCamera, {});
+    Command(SymbolId::Command_GetVrHeadPosition, {7});
+    CHECK(Context.Vectors.at(7)[0] == 0);
+    CHECK(Context.Vectors.at(7)[1] == 2.5);
+    for (auto Id :
+         {SymbolId::Command_SetVrEnabled, SymbolId::Command_SetTrackingSpace, SymbolId::Command_SetVrPreviewMode})
+        CHECK_FALSE(InvokeCommand(Context, Id, {BuiltinValue::FromNumber(99)}, Error));
+    CHECK_FALSE(InvokeCommand(Context, SymbolId::Command_GetVrControllerPosition,
+                              {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(7)}, Error));
+    CHECK_FALSE(InvokeCommand(Context, SymbolId::Command_GetVrHeadPosition, {BuiltinValue::FromNumber(0)}, Error));
+    CHECK_FALSE(Kernel.Vr().SetCameraHeight(std::numeric_limits<float>::infinity(), &Error));
+    CHECK(Context.Vectors.at(7)[1] == 2.5);
+    Command(SymbolId::Command_SetVrEnabled, {0});
+    CHECK(Query(SymbolId::Function_IsVrEnabled) == 0);
+    CHECK(Query(SymbolId::Function_IsVrHeadTracked) == 0);
+    State.Supported = false;
+    Command(SymbolId::Command_SetVrEnabled, {1});
+    CHECK(Query(SymbolId::Function_IsVrEnabled) == 0);
+    CHECK(Query(SymbolId::Function_IsVrSupported) == 0);
 }
 
 TEST_CASE("VR capability detection includes compiled branches and source units without textual false positives")
@@ -458,7 +455,7 @@ TEST_CASE("VR capability detection includes compiled branches and source units w
     {
         ExecutionRequest Request;
         Request.RootLogicalPath = "/virtual/main.dba";
-        Request.Profile = LanguageProfile::Dbc;
+        Request.Profile = LanguageProfile::DbPro;
         Request.Sources = {{Request.RootLogicalPath, Text},
                            {"/virtual/included.dba", "set vr preview mode 1\n"},
                            {"/virtual/unused.dba", "set vr enabled 1\n"}};
@@ -477,12 +474,17 @@ TEST_CASE("VR capability detection includes compiled branches and source units w
     CHECK_FALSE(Kernel.Vr().Capable());
     Prepare("print 1\n");
     CHECK_FALSE(Kernel.Vr().Capable());
-    CHECK(language::DetectDialect({"vr.dba", "set vr enabled 1\nprint x vector3(1)\n"}).Kind ==
-          language::DialectDetectionKind::Ambiguous);
+    // VR is DBPro's: it says which profile a program is for, and Classic refuses it.
+    CHECK(language::DetectDialect({"vr.dba", "set vr enabled 1\n"}).Kind == language::DialectDetectionKind::DbPro);
     CHECK(language::DetectDialect({"vr.dba", "set vr enabled 1\nbob 1,2,3,4\n"}).Kind ==
-          language::DialectDetectionKind::Dbc);
-    CHECK(language::DetectDialect({"vr.dba", "set vr enabled 1\nmake vector3 1\n"}).Kind ==
-          language::DialectDetectionKind::DbPro);
+          language::DialectDetectionKind::Conflict);
+    ExecutionRequest Classic;
+    Classic.RootLogicalPath = "/virtual/main.dba";
+    Classic.Profile = LanguageProfile::Dbc;
+    Classic.Sources = {{Classic.RootLogicalPath, "set vr enabled 1\n"}};
+    CHECK_FALSE(Service.Prepare(std::move(Classic)));
+    REQUIRE_FALSE(Service.Result().Diagnostics.empty());
+    CHECK(Service.Result().Diagnostics.front().Code == "DBC2014");
 }
 
 TEST_CASE("XR session events keep enabled independent of focus and balance empty frames")
@@ -589,7 +591,7 @@ TEST_CASE("XR stereo GPU frames share one upload and retain a gamma corrected ca
     Fake.Enable(true);
     Fake.NoRender = false;
     auto& K = Fake.Kernel;
-    K.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Classic());
+    K.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
     REQUIRE(K.Core().SetWindowSize(80, 60));
     K.Camera().SetAutoCamOff();
     REQUIRE(K.Camera().PositionCamera(0, 0, 0));
@@ -821,14 +823,15 @@ TEST_CASE("XR direct and converted eyes preserve HUD pixels and independent dept
 
 TEST_CASE("XR presentation continues while BASIC waits and a minimized host stays suspended")
 {
-    for (const std::string Wait : {"wait 100000", "sleep 100000", "wait key", "suspend for mouse", "input answer$"})
+    for (const std::string Wait :
+         {"wait 100000", "sleep 100000", "wait key", "suspend for mouse", "input \"?\", answer$"})
     {
         CAPTURE(Wait);
         FakeXr Fake;
         ExecutionService Service(Fake.Kernel);
         ExecutionRequest Request;
         Request.RootLogicalPath = "/virtual/vr_wait.dba";
-        Request.Profile = LanguageProfile::Dbc;
+        Request.Profile = LanguageProfile::DbPro;
         Request.Sources = {{Request.RootLogicalPath, "set vr enabled 1\nsync on\n" + Wait + "\nend\n"}};
         REQUIRE(Service.Prepare(std::move(Request)));
         Fake.Enable(true);
@@ -862,7 +865,7 @@ TEST_CASE("XR pacing cancels an already pending SYNC RATE deadline")
     State.Running = false;
     BuiltinContext Context;
     Context.Kernel = &K;
-    Context.Profile = LanguageProfile::Dbc;
+    Context.Profile = LanguageProfile::DbPro;
     EngineBuiltinHost Host(Context);
     vm::BuiltinInvocation Sync{1, SymbolId::Command_Sync, {}, {language::TypeKind::Void, {}}, false};
     const auto Pending = Host.Invoke(Sync);

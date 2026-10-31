@@ -114,15 +114,6 @@ PROFILE_STRING_PARAMETERS = {
 }
 
 PROFILE_PARAMETER_SPECS = {
-    ("Dbc", "SET VR ENABLED"): "I",
-    ("Dbc", "SET TRACKING SPACE"): "I",
-    ("Dbc", "GET VR CONTROLLER POSITION"): "I,I",
-    ("Dbc", "GET VR CONTROLLER ROTATION"): "I,I",
-    ("Dbc", "GET VR HEAD POSITION"): "I",
-    ("Dbc", "GET VR ROTATION"): "I",
-    ("Dbc", "IS VR CONTROLLER TRACKED"): "I",
-    ("Dbc", "SET VR PREVIEW MODE"): "I",
-    ("Dbc", "SET VR CAMERA HEIGHT"): "R",
     ("DbPro", "SET VR ENABLED"): "I",
     ("DbPro", "SET TRACKING SPACE"): "I",
     ("DbPro", "GET VR CONTROLLER POSITION"): "I,I",
