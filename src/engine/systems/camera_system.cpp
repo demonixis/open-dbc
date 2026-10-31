@@ -2,7 +2,9 @@
 #include "../engine_math.hpp"
 #include "core_system.hpp"
 #include "engine_kernel.hpp"
+#include "image_store.hpp"
 #include "object_manager.hpp"
+#include "renderer_system.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -125,12 +127,84 @@ namespace dbc
         std::vector<int> Ids;
         Ids.reserve(Cameras_.size());
         for (const auto& [Id, Camera] : Cameras_)
-            if (Id >= 32 || ((SyncMask_ >> Id) & 1u) != 0)
+            if (Camera.TargetImage == 0 && (Id >= 32 || ((SyncMask_ >> Id) & 1u) != 0))
                 Ids.push_back(Id);
         if (Ids.empty())
             Ids.push_back(0);
         std::sort(Ids.begin(), Ids.end());
         return Ids;
+    }
+
+    std::vector<int> CameraSystem::ImageCameraIds() const
+    {
+        std::vector<int> Ids;
+        for (const auto& [Id, Camera] : Cameras_)
+            if (Camera.TargetImage != 0 && (Id >= 32 || ((SyncMask_ >> Id) & 1u) != 0))
+                Ids.push_back(Id);
+        std::sort(Ids.begin(), Ids.end());
+        return Ids;
+    }
+
+    bool CameraSystem::SetCameraToImage(int CameraId, int ImageId, int Width, int Height, std::string* Error)
+    {
+        CameraState* Camera = Require(CameraId, "SET CAMERA TO IMAGE", Error);
+        if (!Camera)
+            return false;
+        if (ImageId < 1)
+        {
+            Camera->TargetImage = 0;
+            Kernel_.Renderer().InvalidateTriCache();
+            return true;
+        }
+        // Below two pixels a side an image has no mipmaps, and so no texture a render pass can write.
+        constexpr int MaxSide = 8192;
+        if (Width < 2 || Height < 2 || Width > MaxSide || Height > MaxSide)
+        {
+            if (Error)
+                *Error = "SET CAMERA TO IMAGE takes an image of 2 to 8192 pixels a side";
+            return false;
+        }
+        SDL_Surface* Surface = SDL_CreateSurface(Width, Height, SDL_PIXELFORMAT_RGBA32);
+        if (!Surface)
+        {
+            if (Error)
+                *Error = std::string("SET CAMERA TO IMAGE cannot make its image: ") + SDL_GetError();
+            return false;
+        }
+        const bool Stored = SDL_FillSurfaceRect(Surface, nullptr, SDL_MapSurfaceRGBA(Surface, 0, 0, 0, 255)) &&
+                            Kernel_.ImageStoreRef().StoreImageFromSurface(ImageId, Surface, Error);
+        SDL_DestroySurface(Surface);
+        if (!Stored)
+            return false;
+        Camera->TargetImage = ImageId;
+        Camera->TargetImageWidth = Width;
+        Camera->TargetImageHeight = Height;
+        Kernel_.Renderer().InvalidateTriCache();
+        return true;
+    }
+
+    bool CameraSystem::SetCameraClip(int CameraId, int Mode, float X, float Y, float Z, float NormalX, float NormalY,
+                                     float NormalZ, std::string* Error)
+    {
+        CameraState* Camera = Require(CameraId, "SET CAMERA CLIP", Error);
+        if (!Camera)
+            return false;
+        Camera->Dirty = true;
+        Kernel_.Renderer().InvalidateTriCache();
+        Camera->Clipped = Mode != 0;
+        if (!Camera->Clipped)
+            return true;
+        const float Length = std::sqrt(NormalX * NormalX + NormalY * NormalY + NormalZ * NormalZ);
+        if (!std::isfinite(Length) || Length < 1e-6f || !std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z))
+        {
+            Camera->Clipped = false;
+            if (Error)
+                *Error = "SET CAMERA CLIP requires a finite point and a nonzero normal";
+            return false;
+        }
+        const float A = NormalX / Length, B = NormalY / Length, C = NormalZ / Length;
+        Camera->ClipPlane = {A, B, C, -(A * X + B * Y + C * Z)};
+        return true;
     }
 
     int CameraSystem::SelectRenderCamera(int CameraId)
@@ -770,7 +844,11 @@ namespace dbc
 
     float CameraSystem::Aspect() const
     {
-        return Current().Aspect > 0.0f ? Current().Aspect : Kernel_.Core().CameraAspect();
+        if (Current().Aspect > 0.0f)
+            return Current().Aspect;
+        if (Current().TargetImage != 0)
+            return static_cast<float>(Current().TargetImageWidth) / static_cast<float>(Current().TargetImageHeight);
+        return Kernel_.Core().CameraAspect();
     }
 
     float CameraSystem::ClampedNearPlane() const

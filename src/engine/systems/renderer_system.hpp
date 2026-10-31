@@ -116,6 +116,10 @@ namespace dbc
         void PrepareFrameSimulation(double DeltaSeconds);
         [[nodiscard]] RenderFrameState PrepareFrame(double DeltaSeconds, bool Retain2d = false, bool HudLast = false);
         [[nodiscard]] RenderView CameraView(Uint32 PhysicalWidth, Uint32 PhysicalHeight) const;
+        // The textures a camera sends to an image draws in, remade when the size changes. Empty on failure.
+        [[nodiscard]] GpuRenderTarget CameraImageTarget(int CameraId, Uint32 Width, Uint32 Height);
+        // Writes what the camera drew into its image, and the image's mipmaps.
+        bool TransferCameraImage(int CameraId, int ImageId, SDL_GPUCommandBuffer* Cmd);
         bool RenderPreparedView(const RenderView& View, const GpuRenderTarget& Target, SDL_GPUCommandBuffer* Commands,
                                 RenderFrameState& Frame);
         bool BuildPreparedView(const RenderView& View, PreparedViewGeometry& Geometry, RenderFrameState& Frame);
@@ -382,6 +386,7 @@ namespace dbc
         void AppendStaticTerrains(const RenderView& View, PreparedViewGeometry& Geometry, bool AfterObjects);
         bool UploadStaticTerrains(std::span<PreparedViewGeometry> Geometry, SDL_GPUCommandBuffer* Commands);
         void ReleaseStaticTerrains();
+        void ReleaseCameraTargets();
 
         EngineKernel& Kernel_;
         bool RenderFailureReported_ = false;
@@ -408,6 +413,17 @@ namespace dbc
         bool MipmapModeOverride_ = false;
         int MipmapMode_ = 2;
         std::unordered_map<int, StaticTerrain> StaticTerrains_;
+
+        struct CameraTarget
+        {
+            SDL_GPUTexture* Color = nullptr;
+            SDL_GPUTexture* Depth = nullptr;
+            Uint32 Width = 0;
+            Uint32 Height = 0;
+        };
+
+        std::unordered_map<int, CameraTarget> CameraTargets_;
+        SDL_GPUGraphicsPipeline* CameraTransferPipeline_ = nullptr;
         SDL_GPUBuffer* TerrainIndexBuffer_ = nullptr;
         Uint32 TerrainIndexCapacity_ = 0;
         SDL_GPUBuffer* TerrainInstanceBuffer_ = nullptr;

@@ -1356,6 +1356,16 @@ UNIT_WITNESSES += (
     ("dbpro", "Command", "PICK OBJECT", "pick object 32, 32, 1, 1\n", "object-selection-state", OBJECT_SELECTION_TEST),
 )
 
+CAMERA_IMAGE_TEST = "test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane"
+UNIT_WITNESSES += (
+    ("dbpro", "Command", "SET CAMERA TO IMAGE", "set camera to image 1, 5, 64, 64\n", "camera-image-pixel", CAMERA_IMAGE_TEST),
+    ("dbpro", "Command", "SET CAMERA TO IMAGE", "set camera to image 1, 5, 64, 64, 0\n", "camera-image-pixel", CAMERA_IMAGE_TEST),
+    ("dbpro", "Command", "SET CAMERA TO IMAGE", "set camera to image 1, 5, 64, 64, 0, 21\n", "camera-image-pixel", CAMERA_IMAGE_TEST),
+    ("dbpro", "Command", "SET CAMERA CLIP", "set camera clip 0, 1, 0, 0, 6, 0, 0, 1\n", "camera-image-pixel", CAMERA_IMAGE_TEST),
+    ("dbpro", "Command", "DRAW TO CAMERA", "draw to camera\n", "camera-image-state", CAMERA_IMAGE_TEST),
+    ("dbpro", "Command", "DRAW TO SCREEN", "draw to screen\n", "camera-image-state", CAMERA_IMAGE_TEST),
+)
+
 ODE_RIGID_BODY_TEST = (
     "test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend"
 )

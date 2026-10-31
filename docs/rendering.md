@@ -138,6 +138,27 @@ one map, and a mesh left without any goes back to the fixed-function path.
 - Meshes with one normal layer at its plain coordinates stay on the GPU path and
   instance; a scrolled, scaled or two-layer normal map draws through triangles.
 
+## Cameras and images
+
+- `SET CAMERA TO IMAGE camera, image, width, height` makes `image`, or replaces it,
+  and each SYNC draws the camera into it before the cameras that reach the screen,
+  so the same frame shows the result. Image number 0 sends the camera back to the
+  screen and leaves the image. An optional alpha mode and D3D format are accepted
+  and do not change anything: the image is 8-bit RGBA with an opaque alpha.
+- The result lives on the GPU only: memblocks and `SAVE IMAGE` read the image's CPU
+  copy, which stays black. VR frames do not update camera images.
+- `DRAW TO CAMERA` sends the frame's 2D layer over the current camera, in the
+  image's pixels if it has one. `DRAW TO SCREEN` brings it back.
+- `SET CAMERA CLIP camera, mode, x#, y#, z#, nx#, ny#, nz#` keeps what the normal
+  points to. It replaces the near plane rather than clipping per fragment, so it
+  costs nothing but only works when the eye is on the removed side, as a mirrored
+  camera is: on the kept side it has no effect.
+- `SYNC MASK` and `SET OBJECT MASK` hold one bit per camera from camera zero, and
+  cameras from 32 up always pass. A mask that leaves no camera draws camera zero, so
+  that the 2D layer still reaches the screen.
+- `SET OBJECT FOV` and `ENABLE OBJECT ZBIAS` act on view-space vertices and put the
+  object on the CPU path.
+
 ## Where frame time goes
 
 On the CPU path, time grows with visible triangles, not objects: clipping and

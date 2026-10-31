@@ -180,6 +180,8 @@ namespace dbc
         SDL_GPUGraphicsPipeline*& GpuPipelineAlphaWriteWireframe();
         SDL_GPUGraphicsPipeline*& GpuPipelineTransparentWireframe();
         SDL_GPUGraphicsPipeline*& GpuPipelineAdditiveWireframe();
+        // A full-screen copy into a texture of this format: see vr_transfer.hlsl for its uniforms. The caller owns it.
+        [[nodiscard]] SDL_GPUGraphicsPipeline* CreateTransferPipeline(SDL_GPUTextureFormat Format);
         SDL_GPUSampler*& GpuSampler();
         // Point-sampled variant for surfaces whose texture filtering is switched off.
         SDL_GPUSampler*& GpuSamplerNearest();

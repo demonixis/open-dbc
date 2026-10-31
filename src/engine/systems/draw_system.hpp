@@ -93,6 +93,17 @@ namespace dbc
         void SetDrawToFront();
         void SetDrawToBack();
 
+        // DRAW TO CAMERA: the camera the 2D layer goes over instead of the screen, or below zero for the screen.
+        void SetDrawToCamera(int CameraId)
+        {
+            DrawToCamera_ = CameraId;
+        }
+
+        [[nodiscard]] int DrawToCamera() const
+        {
+            return DrawToCamera_;
+        }
+
         bool IsDrawToFront() const
         {
             return DrawToFront_;
@@ -111,6 +122,7 @@ namespace dbc
         float BackdropScrollX_ = 0.0f;
         float BackdropScrollY_ = 0.0f;
         bool DrawToFront_ = true;
+        int DrawToCamera_ = -1;
     };
 
 } // namespace dbc

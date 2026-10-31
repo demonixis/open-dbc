@@ -1335,10 +1335,24 @@ namespace dbc
                                      K.Gpu().GpuDepthFormat(),
                                      DrawableW,
                                      DrawableH};
-        const std::vector<int> CameraIds = K.Camera().ScreenCameraIds();
+        std::vector<int> CameraIds = K.Camera().ImageCameraIds();
+        const std::size_t ImageCameras = CameraIds.size();
+        for (const int Id : K.Camera().ScreenCameraIds())
+            CameraIds.push_back(Id);
         std::vector<RenderView> Views;
         std::vector<PreparedViewGeometry> Geometry(CameraIds.size());
+        std::vector<GpuRenderTarget> Targets;
         Views.reserve(CameraIds.size());
+        Targets.reserve(CameraIds.size());
+        // DRAW TO CAMERA names one camera; a camera SYNC MASK leaves out draws no 2D layer.
+        const int HudCamera = K.Draw().DrawToCamera();
+        const auto HasHud = [&](std::size_t Index)
+        {
+            if (HudCamera >= 0)
+                return CameraIds[Index] == HudCamera;
+            // DRAW TO BACK puts the 2D layer under every screen camera, DRAW TO FRONT over them all.
+            return K.Draw().IsDrawToFront() ? Index + 1 == CameraIds.size() : Index == ImageCameras;
+        };
         bool Prepared = true;
         for (std::size_t Index = 0; Prepared && Index < CameraIds.size(); ++Index)
         {
@@ -1346,11 +1360,19 @@ namespace dbc
             // The triangle cache holds one camera's view-space geometry.
             if (CameraIds.size() > 1)
                 K.Renderer().InvalidateTriCache();
-            Views.push_back(K.Renderer().CameraView(DrawableW, DrawableH));
-            // DRAW TO BACK puts the 2D layer under every camera, DRAW TO FRONT over them all.
-            Geometry[Index].Hud = K.Draw().IsDrawToFront() ? Index + 1 == CameraIds.size() : Index == 0;
-            Geometry[Index].OverPreviousCamera = Index > 0;
-            Prepared = K.Renderer().BuildPreparedView(Views.back(), Geometry[Index], Frame);
+            const bool ToImage = Index < ImageCameras;
+            Targets.push_back(ToImage ? K.Renderer().CameraImageTarget(
+                                            CameraIds[Index], static_cast<Uint32>(K.Camera().TargetImageWidth()),
+                                            static_cast<Uint32>(K.Camera().TargetImageHeight()))
+                                      : Target);
+            Prepared = Targets.back().Color != nullptr;
+            if (Prepared)
+            {
+                Views.push_back(K.Renderer().CameraView(Targets.back().Width, Targets.back().Height));
+                Geometry[Index].Hud = HasHud(Index);
+                Geometry[Index].OverPreviousCamera = Index > ImageCameras;
+                Prepared = K.Renderer().BuildPreparedView(Views.back(), Geometry[Index], Frame);
+            }
             K.Camera().SelectRenderCamera(Previous);
         }
         if (!Prepared || !K.Renderer().UploadPreparedViews(Geometry, Cmd))
@@ -1358,7 +1380,10 @@ namespace dbc
         for (std::size_t Index = 0; Index < Views.size(); ++Index)
         {
             const int Previous = K.Camera().SelectRenderCamera(CameraIds[Index]);
-            const bool Recorded = K.Renderer().RecordPreparedView(Views[Index], Target, Geometry[Index], Cmd, Frame);
+            const int ImageId = Index < ImageCameras ? K.Camera().TargetImage() : 0;
+            const bool Recorded =
+                K.Renderer().RecordPreparedView(Views[Index], Targets[Index], Geometry[Index], Cmd, Frame) &&
+                (ImageId == 0 || K.Renderer().TransferCameraImage(CameraIds[Index], ImageId, Cmd));
             K.Camera().SelectRenderCamera(Previous);
             if (!Recorded)
                 return;
@@ -1459,6 +1484,7 @@ namespace dbc
     RendererSystem::~RendererSystem()
     {
         ReleaseStaticTerrains();
+        ReleaseCameraTargets();
         ReleaseGpuMeshes();
         ReleaseShadowVolumes();
     }
@@ -1505,21 +1531,138 @@ namespace dbc
         Transform[3] = Transform * glm::vec4(-Camera.PositionX(), -Camera.PositionY(), -Camera.PositionZ(), 1.0f);
         const float Fov = glm::radians(std::clamp(Camera.Fov(), 10.0f, 170.0f));
         const float Near = Camera.ClampedNearPlane(), Far = Camera.ClampedFarPlane();
-        const int Width = Kernel_.Core().WindowWidth(), Height = Kernel_.Core().WindowHeight();
+        // A camera sent to an image takes the image's pixels as its logical coordinates.
+        const bool ToImage = Camera.TargetImage() != 0;
+        const int Width = ToImage ? Camera.TargetImageWidth() : Kernel_.Core().WindowWidth();
+        const int Height = ToImage ? Camera.TargetImageHeight() : Kernel_.Core().WindowHeight();
         const SDL_FRect Viewport =
             Camera.HasCameraView()
                 ? SDL_FRect{static_cast<float>(Camera.ViewLeft()), static_cast<float>(Camera.ViewTop()),
                             static_cast<float>(static_cast<double>(Camera.ViewRight()) - Camera.ViewLeft()),
                             static_cast<float>(static_cast<double>(Camera.ViewBottom()) - Camera.ViewTop())}
                 : SDL_FRect{0.0f, 0.0f, static_cast<float>(Width), static_cast<float>(Height)};
-        return {Transform,
-                glm::perspectiveLH_ZO(Fov, Camera.Aspect(), Near, Far),
-                glm::perspectiveLH_ZO(Fov, Camera.Aspect(), Near, std::max(Far, 1e7f)),
-                Viewport,
-                Width,
-                Height,
-                PhysicalWidth,
-                PhysicalHeight};
+        glm::mat4 Projection = glm::perspectiveLH_ZO(Fov, Camera.Aspect(), Near, Far);
+        glm::mat4 AdditiveProjection = glm::perspectiveLH_ZO(Fov, Camera.Aspect(), Near, std::max(Far, 1e7f));
+        if (Camera.HasClipPlane())
+        {
+            const std::array<float, 4> Plane = Camera.ClipPlane();
+            // A plane's coefficients go through the inverse transpose of the matrix that moves its points.
+            const glm::vec4 ViewPlane =
+                glm::transpose(glm::inverse(Transform)) * glm::vec4(Plane[0], Plane[1], Plane[2], Plane[3]);
+            // The near plane becomes the clipping plane, which has no cost per fragment and needs no pipeline. It
+            // only exists when the eye is on the clipped side of the plane.
+            if (ViewPlane.w < 0.0f)
+                for (glm::mat4* Matrix : {&Projection, &AdditiveProjection})
+                {
+                    const glm::vec4 Corner =
+                        glm::inverse(*Matrix) *
+                        glm::vec4(ViewPlane.x < 0.0f ? -1.0f : 1.0f, ViewPlane.y < 0.0f ? -1.0f : 1.0f, 1.0f, 1.0f);
+                    const glm::vec4 Row = ViewPlane / glm::dot(ViewPlane, Corner);
+                    for (int Column = 0; Column < 4; ++Column)
+                        (*Matrix)[Column][2] = Row[Column];
+                }
+        }
+        return {Transform, Projection, AdditiveProjection, Viewport, Width, Height, PhysicalWidth, PhysicalHeight};
+    }
+
+    GpuRenderTarget RendererSystem::CameraImageTarget(int CameraId, Uint32 Width, Uint32 Height)
+    {
+        EngineKernel& K = Kernel_;
+        SDL_GPUDevice* Device = K.Gpu().GpuDevice();
+        if (!Device || Width == 0 || Height == 0)
+            return {};
+        CameraTarget& Entry = CameraTargets_[CameraId];
+        if (!Entry.Color || Entry.Width != Width || Entry.Height != Height)
+        {
+            if (Entry.Color)
+                SDL_ReleaseGPUTexture(Device, Entry.Color);
+            if (Entry.Depth)
+                SDL_ReleaseGPUTexture(Device, Entry.Depth);
+            Entry = {};
+            SDL_GPUTextureCreateInfo Info{};
+            Info.type = SDL_GPU_TEXTURETYPE_2D;
+            Info.width = Width;
+            Info.height = Height;
+            Info.layer_count_or_depth = 1;
+            Info.num_levels = 1;
+            Info.sample_count = SDL_GPU_SAMPLECOUNT_1;
+            Info.format = K.Gpu().GpuColorFormat();
+            Info.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
+            Entry.Color = SDL_CreateGPUTexture(Device, &Info);
+            Info.format = K.Gpu().GpuDepthFormat();
+            Info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+            Entry.Depth = SDL_CreateGPUTexture(Device, &Info);
+            if (!Entry.Color || !Entry.Depth)
+            {
+                DBC_LOG_ERROR("Camera image target failed: {}", SDL_GetError());
+                ReportRenderError("camera image target failed");
+                return {};
+            }
+            Entry.Width = Width;
+            Entry.Height = Height;
+        }
+        return {Entry.Color, Entry.Depth, K.Gpu().GpuColorFormat(), K.Gpu().GpuDepthFormat(), Width, Height};
+    }
+
+    bool RendererSystem::TransferCameraImage(int CameraId, int ImageId, SDL_GPUCommandBuffer* Cmd)
+    {
+        EngineKernel& K = Kernel_;
+        const auto Entry = CameraTargets_.find(CameraId);
+        Image* Destination = K.ImageStoreRef().GetImage(ImageId);
+        // A program may have deleted or replaced the image, which only leaves nothing to write to.
+        if (Entry == CameraTargets_.end() || !Destination || !Destination->GpuTexture ||
+            Destination->Width != static_cast<int>(Entry->second.Width) ||
+            Destination->Height != static_cast<int>(Entry->second.Height))
+            return true;
+        if (!CameraTransferPipeline_)
+        {
+            CameraTransferPipeline_ = K.Gpu().CreateTransferPipeline(SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB);
+            if (!CameraTransferPipeline_)
+            {
+                ReportRenderError("camera image transfer pipeline failed");
+                return false;
+            }
+        }
+        SDL_GPUColorTargetInfo Color{};
+        Color.texture = Destination->GpuTexture;
+        Color.load_op = SDL_GPU_LOADOP_DONT_CARE;
+        Color.store_op = SDL_GPU_STOREOP_STORE;
+        SDL_GPURenderPass* Pass = SDL_BeginGPURenderPass(Cmd, &Color, 1, nullptr);
+        if (!Pass)
+        {
+            ReportRenderError("camera image transfer pass failed");
+            return false;
+        }
+        SDL_BindGPUGraphicsPipeline(Pass, CameraTransferPipeline_);
+        // The camera wrote encoded values; an image's format encodes what it is given, so they are decoded first.
+        const std::array<float, 8> Uniforms{1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+        SDL_PushGPUFragmentUniformData(Cmd, 0, Uniforms.data(), sizeof(Uniforms));
+        const SDL_GPUTextureSamplerBinding Binding{Entry->second.Color, K.Gpu().GpuSampler()};
+        SDL_BindGPUFragmentSamplers(Pass, 0, &Binding, 1);
+        SDL_DrawGPUPrimitives(Pass, 3, 1, 0, 0);
+        SDL_EndGPURenderPass(Pass);
+        SDL_GenerateMipmapsForGPUTexture(Cmd, Destination->GpuTexture);
+        return true;
+    }
+
+    void RendererSystem::ReleaseCameraTargets()
+    {
+        SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
+        if (Device)
+        {
+            for (auto& [CameraId, Entry] : CameraTargets_)
+            {
+                (void)CameraId;
+                if (Entry.Color)
+                    SDL_ReleaseGPUTexture(Device, Entry.Color);
+                if (Entry.Depth)
+                    SDL_ReleaseGPUTexture(Device, Entry.Depth);
+            }
+            if (CameraTransferPipeline_)
+                SDL_ReleaseGPUGraphicsPipeline(Device, CameraTransferPipeline_);
+        }
+        CameraTargets_.clear();
+        CameraTransferPipeline_ = nullptr;
     }
 
     void RendererSystem::PrepareFrameSimulation(double DeltaSeconds)

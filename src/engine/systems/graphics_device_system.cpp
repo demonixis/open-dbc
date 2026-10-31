@@ -218,6 +218,33 @@ namespace dbc
         return Submitted;
     }
 
+    [[nodiscard]] SDL_GPUGraphicsPipeline* GraphicsDeviceSystem::CreateTransferPipeline(SDL_GPUTextureFormat Format)
+    {
+        SDL_GPUShader* Vertex = CreateEngineShader("vr_transfer", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0);
+        SDL_GPUShader* Fragment = CreateEngineShader("vr_transfer", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 1);
+        SDL_GPUGraphicsPipeline* Pipeline = nullptr;
+        if (Vertex && Fragment)
+        {
+            SDL_GPUGraphicsPipelineCreateInfo Info{};
+            Info.vertex_shader = Vertex;
+            Info.fragment_shader = Fragment;
+            Info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+            Info.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
+            Info.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
+            Info.multisample_state.sample_count = SDL_GPU_SAMPLECOUNT_1;
+            SDL_GPUColorTargetDescription Color{};
+            Color.format = Format;
+            Info.target_info.color_target_descriptions = &Color;
+            Info.target_info.num_color_targets = 1;
+            Pipeline = SDL_CreateGPUGraphicsPipeline(GpuDevice_, &Info);
+        }
+        if (Vertex)
+            SDL_ReleaseGPUShader(GpuDevice_, Vertex);
+        if (Fragment)
+            SDL_ReleaseGPUShader(GpuDevice_, Fragment);
+        return Pipeline;
+    }
+
     [[nodiscard]] SDL_GPUTexture* GraphicsDeviceSystem::CreateGpuTextureFromSurface(SDL_Surface* Surface)
     {
         if (!GpuDevice_ || !Surface)

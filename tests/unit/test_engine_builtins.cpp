@@ -10055,6 +10055,107 @@ TEST_CASE("DBPro chooses what each camera and SYNC draws, and how an object proj
     }
 }
 
+TEST_CASE("DBPro cameras draw to images and clip at a plane")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 64, 64));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    const auto Center = [&]()
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        std::array<Uint8, 4> Pixel{};
+        REQUIRE(
+            SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
+        SDL_DestroySurface(Capture);
+        return Pixel;
+    };
+    const auto Box = [&](int Id, float Z, int Color)
+    {
+        Kernel.Objects().MakeObjectBox(Id, 2.0f, 2.0f, 0.1f);
+        Kernel.Objects().PositionObject(Id, 0.0f, 0.0f, Z);
+        Kernel.Objects().SetObjectLight(Id, 0);
+        Kernel.Objects().ColorObject(Id, Color);
+    };
+
+    SUBCASE("what a camera saw reaches the screen through its image, in the same colours and the same frame")
+    {
+        Box(1, 5.0f, 0x00C04080);
+        const auto Direct = Center();
+        // Only camera one looks at the box; camera zero looks at the plane carrying its image.
+        RequireEngineStatus([&](std::string& CameraError) { return Kernel.Camera().MakeCamera(1, &CameraError); });
+        RequireEngineStatus([&](std::string& CameraError)
+                            { return Kernel.Camera().PositionCamera(1, 0.0f, 0.0f, 0.0f, &CameraError); });
+        RequireEngineStatus([&](std::string& CameraError)
+                            { return Kernel.Camera().SetBackdropColor(1, 0x00C04080, &CameraError); });
+        REQUIRE(Command(SymbolId::Command_SetCameraToImage, {1, 5, 64, 64}));
+        CHECK(Kernel.Camera().ImageCameraIds() == std::vector<int>{1});
+        CHECK(Kernel.Camera().ScreenCameraIds() == std::vector<int>{0});
+        Kernel.Objects().MakeObjectBox(2, 40.0f, 40.0f, 0.1f);
+        Kernel.Objects().PositionObject(2, 0.0f, 0.0f, 20.0f);
+        Kernel.Objects().SetObjectLight(2, 0);
+        Kernel.Objects().TextureObject(2, 5);
+        Kernel.Objects().SetObjectCameraMask(1, 2);
+        Kernel.Objects().SetObjectCameraMask(2, 1);
+        const auto Through = Center();
+        for (int Channel = 0; Channel < 3; ++Channel)
+            CHECK(std::abs(Through[static_cast<std::size_t>(Channel)] - Direct[static_cast<std::size_t>(Channel)]) <=
+                  3);
+        // Back to the screen: the camera draws over camera zero, and the image stays.
+        REQUIRE(Command(SymbolId::Command_SetCameraToImage, {1, 0, 0, 0}));
+        CHECK(Kernel.Camera().ImageCameraIds().empty());
+        CHECK(Kernel.ImageStoreRef().GetImage(5) != nullptr);
+        CHECK_FALSE(Command(SymbolId::Command_SetCameraToImage, {1, 5, 1, 64}));
+        CHECK_FALSE(Command(SymbolId::Command_SetCameraToImage, {9, 5, 64, 64}));
+    }
+
+    SUBCASE("the 2D layer follows DRAW TO CAMERA")
+    {
+        RequireEngineStatus([&](std::string& CameraError) { return Kernel.Camera().MakeCamera(1, &CameraError); });
+        REQUIRE(Command(SymbolId::Command_SetCameraToImage, {1, 5, 64, 64}));
+        RequireEngineStatus([&](std::string& CameraError)
+                            { return Kernel.Camera().SetCurrentCamera(1, &CameraError); });
+        REQUIRE(Command(SymbolId::Command_DrawToCamera, {}));
+        CHECK(Kernel.Draw().DrawToCamera() == 1);
+        REQUIRE(Command(SymbolId::Command_DrawToScreen, {}));
+        CHECK(Kernel.Draw().DrawToCamera() == -1);
+    }
+
+    SUBCASE("the clip plane removes what lies behind it, unless the eye is on its kept side")
+    {
+        Box(1, 5.0f, 0x00FF0000);
+        Box(2, 7.0f, 0x000000FF);
+        REQUIRE(Center()[0] > 128);
+        REQUIRE(Command(SymbolId::Command_SetCameraClip, {0, 1, 0, 0, 6, 0, 0, 1}));
+        CHECK(Center()[2] > 128);
+        CHECK(Center()[0] < 128);
+        // Kept side: the eye stands in it, and nothing moves in front of it.
+        REQUIRE(Command(SymbolId::Command_SetCameraClip, {0, 1, 0, 0, 6, 0, 0, -1}));
+        CHECK(Center()[0] > 128);
+        REQUIRE(Command(SymbolId::Command_SetCameraClip, {0, 0, 0, 0, 0, 0, 0, 0}));
+        CHECK(Center()[0] > 128);
+        CHECK_FALSE(Command(SymbolId::Command_SetCameraClip, {0, 1, 0, 0, 6, 0, 0, 0}));
+    }
+}
+
 TEST_CASE("DBPro surface maps light objects through the Blinn-Phong path")
 {
     dbc::EngineKernel Kernel;

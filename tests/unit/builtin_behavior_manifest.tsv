@@ -1056,6 +1056,7 @@ dbpro	470	711	Command	SET CAMERA RANGE	golden-output	test_dbpro_arity.dba	1568bb
 dbpro	471	713	Command	SET CAMERA ROTATION XYZ	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	472	715	Command	SET CAMERA ROTATION ZYX	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	473	717	Command	SET CAMERA TO FOLLOW	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
+dbpro	474	718	Command	SET CAMERA TO IMAGE	camera-image-pixel	test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane	-
 dbpro	475	720	Command	SET CAMERA TO OBJECT ORIENTATION	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	476	722	Command	SET CAMERA VIEW	golden-output	test_dbpro_arity.dba	1568bbbe5743c29bac1fbe7933381ff38890a0f88eb2f8e62317410904870bd6
 dbpro	477	723	Command	SET CARTOON SHADING ON	material-pixel	test_engine_builtins.cpp::DBPro bump cartoon and rainbow effects reach the portable stock shader	-
@@ -1592,6 +1593,8 @@ dbpro	1249	1809	Command	DISABLE OBJECT ZREAD	render-state	test_engine_builtins.c
 dbpro	1250	1810	Command	DISABLE OBJECT ZWRITE	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
 dbpro	1254	1812	Command	DRAW SPRITES FIRST	render-order	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1255	1813	Command	DRAW SPRITES LAST	render-order	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	1256	1814	Command	DRAW TO CAMERA	camera-image-state	test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane	-
+dbpro	1257	1815	Command	DRAW TO SCREEN	camera-image-state	test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane	-
 dbpro	1259	1816	Command	EMPTY ARRAY	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1260	1817	Command	ENABLE OBJECT ZBIAS	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1261	1818	Command	ENABLE OBJECT ZREAD	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
@@ -1639,6 +1642,7 @@ dbpro	1366	1921	Command	REMOVE FROM STACK	golden-output	test_dbpro_collections.d
 dbpro	1369	1924	Function	REVERSE$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1370	1925	Command	SCALE LISTENER	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	1375	1930	Command	SET BITMAP FORMAT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1378	1933	Command	SET CAMERA CLIP	camera-image-pixel	test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane	-
 dbpro	1380	1935	Command	SET CONTROL DEVICE INDEX	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
 dbpro	1381	1936	Command	SET EFFECT CONSTANT BOOLEAN	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-
 dbpro	1382	1937	Command	SET EFFECT CONSTANT FLOAT	effect-control	test_shader_compiler.cpp::DBPro effect constants techniques transpose and checklists drive compiled HLSL	-

@@ -20,3 +20,5 @@ First public release.
 - Six demos and tutorials covering the 747 Classic help symbols, with CC0 assets.
 - DBPro surface maps: a Blinn-Phong path with normal, specular, emissive and
   reflection maps and mipmapped cube maps.
+- DBPro cameras draw to images and clip at a plane; objects can be excluded, masked
+  per camera, and given their own field of view and depth bias.

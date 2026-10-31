@@ -85,7 +85,6 @@ dbpro	Command_SendNetMessageMemblock	Command	SEND NET MESSAGE MEMBLOCK	Target	me
 dbpro	Command_SendNetMessageMesh	Command	SEND NET MESSAGE MESH	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SendNetMessageSound	Command	SEND NET MESSAGE SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SendNetMessageString	Command	SEND NET MESSAGE STRING	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetCameraToImage	Command	SET CAMERA TO IMAGE	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetDvdChapter	Command	SET DVD CHAPTER	Deferred	video	dbpro-reference	media-backend
 dbpro	Command_SetGlobalObjectCreation	Command	SET GLOBAL OBJECT CREATION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -201,8 +200,6 @@ dbpro	Command_DeletePixelShader	Command	DELETE PIXEL SHADER	Target	core	dbpro-re
 dbpro	Command_DeleteStaticObject	Command	DELETE STATIC OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DestroyTerrain	Command	DESTROY TERRAIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DitherAvailable	Function	DITHER AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_DrawToCamera	Command	DRAW TO CAMERA	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_DrawToScreen	Command	DRAW TO SCREEN	Target	display	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExcludeFromImageblock	Command	EXCLUDE FROM IMAGEBLOCK	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExecutableRunning	Function	EXECUTABLE RUNNING	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExecuteExecutable	Function	EXECUTE EXECUTABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -273,7 +270,6 @@ dbpro	Command_SetAnimationSpeed	Command	SET ANIMATION SPEED	Deferred	video	dbpro
 dbpro	Command_SetAnimationVolume	Command	SET ANIMATION VOLUME	Deferred	video	dbpro-reference	media-backend
 dbpro	Command_SetBspMultitexturingOff	Command	SET BSP MULTITEXTURING OFF	Target	text	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetBspMultitexturingOn	Command	SET BSP MULTITEXTURING ON	Target	text	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetCameraClip	Command	SET CAMERA CLIP	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetCamerasToStereoscopic	Command	SET CAMERAS TO STEREOSCOPIC	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGlobalShadowColor	Command	SET GLOBAL SHADOW COLOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGlobalShadowShades	Command	SET GLOBAL SHADOW SHADES	Target	core	dbpro-reference	engine-subsystem-and-oracle
