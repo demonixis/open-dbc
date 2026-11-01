@@ -53,10 +53,13 @@ Robustness:
 Repository files:
 
 - [ ] Issue and PR templates.
-- [ ] Find out why the DBPro tutorials `basic3d3`, `camera1`, `light1` and `music1`
-  timed out under SwiftShader on Windows (last seen 2026-10-27), a slow software
-  renderer or a real hang. Windows CI skips `example_frames` for its duration, so
-  no frame is checked on Windows until a run on a real GPU settles this.
+- [ ] Run on Windows with a real GPU what its CI leaves out, under SwiftShader: why
+  the DBPro tutorials `basic3d3`, `camera1`, `light1` and `music1` timed out in
+  `example_frames` (last seen 2026-10-27), and why "A DBPro shadow does not depend
+  on how the camera sees its caster" darkens nothing from its first camera.
+- [ ] Find the crash at exit of "Classic animations validate numbers, files, bitmaps
+  and areas" on Windows, once in three CI runs, after the file Media Foundation
+  rejects. Windows CI runs a failed test twice to get past it.
 - [ ] README screenshots.
 
 Publication:

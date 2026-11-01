@@ -81,7 +81,7 @@ request, except changes to hand-written text only:
 |---|---|---|
 | `linux` | Debug | everything, the `portable` checks included |
 | `macos` | Debug | all but `portable` |
-| `windows` | Debug | all but `portable` and `example_frames` |
+| `windows` | Debug | all but `portable` and two rendering checks, see the roadmap |
 | `android` | arm64 runtime, then a Release Studio | exports an APK and an AAB, launched nowhere |
 
 Label a check `portable` when its result cannot depend on the host (committed data,
