@@ -87,7 +87,7 @@ request, except changes to hand-written text only:
 Label a check `portable` when its result cannot depend on the host (committed data,
 generated references), so that only `linux` runs it. `shaders.yml` reproduces the
 canonical SPIR-V when the shaders change. Runs start from the compiler cache: expect
-about 40 minutes after a dependency change and far less otherwise.
+about 40 minutes after a dependency change and 20 otherwise.
 
 ## Rules
 
