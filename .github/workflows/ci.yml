@@ -1,0 +1,246 @@
+name: CI
+
+# Which job runs which tests is explained in docs/CONTRIBUTING.md.
+on:
+  push:
+    branches: [main, 'ci/**']
+    paths-ignore: &hand-written-text
+      - 'docs/*.md'
+      - 'CHANGELOG.md'
+      - 'LICENSE'
+      - 'licenses/**'
+  pull_request:
+    branches: [main]
+    paths-ignore: *hand-written-text
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push supersedes the running checks of the same branch or pull request.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SDL_ASSERT: abort
+  CMAKE_C_COMPILER_LAUNCHER: ccache
+  CMAKE_CXX_COMPILER_LAUNCHER: ccache
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-build
+        with:
+          job: linux
+      - uses: ./.github/actions/install-linux-deps
+
+      - name: Install the display and renderer of the tests
+        run: |
+          sudo apt-get install -y xvfb mesa-vulkan-drivers xdg-user-dirs
+          # The lavapipe manifest name depends on the Mesa release.
+          Icd=$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' | head -n 1)
+          test -f "$Icd"
+          echo "VK_DRIVER_FILES=$Icd" >> "$GITHUB_ENV"
+          # MYDOCDIR$ requires a configured XDG Documents directory.
+          xdg-user-dirs-update
+          # Lavapipe maps every descriptor set bound with dynamic offsets separately and does not
+          # check the mapping; busy scenes such as Hive Defender exceed the default 65530 mappings.
+          sudo sysctl -w vm.max_map_count=1048576
+
+      - name: Configure
+        run: cmake --preset default
+
+      - name: Build
+        run: cmake --build --preset default --parallel 4 -- -k 0
+
+      # The only job that runs the "portable" checks: they give the same result everywhere.
+      - name: All tests
+        run: xvfb-run -a ctest --preset default
+
+      - name: Install and relocate the product
+        env:
+          OPENDBC_HEADLESS: "1"
+        run: >-
+          xvfb-run -a python3 scripts/qualify_install.py
+          --build-dir build/default
+          --destination "$RUNNER_TEMP/OpenDBC relocated"
+          --run
+
+      - name: Package and relocate the product
+        env:
+          OPENDBC_HEADLESS: "1"
+        run: >-
+          xvfb-run -a python3 scripts/qualify_install.py
+          --build-dir build/default
+          --destination "$RUNNER_TEMP/OpenDBC CPack relocated"
+          --cpack
+          --run
+
+      - name: Static-link gate
+        run: |
+          ./scripts/check_static_link.sh --strict --binary "$RUNNER_TEMP/OpenDBC relocated/bin/opendbc"
+          ./scripts/check_static_link.sh --strict --binary "$RUNNER_TEMP/OpenDBC CPack relocated/bin/opendbc"
+
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-build
+        with:
+          job: macos
+
+      - name: Configure
+        run: cmake --preset default
+
+      - name: Build
+        run: cmake --build --preset default --parallel 3 -- -k 0
+
+      - name: Platform tests
+        run: ctest --preset default -LE portable
+
+      - name: Install and relocate the product
+        run: >-
+          python3 scripts/qualify_install.py
+          --build-dir build/default
+          --destination "$RUNNER_TEMP/OpenDBC relocated"
+          --run
+
+      - name: Package and relocate the product
+        run: >-
+          python3 scripts/qualify_install.py
+          --build-dir build/default
+          --destination "$RUNNER_TEMP/OpenDBC CPack relocated"
+          --cpack
+          --run
+
+      - name: Static-link and signature gates
+        run: |
+          ./scripts/check_static_link.sh --strict --binary "$RUNNER_TEMP/OpenDBC relocated/opendbc.app/Contents/MacOS/opendbc"
+          ./scripts/check_static_link.sh --strict --binary "$RUNNER_TEMP/OpenDBC CPack relocated/opendbc.app/Contents/MacOS/opendbc"
+          codesign --verify --deep --strict "$RUNNER_TEMP/OpenDBC relocated/opendbc.app"
+          codesign --verify --deep --strict "$RUNNER_TEMP/OpenDBC CPack relocated/opendbc.app"
+
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+      - uses: ./.github/actions/setup-build
+        with:
+          job: windows
+
+      - name: Install pinned SwiftShader Vulkan ICD
+        run: |
+          $Archive = Join-Path $env:RUNNER_TEMP "swiftshader-win64-5.0.0.1.zip"
+          $Destination = Join-Path $env:RUNNER_TEMP "swiftshader"
+          Invoke-WebRequest -Uri "https://github.com/jakoch/rasterizers/releases/download/20260731/swiftshader-win64-5.0.0.1.zip" -OutFile $Archive
+          $Actual = (Get-FileHash -Algorithm SHA256 $Archive).Hash.ToLowerInvariant()
+          if ($Actual -ne "63e97af8b88c2c8cbc61495fc5ef4fad1ce60a874f2c19207cd072c46944065f") {
+            throw "SwiftShader archive checksum mismatch: $Actual"
+          }
+          Expand-Archive -LiteralPath $Archive -DestinationPath $Destination
+          "VK_DRIVER_FILES=$Destination\vk_swiftshader_icd.json" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $Destination | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Configure
+        # ccache needs debug information embedded in each object (/Z7) instead of a shared PDB.
+        # Checked iterators slow the Debug runtime enough to time out frame checks under SwiftShader,
+        # so the whole build (dependencies included, to keep one iterator ABI) turns them off.
+        run: >-
+          cmake --preset default
+          -DCMAKE_POLICY_DEFAULT_CMP0141=NEW
+          -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
+          -DCMAKE_CXX_FLAGS_INIT=/D_ITERATOR_DEBUG_LEVEL=0
+
+      - name: Build
+        run: cmake --build --preset default --parallel 4 -- -k 0
+
+      # example_frames renders every example in software here: more than half an hour for the frames
+      # that Linux and macOS check as well. See docs/roadmap.md for the tutorials it leaves unchecked.
+      - name: Platform tests
+        run: ctest --preset default -LE portable -E "^example_frames$"
+
+      - name: Install and relocate the product
+        env:
+          OPENDBC_HEADLESS: "1"
+        run: >-
+          python scripts/qualify_install.py
+          --build-dir build/default
+          --destination "$env:RUNNER_TEMP\OpenDBC relocated"
+          --run
+
+      - name: Package and relocate the product
+        env:
+          OPENDBC_HEADLESS: "1"
+        run: >-
+          python scripts/qualify_install.py
+          --build-dir build/default
+          --destination "$env:RUNNER_TEMP\OpenDBC CPack relocated"
+          --cpack
+          --run
+
+      - name: Static-link gate
+        run: |
+          ./scripts/check_static_link.ps1 -Strict -Binary "$env:RUNNER_TEMP\OpenDBC relocated\bin\opendbc.exe"
+          ./scripts/check_static_link.ps1 -Strict -Binary "$env:RUNNER_TEMP\OpenDBC CPack relocated\bin\opendbc.exe"
+
+  # Builds the arm64 runtime and exports real packages from a Studio that embeds it.
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-build
+        with:
+          job: android
+          ccache-size: 3G
+      - uses: ./.github/actions/install-linux-deps
+
+      - name: Install pinned Android toolchain
+        run: |
+          Tools="$ANDROID_HOME/cmdline-tools/latest/bin"
+          yes | "$Tools/sdkmanager" --licenses > /dev/null
+          "$Tools/sdkmanager" "platforms;android-36" "build-tools;35.0.0" "ndk;26.3.11579264"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.3.11579264" >> "$GITHUB_ENV"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+
+      - name: Configure the Android runtime
+        run: cmake --preset android-host
+
+      - name: Build the Android runtime
+        run: cmake --build --preset android-host --parallel 4 -- -k 0
+
+      - name: Configure the Studio
+        run: >-
+          cmake --preset release
+          -DOPENDBC_ANDROID_EXPORT_HOST_LIBRARY="$PWD/build/android-host/tools/runner/libmain.so"
+
+      - name: Build the Studio
+        run: cmake --build --preset release --parallel 4 -- -k 0
+
+      - name: Install the product
+        run: >-
+          python3 scripts/qualify_install.py
+          --build-dir build/release
+          --destination "$RUNNER_TEMP/OpenDBC relocated"
+
+      - name: Export APK and AAB packages
+        run: >-
+          python3 scripts/qualify_exports.py
+          --executable "$RUNNER_TEMP/OpenDBC relocated/bin/opendbc"
+          --output "$RUNNER_TEMP/exports"
+          --android

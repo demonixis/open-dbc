@@ -27,8 +27,8 @@
 - macOS releases target Apple Silicon only, exported games included: one binary per
   target, no universal build.
 - No SBOM, `CODEOWNERS` or Dependabot: one maintainer, dependencies pinned in
-  `cmake/fetch_dependency.cmake`, no CI. AppStream and Flatpak wait until someone
-  asks for them.
+  `cmake/fetch_dependency.cmake`. AppStream and Flatpak wait until someone asks for
+  them.
 
 ## Before 0.5
 
@@ -52,8 +52,11 @@ Robustness:
 
 Repository files:
 
-- [ ] Issue and PR templates. No CI workflow for now: it took too many iterations to
-  get working.
+- [ ] Issue and PR templates.
+- [ ] Find out why the DBPro tutorials `basic3d3`, `camera1`, `light1` and `music1`
+  timed out under SwiftShader on Windows (last seen 2026-10-27), a slow software
+  renderer or a real hang. Windows CI skips `example_frames` for its duration, so
+  no frame is checked on Windows until a run on a real GPU settles this.
 - [ ] README screenshots.
 
 Publication:

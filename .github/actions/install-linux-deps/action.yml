@@ -1,0 +1,12 @@
+name: Install Linux build dependencies
+description: Install the system packages that configuring and building OpenDBC need on Ubuntu.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build lld
+        sudo apt-get install -y libwayland-dev libxkbcommon-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev
+        sudo apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good

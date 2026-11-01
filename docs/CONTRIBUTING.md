@@ -61,7 +61,8 @@ cmake --build --preset default
 ```
 
 `scripts/qualify_exports.py --mobile --run-ios-simulator` exports, builds and
-runs every target this Mac can.
+runs every target this Mac can; `--android` qualifies the Android packages alone,
+on any host.
 
 To qualify Windows signing, set `OPENDBC_WINDOWS_CERTIFICATE` to a trusted code
 signing certificate and run the skipped test, which signs, timestamps and verifies
@@ -70,6 +71,23 @@ the runner and the OpenXR loader:
 ```bash
 build/default/tests/unit/test_artifact_export.exe --no-skip --test-case="Windows signed exports pass Authenticode verification"
 ```
+
+## Continuous integration
+
+`.github/workflows/ci.yml` builds every push to `main` and `ci/**` and every pull
+request, except changes to hand-written text only:
+
+| Job | Builds | Tests |
+|---|---|---|
+| `linux` | Debug | everything, the `portable` checks included |
+| `macos` | Debug | all but `portable` |
+| `windows` | Debug | all but `portable` and `example_frames` |
+| `android` | arm64 runtime, then a Release Studio | exports an APK and an AAB, launched nowhere |
+
+Label a check `portable` when its result cannot depend on the host (committed data,
+generated references), so that only `linux` runs it. `shaders.yml` reproduces the
+canonical SPIR-V when the shaders change. Runs start from the compiler cache: expect
+about 40 minutes after a dependency change and far less otherwise.
 
 ## Rules
 

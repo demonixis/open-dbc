@@ -1,0 +1,30 @@
+name: Set up build caches
+description: Restore the pinned dependency sources and the compiler cache of one job.
+
+inputs:
+  job:
+    description: Name of the caches, one set per job.
+    required: true
+  ccache-size:
+    description: Largest size of the compiler cache.
+    default: 2G
+
+runs:
+  using: composite
+  steps:
+    # Fetching the pinned dependencies again on each run takes minutes. A changed pin restores the
+    # previous cache and fetches only what is missing.
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: build/_deps-cache
+        key: deps-${{ inputs.job }}-${{ hashFiles('CMakeLists.txt', 'src/engine/CMakeLists.txt', 'tools/*/CMakeLists.txt', 'tests/unit/CMakeLists.txt', 'cmake/**') }}
+        restore-keys: deps-${{ inputs.job }}-
+
+    # Third-party dependencies (DXC/LLVM above all) dominate the build. Pull requests read the cache
+    # without adding to it, so that they do not push the caches of main out of the storage quota.
+    - uses: hendrikmuhs/ccache-action@f09c25b45002a07be2955cbe52e8cee55643f89d # v1.2.24
+      with:
+        key: ${{ inputs.job }}
+        max-size: ${{ inputs.ccache-size }}
+        evict-old-files: job
+        save: ${{ github.event_name != 'pull_request' }}
