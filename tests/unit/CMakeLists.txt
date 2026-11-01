@@ -202,6 +202,8 @@ doctest_discover_tests(test_terrain_mesh PROPERTIES LABELS "unit")
 add_executable(test_engine_builtins test_engine_builtins.cpp)
 target_compile_definitions(test_engine_builtins PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(test_engine_builtins PRIVATE doctest_with_main dbc_interpreter)
+# Thousands of test cases exceed the default section limit of an MSVC object file.
+target_compile_options(test_engine_builtins PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 doctest_discover_tests(test_engine_builtins PROPERTIES LABELS "unit")
 
 # --- Test: Jolt physics through the ODE forms ---

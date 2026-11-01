@@ -205,8 +205,8 @@ namespace dbc::studio
             ImGui::SeparatorText(Tr("Checks"));
             // The labels line up after the longest status, whose width depends on the language.
             float StatusWidth = 0.0f;
-            for (const char* Status : {"OK", "Missing", "Warning"})
-                StatusWidth = std::max(StatusWidth, ImGui::CalcTextSize(Tr(Status)).x);
+            for (const char* Label : {"OK", "Missing", "Warning"})
+                StatusWidth = std::max(StatusWidth, ImGui::CalcTextSize(Tr(Label)).x);
             StatusWidth += ImGui::GetStyle().ItemSpacing.x;
             const float LabelX = ImGui::GetCursorPosX() + StatusWidth;
             for (const toolchain::ExportCheck& Check : Checks)
