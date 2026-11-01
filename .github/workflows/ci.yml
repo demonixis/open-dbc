@@ -60,8 +60,12 @@ jobs:
         run: cmake --build --preset default --parallel 4 -- -k 0
 
       # The only job that runs the "portable" checks: they give the same result everywhere.
-      - name: All tests
-        run: xvfb-run -a ctest --preset default
+      - name: All tests but the example frames
+        run: xvfb-run -a ctest --preset default -E "^example_frames$"
+
+      # Lavapipe renders on the CPU: beside the other tests, the examples outlast their timeout.
+      - name: Example frames
+        run: xvfb-run -a ctest --preset default -R "^example_frames$"
 
       - name: Install and relocate the product
         env:
