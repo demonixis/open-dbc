@@ -22,14 +22,21 @@ concurrency:
   group: shaders-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CMAKE_C_COMPILER_LAUNCHER: ccache
+  CMAKE_CXX_COMPILER_LAUNCHER: ccache
+
 jobs:
   verify-shaders:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      - uses: ./.github/actions/setup-build
+        with:
+          job: shaders
       - uses: ./.github/actions/install-linux-deps
 
       - name: Configure pinned shader toolchain
