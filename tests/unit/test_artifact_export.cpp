@@ -138,7 +138,7 @@ namespace
 #if defined(__APPLE__)
         const fs::path Runner = Root / "OpenDBC.app/Contents/Helpers/opendbc-runner.app";
         const fs::path Binary = Runner / "Contents/MacOS/opendbc-runner";
-        const fs::path Manifest = Runner / "Contents/Resources/opendbc-host.json";
+        const fs::path Manifest = Root / "OpenDBC.app/Contents/Resources/opendbc-runner-host.json";
 #else
         const fs::path Binary = Root / "opendbc-runner";
         const fs::path Manifest = Root / "opendbc-runner-host.json";

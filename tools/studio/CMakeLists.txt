@@ -452,6 +452,8 @@ if(NOT ANDROID AND NOT IOS)
             COMMAND ${CMAKE_COMMAND} -E rm -rf "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Helpers/opendbc-runner.app"
             COMMAND ${CMAKE_COMMAND} -E copy_directory "$<TARGET_BUNDLE_DIR:opendbc-runner>"
                 "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Helpers/opendbc-runner.app"
+            COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_BUNDLE_DIR:opendbc-runner>/../opendbc-runner-host.json"
+                "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources/opendbc-runner-host.json"
             COMMENT "Embedding opendbc-runner in the Studio bundle" VERBATIM)
     else()
         add_custom_command(TARGET opendbc POST_BUILD

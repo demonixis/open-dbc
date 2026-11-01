@@ -41,9 +41,8 @@ if(APPLE AND NOT IOS)
         MACOSX_BUNDLE_BUNDLE_NAME "OpenDBC Runner"
         MACOSX_BUNDLE_GUI_IDENTIFIER "net.demonixis.opendbc.runner"
     )
-    # The Studio bundle that nests the runner cannot be signed around an unsigned bundle. Signing before the
-    # host manifest below keeps the binary hash it records; the manifest then breaks the resource seal, which
-    # exports re-sign.
+    # The Studio bundle that nests the runner cannot be signed around an unsigned bundle. The host manifest
+    # below records the hash of the signed binary, so it stays outside the bundle and its resource seal.
     add_custom_command(TARGET opendbc-runner POST_BUILD
         COMMAND /usr/bin/codesign --force --sign - --timestamp=none "$<TARGET_BUNDLE_DIR:opendbc-runner>"
         COMMENT "Ad-hoc signing opendbc-runner"
@@ -166,7 +165,7 @@ elseif(IOS)
         VERBATIM)
 else()
     if(APPLE)
-        set(OPENDBC_RUNNER_HOST_MANIFEST "$<TARGET_BUNDLE_DIR:opendbc-runner>/Contents/Resources/opendbc-host.json")
+        set(OPENDBC_RUNNER_HOST_MANIFEST "$<TARGET_BUNDLE_DIR:opendbc-runner>/../opendbc-runner-host.json")
     else()
         set(OPENDBC_RUNNER_HOST_MANIFEST "$<TARGET_FILE_DIR:opendbc-runner>/opendbc-runner-host.json")
     endif()

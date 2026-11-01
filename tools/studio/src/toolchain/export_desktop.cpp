@@ -58,7 +58,7 @@ namespace dbc::studio
 #if defined(__APPLE__)
             const fs::path HostResources = Request.HostProduct / "Contents/Resources";
             const fs::path HostBinary = Request.HostProduct / "Contents/MacOS/opendbc-runner";
-            const fs::path HostManifest = HostResources / "opendbc-host.json";
+            const fs::path HostManifest = Request.HostResources / "opendbc-runner-host.json";
 #else
             const fs::path HostResources = Request.HostResources;
             const fs::path HostBinary = Request.HostProduct;
