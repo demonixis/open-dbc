@@ -810,8 +810,9 @@ if(BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/check_example_frames.py
             --opendbc $<TARGET_FILE:opendbc>
     )
+    # Twice what a software renderer took on a CI runner, whose speed varies from run to run.
     set_tests_properties(example_frames PROPERTIES
-        TIMEOUT 300
+        TIMEOUT 600
         LABELS "runtime;qualification"
         ENVIRONMENT "OPENDBC_HEADLESS=1"
     )
