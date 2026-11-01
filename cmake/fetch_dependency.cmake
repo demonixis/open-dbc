@@ -7,7 +7,11 @@ set(OPENDBC_DEPENDENCY_CACHE "${CMAKE_SOURCE_DIR}/build/_deps-cache" CACHE PATH
 find_package(Git REQUIRED)
 
 function(opendbc_run_git)
-    execute_process(COMMAND "${GIT_EXECUTABLE}" ${ARGN}
+    # The test files of SPIRV-Cross, inside SDL3_shadercross, exceed the Windows path limit.
+    if(CMAKE_HOST_WIN32)
+        set(OPENDBC_GIT_OPTIONS -c core.longpaths=true)
+    endif()
+    execute_process(COMMAND "${GIT_EXECUTABLE}" ${OPENDBC_GIT_OPTIONS} ${ARGN}
         RESULT_VARIABLE OPENDBC_GIT_RESULT
         OUTPUT_VARIABLE OPENDBC_GIT_OUTPUT
         ERROR_VARIABLE OPENDBC_GIT_ERROR)
