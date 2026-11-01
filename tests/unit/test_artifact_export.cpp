@@ -119,13 +119,13 @@ namespace
         const fs::path Resources = Root;
 #if defined(_WIN32)
         Write(Resources / "openxr_loader.dll", "loader");
-        fs::copy_file(fs::path(OPENDBC_TEST_SOURCE_DIR) / "resources/editor.png", Resources / "editor.png",
-                      fs::copy_options::overwrite_existing);
 #else
         Write(Resources / "libopenxr_loader.so.1", "loader");
 #endif
 #endif
         Write(Resources / "opendbc-runtime.json", "{\"fingerprint\":\"test\"}\n");
+        fs::copy_file(fs::path(OPENDBC_TEST_SOURCE_DIR) / "resources/editor.png", Resources / "editor.png",
+                      fs::copy_options::overwrite_existing);
         Write(Resources / "NOTICE.md", "notice");
         Write(Resources / "licenses/OpenDBC.txt", "license");
         Write(Resources / "licenses/MuseScore-General-SoundFont-LICENSE.md", "soundfont license");
@@ -724,7 +724,6 @@ TEST_CASE("iOS export writes an Xcode project around the runtime xcframework")
     fs::copy(fs::path(OPENDBC_TEST_SOURCE_DIR) / "examples/ios/export-template", Host / "template",
              fs::copy_options::recursive);
     Write(Host / "OpenDBCRuntime.xcconfig", "OPENDBC_RUNTIME_LDFLAGS = -ObjC\n");
-    fs::copy_file(fs::path(OPENDBC_TEST_SOURCE_DIR) / "resources/editor.png", Request.HostResources / "editor.png");
     Write(Host / "OpenDBCRuntime.xcframework/Info.plist", "xcframework");
     const std::string RuntimeHash =
         *toolchain::detail::ArtifactSha256File(Request.HostResources / "opendbc-runtime.json");
