@@ -24,7 +24,7 @@ namespace
         const auto AddFace = [&](const dbc::Vec3& N, const dbc::Vec3& U, const dbc::Vec3& V)
         {
             const auto First = static_cast<uint32_t>(Geometry.Vertices.size());
-            for (const auto [SignU, SignV] : {std::pair{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}})
+            for (const auto& [SignU, SignV] : {std::pair{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}})
                 Geometry.Vertices.push_back(dbc::Vec3{N.X + U.X * SignU + V.X * SignV, N.Y + U.Y * SignU + V.Y * SignV,
                                                       N.Z + U.Z * SignU + V.Z * SignV});
             Geometry.Indices.insert(Geometry.Indices.end(), {First, First + 1, First + 2, First, First + 2, First + 3});
