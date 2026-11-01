@@ -19,6 +19,13 @@ if(WIN32)
     target_sources(opendbc-runner PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/runner.rc")
 endif()
 target_link_libraries(opendbc-runner PRIVATE dbc_interpreter)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # GNU ld extracts an archive member for any symbol it defines, inline copies included, and then
+    # keeps all of it. The runner shares headers with the frontend, so it would ship the parser unused.
+    target_compile_options(dbc_language PRIVATE -ffunction-sections -fdata-sections)
+    target_compile_options(opendbc_vm PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(opendbc-runner PRIVATE -Wl,--gc-sections)
+endif()
 dbc_enable_warnings(opendbc-runner)
 if(NOT IOS)
     opendbc_deploy_resources(opendbc-runner)
