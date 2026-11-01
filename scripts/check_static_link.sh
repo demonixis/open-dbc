@@ -15,7 +15,12 @@ linux_system_dependency() {
         libwayland-client.so.*|libwayland-cursor.so.*|libwayland-egl.so.*|\
         libxkbcommon*.so.*|libdecor-*.so.*|libasound.so.*|libpulse*.so.*|libudev.so.*|\
         libdbus-*.so.*|libGL*.so.*|libEGL.so.*|libvulkan.so.*|\
-        libdrm.so.*|libgbm.so.*)
+        libdrm.so.*|libgbm.so.*|\
+        libgstreamer-1.0.so.*|libgstapp-1.0.so.*|libgstbase-1.0.so.*|libgstvideo-1.0.so.*|\
+        libglib-2.0.so.*|libgobject-2.0.so.*|libgmodule-2.0.so.*|libffi.so.*|libpcre2-8.so.*|\
+        liborc-0.4.so.*|libunwind.so.*|libdw.so.*|libelf.so.*|libz.so.*|liblzma.so.*|\
+        libbz2.so.*|libzstd.so.*)
+            # GStreamer and what it loads: Linux video links the system's, see docs/video.md.
             return 0 ;;
         *) return 1 ;;
     esac
