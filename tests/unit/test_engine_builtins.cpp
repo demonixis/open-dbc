@@ -2354,6 +2354,8 @@ TEST_CASE("A DBPro shadow does not depend on how the camera sees its caster")
         return Reds;
     };
     // How many pixels the shadow darkens from there.
+    int PlainLit = 0;
+    INFO("lit pixels without the shadow: ", PlainLit);
     const auto Darkened = [&](float EyeX, float EyeY, float EyeZ, float AtX, float AtZ)
     {
         RequireEngineStatus([&](std::string& Status)
@@ -2361,6 +2363,7 @@ TEST_CASE("A DBPro shadow does not depend on how the camera sees its caster")
         RequireEngineStatus([&](std::string& Status) { return Kernel.Camera().PointCamera(AtX, 0.0f, AtZ, &Status); });
         REQUIRE(Command(dbc::language::SymbolId::Command_SetShadowShadingOff, {BuiltinValue::FromNumber(2)}));
         const std::vector<int> Plain = RedChannels();
+        PlainLit = static_cast<int>(std::count_if(Plain.begin(), Plain.end(), [](int Red) { return Red > 0; }));
         REQUIRE(Command(dbc::language::SymbolId::Command_SetShadowShadingOn, {BuiltinValue::FromNumber(2)}));
         const std::vector<int> Shadowed = RedChannels();
         int Count = 0;
