@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "core/new_project.hpp"
@@ -18,9 +19,8 @@ namespace
     {
         TemporaryLocation()
         {
-            Root =
-                std::filesystem::temp_directory_path() /
-                ("opendbc-new-project-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+            Root = std::filesystem::temp_directory_path() /
+                   ("opendbc-new-project-" + std::to_string(dbc::testing::UniqueSuffix()));
             std::filesystem::create_directories(Root);
         }
 

@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "core/snippet_library.hpp"
@@ -21,7 +22,7 @@ namespace
         TemporaryFolder()
         {
             Root = std::filesystem::temp_directory_path() /
-                   ("opendbc-snippets-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+                   ("opendbc-snippets-" + std::to_string(dbc::testing::UniqueSuffix()));
             std::filesystem::create_directories(Root);
         }
 

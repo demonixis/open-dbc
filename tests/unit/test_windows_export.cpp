@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "core/settings.hpp"
@@ -56,8 +57,7 @@ namespace
     void ExerciseWindowsExport(bool Sign)
     {
         const fs::path Root =
-            fs::temp_directory_path() /
-            ("opendbc-export-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+            fs::temp_directory_path() / ("opendbc-export-" + std::to_string(dbc::testing::UniqueSuffix()));
 
         struct Cleanup
         {

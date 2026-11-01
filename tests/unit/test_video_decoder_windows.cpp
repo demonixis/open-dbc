@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "engine/systems/video_decoder.hpp"
@@ -33,8 +34,8 @@ namespace
 
 TEST_CASE("Media Foundation plays pauses restarts and finishes video from a Unicode path")
 {
-    const auto Root = std::filesystem::temp_directory_path() /
-                      ("opendbc-video-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto Root =
+        std::filesystem::temp_directory_path() / ("opendbc-video-" + std::to_string(dbc::testing::UniqueSuffix()));
 
     struct Cleanup
     {

@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "engine/systems/core_system.hpp"
@@ -19,7 +20,7 @@ namespace
         ProjectFixture()
         {
             Root = std::filesystem::temp_directory_path() /
-                   ("opendbc-resolver-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+                   ("opendbc-resolver-" + std::to_string(dbc::testing::UniqueSuffix()));
             std::filesystem::create_directories(Root);
         }
 

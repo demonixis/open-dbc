@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "engine/systems/core_system.hpp"
@@ -24,7 +25,7 @@ namespace
     {
         explicit TemporarySource(std::string_view Text)
         {
-            const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+            const auto Suffix = dbc::testing::UniqueSuffix();
             Path = std::filesystem::temp_directory_path() / ("opendbc-command-line-" + std::to_string(Suffix) + ".dba");
             std::ofstream Output(Path, std::ios::binary);
             Output << Text;
@@ -43,7 +44,7 @@ namespace
     {
         TemporaryProject()
         {
-            const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+            const auto Suffix = dbc::testing::UniqueSuffix();
             Root = std::filesystem::temp_directory_path() / ("opendbc-command-project-" + std::to_string(Suffix));
             std::filesystem::create_directories(Root);
         }

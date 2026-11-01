@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "engine/systems/engine_kernel.hpp"
@@ -36,7 +37,7 @@ namespace
     {
         TemporaryDirectory()
         {
-            const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+            const auto Suffix = dbc::testing::UniqueSuffix();
             Root = std::filesystem::temp_directory_path() / ("opendbc-program-image-" + std::to_string(Suffix));
             std::filesystem::create_directories(Root);
         }

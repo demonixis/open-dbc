@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "core/media_catalogue.hpp"
@@ -53,8 +54,7 @@ TEST_CASE("Studio media scan skips hidden entries and honours the limit")
 TEST_CASE("Studio media preserves UTF-8 names through native filesystem paths")
 {
     namespace fs = std::filesystem;
-    const auto Root = fs::temp_directory_path() /
-                      ("opendbc-media-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto Root = fs::temp_directory_path() / ("opendbc-media-" + std::to_string(dbc::testing::UniqueSuffix()));
 
     struct Cleanup
     {

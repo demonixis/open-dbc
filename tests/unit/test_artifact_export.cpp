@@ -1,3 +1,4 @@
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 
 #include "core/paths.hpp"
@@ -31,9 +32,7 @@ namespace
     {
         explicit TemporaryDirectory(std::string_view Name)
         {
-            Root =
-                fs::temp_directory_path() /
-                (std::string(Name) + "-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+            Root = fs::temp_directory_path() / (std::string(Name) + "-" + std::to_string(dbc::testing::UniqueSuffix()));
             fs::create_directories(Root);
         }
 

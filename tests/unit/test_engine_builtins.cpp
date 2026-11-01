@@ -27,6 +27,7 @@
 #include "interpreter/engine_builtin_host.hpp"
 #include "interpreter/engine_builtin_registry.hpp"
 #include "interpreter/execution_service.hpp"
+#include "unique_suffix.hpp"
 
 #include <doctest/doctest.h>
 #include <spdlog/sinks/base_sink.h>
@@ -155,7 +156,7 @@ TEST_CASE("Companded WAV files load")
 {
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("companded-wave", 16, 16));
-    const auto Stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Stamp = dbc::testing::UniqueSuffix();
     for (const std::uint16_t Format : {std::uint16_t{6}, std::uint16_t{7}})
     {
         // Enough samples to fill SDL_mixer's decode buffer, which used to overflow on the stack.
@@ -366,7 +367,7 @@ TEST_CASE("Primitive meshes use outward winding and enable culling by default")
 
 TEST_CASE("Mesh and object file commands resolve through the execution asset root")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-mesh-root-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directories(Root / "models"));
@@ -408,7 +409,7 @@ TEST_CASE("Historical text X frame matrices accept only the missing final termin
     REQUIRE_FALSE(Sky->Meshes.empty());
     CHECK(Sky->Meshes.front().Geometry().Indices.size() == 12);
 
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path InvalidPath =
         std::filesystem::temp_directory_path() / ("opendbc-invalid-matrix-" + std::to_string(Suffix) + ".x");
     std::ifstream Source(SkyPath, std::ios::binary);
@@ -1663,7 +1664,7 @@ TEST_CASE("Historical DDS and TGA assets decode to stable RGBA pixels")
 
 TEST_CASE("DDS decoding accepts legacy DXT alpha blocks and rejects truncated payloads")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-dds-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directory(Root));
@@ -2030,7 +2031,7 @@ TEST_CASE("LOAD IMAGE applies the configured color key to opaque images")
 {
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("image-color-key", 16, 16));
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Path =
         std::filesystem::temp_directory_path() / ("opendbc-color-key-" + std::to_string(Suffix) + ".bmp");
     const std::filesystem::path OneToOnePath =
@@ -3495,7 +3496,7 @@ TEST_CASE("Opaque objects interleaved in depth batch by texture")
 
 TEST_CASE("DBPro BSP worlds load, draw the leaves their camera sees and delete")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-bsp-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directories(Root / "maps"));
@@ -3577,7 +3578,7 @@ TEST_CASE("DBPro BSP worlds load, draw the leaves their camera sees and delete")
 
 TEST_CASE("DBPro BSP collision keeps cameras and objects on the world's open side")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-bsp-collision-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directories(Root));
@@ -4386,7 +4387,7 @@ TEST_CASE("Standard DBPro particles preserve simulation billboard and state cont
 
 TEST_CASE("DBPro LOD terrain preserves heightmap identity query and render contracts")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Heightmap =
         std::filesystem::temp_directory_path() / ("opendbc-terrain-" + std::to_string(Suffix) + ".bmp");
     SDL_Surface* Surface = SDL_CreateSurface(2, 2, SDL_PIXELFORMAT_RGBA32);
@@ -4523,7 +4524,7 @@ TEST_CASE("Matrices skip blocks outside the view and terrains coarsen far from t
     RequireEngineStatus([&](std::string& Error) { return Kernel.Matrices().DeleteMatrix(1, &Error); });
 
     // A 256 x 256 terrain: nearby blocks keep every cell, distant ones use a coarser grid.
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Heightmap =
         std::filesystem::temp_directory_path() / ("opendbc-lod-" + std::to_string(Suffix) + ".bmp");
     SDL_Surface* Surface = SDL_CreateSurface(257, 257, SDL_PIXELFORMAT_RGBA32);
@@ -4553,7 +4554,7 @@ TEST_CASE("Static GPU terrains draw their upper side, follow the view and rebuil
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().SetBackdropColor(0x0000FF, &Error); });
     RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().EnableBackdrop(&Error); });
 
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Heightmap =
         std::filesystem::temp_directory_path() / ("opendbc-static-terrain-" + std::to_string(Suffix) + ".bmp");
     SDL_Surface* Surface = SDL_CreateSurface(33, 33, SDL_PIXELFORMAT_RGBA32);
@@ -4611,7 +4612,7 @@ TEST_CASE("Static GPU terrain keeps its render priority's place among the opaque
     REQUIRE(Kernel.Initialize("terrain-order", 64, 64));
     Kernel.Camera().SetAutoCamOff();
     REQUIRE(Kernel.Core().EnsureInitialized());
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Heightmap =
         std::filesystem::temp_directory_path() / ("opendbc-terrain-order-" + std::to_string(Suffix) + ".bmp");
     SDL_Surface* Surface = SDL_CreateSurface(33, 33, SDL_PIXELFORMAT_RGBA32);
@@ -4773,7 +4774,7 @@ TEST_CASE("Portable sound music 3D audio and memblocks preserve DBPro state")
     CHECK(ReadEngineNumber<int>([&](std::string& Error, int& Output)
                                 { return Kernel.Audio().SoundType(Output, 3, &Error); }) == 0);
 
-    const auto SavedSuffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto SavedSuffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path SavedSound =
         std::filesystem::temp_directory_path() / ("opendbc-saved-sound-" + std::to_string(SavedSuffix) + ".wav");
     Context.Profile = dbc::language::LanguageProfile::Dbc;
@@ -7014,7 +7015,7 @@ TEST_CASE("Portable mesh vertex data memblocks and DBO preserve mutable geometry
     Kernel.Objects().InstanceObject(4, 3);
     REQUIRE(Kernel.Objects().GetObject(4) != nullptr);
 
-    const auto Stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Stamp = dbc::testing::UniqueSuffix();
     const std::filesystem::path MeshPath =
         std::filesystem::temp_directory_path() / ("opendbc-lot22-" + std::to_string(Stamp) + ".x");
     const std::filesystem::path ObjectPath =
@@ -7819,7 +7820,7 @@ TEST_CASE("DBPro math and screen compatibility functions retain deterministic va
 
 TEST_CASE("Classic host core clipboard and measurable system queries expose observable state")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-classic-host-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directories(Root / "working"));
@@ -7924,7 +7925,7 @@ TEST_CASE("Classic host core clipboard and measurable system queries expose obse
 
 TEST_CASE("Classic registry commands persist values in the user's registry file")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-classic-registry-" + std::to_string(Suffix));
     BuiltinContext Context;
@@ -8267,7 +8268,7 @@ TEST_CASE("16-bit screen bitmap memblocks use RGB565 and can replace bitmap zero
 
 TEST_CASE("COPY FILE never overwrites and reports source and destination failures")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-copy-file-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directory(Root));
@@ -8308,7 +8309,7 @@ TEST_CASE("COPY FILE never overwrites and reports source and destination failure
 TEST_CASE("Classic portable files memblocks and DIRBLOCKs round-trip inside the asset root")
 {
     std::string MemblockError;
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-classic-files-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directories(Root / "source/nested"));
@@ -8457,7 +8458,7 @@ TEST_CASE("Classic portable files memblocks and DIRBLOCKs round-trip inside the 
 
 TEST_CASE("File and memblock compatibility failures return typed runtime errors")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-file-errors-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directory(Root));
@@ -9647,7 +9648,7 @@ TEST_CASE("DBPro sprites preserve transient paste atlas frame and render orderin
     CHECK(Kernel.Sprites().SpriteGlobalOffsetX() == doctest::Approx(4.0f));
     CHECK(Kernel.Sprites().SpriteGlobalScaleX() == doctest::Approx(2.0f));
 
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Atlas =
         std::filesystem::temp_directory_path() / ("opendbc-sprite-atlas-" + std::to_string(Suffix) + ".bmp");
     REQUIRE(SDL_SaveBMP(Surface, Atlas.string().c_str()));
@@ -9755,7 +9756,7 @@ TEST_CASE("DBPro sprites preserve transient paste atlas frame and render orderin
 
 TEST_CASE("LOAD ARRAY rejects a truncated record without changing the destination")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Path =
         std::filesystem::temp_directory_path() / ("opendbc-truncated-array-" + std::to_string(Suffix) + ".bin");
     {
@@ -10039,7 +10040,7 @@ TEST_CASE("Classic restored object commands preserve typed state and historical 
 TEST_CASE("Music fallback is limited to same-stem MIDI alternatives")
 {
     std::string AudioError;
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-midi-fallback-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directory(Root));
@@ -10961,7 +10962,7 @@ TEST_CASE("Classic gamma and mipmap modes drive final pixels and sampler state")
 
 TEST_CASE("Classic portable static world, line of sight, and global collision have observable state")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-static-world-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directory(Root));
@@ -11054,7 +11055,7 @@ TEST_CASE("Classic portable static world, line of sight, and global collision ha
 
 TEST_CASE("Classic authored object keyframes round-trip through the portable animation format")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-object-animation-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directory(Root));
@@ -11189,7 +11190,7 @@ TEST_CASE("Cloned imported objects keep their animation after the source is dele
 
 TEST_CASE("Classic imported object animation saves every moving frame and appends losslessly")
 {
-    const auto Suffix = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Suffix = dbc::testing::UniqueSuffix();
     const std::filesystem::path Root =
         std::filesystem::temp_directory_path() / ("opendbc-imported-animation-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directory(Root));
@@ -11307,7 +11308,7 @@ TEST_CASE("Checked engine failures preserve outputs and avoid invalid resource p
 
 TEST_CASE("Binary float I/O rejects non-finite values and preserves failed read outputs")
 {
-    const auto Stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Stamp = dbc::testing::UniqueSuffix();
     const auto Path = std::filesystem::temp_directory_path() / ("opendbc-float-io-" + std::to_string(Stamp));
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("float-io", 16, 16));
@@ -11334,7 +11335,7 @@ TEST_CASE("Binary float I/O rejects non-finite values and preserves failed read 
 
 TEST_CASE("READ STRING takes CR LF as one line end")
 {
-    const auto Stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Stamp = dbc::testing::UniqueSuffix();
     const auto Path = std::filesystem::temp_directory_path() / ("opendbc-read-string-" + std::to_string(Stamp));
     {
         std::ofstream Out(Path, std::ios::binary);
@@ -11469,7 +11470,7 @@ TEST_CASE("DBO frame traversal handles deep input and rejects truncated data bef
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("checked-dbo-frames", 16, 16));
     Kernel.Objects().MakeObjectCube(1, 1.0f);
-    const auto Stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto Stamp = dbc::testing::UniqueSuffix();
     const auto Path = std::filesystem::temp_directory_path() / ("opendbc-deep-" + std::to_string(Stamp) + ".dbo");
     REQUIRE(Kernel.Objects().SaveObject(Path.string(), 1));
     std::vector<std::uint8_t> Original;

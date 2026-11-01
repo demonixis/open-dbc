@@ -1,5 +1,6 @@
 #pragma once
 
+#include "unique_suffix.hpp"
 #include <doctest/doctest.h>
 #include <gst/gst.h>
 
@@ -12,8 +13,7 @@ namespace dbc::tests
     struct GStreamerVideoFixture
     {
         std::filesystem::path Root =
-            std::filesystem::temp_directory_path() /
-            ("opendbc-video-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+            std::filesystem::temp_directory_path() / ("opendbc-video-" + std::to_string(dbc::testing::UniqueSuffix()));
 
         explicit GStreamerVideoFixture(bool Compressed = false)
         {
