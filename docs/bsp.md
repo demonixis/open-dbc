@@ -7,7 +7,7 @@
 
 `LOAD BSP pk3$, map$` tries the map name as given, then the same name in the
 pk3's folder, matching file names without case. OpenDBC reads DBPro's own BSP
-format (the world tutorial's `ikzdm1.BSP`): nodes, planes, leaves with polygon
+format (the world tutorial's `ikzdm1.bsp`): nodes, planes, leaves with polygon
 ranges, run-length PVS bytes and 21-byte texture names, every index validated.
 Quake 1, Half-Life, Quake 2 and Quake 3 files, and maps inside pk3 archives, fail
 with a runtime error naming the format. A new `LOAD BSP` replaces the world;

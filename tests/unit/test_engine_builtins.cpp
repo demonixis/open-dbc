@@ -3498,7 +3498,7 @@ TEST_CASE("DBPro BSP worlds load, draw the leaves their camera sees and delete")
         std::filesystem::temp_directory_path() / ("opendbc-bsp-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directories(Root / "maps"));
     const std::filesystem::path Tutorial = std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/world";
-    for (const char* Name : {"ikzdm1.BSP", "CYGRASS1.png", "CYWALLT.png"})
+    for (const char* Name : {"ikzdm1.bsp", "CYGRASS1.png", "CYWALLT.png"})
         REQUIRE(std::filesystem::copy_file(Tutorial / Name, Root / "maps" / Name));
     {
         std::ofstream Quake3(Root / "maps/q3.bsp", std::ios::binary);
@@ -3580,7 +3580,7 @@ TEST_CASE("DBPro BSP collision keeps cameras and objects on the world's open sid
         std::filesystem::temp_directory_path() / ("opendbc-bsp-collision-" + std::to_string(Suffix));
     REQUIRE(std::filesystem::create_directories(Root));
     REQUIRE(std::filesystem::copy_file(
-        std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/world/ikzdm1.BSP", Root / "ikzdm1.BSP"));
+        std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/world/ikzdm1.bsp", Root / "ikzdm1.bsp"));
 
     dbc::EngineKernel Kernel;
     REQUIRE(Kernel.Initialize("bsp-collision", 32, 24));

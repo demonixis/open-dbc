@@ -12,7 +12,7 @@ namespace
 {
     std::vector<uint8_t> ReadTutorialMap()
     {
-        std::ifstream Stream(std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/world/ikzdm1.BSP",
+        std::ifstream Stream(std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/world/ikzdm1.bsp",
                              std::ios::binary);
         REQUIRE(Stream);
         return {std::istreambuf_iterator<char>(Stream), std::istreambuf_iterator<char>()};
