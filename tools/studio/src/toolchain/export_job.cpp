@@ -24,7 +24,7 @@ namespace dbc::studio
                 Lines_.clear();
                 Result_.reset();
             }
-            Worker_ = std::jthread(
+            Worker_ = std::thread(
                 [this, Request = std::move(Request)]
                 {
                     ArtifactExportProgress Progress;

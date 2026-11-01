@@ -40,7 +40,7 @@ namespace dbc::studio
             std::optional<ArtifactExportResult> Result_;
             std::atomic<bool> Cancel_{false};
             std::atomic<bool> Running_{false};
-            std::jthread Worker_;
+            std::thread Worker_;
         };
     } // namespace toolchain
 
