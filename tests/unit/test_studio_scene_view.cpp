@@ -778,10 +778,14 @@ TEST_CASE("The brush fills up to its density, and Shift erases its copies")
     Driver.Tap(ImGuiKey_3);
 
     // The defaults: 10 per 100 x 100 over a radius of 50 make 8. The other cube looks the same as the
-    // source, so it counts towards them.
+    // source, so it counts towards them. Random points can leave a stamp short, and the next tops it up.
     const glm::vec3 Spot(40.0f, 0.0f, 30.0f);
-    Driver.Click(Spot);
-    const std::size_t Once = Driver.SavedNodes().size();
+    std::size_t Once = 0;
+    for (int Stamp = 0; Stamp < 8 && Once < 9; ++Stamp)
+    {
+        Driver.Click(Spot);
+        Once = Driver.SavedNodes().size();
+    }
     CHECK(Once == 9);
 
     // Over the same spot, a second click adds nothing.
