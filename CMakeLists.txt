@@ -124,6 +124,8 @@ if(MSVC)
         "/pathmap:${CMAKE_SOURCE_DIR}=."
         "/pathmap:${CMAKE_BINARY_DIR}=."
     )
+    # Builds with debug information otherwise record the absolute path of their PDB in the executable.
+    add_link_options("/PDBALTPATH:%_PDB%")
 elseif(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     add_compile_options(
         "-ffile-prefix-map=${CMAKE_SOURCE_DIR}=."
