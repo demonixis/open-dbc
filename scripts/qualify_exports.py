@@ -229,11 +229,29 @@ def create_qa_keystore(root: Path) -> Path:
     return keystore
 
 
+def qualify_desktop(executable: Path, entry: Path, name: str, dialect: str, output: Path) -> None:
+    desktop = export(executable, entry, dialect, "desktop", output / f"desktop-{name}", True)
+    product = f"OpenDBC {name.title()} QA"
+    if sys.platform == "darwin":
+        desktop_resources = desktop / "Contents/Resources"
+        desktop_executable = desktop / "Contents/MacOS/opendbc-runner"
+        execute(["codesign", "--verify", "--deep", "--strict", str(desktop)])
+    else:
+        desktop_resources = desktop
+        desktop_executable = desktop / (f"{product}.exe" if os.name == "nt" else product)
+    verify_directory_payload(desktop_resources)
+    launched = execute([str(desktop_executable)], capture=True)
+    require(launched.stdout == expected_output(name),
+            f"Desktop artifact did not execute the expected {name} BASIC output")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export and qualify BASIC artifacts")
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--mobile", action="store_true", help="also qualify iOS and Android packages")
+    parser.add_argument("--android", action="store_true",
+                        help="qualify the Android packages alone, on any host")
     parser.add_argument("--run-ios-simulator", action="store_true")
     parser.add_argument("--run-android", action="store_true")
     parser.add_argument("--adb", default="adb")
@@ -251,29 +269,18 @@ def main() -> None:
         keystore = create_qa_keystore(projects) if args.run_android else None
         for name, dialect, bundle_id in PROFILES:
             entry = prepare_project(projects, name, dialect, bundle_id, keystore)
-            desktop = export(executable, entry, dialect, "desktop", output / f"desktop-{name}", True)
-            product = f"OpenDBC {name.title()} QA"
-            if sys.platform == "darwin":
-                desktop_resources = desktop / "Contents/Resources"
-                desktop_executable = desktop / "Contents/MacOS/opendbc-runner"
-                execute(["codesign", "--verify", "--deep", "--strict", str(desktop)])
-            else:
-                desktop_resources = desktop
-                desktop_executable = desktop / (f"{product}.exe" if os.name == "nt" else product)
-            verify_directory_payload(desktop_resources)
-            launched = execute([str(desktop_executable)], capture=True)
-            require(launched.stdout == expected_output(name),
-                    f"Desktop artifact did not execute the expected {name} BASIC output")
-
-            if not args.mobile:
+            if not args.android:
+                qualify_desktop(executable, entry, name, dialect, output)
+            if args.mobile:
+                require(sys.platform == "darwin", "mobile export qualification currently requires macOS")
+                xcode = export(executable, entry, dialect, "ios", output / f"ios-{name}", True)
+                verify_directory_payload(xcode)
+                simulator = build_xcode_project(xcode, "iphonesimulator", output / f"ios-{name}-build")
+                verify_directory_payload(simulator)
+                if simulator_udid:
+                    launch_ios_simulator(simulator, bundle_id, simulator_udid, name)
+            if not args.mobile and not args.android:
                 continue
-            require(sys.platform == "darwin", "mobile export qualification currently requires macOS")
-            xcode = export(executable, entry, dialect, "ios", output / f"ios-{name}", True)
-            verify_directory_payload(xcode)
-            simulator = build_xcode_project(xcode, "iphonesimulator", output / f"ios-{name}-build")
-            verify_directory_payload(simulator)
-            if simulator_udid:
-                launch_ios_simulator(simulator, bundle_id, simulator_udid, name)
 
             apk = export(executable, entry, dialect, "android-apk", output / f"android-apk-{name}",
                          not args.run_android)
@@ -282,10 +289,11 @@ def main() -> None:
                 launch_android(apk, bundle_id, args.adb)
 
         if args.mobile:
-            classic_entry = projects / "classic/main.dba"
             device = build_xcode_project(output / "ios-classic/OpenDBC Classic QA-Xcode", "iphoneos",
                                          output / "ios-device-classic-build")
             verify_directory_payload(device)
+        if args.mobile or args.android:
+            classic_entry = projects / "classic/main.dba"
             aab = export(executable, classic_entry, "dbc", "android-aab", output / "android-aab-classic",
                          not args.run_android)
             verify_zip_payload(aab, "assets/opendbc-artifact.json", "assets/artifact/assets/probe.txt")
