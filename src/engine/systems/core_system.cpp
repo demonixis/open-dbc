@@ -224,6 +224,15 @@ namespace dbc
         return true;
     }
 
+    // Only VSync is guaranteed: a device without the other modes still runs the program, capped.
+    static SDL_GPUPresentMode UncappedPresentMode(SDL_GPUDevice* Device, SDL_Window* Window)
+    {
+        for (const SDL_GPUPresentMode Mode : {SDL_GPU_PRESENTMODE_IMMEDIATE, SDL_GPU_PRESENTMODE_MAILBOX})
+            if (SDL_WindowSupportsGPUPresentMode(Device, Window, Mode))
+                return Mode;
+        return SDL_GPU_PRESENTMODE_VSYNC;
+    }
+
     // -----------------------------------------------------------------------
     // Display / window
     // -----------------------------------------------------------------------
@@ -284,7 +293,8 @@ namespace dbc
         Kernel_.Renderer().InvalidateTriCache();
         if (Kernel_.Gpu().GpuDevice() && Window_ &&
             !SDL_SetGPUSwapchainParameters(Kernel_.Gpu().GpuDevice(), Window_, SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-                                           Vsync ? SDL_GPU_PRESENTMODE_VSYNC : SDL_GPU_PRESENTMODE_IMMEDIATE))
+                                           Vsync ? SDL_GPU_PRESENTMODE_VSYNC
+                                                 : UncappedPresentMode(Kernel_.Gpu().GpuDevice(), Window_)))
         {
             if (Error)
                 *Error = std::string("SET DISPLAY MODE VSync failed: ") + SDL_GetError();
@@ -681,7 +691,7 @@ namespace dbc
         if (Device && Window_)
         {
             SDL_SetGPUSwapchainParameters(Device, Window_, SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-                                          SDL_GPU_PRESENTMODE_IMMEDIATE);
+                                          UncappedPresentMode(Device, Window_));
         }
     }
 
