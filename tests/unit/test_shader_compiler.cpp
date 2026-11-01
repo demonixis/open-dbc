@@ -216,7 +216,7 @@ float4 PSMain(PixelInput Input) : SV_Target0
     CHECK(ReadEngineNumber<int>([&](std::string& Error, int& Output)
                                 { return Kernel.Objects().LimbEffect(Output, 1, 0, &Error); }) == -1);
 
-    REQUIRE(Kernel.Gpu().LoadEffect(Source.string(), 7, 0, 0, &EffectError));
+    REQUIRE_MESSAGE(Kernel.Gpu().LoadEffect(Source.string(), 7, 0, 0, &EffectError), EffectError);
     for (const nlohmann::json& Invalid :
          {nlohmann::json(1.5), nlohmann::json(UINT64_MAX), nlohmann::json(true), nlohmann::json("1")})
     {
