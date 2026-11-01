@@ -2442,14 +2442,16 @@ TEST_CASE("A shadow caster does not darken the faces its light reaches")
     };
 
     // Rounding decided the depth test between these faces and the near cap, so these cameras a hundredth apart
-    // darkened from a third of the cube to all of it.
+    // darkened from a third of the cube to all of it. Rasterizers still round a pixel or two of the silhouette
+    // their own way: lavapipe darkens one from the farthest camera.
+    constexpr int SilhouettePixels = 4;
     for (const dbc::Vec3& Eye :
          {dbc::Vec3{-200.0f, 0.0f, -200.0f}, dbc::Vec3{-199.99f, 0.0f, -200.0f}, dbc::Vec3{-200.01f, 0.0f, -200.0f},
           dbc::Vec3{-200.0f, 0.0f, -199.99f}, dbc::Vec3{-200.0f, 0.01f, -200.0f}, dbc::Vec3{-200.0f, 100.0f, -200.0f},
           dbc::Vec3{-800.0f, 0.0f, -800.0f}})
     {
         INFO("camera at ", Eye.X, ", ", Eye.Y, ", ", Eye.Z);
-        CHECK(DarkenedFrom(Eye.X, Eye.Y, Eye.Z).OnCube == 0);
+        CHECK(DarkenedFrom(Eye.X, Eye.Y, Eye.Z).OnCube <= SilhouettePixels);
     }
 
     // With the light behind the camera the volume runs on past the far plane, and its back faces must still count.
