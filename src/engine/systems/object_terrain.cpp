@@ -313,9 +313,9 @@ namespace dbc
         Object.TransformDirty = true;
     }
 
-    bool ObjectManager::GetTerrainSize(float& Output, int ObjectId, bool AlongZ, std::string* Error) const
+    bool ObjectManager::GetTerrainSize(float& Output, int ObjectId, bool AlongZ, const char* Command,
+                                       std::string* Error) const
     {
-        const char* Command = AlongZ ? "GET TERRAIN Z SIZE" : "GET TERRAIN X SIZE";
         const Object3D* Object = RequireObject(ObjectId, Command, Error);
         if (!Object)
             return false;

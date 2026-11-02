@@ -66,7 +66,6 @@ dbpro	Function_GetFtpProgress	Function	GET FTP PROGRESS	Never	ftp	dbc-help,dbpro
 dbpro	Function_GetFtpStatus	Function	GET FTP STATUS	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Function_GetMemblockPtr	Function	GET MEMBLOCK PTR	Target	memory	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetRegistryString	Function	GET REGISTRY$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetTerrainSize	Function	GET TERRAIN SIZE	Target	core	legacy-unverified	engine-subsystem-and-oracle
 dbpro	Function_StaticLineOfSight	Function	STATIC LINE OF SIGHT	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_StaticLineOfSightX	Function	STATIC LINE OF SIGHT X	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_StaticLineOfSightY	Function	STATIC LINE OF SIGHT Y	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle

@@ -212,7 +212,7 @@ DBPro's repository has neither help pages nor source for these forms. Their synt
 comes from TGC's DarkGDK sample and forum programs; what those leave open is decided
 here, as noted below. The `DBPro/Terrain.hpp` header of the Bullet ragdoll sample gives
 the signatures of `LOAD TERRAIN`, `SAVE TERRAIN`, `DESTROY TERRAIN` and the size readers.
-`GET TERRAIN SIZE` appears nowhere and stays unsupported.
+`GET TERRAIN SIZE` has no known signature.
 
 - The terrain is an object, so `POSITION OBJECT`, `SCALE OBJECT` and collision work on
   it. Its corner is at its position and it extends along +X and +Z.
@@ -237,7 +237,8 @@ the signatures of `LOAD TERRAIN`, `SAVE TERRAIN`, `DESTROY TERRAIN` and the size
 - `GET TERRAIN GROUND HEIGHT(terrain, x#, z#)` reads the drawn surface in world units,
   stops at the edges, and ignores rotation.
 - `GET TERRAIN X SIZE(terrain)` and `GET TERRAIN Z SIZE(terrain)` return the built
-  terrain's extent before `SCALE OBJECT`.
+  terrain's extent before `SCALE OBJECT`. Our choice: `GET TERRAIN SIZE(terrain)`
+  returns the X extent, the size of the square terrains of the original DLL.
 - `SAVE TERRAIN file$, terrain` writes the heights and settings in OpenDBC's own format,
   since DBPro's is undocumented; `LOAD TERRAIN file$, terrain` makes the terrain again,
   built, using the images of the same numbers when they exist. `DESTROY TERRAIN terrain`

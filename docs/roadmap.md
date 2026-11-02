@@ -15,8 +15,8 @@ Publication:
 
 ## DBPro parity
 
-The catalogue counts 1,058 of DBPro's 1,266 core commands and functions as implemented,
-against 702 of 731 in Classic. The other 208 are sorted here by name only; confirm each
+The catalogue counts 1,059 of DBPro's 1,266 core commands and functions as implemented,
+against 702 of 731 in Classic. The other 207 are sorted here by name only; confirm each
 one when it is picked up.
 
 152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access

@@ -960,7 +960,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET STATIC COLLISION Z` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET TERRAIN GROUND HEIGHT` | Function | 3 | number, number, number -> real | Implemented | DBPro snapshot, legacy unverified | DarkBASIC Professional function implemented with an observable contract. |
 | `GET TERRAIN HEIGHT` | Function | 3 | number, number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `GET TERRAIN SIZE` | Function | 1 | number -> real | Unsupported (DBC2043) | legacy unverified | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET TERRAIN SIZE` | Function | 1 | number -> real | Implemented | legacy unverified | DarkBASIC Professional function implemented with an observable contract. |
 | `GET TERRAIN X SIZE` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET TERRAIN Z SIZE` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET TIME$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |

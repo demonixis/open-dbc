@@ -119,8 +119,9 @@ namespace dbc
         bool BuildTerrain(int ObjectId, std::string* Error = nullptr);
         void UpdateTerrains();
         bool GetTerrainGroundHeight(float& Output, int ObjectId, float X, float Z, std::string* Error = nullptr) const;
-        // The built terrain's extent along X or Z, in the units of the object.
-        bool GetTerrainSize(float& Output, int ObjectId, bool AlongZ, std::string* Error = nullptr) const;
+        // The built terrain's extent along X or Z, in the units of the object; Command names the caller in errors.
+        bool GetTerrainSize(float& Output, int ObjectId, bool AlongZ, const char* Command,
+                            std::string* Error = nullptr) const;
         bool DestroyTerrain(int ObjectId, std::string* Error = nullptr);
         // An OpenDBC file of the built terrain's heights and settings; LOAD TERRAIN makes it again, built.
         bool SaveTerrain(const std::string& Path, int ObjectId, std::string* Error = nullptr) const;

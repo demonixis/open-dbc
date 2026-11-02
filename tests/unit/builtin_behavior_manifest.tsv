@@ -1389,6 +1389,7 @@ dbpro	838	1281	Function	GET STATIC COLLISION Y	collision-state	test_engine_built
 dbpro	839	1283	Function	GET STATIC COLLISION Z	collision-state	test_engine_builtins.cpp::Portable collision volumes hit events limb bounds and picking preserve DBPro queries	-
 dbpro	840	1284	Function	GET TERRAIN GROUND HEIGHT	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	841	1285	Function	GET TERRAIN HEIGHT	golden-output	test_dbpro_terrain.dba	41da670a2b8be5fcd73eb30733fa91c021f414378e052ccd9b77bd32673b3310
+dbpro	842	1286	Function	GET TERRAIN SIZE	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	843	1288	Function	GET TIME$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	844	1289	Function	GET TOTAL TERRAIN HEIGHT	golden-output	test_dbpro_terrain.dba	41da670a2b8be5fcd73eb30733fa91c021f414378e052ccd9b77bd32673b3310
 dbpro	845	1290	Function	GET VERTEXDATA INDEX COUNT	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-

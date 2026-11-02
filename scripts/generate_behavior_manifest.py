@@ -222,6 +222,7 @@ UNIT_WITNESSES = (
      TERRAIN_TEST),
     ("dbpro", "Function", "GET TERRAIN X SIZE", "value# = get terrain x size(1)\n", "engine-state", TERRAIN_TEST),
     ("dbpro", "Function", "GET TERRAIN Z SIZE", "value# = get terrain z size(1)\n", "engine-state", TERRAIN_TEST),
+    ("dbpro", "Function", "GET TERRAIN SIZE", "value# = get terrain size(1)\n", "engine-state", TERRAIN_TEST),
     ("dbpro", "Command", "SAVE TERRAIN", 'save terrain "map.ter", 1\n', "terrain-file", TERRAIN_TEST),
     ("dbpro", "Command", "LOAD TERRAIN", 'load terrain "map.ter", 2\n', "terrain-file", TERRAIN_TEST),
     ("dbpro", "Command", "DESTROY TERRAIN", "destroy terrain 2\n", "engine-state", TERRAIN_TEST),

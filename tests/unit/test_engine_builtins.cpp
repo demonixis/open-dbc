@@ -12364,6 +12364,7 @@ TEST_CASE("DBPro Advanced Terrain builds an object from a heightmap")
         REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
         CHECK(Size(SymbolId::Function_GetTerrainXSize, 1) == doctest::Approx(16.0f));
         CHECK(Size(SymbolId::Function_GetTerrainZSize, 1) == doctest::Approx(12.0f));
+        CHECK(Size(SymbolId::Function_GetTerrainSize, 1) == doctest::Approx(16.0f));
         REQUIRE_MESSAGE(WithFile(SymbolId::Command_SaveTerrain, Saved, 1), Error);
 
         // Loaded built, without the heightmap, with its split and texture.
