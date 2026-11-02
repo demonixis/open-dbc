@@ -1,15 +1,24 @@
 profile	symbol_id	kind	name	disposition	family	proof	prerequisite
+dbpro	Command_AlwaysActiveOff	Command	ALWAYS ACTIVE OFF	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_AlwaysActiveOn	Command	ALWAYS ACTIVE ON	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_AppendObjectAnimation	Command	APPEND OBJECT ANIMATION	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_AttachObjectToStatic	Command	ATTACH OBJECT TO STATIC	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CallDll	Command	CALL DLL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Cd	Command	CD	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ClearAllObjectKeyframes	Command	CLEAR ALL OBJECT KEYFRAMES	Target	input	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ClearObjectKeyframe	Command	CLEAR OBJECT KEYFRAME	Target	input	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CreateVertexShaderFromFile	Command	CREATE VERTEX SHADER FROM FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteDll	Command	DELETE DLL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteVertexShader	Command	DELETE VERTEX SHADER	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DetachObjectFromStatic	Command	DETACH OBJECT FROM STATIC	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Dir	Command	DIR	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_DisableStaticOcclusion	Command	DISABLE STATIC OCCLUSION	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DisableSystemkeys	Command	DISABLE SYSTEMKEYS	Study	input	dbc-help,dbpro-reference	cross-platform-key-map
+dbpro	Command_DisableTnl	Command	DISABLE TNL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Drivelist	Command	DRIVELIST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_EnableStaticOcclusion	Command	ENABLE STATIC OCCLUSION	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_EnableSystemkeys	Command	ENABLE SYSTEMKEYS	Study	input	dbc-help,dbpro-reference	cross-platform-key-map
+dbpro	Command_EnableTnl	Command	ENABLE TNL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExecuteFile	Command	EXECUTE FILE	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExitPrompt	Command	EXIT PROMPT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Fastsync	Command	FASTSYNC	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -35,21 +44,30 @@ dbpro	Command_PerformCsgIntersection	Command	PERFORM CSG INTERSECTION	Target	cor
 dbpro	Command_PerformCsgUnion	Command	PERFORM CSG UNION	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ReadDirblock	Command	READ DIRBLOCK	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_RecordSound	Command	RECORD SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SaveObjectAnimation	Command	SAVE OBJECT ANIMATION	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveSound	Command	SAVE SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveStaticObjects	Command	SAVE STATIC OBJECTS	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetDvdChapter	Command	SET DVD CHAPTER	Deferred	video	dbpro-reference	media-backend
+dbpro	Command_SetEax	Command	SET EAX	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEmulationOff	Command	SET EMULATION OFF	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEmulationOn	Command	SET EMULATION ON	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetMipmapMode	Command	SET MIPMAP MODE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetObjectKeyframe	Command	SET OBJECT KEYFRAME	Target	input	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetStaticObjectsTexture	Command	SET STATIC OBJECTS TEXTURE	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOff	Command	SET STATIC OBJECTS WIREFRAME OFF	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOn	Command	SET STATIC OBJECTS WIREFRAME ON	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetVertexShaderOff	Command	SET VERTEX SHADER OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetVertexShaderOn	Command	SET VERTEX SHADER ON	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_StopRecordingSound	Command	STOP RECORDING SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_TextureBackdrop	Command	TEXTURE BACKDROP	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_UnlockBackbuffer	Command	UNLOCK BACKBUFFER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_WriteDirblock	Command	WRITE DIRBLOCK	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_WriteToClipboard	Command	WRITE TO CLIPBOARD	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_WriteToRegistry	Command	WRITE TO REGISTRY	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DllCallExist	Function	DLL CALL EXIST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DllExist	Function	DLL EXIST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_EmulationMode	Function	EMULATION MODE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetBackbufferDepth	Function	GET BACKBUFFER DEPTH	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetBackbufferHeight	Function	GET BACKBUFFER HEIGHT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetBackbufferPitch	Function	GET BACKBUFFER PITCH	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -240,3 +258,538 @@ dbpro	Function_ExtOdeGetBodyAdjustmentZ	Function	ODE GET BODY ADJUSTMENT Z	Targe
 dbpro	Function_ExtOdeGetBodyTravelDistanceX	Function	ODE GET BODY TRAVEL DISTANCE X	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Function_ExtOdeGetBodyTravelDistanceY	Function	ODE GET BODY TRAVEL DISTANCE Y	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Function_ExtOdeGetBodyTravelDistanceZ	Function	ODE GET BODY TRAVEL DISTANCE Z	Target	physics	ode-extension	jolt-adapter-and-oracle
+dbpro	Command_3ds2x	Command	3DS2X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_AddBitmapToBlock	Command	ADD BITMAP TO BLOCK	Target	display	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_AddFileToBlock	Command	ADD FILE TO BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_AddImageToBlock	Command	ADD IMAGE TO BLOCK	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_AddObjectToBlock	Command	ADD OBJECT TO BLOCK	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_AddVisbilityListMask	Command	ADD VISBILITY LIST MASK	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ApplyPresetEaxEffect	Command	APPLY PRESET EAX EFFECT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdolladdhingejoint	Command	BPHYS_RAGDOLLADDHINGEJOINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdolladdtwistjoint	Command	BPHYS_RAGDOLLADDTWISTJOINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdollapplyforce	Command	BPHYS_RAGDOLLAPPLYFORCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdollbegin	Command	BPHYS_RAGDOLLBEGIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdollboneaddlimbid	Command	BPHYS_RAGDOLLBONEADDLIMBID	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdollend	Command	BPHYS_RAGDOLLEND	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdollsetdamping	Command	BPHYS_RAGDOLLSETDAMPING	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdollsetdeactivationtime	Command	BPHYS_RAGDOLLSETDEACTIVATIONTIME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysRagdollsetsleepingthresholds	Command	BPHYS_RAGDOLLSETSLEEPINGTHRESHOLDS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_BphysSetnogravity	Command	BPHYS_SETNOGRAVITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ClearInternalLightmaps	Command	CLEAR INTERNAL LIGHTMAPS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_CloseDataFile	Command	CLOSE DATA FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_CloseFileBlock	Command	CLOSE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_CloseFileMap	Command	CLOSE FILE MAP	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_CreateFileBlock	Command	CREATE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_CreateFileMap	Command	CREATE FILE MAP	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_DeleteFileBlock	Command	DELETE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_DeleteOggVorbis	Command	DELETE OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_DeleteVector	Command	DELETE VECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_DestroyFileMap	Command	DESTROY FILE MAP	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_EncodeToOggVorbis	Command	ENCODE TO OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_EncryptAllFiles	Command	ENCRYPT ALL FILES	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_EncryptFile	Command	ENCRYPT FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_EncryptWorkshopFile	Command	ENCRYPT WORKSHOP FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ExtractFileFromBlock	Command	EXTRACT FILE FROM BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_FinishObjectPanel	Command	FINISH OBJECT PANEL	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ForceAdapterOrdinal	Command	FORCE ADAPTER ORDINAL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_FreeInstanceStamp	Command	FREE INSTANCE STAMP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_GetProcessorOnChipFeatures	Command	GET PROCESSOR ON CHIP FEATURES	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_GetProcessorPowerManagement	Command	GET PROCESSOR POWER MANAGEMENT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_GetProcessorSupportedFeatures	Command	GET PROCESSOR SUPPORTED FEATURES	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_GetVoiceList	Command	GET VOICE LIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_InitInstanceStamp	Command	INIT INSTANCE STAMP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_InstanceStamp	Command	INSTANCE STAMP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmAddCollisionObject	Command	LM ADD COLLISION OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmAddCustomPointLight	Command	LM ADD CUSTOM POINT LIGHT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmAddDirectionalLight	Command	LM ADD DIRECTIONAL LIGHT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmAddLightMapObject	Command	LM ADD LIGHT MAP OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmAddPointLight	Command	LM ADD POINT LIGHT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmAddShadedLightMapObject	Command	LM ADD SHADED LIGHT MAP OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmAddSpotLight	Command	LM ADD SPOT LIGHT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmAddTransparentCollisionObject	Command	LM ADD TRANSPARENT COLLISION OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmBoostCurvedSurfaceQuality	Command	LM BOOST CURVED SURFACE QUALITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmBuildCollisionData	Command	LM BUILD COLLISION DATA	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmBuildLightMaps	Command	LM BUILD LIGHT MAPS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmBuildLightMapsThread	Command	LM BUILD LIGHT MAPS THREAD	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmClearCollisionObjects	Command	LM CLEAR COLLISION OBJECTS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmClearLightMapObjects	Command	LM CLEAR LIGHT MAP OBJECTS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmClearLights	Command	LM CLEAR LIGHTS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmReset	Command	LM RESET	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetAmbientLight	Command	LM SET AMBIENT LIGHT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetAmbientOcclusionOff	Command	LM SET AMBIENT OCCLUSION OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetAmbientOcclusionOn	Command	LM SET AMBIENT OCCLUSION ON	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetBlendMode	Command	LM SET BLEND MODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetLightMapFileFormat	Command	LM SET LIGHT MAP FILE FORMAT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetLightMapFolder	Command	LM SET LIGHT MAP FOLDER	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetLightMapName	Command	LM SET LIGHT MAP NAME	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetMode	Command	LM SET MODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmSetShadowPower	Command	LM SET SHADOW POWER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmStart	Command	LM START	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LmTerminateThread	Command	LM TERMINATE THREAD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LoadAnimationFromBlock	Command	LOAD ANIMATION FROM BLOCK	Deferred	video	dbpro-reference	media-backend
+dbpro	Command_LoadBitmapFromBlock	Command	LOAD BITMAP FROM BLOCK	Study	display	dbpro-reference	typed-load-errors
+dbpro	Command_LoadFileFromBlock	Command	LOAD FILE FROM BLOCK	Study	file	dbpro-reference	typed-load-errors
+dbpro	Command_LoadImageFromBlock	Command	LOAD IMAGE FROM BLOCK	Study	core	dbpro-reference	typed-load-errors
+dbpro	Command_LoadMemblockFromBlock	Command	LOAD MEMBLOCK FROM BLOCK	Study	memory	dbpro-reference	typed-load-errors
+dbpro	Command_LoadObjectFromBlock	Command	LOAD OBJECT FROM BLOCK	Study	3d	dbpro-reference	typed-load-errors
+dbpro	Command_LoadOggVorbis	Command	LOAD OGG VORBIS	Study	core	dbpro-reference	typed-load-errors
+dbpro	Command_LoadSoundFromBlock	Command	LOAD SOUND FROM BLOCK	Study	audio	dbpro-reference	typed-load-errors
+dbpro	Command_LoopOggVorbis	Command	LOOP OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MakeMeshFromLimb	Command	MAKE MESH FROM LIMB	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MemorySnapshot	Command	MEMORY SNAPSHOT	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerConnectToTcpServer	Command	MULTIPLAYER CONNECT TO TCP SERVER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerCreateTcpServer	Command	MULTIPLAYER CREATE TCP SERVER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerDisconnect	Command	MULTIPLAYER DISCONNECT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerDisplayDebug	Command	MULTIPLAYER DISPLAY DEBUG	Study	display	dbpro-reference	platform-display-mode-matrix
+dbpro	Command_MultiplayerGetMessage	Command	MULTIPLAYER GET MESSAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerGetMessageMemblock	Command	MULTIPLAYER GET MESSAGE MEMBLOCK	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerSendFromPlayer	Command	MULTIPLAYER SEND FROM PLAYER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerSendMessageFloat	Command	MULTIPLAYER SEND MESSAGE FLOAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerSendMessageInteger	Command	MULTIPLAYER SEND MESSAGE INTEGER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerSendMessageMemblock	Command	MULTIPLAYER SEND MESSAGE MEMBLOCK	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerSendMessageString	Command	MULTIPLAYER SEND MESSAGE STRING	Target	text	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerSendMessageTo	Command	MULTIPLAYER SEND MESSAGE TO	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerSetDebugState	Command	MULTIPLAYER SET DEBUG STATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerStart	Command	MULTIPLAYER START	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_MultiplayerStartVoiceServer	Command	MULTIPLAYER START VOICE SERVER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_OpenDataFile	Command	OPEN DATA FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_OpenFileBlock	Command	OPEN FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_OpenFileMap	Command	OPEN FILE MAP	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_PauseOggVorbis	Command	PAUSE OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_PerformChecklistForEaxEffects	Command	PERFORM CHECKLIST FOR EAX EFFECTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_PerformChecklistForFileBlockData	Command	PERFORM CHECKLIST FOR FILE BLOCK DATA	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_PlayOggVorbis	Command	PLAY OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatAdd	Command	QUAT ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatAxis	Command	QUAT AXIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatConjugate	Command	QUAT CONJUGATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatCopy	Command	QUAT COPY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatFromEuler	Command	QUAT FROM EULER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatIdentity	Command	QUAT IDENTITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatInverse	Command	QUAT INVERSE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatInverseFast	Command	QUAT INVERSE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatLerp	Command	QUAT LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatMul	Command	QUAT MUL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatMultiply	Command	QUAT MULTIPLY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatNormalize	Command	QUAT NORMALIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatNormalizeFast	Command	QUAT NORMALIZE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatRotationX	Command	QUAT ROTATION X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatRotationY	Command	QUAT ROTATION Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatRotationZ	Command	QUAT ROTATION Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatScale	Command	QUAT SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatSet	Command	QUAT SET	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatSetW	Command	QUAT SET W	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatSetX	Command	QUAT SET X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatSetY	Command	QUAT SET Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatSetZ	Command	QUAT SET Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatSlerp	Command	QUAT SLERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatSub	Command	QUAT SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_QuatSubtract	Command	QUAT SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_RemoveFileFromBlock	Command	REMOVE FILE FROM BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_RenderEffectShadowMapping	Command	RENDER EFFECT SHADOW MAPPING	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ResetObjectPivot	Command	RESET OBJECT PIVOT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ResetTracking	Command	RESET TRACKING	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ResumeOggVorbis	Command	RESUME OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_ReverseObjectFrames	Command	REVERSE OBJECT FRAMES	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_RotateImage	Command	ROTATE IMAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SaveFileBlock	Command	SAVE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SaveIconFromImage	Command	SAVE ICON FROM IMAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SendVoiceMessage	Command	SEND VOICE MESSAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SendVoiceMessageXml	Command	SEND VOICE MESSAGE XML	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetCameraSwitchBank	Command	SET CAMERA SWITCH BANK	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetCharacterCreatorTones	Command	SET CHARACTER CREATOR TONES	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetChildWindowTruePixel	Command	SET CHILD WINDOW TRUE PIXEL	Target	display	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxAirAbsorption	Command	SET EAX AIR ABSORPTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxClipDecayHf	Command	SET EAX CLIP DECAY HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxConeInsideAngle	Command	SET EAX CONE INSIDE ANGLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxConeOrientationX	Command	SET EAX CONE ORIENTATION X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxConeOrientationY	Command	SET EAX CONE ORIENTATION Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxConeOrientationZ	Command	SET EAX CONE ORIENTATION Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxConeOutsideAngle	Command	SET EAX CONE OUTSIDE ANGLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxConeOutsideVolume	Command	SET EAX CONE OUTSIDE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxDecayHfRatio	Command	SET EAX DECAY HF RATIO	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxDecayTime	Command	SET EAX DECAY TIME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxEnvironment	Command	SET EAX ENVIRONMENT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxEnvironmentDiffusion	Command	SET EAX ENVIRONMENT DIFFUSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxEnvironmentSize	Command	SET EAX ENVIRONMENT SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxFlags	Command	SET EAX FLAGS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxMaxDistance	Command	SET EAX MAX DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxMinDistance	Command	SET EAX MIN DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxReflections	Command	SET EAX REFLECTIONS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxReflectionsDelay	Command	SET EAX REFLECTIONS DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxReverb	Command	SET EAX REVERB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxReverbDelay	Command	SET EAX REVERB DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxRoom	Command	SET EAX ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxRoomHf	Command	SET EAX ROOM HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxRoomRolloff	Command	SET EAX ROOM ROLLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxScaleDecayTime	Command	SET EAX SCALE DECAY TIME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxScaleReflections	Command	SET EAX SCALE REFLECTIONS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxScaleReflectionsDelay	Command	SET EAX SCALE REFLECTIONS DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxScaleReverb	Command	SET EAX SCALE REVERB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxScaleReverbDelay	Command	SET EAX SCALE REVERB DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceAbsorption	Command	SET EAX SOURCE ABSORPTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceAffectDirectHf	Command	SET EAX SOURCE AFFECT DIRECT HF	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceAffectRoom	Command	SET EAX SOURCE AFFECT ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceAffectRoomHf	Command	SET EAX SOURCE AFFECT ROOM HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceDirect	Command	SET EAX SOURCE DIRECT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceDirectHf	Command	SET EAX SOURCE DIRECT HF	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceFlags	Command	SET EAX SOURCE FLAGS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceObstruction	Command	SET EAX SOURCE OBSTRUCTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceObstructionLf	Command	SET EAX SOURCE OBSTRUCTION LF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceOcclusion	Command	SET EAX SOURCE OCCLUSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceOcclusionLf	Command	SET EAX SOURCE OCCLUSION LF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceOcclusionRoom	Command	SET EAX SOURCE OCCLUSION ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceOutside	Command	SET EAX SOURCE OUTSIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceRolloff	Command	SET EAX SOURCE ROLLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEaxSourceRoom	Command	SET EAX SOURCE ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEffectLodTechnique	Command	SET EFFECT LOD TECHNIQUE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEffectShadowMappingMode	Command	SET EFFECT SHADOW MAPPING MODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetEffectToShadowMapping	Command	SET EFFECT TO SHADOW MAPPING	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetFastBoundsCalculation	Command	SET FAST BOUNDS CALCULATION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetFileBlockCompression	Command	SET FILE BLOCK COMPRESSION	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetFileBlockKey	Command	SET FILE BLOCK KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetFileMapDword	Command	SET FILE MAP DWORD	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetFileMapFloat	Command	SET FILE MAP FLOAT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetFileMapString	Command	SET FILE MAP STRING$	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetImageAutomipmap	Command	SET IMAGE AUTOMIPMAP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetLegacyConvertMode	Command	SET LEGACY CONVERT MODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetNvperfhud	Command	SET NVPERFHUD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetObjectArbitary	Command	SET OBJECT ARBITARY	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetObjectCollisionProperty	Command	SET OBJECT COLLISION PROPERTY	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetObjectLod	Command	SET OBJECT LOD	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetObjectOcclusion	Command	SET OBJECT OCCLUSION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetObjectPanelQuad	Command	SET OBJECT PANEL QUAD	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetObjectRotationZxy	Command	SET OBJECT ROTATION ZXY	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetOcclusionMode	Command	SET OCCLUSION MODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetOggVorbisVolume	Command	SET OGG VORBIS VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetProjectionMatrix4	Command	SET PROJECTION MATRIX4	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetRegistryHkey	Command	SET REGISTRY HKEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetSpriteFilterMode	Command	SET SPRITE FILTER MODE	Target	2d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetStaticCulling	Command	SET STATIC CULLING	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetStaticEffectTechnique	Command	SET STATIC EFFECT TECHNIQUE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetVoice	Command	SET VOICE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetVoiceSpeed	Command	SET VOICE SPEED	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_SetVoiceVolume	Command	SET VOICE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_StopOggVorbis	Command	STOP OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_TransferImage	Command	TRANSFER IMAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_UpdateDataFile	Command	UPDATE DATA FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Add	Command	VECTOR2 ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Div	Command	VECTOR2 DIV	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Divide	Command	VECTOR2 DIVIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Lerp	Command	VECTOR2 LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Mul	Command	VECTOR2 MUL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Multiply	Command	VECTOR2 MULTIPLY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Normalize	Command	VECTOR2 NORMALIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2NormalizeFast	Command	VECTOR2 NORMALIZE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Scale	Command	VECTOR2 SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Sub	Command	VECTOR2 SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector2Subtract	Command	VECTOR2 SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Add	Command	VECTOR3 ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Cross	Command	VECTOR3 CROSS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Div	Command	VECTOR3 DIV	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Divide	Command	VECTOR3 DIVIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3EulerLookAt	Command	VECTOR3 EULER LOOK AT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3EulerLookAtFast	Command	VECTOR3 EULER LOOK AT FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Lerp	Command	VECTOR3 LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Mul	Command	VECTOR3 MUL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Multiply	Command	VECTOR3 MULTIPLY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Normalize	Command	VECTOR3 NORMALIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3NormalizeFast	Command	VECTOR3 NORMALIZE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3RotateByQuat	Command	VECTOR3 ROTATE BY QUAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Scale	Command	VECTOR3 SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Sub	Command	VECTOR3 SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Subtract	Command	VECTOR3 SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Transform3	Command	VECTOR3 TRANSFORM3	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3Transform4	Command	VECTOR3 TRANSFORM4	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3TriangleNormal	Command	VECTOR3 TRIANGLE NORMAL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector3TriangleSlide	Command	VECTOR3 TRIANGLE SLIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Add	Command	VECTOR4 ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Cross	Command	VECTOR4 CROSS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Div	Command	VECTOR4 DIV	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Divide	Command	VECTOR4 DIVIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Lerp	Command	VECTOR4 LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Mul	Command	VECTOR4 MUL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Multiply	Command	VECTOR4 MULTIPLY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Normalize	Command	VECTOR4 NORMALIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4NormalizeFast	Command	VECTOR4 NORMALIZE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Scale	Command	VECTOR4 SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Sub	Command	VECTOR4 SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_Vector4Subtract	Command	VECTOR4 SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_WaitForFileMapEvent	Command	WAIT FOR FILE MAP EVENT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysDeleteragdoll	Function	BPHYS_DELETERAGDOLL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdolladdbone	Function	BPHYS_RAGDOLLADDBONE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdolladdbone2	Function	BPHYS_RAGDOLLADDBONE2	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdollexist	Function	BPHYS_RAGDOLLEXIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdollgetboneobjid	Function	BPHYS_RAGDOLLGETBONEOBJID	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdollgetidfromboneobject	Function	BPHYS_RAGDOLLGETIDFROMBONEOBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdollhidebones	Function	BPHYS_RAGDOLLHIDEBONES	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdollisstatic	Function	BPHYS_RAGDOLLISSTATIC	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdollsetstatic	Function	BPHYS_RAGDOLLSETSTATIC	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_BphysRagdollshowbones	Function	BPHYS_RAGDOLLSHOWBONES	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Clamp	Function	CLAMP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_ClampSnorm	Function	CLAMP SNORM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_ClampUnorm	Function	CLAMP UNORM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_CopySign	Function	COPY SIGN	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_DeleteVector	Function	DELETE VECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_DirectxRefreshRate	Function	DIRECTX REFRESH RATE$	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_DirectxVersion	Function	DIRECTX VERSION$	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_FloatToDwordFast	Function	FLOAT TO DWORD FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_FloatToIntFast	Function	FLOAT TO INT FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetCdCount	Function	GET CD COUNT	Target	audio	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetCdLetter	Function	GET CD LETTER$	Target	audio	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetChildWindowHeight	Function	GET CHILD WINDOW HEIGHT	Target	display	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetChildWindowWidth	Function	GET CHILD WINDOW WIDTH	Target	display	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetChildWindowX	Function	GET CHILD WINDOW X	Target	display	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetChildWindowY	Function	GET CHILD WINDOW Y	Target	display	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetComputerName	Function	GET COMPUTER NAME$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDataFileCell	Function	GET DATA FILE CELL	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDataFileColumnCount	Function	GET DATA FILE COLUMN COUNT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDataFileExists	Function	GET DATA FILE EXISTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDataFileRowCount	Function	GET DATA FILE ROW COUNT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDisplayDepth	Function	GET DISPLAY DEPTH	Study	display	dbpro-reference	platform-display-mode-matrix
+dbpro	Function_GetDisplayHeight	Function	GET DISPLAY HEIGHT	Study	display	dbpro-reference	platform-display-mode-matrix
+dbpro	Function_GetDisplayRefreshRate	Function	GET DISPLAY REFRESH RATE	Study	display	dbpro-reference	platform-display-mode-matrix
+dbpro	Function_GetDisplayWidth	Function	GET DISPLAY WIDTH	Study	display	dbpro-reference	platform-display-mode-matrix
+dbpro	Function_GetDriveBytesPerSector	Function	GET DRIVE BYTES PER SECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveCount	Function	GET DRIVE COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveCylinderCount	Function	GET DRIVE CYLINDER COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveFileLengthSupport	Function	GET DRIVE FILE LENGTH SUPPORT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveFileSystem	Function	GET DRIVE FILE SYSTEM$	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveFreeSpace	Function	GET DRIVE FREE SPACE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveSectorsPerTrack	Function	GET DRIVE SECTORS PER TRACK	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveSerial	Function	GET DRIVE SERIAL$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveTotalSize	Function	GET DRIVE TOTAL SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveTrackCount	Function	GET DRIVE TRACK COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetDriveUsedSpace	Function	GET DRIVE USED SPACE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEax	Function	GET EAX	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxAirAbsorption	Function	GET EAX AIR ABSORPTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxConeInsideAngle	Function	GET EAX CONE INSIDE ANGLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxConeOrientationX	Function	GET EAX CONE ORIENTATION X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxConeOrientationY	Function	GET EAX CONE ORIENTATION Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxConeOrientationZ	Function	GET EAX CONE ORIENTATION Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxConeOutsideAngle	Function	GET EAX CONE OUTSIDE ANGLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxConeOutsideVolume	Function	GET EAX CONE OUTSIDE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxDecayHfRatio	Function	GET EAX DECAY HF RATIO	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxEnvironment	Function	GET EAX ENVIRONMENT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxEnvironmentDiffusion	Function	GET EAX ENVIRONMENT DIFFUSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxEnvironmentSize	Function	GET EAX ENVIRONMENT SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxFlags	Function	GET EAX FLAGS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxMaxDistance	Function	GET EAX MAX DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxMinDistance	Function	GET EAX MIN DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxReflections	Function	GET EAX REFLECTIONS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxReflectionsDelay	Function	GET EAX REFLECTIONS DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxReverb	Function	GET EAX REVERB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxReverbDelay	Function	GET EAX REVERB DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxRoom	Function	GET EAX ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxRoomDecayTime	Function	GET EAX ROOM DECAY TIME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxRoomHf	Function	GET EAX ROOM HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxRoomRolloff	Function	GET EAX ROOM ROLLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceAbsorption	Function	GET EAX SOURCE ABSORPTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceDirect	Function	GET EAX SOURCE DIRECT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceDirectHf	Function	GET EAX SOURCE DIRECT HF	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceFlags	Function	GET EAX SOURCE FLAGS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceObstruction	Function	GET EAX SOURCE OBSTRUCTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceObstructionLf	Function	GET EAX SOURCE OBSTRUCTION LF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceOcclusion	Function	GET EAX SOURCE OCCLUSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceOcclusionLf	Function	GET EAX SOURCE OCCLUSION LF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceOcclusionRoom	Function	GET EAX SOURCE OCCLUSION ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceOutside	Function	GET EAX SOURCE OUTSIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceRolloff	Function	GET EAX SOURCE ROLLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceRoom	Function	GET EAX SOURCE ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEaxSourceRoomHf	Function	GET EAX SOURCE ROOM HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetEffectParameterIndex	Function	GET EFFECT PARAMETER INDEX	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileBlockCompression	Function	GET FILE BLOCK COMPRESSION	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileBlockCount	Function	GET FILE BLOCK COUNT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileBlockDataExists	Function	GET FILE BLOCK DATA EXISTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileBlockExists	Function	GET FILE BLOCK EXISTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileBlockKey	Function	GET FILE BLOCK KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileBlockSize	Function	GET FILE BLOCK SIZE	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileMapDword	Function	GET FILE MAP DWORD	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileMapFloat	Function	GET FILE MAP FLOAT	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetFileMapString	Function	GET FILE MAP STRING$	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetInstalledMemory	Function	GET INSTALLED MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetIpAddress	Function	GET IP ADDRESS$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetLimbPolygonCount	Function	GET LIMB POLYGON COUNT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetMemoryAvailable	Function	GET MEMORY AVAILABLE	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetMemoryPercentFree	Function	GET MEMORY PERCENT FREE	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetMemoryPercentUsed	Function	GET MEMORY PERCENT USED	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetMultimaterialCount	Function	GET MULTIMATERIAL COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetObjectOcclusion	Function	GET OBJECT OCCLUSION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetObjectPolygonCount	Function	GET OBJECT POLYGON COUNT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetObjectVertexCount	Function	GET OBJECT VERTEX COUNT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetOggVorbisExists	Function	GET OGG VORBIS EXISTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetOggVorbisState	Function	GET OGG VORBIS STATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetOggVorbisVolume	Function	GET OGG VORBIS VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorBrand	Function	GET PROCESSOR BRAND$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorCount	Function	GET PROCESSOR COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorFamilyId	Function	GET PROCESSOR FAMILY ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorFrequency	Function	GET PROCESSOR FREQUENCY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorModelId	Function	GET PROCESSOR MODEL ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorName	Function	GET PROCESSOR NAME$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorPlatform	Function	GET PROCESSOR PLATFORM$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorSteppingId	Function	GET PROCESSOR STEPPING ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorTypeId	Function	GET PROCESSOR TYPE ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorUsage	Function	GET PROCESSOR USAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetProcessorVendor	Function	GET PROCESSOR VENDOR$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetTrackingPitch	Function	GET TRACKING PITCH	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetTrackingRoll	Function	GET TRACKING ROLL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetTrackingYaw	Function	GET TRACKING YAW	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetUserName	Function	GET USER NAME$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetVoiceApi	Function	GET VOICE API	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetVoiceSpeed	Function	GET VOICE SPEED	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetVoiceVolume	Function	GET VOICE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_GetWebClient	Function	GET WEB CLIENT$	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_IntersectAll	Function	INTERSECT ALL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_InvSqrtFast	Function	INV SQRT FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Lerp	Function	LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_LimbTexturePtr	Function	LIMB TEXTURE PTR	Target	text	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_LmGetComplete	Function	LM GET COMPLETE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_LmGetPercent	Function	LM GET PERCENT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_LmGetStatus	Function	LM GET STATUS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MakeNewObjectPanel	Function	MAKE NEW OBJECT PANEL	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_ManageMemory	Function	MANAGE MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Matrix4Exist	Function	MATRIX4 EXIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Max	Function	MAX	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Min	Function	MIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetConnection	Function	MULTIPLAYER GET CONNECTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetId	Function	MULTIPLAYER GET ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetIpAddress	Function	MULTIPLAYER GET IP ADDRESS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetMessageFloat	Function	MULTIPLAYER GET MESSAGE FLOAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetMessageInteger	Function	MULTIPLAYER GET MESSAGE INTEGER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetMessagePlayerFrom	Function	MULTIPLAYER GET MESSAGE PLAYER FROM	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetMessageString	Function	MULTIPLAYER GET MESSAGE STRING	Target	text	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetMessageType	Function	MULTIPLAYER GET MESSAGE TYPE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetPlayerCount	Function	MULTIPLAYER GET PLAYER COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetPlayerId	Function	MULTIPLAYER GET PLAYER ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetPlayerName	Function	MULTIPLAYER GET PLAYER NAME	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerGetQueueSize	Function	MULTIPLAYER GET QUEUE SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_MultiplayerMessageExists	Function	MULTIPLAYER MESSAGE EXISTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_NewQuat	Function	NEW QUAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_NewVector2	Function	NEW VECTOR2	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_NewVector3	Function	NEW VECTOR3	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_NewVector4	Function	NEW VECTOR4	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_NextPowerOfTwo	Function	NEXT POWER OF TWO	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_ObjectScaleX	Function	OBJECT SCALE X	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_ObjectScaleY	Function	OBJECT SCALE Y	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_ObjectScaleZ	Function	OBJECT SCALE Z	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_ObjectStatisticsInteger	Function	OBJECT STATISTICS INTEGER	Target	3d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_OpenFileDialog	Function	OPEN FILE DIALOG	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Perffreq	Function	PERFFREQ	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatAdd	Function	QUAT ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatAxis	Function	QUAT AXIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatConjugate	Function	QUAT CONJUGATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatCopy	Function	QUAT COPY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatDuplicate	Function	QUAT DUPLICATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatFromEuler	Function	QUAT FROM EULER	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatIdentity	Function	QUAT IDENTITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatInvLengthFast	Function	QUAT INV LENGTH FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatInverse	Function	QUAT INVERSE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatInverseFast	Function	QUAT INVERSE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatLength	Function	QUAT LENGTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatLengthFast	Function	QUAT LENGTH FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatLerp	Function	QUAT LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatMagnitude	Function	QUAT MAGNITUDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatMul	Function	QUAT MUL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatMultiply	Function	QUAT MULTIPLY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatNormalize	Function	QUAT NORMALIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatNormalizeFast	Function	QUAT NORMALIZE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatRotationX	Function	QUAT ROTATION X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatRotationY	Function	QUAT ROTATION Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatRotationZ	Function	QUAT ROTATION Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatScale	Function	QUAT SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatSet	Function	QUAT SET	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatSetW	Function	QUAT SET W	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatSetX	Function	QUAT SET X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatSetY	Function	QUAT SET Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatSetZ	Function	QUAT SET Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatSlerp	Function	QUAT SLERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatSub	Function	QUAT SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatSubtract	Function	QUAT SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatToString	Function	QUAT TO STRING	Target	text	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatW	Function	QUAT W	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatX	Function	QUAT X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatY	Function	QUAT Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_QuatZ	Function	QUAT Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_ResetLeftEye	Function	RESET LEFT EYE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_SaveFileDialog	Function	SAVE FILE DIALOG	Target	file	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Sign	Function	SIGN	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_SqrtFast	Function	SQRT FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_TempQuat	Function	TEMP QUAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_TempVector2	Function	TEMP VECTOR2	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_TempVector3	Function	TEMP VECTOR3	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_TempVector4	Function	TEMP VECTOR4	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_TestMemory	Function	TEST MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Add	Function	VECTOR2 ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Distance	Function	VECTOR2 DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2DistanceFast	Function	VECTOR2 DISTANCE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Div	Function	VECTOR2 DIV	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Divide	Function	VECTOR2 DIVIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Dot	Function	VECTOR2 DOT	Target	2d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2InvLengthFast	Function	VECTOR2 INV LENGTH FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Length	Function	VECTOR2 LENGTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2LengthFast	Function	VECTOR2 LENGTH FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Lerp	Function	VECTOR2 LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Magnitude	Function	VECTOR2 MAGNITUDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Mul	Function	VECTOR2 MUL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Multiply	Function	VECTOR2 MULTIPLY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Normalize	Function	VECTOR2 NORMALIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2NormalizeFast	Function	VECTOR2 NORMALIZE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Scale	Function	VECTOR2 SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Sub	Function	VECTOR2 SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2Subtract	Function	VECTOR2 SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector2ToString	Function	VECTOR2 TO STRING	Target	text	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Add	Function	VECTOR3 ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Cross	Function	VECTOR3 CROSS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Distance	Function	VECTOR3 DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3DistanceFast	Function	VECTOR3 DISTANCE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Div	Function	VECTOR3 DIV	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Divide	Function	VECTOR3 DIVIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Dot	Function	VECTOR3 DOT	Target	2d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3EulerLookAt	Function	VECTOR3 EULER LOOK AT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3EulerLookAtFast	Function	VECTOR3 EULER LOOK AT FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Forward	Function	VECTOR3 FORWARD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3InvLengthFast	Function	VECTOR3 INV LENGTH FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Length	Function	VECTOR3 LENGTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3LengthFast	Function	VECTOR3 LENGTH FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Lerp	Function	VECTOR3 LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Magnitude	Function	VECTOR3 MAGNITUDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Mul	Function	VECTOR3 MUL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Multiply	Function	VECTOR3 MULTIPLY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Normalize	Function	VECTOR3 NORMALIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3NormalizeFast	Function	VECTOR3 NORMALIZE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Right	Function	VECTOR3 RIGHT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3RotateByQuat	Function	VECTOR3 ROTATE BY QUAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Scale	Function	VECTOR3 SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Sub	Function	VECTOR3 SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Subtract	Function	VECTOR3 SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3ToString	Function	VECTOR3 TO STRING	Target	text	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Transform3	Function	VECTOR3 TRANSFORM3	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Transform4	Function	VECTOR3 TRANSFORM4	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3TriangleNormal	Function	VECTOR3 TRIANGLE NORMAL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3TriangleSlide	Function	VECTOR3 TRIANGLE SLIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector3Up	Function	VECTOR3 UP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Add	Function	VECTOR4 ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Cross	Function	VECTOR4 CROSS	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Distance	Function	VECTOR4 DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4DistanceFast	Function	VECTOR4 DISTANCE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Div	Function	VECTOR4 DIV	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Divide	Function	VECTOR4 DIVIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Dot	Function	VECTOR4 DOT	Target	2d	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4InvLengthFast	Function	VECTOR4 INV LENGTH FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Length	Function	VECTOR4 LENGTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4LengthFast	Function	VECTOR4 LENGTH FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Lerp	Function	VECTOR4 LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Magnitude	Function	VECTOR4 MAGNITUDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Mul	Function	VECTOR4 MUL	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Multiply	Function	VECTOR4 MULTIPLY	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Normalize	Function	VECTOR4 NORMALIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4NormalizeFast	Function	VECTOR4 NORMALIZE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Scale	Function	VECTOR4 SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Sub	Function	VECTOR4 SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4Subtract	Function	VECTOR4 SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_Vector4ToString	Function	VECTOR4 TO STRING	Target	text	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_VectorW	Function	VECTOR W	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_VectorX	Function	VECTOR X	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_VectorY	Function	VECTOR Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_VectorZ	Function	VECTOR Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_WindowHeight	Function	WINDOW HEIGHT	Target	display	dbpro-reference	engine-subsystem-and-oracle
+dbpro	Function_WindowWidth	Function	WINDOW WIDTH	Target	display	dbpro-reference	engine-subsystem-and-oracle

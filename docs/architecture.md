@@ -88,9 +88,15 @@ Each callable has a per-profile state:
 | Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, CD audio, the Windows folder and obsolete hardware switches |
 | Unsupported | Rejected at bind time with `DBC2043` |
 
-The forms of DarkPHYSICS, Dark Dynamix, 3D Cloth & Particles and Advanced Terrain, a
-commercial plugin whose source was never released, are not in the catalogue: they stop at
-bind time with `DBC2049`, which names the plugin and what to use instead.
+`DbPro` lists every form the free (MIT) DBPro release declares, in its editor keyword
+files and in the string tables of its SDK, DarkLIGHTS and the Enhancement Pack
+(`scripts/data/dbpro_*_evidence.tsv`). The catalogue audit rejects a `DbPro` form with no
+such source unless it is OpenDBC's own.
+
+The forms of DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles are left out of the
+catalogue, and so is Advanced Terrain, a commercial plugin whose source was never released:
+they stop at bind time with `DBC2049`, which names the plugin and what to use instead. The
+evidence generator checks that it names every form of the physics plugins.
 
 Classic takes no additions. `DbPro` also takes OpenDBC's own forms, with multi-word names,
 among them VR ([vr.md](vr.md)).

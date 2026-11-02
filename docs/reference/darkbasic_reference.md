@@ -16,10 +16,10 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | Symbol | Kind | Arity | Typed overloads | OpenDBC status | Provenance | Description |
 |---|---|---:|---|---|---|---|
 | `ADD LIMB` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `ALWAYS ACTIVE OFF` | Command | 0 | none -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
-| `ALWAYS ACTIVE ON` | Command | 0 | none -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `ALWAYS ACTIVE OFF` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
+| `ALWAYS ACTIVE ON` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `APPEND OBJECT` | Command | 3 | string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `APPEND OBJECT ANIMATION` | Command | 4 | string, string, number, number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `APPEND OBJECT ANIMATION` | Command | 4 | string, string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `ATTACH OBJECT TO STATIC` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `AUTOCAM OFF` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `AUTOCAM ON` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -34,10 +34,10 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CHANGE MESH` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CHANGE MESH FROM MEMBLOCK` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CIRCLE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `CLEAR ALL OBJECT KEYFRAMES` | Command | 1 | number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `CLEAR ALL OBJECT KEYFRAMES` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CLEAR CAMERA VIEW` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CLEAR ENTRY BUFFER` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `CLEAR OBJECT KEYFRAME` | Command | 2 | number, number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `CLEAR OBJECT KEYFRAME` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CLONE SOUND` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CLOSE FILE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CLS` | Command | 0-1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -74,9 +74,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DIR` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DISABLE ESCAPEKEY` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DISABLE OBJECT ZDEPTH` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `DISABLE STATIC OCCLUSION` | Command | 0 | none -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `DISABLE STATIC OCCLUSION` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DISABLE SYSTEMKEYS` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `DISABLE TNL` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `DISABLE TNL` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
 | `DOT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DRAW TO BACK` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DRAW TO FRONT` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -85,9 +85,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `EMPTY CHECKLIST` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `ENABLE ESCAPEKEY` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `ENABLE OBJECT ZDEPTH` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `ENABLE STATIC OCCLUSION` | Command | 0 | none -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `ENABLE STATIC OCCLUSION` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `ENABLE SYSTEMKEYS` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `ENABLE TNL` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `ENABLE TNL` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
 | `EXECUTE FILE` | Command | 3-4 | string, string, string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `EXIT PROMPT` | Command | 2 | string, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `FADE BITMAP` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -277,7 +277,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SAVE ARRAY` | Command | 2 | string, any array -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SAVE BITMAP` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SAVE IMAGE` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `SAVE OBJECT ANIMATION` | Command | 2 | string, number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `SAVE OBJECT ANIMATION` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SAVE SOUND` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SAVE STATIC OBJECTS` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SCALE BOB` | Command | 2 | number, number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
@@ -312,9 +312,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET DIR` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET DIRECTIONAL LIGHT` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET DISPLAY MODE` | Command | 2-3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `SET EAX` | Command | 1 | number -> void | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `SET EMULATION OFF` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
-| `SET EMULATION ON` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `SET EAX` | Command | 1 | number -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `SET EMULATION OFF` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
+| `SET EMULATION ON` | Command | 0 | none -> void | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic command callable through a documented neutral compatibility stub. |
 | `SET GAMMA` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET GLOBAL COLLISION OFF` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET GLOBAL COLLISION ON` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -329,7 +329,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET MATRIX TILE` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET MATRIX WIREFRAME OFF` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET MATRIX WIREFRAME ON` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `SET MIPMAP MODE` | Command | 1 | number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `SET MIPMAP MODE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET NET CONNECTION` | Command | 1-2 | number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET NORMALIZATION OFF` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET NORMALIZATION ON` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -341,7 +341,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET OBJECT COLLISION TO SPHERES` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET OBJECT FRAME` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET OBJECT INTERPOLATION` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `SET OBJECT KEYFRAME` | Command | 2 | number, number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `SET OBJECT KEYFRAME` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET OBJECT ROTATION XYZ` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET OBJECT ROTATION ZYX` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET OBJECT SPEED` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -354,7 +354,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET SOUND VOLUME` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET SPOT LIGHT` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `SET STATIC OBJECTS TEXTURE` | Command | 1 | number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `SET STATIC OBJECTS TEXTURE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET STATIC OBJECTS WIREFRAME OFF` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET STATIC OBJECTS WIREFRAME ON` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SET TEXT FONT` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -399,7 +399,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SYNC ON` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `SYNC RATE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `TEXT` | Command | 3 | number, number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `TEXTURE BACKDROP` | Command | 1 | number -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `TEXTURE BACKDROP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `TEXTURE LIMB` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `TEXTURE OBJECT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `TURN CAMERA LEFT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
@@ -503,7 +503,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DLL CALL EXIST` | Function | 2 | number, string -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `DLL EXIST` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `DOWNKEY` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
-| `EMULATION MODE` | Function | 0 | none -> real | Compatibility stub (permanent) | Classic help | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
+| `EMULATION MODE` | Function | 0 | none -> real | Compatibility stub (permanent) | Classic help, DBPro snapshot | Historical DarkBASIC Classic function callable through a documented neutral compatibility stub. |
 | `ENTRY$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `ESCAPEKEY` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |
 | `EXP` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic function implemented with an observable contract. |

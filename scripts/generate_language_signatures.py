@@ -258,13 +258,6 @@ def generate(prefix: str) -> str:
         symbol, kind, name = match.group(1), match.group(2), match.group(3)
         if kind not in {"Command", "Function"}:
             continue
-        if symbol in extension_signatures:
-            for count, result, parameters in sorted(set(extension_signatures[symbol])):
-                lines.append(
-                    f'DBC_SIGNATURE({symbol}, DbPro, {count}, {count}, '
-                    f'UINT64_C(0x{1 << count:016X}), {result}, "{parameters}")'
-                )
-            continue
         profiles = int(match.group(4))
         values = (
             ("Dbc", 1, int(match.group(5)), int(match.group(6)), int(match.group(7), 16)),
@@ -272,6 +265,14 @@ def generate(prefix: str) -> str:
         )
         for profile, bit, minimum, maximum, mask in values:
             if profiles & bit == 0:
+                continue
+            # The DBPro exports type the forms of the extension evidence.
+            if profile == "DbPro" and symbol in extension_signatures:
+                for count, result, parameters in sorted(set(extension_signatures[symbol])):
+                    lines.append(
+                        f'DBC_SIGNATURE({symbol}, DbPro, {count}, {count}, '
+                        f'UINT64_C(0x{1 << count:016X}), {result}, "{parameters}")'
+                    )
                 continue
             for accepted_min, accepted_max, accepted_mask in arities(minimum, maximum, mask):
                 spec = parameter_spec(profile, name, accepted_max)

@@ -33,5 +33,8 @@ First public release.
   `SET SCREEN EFFECT` show camera zero's image through a full-screen effect.
 - DBPro automatic collision for objects and cameras, force feedback, fire and snow
   particles, and global shadow colour, shades and light.
+- The DBPro profile catalogues every form of the free DBPro release, DarkLIGHTS and the
+  Enhancement Pack included; those that do not run yet stop with `DBC2043`. Advanced
+  Terrain, a commercial plugin, is left out.
 - DBPro's `SET GLOBAL OBJECT CREATION` draw orders, level of detail models, memblocks kept
   with objects and in DBO files, `REDUCE MESH`, `CONVERT OBJECT FVF` and `MAKE EMITTER`.

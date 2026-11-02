@@ -29,9 +29,31 @@ SOURCES = {
     ),
 }
 
-SURFACE_BITS = {"Ode": 16}
+# The forms the free DBPro release exports from these folders' string tables and its editor keyword files leave
+# out: later core forms and the DarkLIGHTS and Enhancement Pack plugins.
+SDK_ROOTS = (
+    "Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK",
+    "Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDKMore",
+    "Dark Basic Public Shared/Official Plugins/DarkLIGHTS",
+    "Dark Basic Public Shared/Official Plugins/Enhancement Pack",
+)
+SDK_SOURCE_BASE = "Dark Basic Public Shared"
+# The forms of DBPro's editor keyword files, which the hand-written catalogue rows carry.
+CORE_EVIDENCE = ROOT / "scripts/data/dbpro_catalogue_evidence.tsv"
+# Plugins left out of the catalogue, whose forms stop with DBC2049 (RemovedPluginOf).
+REMOVED_PLUGIN_ROOTS = (
+    "Dark Basic Public Shared/Official Plugins/3D Cloth & Particles",
+    "Dark Basic Public Shared/Official Plugins/Dark Dynamix",
+    "Dark Basic Public Shared/Official Plugins/DarkPHYSICS",
+)
+CLOTH_FORMS = ROOT / "src/language/removed_cloth_forms.inc"
+
+SURFACE_BITS = {"Ode": 16, "Sdk": 2}
 SURFACE_PREFIXES = {"Ode": "ODE "}
-TYPE_CODES = {"D": "I", "L": "I", "F": "R", "S": "S"}
+TYPE_CODES = {"D": "I", "L": "I", "R": "I", "F": "R", "S": "S"}
+RETURN_TYPES = {"D": "Integer", "L": "Integer", "R": "Integer", "F": "Real", "S": "String"}
+CATALOGUE_ROW = re.compile(r'DBC_CATALOGUE\(([^,]+), ([^,]+), "([^"]+)", ([0-9]+), .*, ([0-9]+), ([0-9]+)\)$',
+                           re.MULTILINE)
 
 
 @dataclass(frozen=True, order=True)
@@ -66,6 +88,8 @@ def IdentifierPart(Value: str) -> str:
 
 
 def SymbolIdFor(Surface: str, Kind: str, Name: str) -> str:
+    if Surface == "Sdk":
+        return f"{Kind}_{IdentifierPart(Name)}"
     Prefix = SURFACE_PREFIXES.get(Surface, "")
     LocalName = Name[len(Prefix):] if Prefix and Name.startswith(Prefix) else Name
     SurfacePart = {"Ode": "Ode"}[Surface]
@@ -82,11 +106,17 @@ def ParseKeywords(PathValue: Path) -> set[str]:
     return Result
 
 
-def ParseExports(PathValue: Path) -> dict[str, set[tuple[str, str, str]]]:
+def ReadResource(PathValue: Path) -> str:
+    Raw = PathValue.read_bytes()
+    return Raw.decode("utf-16") if Raw[:2] in (b"\xff\xfe", b"\xfe\xff") else Raw.decode("latin-1")
+
+
+# Each exported name with its kind and type codes, the first one of a function being its return type.
+def ParseExports(PathValue: Path) -> dict[str, set[tuple[str, str]]]:
     Result = defaultdict(set)
-    for Line in PathValue.read_text(errors="replace").splitlines():
+    for Line in ReadResource(PathValue).splitlines():
         Value = Line.strip()
-        if Value.startswith("//") or "IDS_STRING" not in Value:
+        if re.match(r'(?:IDS_STRING\w*|[0-9]+)\s+"', Value) is None:
             continue
         Match = re.search(r'"([^"\\]*(?:\\.[^"\\]*)*)"', Value)
         if Match is None or "%" not in Match.group(1):
@@ -95,20 +125,37 @@ def ParseExports(PathValue: Path) -> dict[str, set[tuple[str, str, str]]]:
         RawName, TypeCode, *_ = Payload.split("%")
         IsFunction = RawName.strip().endswith("[")
         Name = NormalizeName(RawName.strip().rstrip("["))
-        if TypeCode == "0":
-            TypeCode = ""
-        if IsFunction:
-            Require(bool(TypeCode), f"Missing return type in export: {Payload}")
-            ReturnType = {"D": "Integer", "L": "Integer", "F": "Real", "S": "String"}[TypeCode[0]]
-            TypeCode = TypeCode[1:]
-            Kind = "Function"
-        else:
-            ReturnType = "Void"
-            Kind = "Command"
-        Require(all(Code in TYPE_CODES for Code in TypeCode), f"Unknown DBPro type code in export: {Payload}")
-        Parameters = ",".join(TYPE_CODES[Code] for Code in TypeCode) or "-"
-        Result[Name].add((Kind, ReturnType, Parameters))
+        if Name:
+            Result[Name].add(("Function" if IsFunction else "Command", "" if TypeCode == "0" else TypeCode))
     return Result
+
+
+def TypedSignature(Name: str, Kind: str, TypeCode: str) -> tuple[str, str, str]:
+    ReturnType = "Void"
+    if Kind == "Function":
+        Require(bool(TypeCode) and TypeCode[0] in RETURN_TYPES, f"Missing return type in export: {Name}")
+        ReturnType = RETURN_TYPES[TypeCode[0]]
+        TypeCode = TypeCode[1:]
+    Require(all(Code in TYPE_CODES for Code in TypeCode), f"Unknown DBPro type code in export: {Name} {TypeCode}")
+    return Kind, ReturnType, ",".join(TYPE_CODES[Code] for Code in TypeCode) or "-"
+
+
+# The plugin RemovedPluginOf names for a form, as language_catalogue.cpp decides it.
+def RemovedPlugin(Name: str, ClothForms: set[str]) -> str:
+    if Name.startswith("PHY ") or Name == "PHYSX":
+        return "DarkPHYSICS"
+    if Name.startswith("DYN "):
+        return "Dark Dynamix"
+    Words = Name.split(" ")
+    if any(" ".join(Words[:Count]) in ClothForms for Count in range(1, len(Words) + 1)):
+        return "3D Cloth & Particles"
+    return ""
+
+
+def ResourceFiles(DbProRoot: Path, Folder: str) -> list[Path]:
+    Root = DbProRoot / Folder
+    Require(Root.is_dir(), f"Missing DBPro folder: {Root}")
+    return sorted(PathValue for PathValue in Root.rglob("*") if PathValue.suffix.lower() == ".rc")
 
 
 def AddRows(Result: list[Overload], Surface: str, Name: str, Signatures: set[tuple[str, str, str]],
@@ -133,13 +180,38 @@ def BuildEvidence(DbProRoot: Path) -> list[Overload]:
     OdeNames = {Name for Name in OdeExports if Name.startswith("ODE ")}
     Require(OdeKeywords <= OdeNames, "ODE keyword inventory contains names absent from its export table")
     for Name in sorted(OdeNames):
-        AddRows(Result, "Ode", Name, OdeExports[Name], Name,
+        AddRows(Result, "Ode", Name, {TypedSignature(Name, *Signature) for Signature in OdeExports[Name]}, Name,
                 {"ode-exports"} | ({"ode-keywords"} if Name in OdeKeywords else set()))
+
+    with CORE_EVIDENCE.open(newline="", encoding="utf-8") as Input:
+        # Its comments start with "# "; #CONSTANT and #INCLUDE are rows.
+        CoreNames = {Row["name"] for Row in
+                     csv.DictReader((Line for Line in Input if not Line.startswith("# ")), delimiter="\t")}
+    SdkExports = defaultdict(lambda: defaultdict(set))
+    for Folder in SDK_ROOTS:
+        for PathValue in ResourceFiles(DbProRoot, Folder):
+            Source = PathValue.relative_to(DbProRoot / SDK_SOURCE_BASE).as_posix()
+            for Name, Signatures in ParseExports(PathValue).items():
+                # DBDLLCore.rc also exports FREE STRING$ without its $.
+                if Name in CoreNames or Name + "$" in CoreNames or Name.startswith("ODE "):
+                    continue
+                for Signature in Signatures:
+                    SdkExports[Name][Signature].add(Source)
+    for Name, Signatures in sorted(SdkExports.items()):
+        AddRows(Result, "Sdk", Name, {TypedSignature(Name, *Signature) for Signature in Signatures}, Name,
+                set().union(*Signatures.values()))
+
+    ClothForms = set(re.findall(r'^"([^"]+)",$', CLOTH_FORMS.read_text(encoding="utf-8"), re.MULTILINE))
+    for Folder in REMOVED_PLUGIN_ROOTS:
+        for PathValue in ResourceFiles(DbProRoot, Folder):
+            for Name in ParseExports(PathValue):
+                Require(bool(RemovedPlugin(Name, ClothForms)),
+                        f"{Name} of {PathValue.relative_to(DbProRoot)} is neither catalogued nor named by DBC2049")
 
     Counts = defaultdict(set)
     for Row in Result:
         Counts[Row.Surface].add(Row.Name)
-    Require({Surface: len(Names) for Surface, Names in Counts.items()} == {"Ode": 121},
+    Require({Surface: len(Names) for Surface, Names in Counts.items()} == {"Ode": 121, "Sdk": 485},
             "DBPro extension public spelling totals drifted")
     Require(len({(Row.SymbolId, Row.AcceptedCount, Row.ReturnType, Row.Parameters) for Row in Result}) == len(Result),
             "Duplicate DBPro extension overload evidence")
@@ -150,6 +222,8 @@ def EvidenceText(Rows: list[Overload]) -> str:
     Lines = [f"# DBPro commit\t{DBPRO_COMMIT}"]
     for Label, (RelativePath, ExpectedHash) in SOURCES.items():
         Lines.append(f"# {Label}\t{RelativePath}\t{ExpectedHash}")
+    for Folder in SDK_ROOTS:
+        Lines.append(f"# sdk-exports\t{Folder}")
     Lines.append("surface\tsymbol_id\tkind\tname\taccepted_count\treturn_type\tparameters\tcanonical_name\tsources")
     for Row in Rows:
         Lines.append("\t".join((Row.Surface, Row.SymbolId, Row.Kind, Row.Name, str(Row.AcceptedCount),
@@ -168,7 +242,15 @@ def ReadEvidence() -> list[Overload]:
     return Rows
 
 
-def CatalogueRegion(Rows: list[Overload], ImplementedProfiles: dict[str, int]) -> str:
+# Hand-written rows keep their own entries: a form they already carry in DBPro is not generated again, and one
+# carried in Classic only under the same SymbolId has to be widened to DBPro by hand.
+def CatalogueRegion(Rows: list[Overload], ImplementedProfiles: dict[str, int], HandWritten: str) -> str:
+    WrittenIds = {}
+    DbProSpellings = set()
+    for Match in CATALOGUE_ROW.finditer(HandWritten):
+        WrittenIds[Match.group(1)] = (Match.group(2), Match.group(3), int(Match.group(4)))
+        if int(Match.group(4)) & 2:
+            DbProSpellings.add((Match.group(2), Match.group(3)))
     Groups = defaultdict(list)
     for Row in Rows:
         Groups[(Row.Surface, Row.SymbolId, Row.Kind, Row.Name)].append(Row)
@@ -177,6 +259,11 @@ def CatalogueRegion(Rows: list[Overload], ImplementedProfiles: dict[str, int]) -
     for (Surface, SymbolId, Kind, Name), Overloads in sorted(Groups.items()):
         Require(SymbolId not in SeenIds, f"Extension SymbolId collision: {SymbolId}")
         SeenIds.add(SymbolId)
+        if SymbolId in WrittenIds:
+            Require(WrittenIds[SymbolId] == (Kind, Name, 3), f"Widen {SymbolId} to DBPro or rename the new form")
+            continue
+        if (Kind, Name) in DbProSpellings:
+            continue
         Counts = sorted({Row.AcceptedCount for Row in Overloads})
         Mask = sum(1 << Count for Count in Counts)
         Implemented = ImplementedProfiles.get(SymbolId, 0)
@@ -191,20 +278,18 @@ def CatalogueRegion(Rows: list[Overload], ImplementedProfiles: dict[str, int]) -
 
 def UpdateCatalogue(Rows: list[Overload], Check: bool) -> None:
     Current = CATALOGUE.read_text(encoding="utf-8")
-    ImplementedProfiles = {}
-    for Match in re.finditer(r"DBC_CATALOGUE\(([^,]+),.*?, ([0-9]+), ([0-9]+)\)$", Current, re.MULTILINE):
-        if int(Match.group(3)) & SURFACE_BITS["Ode"]:
-            ImplementedProfiles[Match.group(1)] = int(Match.group(2))
-    Region = CatalogueRegion(Rows, ImplementedProfiles).rstrip()
     if BEGIN in Current:
         Prefix, Remainder = Current.split(BEGIN, 1)
         Require(END in Remainder, "Unterminated generated DBPro extension catalogue region")
-        _, Suffix = Remainder.split(END, 1)
-        Generated = Prefix.rstrip() + "\n\n" + Region + "\n\n" + Suffix.lstrip()
+        Previous, Suffix = Remainder.split(END, 1)
+        Suffix = Suffix.lstrip()
     else:
         Require(SIGNATURE_BEGIN in Current, "Missing generated signature marker in language catalogue")
         Prefix, Suffix = Current.split(SIGNATURE_BEGIN, 1)
-        Generated = Prefix.rstrip() + "\n\n" + Region + "\n\n" + SIGNATURE_BEGIN + Suffix
+        Previous, Suffix = "", SIGNATURE_BEGIN + Suffix
+    ImplementedProfiles = {Match.group(1): int(Match.group(5)) for Match in CATALOGUE_ROW.finditer(Previous)}
+    Region = CatalogueRegion(Rows, ImplementedProfiles, Prefix).rstrip()
+    Generated = Prefix.rstrip() + "\n\n" + Region + "\n\n" + Suffix
     if Check:
         Require(Current == Generated, "DBPro extension catalogue region is stale")
     else:

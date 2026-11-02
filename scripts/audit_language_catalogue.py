@@ -450,16 +450,33 @@ def audit_dbpro_extension_evidence(catalogue: dict[tuple[str, str], tuple]) -> N
         key = (row["kind"], row["name"])
         require(key in catalogue, f"DBPro extension evidence is absent from catalogue: {row['surface']} {key}")
         entry = catalogue[key]
-        require(entry[0] == row["symbol_id"], f"DBPro extension SymbolId differs for {row['name']}")
-        require(entry[3] == 2, f"DBPro extension leaked outside the DbPro profile: {row['name']}")
-        require(entry[11] == surface_bits[row["surface"]], f"DBPro extension provenance differs: {row['name']}")
+        if row["surface"] == "Ode":
+            require(entry[0] == row["symbol_id"], f"DBPro extension SymbolId differs for {row['name']}")
+            require(entry[3] == 2, f"DBPro extension leaked outside the DbPro profile: {row['name']}")
+            require(entry[11] == surface_bits["Ode"], f"DBPro extension provenance differs: {row['name']}")
+        else:
+            # Free DBPro forms, some of them shared with Classic rows.
+            require(entry[3] & 2, f"DBPro export is unavailable in DBPro profile: {row['name']}")
+            require(entry[11] & surface_bits[row["surface"]], f"DBPro export provenance is missing: {row['name']}")
         count = int(row["accepted_count"])
         accepted_mask = entry[9]
         accepted = ({value for value in range(64) if accepted_mask & (1 << value)} if accepted_mask else
                     set(range(entry[7], entry[8] + 1)))
         require(count in accepted, f"DBPro extension arity differs from evidence for {row['name']}")
         spellings.add((row["surface"], row["name"]))
-    require(len(spellings) == 121, "DBPro extension public spelling total drifted")
+    require(len(spellings) == 606, "DBPro extension public spelling total drifted")
+
+
+def audit_free_sources(entries: list[tuple]) -> None:
+    # A DBPro command or function is OpenDBC's own or comes from the free DBPro release.
+    names = set()
+    for path in (DBPRO_EVIDENCE, DBPRO_EXTENSION_EVIDENCE):
+        with path.open(newline="", encoding="utf-8") as source:
+            names.update(row["name"] for row in
+                         csv.DictReader((line for line in source if not line.startswith("#")), delimiter="\t"))
+    for entry in entries:
+        if entry[1] in {"Command", "Function"} and entry[3] & 2 and not entry[11] & 4:
+            require(entry[2] in names, f"DBPro form has no free source: {entry[1]} {entry[2]}")
 
 
 def audit_dbpro(root: Path) -> None:
@@ -505,6 +522,7 @@ def main() -> None:
         raise SystemExit("--refresh-dbpro-evidence requires --dbpro-root")
     audit_dbpro_evidence(catalogue)
     audit_dbpro_extension_evidence(catalogue)
+    audit_free_sources(entries)
     callables = sum(entry[1] in {"Command", "Function"} for entry in entries)
     print(f"Language catalogue audit passed: {len(entries)} symbols, {callables} callables")
 

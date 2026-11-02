@@ -1,6 +1,10 @@
 # DBPro commit	af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9
 # ode-keywords	Install/Editor/Keywords/keywordsODE.ini	bf74ba8e745258218f446c5d94083b43a5847512b582b3d7ed6e59203f83c1a1
 # ode-exports	Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC	0e6eb1563e3f9489b98c77158b520080c3c027a0c42136a7960dac6fa11ca232
+# sdk-exports	Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK
+# sdk-exports	Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDKMore
+# sdk-exports	Dark Basic Public Shared/Official Plugins/DarkLIGHTS
+# sdk-exports	Dark Basic Public Shared/Official Plugins/Enhancement Pack
 surface	symbol_id	kind	name	accepted_count	return_type	parameters	canonical_name	sources
 Ode	Command_ExtOdeAddForce	Command	ODE ADD FORCE	7	Void	I,R,R,R,R,R,R	ODE ADD FORCE	ode-exports,ode-keywords
 Ode	Command_ExtOdeAddStaticObjectBox	Command	ODE ADD STATIC OBJECT BOX	2	Void	I,I	ODE ADD STATIC OBJECT BOX	ode-exports
@@ -131,3 +135,594 @@ Ode	Function_ExtOdeRay	Function	ODE RAY	7	Integer	R,R,R,R,R,R,I	ODE RAY	ode-expo
 Ode	Function_ExtOdeRayCast	Function	ODE RAY CAST	7	Integer	I,R,R,R,R,R,R	ODE RAY CAST	ode-exports
 Ode	Function_ExtOdeRayForce	Function	ODE RAY FORCE	7	Integer	R,R,R,R,R,R,R	ODE RAY FORCE	ode-exports
 Ode	Function_ExtOdeRayTerrain	Function	ODE RAY TERRAIN	6	Integer	R,R,R,R,R,R	ODE RAY TERRAIN	ode-exports
+Sdk	Command_3ds2x	Command	3DS2X	2	Void	S,S	3DS2X	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_AddBitmapToBlock	Command	ADD BITMAP TO BLOCK	3	Void	I,I,S	ADD BITMAP TO BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_AddFileToBlock	Command	ADD FILE TO BLOCK	2	Void	I,S	ADD FILE TO BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_AddImageToBlock	Command	ADD IMAGE TO BLOCK	3	Void	I,I,S	ADD IMAGE TO BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_AddObjectToBlock	Command	ADD OBJECT TO BLOCK	3	Void	I,I,S	ADD OBJECT TO BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_AddVisbilityListMask	Command	ADD VISBILITY LIST MASK	1	Void	I	ADD VISBILITY LIST MASK	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_AlwaysActiveOff	Command	ALWAYS ACTIVE OFF	0	Void	-	ALWAYS ACTIVE OFF	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Command_AlwaysActiveOn	Command	ALWAYS ACTIVE ON	0	Void	-	ALWAYS ACTIVE ON	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Command_AppendObjectAnimation	Command	APPEND OBJECT ANIMATION	2	Void	I,S	APPEND OBJECT ANIMATION	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_ApplyPresetEaxEffect	Command	APPLY PRESET EAX EFFECT	2	Void	I,I	APPLY PRESET EAX EFFECT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_BphysRagdolladdhingejoint	Command	BPHYS_RAGDOLLADDHINGEJOINT	5	Void	I,I,I,I,I	BPHYS_RAGDOLLADDHINGEJOINT	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysRagdolladdtwistjoint	Command	BPHYS_RAGDOLLADDTWISTJOINT	5	Void	I,I,I,I,I	BPHYS_RAGDOLLADDTWISTJOINT	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysRagdollapplyforce	Command	BPHYS_RAGDOLLAPPLYFORCE	9	Void	I,I,R,R,R,R,R,R,R	BPHYS_RAGDOLLAPPLYFORCE	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysRagdollbegin	Command	BPHYS_RAGDOLLBEGIN	2	Void	I,R	BPHYS_RAGDOLLBEGIN	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysRagdollboneaddlimbid	Command	BPHYS_RAGDOLLBONEADDLIMBID	2	Void	I,I	BPHYS_RAGDOLLBONEADDLIMBID	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysRagdollend	Command	BPHYS_RAGDOLLEND	0	Void	-	BPHYS_RAGDOLLEND	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysRagdollsetdamping	Command	BPHYS_RAGDOLLSETDAMPING	2	Void	R,R	BPHYS_RAGDOLLSETDAMPING	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysRagdollsetdeactivationtime	Command	BPHYS_RAGDOLLSETDEACTIVATIONTIME	1	Void	R	BPHYS_RAGDOLLSETDEACTIVATIONTIME	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysRagdollsetsleepingthresholds	Command	BPHYS_RAGDOLLSETSLEEPINGTHRESHOLDS	2	Void	R,R	BPHYS_RAGDOLLSETSLEEPINGTHRESHOLDS	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_BphysSetnogravity	Command	BPHYS_SETNOGRAVITY	2	Void	I,I	BPHYS_SETNOGRAVITY	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Command_ClearAllObjectKeyframes	Command	CLEAR ALL OBJECT KEYFRAMES	1	Void	I	CLEAR ALL OBJECT KEYFRAMES	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_ClearInternalLightmaps	Command	CLEAR INTERNAL LIGHTMAPS	0	Void	-	CLEAR INTERNAL LIGHTMAPS	Dark Basic Pro SDK/DarkSDK/Image/Image.rc
+Sdk	Command_ClearObjectKeyframe	Command	CLEAR OBJECT KEYFRAME	2	Void	I,I	CLEAR OBJECT KEYFRAME	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_CloseDataFile	Command	CLOSE DATA FILE	1	Void	I	CLOSE DATA FILE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_CloseFileBlock	Command	CLOSE FILE BLOCK	1	Void	I	CLOSE FILE BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_CloseFileMap	Command	CLOSE FILE MAP	1	Void	I	CLOSE FILE MAP	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_CreateFileBlock	Command	CREATE FILE BLOCK	2	Void	I,S	CREATE FILE BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_CreateFileMap	Command	CREATE FILE MAP	3	Void	I,S,I	CREATE FILE MAP	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_DeleteFileBlock	Command	DELETE FILE BLOCK	1	Void	I	DELETE FILE BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_DeleteOggVorbis	Command	DELETE OGG VORBIS	1	Void	I	DELETE OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_DeleteVector	Command	DELETE VECTOR	1	Void	I	DELETE VECTOR	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_DestroyFileMap	Command	DESTROY FILE MAP	1	Void	I	DESTROY FILE MAP	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_DisableStaticOcclusion	Command	DISABLE STATIC OCCLUSION	0	Void	-	DISABLE STATIC OCCLUSION	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc
+Sdk	Command_DisableTnl	Command	DISABLE TNL	0	Void	-	DISABLE TNL	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_EnableStaticOcclusion	Command	ENABLE STATIC OCCLUSION	0	Void	-	ENABLE STATIC OCCLUSION	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc
+Sdk	Command_EnableTnl	Command	ENABLE TNL	0	Void	-	ENABLE TNL	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_EncodeToOggVorbis	Command	ENCODE TO OGG VORBIS	2	Void	S,S	ENCODE TO OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_EncodeToOggVorbis	Command	ENCODE TO OGG VORBIS	3	Void	S,S,R	ENCODE TO OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_EncryptAllFiles	Command	ENCRYPT ALL FILES	1	Void	S	ENCRYPT ALL FILES	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Command_EncryptFile	Command	ENCRYPT FILE	1	Void	S	ENCRYPT FILE	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Command_EncryptWorkshopFile	Command	ENCRYPT WORKSHOP FILE	1	Void	S	ENCRYPT WORKSHOP FILE	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Command_ExtractFileFromBlock	Command	EXTRACT FILE FROM BLOCK	3	Void	I,S,S	EXTRACT FILE FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_FinishObjectPanel	Command	FINISH OBJECT PANEL	3	Void	I,R,R	FINISH OBJECT PANEL	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_ForceAdapterOrdinal	Command	FORCE ADAPTER ORDINAL	1	Void	I	FORCE ADAPTER ORDINAL	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Command_FreeInstanceStamp	Command	FREE INSTANCE STAMP	1	Void	I	FREE INSTANCE STAMP	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_GetProcessorOnChipFeatures	Command	GET PROCESSOR ON CHIP FEATURES	1	Void	I	GET PROCESSOR ON CHIP FEATURES	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_GetProcessorPowerManagement	Command	GET PROCESSOR POWER MANAGEMENT	1	Void	I	GET PROCESSOR POWER MANAGEMENT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_GetProcessorSupportedFeatures	Command	GET PROCESSOR SUPPORTED FEATURES	1	Void	I	GET PROCESSOR SUPPORTED FEATURES	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_GetVoiceList	Command	GET VOICE LIST	0	Void	-	GET VOICE LIST	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_InitInstanceStamp	Command	INIT INSTANCE STAMP	7	Void	I,I,I,I,I,I,I	INIT INSTANCE STAMP	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_InstanceStamp	Command	INSTANCE STAMP	3	Void	I,I,I	INSTANCE STAMP	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_LmAddCollisionObject	Command	LM ADD COLLISION OBJECT	1	Void	I	LM ADD COLLISION OBJECT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddCustomPointLight	Command	LM ADD CUSTOM POINT LIGHT	9	Void	R,R,R,R,R,R,R,R,R	LM ADD CUSTOM POINT LIGHT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddDirectionalLight	Command	LM ADD DIRECTIONAL LIGHT	6	Void	R,R,R,R,R,R	LM ADD DIRECTIONAL LIGHT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddLightMapObject	Command	LM ADD LIGHT MAP OBJECT	1	Void	I	LM ADD LIGHT MAP OBJECT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddLightMapObject	Command	LM ADD LIGHT MAP OBJECT	2	Void	I,I	LM ADD LIGHT MAP OBJECT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddLightMapObject	Command	LM ADD LIGHT MAP OBJECT	3	Void	I,I,I	LM ADD LIGHT MAP OBJECT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddLightMapObject	Command	LM ADD LIGHT MAP OBJECT	4	Void	I,I,I,I	LM ADD LIGHT MAP OBJECT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddPointLight	Command	LM ADD POINT LIGHT	7	Void	R,R,R,R,R,R,R	LM ADD POINT LIGHT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddShadedLightMapObject	Command	LM ADD SHADED LIGHT MAP OBJECT	2	Void	I,I	LM ADD SHADED LIGHT MAP OBJECT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddShadedLightMapObject	Command	LM ADD SHADED LIGHT MAP OBJECT	3	Void	I,I,I	LM ADD SHADED LIGHT MAP OBJECT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddSpotLight	Command	LM ADD SPOT LIGHT	12	Void	R,R,R,R,R,R,R,R,R,R,R,R	LM ADD SPOT LIGHT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmAddTransparentCollisionObject	Command	LM ADD TRANSPARENT COLLISION OBJECT	2	Void	I,I	LM ADD TRANSPARENT COLLISION OBJECT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmBoostCurvedSurfaceQuality	Command	LM BOOST CURVED SURFACE QUALITY	2	Void	R,R	LM BOOST CURVED SURFACE QUALITY	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmBuildCollisionData	Command	LM BUILD COLLISION DATA	0	Void	-	LM BUILD COLLISION DATA	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmBuildLightMaps	Command	LM BUILD LIGHT MAPS	3	Void	I,R,I	LM BUILD LIGHT MAPS	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmBuildLightMaps	Command	LM BUILD LIGHT MAPS	4	Void	I,R,I,I	LM BUILD LIGHT MAPS	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmBuildLightMapsThread	Command	LM BUILD LIGHT MAPS THREAD	3	Void	I,R,I	LM BUILD LIGHT MAPS THREAD	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmBuildLightMapsThread	Command	LM BUILD LIGHT MAPS THREAD	4	Void	I,R,I,I	LM BUILD LIGHT MAPS THREAD	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmClearCollisionObjects	Command	LM CLEAR COLLISION OBJECTS	0	Void	-	LM CLEAR COLLISION OBJECTS	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmClearLightMapObjects	Command	LM CLEAR LIGHT MAP OBJECTS	0	Void	-	LM CLEAR LIGHT MAP OBJECTS	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmClearLights	Command	LM CLEAR LIGHTS	0	Void	-	LM CLEAR LIGHTS	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmReset	Command	LM RESET	0	Void	-	LM RESET	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetAmbientLight	Command	LM SET AMBIENT LIGHT	3	Void	R,R,R	LM SET AMBIENT LIGHT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetAmbientOcclusionOff	Command	LM SET AMBIENT OCCLUSION OFF	0	Void	-	LM SET AMBIENT OCCLUSION OFF	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetAmbientOcclusionOn	Command	LM SET AMBIENT OCCLUSION ON	3	Void	I,R,I	LM SET AMBIENT OCCLUSION ON	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetBlendMode	Command	LM SET BLEND MODE	1	Void	I	LM SET BLEND MODE	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetLightMapFileFormat	Command	LM SET LIGHT MAP FILE FORMAT	1	Void	I	LM SET LIGHT MAP FILE FORMAT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetLightMapFolder	Command	LM SET LIGHT MAP FOLDER	1	Void	S	LM SET LIGHT MAP FOLDER	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetLightMapName	Command	LM SET LIGHT MAP NAME	1	Void	S	LM SET LIGHT MAP NAME	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetMode	Command	LM SET MODE	1	Void	I	LM SET MODE	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmSetShadowPower	Command	LM SET SHADOW POWER	1	Void	R	LM SET SHADOW POWER	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmStart	Command	LM START	0	Void	-	LM START	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LmTerminateThread	Command	LM TERMINATE THREAD	0	Void	-	LM TERMINATE THREAD	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Command_LoadAnimationFromBlock	Command	LOAD ANIMATION FROM BLOCK	3	Void	I,S,I	LOAD ANIMATION FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_LoadBitmapFromBlock	Command	LOAD BITMAP FROM BLOCK	3	Void	I,S,I	LOAD BITMAP FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_LoadFileFromBlock	Command	LOAD FILE FROM BLOCK	3	Void	I,S,I	LOAD FILE FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_LoadImageFromBlock	Command	LOAD IMAGE FROM BLOCK	3	Void	I,S,I	LOAD IMAGE FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_LoadMemblockFromBlock	Command	LOAD MEMBLOCK FROM BLOCK	3	Void	I,S,I	LOAD MEMBLOCK FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_LoadObjectFromBlock	Command	LOAD OBJECT FROM BLOCK	3	Void	I,S,I	LOAD OBJECT FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_LoadOggVorbis	Command	LOAD OGG VORBIS	2	Void	S,I	LOAD OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_LoadSoundFromBlock	Command	LOAD SOUND FROM BLOCK	3	Void	I,S,I	LOAD SOUND FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_LoopOggVorbis	Command	LOOP OGG VORBIS	1	Void	I	LOOP OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_MakeMeshFromLimb	Command	MAKE MESH FROM LIMB	3	Void	I,I,I	MAKE MESH FROM LIMB	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_MemorySnapshot	Command	MEMORY SNAPSHOT	1	Void	I	MEMORY SNAPSHOT	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Command_MultiplayerConnectToTcpServer	Command	MULTIPLAYER CONNECT TO TCP SERVER	2	Void	S,S	MULTIPLAYER CONNECT TO TCP SERVER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerConnectToTcpServer	Command	MULTIPLAYER CONNECT TO TCP SERVER	3	Void	S,S,I	MULTIPLAYER CONNECT TO TCP SERVER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerCreateTcpServer	Command	MULTIPLAYER CREATE TCP SERVER	1	Void	S	MULTIPLAYER CREATE TCP SERVER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerCreateTcpServer	Command	MULTIPLAYER CREATE TCP SERVER	2	Void	S,I	MULTIPLAYER CREATE TCP SERVER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerDisconnect	Command	MULTIPLAYER DISCONNECT	0	Void	-	MULTIPLAYER DISCONNECT	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerDisplayDebug	Command	MULTIPLAYER DISPLAY DEBUG	1	Void	S	MULTIPLAYER DISPLAY DEBUG	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerGetMessage	Command	MULTIPLAYER GET MESSAGE	0	Void	-	MULTIPLAYER GET MESSAGE	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerGetMessageMemblock	Command	MULTIPLAYER GET MESSAGE MEMBLOCK	1	Void	I	MULTIPLAYER GET MESSAGE MEMBLOCK	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendFromPlayer	Command	MULTIPLAYER SEND FROM PLAYER	1	Void	I	MULTIPLAYER SEND FROM PLAYER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageFloat	Command	MULTIPLAYER SEND MESSAGE FLOAT	1	Void	R	MULTIPLAYER SEND MESSAGE FLOAT	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageFloat	Command	MULTIPLAYER SEND MESSAGE FLOAT	2	Void	R,I	MULTIPLAYER SEND MESSAGE FLOAT	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageInteger	Command	MULTIPLAYER SEND MESSAGE INTEGER	1	Void	I	MULTIPLAYER SEND MESSAGE INTEGER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageInteger	Command	MULTIPLAYER SEND MESSAGE INTEGER	2	Void	I,I	MULTIPLAYER SEND MESSAGE INTEGER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageMemblock	Command	MULTIPLAYER SEND MESSAGE MEMBLOCK	1	Void	I	MULTIPLAYER SEND MESSAGE MEMBLOCK	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageMemblock	Command	MULTIPLAYER SEND MESSAGE MEMBLOCK	2	Void	I,I	MULTIPLAYER SEND MESSAGE MEMBLOCK	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageMemblock	Command	MULTIPLAYER SEND MESSAGE MEMBLOCK	3	Void	I,I,I	MULTIPLAYER SEND MESSAGE MEMBLOCK	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageString	Command	MULTIPLAYER SEND MESSAGE STRING	1	Void	S	MULTIPLAYER SEND MESSAGE STRING	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageString	Command	MULTIPLAYER SEND MESSAGE STRING	2	Void	S,I	MULTIPLAYER SEND MESSAGE STRING	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSendMessageTo	Command	MULTIPLAYER SEND MESSAGE TO	1	Void	I	MULTIPLAYER SEND MESSAGE TO	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerSetDebugState	Command	MULTIPLAYER SET DEBUG STATE	1	Void	I	MULTIPLAYER SET DEBUG STATE	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerStart	Command	MULTIPLAYER START	0	Void	-	MULTIPLAYER START	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_MultiplayerStartVoiceServer	Command	MULTIPLAYER START VOICE SERVER	0	Void	-	MULTIPLAYER START VOICE SERVER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Command_OpenDataFile	Command	OPEN DATA FILE	3	Void	S,S,I	OPEN DATA FILE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_OpenFileBlock	Command	OPEN FILE BLOCK	2	Void	S,I	OPEN FILE BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_OpenFileBlock	Command	OPEN FILE BLOCK	3	Void	S,I,S	OPEN FILE BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_OpenFileMap	Command	OPEN FILE MAP	2	Void	I,S	OPEN FILE MAP	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_PauseOggVorbis	Command	PAUSE OGG VORBIS	1	Void	I	PAUSE OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_PerformChecklistForEaxEffects	Command	PERFORM CHECKLIST FOR EAX EFFECTS	0	Void	-	PERFORM CHECKLIST FOR EAX EFFECTS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_PerformChecklistForFileBlockData	Command	PERFORM CHECKLIST FOR FILE BLOCK DATA	1	Void	I	PERFORM CHECKLIST FOR FILE BLOCK DATA	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_PlayOggVorbis	Command	PLAY OGG VORBIS	1	Void	I	PLAY OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_QuatAdd	Command	QUAT ADD	3	Void	I,I,I	QUAT ADD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatAxis	Command	QUAT AXIS	5	Void	I,R,R,R,R	QUAT AXIS	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatConjugate	Command	QUAT CONJUGATE	1	Void	I	QUAT CONJUGATE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatConjugate	Command	QUAT CONJUGATE	2	Void	I,I	QUAT CONJUGATE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatCopy	Command	QUAT COPY	2	Void	I,I	QUAT COPY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatFromEuler	Command	QUAT FROM EULER	2	Void	I,I	QUAT FROM EULER	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatIdentity	Command	QUAT IDENTITY	1	Void	I	QUAT IDENTITY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatInverse	Command	QUAT INVERSE	2	Void	I,I	QUAT INVERSE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatInverseFast	Command	QUAT INVERSE FAST	2	Void	I,I	QUAT INVERSE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatLerp	Command	QUAT LERP	4	Void	I,I,I,R	QUAT LERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatMul	Command	QUAT MUL	3	Void	I,I,I	QUAT MUL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatMultiply	Command	QUAT MULTIPLY	3	Void	I,I,I	QUAT MULTIPLY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatNormalize	Command	QUAT NORMALIZE	1	Void	I	QUAT NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatNormalize	Command	QUAT NORMALIZE	2	Void	I,I	QUAT NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatNormalizeFast	Command	QUAT NORMALIZE FAST	1	Void	I	QUAT NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatNormalizeFast	Command	QUAT NORMALIZE FAST	2	Void	I,I	QUAT NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatRotationX	Command	QUAT ROTATION X	2	Void	I,R	QUAT ROTATION X	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatRotationY	Command	QUAT ROTATION Y	2	Void	I,R	QUAT ROTATION Y	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatRotationZ	Command	QUAT ROTATION Z	2	Void	I,R	QUAT ROTATION Z	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatScale	Command	QUAT SCALE	3	Void	I,I,R	QUAT SCALE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatSet	Command	QUAT SET	5	Void	I,R,R,R,R	QUAT SET	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatSetW	Command	QUAT SET W	2	Void	I,R	QUAT SET W	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatSetX	Command	QUAT SET X	2	Void	I,R	QUAT SET X	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatSetY	Command	QUAT SET Y	2	Void	I,R	QUAT SET Y	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatSetZ	Command	QUAT SET Z	2	Void	I,R	QUAT SET Z	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatSlerp	Command	QUAT SLERP	4	Void	I,I,I,R	QUAT SLERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatSub	Command	QUAT SUB	3	Void	I,I,I	QUAT SUB	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_QuatSubtract	Command	QUAT SUBTRACT	3	Void	I,I,I	QUAT SUBTRACT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_RemoveFileFromBlock	Command	REMOVE FILE FROM BLOCK	2	Void	I,S	REMOVE FILE FROM BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_RenderEffectShadowMapping	Command	RENDER EFFECT SHADOW MAPPING	1	Void	I	RENDER EFFECT SHADOW MAPPING	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_ResetObjectPivot	Command	RESET OBJECT PIVOT	1	Void	I	RESET OBJECT PIVOT	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_ResetTracking	Command	RESET TRACKING	0	Void	-	RESET TRACKING	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Command_ResumeOggVorbis	Command	RESUME OGG VORBIS	1	Void	I	RESUME OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_ReverseObjectFrames	Command	REVERSE OBJECT FRAMES	1	Void	I	REVERSE OBJECT FRAMES	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_RotateImage	Command	ROTATE IMAGE	2	Void	I,I	ROTATE IMAGE	Dark Basic Pro SDK/DarkSDK/Image/Image.rc
+Sdk	Command_SaveFileBlock	Command	SAVE FILE BLOCK	1	Void	I	SAVE FILE BLOCK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SaveIconFromImage	Command	SAVE ICON FROM IMAGE	2	Void	S,I	SAVE ICON FROM IMAGE	Dark Basic Pro SDK/DarkSDK/Image/Image.rc
+Sdk	Command_SaveObjectAnimation	Command	SAVE OBJECT ANIMATION	2	Void	I,S	SAVE OBJECT ANIMATION	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SendVoiceMessage	Command	SEND VOICE MESSAGE	1	Void	S	SEND VOICE MESSAGE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SendVoiceMessageXml	Command	SEND VOICE MESSAGE XML	1	Void	S	SEND VOICE MESSAGE XML	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetCameraSwitchBank	Command	SET CAMERA SWITCH BANK	2	Void	I,I	SET CAMERA SWITCH BANK	Dark Basic Pro SDK/DarkSDK/Camera/Camera.rc
+Sdk	Command_SetCharacterCreatorTones	Command	SET CHARACTER CREATOR TONES	6	Void	I,I,R,R,R,R	SET CHARACTER CREATOR TONES	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetChildWindowTruePixel	Command	SET CHILD WINDOW TRUE PIXEL	1	Void	I	SET CHILD WINDOW TRUE PIXEL	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Command_SetEax	Command	SET EAX	1	Void	I	SET EAX	Dark Basic Pro SDK/DarkSDK/Sound/Sound.rc
+Sdk	Command_SetEaxAirAbsorption	Command	SET EAX AIR ABSORPTION	2	Void	I,R	SET EAX AIR ABSORPTION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxClipDecayHf	Command	SET EAX CLIP DECAY HF	2	Void	I,I	SET EAX CLIP DECAY HF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxConeInsideAngle	Command	SET EAX CONE INSIDE ANGLE	2	Void	I,I	SET EAX CONE INSIDE ANGLE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxConeOrientationX	Command	SET EAX CONE ORIENTATION X	2	Void	I,R	SET EAX CONE ORIENTATION X	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxConeOrientationY	Command	SET EAX CONE ORIENTATION Y	2	Void	I,R	SET EAX CONE ORIENTATION Y	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxConeOrientationZ	Command	SET EAX CONE ORIENTATION Z	2	Void	I,R	SET EAX CONE ORIENTATION Z	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxConeOutsideAngle	Command	SET EAX CONE OUTSIDE ANGLE	2	Void	I,I	SET EAX CONE OUTSIDE ANGLE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxConeOutsideVolume	Command	SET EAX CONE OUTSIDE VOLUME	2	Void	I,I	SET EAX CONE OUTSIDE VOLUME	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxDecayHfRatio	Command	SET EAX DECAY HF RATIO	2	Void	I,R	SET EAX DECAY HF RATIO	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxDecayTime	Command	SET EAX DECAY TIME	2	Void	I,R	SET EAX DECAY TIME	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxEnvironment	Command	SET EAX ENVIRONMENT	2	Void	I,I	SET EAX ENVIRONMENT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxEnvironmentDiffusion	Command	SET EAX ENVIRONMENT DIFFUSION	2	Void	I,R	SET EAX ENVIRONMENT DIFFUSION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxEnvironmentSize	Command	SET EAX ENVIRONMENT SIZE	2	Void	I,R	SET EAX ENVIRONMENT SIZE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxFlags	Command	SET EAX FLAGS	2	Void	I,I	SET EAX FLAGS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxMaxDistance	Command	SET EAX MAX DISTANCE	2	Void	I,R	SET EAX MAX DISTANCE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxMinDistance	Command	SET EAX MIN DISTANCE	2	Void	I,R	SET EAX MIN DISTANCE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxReflections	Command	SET EAX REFLECTIONS	2	Void	I,I	SET EAX REFLECTIONS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxReflectionsDelay	Command	SET EAX REFLECTIONS DELAY	2	Void	I,R	SET EAX REFLECTIONS DELAY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxReverb	Command	SET EAX REVERB	2	Void	I,I	SET EAX REVERB	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxReverbDelay	Command	SET EAX REVERB DELAY	2	Void	I,R	SET EAX REVERB DELAY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxRoom	Command	SET EAX ROOM	2	Void	I,I	SET EAX ROOM	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxRoomHf	Command	SET EAX ROOM HF	2	Void	I,I	SET EAX ROOM HF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxRoomRolloff	Command	SET EAX ROOM ROLLOFF	2	Void	I,R	SET EAX ROOM ROLLOFF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxScaleDecayTime	Command	SET EAX SCALE DECAY TIME	2	Void	I,I	SET EAX SCALE DECAY TIME	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxScaleReflections	Command	SET EAX SCALE REFLECTIONS	2	Void	I,I	SET EAX SCALE REFLECTIONS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxScaleReflectionsDelay	Command	SET EAX SCALE REFLECTIONS DELAY	2	Void	I,I	SET EAX SCALE REFLECTIONS DELAY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxScaleReverb	Command	SET EAX SCALE REVERB	2	Void	I,I	SET EAX SCALE REVERB	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxScaleReverbDelay	Command	SET EAX SCALE REVERB DELAY	2	Void	I,I	SET EAX SCALE REVERB DELAY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceAbsorption	Command	SET EAX SOURCE ABSORPTION	2	Void	I,R	SET EAX SOURCE ABSORPTION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceAffectDirectHf	Command	SET EAX SOURCE AFFECT DIRECT HF	2	Void	I,I	SET EAX SOURCE AFFECT DIRECT HF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceAffectRoom	Command	SET EAX SOURCE AFFECT ROOM	2	Void	I,I	SET EAX SOURCE AFFECT ROOM	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceAffectRoomHf	Command	SET EAX SOURCE AFFECT ROOM HF	2	Void	I,I	SET EAX SOURCE AFFECT ROOM HF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceDirect	Command	SET EAX SOURCE DIRECT	2	Void	I,I	SET EAX SOURCE DIRECT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceDirectHf	Command	SET EAX SOURCE DIRECT HF	2	Void	I,I	SET EAX SOURCE DIRECT HF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceFlags	Command	SET EAX SOURCE FLAGS	2	Void	I,I	SET EAX SOURCE FLAGS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceObstruction	Command	SET EAX SOURCE OBSTRUCTION	2	Void	I,I	SET EAX SOURCE OBSTRUCTION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceObstructionLf	Command	SET EAX SOURCE OBSTRUCTION LF	2	Void	I,R	SET EAX SOURCE OBSTRUCTION LF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceOcclusion	Command	SET EAX SOURCE OCCLUSION	2	Void	I,I	SET EAX SOURCE OCCLUSION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceOcclusionLf	Command	SET EAX SOURCE OCCLUSION LF	2	Void	I,R	SET EAX SOURCE OCCLUSION LF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceOcclusionRoom	Command	SET EAX SOURCE OCCLUSION ROOM	2	Void	I,R	SET EAX SOURCE OCCLUSION ROOM	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceOutside	Command	SET EAX SOURCE OUTSIDE	2	Void	I,I	SET EAX SOURCE OUTSIDE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceRolloff	Command	SET EAX SOURCE ROLLOFF	2	Void	I,R	SET EAX SOURCE ROLLOFF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEaxSourceRoom	Command	SET EAX SOURCE ROOM	2	Void	I,I	SET EAX SOURCE ROOM	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetEffectLodTechnique	Command	SET EFFECT LOD TECHNIQUE	2	Void	I,S	SET EFFECT LOD TECHNIQUE	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetEffectShadowMappingMode	Command	SET EFFECT SHADOW MAPPING MODE	1	Void	I	SET EFFECT SHADOW MAPPING MODE	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetEffectToShadowMapping	Command	SET EFFECT TO SHADOW MAPPING	1	Void	I	SET EFFECT TO SHADOW MAPPING	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetEmulationOff	Command	SET EMULATION OFF	0	Void	-	SET EMULATION OFF	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Command_SetEmulationOn	Command	SET EMULATION ON	0	Void	-	SET EMULATION ON	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Command_SetFastBoundsCalculation	Command	SET FAST BOUNDS CALCULATION	1	Void	I	SET FAST BOUNDS CALCULATION	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetFileBlockCompression	Command	SET FILE BLOCK COMPRESSION	2	Void	I,I	SET FILE BLOCK COMPRESSION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetFileBlockKey	Command	SET FILE BLOCK KEY	2	Void	I,S	SET FILE BLOCK KEY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetFileMapDword	Command	SET FILE MAP DWORD	3	Void	I,I,I	SET FILE MAP DWORD	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetFileMapFloat	Command	SET FILE MAP FLOAT	3	Void	I,I,R	SET FILE MAP FLOAT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetFileMapString	Command	SET FILE MAP STRING$	3	Void	I,I,S	SET FILE MAP STRING$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetImageAutomipmap	Command	SET IMAGE AUTOMIPMAP	1	Void	I	SET IMAGE AUTOMIPMAP	Dark Basic Pro SDK/DarkSDK/Image/Image.rc
+Sdk	Command_SetLegacyConvertMode	Command	SET LEGACY CONVERT MODE	1	Void	I	SET LEGACY CONVERT MODE	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetMipmapMode	Command	SET MIPMAP MODE	1	Void	I	SET MIPMAP MODE	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetNvperfhud	Command	SET NVPERFHUD	1	Void	I	SET NVPERFHUD	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Command_SetObjectArbitary	Command	SET OBJECT ARBITARY	2	Void	I,I	SET OBJECT ARBITARY	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetObjectCollisionProperty	Command	SET OBJECT COLLISION PROPERTY	2	Void	I,I	SET OBJECT COLLISION PROPERTY	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetObjectKeyframe	Command	SET OBJECT KEYFRAME	2	Void	I,I	SET OBJECT KEYFRAME	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc,Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetObjectLod	Command	SET OBJECT LOD	3	Void	I,I,R	SET OBJECT LOD	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetObjectOcclusion	Command	SET OBJECT OCCLUSION	6	Void	I,I,I,I,I,I	SET OBJECT OCCLUSION	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetObjectPanelQuad	Command	SET OBJECT PANEL QUAD	13	Void	I,I,R,R,R,R,R,R,R,R,I,I,I	SET OBJECT PANEL QUAD	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetObjectRotationZxy	Command	SET OBJECT ROTATION ZXY	1	Void	I	SET OBJECT ROTATION ZXY	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetOcclusionMode	Command	SET OCCLUSION MODE	1	Void	I	SET OCCLUSION MODE	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Command_SetOggVorbisVolume	Command	SET OGG VORBIS VOLUME	2	Void	I,I	SET OGG VORBIS VOLUME	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_SetProjectionMatrix4	Command	SET PROJECTION MATRIX4	1	Void	I	SET PROJECTION MATRIX4	Dark Basic Pro SDK/DarkSDK/Vectors/Vectors.rc
+Sdk	Command_SetRegistryHkey	Command	SET REGISTRY HKEY	1	Void	I	SET REGISTRY HKEY	Dark Basic Pro SDK/DarkSDK/Input/Input.rc
+Sdk	Command_SetSpriteFilterMode	Command	SET SPRITE FILTER MODE	1	Void	I	SET SPRITE FILTER MODE	Dark Basic Pro SDK/DarkSDK/Sprites/Sprites.rc
+Sdk	Command_SetStaticCulling	Command	SET STATIC CULLING	1	Void	I	SET STATIC CULLING	Dark Basic Pro SDK/DarkSDKMore/GameFX/GameFX.rc
+Sdk	Command_SetStaticEffectTechnique	Command	SET STATIC EFFECT TECHNIQUE	1	Void	S	SET STATIC EFFECT TECHNIQUE	Dark Basic Pro SDK/DarkSDKMore/GameFX/GameFX.rc
+Sdk	Command_SetStaticObjectsTexture	Command	SET STATIC OBJECTS TEXTURE	1	Void	I	SET STATIC OBJECTS TEXTURE	Dark Basic Pro SDK/DarkSDK/Objects/Objects.rc
+Sdk	Command_SetVoice	Command	SET VOICE	1	Void	I	SET VOICE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetVoiceSpeed	Command	SET VOICE SPEED	1	Void	I	SET VOICE SPEED	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_SetVoiceVolume	Command	SET VOICE VOLUME	1	Void	I	SET VOICE VOLUME	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_StopOggVorbis	Command	STOP OGG VORBIS	1	Void	I	STOP OGG VORBIS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Command_TextureBackdrop	Command	TEXTURE BACKDROP	1	Void	I	TEXTURE BACKDROP	Dark Basic Pro SDK/DarkSDK/Camera/Camera.rc
+Sdk	Command_TextureBackdrop	Command	TEXTURE BACKDROP	2	Void	I,I	TEXTURE BACKDROP	Dark Basic Pro SDK/DarkSDK/Camera/Camera.rc
+Sdk	Command_TransferImage	Command	TRANSFER IMAGE	4	Void	I,I,I,I	TRANSFER IMAGE	Dark Basic Pro SDK/DarkSDK/Image/Image.rc
+Sdk	Command_UpdateDataFile	Command	UPDATE DATA FILE	1	Void	I	UPDATE DATA FILE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Command_Vector2Add	Command	VECTOR2 ADD	3	Void	I,I,I	VECTOR2 ADD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Div	Command	VECTOR2 DIV	3	Void	I,I,I	VECTOR2 DIV	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Divide	Command	VECTOR2 DIVIDE	3	Void	I,I,I	VECTOR2 DIVIDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Lerp	Command	VECTOR2 LERP	4	Void	I,I,I,R	VECTOR2 LERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Mul	Command	VECTOR2 MUL	3	Void	I,I,I	VECTOR2 MUL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Multiply	Command	VECTOR2 MULTIPLY	3	Void	I,I,I	VECTOR2 MULTIPLY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Normalize	Command	VECTOR2 NORMALIZE	1	Void	I	VECTOR2 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Normalize	Command	VECTOR2 NORMALIZE	2	Void	I,I	VECTOR2 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2NormalizeFast	Command	VECTOR2 NORMALIZE FAST	1	Void	I	VECTOR2 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2NormalizeFast	Command	VECTOR2 NORMALIZE FAST	2	Void	I,I	VECTOR2 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Scale	Command	VECTOR2 SCALE	3	Void	I,I,R	VECTOR2 SCALE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Sub	Command	VECTOR2 SUB	3	Void	I,I,I	VECTOR2 SUB	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector2Subtract	Command	VECTOR2 SUBTRACT	3	Void	I,I,I	VECTOR2 SUBTRACT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Add	Command	VECTOR3 ADD	3	Void	I,I,I	VECTOR3 ADD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Cross	Command	VECTOR3 CROSS	3	Void	I,I,I	VECTOR3 CROSS	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Div	Command	VECTOR3 DIV	3	Void	I,I,I	VECTOR3 DIV	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Divide	Command	VECTOR3 DIVIDE	3	Void	I,I,I	VECTOR3 DIVIDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3EulerLookAt	Command	VECTOR3 EULER LOOK AT	3	Void	I,I,I	VECTOR3 EULER LOOK AT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3EulerLookAtFast	Command	VECTOR3 EULER LOOK AT FAST	3	Void	I,I,I	VECTOR3 EULER LOOK AT FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Lerp	Command	VECTOR3 LERP	4	Void	I,I,I,R	VECTOR3 LERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Mul	Command	VECTOR3 MUL	3	Void	I,I,I	VECTOR3 MUL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Multiply	Command	VECTOR3 MULTIPLY	3	Void	I,I,I	VECTOR3 MULTIPLY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Normalize	Command	VECTOR3 NORMALIZE	1	Void	I	VECTOR3 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Normalize	Command	VECTOR3 NORMALIZE	2	Void	I,I	VECTOR3 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3NormalizeFast	Command	VECTOR3 NORMALIZE FAST	1	Void	I	VECTOR3 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3NormalizeFast	Command	VECTOR3 NORMALIZE FAST	2	Void	I,I	VECTOR3 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3RotateByQuat	Command	VECTOR3 ROTATE BY QUAT	3	Void	I,I,I	VECTOR3 ROTATE BY QUAT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Scale	Command	VECTOR3 SCALE	3	Void	I,I,R	VECTOR3 SCALE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Sub	Command	VECTOR3 SUB	3	Void	I,I,I	VECTOR3 SUB	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Subtract	Command	VECTOR3 SUBTRACT	3	Void	I,I,I	VECTOR3 SUBTRACT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Transform3	Command	VECTOR3 TRANSFORM3	3	Void	I,I,I	VECTOR3 TRANSFORM3	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3Transform4	Command	VECTOR3 TRANSFORM4	3	Void	I,I,I	VECTOR3 TRANSFORM4	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3TriangleNormal	Command	VECTOR3 TRIANGLE NORMAL	4	Void	I,I,I,I	VECTOR3 TRIANGLE NORMAL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector3TriangleSlide	Command	VECTOR3 TRIANGLE SLIDE	4	Void	I,I,I,R	VECTOR3 TRIANGLE SLIDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Add	Command	VECTOR4 ADD	3	Void	I,I,I	VECTOR4 ADD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Cross	Command	VECTOR4 CROSS	4	Void	I,I,I,I	VECTOR4 CROSS	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Div	Command	VECTOR4 DIV	3	Void	I,I,I	VECTOR4 DIV	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Divide	Command	VECTOR4 DIVIDE	3	Void	I,I,I	VECTOR4 DIVIDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Lerp	Command	VECTOR4 LERP	4	Void	I,I,I,R	VECTOR4 LERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Mul	Command	VECTOR4 MUL	3	Void	I,I,I	VECTOR4 MUL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Multiply	Command	VECTOR4 MULTIPLY	3	Void	I,I,I	VECTOR4 MULTIPLY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Normalize	Command	VECTOR4 NORMALIZE	1	Void	I	VECTOR4 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Normalize	Command	VECTOR4 NORMALIZE	2	Void	I,I	VECTOR4 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4NormalizeFast	Command	VECTOR4 NORMALIZE FAST	1	Void	I	VECTOR4 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4NormalizeFast	Command	VECTOR4 NORMALIZE FAST	2	Void	I,I	VECTOR4 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Scale	Command	VECTOR4 SCALE	3	Void	I,I,R	VECTOR4 SCALE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Sub	Command	VECTOR4 SUB	3	Void	I,I,I	VECTOR4 SUB	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_Vector4Subtract	Command	VECTOR4 SUBTRACT	3	Void	I,I,I	VECTOR4 SUBTRACT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Command_WaitForFileMapEvent	Command	WAIT FOR FILE MAP EVENT	1	Void	I	WAIT FOR FILE MAP EVENT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_BphysDeleteragdoll	Function	BPHYS_DELETERAGDOLL	1	Integer	I	BPHYS_DELETERAGDOLL	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdolladdbone	Function	BPHYS_RAGDOLLADDBONE	5	Integer	I,I,R,I,I	BPHYS_RAGDOLLADDBONE	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdolladdbone2	Function	BPHYS_RAGDOLLADDBONE2	6	Integer	I,I,R,R,I,I	BPHYS_RAGDOLLADDBONE2	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdollexist	Function	BPHYS_RAGDOLLEXIST	1	Integer	I	BPHYS_RAGDOLLEXIST	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdollgetboneobjid	Function	BPHYS_RAGDOLLGETBONEOBJID	2	Integer	I,I	BPHYS_RAGDOLLGETBONEOBJID	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdollgetidfromboneobject	Function	BPHYS_RAGDOLLGETIDFROMBONEOBJECT	1	Integer	I	BPHYS_RAGDOLLGETIDFROMBONEOBJECT	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdollhidebones	Function	BPHYS_RAGDOLLHIDEBONES	1	Integer	I	BPHYS_RAGDOLLHIDEBONES	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdollisstatic	Function	BPHYS_RAGDOLLISSTATIC	1	Integer	I	BPHYS_RAGDOLLISSTATIC	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdollsetstatic	Function	BPHYS_RAGDOLLSETSTATIC	2	Integer	I,I	BPHYS_RAGDOLLSETSTATIC	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_BphysRagdollshowbones	Function	BPHYS_RAGDOLLSHOWBONES	1	Integer	I	BPHYS_RAGDOLLSHOWBONES	Dark Basic Pro SDK/DarkSDK/Bullet/Script1.RC
+Sdk	Function_Clamp	Function	CLAMP	3	Real	R,R,R	CLAMP	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_ClampSnorm	Function	CLAMP SNORM	1	Real	R	CLAMP SNORM	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_ClampUnorm	Function	CLAMP UNORM	1	Real	R	CLAMP UNORM	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_CopySign	Function	COPY SIGN	2	Real	R,R	COPY SIGN	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_DeleteVector	Function	DELETE VECTOR	1	Integer	I	DELETE VECTOR	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_DirectxRefreshRate	Function	DIRECTX REFRESH RATE$	0	String	-	DIRECTX REFRESH RATE$	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_DirectxVersion	Function	DIRECTX VERSION$	0	String	-	DIRECTX VERSION$	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_EmulationMode	Function	EMULATION MODE	0	Integer	-	EMULATION MODE	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_FloatToDwordFast	Function	FLOAT TO DWORD FAST	1	Integer	R	FLOAT TO DWORD FAST	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_FloatToIntFast	Function	FLOAT TO INT FAST	1	Integer	R	FLOAT TO INT FAST	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_GetCdCount	Function	GET CD COUNT	0	Integer	-	GET CD COUNT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetCdLetter	Function	GET CD LETTER$	1	String	I	GET CD LETTER$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetChildWindowHeight	Function	GET CHILD WINDOW HEIGHT	0	Integer	-	GET CHILD WINDOW HEIGHT	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetChildWindowHeight	Function	GET CHILD WINDOW HEIGHT	1	Integer	I	GET CHILD WINDOW HEIGHT	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetChildWindowWidth	Function	GET CHILD WINDOW WIDTH	0	Integer	-	GET CHILD WINDOW WIDTH	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetChildWindowWidth	Function	GET CHILD WINDOW WIDTH	1	Integer	I	GET CHILD WINDOW WIDTH	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetChildWindowX	Function	GET CHILD WINDOW X	0	Integer	-	GET CHILD WINDOW X	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetChildWindowY	Function	GET CHILD WINDOW Y	0	Integer	-	GET CHILD WINDOW Y	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetComputerName	Function	GET COMPUTER NAME$	0	String	-	GET COMPUTER NAME$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDataFileCell	Function	GET DATA FILE CELL	3	String	I,I,I	GET DATA FILE CELL	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDataFileColumnCount	Function	GET DATA FILE COLUMN COUNT	1	Integer	I	GET DATA FILE COLUMN COUNT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDataFileExists	Function	GET DATA FILE EXISTS	1	Integer	I	GET DATA FILE EXISTS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDataFileRowCount	Function	GET DATA FILE ROW COUNT	1	Integer	I	GET DATA FILE ROW COUNT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDisplayDepth	Function	GET DISPLAY DEPTH	0	Integer	-	GET DISPLAY DEPTH	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDisplayHeight	Function	GET DISPLAY HEIGHT	0	Integer	-	GET DISPLAY HEIGHT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDisplayRefreshRate	Function	GET DISPLAY REFRESH RATE	0	Integer	-	GET DISPLAY REFRESH RATE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDisplayWidth	Function	GET DISPLAY WIDTH	0	Integer	-	GET DISPLAY WIDTH	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveBytesPerSector	Function	GET DRIVE BYTES PER SECTOR	1	Integer	I	GET DRIVE BYTES PER SECTOR	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveCount	Function	GET DRIVE COUNT	0	Integer	-	GET DRIVE COUNT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveCylinderCount	Function	GET DRIVE CYLINDER COUNT	1	Integer	I	GET DRIVE CYLINDER COUNT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveFileLengthSupport	Function	GET DRIVE FILE LENGTH SUPPORT	1	Integer	I	GET DRIVE FILE LENGTH SUPPORT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveFileSystem	Function	GET DRIVE FILE SYSTEM$	1	String	I	GET DRIVE FILE SYSTEM$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveFreeSpace	Function	GET DRIVE FREE SPACE	2	Integer	I,I	GET DRIVE FREE SPACE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveSectorsPerTrack	Function	GET DRIVE SECTORS PER TRACK	1	Integer	I	GET DRIVE SECTORS PER TRACK	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveSerial	Function	GET DRIVE SERIAL$	1	String	I	GET DRIVE SERIAL$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveTotalSize	Function	GET DRIVE TOTAL SIZE	2	Integer	I,I	GET DRIVE TOTAL SIZE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveTrackCount	Function	GET DRIVE TRACK COUNT	1	Integer	I	GET DRIVE TRACK COUNT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetDriveUsedSpace	Function	GET DRIVE USED SPACE	2	Integer	I,I	GET DRIVE USED SPACE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEax	Function	GET EAX	0	Integer	-	GET EAX	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxAirAbsorption	Function	GET EAX AIR ABSORPTION	1	Real	I	GET EAX AIR ABSORPTION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxConeInsideAngle	Function	GET EAX CONE INSIDE ANGLE	1	Integer	I	GET EAX CONE INSIDE ANGLE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxConeOrientationX	Function	GET EAX CONE ORIENTATION X	1	Real	I	GET EAX CONE ORIENTATION X	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxConeOrientationY	Function	GET EAX CONE ORIENTATION Y	1	Real	I	GET EAX CONE ORIENTATION Y	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxConeOrientationZ	Function	GET EAX CONE ORIENTATION Z	1	Real	I	GET EAX CONE ORIENTATION Z	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxConeOutsideAngle	Function	GET EAX CONE OUTSIDE ANGLE	1	Integer	I	GET EAX CONE OUTSIDE ANGLE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxConeOutsideVolume	Function	GET EAX CONE OUTSIDE VOLUME	1	Integer	I	GET EAX CONE OUTSIDE VOLUME	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxDecayHfRatio	Function	GET EAX DECAY HF RATIO	1	Real	I	GET EAX DECAY HF RATIO	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxEnvironment	Function	GET EAX ENVIRONMENT	1	Integer	I	GET EAX ENVIRONMENT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxEnvironmentDiffusion	Function	GET EAX ENVIRONMENT DIFFUSION	1	Real	I	GET EAX ENVIRONMENT DIFFUSION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxEnvironmentSize	Function	GET EAX ENVIRONMENT SIZE	1	Real	I	GET EAX ENVIRONMENT SIZE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxFlags	Function	GET EAX FLAGS	1	Integer	I	GET EAX FLAGS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxMaxDistance	Function	GET EAX MAX DISTANCE	1	Real	I	GET EAX MAX DISTANCE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxMinDistance	Function	GET EAX MIN DISTANCE	1	Real	I	GET EAX MIN DISTANCE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxReflections	Function	GET EAX REFLECTIONS	1	Integer	I	GET EAX REFLECTIONS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxReflectionsDelay	Function	GET EAX REFLECTIONS DELAY	1	Real	I	GET EAX REFLECTIONS DELAY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxReverb	Function	GET EAX REVERB	1	Integer	I	GET EAX REVERB	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxReverbDelay	Function	GET EAX REVERB DELAY	1	Real	I	GET EAX REVERB DELAY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxRoom	Function	GET EAX ROOM	1	Integer	I	GET EAX ROOM	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxRoomDecayTime	Function	GET EAX ROOM DECAY TIME	1	Real	I	GET EAX ROOM DECAY TIME	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxRoomHf	Function	GET EAX ROOM HF	1	Integer	I	GET EAX ROOM HF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxRoomRolloff	Function	GET EAX ROOM ROLLOFF	1	Real	I	GET EAX ROOM ROLLOFF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceAbsorption	Function	GET EAX SOURCE ABSORPTION	1	Real	I	GET EAX SOURCE ABSORPTION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceDirect	Function	GET EAX SOURCE DIRECT	1	Integer	I	GET EAX SOURCE DIRECT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceDirectHf	Function	GET EAX SOURCE DIRECT HF	1	Integer	I	GET EAX SOURCE DIRECT HF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceFlags	Function	GET EAX SOURCE FLAGS	1	Integer	I	GET EAX SOURCE FLAGS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceObstruction	Function	GET EAX SOURCE OBSTRUCTION	1	Integer	I	GET EAX SOURCE OBSTRUCTION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceObstructionLf	Function	GET EAX SOURCE OBSTRUCTION LF	1	Real	I	GET EAX SOURCE OBSTRUCTION LF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceOcclusion	Function	GET EAX SOURCE OCCLUSION	1	Integer	I	GET EAX SOURCE OCCLUSION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceOcclusionLf	Function	GET EAX SOURCE OCCLUSION LF	1	Real	I	GET EAX SOURCE OCCLUSION LF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceOcclusionRoom	Function	GET EAX SOURCE OCCLUSION ROOM	1	Real	I	GET EAX SOURCE OCCLUSION ROOM	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceOutside	Function	GET EAX SOURCE OUTSIDE	1	Integer	I	GET EAX SOURCE OUTSIDE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceRolloff	Function	GET EAX SOURCE ROLLOFF	1	Real	I	GET EAX SOURCE ROLLOFF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceRoom	Function	GET EAX SOURCE ROOM	1	Integer	I	GET EAX SOURCE ROOM	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEaxSourceRoomHf	Function	GET EAX SOURCE ROOM HF	1	Real	I	GET EAX SOURCE ROOM HF	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetEffectParameterIndex	Function	GET EFFECT PARAMETER INDEX	2	Integer	I,S	GET EFFECT PARAMETER INDEX	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_GetFileBlockCompression	Function	GET FILE BLOCK COMPRESSION	1	Integer	I	GET FILE BLOCK COMPRESSION	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetFileBlockCount	Function	GET FILE BLOCK COUNT	1	Integer	I	GET FILE BLOCK COUNT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetFileBlockDataExists	Function	GET FILE BLOCK DATA EXISTS	2	Integer	I,S	GET FILE BLOCK DATA EXISTS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetFileBlockExists	Function	GET FILE BLOCK EXISTS	1	Integer	I	GET FILE BLOCK EXISTS	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetFileBlockKey	Function	GET FILE BLOCK KEY	1	Integer	I	GET FILE BLOCK KEY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetFileBlockSize	Function	GET FILE BLOCK SIZE	1	Integer	I	GET FILE BLOCK SIZE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetFileMapDword	Function	GET FILE MAP DWORD	2	Integer	I,I	GET FILE MAP DWORD	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetFileMapFloat	Function	GET FILE MAP FLOAT	2	Real	I,I	GET FILE MAP FLOAT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetFileMapString	Function	GET FILE MAP STRING$	2	String	I,I	GET FILE MAP STRING$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetInstalledMemory	Function	GET INSTALLED MEMORY	1	Integer	I	GET INSTALLED MEMORY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetIpAddress	Function	GET IP ADDRESS$	0	String	-	GET IP ADDRESS$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetLimbPolygonCount	Function	GET LIMB POLYGON COUNT	2	Integer	I,I	GET LIMB POLYGON COUNT	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_GetMemoryAvailable	Function	GET MEMORY AVAILABLE	1	Integer	I	GET MEMORY AVAILABLE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetMemoryPercentFree	Function	GET MEMORY PERCENT FREE	0	Integer	-	GET MEMORY PERCENT FREE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetMemoryPercentUsed	Function	GET MEMORY PERCENT USED	0	Integer	-	GET MEMORY PERCENT USED	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetMultimaterialCount	Function	GET MULTIMATERIAL COUNT	1	Integer	I	GET MULTIMATERIAL COUNT	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_GetObjectOcclusion	Function	GET OBJECT OCCLUSION	1	Integer	I	GET OBJECT OCCLUSION	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_GetObjectPolygonCount	Function	GET OBJECT POLYGON COUNT	1	Integer	I	GET OBJECT POLYGON COUNT	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_GetObjectVertexCount	Function	GET OBJECT VERTEX COUNT	1	Integer	I	GET OBJECT VERTEX COUNT	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_GetOggVorbisExists	Function	GET OGG VORBIS EXISTS	1	Integer	I	GET OGG VORBIS EXISTS	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Function_GetOggVorbisState	Function	GET OGG VORBIS STATE	1	Integer	I	GET OGG VORBIS STATE	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Function_GetOggVorbisVolume	Function	GET OGG VORBIS VOLUME	1	Integer	I	GET OGG VORBIS VOLUME	Official Plugins/Enhancement Pack/Code/ogg vorbis/commands.rc
+Sdk	Function_GetProcessorBrand	Function	GET PROCESSOR BRAND$	1	String	I	GET PROCESSOR BRAND$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorCount	Function	GET PROCESSOR COUNT	0	Integer	-	GET PROCESSOR COUNT	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorFamilyId	Function	GET PROCESSOR FAMILY ID	1	Integer	I	GET PROCESSOR FAMILY ID	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorFrequency	Function	GET PROCESSOR FREQUENCY	1	Integer	I	GET PROCESSOR FREQUENCY	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorModelId	Function	GET PROCESSOR MODEL ID	1	Integer	I	GET PROCESSOR MODEL ID	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorName	Function	GET PROCESSOR NAME$	1	String	I	GET PROCESSOR NAME$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorPlatform	Function	GET PROCESSOR PLATFORM$	1	String	I	GET PROCESSOR PLATFORM$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorSteppingId	Function	GET PROCESSOR STEPPING ID	1	Integer	I	GET PROCESSOR STEPPING ID	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorTypeId	Function	GET PROCESSOR TYPE ID	1	Integer	I	GET PROCESSOR TYPE ID	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorUsage	Function	GET PROCESSOR USAGE	1	Integer	I	GET PROCESSOR USAGE	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetProcessorVendor	Function	GET PROCESSOR VENDOR$	1	String	I	GET PROCESSOR VENDOR$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetTrackingPitch	Function	GET TRACKING PITCH	1	Real	I	GET TRACKING PITCH	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetTrackingRoll	Function	GET TRACKING ROLL	1	Real	I	GET TRACKING ROLL	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetTrackingYaw	Function	GET TRACKING YAW	1	Real	I	GET TRACKING YAW	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_GetUserName	Function	GET USER NAME$	0	String	-	GET USER NAME$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetVoiceApi	Function	GET VOICE API	0	Integer	-	GET VOICE API	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetVoiceSpeed	Function	GET VOICE SPEED	0	Integer	-	GET VOICE SPEED	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetVoiceVolume	Function	GET VOICE VOLUME	0	Integer	-	GET VOICE VOLUME	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_GetWebClient	Function	GET WEB CLIENT$	0	String	-	GET WEB CLIENT$	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_IntersectAll	Function	INTERSECT ALL	9	Integer	I,I,R,R,R,R,R,R,I	INTERSECT ALL	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_InvSqrtFast	Function	INV SQRT FAST	1	Real	R	INV SQRT FAST	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_Lerp	Function	LERP	3	Real	R,R,R	LERP	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_LimbTexturePtr	Function	LIMB TEXTURE PTR	2	Integer	I,I	LIMB TEXTURE PTR	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_LmGetComplete	Function	LM GET COMPLETE	0	Integer	-	LM GET COMPLETE	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Function_LmGetPercent	Function	LM GET PERCENT	0	Real	-	LM GET PERCENT	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Function_LmGetStatus	Function	LM GET STATUS	0	String	-	LM GET STATUS	Official Plugins/DarkLIGHTS/LightMapper/LightMapper.rc
+Sdk	Function_MakeNewObjectPanel	Function	MAKE NEW OBJECT PANEL	2	Integer	I,I	MAKE NEW OBJECT PANEL	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_ManageMemory	Function	MANAGE MEMORY	2	Integer	I,I	MANAGE MEMORY	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_Matrix4Exist	Function	MATRIX4 EXIST	1	Integer	I	MATRIX4 EXIST	Dark Basic Pro SDK/DarkSDK/Vectors/Vectors.rc
+Sdk	Function_Max	Function	MAX	2	Real	R,R	MAX	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_Min	Function	MIN	2	Real	R,R	MIN	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_MultiplayerGetConnection	Function	MULTIPLAYER GET CONNECTION	0	Integer	-	MULTIPLAYER GET CONNECTION	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetId	Function	MULTIPLAYER GET ID	0	Integer	-	MULTIPLAYER GET ID	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetIpAddress	Function	MULTIPLAYER GET IP ADDRESS	0	String	-	MULTIPLAYER GET IP ADDRESS	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetMessageFloat	Function	MULTIPLAYER GET MESSAGE FLOAT	0	Real	-	MULTIPLAYER GET MESSAGE FLOAT	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetMessageInteger	Function	MULTIPLAYER GET MESSAGE INTEGER	0	Integer	-	MULTIPLAYER GET MESSAGE INTEGER	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetMessagePlayerFrom	Function	MULTIPLAYER GET MESSAGE PLAYER FROM	0	Integer	-	MULTIPLAYER GET MESSAGE PLAYER FROM	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetMessageString	Function	MULTIPLAYER GET MESSAGE STRING	0	String	-	MULTIPLAYER GET MESSAGE STRING	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetMessageType	Function	MULTIPLAYER GET MESSAGE TYPE	0	Integer	-	MULTIPLAYER GET MESSAGE TYPE	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetPlayerCount	Function	MULTIPLAYER GET PLAYER COUNT	0	Integer	-	MULTIPLAYER GET PLAYER COUNT	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetPlayerId	Function	MULTIPLAYER GET PLAYER ID	1	Integer	I	MULTIPLAYER GET PLAYER ID	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetPlayerName	Function	MULTIPLAYER GET PLAYER NAME	1	String	I	MULTIPLAYER GET PLAYER NAME	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerGetQueueSize	Function	MULTIPLAYER GET QUEUE SIZE	1	Integer	I	MULTIPLAYER GET QUEUE SIZE	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_MultiplayerMessageExists	Function	MULTIPLAYER MESSAGE EXISTS	0	Integer	-	MULTIPLAYER MESSAGE EXISTS	Dark Basic Pro SDK/DarkSDK/MultiplayerPlus/Script1.rc
+Sdk	Function_NewQuat	Function	NEW QUAT	0	Integer	-	NEW QUAT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_NewVector2	Function	NEW VECTOR2	0	Integer	-	NEW VECTOR2	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_NewVector3	Function	NEW VECTOR3	0	Integer	-	NEW VECTOR3	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_NewVector4	Function	NEW VECTOR4	0	Integer	-	NEW VECTOR4	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_NextPowerOfTwo	Function	NEXT POWER OF TWO	1	Integer	I	NEXT POWER OF TWO	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_NextPowerOfTwo	Function	NEXT POWER OF TWO	2	Integer	I,I	NEXT POWER OF TWO	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_ObjectScaleX	Function	OBJECT SCALE X	1	Real	I	OBJECT SCALE X	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_ObjectScaleY	Function	OBJECT SCALE Y	1	Real	I	OBJECT SCALE Y	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_ObjectScaleZ	Function	OBJECT SCALE Z	1	Real	I	OBJECT SCALE Z	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_ObjectStatisticsInteger	Function	OBJECT STATISTICS INTEGER	2	Integer	I,I	OBJECT STATISTICS INTEGER	Dark Basic Pro SDK/DarkSDK/Objects/ObjectsPlus.rc
+Sdk	Function_OpenFileDialog	Function	OPEN FILE DIALOG	3	String	S,S,S	OPEN FILE DIALOG	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_Perffreq	Function	PERFFREQ	0	Integer	-	PERFFREQ	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_QuatAdd	Function	QUAT ADD	3	Integer	I,I,I	QUAT ADD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatAxis	Function	QUAT AXIS	5	Integer	I,R,R,R,R	QUAT AXIS	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatConjugate	Function	QUAT CONJUGATE	1	Integer	I	QUAT CONJUGATE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatConjugate	Function	QUAT CONJUGATE	2	Integer	I,I	QUAT CONJUGATE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatCopy	Function	QUAT COPY	2	Integer	I,I	QUAT COPY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatDuplicate	Function	QUAT DUPLICATE	1	Integer	I	QUAT DUPLICATE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatFromEuler	Function	QUAT FROM EULER	2	Integer	I,I	QUAT FROM EULER	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatIdentity	Function	QUAT IDENTITY	0	Integer	-	QUAT IDENTITY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatIdentity	Function	QUAT IDENTITY	1	Integer	I	QUAT IDENTITY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatInvLengthFast	Function	QUAT INV LENGTH FAST	1	Real	I	QUAT INV LENGTH FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatInverse	Function	QUAT INVERSE	2	Integer	I,I	QUAT INVERSE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatInverseFast	Function	QUAT INVERSE FAST	2	Integer	I,I	QUAT INVERSE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatLength	Function	QUAT LENGTH	1	Real	I	QUAT LENGTH	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatLengthFast	Function	QUAT LENGTH FAST	1	Real	I	QUAT LENGTH FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatLerp	Function	QUAT LERP	4	Integer	I,I,I,R	QUAT LERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatMagnitude	Function	QUAT MAGNITUDE	1	Real	I	QUAT MAGNITUDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatMul	Function	QUAT MUL	3	Integer	I,I,I	QUAT MUL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatMultiply	Function	QUAT MULTIPLY	3	Integer	I,I,I	QUAT MULTIPLY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatNormalize	Function	QUAT NORMALIZE	1	Integer	I	QUAT NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatNormalize	Function	QUAT NORMALIZE	2	Integer	I,I	QUAT NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatNormalizeFast	Function	QUAT NORMALIZE FAST	1	Integer	I	QUAT NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatNormalizeFast	Function	QUAT NORMALIZE FAST	2	Integer	I,I	QUAT NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatRotationX	Function	QUAT ROTATION X	2	Integer	I,R	QUAT ROTATION X	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatRotationY	Function	QUAT ROTATION Y	2	Integer	I,R	QUAT ROTATION Y	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatRotationZ	Function	QUAT ROTATION Z	2	Integer	I,R	QUAT ROTATION Z	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatScale	Function	QUAT SCALE	3	Integer	I,I,R	QUAT SCALE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatSet	Function	QUAT SET	5	Integer	I,R,R,R,R	QUAT SET	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatSetW	Function	QUAT SET W	2	Integer	I,R	QUAT SET W	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatSetX	Function	QUAT SET X	2	Integer	I,R	QUAT SET X	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatSetY	Function	QUAT SET Y	2	Integer	I,R	QUAT SET Y	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatSetZ	Function	QUAT SET Z	2	Integer	I,R	QUAT SET Z	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatSlerp	Function	QUAT SLERP	4	Integer	I,I,I,R	QUAT SLERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatSub	Function	QUAT SUB	3	Integer	I,I,I	QUAT SUB	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatSubtract	Function	QUAT SUBTRACT	3	Integer	I,I,I	QUAT SUBTRACT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatToString	Function	QUAT TO STRING	1	String	I	QUAT TO STRING	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatW	Function	QUAT W	1	Real	I	QUAT W	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatX	Function	QUAT X	1	Real	I	QUAT X	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatY	Function	QUAT Y	1	Real	I	QUAT Y	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_QuatZ	Function	QUAT Z	1	Real	I	QUAT Z	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_ResetLeftEye	Function	RESET LEFT EYE	0	Integer	-	RESET LEFT EYE	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_SaveFileDialog	Function	SAVE FILE DIALOG	3	String	S,S,S	SAVE FILE DIALOG	Official Plugins/Enhancement Pack/Code/commands.rc
+Sdk	Function_Sign	Function	SIGN	1	Real	R	SIGN	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_SqrtFast	Function	SQRT FAST	1	Real	R	SQRT FAST	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_TempQuat	Function	TEMP QUAT	4	Integer	R,R,R,R	TEMP QUAT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_TempVector2	Function	TEMP VECTOR2	2	Integer	R,R	TEMP VECTOR2	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_TempVector3	Function	TEMP VECTOR3	3	Integer	R,R,R	TEMP VECTOR3	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_TempVector4	Function	TEMP VECTOR4	4	Integer	R,R,R,R	TEMP VECTOR4	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_TestMemory	Function	TEST MEMORY	1	Integer	I	TEST MEMORY	Dark Basic Pro SDK/DarkSDK/Core/DBDLLCore.rc
+Sdk	Function_Vector2Add	Function	VECTOR2 ADD	3	Integer	I,I,I	VECTOR2 ADD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Distance	Function	VECTOR2 DISTANCE	2	Real	I,I	VECTOR2 DISTANCE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2DistanceFast	Function	VECTOR2 DISTANCE FAST	2	Real	I,I	VECTOR2 DISTANCE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Div	Function	VECTOR2 DIV	3	Integer	I,I,I	VECTOR2 DIV	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Divide	Function	VECTOR2 DIVIDE	3	Integer	I,I,I	VECTOR2 DIVIDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Dot	Function	VECTOR2 DOT	2	Real	I,I	VECTOR2 DOT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2InvLengthFast	Function	VECTOR2 INV LENGTH FAST	1	Real	I	VECTOR2 INV LENGTH FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Length	Function	VECTOR2 LENGTH	1	Real	I	VECTOR2 LENGTH	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2LengthFast	Function	VECTOR2 LENGTH FAST	1	Real	I	VECTOR2 LENGTH FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Lerp	Function	VECTOR2 LERP	4	Integer	I,I,I,R	VECTOR2 LERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Magnitude	Function	VECTOR2 MAGNITUDE	1	Real	I	VECTOR2 MAGNITUDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Mul	Function	VECTOR2 MUL	3	Integer	I,I,I	VECTOR2 MUL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Multiply	Function	VECTOR2 MULTIPLY	3	Integer	I,I,I	VECTOR2 MULTIPLY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Normalize	Function	VECTOR2 NORMALIZE	1	Integer	I	VECTOR2 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Normalize	Function	VECTOR2 NORMALIZE	2	Integer	I,I	VECTOR2 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2NormalizeFast	Function	VECTOR2 NORMALIZE FAST	1	Integer	I	VECTOR2 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2NormalizeFast	Function	VECTOR2 NORMALIZE FAST	2	Integer	I,I	VECTOR2 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Scale	Function	VECTOR2 SCALE	3	Integer	I,I,R	VECTOR2 SCALE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Sub	Function	VECTOR2 SUB	3	Integer	I,I,I	VECTOR2 SUB	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2Subtract	Function	VECTOR2 SUBTRACT	3	Integer	I,I,I	VECTOR2 SUBTRACT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector2ToString	Function	VECTOR2 TO STRING	1	String	I	VECTOR2 TO STRING	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Add	Function	VECTOR3 ADD	3	Integer	I,I,I	VECTOR3 ADD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Cross	Function	VECTOR3 CROSS	3	Integer	I,I,I	VECTOR3 CROSS	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Distance	Function	VECTOR3 DISTANCE	2	Real	I,I	VECTOR3 DISTANCE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3DistanceFast	Function	VECTOR3 DISTANCE FAST	2	Real	I,I	VECTOR3 DISTANCE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Div	Function	VECTOR3 DIV	3	Integer	I,I,I	VECTOR3 DIV	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Divide	Function	VECTOR3 DIVIDE	3	Integer	I,I,I	VECTOR3 DIVIDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Dot	Function	VECTOR3 DOT	2	Real	I,I	VECTOR3 DOT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3EulerLookAt	Function	VECTOR3 EULER LOOK AT	3	Integer	I,I,I	VECTOR3 EULER LOOK AT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3EulerLookAtFast	Function	VECTOR3 EULER LOOK AT FAST	3	Integer	I,I,I	VECTOR3 EULER LOOK AT FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Forward	Function	VECTOR3 FORWARD	0	Integer	-	VECTOR3 FORWARD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3InvLengthFast	Function	VECTOR3 INV LENGTH FAST	1	Real	I	VECTOR3 INV LENGTH FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Length	Function	VECTOR3 LENGTH	1	Real	I	VECTOR3 LENGTH	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3LengthFast	Function	VECTOR3 LENGTH FAST	1	Real	I	VECTOR3 LENGTH FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Lerp	Function	VECTOR3 LERP	4	Integer	I,I,I,R	VECTOR3 LERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Magnitude	Function	VECTOR3 MAGNITUDE	1	Real	I	VECTOR3 MAGNITUDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Mul	Function	VECTOR3 MUL	3	Integer	I,I,I	VECTOR3 MUL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Multiply	Function	VECTOR3 MULTIPLY	3	Integer	I,I,I	VECTOR3 MULTIPLY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Normalize	Function	VECTOR3 NORMALIZE	1	Integer	I	VECTOR3 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Normalize	Function	VECTOR3 NORMALIZE	2	Integer	I,I	VECTOR3 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3NormalizeFast	Function	VECTOR3 NORMALIZE FAST	1	Integer	I	VECTOR3 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3NormalizeFast	Function	VECTOR3 NORMALIZE FAST	2	Integer	I,I	VECTOR3 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Right	Function	VECTOR3 RIGHT	0	Integer	-	VECTOR3 RIGHT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3RotateByQuat	Function	VECTOR3 ROTATE BY QUAT	3	Integer	I,I,I	VECTOR3 ROTATE BY QUAT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Scale	Function	VECTOR3 SCALE	3	Integer	I,I,R	VECTOR3 SCALE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Sub	Function	VECTOR3 SUB	3	Integer	I,I,I	VECTOR3 SUB	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Subtract	Function	VECTOR3 SUBTRACT	3	Integer	I,I,I	VECTOR3 SUBTRACT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3ToString	Function	VECTOR3 TO STRING	1	String	I	VECTOR3 TO STRING	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Transform3	Function	VECTOR3 TRANSFORM3	3	Integer	I,I,I	VECTOR3 TRANSFORM3	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Transform4	Function	VECTOR3 TRANSFORM4	3	Integer	I,I,I	VECTOR3 TRANSFORM4	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3TriangleNormal	Function	VECTOR3 TRIANGLE NORMAL	4	Integer	I,I,I,I	VECTOR3 TRIANGLE NORMAL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3TriangleSlide	Function	VECTOR3 TRIANGLE SLIDE	4	Integer	I,I,I,R	VECTOR3 TRIANGLE SLIDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector3Up	Function	VECTOR3 UP	0	Integer	-	VECTOR3 UP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Add	Function	VECTOR4 ADD	3	Integer	I,I,I	VECTOR4 ADD	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Cross	Function	VECTOR4 CROSS	4	Integer	I,I,I,I	VECTOR4 CROSS	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Distance	Function	VECTOR4 DISTANCE	2	Real	I,I	VECTOR4 DISTANCE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4DistanceFast	Function	VECTOR4 DISTANCE FAST	2	Real	I,I	VECTOR4 DISTANCE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Div	Function	VECTOR4 DIV	3	Integer	I,I,I	VECTOR4 DIV	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Divide	Function	VECTOR4 DIVIDE	3	Integer	I,I,I	VECTOR4 DIVIDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Dot	Function	VECTOR4 DOT	2	Real	I,I	VECTOR4 DOT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4InvLengthFast	Function	VECTOR4 INV LENGTH FAST	1	Real	I	VECTOR4 INV LENGTH FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Length	Function	VECTOR4 LENGTH	1	Real	I	VECTOR4 LENGTH	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4LengthFast	Function	VECTOR4 LENGTH FAST	1	Real	I	VECTOR4 LENGTH FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Lerp	Function	VECTOR4 LERP	4	Integer	I,I,I,R	VECTOR4 LERP	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Magnitude	Function	VECTOR4 MAGNITUDE	1	Real	I	VECTOR4 MAGNITUDE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Mul	Function	VECTOR4 MUL	3	Integer	I,I,I	VECTOR4 MUL	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Multiply	Function	VECTOR4 MULTIPLY	3	Integer	I,I,I	VECTOR4 MULTIPLY	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Normalize	Function	VECTOR4 NORMALIZE	1	Integer	I	VECTOR4 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Normalize	Function	VECTOR4 NORMALIZE	2	Integer	I,I	VECTOR4 NORMALIZE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4NormalizeFast	Function	VECTOR4 NORMALIZE FAST	1	Integer	I	VECTOR4 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4NormalizeFast	Function	VECTOR4 NORMALIZE FAST	2	Integer	I,I	VECTOR4 NORMALIZE FAST	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Scale	Function	VECTOR4 SCALE	3	Integer	I,I,R	VECTOR4 SCALE	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Sub	Function	VECTOR4 SUB	3	Integer	I,I,I	VECTOR4 SUB	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4Subtract	Function	VECTOR4 SUBTRACT	3	Integer	I,I,I	VECTOR4 SUBTRACT	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_Vector4ToString	Function	VECTOR4 TO STRING	1	String	I	VECTOR4 TO STRING	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_VectorW	Function	VECTOR W	1	Real	I	VECTOR W	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_VectorX	Function	VECTOR X	1	Real	I	VECTOR X	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_VectorY	Function	VECTOR Y	1	Real	I	VECTOR Y	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_VectorZ	Function	VECTOR Z	1	Real	I	VECTOR Z	Dark Basic Pro SDK/DarkSDK/Transforms/Transforms.rc
+Sdk	Function_WindowHeight	Function	WINDOW HEIGHT	0	Integer	-	WINDOW HEIGHT	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc
+Sdk	Function_WindowWidth	Function	WINDOW WIDTH	0	Integer	-	WINDOW WIDTH	Dark Basic Pro SDK/DarkSDK/Setup/Setup.rc

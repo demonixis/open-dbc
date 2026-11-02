@@ -123,6 +123,30 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
     CHECK(dbc::language::HasEvidence(ActiveOde, EvidenceSource::OdeExtension));
 }
 
+TEST_CASE("Every form the free DBPro release exports is catalogued")
+{
+    // Later core forms, DarkLIGHTS and the Enhancement Pack, catalogued before they run.
+    for (const auto& [Kind, Name] :
+         std::initializer_list<std::pair<SymbolKind, std::string_view>>{{SymbolKind::Function, "QUAT SLERP"},
+                                                                        {SymbolKind::Function, "MAX"},
+                                                                        {SymbolKind::Command, "BPHYS_RAGDOLLBEGIN"},
+                                                                        {SymbolKind::Command, "LM START"},
+                                                                        {SymbolKind::Command, "PLAY OGG VORBIS"}})
+    {
+        const dbc::language::SymbolDescriptor* Descriptor =
+            dbc::language::FindSymbol(LanguageProfile::DbPro, Kind, Name);
+        REQUIRE_MESSAGE(Descriptor != nullptr, Name);
+        CHECK_FALSE(dbc::language::AvailableIn(*Descriptor, LanguageProfile::Dbc));
+        CHECK(dbc::language::HasEvidence(*Descriptor, dbc::language::EvidenceSource::DbProReference));
+        CHECK(dbc::language::SupportFor(*Descriptor, LanguageProfile::DbPro) == SupportStatus::Unsupported);
+    }
+    // A Classic form the DBPro release also exports keeps its Classic behaviour.
+    const dbc::language::SymbolDescriptor& AlwaysActive =
+        dbc::language::Symbol(dbc::language::SymbolId::Command_AlwaysActiveOff);
+    CHECK(dbc::language::SupportFor(AlwaysActive, LanguageProfile::Dbc) == SupportStatus::Implemented);
+    CHECK(dbc::language::SupportFor(AlwaysActive, LanguageProfile::DbPro) == SupportStatus::Unsupported);
+}
+
 TEST_CASE("Removed plugins are named by their prefixes and forms")
 {
     using dbc::language::RemovedPluginOf;

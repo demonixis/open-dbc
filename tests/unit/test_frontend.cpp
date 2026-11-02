@@ -712,6 +712,17 @@ TEST_CASE("Professional does not inherit Classic bare user-function statement sy
     CHECK(HasCode(Program, "DBC2013"));
 }
 
+TEST_CASE("Free DBPro forms that do not run yet are explicitly unsupported")
+{
+    const dbc::language::Program Program =
+        dbc::language::Compile(Source("lm start\nbphys_ragdollbegin 1, 2.0\nplay ogg vorbis 1\nprint max(1.0, 2.0)\n",
+                                      dbc::language::LanguageProfile::DbPro, "dbpro-free-forms.dba"));
+    CHECK(std::count_if(Program.Diagnostics.begin(), Program.Diagnostics.end(),
+                        [](const auto& Diagnostic) { return Diagnostic.Code == "DBC2043"; }) == 4);
+    CHECK(std::all_of(Program.Diagnostics.begin(), Program.Diagnostics.end(),
+                      [](const auto& Diagnostic) { return Diagnostic.Code == "DBC2043"; }));
+}
+
 TEST_CASE("Forms of the removed plugins name their plugin")
 {
     const auto Diagnosed = [](const char* Text)
