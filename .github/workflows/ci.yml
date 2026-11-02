@@ -1,6 +1,5 @@
 name: CI
 
-# Which job runs which tests is explained in docs/CONTRIBUTING.md.
 on:
   push:
     branches: [main, 'ci/**']

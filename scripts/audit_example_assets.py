@@ -3,7 +3,7 @@
 
 - Every media file under examples/ (except the MIT DBPro import in
   examples/dbpro/tutorials and examples/dbpro/Hello World, covered by
-  docs/NOTICE.md, and the Android export template) needs a row in
+  licenses/NOTICE.md, and the Android export template) needs a row in
   examples/ASSETS.tsv with its SHA-256, licence, source and author.
 - No tracked file may match a digest of the removed DarkBASIC Classic content
   (scripts/data/dbc_content_sha256.txt), unless the same file is part of the

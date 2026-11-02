@@ -18,7 +18,7 @@ color backdrop 0
 set camera range 1, 1200
 set camera fov 70
 
-rem LEVEL_TILING comes from assets-src/blender/reactor_breach.py: it turns the
+rem LEVEL_TILING matches the Blender bake of the level: it turns the
 rem lightmap atlas UVs back into material repeats of 32 world units.
 #constant LEVEL_TILING 21.7687
 #constant EYE 16.0
@@ -1268,8 +1268,8 @@ data 120, 40, 190, 40, 120, 40, 40, -30
 
 rem layout:begin
 layout:
-rem The facility, in world units (floor at y = 0). assets-src/blender/reactor_breach.py
-rem reads these lines to model and light the level, so edit both together.
+rem The facility, in world units (floor at y = 0). The Blender model of the level
+rem was built from these lines, so edit both together.
 rem room: x1, z1, x2, z2, ceiling height
 data "room", -40, -170, 40, -90, 50
 data "room", -14, -90, 14, -50, 36

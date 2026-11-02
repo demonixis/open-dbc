@@ -1123,7 +1123,7 @@ namespace dbc
         }
 
         // DBO block codes from the MIT DarkBASIC Professional source (Dark-Basic-Pro repository,
-        // see docs/NOTICE.md).
+        // see licenses/NOTICE.md).
         constexpr uint32_t DboRootFrame = 1;
         constexpr uint32_t DboRootAnimationSet = 2;
         constexpr uint32_t DboFrameName = 101;

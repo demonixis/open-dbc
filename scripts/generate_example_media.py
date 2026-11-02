@@ -3,8 +3,7 @@
 
 Every sound is synthesised deterministically as a PCM WAV. Music is written as
 a MIDI file together with a WAV rendered from the same notes, which LOAD MUSIC
-plays when no MIDI synthesiser is available. Textures are baked from
-procedural materials by assets-src/blender/bake_textures.py.
+plays when no MIDI synthesiser is available.
 """
 
 import argparse

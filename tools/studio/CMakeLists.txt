@@ -413,14 +413,14 @@ set(OPENDBC_REPOSITORY_LICENSES
     "${CMAKE_SOURCE_DIR}/licenses/VintageDreamsWaves-COPYRIGHT.txt")
 if(APPLE)
     set_source_files_properties(${OPENDBC_REFERENCE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties("${CMAKE_SOURCE_DIR}/docs/NOTICE.md" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties("${CMAKE_SOURCE_DIR}/licenses/NOTICE.md" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_source_files_properties(${OPENDBC_REPOSITORY_LICENSES} ${OPENDBC_GENERATED_LICENSES}
         PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/licenses")
     set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/editor.png"
         PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_source_files_properties("${OPENDBC_RUNTIME_MANIFEST}"
         PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    target_sources(opendbc PRIVATE ${OPENDBC_REFERENCE_FILES} "${CMAKE_SOURCE_DIR}/docs/NOTICE.md"
+    target_sources(opendbc PRIVATE ${OPENDBC_REFERENCE_FILES} "${CMAKE_SOURCE_DIR}/licenses/NOTICE.md"
         "${CMAKE_SOURCE_DIR}/resources/editor.png" "${OPENDBC_RUNTIME_MANIFEST}"
         ${OPENDBC_REPOSITORY_LICENSES} ${OPENDBC_GENERATED_LICENSES})
 else()
@@ -433,7 +433,7 @@ else()
     endforeach()
     add_custom_command(TARGET opendbc POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:opendbc>/licenses"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/docs/NOTICE.md"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/licenses/NOTICE.md"
             "$<TARGET_FILE_DIR:opendbc>/NOTICE.md"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/resources/editor.png"
             "$<TARGET_FILE_DIR:opendbc>/editor.png"
@@ -682,7 +682,7 @@ if(NOT IOS AND NOT ANDROID)
                 "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/shaders"
             COMMAND ${CMAKE_COMMAND} -E make_directory
                 "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/licenses"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/docs/NOTICE.md"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/licenses/NOTICE.md"
                 "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/NOTICE.md"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OPENDBC_RUNTIME_MANIFEST}"
                 "${OPENDBC_ANDROID_TEMPLATE_OUTPUT}/app/src/main/assets/opendbc-runtime.json"
@@ -720,7 +720,7 @@ if(NOT IOS AND NOT ANDROID)
         endif()
         install(FILES ${OPENDBC_REFERENCE_FILES} DESTINATION bin COMPONENT Runtime)
         install(FILES ${OPENDBC_CANONICAL_SHADERS} DESTINATION bin/shaders COMPONENT Runtime)
-        install(FILES "${CMAKE_SOURCE_DIR}/docs/NOTICE.md" DESTINATION bin COMPONENT Runtime)
+        install(FILES "${CMAKE_SOURCE_DIR}/licenses/NOTICE.md" DESTINATION bin COMPONENT Runtime)
         install(FILES "${CMAKE_SOURCE_DIR}/resources/editor.png" DESTINATION bin COMPONENT Runtime)
         install(FILES "${OPENDBC_RUNTIME_MANIFEST}" DESTINATION bin COMPONENT Runtime)
         install(FILES ${OPENDBC_REPOSITORY_LICENSES} ${OPENDBC_GENERATED_LICENSES}
@@ -743,7 +743,7 @@ if(NOT IOS AND NOT ANDROID)
             install(FILES ${OPENDBC_CANONICAL_SHADERS}
                 DESTINATION bin/export-hosts/android/template/app/src/main/assets/shaders
                 COMPONENT Runtime)
-            install(FILES "${CMAKE_SOURCE_DIR}/docs/NOTICE.md"
+            install(FILES "${CMAKE_SOURCE_DIR}/licenses/NOTICE.md"
                 DESTINATION bin/export-hosts/android/template/app/src/main/assets COMPONENT Runtime)
             install(FILES "${OPENDBC_RUNTIME_MANIFEST}"
                 DESTINATION bin/export-hosts/android/template/app/src/main/assets COMPONENT Runtime)

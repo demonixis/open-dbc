@@ -7,7 +7,7 @@ and switches to the keyboard or mouse as soon as you use them, so you can watch 
 opendbc run examples/dbc/tutorials/2d/night_town.dba --dialect dbc
 ```
 
-Pictures in `bitmap/` and `sprite/` are rendered by `assets-src/blender/classic_tutorials.py` and saved
+Pictures in `bitmap/` and `sprite/` are rendered with Blender and saved
 as BMP, the format DarkBASIC Classic loads. The bobs draw their own images in BASIC.
 `scripts/check_example_frames.py` (CTest `example_frames`) runs each tutorial headless and checks its last frame.
 

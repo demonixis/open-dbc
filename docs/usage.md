@@ -193,8 +193,7 @@ Android builds need a JDK 17 or newer and the Android SDK, found through
 build downloads Gradle. The Build window creates the upload keystore Google Play
 ties to the app: keep a copy of the file and its password.
 
-Mobile targets embed runtimes built apart from the Studio
-([CONTRIBUTING.md](CONTRIBUTING.md#exports)).
+Mobile targets embed runtimes built apart from the Studio.
 
 On touch screens the top, bottom, left, right and centre zones act as the arrow
 keys and space, and the back action is escape. On desktops this takes a real touch

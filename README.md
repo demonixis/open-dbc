@@ -62,9 +62,6 @@ ctest --preset default
 | Classic multiplayer | [docs/network.md](docs/network.md) |
 | Native plugins (Classic DLLs) | [docs/plugins.md](docs/plugins.md) |
 | Example programs | [examples/README.md](examples/README.md) |
-| Logos, social headers, wallpapers | [docs/branding.md](docs/branding.md) |
-| Questions about content and the name | [docs/faq.md](docs/faq.md) |
-| Contributing, code of conduct | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md), [docs/CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md) |
 | Security and reporting vulnerabilities | [docs/SECURITY.md](docs/SECURITY.md) |
 | Changes per version | [CHANGELOG.md](CHANGELOG.md) |
 | Remaining work | [docs/roadmap.md](docs/roadmap.md) |
@@ -72,4 +69,4 @@ ctest --preset default
 ## Licence
 
 MIT, see [LICENSE](LICENSE). Trademarks and third-party content are listed in
-[docs/NOTICE.md](docs/NOTICE.md).
+[licenses/NOTICE.md](licenses/NOTICE.md).
