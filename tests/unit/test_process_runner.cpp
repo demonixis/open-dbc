@@ -77,6 +77,49 @@ TEST_CASE("process runner does not wait for a background process that keeps the 
     CHECK(Result);
     CHECK(SDL_GetTicks() - Start < 6000);
 }
+
+TEST_CASE("process runner remains cancellable after a tool closes its output")
+{
+    std::atomic<bool> Cancel{false};
+    toolchain::ProcessRequest Request;
+    Request.Arguments = {"/bin/sh", "-c", "echo ready; exec 1>&- 2>&-; exec sleep 8"};
+    const Uint64 Start = SDL_GetTicks();
+    const toolchain::ProcessResult Result = toolchain::RunProcess(
+        Request,
+        [&](std::string_view)
+        {
+            // Let the child close its pipe while the last line is being consumed.
+            SDL_Delay(100);
+            Cancel = true;
+        },
+        &Cancel, false);
+    CHECK(Result.Cancelled);
+    CHECK_FALSE(Result);
+    CHECK(SDL_GetTicks() - Start < 6000);
+}
+
+TEST_CASE("process runner checks cancellation while output stays readable")
+{
+    std::atomic<bool> Cancel{false};
+    toolchain::ProcessRequest Request;
+    Request.Arguments = {"/bin/sh", "-c",
+                         "line=$(printf '%01024d' 0); i=0; "
+                         "while [ $i -lt 400 ]; do printf '%s\\n' \"$line\"; i=$((i+1)); done"};
+    int Lines = 0;
+    const toolchain::ProcessResult Result = toolchain::RunProcess(
+        Request,
+        [&](std::string_view)
+        {
+            ++Lines;
+            Cancel = true;
+            // A slower consumer keeps the pipe readable between reads.
+            SDL_Delay(2);
+        },
+        &Cancel, false);
+    CHECK(Result.Cancelled);
+    CHECK_FALSE(Result);
+    CHECK(Lines < 400);
+}
 #endif
 
 TEST_CASE("process runner reports a tool that cannot start")

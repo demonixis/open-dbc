@@ -153,46 +153,48 @@ namespace dbc::studio
             std::array<char, 4096> Buffer{};
             std::uint64_t StopRequestedAt = 0;
             std::uint64_t ExitedAt = 0;
+            bool Exited = false;
             bool Forced = false;
-            // The output stream is non-blocking: drain it until the tool closes it, or shortly after the
-            // tool exits when a process it left behind still holds the pipe open.
-            while (Output != nullptr)
+            // Process lifetime is independent of its output: a tool may close the pipe before exiting,
+            // or leave a background process writing to it after it exits.
+            while (!Exited || Output != nullptr)
             {
-                const std::size_t Count = SDL_ReadIO(Output, Buffer.data(), Buffer.size());
-                if (Count > 0)
+                const std::uint64_t Now = SDL_GetTicks();
+                if (!Exited && SDL_WaitProcess(Process.get(), false, &Result.ExitCode))
                 {
-                    Lines.Feed(std::string_view(Buffer.data(), Count));
-                    continue;
+                    Exited = true;
+                    ExitedAt = Now;
                 }
-                if (SDL_GetIOStatus(Output) != SDL_IO_STATUS_NOT_READY)
-                    break;
-                if (ExitedAt == 0 && SDL_WaitProcess(Process.get(), false, &Result.ExitCode))
-                    ExitedAt = SDL_GetTicks();
-                if (ExitedAt != 0 && SDL_GetTicks() - ExitedAt > OrphanedPipeMilliseconds)
-                    break;
-                if (Cancel != nullptr && Cancel->load(std::memory_order_relaxed))
+                if (!Exited && Cancel != nullptr && Cancel->load(std::memory_order_relaxed))
                 {
-                    if (StopRequestedAt == 0)
+                    if (!Result.Cancelled)
                     {
                         Result.Cancelled = true;
-                        StopRequestedAt = SDL_GetTicks();
+                        StopRequestedAt = Now;
                         SDL_KillProcess(Process.get(), false);
                     }
-                    else if (!Forced && SDL_GetTicks() - StopRequestedAt > GracefulStopMilliseconds)
+                    else if (!Forced && Now - StopRequestedAt > GracefulStopMilliseconds)
                     {
                         Forced = true;
                         SDL_KillProcess(Process.get(), true);
                     }
                 }
-                SDL_Delay(10);
+                std::size_t Count = 0;
+                if (Output != nullptr)
+                {
+                    Count = SDL_ReadIO(Output, Buffer.data(), Buffer.size());
+                    if (Count > 0)
+                        Lines.Feed(std::string_view(Buffer.data(), Count));
+                    else if (SDL_GetIOStatus(Output) != SDL_IO_STATUS_NOT_READY)
+                        Output = nullptr;
+                }
+                if (Exited && (Output == nullptr || Now - ExitedAt > OrphanedPipeMilliseconds))
+                    break;
+                if (Count == 0)
+                    SDL_Delay(10);
             }
             Lines.Finish();
 
-            if (!SDL_WaitProcess(Process.get(), true, &Result.ExitCode))
-            {
-                Result.Error = TrFmt("Cannot wait for '{0}': {1}", {Tool, SDL_GetError()});
-                return Result;
-            }
             if (Result.Cancelled)
                 Result.Error = TrFmt("Cancelled while running '{0}'", {Tool});
             else if (Result.ExitCode != 0)
