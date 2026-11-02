@@ -45,6 +45,7 @@ $AllowedSystemLibraries = @(
     "oleaut32.dll",
     "setupapi.dll",
     "shell32.dll",
+    "shlwapi.dll",
     "user32.dll",
     "uxtheme.dll",
     "version.dll",
