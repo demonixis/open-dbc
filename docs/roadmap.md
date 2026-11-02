@@ -15,13 +15,13 @@ Publication:
 
 ## DBPro parity
 
-The catalogue counts 1,042 of DBPro's 1,802 commands and functions as implemented,
-against 701 of 730 in Classic. The other 760 are sorted here by name only; confirm each
+The catalogue counts 1,042 of DBPro's 1,584 core commands and functions as implemented,
+against 701 of 730 in Classic. The other 542 are sorted here by name only; confirm each
 one when it is picked up.
 
-553 of them come from the string tables of the free release rather than its keyword files:
-the Enhancement Pack (188 names), quaternions and vectors (117), DarkLIGHTS (30),
-MultiplayerPlus (28), Bullet ragdolls (20) and later core forms.
+335 of them come from the string tables of the free release rather than its keyword files:
+quaternions and vectors (117 names), objects (47), MultiplayerPlus (28), Bullet ragdolls
+(20) and other later core forms.
 
 152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access
 (89); raw memory and pointers, assembly shaders and DLLs (42); FTP and HTTP without TLS

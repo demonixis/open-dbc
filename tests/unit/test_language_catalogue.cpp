@@ -123,15 +123,14 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
     CHECK(dbc::language::HasEvidence(ActiveOde, EvidenceSource::OdeExtension));
 }
 
-TEST_CASE("Every form the free DBPro release exports is catalogued")
+TEST_CASE("Every core form the free DBPro release exports is catalogued")
 {
-    // Later core forms, DarkLIGHTS and the Enhancement Pack, catalogued before they run.
+    // Later core forms, catalogued before they run.
     for (const auto& [Kind, Name] :
          std::initializer_list<std::pair<SymbolKind, std::string_view>>{{SymbolKind::Function, "QUAT SLERP"},
                                                                         {SymbolKind::Function, "MAX"},
                                                                         {SymbolKind::Command, "BPHYS_RAGDOLLBEGIN"},
-                                                                        {SymbolKind::Command, "LM START"},
-                                                                        {SymbolKind::Command, "PLAY OGG VORBIS"}})
+                                                                        {SymbolKind::Command, "MULTIPLAYER START"}})
     {
         const dbc::language::SymbolDescriptor* Descriptor =
             dbc::language::FindSymbol(LanguageProfile::DbPro, Kind, Name);
@@ -160,6 +159,9 @@ TEST_CASE("Removed plugins are named by their prefixes and forms")
     CHECK(RemovedPluginOf("BUILD TERRAIN").Name == "Advanced Terrain");
     CHECK(RemovedPluginOf("SET TERRAIN LIGHT OBJ").Name == "Advanced Terrain");
     CHECK(RemovedPluginOf("GET TERRAIN SIZE").Replacement == "MAKE TERRAIN");
+    CHECK(RemovedPluginOf("LM BUILD LIGHT MAPS").Name == "DarkLIGHTS");
+    CHECK(RemovedPluginOf("PLAY OGG VORBIS").Name == "the Enhancement Pack");
+    CHECK(RemovedPluginOf("GET PROCESSOR NAME$").Replacement.empty());
     CHECK(RemovedPluginOf("MAKE TERRAIN").Name.empty());
     CHECK(RemovedPluginOf("ODE START").Name.empty());
     CHECK(RemovedPluginOf("SET OBJECT").Name.empty());

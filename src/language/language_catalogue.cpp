@@ -324,24 +324,27 @@ namespace dbc::language
             return {"DarkPHYSICS", Physics};
         if (CanonicalName.starts_with("DYN "))
             return {"Dark Dynamix", Physics};
-        static constexpr std::string_view ClothForms[] = {
-#include "removed_cloth_forms.inc"
+        if (CanonicalName.starts_with("LM "))
+            return {"DarkLIGHTS", {}};
+
+        struct Form
+        {
+            std::string_view Name;
+            RemovedPlugin Plugin;
         };
-        // A commercial plugin whose source was never released, sorted.
-        static constexpr std::string_view AdvancedTerrainForms[] = {
-            "BUILD TERRAIN",         "DESTROY TERRAIN",     "GET TERRAIN GROUND HEIGHT",
-            "GET TERRAIN SIZE",      "GET TERRAIN X SIZE",  "GET TERRAIN Z SIZE",
-            "LOAD TERRAIN",          "MAKE OBJECT TERRAIN", "SAVE TERRAIN",
-            "SET TERRAIN HEIGHTMAP", "SET TERRAIN LIGHT",   "SET TERRAIN SCALE",
-            "SET TERRAIN SPLIT",     "SET TERRAIN TEXTURE", "SET TERRAIN TILING",
-            "UPDATE TERRAIN",
+
+        static constexpr RemovedPlugin Cloth{"3D Cloth & Particles", Physics};
+        static constexpr RemovedPlugin Enhancement{"the Enhancement Pack", {}};
+        static constexpr RemovedPlugin Terrain{"Advanced Terrain", "MAKE TERRAIN"};
+        static constexpr Form Forms[] = {
+#include "removed_plugin_forms.inc"
         };
         for (std::string_view Name = CanonicalName;;)
         {
-            if (std::binary_search(std::begin(ClothForms), std::end(ClothForms), Name))
-                return {"3D Cloth & Particles", Physics};
-            if (std::binary_search(std::begin(AdvancedTerrainForms), std::end(AdvancedTerrainForms), Name))
-                return {"Advanced Terrain", "MAKE TERRAIN"};
+            const auto It = std::lower_bound(std::begin(Forms), std::end(Forms), Name,
+                                             [](const Form& Value, std::string_view Key) { return Value.Name < Key; });
+            if (It != std::end(Forms) && It->Name == Name)
+                return It->Plugin;
             const std::size_t Space = Name.rfind(' ');
             if (Space == std::string_view::npos)
                 return {};

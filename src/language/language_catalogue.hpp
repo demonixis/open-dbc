@@ -175,7 +175,7 @@ namespace dbc::language
     // The most words any command's name has, which bounds the search for a name at the start of a line.
     std::size_t LongestCommandWords();
 
-    // A plugin whose forms OpenDBC leaves out, and the commands to use instead.
+    // A plugin whose forms OpenDBC leaves out, and the commands to use instead, if any.
     struct RemovedPlugin
     {
         std::string_view Name;

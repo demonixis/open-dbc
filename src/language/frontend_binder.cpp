@@ -1201,10 +1201,11 @@ namespace dbc::language::detail
                 const RemovedPlugin Plugin = RemovedPluginOf(Name);
                 if (Plugin.Name.empty())
                     return false;
-                Error("DBC2049",
-                      "'" + Name + "' comes from " + std::string(Plugin.Name) +
-                          ", which OpenDBC does not implement; use " + std::string(Plugin.Replacement),
-                      Span);
+                std::string Message =
+                    "'" + Name + "' comes from " + std::string(Plugin.Name) + ", which OpenDBC does not implement";
+                if (!Plugin.Replacement.empty())
+                    Message += "; use " + std::string(Plugin.Replacement);
+                Error("DBC2049", Message, Span);
                 return true;
             }
 

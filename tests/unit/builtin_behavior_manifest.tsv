@@ -1841,24 +1841,24 @@ dbpro	1568	2129	Function	ODE RAY	jolt-rigid-body	test_physics.cpp::ODE rays find
 dbpro	1569	2130	Function	ODE RAY CAST	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
 dbpro	1570	2131	Function	ODE RAY FORCE	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
 dbpro	1571	2132	Function	ODE RAY TERRAIN	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	2107	2705	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2108	2706	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2109	2707	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2110	2708	Function	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2111	2709	Function	MAKE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2112	2710	Function	MAKE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2113	2711	Function	LIMB TEXTURE NAME	object-geometry-texture-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
-dbpro	2114	2712	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2115	2713	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2116	2714	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2117	2715	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2118	2716	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2119	2717	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2120	2718	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2121	2719	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2122	2720	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2123	2721	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2124	2722	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2125	2723	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2126	2724	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2127	2725	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1889	2479	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1890	2480	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1891	2481	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1892	2482	Function	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1893	2483	Function	MAKE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1894	2484	Function	MAKE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	1895	2485	Function	LIMB TEXTURE NAME	object-geometry-texture-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
+dbpro	1896	2486	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1897	2487	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1898	2488	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1899	2489	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1900	2490	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1901	2491	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1902	2492	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1903	2493	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1904	2494	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1905	2495	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1906	2496	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1907	2497	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1908	2498	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1909	2499	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-

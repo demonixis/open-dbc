@@ -714,9 +714,9 @@ TEST_CASE("Professional does not inherit Classic bare user-function statement sy
 
 TEST_CASE("Free DBPro forms that do not run yet are explicitly unsupported")
 {
-    const dbc::language::Program Program =
-        dbc::language::Compile(Source("lm start\nbphys_ragdollbegin 1, 2.0\nplay ogg vorbis 1\nprint max(1.0, 2.0)\n",
-                                      dbc::language::LanguageProfile::DbPro, "dbpro-free-forms.dba"));
+    const dbc::language::Program Program = dbc::language::Compile(
+        Source("multiplayer start\nbphys_ragdollbegin 1, 2.0\nprint sign(-2.0)\nprint max(1.0, 2.0)\n",
+               dbc::language::LanguageProfile::DbPro, "dbpro-free-forms.dba"));
     CHECK(std::count_if(Program.Diagnostics.begin(), Program.Diagnostics.end(),
                         [](const auto& Diagnostic) { return Diagnostic.Code == "DBC2043"; }) == 4);
     CHECK(std::all_of(Program.Diagnostics.begin(), Program.Diagnostics.end(),
@@ -739,6 +739,9 @@ TEST_CASE("Forms of the removed plugins name their plugin")
     CHECK(Diagnosed("set object as vehicle body 1, 2\n").find("3D Cloth & Particles") != std::string::npos);
     CHECK(Diagnosed("build terrain 1\n").find("Advanced Terrain") != std::string::npos);
     CHECK(Diagnosed("h# = get terrain ground height(1, 2.0, 3.0)\n").find("use MAKE TERRAIN") != std::string::npos);
+    CHECK(Diagnosed("lm start\n").find("DarkLIGHTS") != std::string::npos);
+    CHECK(Diagnosed("play ogg vorbis 1\n").find("the Enhancement Pack") != std::string::npos);
+    CHECK(Diagnosed("print get processor name$()\n").find("; use") == std::string::npos);
 
     const dbc::language::Program Ode =
         dbc::language::Compile(Source("ode start\n", dbc::language::LanguageProfile::DbPro, "dbpro-ode.dba"));

@@ -464,7 +464,7 @@ def audit_dbpro_extension_evidence(catalogue: dict[tuple[str, str], tuple]) -> N
                     set(range(entry[7], entry[8] + 1)))
         require(count in accepted, f"DBPro extension arity differs from evidence for {row['name']}")
         spellings.add((row["surface"], row["name"]))
-    require(len(spellings) == 606, "DBPro extension public spelling total drifted")
+    require(len(spellings) == 388, "DBPro extension public spelling total drifted")
 
 
 def audit_free_sources(entries: list[tuple]) -> None:
