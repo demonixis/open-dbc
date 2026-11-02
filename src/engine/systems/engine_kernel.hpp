@@ -34,6 +34,7 @@ namespace dbc
     class DataFileSystem;
     class FileMapSystem;
     class FileBlockSystem;
+    class SpeechSystem;
 
     class EngineKernel
     {
@@ -101,6 +102,7 @@ namespace dbc
         DataFileSystem& DataFiles();
         FileMapSystem& FileMaps();
         FileBlockSystem& FileBlocks();
+        SpeechSystem& Speech();
 
       private:
         bool Initialized_ = false;
@@ -131,6 +133,7 @@ namespace dbc
         std::unique_ptr<DataFileSystem> DataFiles_;
         std::unique_ptr<FileMapSystem> FileMaps_;
         std::unique_ptr<FileBlockSystem> FileBlocks_;
+        std::unique_ptr<SpeechSystem> Speech_;
     };
 
 } // namespace dbc

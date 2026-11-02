@@ -245,7 +245,7 @@ doctest_discover_tests(test_network PROPERTIES LABELS "unit")
 add_executable(test_enhancement_pack test_enhancement_pack.cpp)
 target_link_libraries(test_enhancement_pack PRIVATE doctest_with_main dbc_interpreter)
 target_compile_definitions(test_enhancement_pack PRIVATE TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-doctest_discover_tests(test_enhancement_pack PROPERTIES LABELS "unit")
+doctest_discover_tests(test_enhancement_pack PROPERTIES LABELS "unit" ENVIRONMENT "OPENDBC_HEADLESS=1")
 
 # Plugins for the CALL DLL tests, named like a library of any platform so LOAD DLL "name.dll" finds them.
 add_library(test_dll_plugin MODULE plugins/test_dll_plugin.c)

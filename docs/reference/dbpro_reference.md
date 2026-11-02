@@ -309,7 +309,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET PROCESSOR ON CHIP FEATURES` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `GET PROCESSOR POWER MANAGEMENT` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `GET PROCESSOR SUPPORTED FEATURES` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `GET VOICE LIST` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `GET VOICE LIST` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `GET VR CONTROLLER POSITION` | Command | 2 | integer, integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `GET VR CONTROLLER ROTATION` | Command | 2 | integer, integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `GET VR HEAD POSITION` | Command | 1 | integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
@@ -1033,8 +1033,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SEND NET MESSAGE MESH` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SEND NET MESSAGE SOUND` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SEND NET MESSAGE STRING` | Command | 2 | number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `SEND VOICE MESSAGE` | Command | 1 | string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SEND VOICE MESSAGE XML` | Command | 1 | string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SEND VOICE MESSAGE` | Command | 1 | string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SEND VOICE MESSAGE XML` | Command | 1 | string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET ALPHA MAPPING ON` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET AMBIENT LIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET ANIMATION SPEED` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -1356,9 +1356,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET VERTEXDATA NORMALS` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET VERTEXDATA POSITION` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET VERTEXDATA UV` | Command | 3-4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `SET VOICE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET VOICE SPEED` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET VOICE VOLUME` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VOICE` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET VOICE SPEED` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET VOICE VOLUME` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET VORTEX EFFECTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET VR CAMERA HEIGHT` | Command | 1 | real -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `SET VR ENABLED` | Command | 1 | integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
@@ -1839,9 +1839,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET VERTEXDATA U` | Function | 1-2 | number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA V` | Function | 1-2 | number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA VERTEX COUNT` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `GET VOICE API` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET VOICE SPEED` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET VOICE VOLUME` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET VOICE API` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET VOICE SPEED` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET VOICE VOLUME` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VR CAMERA HEIGHT` | Function | 0 | none -> real | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `GET WEB CLIENT$` | Function | 0 | none -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `HCOS` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -2050,7 +2050,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `OBJECT STATISTICS INTEGER` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `OBJECT VISIBLE` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `ONLYSQUARETEXTURES AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `OPEN FILE DIALOG` | Function | 3 | string, string, string -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `OPEN FILE DIALOG` | Function | 3 | string, string, string -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `PARTICLES EXIST` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `PARTICLES POSITION X` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `PARTICLES POSITION Y` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -2249,7 +2249,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `RIGHT$` | Function | 2 | string, number -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `RIGHTKEY` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `RND` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `SAVE FILE DIALOG` | Function | 3 | string, string, string -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `SAVE FILE DIALOG` | Function | 3 | string, string, string -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `SCANCODE` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `SCREEN DEPTH` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `SCREEN FPS` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |

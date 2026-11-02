@@ -5,6 +5,8 @@ add_library(dbc_engine STATIC
   systems/file_map_system.cpp
   systems/file_block_system.cpp
   systems/ogg_vorbis_encoder.cpp
+  systems/speech_system.cpp
+  systems/native_file_dialog.cpp
   systems/vr_system.cpp
   systems/vr_tracking.cpp
   systems/vr_presenter.cpp
@@ -96,9 +98,10 @@ dbc_enable_warnings(dbc_engine)
 
 # Animations decode with the platform's media framework; other platforms load them inert.
 if(APPLE)
-    target_sources(dbc_engine PRIVATE systems/video_decoder_avfoundation.mm systems/system_info_apple.mm)
+    target_sources(dbc_engine PRIVATE systems/video_decoder_avfoundation.mm systems/system_info_apple.mm
+                                      systems/speech_system_apple.mm)
     set_source_files_properties(systems/video_decoder_avfoundation.mm systems/system_info_apple.mm
-                                PROPERTIES COMPILE_OPTIONS -fobjc-arc)
+                                systems/speech_system_apple.mm PROPERTIES COMPILE_OPTIONS -fobjc-arc)
     target_link_libraries(dbc_engine PUBLIC "-framework Foundation" "-framework AVFoundation"
                           "-framework CoreMedia" "-framework CoreVideo")
     if(NOT IOS)
@@ -107,7 +110,7 @@ if(APPLE)
     endif()
 elseif(WIN32)
     target_sources(dbc_engine PRIVATE systems/video_decoder_media_foundation.cpp)
-    target_link_libraries(dbc_engine PRIVATE mfplat mfuuid ole32 oleaut32 windowscodecs ws2_32 shlwapi advapi32)
+    target_link_libraries(dbc_engine PRIVATE mfplat mfuuid ole32 oleaut32 windowscodecs ws2_32 shlwapi advapi32 sapi)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET GLOBAL

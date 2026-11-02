@@ -1,10 +1,12 @@
 #include "engine/runtime_compatibility.hpp"
+#include "engine/systems/core_system.hpp"
 #include "engine/systems/data_file_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
 #include "engine/systems/file_block_system.hpp"
 #include "engine/systems/file_map_system.hpp"
 #include "engine/systems/image_store.hpp"
 #include "engine/systems/memblock_system.hpp"
+#include "engine/systems/native_file_dialog.hpp"
 #include "interpreter/engine_builtin_context.hpp"
 #include "interpreter/engine_builtin_host.hpp"
 #include "interpreter/engine_builtin_registry.hpp"
@@ -598,4 +600,64 @@ TEST_CASE("Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart fr
     CHECK(App.CommandFails(S::Command_ExtEnhancementLoadOggVorbis, {Str("behold.ogg"), Int(255)}));
     CHECK(App.CommandFails(S::Command_ExtEnhancementPlayOggVorbis, {Int(3)}));
     CHECK(App.Fails(S::Function_ExtEnhancementGetOggVorbisExists, {Int(0)}));
+}
+
+TEST_CASE("Enhancement Pack speech uses the platform synthesiser and stays silent headless")
+{
+    using S = SymbolId;
+    Application App("enhancement-speech");
+    REQUIRE(App.Kernel().Core().EnsureInitialized());
+    REQUIRE(App.Kernel().Core().Headless());
+    const auto Str = [](const char* Text) { return BuiltinValue::FromString(Text); };
+
+    CHECK(App.CommandFails(S::Command_ExtEnhancementSetVoiceSpeed, {Int(11)}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementSetVoiceVolume, {Int(-1)}));
+    App.Require(S::Command_ExtEnhancementSetVoiceSpeed, {Int(-4)});
+    App.Require(S::Command_ExtEnhancementSetVoiceVolume, {Int(70)});
+    App.Require(S::Command_ExtEnhancementSendVoiceMessage, {Str("Hello")});
+    App.Require(S::Command_ExtEnhancementSendVoiceMessageXml, {Str("The words <emph>dark basic</emph>")});
+
+#if defined(SDL_PLATFORM_APPLE) || defined(SDL_PLATFORM_WINDOWS)
+    CHECK(App.Number(S::Function_ExtEnhancementGetVoiceApi) == 1.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetVoiceSpeed) == -4.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetVoiceVolume) == 70.0);
+    App.Require(S::Command_ExtEnhancementGetVoiceList);
+    const std::vector<std::string> Voices = ChecklistNames(App.Context());
+    CHECK(std::none_of(Voices.begin(), Voices.end(), [](const std::string& Name) { return Name.empty(); }));
+    if (!Voices.empty())
+        App.Require(S::Command_ExtEnhancementSetVoice, {Int(static_cast<int>(Voices.size()))});
+    CHECK(App.CommandFails(S::Command_ExtEnhancementSetVoice, {Int(static_cast<int>(Voices.size()) + 1)}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementSetVoice, {Int(0)}));
+#else
+    CHECK(App.Number(S::Function_ExtEnhancementGetVoiceApi) == 0.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetVoiceSpeed) == -1.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetVoiceVolume) == -1.0);
+    CHECK(App.CommandFails(S::Command_ExtEnhancementGetVoiceList, {}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementSetVoice, {Int(1)}));
+#endif
+}
+
+TEST_CASE("Enhancement Pack file dialogs read Windows filters and answer headless runs as cancelled")
+{
+    using S = SymbolId;
+    const std::vector<dbc::FileDialogFilter> Filters =
+        dbc::ParseFileDialogFilters("Text files|*.txt;*.dat|All files|*.*|Broken|");
+    REQUIRE(Filters.size() == 2);
+    CHECK(Filters[0].Name == "Text files");
+    CHECK(Filters[0].Pattern == "txt;dat");
+    CHECK(Filters[1].Name == "All files");
+    CHECK(Filters[1].Pattern == "*");
+    const std::vector<dbc::FileDialogFilter> Bare = dbc::ParseFileDialogFilters("*.png; .jpg");
+    REQUIRE(Bare.size() == 1);
+    CHECK(Bare[0].Pattern == "png;jpg");
+    CHECK(dbc::ParseFileDialogFilters("").empty());
+
+    Application App("enhancement-file-dialogs");
+    REQUIRE(App.Kernel().Core().EnsureInitialized());
+    REQUIRE(App.Kernel().Core().Headless());
+    const std::vector<BuiltinValue> Arguments = {BuiltinValue::FromString("media"),
+                                                 BuiltinValue::FromString("Images|*.png"),
+                                                 BuiltinValue::FromString("Choose an image")};
+    CHECK(App.Text(S::Function_ExtEnhancementOpenFileDialog, Arguments).empty());
+    CHECK(App.Text(S::Function_ExtEnhancementSaveFileDialog, Arguments).empty());
 }

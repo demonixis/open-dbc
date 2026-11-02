@@ -20,11 +20,13 @@
 #include "engine/systems/log.hpp"
 #include "engine/systems/matrix_manager.hpp"
 #include "engine/systems/memblock_system.hpp"
+#include "engine/systems/native_file_dialog.hpp"
 #include "engine/systems/network_system.hpp"
 #include "engine/systems/object_manager.hpp"
 #include "engine/systems/ogg_vorbis_encoder.hpp"
 #include "engine/systems/physics_system.hpp"
 #include "engine/systems/renderer_system.hpp"
+#include "engine/systems/speech_system.hpp"
 #include "engine/systems/system_info.hpp"
 #include "engine/systems/video_system.hpp"
 #include "engine/systems/vr_system.hpp"
@@ -2584,6 +2586,26 @@ namespace dbc::interpreter::detail
             Ctx.Checklist.clear();
             for (const std::string& Name : Names)
                 Ctx.Checklist.push_back(ChecklistItem{Name});
+        }
+
+        // Headless runs have nobody to answer a dialog, so they read it as cancelled.
+        BuiltinValue FileDialogValue(BuiltinContext& Ctx, bool Save, const std::vector<BuiltinValue>& Args,
+                                     std::string& Error)
+        {
+            CoreSystem& Core = Ctx.Kernel->Core();
+            if (!Core.EnsureInitialized())
+            {
+                Error = "The engine could not start";
+                return BuiltinValue{};
+            }
+            if (Core.Headless())
+                return BuiltinValue::FromString(std::string{});
+            const std::string& Directory = Args[0].AsString();
+            std::string Path;
+            if (!ShowFileDialog(Core.Window(), Save, Directory.empty() ? Directory : ResolveAssetPath(Ctx, Directory),
+                                Args[1].AsString(), Args[2].AsString(), Path, &Error))
+                return BuiltinValue{};
+            return BuiltinValue::FromString(Path);
         }
 
         double CheckDisplayMode(BuiltinContext& Ctx, int Width, int Height, int Depth, int Vsync, int Multisampling,

@@ -21,6 +21,7 @@
 #include "object_manager.hpp"
 #include "physics_system.hpp"
 #include "renderer_system.hpp"
+#include "speech_system.hpp"
 #include "sprite_system.hpp"
 #include "system_info.hpp"
 #include "text_system.hpp"
@@ -78,6 +79,7 @@ namespace dbc
         DataFiles_ = std::make_unique<DataFileSystem>();
         FileMaps_ = std::make_unique<FileMapSystem>();
         FileBlocks_ = std::make_unique<FileBlockSystem>();
+        Speech_ = std::make_unique<SpeechSystem>(*this);
         dbc::log::AttachRingBuffer(DebugSystem_.get());
 
         Initialized_ = true;
@@ -96,6 +98,7 @@ namespace dbc
         DataFiles_.reset();
         FileMaps_.reset();
         FileBlocks_.reset();
+        Speech_.reset();
         Network_.reset();
         Video_.reset();
         DebugSystem_.reset();
@@ -391,6 +394,11 @@ namespace dbc
     FileBlockSystem& EngineKernel::FileBlocks()
     {
         return *FileBlocks_;
+    }
+
+    SpeechSystem& EngineKernel::Speech()
+    {
+        return *Speech_;
     }
 
 } // namespace dbc

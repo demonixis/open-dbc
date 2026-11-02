@@ -1905,6 +1905,31 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ENHANCEMENT_SPEECH_TEST = "test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless"
+UNIT_WITNESSES += tuple(
+    ("dbpro", kind, name, code, "speech-state", ENHANCEMENT_SPEECH_TEST)
+    for kind, name, code in (
+        ("Function", "GET VOICE API", "value = get voice api()\n"),
+        ("Command", "GET VOICE LIST", "get voice list\n"),
+        ("Command", "SET VOICE", "set voice 1\n"),
+        ("Command", "SET VOICE SPEED", "set voice speed -4\n"),
+        ("Command", "SET VOICE VOLUME", "set voice volume 70\n"),
+        ("Command", "SEND VOICE MESSAGE", "send voice message \"Hello\"\n"),
+        ("Command", "SEND VOICE MESSAGE XML", "send voice message xml \"The words <emph>dark basic</emph>\"\n"),
+        ("Function", "GET VOICE SPEED", "value = get voice speed()\n"),
+        ("Function", "GET VOICE VOLUME", "value = get voice volume()\n"),
+    )
+)
+
+ENHANCEMENT_DIALOG_TEST = "test_enhancement_pack.cpp::Enhancement Pack file dialogs read Windows filters and answer headless runs as cancelled"
+UNIT_WITNESSES += tuple(
+    ("dbpro", "Function", name, code, "file-dialog-result", ENHANCEMENT_DIALOG_TEST)
+    for name, code in (
+        ("OPEN FILE DIALOG", "value$ = open file dialog(\"media\", \"Images|*.png\", \"Choose an image\")\n"),
+        ("SAVE FILE DIALOG", "value$ = save file dialog(\"media\", \"Images|*.png\", \"Choose an image\")\n"),
+    )
+)
+
 def inspect(opendbc: Path, source: Path, profile: str, what: str) -> dict:
     result = subprocess.run([str(opendbc), "inspect", str(source), "--json", "--dialect", profile],
                             text=True, capture_output=True, check=False)

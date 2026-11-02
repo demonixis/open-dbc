@@ -1765,6 +1765,7 @@ dbpro	1622	2180	Command	EXTRACT FILE FROM BLOCK	zip-archive-state	test_enhanceme
 dbpro	1623	2181	Command	GET PROCESSOR ON CHIP FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1624	2182	Command	GET PROCESSOR POWER MANAGEMENT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1625	2183	Command	GET PROCESSOR SUPPORTED FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1626	2184	Command	GET VOICE LIST	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
 dbpro	1627	2185	Command	LOAD ANIMATION FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
 dbpro	1628	2186	Command	LOAD BITMAP FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
 dbpro	1629	2187	Command	LOAD FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
@@ -1785,12 +1786,17 @@ dbpro	1642	2201	Command	PLAY OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.c
 dbpro	1643	2202	Command	REMOVE FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1644	2203	Command	RESUME OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1645	2204	Command	SAVE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1646	2205	Command	SEND VOICE MESSAGE	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1647	2206	Command	SEND VOICE MESSAGE XML	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
 dbpro	1691	2250	Command	SET FILE BLOCK COMPRESSION	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1692	2251	Command	SET FILE BLOCK KEY	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1693	2252	Command	SET FILE MAP DWORD	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1694	2253	Command	SET FILE MAP FLOAT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1695	2254	Command	SET FILE MAP STRING$	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1696	2255	Command	SET OGG VORBIS VOLUME	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1697	2256	Command	SET VOICE	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1698	2257	Command	SET VOICE SPEED	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1699	2258	Command	SET VOICE VOLUME	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
 dbpro	1700	2259	Command	STOP OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1701	2260	Command	UPDATE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
 dbpro	1702	2261	Command	WAIT FOR FILE MAP EVENT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
@@ -1845,7 +1851,12 @@ dbpro	1786	2345	Function	GET PROCESSOR TYPE ID	host-system-query	test_enhancemen
 dbpro	1787	2346	Function	GET PROCESSOR USAGE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1788	2347	Function	GET PROCESSOR VENDOR$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1789	2348	Function	GET USER NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1790	2349	Function	GET VOICE API	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1791	2350	Function	GET VOICE SPEED	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1792	2351	Function	GET VOICE VOLUME	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
 dbpro	1793	2352	Function	GET WEB CLIENT$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1794	2353	Function	OPEN FILE DIALOG	file-dialog-result	test_enhancement_pack.cpp::Enhancement Pack file dialogs read Windows filters and answer headless runs as cancelled	-
+dbpro	1795	2354	Function	SAVE FILE DIALOG	file-dialog-result	test_enhancement_pack.cpp::Enhancement Pack file dialogs read Windows filters and answer headless runs as cancelled	-
 dbpro	1796	2355	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
 dbpro	1797	2356	Command	ODE ADD STATIC OBJECT BOX	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
 dbpro	1798	2357	Command	ODE COLLISION GET MESSAGE	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
