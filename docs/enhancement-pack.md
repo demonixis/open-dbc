@@ -5,7 +5,7 @@ These are the places where OpenDBC differs from the Windows plugin.
 
 | Family | Behaviour |
 | --- | --- |
-| File blocks | ZIP archives of any extension. Deflate compression; a key turns on ZipCrypto for later additions. Standard tools such as `unzip` open them. Blowfish-wrapped `.fb` files from early releases do not open; the last DBPro release could not open them either. |
+| File blocks | ZIP archives of any extension. Deflate compression; a key turns on ZipCrypto for later additions. Standard tools such as `unzip` open them. Extraction rejects symlinks below the selected output folder. Blowfish-wrapped `.fb` files from early releases do not open; the last DBPro release could not open them either. |
 | Data files | Delimited text only. An `.xls` file is an error: save it as CSV. |
 | File maps | Windows uses named shared memory. Other platforms use the file `opendbc-filemap-<name>` in the temporary folder, which is removed once the last program closes the map. String fields are 255 bytes. `WAIT FOR FILE MAP EVENT` waits up to 5 seconds. |
 | Ogg Vorbis | Numbers 1 to 254, apart from sounds. Volume is 0 to 100; `GET OGG VORBIS VOLUME` returns the attenuation in hundredths of a decibel, as DirectSound did (0 to -9600). `ENCODE TO OGG VORBIS` reads WAV files at quality -0.1 to 1.0 (0.5 by default). |

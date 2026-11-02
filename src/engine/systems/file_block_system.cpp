@@ -520,13 +520,36 @@ namespace dbc
         if (!Item)
             return Fail(Error, "File block " + std::to_string(Id) + " has no file '" + EntryName + "'");
         const std::filesystem::path Relative = PathFromUtf8(NormaliseEntryName(Item->Name));
+        if (Relative.empty() || Relative.is_absolute() || Relative.has_root_name())
+            return Fail(Error, "'" + Item->Name + "' would be extracted outside its folder");
         for (const std::filesystem::path& Part : Relative)
         {
             if (Part == "..")
                 return Fail(Error, "'" + Item->Name + "' would be extracted outside its folder");
         }
-        const std::filesystem::path Target = PathFromUtf8(Directory) / Relative;
         std::error_code FileError;
+        const std::filesystem::path AbsoluteRoot = std::filesystem::absolute(PathFromUtf8(Directory), FileError);
+        if (FileError)
+            return Fail(Error, "Cannot resolve extraction folder '" + Directory + "'");
+        const std::filesystem::path Root = std::filesystem::weakly_canonical(AbsoluteRoot, FileError);
+        if (FileError)
+            return Fail(Error, "Cannot resolve extraction folder '" + Directory + "'");
+        std::filesystem::path Target = Root;
+        for (const std::filesystem::path& Part : Relative)
+        {
+            Target /= Part;
+            const std::filesystem::file_status Status = std::filesystem::symlink_status(Target, FileError);
+            if (FileError && FileError != std::errc::no_such_file_or_directory)
+                return Fail(Error, "Cannot inspect extraction path '" + PathToUtf8(Target) + "'");
+            FileError.clear();
+            // Reject dangling links too: resolving only existing paths would miss them before the write.
+            if (std::filesystem::is_symlink(Status))
+                return Fail(Error, "Cannot extract through symlink '" + PathToUtf8(Target) + "'");
+        }
+        Target = std::filesystem::weakly_canonical(Target, FileError);
+        const std::filesystem::path Confined = Target.lexically_relative(Root);
+        if (FileError || Confined.empty() || Confined.is_absolute() || *Confined.begin() == "..")
+            return Fail(Error, "'" + Item->Name + "' would be extracted outside its folder");
         if (!Item->Name.empty() && (Item->Name.back() == '/' || Item->Name.back() == '\\'))
         {
             std::filesystem::create_directories(Target, FileError);

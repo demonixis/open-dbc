@@ -517,6 +517,54 @@ TEST_CASE("Enhancement Pack file blocks store, encrypt and extract files")
     CHECK(App.Fails(S::Function_ExtEnhancementGetFileBlockExists, {Int(256)}));
 }
 
+TEST_CASE("FileBlockSystem extraction rejects existing and dangling symlinks")
+{
+    ScratchDirectory Scratch("opendbc-file-block-symlink");
+    const std::filesystem::path Output = Scratch.Path() / "output";
+    std::filesystem::create_directories(Output);
+    std::filesystem::create_directories(Scratch.Path() / "outside");
+    Scratch.Write("outside/payload.txt", "unchanged");
+    std::string EntryName = "payload.txt";
+    std::error_code LinkError;
+
+    SUBCASE("A directory link")
+    {
+        std::filesystem::create_directory_symlink(Scratch.Path() / "outside", Output / "linked", LinkError);
+        EntryName = "linked/payload.txt";
+    }
+    SUBCASE("A file link")
+    {
+        std::filesystem::create_symlink(Scratch.Path() / "outside/payload.txt", Output / EntryName, LinkError);
+    }
+    SUBCASE("A dangling file link")
+    {
+        std::filesystem::create_symlink(Scratch.Path() / "outside/new.txt", Output / EntryName, LinkError);
+    }
+#if defined(_WIN32)
+    if (LinkError == std::errc::permission_denied || LinkError == std::errc::operation_not_permitted ||
+        LinkError == std::errc::operation_not_supported || LinkError == std::errc::function_not_supported ||
+        LinkError.value() == 1314) // ERROR_PRIVILEGE_NOT_HELD
+    {
+        MESSAGE("Symlink creation is unavailable: " << LinkError.message());
+        return;
+    }
+#endif
+    REQUIRE_MESSAGE(!LinkError, LinkError.message());
+    dbc::FileBlockSystem Blocks;
+    std::string Error;
+    REQUIRE_MESSAGE(Blocks.Create(1, (Scratch.Path() / "archive.zip").generic_string(), &Error), Error);
+    REQUIRE_MESSAGE(Blocks.AddBytes(1, EntryName, {'x'}, &Error), Error);
+    CHECK_FALSE(Blocks.Extract(1, EntryName, Output.generic_string(), &Error));
+    CHECK(Error.find("symlink") != std::string::npos);
+    std::ifstream Existing(Scratch.Path() / "outside/payload.txt");
+    CHECK(std::string(std::istreambuf_iterator<char>(Existing), {}) == "unchanged");
+    CHECK_FALSE(std::filesystem::exists(Scratch.Path() / "outside/new.txt"));
+
+    REQUIRE_MESSAGE(Blocks.AddBytes(1, "nested/allowed.txt", {'y'}, &Error), Error);
+    REQUIRE_MESSAGE(Blocks.Extract(1, "nested/allowed.txt", Output.generic_string(), &Error), Error);
+    CHECK(std::filesystem::file_size(Output / "nested/allowed.txt") == 1);
+}
+
 TEST_CASE("FileBlockSystem preserves encrypted data descriptors when saving imported ZIP files")
 {
     ScratchDirectory Scratch("opendbc-file-block-descriptor");
