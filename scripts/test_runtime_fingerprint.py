@@ -31,7 +31,8 @@ file(WRITE "${CMAKE_BINARY_DIR}/fingerprint.txt" "${OPENDBC_RUNTIME_FINGERPRINT}
         shutil.copyfile(ROOT / "cmake/runtime_fingerprint.cmake", self.source / "cmake/runtime_fingerprint.cmake")
         self.inputs = ("src/vm/bytecode.hpp", "src/vm/execution_session.cpp",
                        "src/engine/systems/video_decoder_avfoundation.mm", "tools/runner/main.cpp",
-                       "tools/runner/CMakeLists.txt", "tools/studio/src/app.cpp", "shaders/basic.hlsl")
+                       "tools/runner/CMakeLists.txt", "tools/studio/src/app.cpp", "shaders/basic.hlsl",
+                       "sdk/opendbc_plugin.h", "resources/midi/VintageDreamsWaves-v2.sf2")
         for path in self.inputs:
             self.write(path, "// Original fixture input\n")
         self.run_cmake("-S", str(self.source), "-B", str(self.build), "-G", "Ninja")

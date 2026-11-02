@@ -3,6 +3,7 @@ file(GLOB_RECURSE OPENDBC_RUNTIME_FINGERPRINT_INPUTS CONFIGURE_DEPENDS
     "src/*.cpp" "src/*.hpp" "src/*.inc" "src/*.mm"
     "tools/studio/src/*.cpp" "tools/studio/src/*.hpp" "tools/studio/src/*.mm"
     "tools/runner/*.cpp" "tools/runner/*.hpp" "tools/runner/*.mm" "tools/runner/*.in"
+    "sdk/*.h"
     "shaders/*.hlsl" "shaders/*.spv" "shaders/*.msl"
     "cmake/*.cmake" "cmake/*.patch")
 list(APPEND OPENDBC_RUNTIME_FINGERPRINT_INPUTS
@@ -12,7 +13,8 @@ list(APPEND OPENDBC_RUNTIME_FINGERPRINT_INPUTS
     "src/language/CMakeLists.txt"
     "src/vm/CMakeLists.txt"
     "tools/studio/CMakeLists.txt"
-    "tools/runner/CMakeLists.txt")
+    "tools/runner/CMakeLists.txt"
+    "resources/midi/VintageDreamsWaves-v2.sf2")
 list(SORT OPENDBC_RUNTIME_FINGERPRINT_INPUTS)
 set(OPENDBC_RUNTIME_FINGERPRINT_MATERIAL "OpenDBC-runtime-v1\n")
 foreach(OPENDBC_RUNTIME_INPUT IN LISTS OPENDBC_RUNTIME_FINGERPRINT_INPUTS)
