@@ -351,6 +351,16 @@ namespace dbc::language::detail
                             return Array->second;
                         if (const auto Function = Functions_.find(Name); Function != Functions_.end())
                             return InferReturnType(*Function->second.Declaration);
+                        if (const SymbolDescriptor* Descriptor =
+                                FindSymbol(Source_.Profile, SymbolKind::Function, Name))
+                        {
+                            if (ExecutableIn(*Descriptor, Source_.Profile))
+                            {
+                                if (const BuiltinOverload* Selected = FindOverload(
+                                        Descriptor->Id, Source_.Profile, static_cast<int>(Value.Children.size())))
+                                    return TypeForBuiltin(Selected->ReturnType);
+                            }
+                        }
                         return TypeFromSuffix(Name);
                     }
                     case ExpressionKind::Member:

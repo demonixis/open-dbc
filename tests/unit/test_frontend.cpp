@@ -446,6 +446,42 @@ TEST_CASE("Function return contracts are profile-specific and cover every return
     CHECK(HasCode(MixedDbProNumeric, "DBC2041"));
 }
 
+TEST_CASE("Function return inference uses catalogue builtin result types")
+{
+    for (const auto Profile : {dbc::language::LanguageProfile::Dbc, dbc::language::LanguageProfile::DbPro})
+    {
+        const dbc::language::Program Program = dbc::language::Compile(Source("end\n"
+                                                                             "function lengthOrZero(flag)\n"
+                                                                             "if flag then exitfunction 0\n"
+                                                                             "endfunction len(\"abc\")\n"
+                                                                             "function timeOrZero(flag)\n"
+                                                                             "if flag then exitfunction timer()\n"
+                                                                             "endfunction 0\n"
+                                                                             "function lengthOrTime(flag)\n"
+                                                                             "if flag then exitfunction len(\"abc\")\n"
+                                                                             "endfunction timer()\n",
+                                                                             Profile));
+        for (const auto& Diagnostic : Program.Diagnostics)
+            INFO(dbc::language::FormatDiagnostic(*Program.Source, Diagnostic));
+        REQUIRE_FALSE(Program.HasErrors());
+        REQUIRE(Program.Functions.size() == 3);
+        for (const auto& Function : Program.Functions)
+            CHECK(Function.ReturnType.Kind == dbc::language::TypeKind::Integer);
+        const dbc::vm::CompileResult Lowered = dbc::vm::Lower(Program);
+        REQUIRE(Lowered.Success());
+        CHECK(dbc::vm::Verify(*Lowered.Bytecode).Success());
+    }
+
+    const std::string Mixed = "end\n"
+                              "function mixed(flag)\n"
+                              "if flag then exitfunction timer()\n"
+                              "endfunction 1.5\n";
+    const dbc::language::Program Classic = dbc::language::Compile(Source(Mixed, dbc::language::LanguageProfile::Dbc));
+    REQUIRE_FALSE(Classic.HasErrors());
+    CHECK(Classic.Functions.front().ReturnType.Kind == dbc::language::TypeKind::Real);
+    CHECK(HasCode(dbc::language::Compile(Source(Mixed, dbc::language::LanguageProfile::DbPro)), "DBC2041"));
+}
+
 TEST_CASE("Reserved words function names and XOR obey only the active profile")
 {
     const dbc::language::Program ClassicLabel =
