@@ -2018,6 +2018,46 @@ namespace dbc
         return true;
     }
 
+    bool ImageStore::PaintImage(int ImageId, SDL_Surface* Source, const SDL_Rect& Destination, std::string* Error)
+    {
+        Image* Target = GetImage(ImageId);
+        if (!Target || !Target->Surface || !Target->GpuTexture)
+        {
+            if (Error)
+                *Error = "image " + std::to_string(ImageId) + " no longer exists";
+            return false;
+        }
+        const SDL_Rect Bounds{0, 0, Target->Surface->w, Target->Surface->h};
+        SDL_Rect Changed{};
+        if (!SDL_GetRectIntersection(&Destination, &Bounds, &Changed))
+            return true;
+        SDL_Rect Scaled = Destination;
+        if (!SDL_SetSurfaceBlendMode(Source, SDL_BLENDMODE_NONE) ||
+            !SDL_BlitSurfaceScaled(Source, nullptr, Target->Surface, &Scaled, SDL_SCALEMODE_LINEAR) ||
+            !Kernel_.Gpu().UpdateGpuTextureFromSurface(Target->GpuTexture, Target->Surface,
+                                                       std::span<const SDL_Rect>(&Changed, 1)))
+        {
+            if (Error)
+                *Error = std::string("painting failed: ") + SDL_GetError();
+            return false;
+        }
+        // The keyed textures are made again on demand.
+        if (Target->Texture &&
+            !SDL_UpdateTexture(Target->Texture, nullptr, Target->Surface->pixels, Target->Surface->pitch))
+            DBC_LOG_WARN("Image {} texture update failed: {}", ImageId, SDL_GetError());
+        if (Target->ColorKeyTexture)
+        {
+            SDL_DestroyTexture(Target->ColorKeyTexture);
+            Target->ColorKeyTexture = nullptr;
+        }
+        if (Target->GpuColorKeyTexture)
+        {
+            SDL_ReleaseGPUTexture(Kernel_.Gpu().GpuDevice(), Target->GpuColorKeyTexture);
+            Target->GpuColorKeyTexture = nullptr;
+        }
+        return true;
+    }
+
     void ImageStore::WarnMissingImage(const char* Command, int ImageId)
     {
         if (MissingImageWarned_.insert(ImageId).second)

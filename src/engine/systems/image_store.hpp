@@ -93,6 +93,8 @@ namespace dbc
         // Insert / replace an image slot from a raw surface (caller retains ownership).
         bool StoreImageFromSurface(int ImageId, SDL_Surface* Surface, std::string* Error = nullptr);
         bool StoreBitmapFromSurface(int BitmapId, SDL_Surface* Surface, std::string* Error = nullptr);
+        // Scales Source into Destination of an existing image, clipped to it, and refreshes its textures in place.
+        bool PaintImage(int ImageId, SDL_Surface* Source, const SDL_Rect& Destination, std::string* Error = nullptr);
 
         // Reports a command that had to skip a missing image, once per slot.
         void WarnMissingImage(const char* Command, int ImageId);

@@ -26,6 +26,9 @@ namespace dbc
         std::vector<std::uint8_t> Pixels;
         int FrameWidth = 0;
         int FrameHeight = 0;
+        float Rate = 1.0f;
+        // Between Start or Resume and Pause; a rate change only reaches a running player.
+        bool Running = false;
     };
 
     namespace
@@ -146,18 +149,33 @@ namespace dbc
     {
         Impl_->Ended->store(false);
         [Impl_->Player seekToTime:kCMTimeZero toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
-        [Impl_->Player play];
+        Impl_->Running = true;
+        Impl_->Player.rate = Impl_->Rate;
         return true;
     }
 
     void VideoDecoder::Pause()
     {
+        Impl_->Running = false;
         [Impl_->Player pause];
     }
 
     void VideoDecoder::Resume()
     {
-        [Impl_->Player play];
+        Impl_->Running = true;
+        Impl_->Player.rate = Impl_->Rate;
+    }
+
+    void VideoDecoder::SetVolume(float Volume)
+    {
+        Impl_->Player.volume = Volume;
+    }
+
+    void VideoDecoder::SetRate(float Rate)
+    {
+        Impl_->Rate = Rate;
+        if (Impl_->Running)
+            Impl_->Player.rate = Rate;
     }
 
     bool VideoDecoder::Finished() const

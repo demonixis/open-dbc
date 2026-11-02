@@ -7,6 +7,7 @@
 
 #include <SDL3/SDL.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <limits>
 
@@ -133,6 +134,7 @@ namespace dbc
         }
 
         Value->BitmapId = Target;
+        Value->ImageId = 0;
         if (Area)
         {
             Value->X = Area->Left;
@@ -155,6 +157,52 @@ namespace dbc
             return false;
         Value->X = X;
         Value->Y = Y;
+        return true;
+    }
+
+    bool VideoSystem::PlayAnimationToImage(int AnimationId, int ImageId, const AnimationArea& Area, std::string* Error)
+    {
+        constexpr const char* Command = "PLAY ANIMATION TO IMAGE";
+        Animation* Value = RequireAnimation(AnimationId, Command, Error);
+        if (!Value || !ValidateArea(Area, Command, Error))
+            return false;
+        if (ImageId < 1)
+        {
+            if (Error)
+                *Error = std::string(Command) + " requires an image number of 1 or more";
+            return false;
+        }
+        if (Area.Right <= 0 || Area.Bottom <= 0)
+        {
+            if (Error)
+                *Error = std::string(Command) + " requires an area ending at a positive right and bottom";
+            return false;
+        }
+        ImageStore& Store = Kernel_.ImageStoreRef();
+        const bool TooSmall = Store.ImageExist(ImageId) != 0 &&
+                              (Store.ImageWidth(ImageId) < Area.Right || Store.ImageHeight(ImageId) < Area.Bottom);
+        if (TooSmall && !Store.DeleteImage(ImageId, Error))
+            return false;
+        if (Store.ImageExist(ImageId) == 0)
+        {
+            SDL_Surface* Blank = SDL_CreateSurface(Area.Right, Area.Bottom, SDL_PIXELFORMAT_RGBA32);
+            const bool Stored = Blank && Store.StoreImageFromSurface(ImageId, Blank, Error);
+            if (!Blank && Error)
+                *Error = std::string(Command) + " cannot make image " + std::to_string(ImageId) + ": " + SDL_GetError();
+            SDL_DestroySurface(Blank);
+            if (!Stored)
+                return false;
+        }
+
+        Value->BitmapId = 0;
+        Value->ImageId = ImageId;
+        Value->X = Area.Left;
+        Value->Y = Area.Top;
+        Value->Width = Area.Right - Area.Left;
+        Value->Height = Area.Bottom - Area.Top;
+        Value->Looping = false;
+        Value->Paused = false;
+        Value->Playing = Value->Decoder && Value->Decoder->Start();
         return true;
     }
 
@@ -206,6 +254,29 @@ namespace dbc
             Value->Decoder->Resume();
             Value->Paused = false;
         }
+        return true;
+    }
+
+    bool VideoSystem::SetAnimationSpeed(int AnimationId, int Speed, std::string* Error)
+    {
+        Animation* Value = RequireAnimation(AnimationId, "SET ANIMATION SPEED", Error);
+        if (!Value)
+            return false;
+        Value->Speed = Speed;
+        if (Value->Decoder)
+            Value->Decoder->SetRate(static_cast<float>(std::clamp(Speed, 0, 100)) / 100.0f);
+        return true;
+    }
+
+    bool VideoSystem::SetAnimationVolume(int AnimationId, int Volume, std::string* Error)
+    {
+        Animation* Value = RequireAnimation(AnimationId, "SET ANIMATION VOLUME", Error);
+        if (!Value)
+            return false;
+        Value->Volume = Volume;
+        // Linear like sound volumes; DBPro maps the percentage to DirectShow decibels instead.
+        if (Value->Decoder)
+            Value->Decoder->SetVolume(static_cast<float>(std::clamp(Volume, 0, 100)) / 100.0f);
         return true;
     }
 
@@ -280,6 +351,24 @@ namespace dbc
         return true;
     }
 
+    bool VideoSystem::AnimationSpeed(int& Output, int AnimationId, std::string* Error) const
+    {
+        const Animation* Value = RequireAnimation(AnimationId, "ANIMATION SPEED", Error);
+        if (!Value)
+            return false;
+        Output = Value->Speed;
+        return true;
+    }
+
+    bool VideoSystem::AnimationVolume(int& Output, int AnimationId, std::string* Error) const
+    {
+        const Animation* Value = RequireAnimation(AnimationId, "ANIMATION VOLUME", Error);
+        if (!Value)
+            return false;
+        Output = Value->Volume;
+        return true;
+    }
+
     void VideoSystem::PaintFrames()
     {
         for (auto& [AnimationId, Value] : Animations_)
@@ -312,6 +401,20 @@ namespace dbc
 
         ImageStore& Store = Kernel_.ImageStoreRef();
         std::string Error;
+        const SDL_Rect Destination{Value.X, Value.Y, Value.Width, Value.Height};
+        if (Value.ImageId != 0)
+        {
+            SDL_Surface* Source = SDL_CreateSurfaceFrom(Frame.Width, Frame.Height, SDL_PIXELFORMAT_BGRA32,
+                                                        const_cast<std::uint8_t*>(Frame.Pixels), Frame.Pitch);
+            const bool Painted = Source && Store.PaintImage(Value.ImageId, Source, Destination, &Error);
+            if (!Source)
+                Error = SDL_GetError();
+            if (!Painted)
+                DBC_LOG_WARN("Animation {} stopped: {}", AnimationId, Error);
+            SDL_DestroySurface(Source);
+            return Painted;
+        }
+
         SDL_Surface* Target = nullptr;
         if (Value.BitmapId == 0)
         {
@@ -336,7 +439,6 @@ namespace dbc
 
         SDL_Surface* Source = SDL_CreateSurfaceFrom(Frame.Width, Frame.Height, SDL_PIXELFORMAT_BGRA32,
                                                     const_cast<std::uint8_t*>(Frame.Pixels), Frame.Pitch);
-        const SDL_Rect Destination{Value.X, Value.Y, Value.Width, Value.Height};
         const bool Painted = Source && SDL_SetSurfaceBlendMode(Source, SDL_BLENDMODE_NONE) &&
                              SDL_BlitSurfaceScaled(Source, nullptr, Target, &Destination, SDL_SCALEMODE_LINEAR);
         if (!Painted)

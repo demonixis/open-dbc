@@ -36,6 +36,10 @@ namespace dbc
         bool Start();
         void Pause();
         void Resume();
+        // Linear gain, 0 silent to 1 full.
+        void SetVolume(float Volume);
+        // Playback rate, 1 for normal speed; 0 holds the current picture until the rate rises.
+        void SetRate(float Rate);
         // True once playback ended or failed since the latest Start.
         bool Finished() const;
         // Fetches the picture due at the current playback time.

@@ -1,8 +1,8 @@
-# Classic animations
+# Animations
 
-`dbc` only; DBPro animation commands stay unsupported. The `ANIMATION` commands
-play video files with the operating system's media framework, sound included, so
-OpenDBC ships no codec of its own.
+The `ANIMATION` commands of Classic and DBPro play video files with the operating
+system's media framework, sound included, so OpenDBC ships no codec of its own.
+DBPro's DVD forms stay unsupported.
 
 ## Decoding
 
@@ -62,3 +62,14 @@ Pictures therefore advance at every `SYNC` with `SYNC ON` and at every automatic
 refresh otherwise, while the sound plays on its own. A paused animation is
 repainted, because a 3D frame clears the screen bitmap. Once stopped, finished or
 deleted, the last picture stays in its bitmap, as in DarkBASIC.
+
+## DBPro additions
+
+`PLAY ANIMATION TO IMAGE animation, image, left, top, right, bottom` plays once into
+an image, made at right × bottom when it is missing or smaller; each frame updates
+the image's texture in place, so objects and sprites using it show the video.
+
+`SET ANIMATION SPEED` and `SET ANIMATION VOLUME` take percentages, 100 by default.
+`ANIMATION SPEED()` and `ANIMATION VOLUME()` return the value given; playback clamps
+it to 0–100. Speed 0 holds the current picture. The volume is linear, like sound
+volumes, where DBPro mapped it to DirectShow decibels.

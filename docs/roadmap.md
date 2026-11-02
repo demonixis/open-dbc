@@ -6,8 +6,7 @@ Repository files:
 - [ ] README screenshots.
 
 Publication:
-- [ ] Signed tag `v0.5.0`, release with `SHA256SUMS`; its notes say that animations
-  are still Classic only.
+- [ ] Signed tag `v0.5.0`, release with `SHA256SUMS`.
 
 ## Code quality
 
@@ -16,8 +15,8 @@ Publication:
 
 ## DBPro parity
 
-The catalogue counts 1,020 of DBPro's 1,266 core commands and functions as implemented,
-against 702 of 731 in Classic. The other 246 are sorted here by name only; confirm each
+The catalogue counts 1,041 of DBPro's 1,266 core commands and functions as implemented,
+against 702 of 731 in Classic. The other 225 are sorted here by name only; confirm each
 one when it is picked up.
 
 152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access
@@ -26,7 +25,6 @@ one when it is picked up.
 
 To port, in order:
 
-- [ ] Animations ([video.md](video.md)), 16 of 21 forms already in Classic.
 - [ ] Force feedback (11, all in Classic) and what remains of the other gaps: the rest of
   Advanced Terrain once a source gives its signatures (`LOAD TERRAIN`, `SAVE TERRAIN`,
   `DESTROY TERRAIN`, the size readers), and `SET GLOBAL OBJECT CREATION`, whose draw

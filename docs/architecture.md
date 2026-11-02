@@ -104,7 +104,7 @@ that the pinned DXC compiles to SPIR-V, then SDL_shadercross to MSL, as the Stud
 does for effects; the engine loads whichever the GPU device accepts and never
 transpiles at run time. After `cmake --preset shader-verify`, the
 `shader-verify` build preset checks the tracked files byte for byte and
-`shader-update` regenerates them. Classic animations decode with the platform's
+`shader-update` regenerates them. Animations decode with the platform's
 media framework ([video.md](video.md)); OpenDBC bundles no codecs.
 
 [rendering.md](rendering.md) describes how a frame is drawn and what a faster

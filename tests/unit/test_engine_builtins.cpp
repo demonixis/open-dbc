@@ -999,7 +999,157 @@ TEST_CASE("Classic animations play decoded video into their bitmap")
     Kernel.Video().PaintFrames();
     CHECK(Red());
 }
+
+TEST_CASE("DBPro animations play into an image and hold their picture at speed zero")
+{
+#if defined(__linux__)
+    const dbc::tests::GStreamerVideoFixture Fixture;
 #endif
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("dbpro-animation-image", 64, 64));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    Context.AssetRoot = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/video";
+#if defined(__linux__)
+    Context.AssetRoot = Fixture.Root;
+#endif
+    std::string Error;
+    using dbc::language::SymbolId;
+    const auto Command = [&](SymbolId Symbol, std::vector<BuiltinValue> Arguments)
+    { REQUIRE_MESSAGE(InvokeCommand(Context, Symbol, Arguments, Error), Error); };
+    const auto Number = [&](SymbolId Symbol)
+    {
+        BuiltinValue Result;
+        REQUIRE_MESSAGE(InvokeFunction(Context, Symbol, {BuiltinValue::FromNumber(1)}, Result, Error), Error);
+        return ReadBuiltinInteger(Result);
+    };
+    const auto Pixel = [&](int X, int Y)
+    {
+        const dbc::Image* Target = Kernel.ImageStoreRef().GetImage(2);
+        std::array<Uint8, 4> Value{};
+        REQUIRE(Target != nullptr);
+        REQUIRE(SDL_ReadSurfacePixel(Target->Surface, X, Y, &Value[0], &Value[1], &Value[2], &Value[3]));
+        return Value;
+    };
+    const auto Pump = [&]
+    {
+#if defined(__APPLE__)
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.02, false);
+#else
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+#endif
+        Kernel.Video().PaintFrames();
+    };
+    const auto PlayUntil = [&](auto&& Reached)
+    {
+        const auto Deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (!Reached() && std::chrono::steady_clock::now() < Deadline)
+            Pump();
+        return Reached();
+    };
+    const auto Red = [&] { return Pixel(8, 8)[0] > 200 && Pixel(8, 8)[2] < 60; };
+    const auto Blue = [&] { return Pixel(8, 8)[2] > 200 && Pixel(8, 8)[0] < 60; };
+
+#if defined(__APPLE__) || defined(_WIN32)
+    const char* Video = "red_blue.mp4";
+#else
+    const char* Video = "red_blue.avi";
+#endif
+    Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString(Video), BuiltinValue::FromNumber(1)});
+    // The fixture shows red for one second, then blue; the image is made at the area's right and bottom.
+    Command(SymbolId::Command_PlayAnimationToImage,
+            {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(0),
+             BuiltinValue::FromNumber(0), BuiltinValue::FromNumber(32), BuiltinValue::FromNumber(24)});
+    CHECK(Kernel.ImageStoreRef().ImageWidth(2) == 32);
+    CHECK(Kernel.ImageStoreRef().ImageHeight(2) == 24);
+    CHECK(Number(SymbolId::Function_AnimationPlaying) == 1);
+    CHECK(PlayUntil(Red));
+
+    Command(SymbolId::Command_SetAnimationSpeed, {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(0)});
+    const auto HoldUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(1500);
+    while (std::chrono::steady_clock::now() < HoldUntil)
+        Pump();
+    CHECK(Red());
+    CHECK(Number(SymbolId::Function_AnimationPlaying) == 1);
+    Command(SymbolId::Command_SetAnimationSpeed, {BuiltinValue::FromNumber(1), BuiltinValue::FromNumber(100)});
+    CHECK(PlayUntil(Blue));
+    CHECK(PlayUntil([&] { return Number(SymbolId::Function_AnimationPlaying) == 0; }));
+    CHECK(Number(SymbolId::Function_AnimationLooping) == 0);
+}
+#endif
+
+TEST_CASE("DBPro animations keep speed and volume and make their target image")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("dbpro-animation-state", 64, 64));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    Context.AssetRoot = TEST_SOURCE_DIR;
+    std::string Error;
+    using dbc::language::SymbolId;
+    const auto Command = [&](SymbolId Symbol, std::vector<BuiltinValue> Arguments)
+    {
+        Error.clear();
+        return InvokeCommand(Context, Symbol, Arguments, Error);
+    };
+    const auto Numbers = [](std::initializer_list<int> Values)
+    {
+        std::vector<BuiltinValue> Arguments;
+        for (const int Value : Values)
+            Arguments.push_back(BuiltinValue::FromNumber(Value));
+        return Arguments;
+    };
+    const auto Number = [&](SymbolId Symbol)
+    {
+        BuiltinValue Result;
+        std::string QueryError;
+        REQUIRE_MESSAGE(InvokeFunction(Context, Symbol, {BuiltinValue::FromNumber(1)}, Result, QueryError), QueryError);
+        return ReadBuiltinInteger(Result);
+    };
+
+    CHECK_FALSE(Command(SymbolId::Command_SetAnimationSpeed, Numbers({1, 50})));
+    CHECK(Error == "SET ANIMATION SPEED requires existing animation 1");
+    // A text file stays inert whatever codecs the system has.
+    REQUIRE(
+        Command(SymbolId::Command_LoadAnimation, {BuiltinValue::FromString("README.md"), BuiltinValue::FromNumber(1)}));
+    CHECK(Number(SymbolId::Function_AnimationSpeed) == 100);
+    CHECK(Number(SymbolId::Function_AnimationVolume) == 100);
+    // Values outside 0-100 read back as given; playback clamps them.
+    REQUIRE(Command(SymbolId::Command_SetAnimationSpeed, Numbers({1, 250})));
+    REQUIRE(Command(SymbolId::Command_SetAnimationVolume, Numbers({1, -20})));
+    CHECK(Number(SymbolId::Function_AnimationSpeed) == 250);
+    CHECK(Number(SymbolId::Function_AnimationVolume) == -20);
+
+    REQUIRE(Command(SymbolId::Command_PlayAnimationToImage, Numbers({1, 3, 4, 2, 20, 12})));
+    CHECK(Kernel.ImageStoreRef().ImageWidth(3) == 20);
+    CHECK(Kernel.ImageStoreRef().ImageHeight(3) == 12);
+    CHECK(Number(SymbolId::Function_AnimationPositionX) == 4);
+    CHECK(Number(SymbolId::Function_AnimationWidth) == 16);
+    CHECK(Number(SymbolId::Function_AnimationHeight) == 10);
+    CHECK(Number(SymbolId::Function_AnimationPlaying) == 0);
+    // An image large enough is kept; a smaller one is made again at the area's size.
+    REQUIRE(Command(SymbolId::Command_PlayAnimationToImage, Numbers({1, 3, 0, 0, 8, 8})));
+    CHECK(Kernel.ImageStoreRef().ImageWidth(3) == 20);
+    REQUIRE(Command(SymbolId::Command_PlayAnimationToImage, Numbers({1, 3, 0, 0, 30, 8})));
+    CHECK(Kernel.ImageStoreRef().ImageWidth(3) == 30);
+    CHECK(Kernel.ImageStoreRef().ImageHeight(3) == 8);
+
+    CHECK_FALSE(Command(SymbolId::Command_PlayAnimationToImage, Numbers({1, 0, 0, 0, 8, 8})));
+    CHECK(Error == "PLAY ANIMATION TO IMAGE requires an image number of 1 or more");
+    CHECK_FALSE(Command(SymbolId::Command_PlayAnimationToImage, Numbers({1, 3, 8, 0, 8, 8})));
+    CHECK(Error == "PLAY ANIMATION TO IMAGE requires an area with a positive width and height");
+    CHECK_FALSE(Command(SymbolId::Command_PlayAnimationToImage, Numbers({1, 3, -9, -9, -1, -1})));
+    CHECK(Error == "PLAY ANIMATION TO IMAGE requires an area ending at a positive right and bottom");
+
+    // Playing to a bitmap again leaves the image alone.
+    REQUIRE(Command(SymbolId::Command_PlayAnimation, Numbers({1, 0, 0, 0, 8, 8})));
+    REQUIRE(Command(SymbolId::Command_DeleteAnimation, Numbers({1})));
+    CHECK(Kernel.ImageStoreRef().ImageExist(3) == 1);
+}
 
 TEST_CASE("Swarm Classic plains face negative Z while DBPro orientations remain unchanged")
 {

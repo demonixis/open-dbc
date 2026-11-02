@@ -96,6 +96,9 @@ namespace dbc
         int Height = 0;
         bool HaveFrame = false;
         std::atomic<bool> ReportedError{false};
+        double Rate = 1.0;
+        // Between Start or Resume and Pause; a rate change only reaches a running player.
+        bool Running = false;
 
         ~Impl()
         {
@@ -123,6 +126,14 @@ namespace dbc
                 DBC_LOG_WARN("Media Foundation playback failed (HRESULT 0x{:08x})", static_cast<unsigned>(Status));
             }
             return false;
+        }
+
+        // The media engine plays at the stored rate; rate 0 pauses it instead, as a held picture.
+        bool Run()
+        {
+            if (Rate <= 0.0)
+                return Check(Player->Pause());
+            return Check(Player->SetPlaybackRate(Rate)) && Check(Player->Play());
         }
 
         void PumpFrames(std::stop_token Stop)
@@ -275,17 +286,32 @@ namespace dbc
             return false;
         Impl_->Events->Ended.store(false);
         Impl_->HaveFrame = false;
-        return Impl_->Check(Impl_->Player->SetCurrentTime(0)) && Impl_->Check(Impl_->Player->Play());
+        Impl_->Running = true;
+        return Impl_->Check(Impl_->Player->SetCurrentTime(0)) && Impl_->Run();
     }
 
     void VideoDecoder::Pause()
     {
+        Impl_->Running = false;
         Impl_->Check(Impl_->Player->Pause());
     }
 
     void VideoDecoder::Resume()
     {
-        Impl_->Check(Impl_->Player->Play());
+        Impl_->Running = true;
+        Impl_->Run();
+    }
+
+    void VideoDecoder::SetVolume(float Volume)
+    {
+        Impl_->Check(Impl_->Player->SetVolume(Volume));
+    }
+
+    void VideoDecoder::SetRate(float Rate)
+    {
+        Impl_->Rate = Rate;
+        if (Impl_->Running)
+            Impl_->Run();
     }
 
     bool VideoDecoder::Finished() const

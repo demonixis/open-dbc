@@ -1624,6 +1624,38 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+DBPRO_ANIMATION_TEST = "test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image"
+UNIT_WITNESSES += tuple(
+    ("dbpro", kind, name, code, "animation-state", DBPRO_ANIMATION_TEST)
+    for kind, name, code in (
+        ("Command", "LOAD ANIMATION", 'load animation "clip.mp4", 1\n'),
+        ("Command", "DELETE ANIMATION", "delete animation 1\n"),
+        ("Command", "PLAY ANIMATION", "play animation 1\n"),
+        ("Command", "PLAY ANIMATION", "play animation 1, 10, 20\n"),
+        ("Command", "PLAY ANIMATION", "play animation 1, 10, 20, 50, 40\n"),
+        ("Command", "PLAY ANIMATION", "play animation 1, 0, 10, 20, 50, 40\n"),
+        ("Command", "LOOP ANIMATION", "loop animation 1\n"),
+        ("Command", "LOOP ANIMATION", "loop animation 1, 0, 10, 20, 50, 40\n"),
+        ("Command", "PLACE ANIMATION", "place animation 1, 10, 20, 50, 40\n"),
+        ("Command", "STOP ANIMATION", "stop animation 1\n"),
+        ("Command", "PAUSE ANIMATION", "pause animation 1\n"),
+        ("Command", "RESUME ANIMATION", "resume animation 1\n"),
+        ("Command", "PLAY ANIMATION TO IMAGE", "play animation to image 1, 2, 0, 0, 32, 24\n"),
+        ("Command", "SET ANIMATION SPEED", "set animation speed 1, 50\n"),
+        ("Command", "SET ANIMATION VOLUME", "set animation volume 1, 50\n"),
+        ("Function", "ANIMATION EXIST", "value = animation exist(1)\n"),
+        ("Function", "ANIMATION PLAYING", "value = animation playing(1)\n"),
+        ("Function", "ANIMATION PAUSED", "value = animation paused(1)\n"),
+        ("Function", "ANIMATION LOOPING", "value = animation looping(1)\n"),
+        ("Function", "ANIMATION POSITION X", "value = animation position x(1)\n"),
+        ("Function", "ANIMATION POSITION Y", "value = animation position y(1)\n"),
+        ("Function", "ANIMATION WIDTH", "value = animation width(1)\n"),
+        ("Function", "ANIMATION HEIGHT", "value = animation height(1)\n"),
+        ("Function", "ANIMATION SPEED", "value = animation speed(1)\n"),
+        ("Function", "ANIMATION VOLUME", "value = animation volume(1)\n"),
+    )
+)
+
 DBC_REGISTRY_TEST = "test_engine_builtins.cpp::Classic registry commands persist values in the user's registry file"
 UNIT_WITNESSES += tuple(
     ("dbc", kind, name, code, "registry-file-state", DBC_REGISTRY_TEST)

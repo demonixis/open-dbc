@@ -50,6 +50,9 @@ namespace dbc
         std::string Failure;
         int Width = 0;
         int Height = 0;
+        double Rate = 1.0;
+        // Between Start or Resume and Pause; a rate change only reaches a running pipeline.
+        bool Running = false;
 
         ~Impl()
         {
@@ -138,6 +141,19 @@ namespace dbc
                     Failure = "GStreamer could not change the playback state";
             }
             CheckPlayback();
+        }
+
+        // Rate 0 cannot be sought; the pipeline keeps its previous rate and pauses instead.
+        bool Seek(gint64 Position)
+        {
+            return gst_element_seek(Player, Rate > 0.0 ? Rate : 1.0, GST_FORMAT_TIME,
+                                    static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
+                                    GST_SEEK_TYPE_SET, Position, GST_SEEK_TYPE_NONE, -1);
+        }
+
+        void Run()
+        {
+            SetState(Rate > 0.0 ? GST_STATE_PLAYING : GST_STATE_PAUSED);
         }
     };
 
@@ -242,24 +258,43 @@ namespace dbc
         if (!Impl_->Failure.empty())
             return false;
         Impl_->Ended = false;
-        if (!gst_element_seek_simple(Impl_->Player, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, 0))
+        if (!Impl_->Seek(0))
         {
             Impl_->Failure = "GStreamer could not restart the video";
             Impl_->CheckPlayback();
             return false;
         }
-        Impl_->SetState(GST_STATE_PLAYING);
+        Impl_->Running = true;
+        Impl_->Run();
         return Impl_->Failure.empty();
     }
 
     void VideoDecoder::Pause()
     {
+        Impl_->Running = false;
         Impl_->SetState(GST_STATE_PAUSED);
     }
 
     void VideoDecoder::Resume()
     {
-        Impl_->SetState(GST_STATE_PLAYING);
+        Impl_->Running = true;
+        Impl_->Run();
+    }
+
+    void VideoDecoder::SetVolume(float Volume)
+    {
+        g_object_set(Impl_->Player, "volume", static_cast<gdouble>(Volume), nullptr);
+    }
+
+    void VideoDecoder::SetRate(float Rate)
+    {
+        Impl_->Rate = Rate;
+        gint64 Position = 0;
+        // A rate only changes through a seek; it restarts from the current position.
+        if (Rate > 0.0f && gst_element_query_position(Impl_->Player, GST_FORMAT_TIME, &Position))
+            (void)Impl_->Seek(Position);
+        if (Impl_->Running)
+            Impl_->Run();
     }
 
     bool VideoDecoder::Finished() const

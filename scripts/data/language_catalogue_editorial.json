@@ -6,36 +6,15 @@
         "surface": "Core",
         "profiles": "DBPro",
         "symbols": [
-          "ANIMATION EXIST",
-          "ANIMATION HEIGHT",
-          "ANIMATION LOOPING",
-          "ANIMATION PAUSED",
-          "ANIMATION PLAYING",
-          "ANIMATION POSITION X",
-          "ANIMATION POSITION Y",
-          "ANIMATION SPEED",
-          "ANIMATION VOLUME",
-          "ANIMATION WIDTH",
-          "DELETE ANIMATION",
-          "LOAD ANIMATION",
           "LOAD DVD ANIMATION",
-          "LOOP ANIMATION",
-          "PAUSE ANIMATION",
-          "PLACE ANIMATION",
-          "PLAY ANIMATION",
-          "PLAY ANIMATION TO IMAGE",
-          "RESUME ANIMATION",
-          "SET ANIMATION SPEED",
-          "SET ANIMATION VOLUME",
           "SET DVD CHAPTER",
-          "STOP ANIMATION",
           "TOTAL DVD CHAPTERS"
         ]
       },
       "set": {
-        "notes": "Professional multimedia animation remains deferred; the Classic forms play through the platform media framework (docs/video.md)."
+        "notes": "DVD playback is not supported; animations play files through the platform media framework (docs/video.md)."
       },
-      "expected_rows": 24
+      "expected_rows": 3
     },
     {
       "match": {

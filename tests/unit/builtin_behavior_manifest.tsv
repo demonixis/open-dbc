@@ -772,6 +772,7 @@ dbpro	69	102	Command	CREATE NET GAME	loopback-net-game	test_network.cpp::DBPro n
 dbpro	70	104	Command	CREATE NET PLAYER	loopback-net-game	test_network.cpp::DBPro net games connect, list players and exchange typed messages over loopback	-
 dbpro	72	106	Command	CROSS PRODUCT VECTOR3	golden-output	test_dbpro_vector3.dba	659ac5b90a10d29c88abf6699989dc61a5e407016c77c6353a79e384ede0d4f4
 dbpro	73	108	Command	DATA	vm-state	test_vm.cpp::DATA READ and RESTORE use the typed module pool	-
+dbpro	74	110	Command	DELETE ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	75	112	Command	DELETE BITMAP	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	77	114	Command	DELETE BSP	bsp-world	test_engine_builtins.cpp::DBPro BSP worlds load, draw the leaves their camera sees and delete	-
 dbpro	78	115	Command	DELETE CAMERA	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
@@ -857,6 +858,7 @@ dbpro	202	315	Command	LINEAR INTERPOLATE VECTOR3	golden-output	test_vector.dba	4
 dbpro	203	316	Command	LINEAR INTERPOLATE VECTOR4	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	204	318	Command	LINK LIMB	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	205	320	Command	LOAD 3DSOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbpro	206	322	Command	LOAD ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	207	324	Command	LOAD ARRAY	vm-state	test_vm.cpp::Output commands store typed results and whole-array calls are explicit	-
 dbpro	208	326	Command	LOAD BITMAP	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	209	327	Command	LOAD BSP	bsp-world	test_engine_builtins.cpp::DBPro BSP worlds load, draw the leaves their camera sees and delete	-
@@ -870,6 +872,8 @@ dbpro	223	350	Command	LOCK OBJECT OFF	engine-state	test_engine_builtins.cpp::Por
 dbpro	224	352	Command	LOCK OBJECT ON	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	225	353	Command	LOCK VERTEXDATA FOR LIMB	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	226	354	Command	LOCK VERTEXDATA FOR MESH	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
+dbpro	227	357	Command	LOOP ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	227	358	Command	LOOP ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	228	360	Command	LOOP MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	229	362	Command	LOOP OBJECT	golden-output	test_dbpro_object_animation.dba	e8ef6eab45c8ec5c12919390583cec4a5445600db8d0a58d78a1f3c29c80b8ca
 dbpro	230	364	Command	LOOP SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -946,6 +950,7 @@ dbpro	327	478	Command	OPEN TO READ	golden-output	test_dbpro_file_memblock.dba	f1
 dbpro	328	480	Command	OPEN TO WRITE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	330	483	Command	PASTE IMAGE	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	331	485	Command	PASTE SPRITE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	332	487	Command	PAUSE ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	333	489	Command	PAUSE MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	334	491	Command	PAUSE SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	337	493	Command	PERFORM CHECKLIST FOR CONTROL DEVICES	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
@@ -965,6 +970,12 @@ dbpro	354	520	Command	PITCH CAMERA DOWN	engine-state	test_engine_builtins.cpp::P
 dbpro	355	522	Command	PITCH CAMERA UP	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	356	524	Command	PITCH OBJECT DOWN	golden-output	test_object_movement.dba	be2d7bcaa7223b9c7e5728d58c839557468d07aa7d5c239e93e5633fb4fb683c
 dbpro	357	526	Command	PITCH OBJECT UP	golden-output	test_object_movement.dba	be2d7bcaa7223b9c7e5728d58c839557468d07aa7d5c239e93e5633fb4fb683c
+dbpro	358	528	Command	PLACE ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	359	533	Command	PLAY ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	359	534	Command	PLAY ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	359	535	Command	PLAY ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	359	536	Command	PLAY ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	360	537	Command	PLAY ANIMATION TO IMAGE	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	361	539	Command	PLAY MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	362	541	Command	PLAY OBJECT	golden-output	test_dbpro_object_animation.dba	e8ef6eab45c8ec5c12919390583cec4a5445600db8d0a58d78a1f3c29c80b8ca
 dbpro	363	543	Command	PLAY SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -1004,6 +1015,7 @@ dbpro	399	603	Command	REMOVE LIMB	engine-state	test_engine_builtins.cpp::Portabl
 dbpro	400	605	Command	RENAME FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	401	607	Command	RESTORE	vm-state	test_vm.cpp::DATA READ and RESTORE use the typed module pool	-
 dbpro	402	609	Command	RESTORE WINDOW	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
+dbpro	403	611	Command	RESUME ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	404	613	Command	RESUME MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	405	615	Command	RESUME SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	406	617	Command	ROLL CAMERA LEFT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
@@ -1214,6 +1226,7 @@ dbpro	639	947	Command	SHOW WINDOW	window-state	test_engine_builtins.cpp::Portabl
 dbpro	640	949	Command	SIZE SPRITE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	641	951	Command	SLEEP	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
 dbpro	642	953	Command	SPRITE	golden-output	test_dbpro_sprites_pro.dba	02522a4ca0a7a8bddad544d16eb6402c03866e834b449d3b481146b2e1c64918
+dbpro	643	955	Command	STOP ANIMATION	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	644	957	Command	STOP MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	645	959	Command	STOP OBJECT	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	648	963	Command	STOP SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
@@ -1271,6 +1284,14 @@ dbpro	706	1061	Command	ZROTATE OBJECT	engine-state	test_engine_builtins.cpp::DBP
 dbpro	708	1064	Function	ABS	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	709	1066	Function	ACOS	golden-output	test_dbpro_core.dba	8d62c939abc65069a90e348b81888038410b08ddf81ef5c642ada8634a676b3d
 dbpro	710	1068	Function	ALPHABLENDING AVAILABLE	gpu-capability	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
+dbpro	711	1070	Function	ANIMATION EXIST	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	712	1072	Function	ANIMATION HEIGHT	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	714	1075	Function	ANIMATION LOOPING	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	715	1077	Function	ANIMATION PAUSED	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	716	1079	Function	ANIMATION PLAYING	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	717	1081	Function	ANIMATION POSITION X	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	718	1083	Function	ANIMATION POSITION Y	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	719	1085	Function	ANIMATION WIDTH	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	720	1087	Function	APPNAME$	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	721	1089	Function	ASC	value	test_engine_builtins.cpp::Text compatibility commands and functions expose observable state in both profiles	-
 dbpro	722	1091	Function	ASIN	golden-output	test_dbpro_core.dba	8d62c939abc65069a90e348b81888038410b08ddf81ef5c642ada8634a676b3d
@@ -1601,6 +1622,8 @@ dbpro	1181	1741	Command	ADD MEMBLOCK TO OBJECT	engine-state	test_engine_builtins
 dbpro	1185	1745	Command	ADD TO QUEUE	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1186	1746	Command	ADD TO STACK	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1189	1749	Function	AMBIENT LIGHT	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
+dbpro	1190	1750	Function	ANIMATION SPEED	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	1191	1751	Function	ANIMATION VOLUME	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	1194	1754	Function	APPEND$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1195	1755	Function	ARRAY COUNT	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1196	1756	Command	ARRAY DELETE ELEMENT	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
@@ -1684,6 +1707,8 @@ dbpro	1366	1919	Command	REMOVE FROM QUEUE	golden-output	test_dbpro_collections.d
 dbpro	1367	1920	Command	REMOVE FROM STACK	golden-output	test_dbpro_collections.dba	7366f15796ed47f82fa8e727aa13eb242adb568775cf0979517266bf55ddad1d
 dbpro	1370	1923	Function	REVERSE$	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1371	1924	Command	SCALE LISTENER	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbpro	1374	1927	Command	SET ANIMATION SPEED	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
+dbpro	1375	1928	Command	SET ANIMATION VOLUME	animation-state	test_engine_builtins.cpp::DBPro animations keep speed and volume and make their target image	-
 dbpro	1376	1929	Command	SET BITMAP FORMAT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1379	1932	Command	SET CAMERA CLIP	camera-image-pixel	test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane	-
 dbpro	1381	1934	Command	SET CONTROL DEVICE INDEX	input-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-

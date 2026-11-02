@@ -39,6 +39,10 @@ namespace dbc
 
     void VideoDecoder::Resume() {}
 
+    void VideoDecoder::SetVolume(float) {}
+
+    void VideoDecoder::SetRate(float) {}
+
     bool VideoDecoder::Finished() const
     {
         return true;
