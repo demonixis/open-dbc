@@ -412,6 +412,15 @@ TEST_CASE("Enhancement Pack file maps share memory between programs")
     CHECK(Host.CommandFails(S::Command_ExtEnhancementCreateFileMap, {Int(256), MapName, Int(16)}));
     CHECK(Host.CommandFails(S::Command_ExtEnhancementCreateFileMap, {Int(3), MapName, Int(0)}));
 
+    const std::string FullField(dbc::FileMapSystem::StringField, 'a');
+    Host.Require(S::Command_ExtEnhancementSetFileMapDword, {Int(1), Int(767), Int(0x12345678)});
+    Host.Require(S::Command_ExtEnhancementSetFileMapString, {Int(1), Int(512), BuiltinValue::FromString(FullField)});
+    CHECK(Guest.Text(S::Function_ExtEnhancementGetFileMapString, {Int(2), Int(512)}) == FullField);
+    CHECK(Host.CommandFails(S::Command_ExtEnhancementSetFileMapString,
+                            {Int(1), Int(512), BuiltinValue::FromString(std::string(256, 'b'))}));
+    CHECK(Guest.Text(S::Function_ExtEnhancementGetFileMapString, {Int(2), Int(512)}) == FullField);
+    CHECK(Guest.Number(S::Function_ExtEnhancementGetFileMapDword, {Int(2), Int(767)}) == 0x12345678);
+
     // Another program's write ends the wait long before its five-second timeout.
     const auto Started = std::chrono::steady_clock::now();
     std::thread Writer(

@@ -405,6 +405,8 @@ namespace dbc
                                    std::to_string(Map->Size()) + " bytes");
         const std::uint32_t Field =
             std::min<std::uint32_t>(StringField, Map->Size() - static_cast<std::uint32_t>(Offset));
+        if (Value.size() > Field)
+            return Fail(Error, "File map string exceeds its " + std::to_string(Field) + "-byte field");
         SpinLock Guard(Map->Header().Lock);
         std::memset(Map->Data() + Offset, 0, Field);
         std::memcpy(Map->Data() + Offset, Value.data(), Value.size());
