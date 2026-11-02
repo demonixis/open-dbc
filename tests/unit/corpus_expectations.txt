@@ -59,7 +59,7 @@ dbpro/demos/dusk_rally/dusk_rally.dba|dbpro|verified|-
 dbpro/demos/reactor_breach/reactor_breach.dba|dbpro|verified|-
 dbpro/demos/sky_gardens/sky_gardens.dba|dbpro|verified|-
 dbpro/tutorials/3dmaths/3dmaths1.dba|dbpro|bind|DBC2043
-dbpro/tutorials/animation/animation1.dba|dbpro|bind|DBC2043
+dbpro/tutorials/animation/animation1.dba|dbpro|verified|-
 dbpro/tutorials/basic2d/basic2d1.dba|dbpro|parse|DBC1101,DBC1105
 dbpro/tutorials/basic3d/basic3d1.dba|dbpro|verified|-
 dbpro/tutorials/basic3d/basic3d2.dba|dbpro|bind|DBC2043
@@ -82,7 +82,7 @@ dbpro/tutorials/input/input1.dba|dbpro|verified|-
 dbpro/tutorials/light/light1.dba|dbpro|verified|-
 dbpro/tutorials/matrix/matrix1.dba|dbpro|verified|-
 dbpro/tutorials/memblocks/memblocks1.dba|dbpro|verified|-
-dbpro/tutorials/multiplayer/multiplayer1.dba|dbpro|bind|DBC2043
+dbpro/tutorials/multiplayer/multiplayer1.dba|dbpro|verified|-
 dbpro/tutorials/music/music1.dba|dbpro|verified|-
 dbpro/tutorials/particles/particles1.dba|dbpro|verified|-
 dbpro/tutorials/sound/sound1.dba|dbpro|verified|-
