@@ -87,6 +87,20 @@ TEST_CASE("Run diagnostics parse the lines opendbc run prints")
     CHECK_FALSE(toolchain::ParseRunDiagnostic("hello", Root));
 }
 
+TEST_CASE("Run diagnostics reject output with source positions outside the supported range")
+{
+    const std::filesystem::path Root = std::filesystem::absolute("project");
+    for (const std::string Position : {"4294967296", "18446744073709551615", "99999999999999999999999999999"})
+    {
+        CHECK_FALSE(toolchain::ParseRunDiagnostic("main.dba:" + Position + ":1: DBC5000: program output", Root));
+        CHECK_FALSE(toolchain::ParseRunDiagnostic("main.dba:1:" + Position + ": DBC5000: program output", Root));
+    }
+    const auto Maximum = toolchain::ParseRunDiagnostic("main.dba:4294967295:4294967295: DBC5000: program output", Root);
+    REQUIRE(Maximum);
+    CHECK(Maximum->Line == 4294967295u);
+    CHECK(Maximum->Column == 4294967295u);
+}
+
 TEST_CASE("The Studio runs programs in opendbc-runner and reports where they fail")
 {
     // The runner inherits this: no window, no sound.

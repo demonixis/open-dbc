@@ -3,6 +3,7 @@
 #include "path_utf8.hpp"
 
 #include <algorithm>
+#include <charconv>
 #include <chrono>
 #include <regex>
 #include <string_view>
@@ -162,8 +163,15 @@ namespace dbc::studio
             }
             if (Match[2].matched)
             {
-                Result.Line = static_cast<std::uint32_t>(std::stoul(Match[2].str()));
-                Result.Column = static_cast<std::uint32_t>(std::stoul(Match[3].str()));
+                const auto Position = [&](std::size_t Index, std::uint32_t& Value)
+                {
+                    const std::string_view Text(Match[Index].first, Match[Index].second);
+                    const auto [End, Error] = std::from_chars(Text.data(), Text.data() + Text.size(), Value);
+                    return Error == std::errc{} && End == Text.data() + Text.size();
+                };
+                // Program output can resemble a diagnostic without containing a valid source position.
+                if (!Position(2, Result.Line) || !Position(3, Result.Column))
+                    return std::nullopt;
             }
             Result.Code = Match[5].str();
             Result.Message = Match[6].str();
