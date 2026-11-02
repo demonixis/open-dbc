@@ -67,10 +67,36 @@ namespace
         }
     }
 
-    constexpr std::uint8_t CompatibilityStubProfiles(std::uint8_t Profiles, std::uint8_t Implemented)
+    constexpr bool IsDbProCompatibilityStub(dbc::language::SymbolId Id)
+    {
+        using dbc::language::SymbolId;
+        switch (Id)
+        {
+#define DBC_DBPRO_STUB(Id) case SymbolId::Id:
+#include "dbpro_compatibility_stubs.inc"
+#undef DBC_DBPRO_STUB
+            return true;
+            default:
+                return false;
+        }
+    }
+
+    // Every Classic form that is not implemented is a stub; a DBPro form only when it is listed as one.
+    constexpr std::uint8_t CompatibilityStubProfiles(std::uint8_t Profiles, std::uint8_t Implemented,
+                                                     dbc::language::SymbolId Id)
     {
         constexpr std::uint8_t DbcProfile = 1;
-        return static_cast<std::uint8_t>(Profiles & DbcProfile & ~Implemented);
+        constexpr std::uint8_t DbProProfile = 2;
+        const std::uint8_t Stubs = IsDbProCompatibilityStub(Id) ? DbcProfile | DbProProfile : DbcProfile;
+        return static_cast<std::uint8_t>(Profiles & Stubs & ~Implemented);
+    }
+
+    constexpr std::uint8_t PermanentStubProfiles(std::uint8_t Profiles, std::uint8_t Implemented,
+                                                 dbc::language::SymbolId Id)
+    {
+        const std::uint8_t Permanent =
+            (IsPermanentCompatibilityStub(Id) ? 1 : 0) | (IsDbProCompatibilityStub(Id) ? 2 : 0);
+        return static_cast<std::uint8_t>(CompatibilityStubProfiles(Profiles, Implemented, Id) & Permanent);
     }
 
     std::string UpperAscii(std::string_view Value)
@@ -103,9 +129,8 @@ namespace
      {DbcMin, DbcMax, DbcCounts},                                                                                      \
      {DbProMin, DbProMax, DbProCounts},                                                                                \
      Implemented,                                                                                                      \
-     CompatibilityStubProfiles(Profiles, Implemented),                                                                 \
-     static_cast<std::uint8_t>(CompatibilityStubProfiles(Profiles, Implemented) &                                      \
-                               (IsPermanentCompatibilityStub(dbc::language::SymbolId::Id) ? 1 : 0)),                   \
+     CompatibilityStubProfiles(Profiles, Implemented, dbc::language::SymbolId::Id),                                    \
+     PermanentStubProfiles(Profiles, Implemented, dbc::language::SymbolId::Id),                                        \
      Evidence,                                                                                                         \
      SurfaceForEvidence(Evidence)},
 #define DBC_SIGNATURE(...)

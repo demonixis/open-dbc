@@ -131,6 +131,12 @@ namespace dbc::interpreter::detail
     {
         namespace fs = std::filesystem;
         constexpr int KMaximumMathValue = 22000000;
+        // The Enhancement Pack's EAX presets, in its order; it lists them whether or not EAX is present.
+        constexpr std::array<const char*, 26> KEaxPresetNames = {
+            "Generic",      "Padded Cell", "Room",    "Bathroom",  "Livingroom",       "Stone Room", "Auditorium",
+            "Concert Hall", "Cave",        "Arena",   "Hangar",    "Carpeted Hallway", "Hallway",    "Stone Corridor",
+            "Alley",        "Forest",      "City",    "Mountains", "Quarry",           "Plain",      "Parkinglot",
+            "Sewer Pipe",   "Under Water", "Drugged", "Dizzy",     "Psychotic"};
 
         template <typename Map>
         typename Map::mapped_type* RequireVector(Map& Vectors, int Id, const char* Command,

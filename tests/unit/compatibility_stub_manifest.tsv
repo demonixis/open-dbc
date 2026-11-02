@@ -28,3 +28,83 @@ dbc	Function_GetFtpFileType	Function	GET FTP FILE TYPE	Permanent	numeric:-1
 dbc	Function_GetFtpProgress	Function	GET FTP PROGRESS	Permanent	numeric:-1
 dbc	Function_GetFtpStatus	Function	GET FTP STATUS	Permanent	numeric:0
 dbc	Function_WindirString	Function	WINDIR$	Permanent	string:empty
+dbpro	Command_ExtEnhancementApplyPresetEaxEffect	Command	APPLY PRESET EAX EFFECT	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxAirAbsorption	Command	SET EAX AIR ABSORPTION	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxClipDecayHf	Command	SET EAX CLIP DECAY HF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxConeInsideAngle	Command	SET EAX CONE INSIDE ANGLE	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxConeOrientationX	Command	SET EAX CONE ORIENTATION X	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxConeOrientationY	Command	SET EAX CONE ORIENTATION Y	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxConeOrientationZ	Command	SET EAX CONE ORIENTATION Z	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxConeOutsideAngle	Command	SET EAX CONE OUTSIDE ANGLE	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxConeOutsideVolume	Command	SET EAX CONE OUTSIDE VOLUME	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxDecayHfRatio	Command	SET EAX DECAY HF RATIO	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxDecayTime	Command	SET EAX DECAY TIME	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxEnvironment	Command	SET EAX ENVIRONMENT	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxEnvironmentDiffusion	Command	SET EAX ENVIRONMENT DIFFUSION	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxEnvironmentSize	Command	SET EAX ENVIRONMENT SIZE	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxFlags	Command	SET EAX FLAGS	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxMaxDistance	Command	SET EAX MAX DISTANCE	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxMinDistance	Command	SET EAX MIN DISTANCE	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxReflections	Command	SET EAX REFLECTIONS	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxReflectionsDelay	Command	SET EAX REFLECTIONS DELAY	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxReverb	Command	SET EAX REVERB	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxReverbDelay	Command	SET EAX REVERB DELAY	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxRoom	Command	SET EAX ROOM	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxRoomHf	Command	SET EAX ROOM HF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxRoomRolloff	Command	SET EAX ROOM ROLLOFF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxScaleDecayTime	Command	SET EAX SCALE DECAY TIME	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxScaleReflections	Command	SET EAX SCALE REFLECTIONS	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxScaleReflectionsDelay	Command	SET EAX SCALE REFLECTIONS DELAY	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxScaleReverb	Command	SET EAX SCALE REVERB	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxScaleReverbDelay	Command	SET EAX SCALE REVERB DELAY	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceAbsorption	Command	SET EAX SOURCE ABSORPTION	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceAffectDirectHf	Command	SET EAX SOURCE AFFECT DIRECT HF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceAffectRoom	Command	SET EAX SOURCE AFFECT ROOM	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceAffectRoomHf	Command	SET EAX SOURCE AFFECT ROOM HF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceDirect	Command	SET EAX SOURCE DIRECT	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceDirectHf	Command	SET EAX SOURCE DIRECT HF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceFlags	Command	SET EAX SOURCE FLAGS	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceObstruction	Command	SET EAX SOURCE OBSTRUCTION	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceObstructionLf	Command	SET EAX SOURCE OBSTRUCTION LF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceOcclusion	Command	SET EAX SOURCE OCCLUSION	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceOcclusionLf	Command	SET EAX SOURCE OCCLUSION LF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceOcclusionRoom	Command	SET EAX SOURCE OCCLUSION ROOM	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceOutside	Command	SET EAX SOURCE OUTSIDE	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceRolloff	Command	SET EAX SOURCE ROLLOFF	Permanent	no-op
+dbpro	Command_ExtEnhancementSetEaxSourceRoom	Command	SET EAX SOURCE ROOM	Permanent	no-op
+dbpro	Function_ExtEnhancementGetEax	Function	GET EAX	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxAirAbsorption	Function	GET EAX AIR ABSORPTION	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxConeInsideAngle	Function	GET EAX CONE INSIDE ANGLE	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxConeOrientationX	Function	GET EAX CONE ORIENTATION X	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxConeOrientationY	Function	GET EAX CONE ORIENTATION Y	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxConeOrientationZ	Function	GET EAX CONE ORIENTATION Z	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxConeOutsideAngle	Function	GET EAX CONE OUTSIDE ANGLE	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxConeOutsideVolume	Function	GET EAX CONE OUTSIDE VOLUME	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxDecayHfRatio	Function	GET EAX DECAY HF RATIO	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxEnvironment	Function	GET EAX ENVIRONMENT	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxEnvironmentDiffusion	Function	GET EAX ENVIRONMENT DIFFUSION	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxEnvironmentSize	Function	GET EAX ENVIRONMENT SIZE	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxFlags	Function	GET EAX FLAGS	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxMaxDistance	Function	GET EAX MAX DISTANCE	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxMinDistance	Function	GET EAX MIN DISTANCE	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxReflections	Function	GET EAX REFLECTIONS	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxReflectionsDelay	Function	GET EAX REFLECTIONS DELAY	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxReverb	Function	GET EAX REVERB	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxReverbDelay	Function	GET EAX REVERB DELAY	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxRoom	Function	GET EAX ROOM	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxRoomDecayTime	Function	GET EAX ROOM DECAY TIME	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxRoomHf	Function	GET EAX ROOM HF	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxRoomRolloff	Function	GET EAX ROOM ROLLOFF	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceAbsorption	Function	GET EAX SOURCE ABSORPTION	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceDirect	Function	GET EAX SOURCE DIRECT	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceDirectHf	Function	GET EAX SOURCE DIRECT HF	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceFlags	Function	GET EAX SOURCE FLAGS	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceObstruction	Function	GET EAX SOURCE OBSTRUCTION	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceObstructionLf	Function	GET EAX SOURCE OBSTRUCTION LF	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceOcclusion	Function	GET EAX SOURCE OCCLUSION	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceOcclusionLf	Function	GET EAX SOURCE OCCLUSION LF	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceOcclusionRoom	Function	GET EAX SOURCE OCCLUSION ROOM	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceOutside	Function	GET EAX SOURCE OUTSIDE	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceRolloff	Function	GET EAX SOURCE ROLLOFF	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceRoom	Function	GET EAX SOURCE ROOM	Permanent	numeric:0
+dbpro	Function_ExtEnhancementGetEaxSourceRoomHf	Function	GET EAX SOURCE ROOM HF	Permanent	numeric:0

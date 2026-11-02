@@ -1747,6 +1747,7 @@ dbpro	1436	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and 
 dbpro	1439	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1441	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbpro	1443	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1640	2199	Command	PERFORM CHECKLIST FOR EAX EFFECTS	checklist-state	test_enhancement_pack.cpp::PERFORM CHECKLIST FOR EAX EFFECTS lists the presets in the Enhancement Pack's order	-
 dbpro	1796	2355	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
 dbpro	1797	2356	Command	ODE ADD STATIC OBJECT BOX	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
 dbpro	1798	2357	Command	ODE COLLISION GET MESSAGE	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-

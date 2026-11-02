@@ -4,7 +4,7 @@ import argparse
 import re
 from pathlib import Path
 
-from audit_language_catalogue import ENTRY
+from audit_language_catalogue import ENTRY, dbpro_stub_symbols
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,7 +24,7 @@ EMPTY_STRINGS = {
 def permanent_symbols() -> set[str]:
     source = CATALOGUE_IMPLEMENTATION.read_text(encoding="utf-8")
     body = source.split("constexpr bool IsPermanentCompatibilityStub", 1)[1]
-    body = body.split("constexpr std::uint8_t CompatibilityStubProfiles", 1)[0]
+    body = body.split("constexpr bool IsDbProCompatibilityStub", 1)[0]
     return set(re.findall(r"case SymbolId::(\w+):", body))
 
 
@@ -46,12 +46,16 @@ def generate() -> str:
     permanent = permanent_symbols()
     if len(permanent) != 29:
         raise SystemExit(f"permanent Classic compatibility allowlist must contain exactly 29 symbols, got {len(permanent)}")
+    dbpro_stubs = dbpro_stub_symbols()
     rows = ["profile\tsymbol_id\tkind\tname\tpolicy\tneutral_behavior"]
     seen = set()
+    dbpro_rows = []
     for match in ENTRY.finditer(CATALOGUE.read_text(encoding="utf-8")):
         symbol_id, kind, name = match[1], match[2], match[3]
         available = int(match[4])
         implemented = int(match[11])
+        if symbol_id in dbpro_stubs and available & 2 and not implemented & 2:
+            dbpro_rows.append((symbol_id, kind, name))
         if not available & 1 or implemented & 1:
             continue
         if symbol_id in seen:
@@ -63,11 +67,18 @@ def generate() -> str:
     missing = permanent - seen
     if missing:
         raise SystemExit("permanent compatibility allowlist contains non-stub symbols: " + ", ".join(sorted(missing)))
+    missing = dbpro_stubs - {symbol_id for symbol_id, _, _ in dbpro_rows}
+    if missing:
+        raise SystemExit("DBPro stub list contains forms that are not DBPro stubs: " + ", ".join(sorted(missing)))
+    # DBPro stubs are all permanent, and none of them has a non-zero neutral value.
+    for symbol_id, kind, name in dbpro_rows:
+        rows.append("\t".join(("dbpro", symbol_id, kind, name, "Permanent",
+                               "no-op" if kind == "Command" else "numeric:0")))
     return "\n".join(rows) + "\n"
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Regenerate the DBC neutral compatibility-stub inventory")
+    parser = argparse.ArgumentParser(description="Regenerate the neutral compatibility-stub inventory")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--require-no-temporary", action="store_true")
@@ -81,10 +92,10 @@ def main() -> None:
     if args.check:
         if not args.output.is_file() or args.output.read_text(encoding="utf-8") != generated:
             raise SystemExit(f"compatibility stub manifest is stale: regenerate {args.output}")
-        print(f"Compatibility stub manifest is current: {count} DBC symbols")
+        print(f"Compatibility stub manifest is current: {count} symbols")
         return
     args.output.write_text(generated, encoding="utf-8")
-    print(f"Wrote {count} DBC compatibility stubs to {args.output}")
+    print(f"Wrote {count} compatibility stubs to {args.output}")
 
 
 if __name__ == "__main__":

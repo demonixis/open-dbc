@@ -385,7 +385,6 @@ dbpro	Command_ExtEnhancementAddBitmapToBlock	Command	ADD BITMAP TO BLOCK	Target	
 dbpro	Command_ExtEnhancementAddFileToBlock	Command	ADD FILE TO BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementAddImageToBlock	Command	ADD IMAGE TO BLOCK	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementAddObjectToBlock	Command	ADD OBJECT TO BLOCK	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementApplyPresetEaxEffect	Command	APPLY PRESET EAX EFFECT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementCloseDataFile	Command	CLOSE DATA FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementCloseFileBlock	Command	CLOSE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementCloseFileMap	Command	CLOSE FILE MAP	Target	file	dbpro-reference	engine-subsystem-and-oracle
@@ -413,7 +412,6 @@ dbpro	Command_ExtEnhancementOpenDataFile	Command	OPEN DATA FILE	Target	file	dbpr
 dbpro	Command_ExtEnhancementOpenFileBlock	Command	OPEN FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementOpenFileMap	Command	OPEN FILE MAP	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementPauseOggVorbis	Command	PAUSE OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementPerformChecklistForEaxEffects	Command	PERFORM CHECKLIST FOR EAX EFFECTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementPerformChecklistForFileBlockData	Command	PERFORM CHECKLIST FOR FILE BLOCK DATA	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementPlayOggVorbis	Command	PLAY OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementRemoveFileFromBlock	Command	REMOVE FILE FROM BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
@@ -421,49 +419,6 @@ dbpro	Command_ExtEnhancementResumeOggVorbis	Command	RESUME OGG VORBIS	Target	cor
 dbpro	Command_ExtEnhancementSaveFileBlock	Command	SAVE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSendVoiceMessage	Command	SEND VOICE MESSAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSendVoiceMessageXml	Command	SEND VOICE MESSAGE XML	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxAirAbsorption	Command	SET EAX AIR ABSORPTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxClipDecayHf	Command	SET EAX CLIP DECAY HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxConeInsideAngle	Command	SET EAX CONE INSIDE ANGLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxConeOrientationX	Command	SET EAX CONE ORIENTATION X	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxConeOrientationY	Command	SET EAX CONE ORIENTATION Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxConeOrientationZ	Command	SET EAX CONE ORIENTATION Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxConeOutsideAngle	Command	SET EAX CONE OUTSIDE ANGLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxConeOutsideVolume	Command	SET EAX CONE OUTSIDE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxDecayHfRatio	Command	SET EAX DECAY HF RATIO	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxDecayTime	Command	SET EAX DECAY TIME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxEnvironment	Command	SET EAX ENVIRONMENT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxEnvironmentDiffusion	Command	SET EAX ENVIRONMENT DIFFUSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxEnvironmentSize	Command	SET EAX ENVIRONMENT SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxFlags	Command	SET EAX FLAGS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxMaxDistance	Command	SET EAX MAX DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxMinDistance	Command	SET EAX MIN DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxReflections	Command	SET EAX REFLECTIONS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxReflectionsDelay	Command	SET EAX REFLECTIONS DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxReverb	Command	SET EAX REVERB	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxReverbDelay	Command	SET EAX REVERB DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxRoom	Command	SET EAX ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxRoomHf	Command	SET EAX ROOM HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxRoomRolloff	Command	SET EAX ROOM ROLLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxScaleDecayTime	Command	SET EAX SCALE DECAY TIME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxScaleReflections	Command	SET EAX SCALE REFLECTIONS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxScaleReflectionsDelay	Command	SET EAX SCALE REFLECTIONS DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxScaleReverb	Command	SET EAX SCALE REVERB	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxScaleReverbDelay	Command	SET EAX SCALE REVERB DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceAbsorption	Command	SET EAX SOURCE ABSORPTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceAffectDirectHf	Command	SET EAX SOURCE AFFECT DIRECT HF	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceAffectRoom	Command	SET EAX SOURCE AFFECT ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceAffectRoomHf	Command	SET EAX SOURCE AFFECT ROOM HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceDirect	Command	SET EAX SOURCE DIRECT	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceDirectHf	Command	SET EAX SOURCE DIRECT HF	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceFlags	Command	SET EAX SOURCE FLAGS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceObstruction	Command	SET EAX SOURCE OBSTRUCTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceObstructionLf	Command	SET EAX SOURCE OBSTRUCTION LF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceOcclusion	Command	SET EAX SOURCE OCCLUSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceOcclusionLf	Command	SET EAX SOURCE OCCLUSION LF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceOcclusionRoom	Command	SET EAX SOURCE OCCLUSION ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceOutside	Command	SET EAX SOURCE OUTSIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceRolloff	Command	SET EAX SOURCE ROLLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetEaxSourceRoom	Command	SET EAX SOURCE ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetFileBlockCompression	Command	SET FILE BLOCK COMPRESSION	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetFileBlockKey	Command	SET FILE BLOCK KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetFileMapDword	Command	SET FILE MAP DWORD	Target	file	dbpro-reference	engine-subsystem-and-oracle
@@ -498,42 +453,6 @@ dbpro	Function_ExtEnhancementGetDriveSerial	Function	GET DRIVE SERIAL$	Target	co
 dbpro	Function_ExtEnhancementGetDriveTotalSize	Function	GET DRIVE TOTAL SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetDriveTrackCount	Function	GET DRIVE TRACK COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetDriveUsedSpace	Function	GET DRIVE USED SPACE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEax	Function	GET EAX	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxAirAbsorption	Function	GET EAX AIR ABSORPTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxConeInsideAngle	Function	GET EAX CONE INSIDE ANGLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxConeOrientationX	Function	GET EAX CONE ORIENTATION X	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxConeOrientationY	Function	GET EAX CONE ORIENTATION Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxConeOrientationZ	Function	GET EAX CONE ORIENTATION Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxConeOutsideAngle	Function	GET EAX CONE OUTSIDE ANGLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxConeOutsideVolume	Function	GET EAX CONE OUTSIDE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxDecayHfRatio	Function	GET EAX DECAY HF RATIO	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxEnvironment	Function	GET EAX ENVIRONMENT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxEnvironmentDiffusion	Function	GET EAX ENVIRONMENT DIFFUSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxEnvironmentSize	Function	GET EAX ENVIRONMENT SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxFlags	Function	GET EAX FLAGS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxMaxDistance	Function	GET EAX MAX DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxMinDistance	Function	GET EAX MIN DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxReflections	Function	GET EAX REFLECTIONS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxReflectionsDelay	Function	GET EAX REFLECTIONS DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxReverb	Function	GET EAX REVERB	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxReverbDelay	Function	GET EAX REVERB DELAY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxRoom	Function	GET EAX ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxRoomDecayTime	Function	GET EAX ROOM DECAY TIME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxRoomHf	Function	GET EAX ROOM HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxRoomRolloff	Function	GET EAX ROOM ROLLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceAbsorption	Function	GET EAX SOURCE ABSORPTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceDirect	Function	GET EAX SOURCE DIRECT	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceDirectHf	Function	GET EAX SOURCE DIRECT HF	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceFlags	Function	GET EAX SOURCE FLAGS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceObstruction	Function	GET EAX SOURCE OBSTRUCTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceObstructionLf	Function	GET EAX SOURCE OBSTRUCTION LF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceOcclusion	Function	GET EAX SOURCE OCCLUSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceOcclusionLf	Function	GET EAX SOURCE OCCLUSION LF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceOcclusionRoom	Function	GET EAX SOURCE OCCLUSION ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceOutside	Function	GET EAX SOURCE OUTSIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceRolloff	Function	GET EAX SOURCE ROLLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceRoom	Function	GET EAX SOURCE ROOM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetEaxSourceRoomHf	Function	GET EAX SOURCE ROOM HF	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetFileBlockCompression	Function	GET FILE BLOCK COMPRESSION	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetFileBlockCount	Function	GET FILE BLOCK COUNT	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetFileBlockDataExists	Function	GET FILE BLOCK DATA EXISTS	Target	file	dbpro-reference	engine-subsystem-and-oracle

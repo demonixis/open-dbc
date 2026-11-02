@@ -1758,6 +1758,12 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ENHANCEMENT_EAX_TEST = "test_enhancement_pack.cpp::PERFORM CHECKLIST FOR EAX EFFECTS lists the presets in the Enhancement Pack's order"
+UNIT_WITNESSES += (
+    ("dbpro", "Command", "PERFORM CHECKLIST FOR EAX EFFECTS", "perform checklist for eax effects\n", "checklist-state",
+     ENHANCEMENT_EAX_TEST),
+)
+
 def inspect(opendbc: Path, source: Path, profile: str, what: str) -> dict:
     result = subprocess.run([str(opendbc), "inspect", str(source), "--json", "--dialect", profile],
                             text=True, capture_output=True, check=False)

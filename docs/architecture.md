@@ -85,7 +85,7 @@ Each callable has a per-profile state:
 | State | Meaning |
 | --- | --- |
 | Implemented | Real behaviour, with a witness in `tests/unit/builtin_behavior_manifest.tsv` |
-| Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, CD audio, the Windows folder and obsolete hardware switches |
+| Compatibility stub | Runs with a neutral result (no-op, `0`, `""`). Every Classic form not implemented; permanent only for FTP, CD audio, the Windows folder and obsolete hardware switches. In `DbPro`, only the Enhancement Pack's EAX forms (`src/language/dbpro_compatibility_stubs.inc`), all permanent |
 | Unsupported | Rejected at bind time with `DBC2043` |
 
 `DbPro` lists every core form the free (MIT) DBPro release declares, in its editor keyword

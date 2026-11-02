@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from audit_language_catalogue import ENTRY
+from audit_language_catalogue import ENTRY, dbpro_stub_symbols
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -83,6 +83,7 @@ def evidence(mask: int) -> str:
 def generate() -> str:
     rows = ["profile\tsymbol_id\tkind\tname\tdisposition\tfamily\tproof\tprerequisite"]
     seen = set()
+    dbpro_stubs = dbpro_stub_symbols()
     for match in ENTRY.finditer(CATALOGUE.read_text(encoding="utf-8")):
         symbol_id, kind, name = match[1], match[2], match[3]
         available = int(match[4])
@@ -92,7 +93,7 @@ def generate() -> str:
         for profile, bit in (("dbc", 1), ("dbpro", 2)):
             if not available & bit or implemented & bit:
                 continue
-            if profile == "dbc":
+            if profile == "dbc" or symbol_id in dbpro_stubs:
                 continue
             key = (profile, symbol_id)
             if key in seen:

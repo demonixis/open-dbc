@@ -422,7 +422,7 @@ TEST_CASE("Every available Classic callable is executable with an auditable stub
     CHECK(Permanent == 29);
 }
 
-TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavior and profile isolation")
+TEST_CASE("The permanent stub manifest exactly describes neutral behavior and profile isolation")
 {
     using dbc::language::BuiltinValueType;
     using dbc::language::CompatibilityStubBehavior;
@@ -438,7 +438,7 @@ TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavio
     std::getline(Input, Line);
     CHECK(Line == "profile\tsymbol_id\tkind\tname\tpolicy\tneutral_behavior");
 
-    std::set<SymbolId> Actual;
+    std::set<std::pair<LanguageProfile, SymbolId>> Actual;
     while (std::getline(Input, Line))
     {
         if (Line.empty())
@@ -459,27 +459,26 @@ TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavio
 
         CAPTURE(SymbolName);
         CAPTURE(Name);
-        CHECK(Profile == "dbc");
+        CHECK((Profile == "dbc" || Profile == "dbpro"));
+        const LanguageProfile StubProfile = Profile == "dbc" ? LanguageProfile::Dbc : LanguageProfile::DbPro;
+        const LanguageProfile OtherProfile = Profile == "dbc" ? LanguageProfile::DbPro : LanguageProfile::Dbc;
         CHECK(Policy == "Permanent");
         const SymbolKind ParsedKind = Kind == "Command" ? SymbolKind::Command : SymbolKind::Function;
         CHECK((Kind == "Command" || Kind == "Function"));
-        const auto* Descriptor = dbc::language::FindSymbol(LanguageProfile::Dbc, ParsedKind, Name);
+        const auto* Descriptor = dbc::language::FindSymbol(StubProfile, ParsedKind, Name);
         REQUIRE(Descriptor != nullptr);
         CHECK(CatalogueSymbolName(Descriptor->Id) == SymbolName);
-        CHECK(dbc::language::StubPolicyFor(*Descriptor, LanguageProfile::Dbc) == CompatibilityStubPolicy::Permanent);
-        CHECK(dbc::language::StubBehaviorFor(*Descriptor, LanguageProfile::Dbc) != CompatibilityStubBehavior::None);
-        CHECK(NeutralBehaviorName(dbc::language::StubBehaviorFor(*Descriptor, LanguageProfile::Dbc)) ==
-              NeutralBehavior);
-        CHECK(dbc::language::StubBehaviorFor(*Descriptor, LanguageProfile::DbPro) == CompatibilityStubBehavior::None);
-        CHECK(dbc::language::SupportFor(*Descriptor, LanguageProfile::DbPro) != SupportStatus::CompatibilityStub);
-        CHECK(Actual.insert(Descriptor->Id).second);
+        CHECK(dbc::language::StubPolicyFor(*Descriptor, StubProfile) == CompatibilityStubPolicy::Permanent);
+        CHECK(dbc::language::StubBehaviorFor(*Descriptor, StubProfile) != CompatibilityStubBehavior::None);
+        CHECK(NeutralBehaviorName(dbc::language::StubBehaviorFor(*Descriptor, StubProfile)) == NeutralBehavior);
+        CHECK(dbc::language::StubBehaviorFor(*Descriptor, OtherProfile) == CompatibilityStubBehavior::None);
+        CHECK(dbc::language::SupportFor(*Descriptor, OtherProfile) != SupportStatus::CompatibilityStub);
+        CHECK(Actual.insert({StubProfile, Descriptor->Id}).second);
 
-        for (const dbc::language::BuiltinOverload* Overload :
-             dbc::language::Overloads(Descriptor->Id, LanguageProfile::Dbc))
+        for (const dbc::language::BuiltinOverload* Overload : dbc::language::Overloads(Descriptor->Id, StubProfile))
         {
             REQUIRE(Overload != nullptr);
-            const CompatibilityStubBehavior Behavior =
-                dbc::language::StubBehaviorFor(*Descriptor, LanguageProfile::Dbc);
+            const CompatibilityStubBehavior Behavior = dbc::language::StubBehaviorFor(*Descriptor, StubProfile);
             if (Descriptor->Kind == SymbolKind::Command)
             {
                 CHECK(Overload->ReturnType == BuiltinValueType::Void);
@@ -498,15 +497,25 @@ TEST_CASE("The permanent Classic stub manifest exactly describes neutral behavio
         }
     }
 
-    std::set<SymbolId> Expected;
+    std::set<std::pair<LanguageProfile, SymbolId>> Expected;
+    std::size_t ClassicStubs = 0;
     for (const dbc::language::SymbolDescriptor& Descriptor : dbc::language::Symbols())
     {
         CAPTURE(Descriptor.CanonicalName);
-        if (dbc::language::StubPolicyFor(Descriptor, LanguageProfile::Dbc) == CompatibilityStubPolicy::Permanent)
-            Expected.insert(Descriptor.Id);
-        CHECK((Descriptor.CompatibilityStubProfiles & 2U) == 0);
+        for (const LanguageProfile Profile : {LanguageProfile::Dbc, LanguageProfile::DbPro})
+        {
+            if (dbc::language::StubPolicyFor(Descriptor, Profile) == CompatibilityStubPolicy::Permanent)
+            {
+                Expected.insert({Profile, Descriptor.Id});
+                ClassicStubs += Profile == LanguageProfile::Dbc ? 1 : 0;
+            }
+        }
+        // A DBPro stub is always permanent: there are no temporary ones.
+        if ((Descriptor.CompatibilityStubProfiles & 2U) != 0)
+            CHECK((Descriptor.PermanentStubProfiles & 2U) != 0);
     }
-    CHECK(Expected.size() == 29);
+    CHECK(ClassicStubs == 29);
+    CHECK(Expected.size() == 29 + 80);
     CHECK(Actual == Expected);
 }
 

@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # re-verifies the snapshot against a local copy of that help.
 DBC_EVIDENCE = ROOT / "scripts/data/dbc_catalogue_evidence.tsv"
 CATALOGUE = ROOT / "src/language/language_catalogue.inc"
+DBPRO_STUBS = ROOT / "src/language/dbpro_compatibility_stubs.inc"
 DBPRO_EVIDENCE = ROOT / "scripts/data/dbpro_catalogue_evidence.tsv"
 DBPRO_EXTENSION_EVIDENCE = ROOT / "scripts/data/dbpro_extension_evidence.tsv"
 CLASSIC_INDEX_SHA256 = "078263201bdaab13c24145e769dcdaabb40cb720bcc72915e4cd793f26ffc52a"
@@ -46,6 +47,13 @@ SIGNATURE = re.compile(
     r'DBC_SIGNATURE\(([^,]+),\s*(Dbc|DbPro),\s*(-?\d+),\s*(-?\d+),\s*'
     r'UINT64_C\((0x[0-9A-Fa-f]+|0)\),\s*(Void|Integer|Real|String),\s*"([^"]+)"\)'
 )
+
+
+
+# The DBPro forms language_catalogue.cpp runs as permanent compatibility stubs.
+def dbpro_stub_symbols() -> set[str]:
+    return set(re.findall(r"^DBC_DBPRO_STUB\((\w+)\)$", DBPRO_STUBS.read_text(encoding="utf-8"), re.MULTILINE))
+
 
 CLASSIC_ALIASES = {
     "ENTYR$": "ENTRY$",

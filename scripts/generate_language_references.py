@@ -6,6 +6,8 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from audit_language_catalogue import dbpro_stub_symbols
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOGUE = ROOT / "src/language/language_catalogue.inc"
@@ -62,11 +64,12 @@ PUBLIC_NOTES = {
 def permanent_stub_symbols() -> set[str]:
     source = CATALOGUE_IMPLEMENTATION.read_text(encoding="utf-8")
     body = source.split("constexpr bool IsPermanentCompatibilityStub", 1)[1]
-    body = body.split("constexpr std::uint8_t CompatibilityStubProfiles", 1)[0]
+    body = body.split("constexpr bool IsDbProCompatibilityStub", 1)[0]
     return set(re.findall(r"case SymbolId::(\w+):", body))
 
 
 PERMANENT_STUB_SYMBOLS = permanent_stub_symbols()
+DBPRO_STUB_SYMBOLS = dbpro_stub_symbols()
 
 
 def runtime_status(symbol_id: str, available: int, implemented: int, bit: int) -> str:
@@ -75,6 +78,8 @@ def runtime_status(symbol_id: str, available: int, implemented: int, bit: int) -
     if bit == 1 and available & bit:
         policy = "permanent" if symbol_id in PERMANENT_STUB_SYMBOLS else "temporary"
         return f"Compatibility stub ({policy})"
+    if bit == 2 and available & bit and symbol_id in DBPRO_STUB_SYMBOLS:
+        return "Compatibility stub (permanent)"
     return "Unsupported (DBC2043)"
 
 
