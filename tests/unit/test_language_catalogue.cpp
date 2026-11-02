@@ -123,14 +123,19 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
     CHECK(dbc::language::HasEvidence(ActiveOde, EvidenceSource::OdeExtension));
 }
 
-TEST_CASE("Every core form the free DBPro release exports is catalogued")
+TEST_CASE("Every core and supported plugin form of the free DBPro release is catalogued")
 {
-    // Later core forms, catalogued before they run.
-    for (const auto& [Kind, Name] :
-         std::initializer_list<std::pair<SymbolKind, std::string_view>>{{SymbolKind::Function, "QUAT SLERP"},
-                                                                        {SymbolKind::Function, "MAX"},
-                                                                        {SymbolKind::Command, "BPHYS_RAGDOLLBEGIN"},
-                                                                        {SymbolKind::Command, "MULTIPLAYER START"}})
+    // Later core forms and those of DarkPHYSICS, the Enhancement Pack and 3D Cloth & Particles, catalogued before
+    // they run.
+    for (const auto& [Kind, Name] : std::initializer_list<std::pair<SymbolKind, std::string_view>>{
+             {SymbolKind::Function, "QUAT SLERP"},
+             {SymbolKind::Function, "MAX"},
+             {SymbolKind::Command, "BPHYS_RAGDOLLBEGIN"},
+             {SymbolKind::Command, "MULTIPLAYER START"},
+             {SymbolKind::Command, "PHY MAKE RIGID BODY DYNAMIC BOX"},
+             {SymbolKind::Function, "PHYSX"},
+             {SymbolKind::Command, "PLAY OGG VORBIS"},
+             {SymbolKind::Command, "MAKE CLOTH"}})
     {
         const dbc::language::SymbolDescriptor* Descriptor =
             dbc::language::FindSymbol(LanguageProfile::DbPro, Kind, Name);
@@ -149,25 +154,21 @@ TEST_CASE("Every core form the free DBPro release exports is catalogued")
 TEST_CASE("Removed plugins are named by their prefixes and forms")
 {
     using dbc::language::RemovedPluginOf;
-    CHECK(RemovedPluginOf("PHY MAKE RIGID BODY STATIC CONVEX").Name == "DarkPHYSICS");
-    CHECK(RemovedPluginOf("PHYSX").Name == "DarkPHYSICS");
     CHECK(RemovedPluginOf("DYN COOK CONVEX MESH").Name == "Dark Dynamix");
-    CHECK(RemovedPluginOf("MAKE CLOTH").Name == "3D Cloth & Particles");
-    CHECK(RemovedPluginOf("MAKE CLOTH CURTAIN").Name == "3D Cloth & Particles");
-    CHECK(RemovedPluginOf("SET OBJECT AS VEHICLE BODY").Name == "3D Cloth & Particles");
-    CHECK(RemovedPluginOf("MAKE CLOTH").Replacement == "the ODE commands");
+    CHECK(RemovedPluginOf("DYN COOK CONVEX MESH").Replacement == "the ODE commands");
     CHECK(RemovedPluginOf("BUILD TERRAIN").Name == "Advanced Terrain");
     CHECK(RemovedPluginOf("SET TERRAIN LIGHT OBJ").Name == "Advanced Terrain");
     CHECK(RemovedPluginOf("GET TERRAIN SIZE").Replacement == "MAKE TERRAIN");
     CHECK(RemovedPluginOf("LM BUILD LIGHT MAPS").Name == "DarkLIGHTS");
-    CHECK(RemovedPluginOf("PLAY OGG VORBIS").Name == "the Enhancement Pack");
-    CHECK(RemovedPluginOf("GET PROCESSOR NAME$").Replacement.empty());
+    CHECK(RemovedPluginOf("LM BUILD LIGHT MAPS").Replacement.empty());
+    CHECK(RemovedPluginOf("PHY MAKE RIGID BODY STATIC CONVEX").Name.empty());
+    CHECK(RemovedPluginOf("MAKE CLOTH").Name.empty());
+    CHECK(RemovedPluginOf("PLAY OGG VORBIS").Name.empty());
     CHECK(RemovedPluginOf("MAKE TERRAIN").Name.empty());
     CHECK(RemovedPluginOf("ODE START").Name.empty());
     CHECK(RemovedPluginOf("SET OBJECT").Name.empty());
     CHECK(RemovedPluginOf("PHYSICAL").Name.empty());
-    CHECK(dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Command, "PHY MAKE RIGID BODY STATIC CONVEX") ==
-          nullptr);
+    CHECK(dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Command, "DYN START") == nullptr);
     CHECK(dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Command, "BUILD TERRAIN") == nullptr);
     CHECK(dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Function, "INSTR") == nullptr);
 }

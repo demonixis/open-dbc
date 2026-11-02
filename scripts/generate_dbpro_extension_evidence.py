@@ -38,18 +38,21 @@ SDK_ROOTS = (
 SDK_SOURCE_BASE = "Dark Basic Public Shared"
 # The forms of DBPro's editor keyword files, which the hand-written catalogue rows carry.
 CORE_EVIDENCE = ROOT / "scripts/data/dbpro_catalogue_evidence.tsv"
-# The official plugins, left out of the catalogue: their forms stop with DBC2049 (RemovedPluginOf).
+# The official plugins OpenDBC catalogues, by surface.
+PLUGIN_ROOTS = {
+    "Cloth": "Dark Basic Public Shared/Official Plugins/3D Cloth & Particles",
+    "Enhancement": "Dark Basic Public Shared/Official Plugins/Enhancement Pack",
+    "Physics": "Dark Basic Public Shared/Official Plugins/DarkPHYSICS",
+}
+# The official plugins left out of the catalogue: their forms stop with DBC2049 (RemovedPluginOf).
 REMOVED_PLUGIN_ROOTS = (
-    "Dark Basic Public Shared/Official Plugins/3D Cloth & Particles",
     "Dark Basic Public Shared/Official Plugins/Dark Dynamix",
     "Dark Basic Public Shared/Official Plugins/DarkLIGHTS",
-    "Dark Basic Public Shared/Official Plugins/DarkPHYSICS",
-    "Dark Basic Public Shared/Official Plugins/Enhancement Pack",
 )
 PLUGIN_FORMS = ROOT / "src/language/removed_plugin_forms.inc"
 
-SURFACE_BITS = {"Ode": 16, "Sdk": 2}
-SURFACE_PREFIXES = {"Ode": "ODE "}
+SURFACE_BITS = {"Cloth": 2, "Enhancement": 2, "Ode": 16, "Physics": 2, "Sdk": 2}
+SURFACE_PREFIXES = {"Ode": "ODE ", "Physics": "PHY "}
 TYPE_CODES = {"D": "I", "L": "I", "R": "I", "F": "R", "S": "S"}
 RETURN_TYPES = {"D": "Integer", "L": "Integer", "R": "Integer", "F": "Real", "S": "String"}
 CATALOGUE_ROW = re.compile(r'DBC_CATALOGUE\(([^,]+), ([^,]+), "([^"]+)", ([0-9]+), .*, ([0-9]+), ([0-9]+)\)$',
@@ -92,8 +95,7 @@ def SymbolIdFor(Surface: str, Kind: str, Name: str) -> str:
         return f"{Kind}_{IdentifierPart(Name)}"
     Prefix = SURFACE_PREFIXES.get(Surface, "")
     LocalName = Name[len(Prefix):] if Prefix and Name.startswith(Prefix) else Name
-    SurfacePart = {"Ode": "Ode"}[Surface]
-    return f"{Kind}_Ext{SurfacePart}{IdentifierPart(LocalName)}"
+    return f"{Kind}_Ext{Surface}{IdentifierPart(LocalName)}"
 
 
 def ParseKeywords(PathValue: Path) -> set[str]:
@@ -142,8 +144,6 @@ def TypedSignature(Name: str, Kind: str, TypeCode: str) -> tuple[str, str, str]:
 
 # The plugin RemovedPluginOf names for a form, as language_catalogue.cpp decides it.
 def RemovedPlugin(Name: str, PluginForms: dict[str, str]) -> str:
-    if Name.startswith("PHY ") or Name == "PHYSX":
-        return "DarkPHYSICS"
     if Name.startswith("DYN "):
         return "Dark Dynamix"
     if Name.startswith("LM "):
@@ -202,10 +202,25 @@ def BuildEvidence(DbProRoot: Path) -> list[Overload]:
         AddRows(Result, "Sdk", Name, {TypedSignature(Name, *Signature) for Signature in Signatures}, Name,
                 set().union(*Signatures.values()))
 
+    for Surface, Folder in PLUGIN_ROOTS.items():
+        PluginExports = defaultdict(lambda: defaultdict(set))
+        for PathValue in ResourceFiles(DbProRoot, Folder):
+            Source = PathValue.relative_to(DbProRoot / SDK_SOURCE_BASE).as_posix()
+            for Name, Signatures in ParseExports(PathValue).items():
+                Require(Name not in CoreNames and Name not in SdkExports, f"{Name} of {Source} is already catalogued")
+                for Signature in Signatures:
+                    PluginExports[Name][Signature].add(Source)
+        for Name, Signatures in sorted(PluginExports.items()):
+            AddRows(Result, Surface, Name, {TypedSignature(Name, *Signature) for Signature in Signatures}, Name,
+                    set().union(*Signatures.values()))
+
     PluginForms = dict(re.findall(r'^\{"([^"]+)", (\w+)\},$', PLUGIN_FORMS.read_text(encoding="utf-8"), re.MULTILINE))
     Require(list(PluginForms) == sorted(PluginForms), "Removed plugin forms are not sorted")
     for Folder in REMOVED_PLUGIN_ROOTS:
         for PathValue in ResourceFiles(DbProRoot, Folder):
+            # An old copy of Dark Dynamix's table, from before its forms took the DYN prefix.
+            if PathValue.name == "Physics - Copy.rc":
+                continue
             for Name in ParseExports(PathValue):
                 Require(bool(RemovedPlugin(Name, PluginForms)),
                         f"{Name} of {PathValue.relative_to(DbProRoot)} is neither catalogued nor named by DBC2049")
@@ -213,7 +228,8 @@ def BuildEvidence(DbProRoot: Path) -> list[Overload]:
     Counts = defaultdict(set)
     for Row in Result:
         Counts[Row.Surface].add(Row.Name)
-    Require({Surface: len(Names) for Surface, Names in Counts.items()} == {"Ode": 121, "Sdk": 267},
+    Totals = {"Cloth": 157, "Enhancement": 188, "Ode": 121, "Physics": 491, "Sdk": 267}
+    Require({Surface: len(Names) for Surface, Names in Counts.items()} == Totals,
             "DBPro extension public spelling totals drifted")
     Require(len({(Row.SymbolId, Row.AcceptedCount, Row.ReturnType, Row.Parameters) for Row in Result}) == len(Result),
             "Duplicate DBPro extension overload evidence")
@@ -226,6 +242,8 @@ def EvidenceText(Rows: list[Overload]) -> str:
         Lines.append(f"# {Label}\t{RelativePath}\t{ExpectedHash}")
     for Folder in SDK_ROOTS:
         Lines.append(f"# sdk-exports\t{Folder}")
+    for Surface, Folder in PLUGIN_ROOTS.items():
+        Lines.append(f"# plugin-exports\t{Surface}\t{Folder}")
     Lines.append("surface\tsymbol_id\tkind\tname\taccepted_count\treturn_type\tparameters\tcanonical_name\tsources")
     for Row in Rows:
         Lines.append("\t".join((Row.Surface, Row.SymbolId, Row.Kind, Row.Name, str(Row.AcceptedCount),

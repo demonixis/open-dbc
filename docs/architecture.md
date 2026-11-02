@@ -92,11 +92,13 @@ Each callable has a per-profile state:
 files and in the string tables of its SDK (`scripts/data/dbpro_*_evidence.tsv`). The
 catalogue audit rejects a `DbPro` form with no such source unless it is OpenDBC's own.
 
-Plugins are left out of the catalogue: DarkPHYSICS, Dark Dynamix, 3D Cloth & Particles,
-DarkLIGHTS and the Enhancement Pack, and Advanced Terrain, a commercial plugin whose source
-was never released. Their forms stop at bind time with `DBC2049`, which names the plugin and
-what to use instead, if anything; the evidence generator checks that it names every form of
-the official plugins. Physics goes through the ODE forms on Jolt and OpenDBC's own commands.
+`DbPro` also lists the forms of three official plugins: DarkPHYSICS, the Enhancement Pack
+and 3D Cloth & Particles. Dark Dynamix, a second PhysX wrapper, DarkLIGHTS, whose lightmaps
+a GI system of OpenDBC's will replace, and Advanced Terrain, a commercial plugin whose source
+was never released, are left out: their forms stop at bind time with `DBC2049`, which names
+the plugin and what to use instead, if anything. The evidence generator checks that every
+official plugin form is catalogued or named by `DBC2049`. Physics has one abstraction,
+Jolt, under the ODE and DarkPHYSICS forms.
 
 Classic takes no additions. `DbPro` also takes OpenDBC's own forms, with multi-word names,
 among them VR ([vr.md](vr.md)).

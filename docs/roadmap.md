@@ -37,6 +37,25 @@ Validation and scope:
 - [ ] More DBPro demos and qualified programs: 3 demos and 38 programs, against 6 and
   57 in Classic.
 
+## Official plugins
+
+The forms of three plugins of the free release are catalogued and stop with `DBC2043`
+until they run; the reference lists them. In order of priority:
+
+- [ ] Enhancement Pack (188 forms), cross-platform: file blocks (27), data files (7),
+  file maps (11), Ogg Vorbis (12), system information (39), file dialogs and the rest.
+  EAX (81) becomes stubs. Speech (9) uses the platform's synthesiser (`say` or
+  `AVSpeechSynthesizer` on macOS, SAPI on Windows, the mobile ones) and finds no voice
+  on Linux.
+- [ ] DarkPHYSICS (491 forms) on Jolt, the one physics abstraction beside the ODE forms
+  ([physics.md](physics.md)): rigid bodies, joints, rays, triggers, materials, the
+  character controller, then vehicles, ragdolls, heightfield terrains and the
+  character's water line. A body belongs to ODE or to DarkPHYSICS, not both. Decide what
+  replaces the ODE terrain forms, which take a memory pointer. Fluids, emitters and
+  cloth stay unsupported.
+- [ ] 3D Cloth & Particles (157 forms), on the GPU as far as possible: cloth, emitters,
+  effectors and colliders.
+
 ## Modern features
 
 DBPro additions for after 0.5. Rendering comes in dependency order; the Studio and
@@ -79,10 +98,6 @@ Studio:
 
 Gameplay:
 
-- [ ] More physics on Jolt ([physics.md](physics.md)): commands for what `PhysicsSystem`
-  already does (torque, impulses, kinematic bodies, damping, contact points), then
-  vehicles, ragdolls, heightfield terrains and the character's water line. Decide what
-  replaces the ODE terrain forms, which take a memory pointer.
 - [ ] Animation clips: cross-fades and blending between them.
 - [ ] Navigation: pathfinding over data baked in the Scene view. Weigh a dependency such
   as Recast against a grid in a BASIC library.

@@ -16,6 +16,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | Symbol | Kind | Arity | Typed overloads | OpenDBC status | Provenance | Description |
 |---|---|---:|---|---|---|---|
 | `3DS2X` | Command | 2 | string, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD BITMAP TO BLOCK` | Command | 3 | integer, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD FILE TO BLOCK` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD IMAGE TO BLOCK` | Command | 3 | integer, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD LIGHT MAP LIGHT` | Command | 9 | number, number, number, number, number, number, number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD LIMB` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD LIMB TO LIGHT MAP POOL` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -23,7 +26,10 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ADD MATRIX4` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD MEMBLOCK TO OBJECT` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD MESH TO VERTEXDATA` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `ADD OBJECT TO BLOCK` | Command | 3 | integer, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD OBJECT TO LIGHT MAP POOL` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD RAGDOLL FORCE` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD RAGDOLL IMPULSE` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD STATIC OBJECTS TO LIGHT MAP POOL` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD STATIC SCORCH` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD TO QUEUE` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -31,11 +37,16 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ADD VECTOR2` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD VECTOR3` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD VECTOR4` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `ADD VEHICLE COLLISION POINT` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD VEHICLE COLLISION POINTS` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD VEHICLE WHEEL FORCE` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD VEHICLE WHEEL IMPULSE` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD VISBILITY LIST MASK` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ALWAYS ACTIVE OFF` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ALWAYS ACTIVE ON` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `APPEND OBJECT` | Command | 3 | string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `APPEND OBJECT ANIMATION` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `APPLY PRESET EAX EFFECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ARRAY DELETE ELEMENT` | Command | 1-2 | any array, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ARRAY INDEX TO BOTTOM` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ARRAY INDEX TO QUEUE` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -54,6 +65,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `BCC VECTOR2` | Command | 6 | number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `BCC VECTOR3` | Command | 6 | number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `BCC VECTOR4` | Command | 6 | number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `BIND COLLIDER TO OBJECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `BIND EFFECTOR TO OBJECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `BLUR BITMAP` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `BOX` | Command | 4, 8 | number, number, number, number -> void; number, number, number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `BPHYS_RAGDOLLADDHINGEJOINT` | Command | 5 | integer, integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -91,6 +104,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CHANGE MESH FROM MEMBLOCK` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CHANGE MOUSE` | Command | 1-2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CIRCLE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `CLAMP PHYSICS FRAME RATE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CLEAR ALL OBJECT KEYFRAMES` | Command | 1 | integer -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CLEAR CAMERA VIEW` | Command | 1-2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLEAR ENTRY BUFFER` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -99,11 +113,17 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CLONE OBJECT` | Command | 2-3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLONE SOUND` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLONE SPRITE` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `CLOSE DATA FILE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CLOSE FILE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `CLOSE FILE BLOCK` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `CLOSE FILE MAP` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CLOSE IMAGEBLOCK` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CLS` | Command | 0-1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `COLOR AMBIENT LIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `COLOR BACKDROP` | Command | 1-2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `COLOR EFFECTOR DELETE KEY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR DELETE KEY AT TIME` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR USE ON COLLIDE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `COLOR LIGHT` | Command | 2, 4 | number, number -> void; number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `COLOR LIMB` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `COLOR OBJECT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -121,6 +141,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `COPY VECTOR4` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CREATE ANIMATED SPRITE` | Command | 5 | number, string, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CREATE BITMAP` | Command | 3-4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `CREATE FILE BLOCK` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `CREATE FILE MAP` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CREATE LIGHT MAPS` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CREATE NET GAME` | Command | 3-4 | string, string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CREATE NET PLAYER` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -132,10 +154,15 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DELETE BITMAP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE BSP` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE CAMERA` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `DELETE CLOTH` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `DELETE COLLIDER` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE DIRECTORY` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE DLL` | Command | 1 | number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE EFFECT` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `DELETE EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `DELETE EMITTER` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE FILE` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `DELETE FILE BLOCK` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE ICON` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE IMAGE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE LIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -151,6 +178,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DELETE OBJECT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE OBJECT COLLISION BOX` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE OBJECTS` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `DELETE OGG VORBIS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE PARTICLES` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE PIXEL SHADER` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE SOUND` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -162,7 +190,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DELETE VECTOR2` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE VECTOR3` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE VECTOR4` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `DELETE VEHICLE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE VERTEX SHADER` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `DESTROY FILE MAP` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DETACH OBJECT FROM STATIC` | Command | 1 | number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DIR` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DISABLE ESCAPEKEY` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -178,16 +208,20 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DIVIDE VECTOR3` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DIVIDE VECTOR4` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DOT` | Command | 2-3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `DRAW RAGDOLL DEBUG LINES` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DRAW SPRITES FIRST` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DRAW SPRITES LAST` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DRAW TO BACK` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DRAW TO CAMERA` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DRAW TO FRONT` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DRAW TO SCREEN` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `DRAW VEHICLE DEBUG LINES` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DRIVELIST` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ELLIPSE` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `EMPTY ARRAY` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `EMPTY CHECKLIST` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `ENABLE COLLIDER` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ENABLE EFFECTOR` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ENABLE ESCAPEKEY` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ENABLE OBJECT ZBIAS` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ENABLE OBJECT ZDEPTH` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -196,6 +230,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ENABLE STATIC OCCLUSION` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ENABLE SYSTEMKEYS` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ENABLE TNL` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ENCODE TO OGG VORBIS` | Command | 2-3 | string, string -> void; string, string, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ENCRYPT ALL FILES` | Command | 1 | string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ENCRYPT FILE` | Command | 1 | string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ENCRYPT WORKSHOP FILE` | Command | 1 | string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -206,6 +241,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `EXCLUDE OBJECT ON` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `EXECUTE FILE` | Command | 3-4 | string, string, string, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `EXIT PROMPT` | Command | 2 | string, string -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `EXTRACT FILE FROM BLOCK` | Command | 3 | integer, string, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FADE BITMAP` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FADE OBJECT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FASTSYNC` | Command | 0-1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -214,7 +250,13 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `FIND FIRST` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FIND NEXT` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FINISH OBJECT PANEL` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FIX CLOTH NEAREST POINT` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FIX CLOTH POINT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FIX CLOTH POINT TO OBJECT` | Command | 3, 6 | integer, integer, integer -> void; integer, integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FIX CLOTH POINTS` | Command | 5, 7 | integer, real, real, real, real -> void; integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FIX OBJECT PIVOT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `FIX OBJECT TO RAGDOLL` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FIX RAGDOLL POINT TO OBJECT` | Command | 3, 6 | integer, integer, integer -> void; integer, integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FLIP BITMAP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FLIP SPRITE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FLUSH LIGHT MAPS` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -236,9 +278,19 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `FORCE SHOOT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FORCE UP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FORCE WATER EFFECT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `FREE ALL CLOTH POINTS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FREE ALL CLOTH POINTS ON ALL OBJECTS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FREE ALL CLOTH POINTS ON OBJECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FREE ALL RAGDOLL POINTS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FREE CLOTH NEAREST POINT` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FREE CLOTH POINT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FREE CLOTH POINTS` | Command | 5, 7 | integer, real, real, real, real -> void; integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FREE INSTANCE STAMP` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FREE NET GAME` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FREE NET PLAYER` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `FREEZE CLOTH` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FREEZE EMITTER` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `FREEZE RAGDOLL` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FTP CONNECT` | Command | 3-4 | string, string, string, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FTP DELETE FILE` | Command | 1 | string -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FTP DISCONNECT` | Command | 0-1 | number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -249,9 +301,15 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `FTP PUT FILE` | Command | 1 | string -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FTP SET DIR` | Command | 1 | string -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `FTP TERMINATE` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `GENERATE CLOTH FROM BITMAP` | Command | 6 | integer, integer, real, real, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `GENERATE RECTANGULAR CLOTH` | Command | 6 | integer, real, real, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `GET IMAGE` | Command | 5-6 | number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `GET MEMBLOCK FROM OBJECT` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `GET NET MESSAGE` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `GET PROCESSOR ON CHIP FEATURES` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR POWER MANAGEMENT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR SUPPORTED FEATURES` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `GET VOICE LIST` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `GET VR CONTROLLER POSITION` | Command | 2 | integer, integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `GET VR CONTROLLER ROTATION` | Command | 2 | integer, integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `GET VR HEAD POSITION` | Command | 1 | integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
@@ -291,18 +349,27 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `LINK LIMB` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD 3DSOUND` | Command | 2-4 | string, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD ANIMATION` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `LOAD ANIMATION FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD ARRAY` | Command | 2 | string, any array -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD BITMAP` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `LOAD BITMAP FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD BSP` | Command | 2 | string, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD CDMUSIC` | Command | 2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD CLOTH STATE` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD DLL` | Command | 2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD DVD ANIMATION` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD EFFECT` | Command | 3-4 | string, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `LOAD FILE FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD IMAGE` | Command | 2-4 | string, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `LOAD IMAGE FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD MEMBLOCK FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD MESH` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD MUSIC` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD OBJECT` | Command | 2-4 | string, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `LOAD OBJECT FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD OGG VORBIS` | Command | 2 | string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD SOUND` | Command | 2-5 | string, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `LOAD SOUND FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD STATIC OBJECTS` | Command | 2 | string, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOCK BACKBUFFER` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOCK OBJECT OFF` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -313,15 +380,31 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `LOOP ANIMATION` | Command | 1, 6 | number -> void; number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOOP MUSIC` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOOP OBJECT` | Command | 1-3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `LOOP OGG VORBIS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOOP SOUND` | Command | 1-4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE ARRAY FROM MEMBLOCK` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE BASIC EMITTER` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE BITMAP FROM MEMBLOCK` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `MAKE BOX EMITTER` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE CAMERA` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `MAKE CHAOS EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE CLOTH` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE COLLISION BOX` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE COLLISION DISC` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE COLLISION PLANE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE COLLISION SPHERE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE COLLISION SQUARE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE COLOR EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE DAMPING EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE DIRECTORY` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `MAKE DRAG EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE EMITTER` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE FILE` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE FILE FROM MEMBLOCK` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE FIRE PARTICLES` | Command | 9 | number, number, number, number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `MAKE FLOCK EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE FORCE EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE GRAVITY EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE IMAGE FROM MEMBLOCK` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE LIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE MATRIX` | Command | 5 | number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -348,8 +431,12 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `MAKE OBJECT SPHERE` | Command | 2, 4 | number, number -> void; number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE OBJECT TRIANGLE` | Command | 10 | number, number, number, number, number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE PARTICLES` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `MAKE POINT EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE RAGDOLL` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE SIZE EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE SNOW PARTICLES` | Command | 9 | number, number, number, number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE SOUND FROM MEMBLOCK` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `MAKE SPHERICAL EMITTER` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE STATIC COLLISION BOX` | Command | 6 | number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE STATIC LIMB` | Command | 6 | number, number, number, number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAKE STATIC OBJECT` | Command | 5 | number, number, number, number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -357,6 +444,10 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `MAKE VECTOR2` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE VECTOR3` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAKE VECTOR4` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `MAKE VEHICLE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE VORTEX EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE WIND EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `MAKE WRAPROUND EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `MAXIMIZE VECTOR2` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAXIMIZE VECTOR3` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `MAXIMIZE VECTOR4` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -406,6 +497,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `NORMALIZE VECTOR4` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OFFSET LIMB` | Command | 5-6 | number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OFFSET SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `OPEN DATA FILE` | Command | 3 | string, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `OPEN FILE BLOCK` | Command | 2-3 | string, integer -> void; string, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `OPEN FILE MAP` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `OPEN IMAGEBLOCK` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `OPEN TO READ` | Command | 2 | number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OPEN TO WRITE` | Command | 2 | number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -413,12 +507,15 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `PASTE SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PAUSE ANIMATION` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PAUSE MUSIC` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `PAUSE OGG VORBIS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `PAUSE SOUND` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR CONTROL DEVICES` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR DISPLAY MODES` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR DRIVES` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PERFORM CHECKLIST FOR EAX EFFECTS` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `PERFORM CHECKLIST FOR EFFECT ERRORS` | Command | 0-1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR EFFECT VALUES` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `PERFORM CHECKLIST FOR FILE BLOCK DATA` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `PERFORM CHECKLIST FOR FILES` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR FONTS` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR GRAPHICS CARDS` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -435,6 +532,366 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `PERFORM CSG INTERSECTION ON VERTEXDATA` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `PERFORM CSG UNION` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `PERFORM CSG UNION ON VERTEXDATA` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD FORCE AT CLOTH VERTEX` | Command | 6 | integer, integer, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD FORCE FIELD BOX` | Command | 8 | integer, integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD FORCE FIELD CAPSULE` | Command | 7 | integer, integer, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD FORCE FIELD SPHERE` | Command | 6 | integer, integer, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD RIGID BODY FORCE` | Command | 5, 8 | integer, real, real, real, integer -> void; integer, real, real, real, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD RIGID BODY FORCE AT LOCAL` | Command | 8 | integer, real, real, real, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD RIGID BODY LOCAL FORCE` | Command | 5, 8 | integer, real, real, real, integer -> void; integer, real, real, real, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD RIGID BODY LOCAL FORCE AT LOCAL` | Command | 8 | integer, real, real, real, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD RIGID BODY LOCAL TORQUE` | Command | 5 | integer, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD RIGID BODY TORQUE` | Command | 5 | integer, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD VEHICLE BODY` | Command | 7 | integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ADD VEHICLE WHEEL` | Command | 9 | integer, integer, real, real, real, real, real, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ASSIGN RAGDOLL PART` | Command | 4 | integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ATTACH CLOTH TO ALL SHAPES` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ATTACH CLOTH TO SHAPE` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ATTACH CLOTH VERTEX` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ATTACH CLOTH VERTEX TO SHAPE` | Command | 7 | integer, integer, integer, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ATTACH SOFT BODY BOX` | Command | 8 | integer, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ATTACH SOFT BODY CAPSULE` | Command | 10 | integer, real, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ATTACH SOFT BODY SPHERE` | Command | 6 | integer, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD 6DOF JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD CLOTH` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD CYLINDRICAL JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD DISTANCE JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD FIXED JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD FLUID` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD FORCE FIELD` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD MATERIAL` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD POINT IN PLANE JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD POINT ON LINE JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD PRISMATIC JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD PULLEY JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD REVOLUTE JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD SPHERE JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY BUILD VEHICLE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY CLEAR` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY CLOTH ATTACH RIGID BODY` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY CREATE FORCE FIELD` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY CREATE VEHICLE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE CHARACTER CONTROLLER` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE CLOTH` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE DRAIN` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE EMITTER` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE FLUID` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE FORCE FIELD` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE JOINT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE MATERIAL` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE RIGID BODY` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE SOFT BODY` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DELETE TRIGGER` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY DETACH CLOTH FROM SHAPE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY ENABLE DEBUG` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY END` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY FREE CLOTH VERTEX` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY DYNAMIC CONVEX` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY DYNAMIC CONVEXES` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY DYNAMIC MESH` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY DYNAMIC MESHES` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY STATIC CONVEX` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY STATIC CONVEXES` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY STATIC MESH` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY STATIC MESHES` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD RIGID BODY STATIC TERRAIN` | Command | 2-3 | integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY LOAD SOFT BODY` | Command | 6 | integer, string, string, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE 6DOF JOINT` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE BOX CHARACTER CONTROLLER` | Command | 10 | integer, real, real, real, real, real, real, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE BOX DRAIN` | Command | 10 | integer, real, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE CAPSULE CHARACTER CONTROLLER` | Command | 9 | integer, real, real, real, real, real, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE CLOTH` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE CLOTH FROM LIMB` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE CLOTH FROM OBJECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE CYLINDRICAL JOINT` | Command | 3, 9 | integer, integer, integer -> void; integer, integer, integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE DISTANCE JOINT` | Command | 3, 8 | integer, integer, integer -> void; integer, integer, integer, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE FIRE EMITTER` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE FIXED JOINT` | Command | 3-4 | integer, integer, integer -> void; integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE FLUID` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE FLUID EMITTER` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE MATERIAL` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE PARTICLE EMITTER` | Command | 10 | integer, integer, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE POINT IN PLANE JOINT` | Command | 3, 9 | integer, integer, integer -> void; integer, integer, integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE POINT ON LINE JOINT` | Command | 3, 9 | integer, integer, integer -> void; integer, integer, integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE PRISMATIC JOINT` | Command | 3, 9 | integer, integer, integer -> void; integer, integer, integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE PULLEY JOINT` | Command | 3, 18 | integer, integer, integer -> void; integer, integer, integer, real, real, real, real, real, real, real, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RAGDOLL` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE REVOLUTE JOINT` | Command | 3, 9 | integer, integer, integer -> void; integer, integer, integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC BOX` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC BOXES` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC CAPSULE` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC CAPSULES` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC CONVEX` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC CONVEXES` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC MESH` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC MESHES` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC SPHERE` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY DYNAMIC SPHERES` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC BOX` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC BOXES` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC CAPSULE` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC CAPSULES` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC CONVEX` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC CONVEXES` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC MESH` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC MESHES` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC SPHERE` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC SPHERES` | Command | 1-2 | integer -> void; integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE RIGID BODY STATIC TERRAIN` | Command | 1-3 | integer -> void; integer, integer -> void; integer, string -> void; integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE SCENE` | Command | 4 | integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE SMOKE EMITTER` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE SNOW EMITTER` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE SPHERE DRAIN` | Command | 5 | integer, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE SPHERE JOINT` | Command | 3, 6 | integer, integer, integer -> void; integer, integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE TRIGGER BOX` | Command | 10 | integer, real, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MAKE TRIGGER SPHERE` | Command | 5 | integer, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY MOVE CHARACTER CONTROLLER` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT DRIVE ANGULAR VELOCITY` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT DRIVE LINEAR VELOCITY` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT DRIVE POSITION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT DRIVE ROTATION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT DRIVE X` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT DRIVE Y` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT DRIVE Z` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT GEAR` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT LINEAR LIMIT` | Command | 5 | integer, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT LOCAL NORMAL` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT MOTION X` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT MOTION Y` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT MOTION Z` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT PROJECTION` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT SLERP DRIVE` | Command | 2, 5 | integer, integer -> void; integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT SWING DRIVE` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT SWING1 LIMIT` | Command | 5 | integer, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT SWING1 MOTION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT SWING2 LIMIT` | Command | 5 | integer, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT SWING2 MOTION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT TWIST DRIVE` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT TWIST LIMIT` | Command | 9 | integer, real, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET 6DOF JOINT TWIST MOTION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET ADAPTIVE FORCE` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET AUTO FIXED TIMING` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET BOUNCE THRESHOLD` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CHARACTER CONTROLLER DISPLACEMENT` | Command | 2-4 | integer, integer -> void; integer, real, real -> void; integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CHARACTER CONTROLLER EXTENTS` | Command | 3-4 | integer, real, real -> void; integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CHARACTER CONTROLLER MIN DISTANCE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CHARACTER CONTROLLER SHARPNESS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH ATTACHMENT RESPONSE COEFFICIENT` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH BENDING` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH BENDING STIFFNESS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH COLLISION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH COLLISION GROUP` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH COLLISION RESPONSE COEFFICIENT` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH DAMPING` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH DENSITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH DIMENSIONS` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH EXTERNAL ACCELERATION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH FRICTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH GRAVITY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH POSITION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH PRESSURE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH ROTATION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH SOLVER ITERATIONS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH STATIC` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH STRETCHING STIFFNESS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH TEAR FACTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH TEARING` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH THICKNESS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CLOTH TWO WAY COLLISION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET COLLISION STATE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CONTINUOUS CD` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CONTROLLED FILTERING` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CURRENT SCENE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CYLINDRICAL JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CYLINDRICAL JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CYLINDRICAL JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET CYLINDRICAL JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DEFAULT SLEEP ANGULAR VELOCITY SQUARED` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DEFAULT SLEEP LINEAR VELOCITY SQUARED` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DISTANCE JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DISTANCE JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DISTANCE JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DISTANCE JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DISTANCE JOINT MAX` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DISTANCE JOINT MIN` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DISTANCE JOINT SPRING` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET DYNAMIC FRICTION` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER COLLISION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER COLLISION SCALE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER END COLOR` | Command | 4 | integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER FADE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER GRAVITY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER GROWTH RATE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER LIFE SPAN` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER LINEAR VELOCITY` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER LINEAR VELOCITY RANGE` | Command | 7 | integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER MAX SIZE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER POSITION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER RANGE` | Command | 7 | integer, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER RATE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER SIZE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER START COLOR` | Command | 4 | integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET EMITTER UPDATE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FIXED TIMING` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID ACCELERATION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID DAMPING` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER DIMENSIONS` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER FLAGS` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER LIFETIME` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER MAX PARTICLES` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER RANDOM ANGLE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER RANDOM POSITION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER RATE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER SHAPE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER TYPE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID EMITTER VELOCITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID METHOD` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID MOTION LIMIT` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID PACKET SIZE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID PARTICLE BUFFER CAP` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID POSITION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RADIUS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER COLOR FALLOFF SCALE` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER DENSITY THRESHOLD` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER FLUID COLOR` | Command | 4 | real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER FLUID COLOR FALLOFF` | Command | 4 | real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER FRESNEL COLOR` | Command | 4 | real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER PARTICLE RADIUS` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER PARTICLE SURFACE SCALE` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER SHININESS` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID RENDERER SPECULAR COLOR` | Command | 4 | real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID REST DENSITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID REST PER METRE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID ROTATION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID STIFFNESS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FLUID VISCOSITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD CLOTH SCALE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD CONSTANT` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD COORDINATES` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD LINEAR FALLOFF` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD NOISE` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD POSITION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD QUADRATIC FALLOFF` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD RIGID BODY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD RIGID BODY SCALE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD SOFT BODY SCALE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET FORCE FIELD TORUS RADIUS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET GRAVITY` | Command | 3 | real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET GROUND PLANE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET GROUP COLLISION` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET JOINT BREAK LIMITS` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MATERIAL DIR OF ANISOTROPY` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MATERIAL DYNAMIC FRICTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MATERIAL DYNAMIC FRICTION V` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MATERIAL FRICTION COMBINE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MATERIAL RESTITUTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MATERIAL RESTITUTION COMBINE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MATERIAL STATIC FRICTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MATERIAL STATIC FRICTION V` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET MAX ANGULAR VELOCITY` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET POINT IN PLANE JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET POINT IN PLANE JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET POINT IN PLANE JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET POINT IN PLANE JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET POINT ON LINE JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET POINT ON LINE JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET POINT ON LINE JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET POINT ON LINE JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PRISMATIC JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PRISMATIC JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PRISMATIC JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PRISMATIC JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT DISTANCE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT MOTOR` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT RATIO` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT RIGID` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT STIFFNESS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET PULLEY JOINT SUSPENSION` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET REVOLUTE JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET REVOLUTE JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET REVOLUTE JOINT LIMIT` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET REVOLUTE JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET REVOLUTE JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET REVOLUTE JOINT MOTOR` | Command | 4 | integer, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET REVOLUTE JOINT PROJECTION` | Command | 4 | integer, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET REVOLUTE JOINT SPRING` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY ANGULAR DAMPING` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY ANGULAR MOMENTUM` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY ANGULAR VELOCITY` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY CCD` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY CCD MOTION THRESHOLD` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY GRAVITY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY GROUP` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY KINEMATIC` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY KINEMATIC POSITION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY KINEMATIC ROTATION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY LINEAR DAMPING` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY LINEAR MOMENTUM` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY LINEAR VELOCITY` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY MASS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY MASS OFFSET GLOBAL` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY MASS OFFSET LOCAL` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY MAX ANGULAR VELOCITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY POSITION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY ROTATION` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY SLEEP ANGULAR VELOCITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY SLEEP LINEAR VELOCITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET RIGID BODY TERRAIN EXTENT` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SKIN WIDTH` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT GLOBAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT GLOBAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT LOCAL ANCHOR` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT LOCAL AXIS` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT PROJECTION` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT SPRING` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT SWING AXIS` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT SWING LIMIT` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT SWING SPRING` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT TWIST LIMIT` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET SPHERE JOINT TWIST SPRING` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET STATIC FRICTION` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET TIMING` | Command | 3 | real, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET TRIGGER CALLBACK` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE AUTO` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE BRAKE TORQUE` | Command | 2-3 | integer, real -> void; integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE DYNAMIC FRICTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE DYNAMIC FRICTION V` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE LATERAL TIRE FORCE FUNCTION` | Command | 7 | integer, integer, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE LONGITUDAL TIRE FORCE FUNCTION` | Command | 7 | integer, integer, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE MASS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE MAX MOTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE MAX STEERING ANGLE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE MOTOR FORCE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE MOTOR TORQUE` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE RESTITUTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE STATIC FRICTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE STATIC FRICTION V` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE STEERING ANGLE` | Command | 2-3 | integer, real -> void; integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE STEERING DELTA` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE STEERING VALUE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE SUSPENSION BIAS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE SUSPENSION DAMPING` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE SUSPENSION SPRING` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE SUSPENSION TRAVEL` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE WHEEL FLAGS` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE WHEEL MULTIPLIER` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE WHEEL POWER` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE WHEEL RADIUS` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SET VEHICLE WHEEL ROTATION` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY SLEEP RIGID BODY` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY START` | Command | 0, 3 | none -> void; integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY UPDATE` | Command | 0-1 | none -> void; integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY UPDATE RIGID BODY MASS` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHY WAKE UP RIGID BODY` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PHYSICS GARBAGE COLLECT` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `PICK OBJECT` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PICK SCREEN` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PITCH CAMERA DOWN` | Command | 1-2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -446,6 +903,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `PLAY ANIMATION TO IMAGE` | Command | 6 | number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PLAY MUSIC` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PLAY OBJECT` | Command | 1-3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `PLAY OGG VORBIS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `PLAY SOUND` | Command | 1-2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PLAY SPRITE` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `POINT CAMERA` | Command | 3-4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -508,17 +966,23 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `RECENTER VR CAMERA` | Command | 0 | none -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `RECORD SOUND` | Command | 1-2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `REDUCE MESH` | Command | 6 | number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `RELAX CLOTH` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `REMOVE FILE FROM BLOCK` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `REMOVE FROM QUEUE` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REMOVE FROM STACK` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REMOVE LIMB` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `REMOVE VEHICLE BODY OBJECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `REMOVE VEHICLE WHEEL OBJECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `RENAME FILE` | Command | 2 | string, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `RENDER EFFECT SHADOW MAPPING` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `RESET CLOTH UVS` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `RESET OBJECT PIVOT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `RESET TRACKING` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `RESTORE` | Command | 1 | any... -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `RESTORE WINDOW` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `RESUME ANIMATION` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `RESUME MUSIC` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `RESUME OGG VORBIS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `RESUME SOUND` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REVERSE OBJECT FRAMES` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ROLL CAMERA LEFT` | Command | 1-2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -539,6 +1003,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ROTATE Z MATRIX4` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SAVE ARRAY` | Command | 2 | string, any array -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SAVE BITMAP` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SAVE CLOTH STATE` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SAVE FILE BLOCK` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SAVE ICON FROM IMAGE` | Command | 2 | string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SAVE IMAGE` | Command | 2-3 | string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SAVE MESH` | Command | 2 | string, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -567,6 +1033,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SEND NET MESSAGE MESH` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SEND NET MESSAGE SOUND` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SEND NET MESSAGE STRING` | Command | 2 | number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SEND VOICE MESSAGE` | Command | 1 | string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SEND VOICE MESSAGE XML` | Command | 1 | string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET ALPHA MAPPING ON` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET AMBIENT LIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET ANIMATION SPEED` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -597,20 +1065,80 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET CAMERA VIEW` | Command | 4-5 | number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET CAMERAS TO STEREOSCOPIC` | Command | 5 | number, number, number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET CARTOON SHADING ON` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET CHAOS EFFECTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET CHARACTER CREATOR TONES` | Command | 6 | integer, integer, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET CHILD WINDOW TRUE PIXEL` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET CLOTH ELASTICITY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET CLOTH MASS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLIDER BOUNCE` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLIDER COLOR` | Command | 6 | integer, integer, integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLIDER FRICTION` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLIDER INTERACTION` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLIDER INVERT` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLIDER KILLER` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLIDER RESOLVE` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLIDER USE COLOR` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLISION BOX` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLISION DISC` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLISION SPHERE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET COLLISION SQUARE` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET CONTROL DEVICE` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET CONTROL DEVICE INDEX` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET CUBE MAPPING ON` | Command | 7 | number, number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET CURRENT BITMAP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET CURRENT CAMERA` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET CURSOR` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET DAMPING EFFECTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET DETAIL MAPPING ON` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET DIR` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET DIRECTIONAL LIGHT` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET DISPLAY MODE` | Command | 3, 4, 6 | number, number, number -> void; number, number, number, number -> void; number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET DRAG EFFECTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET DVD CHAPTER` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET EAX` | Command | 1 | integer -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX AIR ABSORPTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX CLIP DECAY HF` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX CONE INSIDE ANGLE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX CONE ORIENTATION X` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX CONE ORIENTATION Y` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX CONE ORIENTATION Z` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX CONE OUTSIDE ANGLE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX CONE OUTSIDE VOLUME` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX DECAY HF RATIO` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX DECAY TIME` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX ENVIRONMENT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX ENVIRONMENT DIFFUSION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX ENVIRONMENT SIZE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX FLAGS` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX MAX DISTANCE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX MIN DISTANCE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX REFLECTIONS` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX REFLECTIONS DELAY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX REVERB` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX REVERB DELAY` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX ROOM` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX ROOM HF` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX ROOM ROLLOFF` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SCALE DECAY TIME` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SCALE REFLECTIONS` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SCALE REFLECTIONS DELAY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SCALE REVERB` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SCALE REVERB DELAY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE ABSORPTION` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE AFFECT DIRECT HF` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE AFFECT ROOM` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE AFFECT ROOM HF` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE DIRECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE DIRECT HF` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE FLAGS` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE OBSTRUCTION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE OBSTRUCTION LF` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE OCCLUSION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE OCCLUSION LF` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE OCCLUSION ROOM` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE OUTSIDE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE ROLLOFF` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EAX SOURCE ROOM` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET EFFECT CONSTANT BOOLEAN` | Command | 3 | number, string, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET EFFECT CONSTANT FLOAT` | Command | 3 | number, string, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET EFFECT CONSTANT INTEGER` | Command | 3 | number, string, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -622,9 +1150,29 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET EFFECT TECHNIQUE` | Command | 2 | number, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET EFFECT TO SHADOW MAPPING` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET EFFECT TRANSPOSE` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET EFFECTOR FALLOFF` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EFFECTOR FALLOFF HEIGHT` | Command | 4 | integer, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EFFECTOR FALLOFF PER PARTICLE` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EFFECTOR FALLOFF RADIUS` | Command | 4 | integer, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EFFECTOR INTERACTION` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EMITTER EXPLODE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EMITTER PARTICLE COLOR` | Command | 5 | integer, integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EMITTER PARTICLE LIFE` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EMITTER PARTICLE MASS` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EMITTER PARTICLE SIZE` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EMITTER PARTICLE VELOCITY` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET EMITTER RATE` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET EMULATION OFF` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET EMULATION ON` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET FAST BOUNDS CALCULATION` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FILE BLOCK COMPRESSION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FILE BLOCK KEY` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FILE MAP DWORD` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FILE MAP FLOAT` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FILE MAP STRING$` | Command | 3 | integer, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FLOCK EFFECTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FLOCK EFFECTOR USE CENTER` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FORCE EFFECTOR` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET GAMMA` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET GLOBAL COLLISION OFF` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET GLOBAL COLLISION ON` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -634,6 +1182,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET GLOBAL SHADOWS OFF` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET GLOBAL SHADOWS ON` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET GRAPHICS CARD` | Command | 1 | number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET GRAVITY EFFECTOR` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET IDENTITY MATRIX4` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET IMAGE AUTOMIPMAP` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET IMAGE COLORKEY` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -668,6 +1217,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET OBJECT AMBIENCE` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT AMBIENT` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT ARBITARY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET OBJECT AS VEHICLE BODY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET OBJECT AS VEHICLE WHEEL` | Command | 4 | integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET OBJECT COLLISION OFF` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT COLLISION ON` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT COLLISION PROPERTY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -704,6 +1255,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET OBJECT TRANSPARENCY` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OBJECT WIREFRAME` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET OCCLUSION MODE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET OGG VORBIS VOLUME` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET PARTICLE CHAOS` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET PARTICLE EMISSIONS` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET PARTICLE FLOOR` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -711,11 +1263,26 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET PARTICLE LIFE` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET PARTICLE SPEED` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET PARTICLE VELOCITY` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET PARTICLE Z SORTING` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET PHYSICS AUTO GARBAGE COLLECT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET PHYSICS FRAME RATE` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET PHYSICS GARBAGE COLLECT INTERVAL` | Command | 1 | real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET PHYSICS MAX ITERATIONS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET PHYSICS TIMER BAILOUT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET PIXEL SHADER OFF` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET PIXEL SHADER ON` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET PIXEL SHADER TEXTURE` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET POINT EFFECTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET POINT EFFECTOR FALLOFF INVERSE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET POINT EFFECTOR FALLOFF INVERSE SQUARE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET POINT EFFECTOR FALLOFF NONE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET POINT EFFECTOR KILL RADIUS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET POINT EFFECTOR USE KILL RADIUS` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET POINT LIGHT` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET PROJECTION MATRIX4` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET RADIAL EMISSION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET RAGDOLL OBJECT OFFSET` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET RAGDOLL SCALES` | Command | 8 | integer, real, real, real, real, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET RAINBOW SHADING ON` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET REFLECTION SHADING ON` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET REGISTRY HKEY` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -728,6 +1295,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET SOUND PAN` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET SOUND SPEED` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET SOUND VOLUME` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET SPAWN BOX` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET SPAWN HEMISPHERE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET SPAWN RADIUS` | Command | 3 | integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET SPHERE MAPPING ON` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET SPOT LIGHT` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -768,6 +1338,14 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET VECTOR3 TO PARTICLES POSITION` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET VECTOR3 TO PARTICLES ROTATION` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET VECTOR4` | Command | 5 | number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET VEHICLE CENTER OF GRAVITY` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VEHICLE MASS` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VEHICLE MOMENT OF INERTIA` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VEHICLE SUSPENSION LIMITS` | Command | 4 | integer, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VEHICLE SUSPENSION PHYSICS` | Command | 4 | integer, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VEHICLE WHEEL CONTROLS` | Command | 4 | integer, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VEHICLE WHEEL SIZE` | Command | 4 | integer, integer, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VEHICLE WHEEL STEER` | Command | 3 | integer, integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET VERTEX SHADER MATRIX` | Command | 4 | number, number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET VERTEX SHADER OFF` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET VERTEX SHADER ON` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -778,15 +1356,21 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET VERTEXDATA NORMALS` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET VERTEXDATA POSITION` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET VERTEXDATA UV` | Command | 3-4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET VOICE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VOICE SPEED` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VOICE VOLUME` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET VORTEX EFFECTOR` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET VR CAMERA HEIGHT` | Command | 1 | real -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `SET VR ENABLED` | Command | 1 | integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `SET VR PREVIEW MODE` | Command | 1 | integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
+| `SET WIND EFFECTOR` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET WINDOW LAYOUT` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET WINDOW OFF` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET WINDOW ON` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET WINDOW POSITION` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET WINDOW SIZE` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET WINDOW TITLE` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET WRAPROUND EFFECTOR` | Command | 4 | integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SHIFT MATRIX DOWN` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SHIFT MATRIX LEFT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SHIFT MATRIX RIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -800,6 +1384,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SHOW PARTICLES` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SHOW SPRITE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SHOW WINDOW` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SIZE EFFECTOR DELETE KEY` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SIZE EFFECTOR DELETE KEY AT TIME` | Command | 2 | integer, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SIZE EFFECTOR USE ON COLLIDE` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SIZE SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SKIP BYTES` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SLEEP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -808,6 +1395,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `STOP EXECUTABLE` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `STOP MUSIC` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `STOP OBJECT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `STOP OGG VORBIS` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `STOP RECORDING SOUND` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `STOP SOUND` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `STRETCH SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -830,6 +1418,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `TEXTURE SCREEN` | Command | 1-2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TEXTURE TERRAIN` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TRANSFER IMAGE` | Command | 4 | integer, integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `TRANSFORM CLOTH UVS` | Command | 6 | integer, real, real, real, real, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `TRANSFORM COORDS VECTOR2` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TRANSFORM COORDS VECTOR3` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TRANSFORM NORMALS VECTOR3` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -840,12 +1429,18 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `TURN CAMERA RIGHT` | Command | 1-2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TURN OBJECT LEFT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TURN OBJECT RIGHT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `UNBIND COLLIDER FROM OBJECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `UNBIND EFFECTOR FROM OBJECT` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `UNDIM` | Command | 1 | any array -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `UNGLUE OBJECT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `UNLOCK BACKBUFFER` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `UNLOCK PIXELS` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `UNLOCK VERTEXDATA` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `UPDATE DATA FILE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `UPDATE MATRIX` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `UPDATE PHYSICS` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `USE EFFECTOR CYLINDER FALLOFF` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `USE EFFECTOR SPHERE FALLOFF` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `VECTOR2 ADD` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `VECTOR2 DIV` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `VECTOR2 DIVIDE` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -890,6 +1485,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `VECTOR4 SUBTRACT` | Command | 3 | integer, integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `VIEW MATRIX4` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `WAIT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `WAIT FOR FILE MAP EVENT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `WAIT KEY` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `WAIT MOUSE` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `WINDOW TO BACK` | Command | 0-1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -924,6 +1520,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `#INCLUDE` | Directive | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional directive implemented with an observable contract. |
 | `ABS` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `ACOS` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `ADD VEHICLE SUSPENSION` | Function | 10 | integer, real, real, real, real, real, real, real, real, real -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `ALPHA AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `ALPHABLENDING AVAILABLE` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `ALPHACOMPARISON AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
@@ -1000,6 +1597,13 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CLAMP UNORM` | Function | 1 | real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `CLIPANDSCALEPOINTS AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `CLIPTLVERTS AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR ADD KEY` | Function | 6 | integer, real, integer, integer, integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR GET KEY ALPHA VALUE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR GET KEY BLUE VALUE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR GET KEY GREEN VALUE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR GET KEY RED VALUE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR GET KEY TIME` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `COLOR EFFECTOR GET NUM KEYS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `COLORPERSPECTIVE AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `COLORWRITEENABLE AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `COMPARE CASE$` | Function | 2 | string, string -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1066,18 +1670,85 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET BACKBUFFER PITCH` | Function | 0 | none -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET BACKBUFFER PTR` | Function | 0 | none -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET BACKBUFFER WIDTH` | Function | 0 | none -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET CD COUNT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET CD LETTER$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CHILD WINDOW HEIGHT` | Function | 0-1 | none -> integer; integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CHILD WINDOW WIDTH` | Function | 0-1 | none -> integer; integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CHILD WINDOW X` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CHILD WINDOW Y` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CLIPBOARD$` | Function | 0 | none -> string | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET COMPUTER NAME$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DATA FILE CELL` | Function | 3 | integer, integer, integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DATA FILE COLUMN COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DATA FILE EXISTS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DATA FILE ROW COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET DATE$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET DEVICE TYPE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET DIR$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DISPLAY DEPTH` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DISPLAY HEIGHT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DISPLAY REFRESH RATE` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DISPLAY WIDTH` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE BYTES PER SECTOR` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE COUNT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE CYLINDER COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE FILE LENGTH SUPPORT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE FILE SYSTEM$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE FREE SPACE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE SECTORS PER TRACK` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE SERIAL$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE TOTAL SIZE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE TRACK COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DRIVE USED SPACE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET DX VERSION$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX AIR ABSORPTION` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX CONE INSIDE ANGLE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX CONE ORIENTATION X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX CONE ORIENTATION Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX CONE ORIENTATION Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX CONE OUTSIDE ANGLE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX CONE OUTSIDE VOLUME` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX DECAY HF RATIO` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX ENVIRONMENT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX ENVIRONMENT DIFFUSION` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX ENVIRONMENT SIZE` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX FLAGS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX MAX DISTANCE` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX MIN DISTANCE` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX REFLECTIONS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX REFLECTIONS DELAY` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX REVERB` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX REVERB DELAY` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX ROOM` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX ROOM DECAY TIME` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX ROOM HF` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX ROOM ROLLOFF` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE ABSORPTION` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE DIRECT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE DIRECT HF` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE FLAGS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE OBSTRUCTION` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE OBSTRUCTION LF` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE OCCLUSION` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE OCCLUSION LF` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE OCCLUSION ROOM` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE OUTSIDE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE ROLLOFF` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE ROOM` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET EAX SOURCE ROOM HF` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET EFFECT PARAMETER INDEX` | Function | 2 | integer, string -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE BLOCK COMPRESSION` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE BLOCK COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE BLOCK DATA EXISTS` | Function | 2 | integer, string -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE BLOCK EXISTS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE BLOCK KEY` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE BLOCK SIZE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET FILE CREATION$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET FILE DATE$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET FILE MAP DWORD` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE MAP FLOAT` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE MAP STRING$` | Function | 2 | integer, integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET FILE NAME$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET FILE TYPE` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET FTP DIR$` | Function | 0 | none -> string | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
@@ -1090,6 +1761,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET FTP STATUS` | Function | 0 | none -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET GROUND HEIGHT` | Function | 3 | number, number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET INDEXDATA` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET INSTALLED MEMORY` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET IP ADDRESS$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET KEY STATE` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET LIMB POLYGON COUNT` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET MATRIX HEIGHT` | Function | 3 | number, number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1105,20 +1778,38 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET MEMBLOCK FROM OBJECT` | Function | 2 | number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET MEMBLOCK PTR` | Function | 1 | number -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET MEMBLOCK SIZE` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET MEMORY AVAILABLE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET MEMORY PERCENT FREE` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET MEMORY PERCENT USED` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET MULTIMATERIAL COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET NUMBER OF CD TRACKS` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET NUMBER OF CLOTH POINTS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET OBJECT COLLISION X` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET OBJECT COLLISION Y` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET OBJECT COLLISION Z` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET OBJECT OCCLUSION` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET OBJECT POLYGON COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET OBJECT VERTEX COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET OGG VORBIS EXISTS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET OGG VORBIS STATE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET OGG VORBIS VOLUME` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET PICK DISTANCE` | Function | 0 | none -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET PICK VECTOR X` | Function | 0 | none -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET PICK VECTOR Y` | Function | 0 | none -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET PICK VECTOR Z` | Function | 0 | none -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET PIXELS PITCH` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET PIXELS POINTER` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR BRAND$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR COUNT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR FAMILY ID` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR FREQUENCY` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR MODEL ID` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR NAME$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR PLATFORM$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR STEPPING ID` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR TYPE ID` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR USAGE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR VENDOR$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET REGISTRY` | Function | 2 | number, number -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET REGISTRY$` | Function | 2 | number, number -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET STATIC COLLISION COUNT` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
@@ -1135,6 +1826,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET TRACKING ROLL` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET TRACKING YAW` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET TYPE PATTERN$` | Function | 1-2 | number, number -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET USER NAME$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET VERTEXDATA DIFFUSE` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA INDEX COUNT` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA NORMALS X` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1147,7 +1839,11 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET VERTEXDATA U` | Function | 1-2 | number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA V` | Function | 1-2 | number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA VERTEX COUNT` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET VOICE API` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET VOICE SPEED` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET VOICE VOLUME` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET VR CAMERA HEIGHT` | Function | 0 | none -> real | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
+| `GET WEB CLIENT$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `HCOS` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `HEX$` | Function | 1 | number -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `HSIN` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1163,6 +1859,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `INTERSECT OBJECT` | Function | 7 | number, number, number, number, number, number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `INV SQRT FAST` | Function | 1 | real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `INVERSE MATRIX4` | Function | 2 | number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `IS COLLIDER ENABLED` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `IS EFFECTOR ENABLED` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `IS EQUAL MATRIX4` | Function | 2 | number, number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `IS EQUAL VECTOR2` | Function | 2 | number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `IS EQUAL VECTOR3` | Function | 2 | number, number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1352,6 +2050,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `OBJECT STATISTICS INTEGER` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `OBJECT VISIBLE` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `ONLYSQUARETEXTURES AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `OPEN FILE DIALOG` | Function | 3 | string, string, string -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `PARTICLES EXIST` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `PARTICLES POSITION X` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `PARTICLES POSITION Y` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1360,6 +2059,138 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `PERFFREQ` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `PERFTIMER` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `PERSPECTIVETEXTURES AVAILABLE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY CLOTH RAY CAST` | Function | 7 | integer, real, real, real, real, real, real -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY CLOTH RAY CAST HIT VERTEX` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY CLOTH RAY CAST HIT X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY CLOTH RAY CAST HIT Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY CLOTH RAY CAST HIT Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CHARACTER CONTROLLER EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH ATTACHMENT RESPONSE COEFFICIENT` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH BENDING` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH BENDING STIFFNESS` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH BUILT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH COLLISION` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH COLLISION GROUP` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH COLLISION RESPONSE COEFFICIENT` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH DAMPING` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH DENSITY` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH DEPTH` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH EXTERNAL ACCELERATION X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH EXTERNAL ACCELERATION Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH EXTERNAL ACCELERATION Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH FRICTION` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH GRAVITY` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH HEIGHT` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH MAX SIZE X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH MAX SIZE Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH MAX SIZE Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH MIN SIZE X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH MIN SIZE Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH MIN SIZE Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH POSITION X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH POSITION Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH POSITION Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH PRESSURE` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH ROTATION X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH ROTATION Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH ROTATION Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH SOLVER ITERATIONS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH STATIC` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH STRETCHING STIFFNESS` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH TEAR FACTOR` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH TEARING` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH THICKNESS` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH TWO WAY COLLISION` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET CLOTH WIDTH` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION CONTACT NORMAL X` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION CONTACT NORMAL Y` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION CONTACT NORMAL Z` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION CONTACT POINT X` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION CONTACT POINT Y` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION CONTACT POINT Z` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION DATA` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION FRICTION FORCE X` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION FRICTION FORCE Y` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION FRICTION FORCE Z` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION NORMAL FORCE X` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION NORMAL FORCE Y` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION NORMAL FORCE Z` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION OBJECT A` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET COLLISION OBJECT B` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET DRAIN EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET EMITTER EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET FLUID EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET FORCE FIELD EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET JOINT EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET JOINT STATE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET JOINT TYPE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL DIR OF ANISOTROPY X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL DIR OF ANISOTROPY Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL DIR OF ANISOTROPY Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL DYNAMIC FRICTION` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL DYNAMIC FRICTION V` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL FRICTION COMBINE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL RESTITUTION` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL RESTITUTION COMBINE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL STATIC FRICTION` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET MATERIAL STATIC FRICTION V` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST DISTANCE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST HIT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST HIT NORMAL X` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST HIT NORMAL Y` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST HIT NORMAL Z` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST HIT POINT X` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST HIT POINT Y` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST HIT POINT Z` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST OBJECT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST TU` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RAY CAST TV` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY ANGULAR DAMPING` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY ANGULAR MOMENTUM X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY ANGULAR MOMENTUM Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY ANGULAR MOMENTUM Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY ANGULAR VELOCITY X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY ANGULAR VELOCITY Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY ANGULAR VELOCITY Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY CCD MOTION THRESHOLD` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY DYNAMIC` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LINEAR DAMPING` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LINEAR MOMENTUM X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LINEAR MOMENTUM Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LINEAR MOMENTUM Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LINEAR VELOCITY X` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LINEAR VELOCITY Y` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LINEAR VELOCITY Z` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LOCAL POINT VELOCITY X` | Function | 4 | integer, real, real, real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LOCAL POINT VELOCITY Y` | Function | 4 | integer, real, real, real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY LOCAL POINT VELOCITY Z` | Function | 4 | integer, real, real, real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY MASS` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY MAX ANGULAR VELOCITY` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY POINT VELOCITY X` | Function | 4 | integer, real, real, real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY POINT VELOCITY Y` | Function | 4 | integer, real, real, real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY POINT VELOCITY Z` | Function | 4 | integer, real, real, real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY SLEEP ANGULAR VELOCITY` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY SLEEP LINEAR VELOCITY` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY SLEEPING` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET RIGID BODY TYPE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET TRIGGER ACTION` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET TRIGGER DATA` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET TRIGGER OBJECT A` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET TRIGGER OBJECT B` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET VEHICLE MOTOR FORCE` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET VEHICLE STEERING ANGLE` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY GET VEHICLE STEERING DELTA` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY RAY CAST` | Function | 6-7 | real, real, real, real, real, real -> integer; real, real, real, real, real, real, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY RAY CAST ALL SHAPES` | Function | 6 | real, real, real, real, real, real -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY RAY CAST CLOSEST SHAPE` | Function | 6 | real, real, real, real, real, real -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY TRIGGER EXIST` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHY TRIGGER TYPE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `PHYSX` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `PICK OBJECT` | Function | 4-5 | number, number, number, number, number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `PIXEL SHADER EXIST` | Function | 1 | number -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `POINT` | Function | 2 | number, number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1418,6 +2249,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `RIGHT$` | Function | 2 | string, number -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `RIGHTKEY` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `RND` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `SAVE FILE DIALOG` | Function | 3 | string, string, string -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `SCANCODE` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `SCREEN DEPTH` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `SCREEN FPS` | Function | 0 | none -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1430,6 +2262,10 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SHIFTKEY` | Function | 0 | none -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `SIGN` | Function | 1 | real -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `SIN` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `SIZE EFFECTOR ADD KEY` | Function | 3 | integer, real, real -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `SIZE EFFECTOR GET KEY TIME` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `SIZE EFFECTOR GET KEY VALUE` | Function | 2 | integer, integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `SIZE EFFECTOR GET NUM KEYS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `SOUND EXIST` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `SOUND LOOPING` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `SOUND PAN` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |

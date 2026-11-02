@@ -319,11 +319,8 @@ namespace dbc::language
 
     RemovedPlugin RemovedPluginOf(std::string_view CanonicalName)
     {
-        static constexpr std::string_view Physics = "the ODE commands";
-        if (CanonicalName.starts_with("PHY ") || CanonicalName == "PHYSX")
-            return {"DarkPHYSICS", Physics};
         if (CanonicalName.starts_with("DYN "))
-            return {"Dark Dynamix", Physics};
+            return {"Dark Dynamix", "the ODE commands"};
         if (CanonicalName.starts_with("LM "))
             return {"DarkLIGHTS", {}};
 
@@ -333,8 +330,6 @@ namespace dbc::language
             RemovedPlugin Plugin;
         };
 
-        static constexpr RemovedPlugin Cloth{"3D Cloth & Particles", Physics};
-        static constexpr RemovedPlugin Enhancement{"the Enhancement Pack", {}};
         static constexpr RemovedPlugin Terrain{"Advanced Terrain", "MAKE TERRAIN"};
         static constexpr Form Forms[] = {
 #include "removed_plugin_forms.inc"
