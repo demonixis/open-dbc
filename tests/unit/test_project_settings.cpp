@@ -126,6 +126,50 @@ TEST_CASE("project settings scrub legacy Android passwords")
     CHECK(Saved.find("must-not-survive") == std::string::npos);
 }
 
+TEST_CASE("project settings persist cleared icons permissions and signing paths")
+{
+    TemporaryProject Project;
+    core::ProjectSettings Settings = core::ProjectSettings::Parse(R"({
+        "icons": {"source":"old.png", "future":"keep-icon"},
+        "ios": {"permissions": {
+            "NSCameraUsageDescription":"old camera",
+            "NSMicrophoneUsageDescription":"old microphone",
+            "NSLocationWhenInUseUsageDescription":"old location",
+            "NSPhotoLibraryUsageDescription":"old photos",
+            "future":"keep-permission"
+        }},
+        "android": {"keystorePath":"old.jks", "keyAlias":"old-alias", "future":"keep-android"}
+    })");
+    REQUIRE(Settings.LoadError.empty());
+    Settings.IconSource.clear();
+    Settings.IosCameraDesc.clear();
+    Settings.IosMicrophoneDesc.clear();
+    Settings.IosLocationDesc.clear();
+    Settings.IosPhotoDesc.clear();
+    Settings.AndroidKeystorePath.clear();
+    REQUIRE(Settings.Save(Project.Root));
+
+    const auto Reloaded = core::ProjectSettings::Load(Project.Root);
+    REQUIRE(Reloaded.LoadError.empty());
+    CHECK(Reloaded.IconSource.empty());
+    CHECK(Reloaded.IosCameraDesc.empty());
+    CHECK(Reloaded.IosMicrophoneDesc.empty());
+    CHECK(Reloaded.IosLocationDesc.empty());
+    CHECK(Reloaded.IosPhotoDesc.empty());
+    CHECK(Reloaded.AndroidKeystorePath.empty());
+    CHECK(Reloaded.AndroidKeyAlias == "release");
+
+    std::ifstream Input(core::ProjectSettings::FilePath(Project.Root));
+    const std::string Saved{std::istreambuf_iterator<char>(Input), std::istreambuf_iterator<char>()};
+    for (const char* Key :
+         {"source", "NSCameraUsageDescription", "NSMicrophoneUsageDescription", "NSLocationWhenInUseUsageDescription",
+          "NSPhotoLibraryUsageDescription", "keystorePath", "keyAlias"})
+        CHECK(Saved.find(Key) == std::string::npos);
+    CHECK(Saved.find("keep-icon") != std::string::npos);
+    CHECK(Saved.find("keep-permission") != std::string::npos);
+    CHECK(Saved.find("keep-android") != std::string::npos);
+}
+
 TEST_CASE("Studio preferences reject wrong JSON types without throwing")
 {
     std::string Error;

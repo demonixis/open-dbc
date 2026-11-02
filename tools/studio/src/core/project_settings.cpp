@@ -29,6 +29,14 @@ namespace dbc::studio
             return (It != J.end() && It->is_string()) ? It->get<std::string>() : Fallback;
         }
 
+        void SetOptionalString(json& Parent, const char* Key, const std::string& Value)
+        {
+            if (Value.empty())
+                Parent.erase(Key);
+            else
+                Parent[Key] = Value;
+        }
+
         int Int(const json& J, const char* Key, int Fallback)
         {
             const auto It = J.find(Key);
@@ -200,26 +208,14 @@ namespace dbc::studio
             Ios["orientations"] = IosOrientations;
 
             json IosPerms = Object(Ios, "permissions");
-            if (!IosCameraDesc.empty())
-            {
-                IosPerms["NSCameraUsageDescription"] = IosCameraDesc;
-            }
-            if (!IosMicrophoneDesc.empty())
-            {
-                IosPerms["NSMicrophoneUsageDescription"] = IosMicrophoneDesc;
-            }
-            if (!IosLocationDesc.empty())
-            {
-                IosPerms["NSLocationWhenInUseUsageDescription"] = IosLocationDesc;
-            }
-            if (!IosPhotoDesc.empty())
-            {
-                IosPerms["NSPhotoLibraryUsageDescription"] = IosPhotoDesc;
-            }
-            if (!IosPerms.empty())
-            {
+            SetOptionalString(IosPerms, "NSCameraUsageDescription", IosCameraDesc);
+            SetOptionalString(IosPerms, "NSMicrophoneUsageDescription", IosMicrophoneDesc);
+            SetOptionalString(IosPerms, "NSLocationWhenInUseUsageDescription", IosLocationDesc);
+            SetOptionalString(IosPerms, "NSPhotoLibraryUsageDescription", IosPhotoDesc);
+            if (IosPerms.empty())
+                Ios.erase("permissions");
+            else
                 Ios["permissions"] = IosPerms;
-            }
 
             json Android = Object(Root, "android");
             Android.erase("keystorePassword");
@@ -228,19 +224,19 @@ namespace dbc::studio
             Android["targetSdk"] = AndroidTargetSdk;
             Android["screenOrientation"] = AndroidOrientation;
             Android["permissions"] = AndroidPermissions;
-            if (!AndroidKeystorePath.empty())
-            {
-                Android["keystorePath"] = AndroidKeystorePath;
+            SetOptionalString(Android, "keystorePath", AndroidKeystorePath);
+            if (AndroidKeystorePath.empty())
+                Android.erase("keyAlias");
+            else
                 Android["keyAlias"] = AndroidKeyAlias;
-            }
 
             Root["general"] = Gen;
-            if (!IconSource.empty())
-            {
-                json Icons;
-                Icons["source"] = IconSource;
+            json Icons = Object(Root, "icons");
+            SetOptionalString(Icons, "source", IconSource);
+            if (Icons.empty())
+                Root.erase("icons");
+            else
                 Root["icons"] = Icons;
-            }
             Root["ios"] = Ios;
             Root["android"] = Android;
             if (LanguageDialect)
