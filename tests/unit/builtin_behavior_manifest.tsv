@@ -1757,7 +1757,10 @@ dbpro	1615	2172	Command	CLOSE FILE MAP	shared-memory-state	test_enhancement_pack
 dbpro	1616	2173	Command	CREATE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1617	2174	Command	CREATE FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1618	2175	Command	DELETE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1619	2176	Command	DELETE OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1620	2177	Command	DESTROY FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1621	2178	Command	ENCODE TO OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1621	2179	Command	ENCODE TO OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1622	2180	Command	EXTRACT FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1623	2181	Command	GET PROCESSOR ON CHIP FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1624	2182	Command	GET PROCESSOR POWER MANAGEMENT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
@@ -1768,20 +1771,27 @@ dbpro	1629	2187	Command	LOAD FILE FROM BLOCK	zip-archive-state	test_enhancement_
 dbpro	1630	2188	Command	LOAD IMAGE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
 dbpro	1631	2189	Command	LOAD MEMBLOCK FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1632	2190	Command	LOAD OBJECT FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1633	2191	Command	LOAD OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1634	2192	Command	LOAD SOUND FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1635	2193	Command	LOOP OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1636	2194	Command	OPEN DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
 dbpro	1637	2195	Command	OPEN FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1637	2196	Command	OPEN FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1638	2197	Command	OPEN FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1639	2198	Command	PAUSE OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1640	2199	Command	PERFORM CHECKLIST FOR EAX EFFECTS	checklist-state	test_enhancement_pack.cpp::PERFORM CHECKLIST FOR EAX EFFECTS lists the presets in the Enhancement Pack's order	-
 dbpro	1641	2200	Command	PERFORM CHECKLIST FOR FILE BLOCK DATA	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1642	2201	Command	PLAY OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1643	2202	Command	REMOVE FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1644	2203	Command	RESUME OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1645	2204	Command	SAVE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1691	2250	Command	SET FILE BLOCK COMPRESSION	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1692	2251	Command	SET FILE BLOCK KEY	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1693	2252	Command	SET FILE MAP DWORD	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1694	2253	Command	SET FILE MAP FLOAT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1695	2254	Command	SET FILE MAP STRING$	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1696	2255	Command	SET OGG VORBIS VOLUME	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1700	2259	Command	STOP OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1701	2260	Command	UPDATE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
 dbpro	1702	2261	Command	WAIT FOR FILE MAP EVENT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1703	2262	Function	GET CD COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
@@ -1820,6 +1830,9 @@ dbpro	1771	2330	Function	GET IP ADDRESS$	host-system-query	test_enhancement_pack
 dbpro	1772	2331	Function	GET MEMORY AVAILABLE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
 dbpro	1773	2332	Function	GET MEMORY PERCENT FREE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
 dbpro	1774	2333	Function	GET MEMORY PERCENT USED	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1775	2334	Function	GET OGG VORBIS EXISTS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1776	2335	Function	GET OGG VORBIS STATE	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1777	2336	Function	GET OGG VORBIS VOLUME	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
 dbpro	1778	2337	Function	GET PROCESSOR BRAND$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1779	2338	Function	GET PROCESSOR COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1780	2339	Function	GET PROCESSOR FAMILY ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-

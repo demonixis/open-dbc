@@ -716,7 +716,7 @@ TEST_CASE("Free DBPro forms that do not run yet are explicitly unsupported")
 {
     const dbc::language::Program Program = dbc::language::Compile(
         Source("multiplayer start\nbphys_ragdollbegin 1, 2.0\nprint sign(-2.0)\nprint max(1.0, 2.0)\n"
-               "phy make rigid body dynamic box 1\nmake cloth 1\nplay ogg vorbis 1\nset object as vehicle body 1, 2\n",
+               "phy make rigid body dynamic box 1\nmake cloth 1\nphy end\nset object as vehicle body 1, 2\n",
                dbc::language::LanguageProfile::DbPro, "dbpro-free-forms.dba"));
     CHECK(std::count_if(Program.Diagnostics.begin(), Program.Diagnostics.end(),
                         [](const auto& Diagnostic) { return Diagnostic.Code == "DBC2043"; }) == 8);

@@ -1,4 +1,4 @@
-# stb_image license
+# stb_image and stb_vorbis license
 
 Copyright (c) 2017 Sean Barrett
 

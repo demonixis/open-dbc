@@ -113,6 +113,12 @@ namespace dbc
             DestroySlot(Slot);
         }
         Music_.clear();
+        for (auto& [Id, Slot] : OggVorbis_)
+        {
+            (void)Id;
+            DestroySlot(Slot);
+        }
+        OggVorbis_.clear();
     }
 
     bool AudioSystem::SetSuspended(bool Suspended, std::string* Error)
@@ -161,6 +167,12 @@ namespace dbc
                 return false;
         }
         for (auto& [Id, Slot] : Music_)
+        {
+            (void)Id;
+            if (!Apply(Slot))
+                return false;
+        }
+        for (auto& [Id, Slot] : OggVorbis_)
         {
             (void)Id;
             if (!Apply(Slot))
@@ -1723,4 +1735,238 @@ namespace dbc
             SDL_SetError("%s", FirstError.c_str());
         return nullptr;
     }
+
+    namespace
+    {
+        // The Enhancement Pack set DirectSound's volume, in hundredths of a decibel, to -96 per percent below 100.
+        float OggVorbisGain(int VolumePercent)
+        {
+            if (VolumePercent <= 0)
+                return 0.0f;
+            return std::pow(10.0f, static_cast<float>(-96 * (100 - VolumePercent)) / 2000.0f);
+        }
+    } // namespace
+
+    AudioSystem::AudioSlot* AudioSystem::RequireOggVorbis(int OggId, std::string* Error)
+    {
+        return const_cast<AudioSlot*>(static_cast<const AudioSystem*>(this)->RequireOggVorbis(OggId, Error));
+    }
+
+    const AudioSystem::AudioSlot* AudioSystem::RequireOggVorbis(int OggId, std::string* Error) const
+    {
+        if (OggId < 1 || OggId > 254)
+        {
+            if (Error)
+                *Error = "Ogg Vorbis number must be between 1 and 254";
+            return nullptr;
+        }
+        const auto It = OggVorbis_.find(OggId);
+        if (It == OggVorbis_.end())
+        {
+            if (Error)
+                *Error = "Ogg Vorbis " + std::to_string(OggId) + " does not exist";
+            return nullptr;
+        }
+        return &It->second;
+    }
+
+    bool AudioSystem::LoadOggVorbis(const std::string& Path, int OggId, std::string* Error)
+    {
+        if (OggId < 1 || OggId > 254)
+        {
+            if (Error)
+                *Error = "Ogg Vorbis number must be between 1 and 254";
+            return false;
+        }
+        if (OggVorbis_.contains(OggId))
+        {
+            if (Error)
+                *Error = "LOAD OGG VORBIS cannot replace existing Ogg Vorbis " + std::to_string(OggId);
+            return false;
+        }
+        std::string Resolved;
+        if (!ImageStore::ResolveAssetPath(Resolved, Path, Error))
+            return false;
+        std::ifstream Input(dbc::PathFromUtf8(Resolved), std::ios::binary);
+        char Magic[4] = {};
+        if (!Input.read(Magic, sizeof(Magic)))
+        {
+            if (Error)
+                *Error = "LOAD OGG VORBIS cannot read '" + Path + "'";
+            return false;
+        }
+        if (std::memcmp(Magic, "OggS", 4) != 0)
+        {
+            if (Error)
+                *Error = "LOAD OGG VORBIS requires an Ogg Vorbis file; '" + Path + "' is not one";
+            return false;
+        }
+        if (!Kernel_.Core().EnsureInitialized() || !Mixer_)
+        {
+            if (Error)
+                *Error = "LOAD OGG VORBIS requires an audio playback device";
+            return false;
+        }
+        // The Enhancement Pack decoded the whole file into one buffer.
+        MIX_Audio* Audio = MIX_LoadAudio(Mixer_, Resolved.c_str(), true);
+        if (!Audio)
+        {
+            if (Error)
+                *Error = "LOAD OGG VORBIS failed for '" + Path + "': " + SDL_GetError();
+            return false;
+        }
+        AudioSlot Slot;
+        Slot.Audio = OwnAudio(Audio);
+        OggVorbis_.emplace(OggId, std::move(Slot));
+        return true;
+    }
+
+    bool AudioSystem::DeleteOggVorbis(int OggId, std::string* Error)
+    {
+        AudioSlot* Slot = RequireOggVorbis(OggId, Error);
+        if (!Slot)
+            return false;
+        DestroySlot(*Slot);
+        OggVorbis_.erase(OggId);
+        return true;
+    }
+
+    bool AudioSystem::PlayOggVorbis(int OggId, bool Loop, std::string* Error)
+    {
+        AudioSlot* Slot = RequireOggVorbis(OggId, Error);
+        if (!Slot)
+            return false;
+        const char* Command = Loop ? "LOOP OGG VORBIS" : "PLAY OGG VORBIS";
+        MIX_Track* Track = RequireTrack(*Slot, Command, Error);
+        if (!Track)
+            return false;
+        SDL_PropertiesID Options = SDL_CreateProperties();
+        if (!Options)
+        {
+            if (Error)
+                *Error = std::string(Command) + " could not allocate playback options: " + SDL_GetError();
+            return false;
+        }
+        SDL_SetNumberProperty(Options, MIX_PROP_PLAY_LOOPS_NUMBER, Loop ? -1 : 0);
+        const bool Played =
+            MIX_SetTrackGain(Track, OggVorbisGain(Slot->VolumePercent)) && MIX_PlayTrack(Track, Options);
+        SDL_DestroyProperties(Options);
+        if (!Played)
+        {
+            if (Error)
+                *Error = std::string(Command) + " failed: " + SDL_GetError();
+            return false;
+        }
+        Slot->Playing = true;
+        Slot->Paused = false;
+        Slot->SuspendedByHost = false;
+        Slot->Looping = Loop;
+        return true;
+    }
+
+    bool AudioSystem::StopOggVorbis(int OggId, std::string* Error)
+    {
+        AudioSlot* Slot = RequireOggVorbis(OggId, Error);
+        if (!Slot)
+            return false;
+        if (Slot->Track && !MIX_StopTrack(Slot->Track, 0))
+        {
+            if (Error)
+                *Error = std::string("STOP OGG VORBIS failed: ") + SDL_GetError();
+            return false;
+        }
+        Slot->Playing = false;
+        Slot->Paused = false;
+        Slot->SuspendedByHost = false;
+        return true;
+    }
+
+    bool AudioSystem::PauseOggVorbis(int OggId, std::string* Error)
+    {
+        AudioSlot* Slot = RequireOggVorbis(OggId, Error);
+        if (!Slot)
+            return false;
+        if (!Slot->Playing || Slot->Paused)
+            return true;
+        if (Slot->Track && !MIX_PauseTrack(Slot->Track))
+        {
+            if (Error)
+                *Error = std::string("PAUSE OGG VORBIS failed: ") + SDL_GetError();
+            return false;
+        }
+        Slot->Paused = true;
+        return true;
+    }
+
+    bool AudioSystem::ResumeOggVorbis(int OggId, std::string* Error)
+    {
+        AudioSlot* Slot = RequireOggVorbis(OggId, Error);
+        if (!Slot)
+            return false;
+        if (!Slot->Paused)
+            return true;
+        if (!Slot->Track || !MIX_ResumeTrack(Slot->Track))
+        {
+            if (Error)
+                *Error = std::string("RESUME OGG VORBIS failed: ") + SDL_GetError();
+            return false;
+        }
+        Slot->Paused = false;
+        return true;
+    }
+
+    bool AudioSystem::SetOggVorbisVolume(int OggId, int VolumePercent, std::string* Error)
+    {
+        AudioSlot* Slot = RequireOggVorbis(OggId, Error);
+        if (!Slot)
+            return false;
+        if (VolumePercent < 0 || VolumePercent > 100)
+        {
+            if (Error)
+                *Error = "SET OGG VORBIS VOLUME takes a volume between 0 and 100";
+            return false;
+        }
+        Slot->VolumePercent = VolumePercent;
+        if (Slot->Track && !MIX_SetTrackGain(Slot->Track, OggVorbisGain(VolumePercent)))
+        {
+            if (Error)
+                *Error = std::string("SET OGG VORBIS VOLUME failed: ") + SDL_GetError();
+            return false;
+        }
+        return true;
+    }
+
+    bool AudioSystem::OggVorbisExists(int& Output, int OggId, std::string* Error) const
+    {
+        if (OggId < 1 || OggId > 254)
+        {
+            if (Error)
+                *Error = "Ogg Vorbis number must be between 1 and 254";
+            return false;
+        }
+        Output = OggVorbis_.contains(OggId) ? 1 : 0;
+        return true;
+    }
+
+    bool AudioSystem::OggVorbisState(int& Output, int OggId, std::string* Error) const
+    {
+        const AudioSlot* Slot = RequireOggVorbis(OggId, Error);
+        if (!Slot)
+            return false;
+        if (Slot->Paused || Slot->SuspendedByHost)
+            Output = 2;
+        else
+            Output = Slot->Playing && Slot->Track && MIX_TrackPlaying(Slot->Track) ? 1 : 0;
+        return true;
+    }
+
+    bool AudioSystem::OggVorbisVolume(int& Output, int OggId, std::string* Error) const
+    {
+        const AudioSlot* Slot = RequireOggVorbis(OggId, Error);
+        if (!Slot)
+            return false;
+        Output = -96 * (100 - Slot->VolumePercent);
+        return true;
+    }
+
 } // namespace dbc

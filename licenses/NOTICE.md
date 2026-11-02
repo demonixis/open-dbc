@@ -23,7 +23,7 @@ sponsored by The Game Creators Ltd or Dark Basic Software Limited.
 | `resources/midi/VintageDreamsWaves-v2.sf2` | Vintage Dreams Waves v2.0 by Ian Wilson, unmodified and embedded at build time, from [FluidSynth](https://github.com/FluidSynth/fluidsynth/tree/master/sf2) | Freeware, redistributed under its terms; see [VintageDreamsWaves-COPYRIGHT.txt](../licenses/VintageDreamsWaves-COPYRIGHT.txt) |
 
 Build dependencies (SDL3, SDL3_image, SDL3_mixer, SDL3_ttf, SDL3_shadercross with DXC
-and SPIRV-Cross, TinySoundFont, Assimp, GLM, spdlog, unordered_dense, ENet, miniz, Jolt Physics, Dear ImGui,
+and SPIRV-Cross, TinySoundFont, Assimp, GLM, spdlog, unordered_dense, ENet, miniz, libogg, libvorbis, Jolt Physics, Dear ImGui,
 ImGuiColorTextEdit, ImGuizmo, nlohmann/json, OpenXR-SDK, and doctest for the tests) are
 fetched at build time and carry their own licences; none of their source is vendored
 here. Desktop builds ship the OpenXR loader with its OpenXR-SDK and jsoncpp notices.
@@ -32,7 +32,7 @@ MoltenVK and the headset runtime are installed separately.
 Linux builds also use the system GStreamer libraries (LGPL); OpenDBC does not
 bundle them or their codec plugins. See [video.md](video.md) for runtime dependencies.
 
-OpenDBC binaries use FreeType, dr_mp3 and stb_image through the
+OpenDBC binaries use FreeType, dr_mp3, stb_image and stb_vorbis through the
 statically linked SDL libraries. This software is based in part on the work of
 the FreeType Team. Their notices are shipped with every installed product and
 exported artifact.

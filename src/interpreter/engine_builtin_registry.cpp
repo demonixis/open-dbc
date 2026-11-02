@@ -22,6 +22,7 @@
 #include "engine/systems/memblock_system.hpp"
 #include "engine/systems/network_system.hpp"
 #include "engine/systems/object_manager.hpp"
+#include "engine/systems/ogg_vorbis_encoder.hpp"
 #include "engine/systems/physics_system.hpp"
 #include "engine/systems/renderer_system.hpp"
 #include "engine/systems/system_info.hpp"

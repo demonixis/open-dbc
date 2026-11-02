@@ -381,24 +381,12 @@ dbpro	Function_ExtClothSizeEffectorAddKey	Function	SIZE EFFECTOR ADD KEY	Target	
 dbpro	Function_ExtClothSizeEffectorGetKeyTime	Function	SIZE EFFECTOR GET KEY TIME	Target	input	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtClothSizeEffectorGetKeyValue	Function	SIZE EFFECTOR GET KEY VALUE	Target	input	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtClothSizeEffectorGetNumKeys	Function	SIZE EFFECTOR GET NUM KEYS	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementDeleteOggVorbis	Command	DELETE OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementEncodeToOggVorbis	Command	ENCODE TO OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementGetVoiceList	Command	GET VOICE LIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementLoadOggVorbis	Command	LOAD OGG VORBIS	Study	core	dbpro-reference	typed-load-errors
-dbpro	Command_ExtEnhancementLoopOggVorbis	Command	LOOP OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementPauseOggVorbis	Command	PAUSE OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementPlayOggVorbis	Command	PLAY OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementResumeOggVorbis	Command	RESUME OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSendVoiceMessage	Command	SEND VOICE MESSAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSendVoiceMessageXml	Command	SEND VOICE MESSAGE XML	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetOggVorbisVolume	Command	SET OGG VORBIS VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetVoice	Command	SET VOICE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetVoiceSpeed	Command	SET VOICE SPEED	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetVoiceVolume	Command	SET VOICE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementStopOggVorbis	Command	STOP OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetOggVorbisExists	Function	GET OGG VORBIS EXISTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetOggVorbisState	Function	GET OGG VORBIS STATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetOggVorbisVolume	Function	GET OGG VORBIS VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetVoiceApi	Function	GET VOICE API	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetVoiceSpeed	Function	GET VOICE SPEED	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetVoiceVolume	Function	GET VOICE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle

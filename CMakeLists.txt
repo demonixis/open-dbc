@@ -299,7 +299,7 @@ set(SDLMIXER_MP3_DRMP3 ON CACHE BOOL "" FORCE)
 set(SDLMIXER_MP3_MPG123 OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_OPUS OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_VOC OFF CACHE BOOL "" FORCE)
-set(SDLMIXER_VORBIS_STB OFF CACHE BOOL "" FORCE)
+set(SDLMIXER_VORBIS_STB ON CACHE BOOL "" FORCE)
 set(SDLMIXER_VORBIS_TREMOR OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_VORBIS_VORBISFILE OFF CACHE BOOL "" FORCE)
 set(SDLMIXER_WAVPACK OFF CACHE BOOL "" FORCE)
@@ -414,6 +414,43 @@ target_compile_definitions(opendbc_miniz PUBLIC MINIZ_NO_ARCHIVE_APIS MINIZ_NO_S
                            MINIZ_NO_ZLIB_COMPATIBLE_NAMES)
 target_include_directories(opendbc_miniz SYSTEM PUBLIC "${miniz_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/miniz_export")
 set_target_properties(opendbc_miniz PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# ENCODE TO OGG VORBIS writes with libvorbis; SDL_mixer's stb_vorbis decodes. Only the encoder's sources are built.
+opendbc_fetch_dependency(ogg
+  https://github.com/xiph/ogg.git
+  be05b13e98b048f0b5a0f5fa8ce514d56db5f822 # v1.3.6
+  SOURCE_SUBDIR opendbc-sources-only
+)
+FetchContent_MakeAvailable(ogg)
+opendbc_fetch_dependency(vorbis
+  https://github.com/xiph/vorbis.git
+  0657aee69dec8508a0011f47f3b69d7538e9d262 # v1.3.7
+  SOURCE_SUBDIR opendbc-sources-only
+)
+FetchContent_MakeAvailable(vorbis)
+file(WRITE "${CMAKE_BINARY_DIR}/ogg_config/ogg/config_types.h"
+     "#ifndef __CONFIG_TYPES_H__\n#define __CONFIG_TYPES_H__\n#include <stdint.h>\n"
+     "typedef int16_t ogg_int16_t;\ntypedef uint16_t ogg_uint16_t;\ntypedef int32_t ogg_int32_t;\n"
+     "typedef uint32_t ogg_uint32_t;\ntypedef int64_t ogg_int64_t;\ntypedef uint64_t ogg_uint64_t;\n#endif\n")
+set(OPENDBC_VORBIS_SOURCES analysis bitrate block codebook envelope floor0 floor1 info lookup lpc lsp mapping0 mdct
+    psy registry res0 sharedbook smallft synthesis vorbisenc window)
+list(TRANSFORM OPENDBC_VORBIS_SOURCES PREPEND "${vorbis_SOURCE_DIR}/lib/")
+list(TRANSFORM OPENDBC_VORBIS_SOURCES APPEND ".c")
+add_library(opendbc_vorbisenc STATIC "${ogg_SOURCE_DIR}/src/bitwise.c" "${ogg_SOURCE_DIR}/src/framing.c"
+            ${OPENDBC_VORBIS_SOURCES})
+target_include_directories(opendbc_vorbisenc SYSTEM PUBLIC "${ogg_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/ogg_config"
+                           "${vorbis_SOURCE_DIR}/include")
+target_include_directories(opendbc_vorbisenc PRIVATE "${vorbis_SOURCE_DIR}/lib")
+if(MSVC)
+    target_compile_definitions(opendbc_vorbisenc PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_options(opendbc_vorbisenc PRIVATE /w)
+else()
+    target_compile_options(opendbc_vorbisenc PRIVATE -w)
+    if(NOT APPLE AND NOT ANDROID AND NOT WIN32)
+        target_link_libraries(opendbc_vorbisenc PUBLIC m)
+    endif()
+endif()
+set_target_properties(opendbc_vorbisenc PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # ENet links the Windows socket libraries for MinGW only.
 if(WIN32)
   target_link_libraries(enet INTERFACE ws2_32 winmm)

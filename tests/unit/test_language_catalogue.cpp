@@ -125,8 +125,7 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
 
 TEST_CASE("Every core and supported plugin form of the free DBPro release is catalogued")
 {
-    // Later core forms and those of DarkPHYSICS, the Enhancement Pack and 3D Cloth & Particles, catalogued before
-    // they run.
+    // Later core forms and those of DarkPHYSICS and 3D Cloth & Particles, catalogued before they run.
     for (const auto& [Kind, Name] : std::initializer_list<std::pair<SymbolKind, std::string_view>>{
              {SymbolKind::Function, "QUAT SLERP"},
              {SymbolKind::Function, "MAX"},
@@ -134,7 +133,6 @@ TEST_CASE("Every core and supported plugin form of the free DBPro release is cat
              {SymbolKind::Command, "MULTIPLAYER START"},
              {SymbolKind::Command, "PHY MAKE RIGID BODY DYNAMIC BOX"},
              {SymbolKind::Function, "PHYSX"},
-             {SymbolKind::Command, "PLAY OGG VORBIS"},
              {SymbolKind::Command, "MAKE CLOTH"}})
     {
         const dbc::language::SymbolDescriptor* Descriptor =

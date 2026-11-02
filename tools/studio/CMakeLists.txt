@@ -108,6 +108,8 @@ set(OPENDBC_THIRD_PARTY_LICENSES
     "${unordered_dense_SOURCE_DIR}/LICENSE|unordered_dense.txt"
     "${enet_SOURCE_DIR}/LICENSE|ENet.txt"
     "${miniz_SOURCE_DIR}/LICENSE|miniz.txt"
+    "${ogg_SOURCE_DIR}/COPYING|libogg.txt"
+    "${vorbis_SOURCE_DIR}/COPYING|libvorbis.txt"
     "${joltphysics_SOURCE_DIR}/LICENSE|JoltPhysics.txt")
 if(TARGET OpenXR::headers)
     list(APPEND OPENDBC_THIRD_PARTY_LICENSES

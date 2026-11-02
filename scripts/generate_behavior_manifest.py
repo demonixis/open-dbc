@@ -1885,6 +1885,26 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ENHANCEMENT_OGG_TEST = "test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds"
+UNIT_WITNESSES += tuple(
+    ("dbpro", kind, name, code, "ogg-vorbis-state", ENHANCEMENT_OGG_TEST)
+    for kind, name, code in (
+        ("Command", "ENCODE TO OGG VORBIS", "encode to ogg vorbis \"behold.wav\", \"behold.ogg\"\n"),
+        ("Command", "ENCODE TO OGG VORBIS", "encode to ogg vorbis \"behold.wav\", \"low.ogg\", 0.0\n"),
+        ("Command", "LOAD OGG VORBIS", "load ogg vorbis \"behold.ogg\", 1\n"),
+        ("Command", "DELETE OGG VORBIS", "delete ogg vorbis 1\n"),
+        ("Command", "PLAY OGG VORBIS", "play ogg vorbis 1\n"),
+        ("Command", "LOOP OGG VORBIS", "loop ogg vorbis 1\n"),
+        ("Command", "STOP OGG VORBIS", "stop ogg vorbis 1\n"),
+        ("Command", "PAUSE OGG VORBIS", "pause ogg vorbis 1\n"),
+        ("Command", "RESUME OGG VORBIS", "resume ogg vorbis 1\n"),
+        ("Command", "SET OGG VORBIS VOLUME", "set ogg vorbis volume 1, 50\n"),
+        ("Function", "GET OGG VORBIS EXISTS", "value = get ogg vorbis exists(1)\n"),
+        ("Function", "GET OGG VORBIS STATE", "value = get ogg vorbis state(1)\n"),
+        ("Function", "GET OGG VORBIS VOLUME", "value = get ogg vorbis volume(1)\n"),
+    )
+)
+
 def inspect(opendbc: Path, source: Path, profile: str, what: str) -> dict:
     result = subprocess.run([str(opendbc), "inspect", str(source), "--json", "--dialect", profile],
                             text=True, capture_output=True, check=False)

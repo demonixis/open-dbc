@@ -4,6 +4,7 @@ add_library(dbc_engine STATIC
   systems/data_file_system.cpp
   systems/file_map_system.cpp
   systems/file_block_system.cpp
+  systems/ogg_vorbis_encoder.cpp
   systems/vr_system.cpp
   systems/vr_tracking.cpp
   systems/vr_presenter.cpp
@@ -61,6 +62,7 @@ target_link_libraries(dbc_engine
   PRIVATE
     Jolt
     opendbc_miniz
+    opendbc_vorbisenc
     enet
 )
 

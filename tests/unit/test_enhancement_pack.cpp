@@ -548,3 +548,54 @@ TEST_CASE("Enhancement Pack file blocks carry images, bitmaps, objects, sounds a
     CHECK(App.Number(S::Function_AnimationHeight, {Int(1)}) == 48.0);
 #endif
 }
+
+TEST_CASE("Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds")
+{
+    using S = SymbolId;
+    ScratchDirectory Scratch("opendbc-ogg-vorbis");
+    std::filesystem::copy_file(std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/memblocks/behold.wav",
+                               Scratch.Path() / "behold.wav");
+    Application App("enhancement-ogg-vorbis");
+    App.Context().AssetRoot = Scratch.Path();
+    const auto Str = [](const char* Text) { return BuiltinValue::FromString(Text); };
+
+    App.Require(S::Command_ExtEnhancementEncodeToOggVorbis, {Str("behold.wav"), Str("behold.ogg")});
+    App.Require(S::Command_ExtEnhancementEncodeToOggVorbis,
+                {Str("behold.wav"), Str("low.ogg"), BuiltinValue::FromNumber(0.0)});
+    std::ifstream Encoded(Scratch.Path() / "behold.ogg", std::ios::binary);
+    const std::string Contents(std::istreambuf_iterator<char>(Encoded), {});
+    CHECK(Contents.rfind("OggS", 0) == 0);
+    CHECK(Contents.find("vorbis") != std::string::npos);
+    CHECK(std::filesystem::file_size(Scratch.Path() / "low.ogg") < Contents.size());
+    CHECK(App.CommandFails(S::Command_ExtEnhancementEncodeToOggVorbis,
+                           {Str("behold.wav"), Str("bad.ogg"), BuiltinValue::FromNumber(2.0)}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementEncodeToOggVorbis, {Str("missing.wav"), Str("bad.ogg")}));
+
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisExists, {Int(1)}) == 0.0);
+    App.Require(S::Command_ExtEnhancementLoadOggVorbis, {Str("behold.ogg"), Int(1)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisExists, {Int(1)}) == 1.0);
+    CHECK(App.Number(S::Function_SoundExist, {Int(1)}) == 0.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisState, {Int(1)}) == 0.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisVolume, {Int(1)}) == 0.0);
+    App.Require(S::Command_ExtEnhancementLoopOggVorbis, {Int(1)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisState, {Int(1)}) == 1.0);
+    App.Require(S::Command_ExtEnhancementPauseOggVorbis, {Int(1)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisState, {Int(1)}) == 2.0);
+    App.Require(S::Command_ExtEnhancementResumeOggVorbis, {Int(1)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisState, {Int(1)}) == 1.0);
+    App.Require(S::Command_ExtEnhancementSetOggVorbisVolume, {Int(1), Int(50)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisVolume, {Int(1)}) == -4800.0);
+    CHECK(App.CommandFails(S::Command_ExtEnhancementSetOggVorbisVolume, {Int(1), Int(101)}));
+    App.Require(S::Command_ExtEnhancementStopOggVorbis, {Int(1)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisState, {Int(1)}) == 0.0);
+    App.Require(S::Command_ExtEnhancementPlayOggVorbis, {Int(1)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisState, {Int(1)}) == 1.0);
+    CHECK(App.CommandFails(S::Command_ExtEnhancementLoadOggVorbis, {Str("low.ogg"), Int(1)}));
+    App.Require(S::Command_ExtEnhancementDeleteOggVorbis, {Int(1)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetOggVorbisExists, {Int(1)}) == 0.0);
+
+    CHECK(App.CommandFails(S::Command_ExtEnhancementLoadOggVorbis, {Str("behold.wav"), Int(2)}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementLoadOggVorbis, {Str("behold.ogg"), Int(255)}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementPlayOggVorbis, {Int(3)}));
+    CHECK(App.Fails(S::Function_ExtEnhancementGetOggVorbisExists, {Int(0)}));
+}

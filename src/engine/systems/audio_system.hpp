@@ -90,6 +90,20 @@ namespace dbc
         bool SetMusicVolume(int MusicId, int VolumePercent, std::string* Error = nullptr);
         bool SetMusicSpeed(int MusicId, int Speed, std::string* Error = nullptr);
 
+        // The Enhancement Pack's Ogg Vorbis sounds, numbered 1 to 254 apart from sounds and music. Volume reads back
+        // in DirectSound's hundredths of a decibel, as it did.
+        bool LoadOggVorbis(const std::string& Path, int OggId, std::string* Error = nullptr);
+        bool DeleteOggVorbis(int OggId, std::string* Error = nullptr);
+        bool PlayOggVorbis(int OggId, bool Loop, std::string* Error = nullptr);
+        bool StopOggVorbis(int OggId, std::string* Error = nullptr);
+        bool PauseOggVorbis(int OggId, std::string* Error = nullptr);
+        bool ResumeOggVorbis(int OggId, std::string* Error = nullptr);
+        bool SetOggVorbisVolume(int OggId, int VolumePercent, std::string* Error = nullptr);
+        bool OggVorbisExists(int& Output, int OggId, std::string* Error = nullptr) const;
+        // 1 while playing, 2 while paused, 0 otherwise.
+        bool OggVorbisState(int& Output, int OggId, std::string* Error = nullptr) const;
+        bool OggVorbisVolume(int& Output, int OggId, std::string* Error = nullptr) const;
+
         // Listener
         bool PositionListener(float X, float Y, float Z, std::string* Error = nullptr);
         bool RotateListener(float XDegrees, float YDegrees, float ZDegrees, std::string* Error = nullptr);
@@ -155,6 +169,8 @@ namespace dbc
 
         static bool ValidateSoundNumber(int SoundId, std::string* Error = nullptr);
         static bool ValidateMusicNumber(int MusicId, std::string* Error = nullptr);
+        AudioSlot* RequireOggVorbis(int OggId, std::string* Error = nullptr);
+        const AudioSlot* RequireOggVorbis(int OggId, std::string* Error = nullptr) const;
         AudioSlot* RequireSound(int SoundId, const char* Command, std::string* Error = nullptr);
         const AudioSlot* RequireSound(int SoundId, const char* Command, std::string* Error = nullptr) const;
         AudioSlot* RequireMusic(int MusicId, const char* Command, std::string* Error = nullptr);
@@ -177,6 +193,7 @@ namespace dbc
         MIX_Mixer* Mixer_ = nullptr;
         std::unordered_map<int, AudioSlot> Sounds_;
         std::unordered_map<int, AudioSlot> Music_;
+        std::unordered_map<int, AudioSlot> OggVorbis_;
         float ListenerX_ = 0.0f;
         float ListenerY_ = 0.0f;
         float ListenerZ_ = 0.0f;
