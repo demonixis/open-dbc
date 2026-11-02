@@ -8,11 +8,6 @@ Repository files:
 Publication:
 - [ ] Signed tag `v0.5.0`, release with `SHA256SUMS`.
 
-## Code quality
-
-- [ ] Code quality audit.
-- [ ] Architecture audit.
-
 ## DBPro parity
 
 The catalogue counts 1,042 of DBPro's 1,584 core commands and functions as implemented,
