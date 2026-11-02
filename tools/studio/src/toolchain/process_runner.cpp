@@ -160,10 +160,20 @@ namespace dbc::studio
             while (!Exited || Output != nullptr)
             {
                 const std::uint64_t Now = SDL_GetTicks();
-                if (!Exited && SDL_WaitProcess(Process.get(), false, &Result.ExitCode))
+                if (!Exited)
                 {
-                    Exited = true;
-                    ExitedAt = Now;
+                    SDL_ClearError();
+                    if (SDL_WaitProcess(Process.get(), false, &Result.ExitCode))
+                    {
+                        Exited = true;
+                        ExitedAt = Now;
+                    }
+                    else if (*SDL_GetError() != '\0')
+                    {
+                        Result.Error = TrFmt("Cannot wait for '{0}': {1}", {Tool, SDL_GetError()});
+                        Lines.Finish();
+                        return Result;
+                    }
                 }
                 if (!Exited && Cancel != nullptr && Cancel->load(std::memory_order_relaxed))
                 {

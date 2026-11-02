@@ -5,6 +5,7 @@
 #include <SDL3/SDL.h>
 
 #include <atomic>
+#include <csignal>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -119,6 +120,26 @@ TEST_CASE("process runner checks cancellation while output stays readable")
     CHECK(Result.Cancelled);
     CHECK_FALSE(Result);
     CHECK(Lines < 400);
+}
+
+TEST_CASE("process runner reports a child whose exit status cannot be collected")
+{
+    const auto Previous = std::signal(SIGCHLD, SIG_IGN);
+    REQUIRE(Previous != SIG_ERR);
+
+    struct RestoreSignal
+    {
+        void (*Handler)(int);
+
+        ~RestoreSignal()
+        {
+            std::signal(SIGCHLD, Handler);
+        }
+    } Restore{Previous};
+
+    const toolchain::ProcessResult Result = RunShell("exit 0");
+    CHECK_FALSE(Result);
+    CHECK(Result.Error.find("Cannot wait for") != std::string::npos);
 }
 #endif
 
