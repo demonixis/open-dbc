@@ -26,26 +26,69 @@ namespace dbc::language
                                          Include.Span.LogicalPath});
         }
 
-        Program ExpandIncludes(std::shared_ptr<const SourceDocument> Source, const IncludeLoader& Loader,
-                               std::unordered_set<std::string>& Active)
+        Program ExpandIncludes(std::shared_ptr<const SourceDocument> Source, const IncludeLoader& Loader)
         {
-            Program Result = LexAndParse(std::move(Source));
+            Program Root = LexAndParse(std::move(Source));
             // A parse error must not hide the includes: every name they declare would look unknown.
-            if (!Result.Source)
-                return Result;
+            if (!Root.Source)
+                return Root;
 
-            const std::string Key = SourceKey(*Result.Source);
-            if (!Active.insert(Key).second)
+            struct IncludeFrame
             {
-                detail::AddError(Result.Diagnostics, "DBC1225", "Cyclic #INCLUDE detected", {});
-                Result.Diagnostics.back().LogicalPath = Result.Source->LogicalPath;
-                return Result;
-            }
+                Program Value;
+                std::size_t DirectIncludeCount = 0;
+                std::size_t NextInclude = 0;
+                std::size_t InsertedStatements = 0;
+                bool IsActive = true;
+            };
 
-            std::size_t InsertedStatements = 0;
-            const std::vector<IncludeDeclaration> DirectIncludes = Result.Includes;
-            for (const IncludeDeclaration& Include : DirectIncludes)
+            // Include chains must not consume the Studio worker's native stack while a child is parsed.
+            std::unordered_set<std::string> Active{SourceKey(*Root.Source)};
+            std::vector<IncludeFrame> Frames;
+            const std::size_t RootIncludeCount = Root.Includes.size();
+            Frames.push_back({std::move(Root), RootIncludeCount});
+            while (true)
             {
+                IncludeFrame& Frame = Frames.back();
+                Program& Result = Frame.Value;
+                if (Frame.NextInclude == Frame.DirectIncludeCount)
+                {
+                    if (Frame.IsActive)
+                        Active.erase(SourceKey(*Result.Source));
+                    Program Child = std::move(Result);
+                    Frames.pop_back();
+                    if (Frames.empty())
+                        return Child;
+
+                    IncludeFrame& Parent = Frames.back();
+                    Program& Destination = Parent.Value;
+                    const IncludeDeclaration& Include = Destination.Includes[Parent.NextInclude - 1];
+                    Destination.Diagnostics.insert(Destination.Diagnostics.end(),
+                                                   std::make_move_iterator(Child.Diagnostics.begin()),
+                                                   std::make_move_iterator(Child.Diagnostics.end()));
+                    const std::size_t Position =
+                        std::min(Include.StatementIndex + Parent.InsertedStatements, Destination.Statements.size());
+                    const std::size_t ChildStatementCount = Child.Statements.size();
+                    Destination.Statements.insert(Destination.Statements.begin() +
+                                                      static_cast<std::ptrdiff_t>(Position),
+                                                  std::make_move_iterator(Child.Statements.begin()),
+                                                  std::make_move_iterator(Child.Statements.end()));
+                    Parent.InsertedStatements += ChildStatementCount;
+                    Destination.Functions.insert(Destination.Functions.end(),
+                                                 std::make_move_iterator(Child.Functions.begin()),
+                                                 std::make_move_iterator(Child.Functions.end()));
+                    Destination.Types.insert(Destination.Types.end(), std::make_move_iterator(Child.Types.begin()),
+                                             std::make_move_iterator(Child.Types.end()));
+                    Destination.Constants.insert(Destination.Constants.end(),
+                                                 std::make_move_iterator(Child.Constants.begin()),
+                                                 std::make_move_iterator(Child.Constants.end()));
+                    Destination.Includes.insert(Destination.Includes.end(),
+                                                std::make_move_iterator(Child.Includes.begin()),
+                                                std::make_move_iterator(Child.Includes.end()));
+                    continue;
+                }
+
+                const IncludeDeclaration& Include = Result.Includes[Frame.NextInclude++];
                 if (!Loader)
                 {
                     IncludeError(Result, Include, "DBC1222", "#INCLUDE requires a source loader");
@@ -69,27 +112,16 @@ namespace dbc::language
                     continue;
                 }
 
-                Program Child = ExpandIncludes(std::move(Included), Loader, Active);
-                Result.Diagnostics.insert(Result.Diagnostics.end(), std::make_move_iterator(Child.Diagnostics.begin()),
-                                          std::make_move_iterator(Child.Diagnostics.end()));
-                const std::size_t Position =
-                    std::min(Include.StatementIndex + InsertedStatements, Result.Statements.size());
-                const std::size_t ChildStatementCount = Child.Statements.size();
-                Result.Statements.insert(Result.Statements.begin() + static_cast<std::ptrdiff_t>(Position),
-                                         std::make_move_iterator(Child.Statements.begin()),
-                                         std::make_move_iterator(Child.Statements.end()));
-                InsertedStatements += ChildStatementCount;
-                Result.Functions.insert(Result.Functions.end(), std::make_move_iterator(Child.Functions.begin()),
-                                        std::make_move_iterator(Child.Functions.end()));
-                Result.Types.insert(Result.Types.end(), std::make_move_iterator(Child.Types.begin()),
-                                    std::make_move_iterator(Child.Types.end()));
-                Result.Constants.insert(Result.Constants.end(), std::make_move_iterator(Child.Constants.begin()),
-                                        std::make_move_iterator(Child.Constants.end()));
-                Result.Includes.insert(Result.Includes.end(), std::make_move_iterator(Child.Includes.begin()),
-                                       std::make_move_iterator(Child.Includes.end()));
+                Program Child = LexAndParse(std::move(Included));
+                const bool IsActive = Active.insert(SourceKey(*Child.Source)).second;
+                if (!IsActive)
+                {
+                    detail::AddError(Child.Diagnostics, "DBC1225", "Cyclic #INCLUDE detected", {});
+                    Child.Diagnostics.back().LogicalPath = Child.Source->LogicalPath;
+                }
+                const std::size_t ChildIncludeCount = IsActive ? Child.Includes.size() : 0;
+                Frames.push_back({std::move(Child), ChildIncludeCount, 0, 0, IsActive});
             }
-            Active.erase(Key);
-            return Result;
         }
     } // namespace
 
@@ -159,8 +191,7 @@ namespace dbc::language
     Program Compile(std::shared_ptr<const SourceDocument> Source, const FrontendOptions& Options,
                     const IncludeLoader& Loader)
     {
-        std::unordered_set<std::string> Active;
-        Program Result = ExpandIncludes(std::move(Source), Loader, Active);
+        Program Result = ExpandIncludes(std::move(Source), Loader);
         Bind(Result, Options);
         std::stable_sort(Result.Diagnostics.begin(), Result.Diagnostics.end(),
                          [](const Diagnostic& Left, const Diagnostic& Right)

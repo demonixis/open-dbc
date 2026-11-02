@@ -23,6 +23,8 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 ```
 
 - The profile is resolved before lexing and never changes during a run.
+- Includes expand with an explicit work stack; deep include chains do not consume
+  the native thread stack.
 - The VM never reparses text and has no engine dependency; the builtin bridge is
   the only layer that knows both VM values and engine calls.
 - Desktop Studios compile the program with the unsaved tabs and run its image in a

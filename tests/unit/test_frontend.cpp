@@ -852,6 +852,65 @@ TEST_CASE("Includes reject profile changes and cycles")
     CHECK(HasCode(Cycle, "DBC1225"));
 }
 
+TEST_CASE("Deep include chains preserve directive order on a 512 KB thread")
+{
+    constexpr std::size_t Depth = 400;
+    std::map<std::filesystem::path, std::string> Sources;
+    for (std::size_t Index = 1; Index <= Depth; ++Index)
+    {
+        std::string Text = "enter" + std::to_string(Index) + " = 1\n";
+        if (Index < Depth)
+            Text += "#include \"level" + std::to_string(Index + 1) + ".dba\"\n";
+        Text += "leave" + std::to_string(Index) + " = 1\n";
+        Sources.emplace("level" + std::to_string(Index) + ".dba", std::move(Text));
+    }
+    const dbc::language::IncludeLoader Loader =
+        [&Sources](const dbc::language::SourceDocument& Including, const std::filesystem::path& Path, std::string&)
+    {
+        const auto Found = Sources.find(Path);
+        if (Found == Sources.end())
+            return std::shared_ptr<const dbc::language::SourceDocument>{};
+        return Source(Found->second, Including.Profile, Path.string());
+    };
+
+    for (const auto Profile : {dbc::language::LanguageProfile::Dbc, dbc::language::LanguageProfile::DbPro})
+    {
+        dbc::language::Program Program;
+        // macOS secondary threads use the same 512 KB stack as the Studio's export worker.
+        std::thread(
+            [&]
+            {
+                Program = dbc::language::Compile(Source("before = 0\n#include \"level1.dba\"\nmiddle = 0\n"
+                                                        "#include \"level1.dba\"\nafter = 0\n",
+                                                        Profile),
+                                                 {}, Loader);
+            })
+            .join();
+        for (const auto& Diagnostic : Program.Diagnostics)
+            INFO(dbc::language::FormatDiagnostic(*Program.Source, Diagnostic));
+        REQUIRE_FALSE(Program.HasErrors());
+        REQUIRE(Program.Statements.size() == Depth * 4 + 3);
+        CHECK(Program.Includes.size() == Depth * 2);
+        CHECK(Program.Statements.front().Expressions.front()->Text == "BEFORE");
+        CHECK(Program.Statements[Depth * 2 + 1].Expressions.front()->Text == "MIDDLE");
+        CHECK(Program.Statements.back().Expressions.front()->Text == "AFTER");
+        for (std::size_t Pass = 0; Pass < 2; ++Pass)
+        {
+            const std::size_t Begin = Pass * (Depth * 2 + 1) + 1;
+            for (std::size_t Index = 1; Index <= Depth; ++Index)
+            {
+                CHECK(Program.Statements[Begin + Index - 1].Expressions.front()->Text ==
+                      "ENTER" + std::to_string(Index));
+                CHECK(Program.Statements[Begin + Depth * 2 - Index].Expressions.front()->Text ==
+                      "LEAVE" + std::to_string(Index));
+            }
+        }
+        const dbc::vm::CompileResult Lowered = dbc::vm::Lower(Program);
+        REQUIRE(Lowered.Success());
+        CHECK(dbc::vm::Verify(*Lowered.Bytecode).Success());
+    }
+}
+
 TEST_CASE("AS declarations are not accepted by the Classic profile")
 {
     const dbc::language::Program Classic =
