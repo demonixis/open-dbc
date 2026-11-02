@@ -517,6 +517,38 @@ TEST_CASE("Enhancement Pack file blocks store, encrypt and extract files")
     CHECK(App.Fails(S::Function_ExtEnhancementGetFileBlockExists, {Int(256)}));
 }
 
+TEST_CASE("FileBlockSystem preserves encrypted data descriptors when saving imported ZIP files")
+{
+    ScratchDirectory Scratch("opendbc-file-block-descriptor");
+    const std::filesystem::path Path = Scratch.Path() / "archive.zip";
+    std::filesystem::copy_file(
+        std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/file_blocks/encrypted_descriptor.zip", Path);
+    dbc::FileBlockSystem Blocks;
+    std::string Error;
+    std::vector<std::uint8_t> Bytes;
+    REQUIRE_MESSAGE(Blocks.Open(1, Path.generic_string(), "opendbc-test", &Error), Error);
+    REQUIRE_MESSAGE(Blocks.Read(1, "payload.txt", Bytes, &Error), Error);
+    CHECK(std::string(Bytes.begin(), Bytes.end()) == "descriptor payload\n");
+    REQUIRE_MESSAGE(Blocks.AddBytes(1, "added.txt", {'a'}, &Error), Error);
+
+    SUBCASE("SAVE FILE BLOCK")
+    {
+        REQUIRE_MESSAGE(Blocks.Save(1, &Error), Error);
+    }
+    SUBCASE("GET FILE BLOCK SIZE")
+    {
+        int Size = 0;
+        REQUIRE_MESSAGE(Blocks.Size(1, Size, &Error), Error);
+        CHECK(Size > 0);
+    }
+    REQUIRE_MESSAGE(Blocks.Close(1, &Error), Error);
+    REQUIRE_MESSAGE(Blocks.Open(1, Path.generic_string(), "opendbc-test", &Error), Error);
+    REQUIRE_MESSAGE(Blocks.Read(1, "payload.txt", Bytes, &Error), Error);
+    CHECK(std::string(Bytes.begin(), Bytes.end()) == "descriptor payload\n");
+    REQUIRE_MESSAGE(Blocks.Read(1, "added.txt", Bytes, &Error), Error);
+    CHECK(Bytes == std::vector<std::uint8_t>{'a'});
+}
+
 TEST_CASE("Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations")
 {
     using S = SymbolId;

@@ -644,25 +644,35 @@ namespace dbc
         std::vector<std::uint8_t> Directory;
         for (const Entry& Item : Target.Entries)
         {
-            if (static_cast<std::uint64_t>(Archive.size()) + Item.Data.size() + Item.Name.size() + 30 > 0xFFFFFFFFu)
+            const bool HasDescriptor = (Item.Flags & KDataDescriptor) != 0;
+            if (static_cast<std::uint64_t>(Archive.size()) + Item.Data.size() + Item.Name.size() + 30 +
+                    (HasDescriptor ? 16 : 0) >
+                0xFFFFFFFFu)
                 return Fail(Error, "File block '" + Target.Path + "' would exceed 4 GB");
             const auto Offset = static_cast<std::uint32_t>(Archive.size());
             const auto Compressed = static_cast<std::uint32_t>(Item.Data.size());
-            // Sizes and CRC are known, so no data descriptor follows.
-            const std::uint16_t Flags = Item.Flags & ~KDataDescriptor;
+            // Bit 3 also selects the encrypted header's check byte. Preserve it when copying stored bytes.
+            const std::uint16_t Flags = Item.Flags;
             Put32(Archive, KLocalHeader);
             Put16(Archive, 20);
             Put16(Archive, Flags);
             Put16(Archive, Item.Method);
             Put16(Archive, Item.Time);
             Put16(Archive, Item.Date);
-            Put32(Archive, Item.Crc);
-            Put32(Archive, Compressed);
-            Put32(Archive, Item.UncompressedSize);
+            Put32(Archive, HasDescriptor ? 0 : Item.Crc);
+            Put32(Archive, HasDescriptor ? 0 : Compressed);
+            Put32(Archive, HasDescriptor ? 0 : Item.UncompressedSize);
             Put16(Archive, static_cast<std::uint32_t>(Item.Name.size()));
             Put16(Archive, 0);
             Archive.insert(Archive.end(), Item.Name.begin(), Item.Name.end());
             Archive.insert(Archive.end(), Item.Data.begin(), Item.Data.end());
+            if (HasDescriptor)
+            {
+                Put32(Archive, 0x08074B50);
+                Put32(Archive, Item.Crc);
+                Put32(Archive, Compressed);
+                Put32(Archive, Item.UncompressedSize);
+            }
 
             Put32(Directory, KCentralHeader);
             Put16(Directory, 20);
