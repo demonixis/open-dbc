@@ -1357,7 +1357,7 @@ namespace dbc::language::detail
                 }
                 // A removed form that starts like a command, such as SET OBJECT AS VEHICLE BODY, is not that command.
                 if (Descriptor && Words > NameWords &&
-                    !RemovedPhysicsPlugin(Canonical(JoinWords(Value.Tokens, 0, Words))).empty())
+                    !RemovedPluginOf(Canonical(JoinWords(Value.Tokens, 0, Words))).Name.empty())
                     Descriptor = nullptr;
                 if (!Descriptor)
                 {

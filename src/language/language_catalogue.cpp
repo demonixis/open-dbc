@@ -317,19 +317,31 @@ namespace dbc::language
         return It == Index.end() ? nullptr : It->second;
     }
 
-    std::string_view RemovedPhysicsPlugin(std::string_view CanonicalName)
+    RemovedPlugin RemovedPluginOf(std::string_view CanonicalName)
     {
+        static constexpr std::string_view Physics = "the ODE commands";
         if (CanonicalName.starts_with("PHY ") || CanonicalName == "PHYSX")
-            return "DarkPHYSICS";
+            return {"DarkPHYSICS", Physics};
         if (CanonicalName.starts_with("DYN "))
-            return "Dark Dynamix";
+            return {"Dark Dynamix", Physics};
         static constexpr std::string_view ClothForms[] = {
-#include "removed_physics_forms.inc"
+#include "removed_cloth_forms.inc"
+        };
+        // A commercial plugin whose source was never released, sorted.
+        static constexpr std::string_view AdvancedTerrainForms[] = {
+            "BUILD TERRAIN",         "DESTROY TERRAIN",     "GET TERRAIN GROUND HEIGHT",
+            "GET TERRAIN SIZE",      "GET TERRAIN X SIZE",  "GET TERRAIN Z SIZE",
+            "LOAD TERRAIN",          "MAKE OBJECT TERRAIN", "SAVE TERRAIN",
+            "SET TERRAIN HEIGHTMAP", "SET TERRAIN LIGHT",   "SET TERRAIN SCALE",
+            "SET TERRAIN SPLIT",     "SET TERRAIN TEXTURE", "SET TERRAIN TILING",
+            "UPDATE TERRAIN",
         };
         for (std::string_view Name = CanonicalName;;)
         {
             if (std::binary_search(std::begin(ClothForms), std::end(ClothForms), Name))
-                return "3D Cloth & Particles";
+                return {"3D Cloth & Particles", Physics};
+            if (std::binary_search(std::begin(AdvancedTerrainForms), std::end(AdvancedTerrainForms), Name))
+                return {"Advanced Terrain", "MAKE TERRAIN"};
             const std::size_t Space = Name.rfind(' ');
             if (Space == std::string_view::npos)
                 return {};

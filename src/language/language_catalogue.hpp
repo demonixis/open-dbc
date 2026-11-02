@@ -174,9 +174,17 @@ namespace dbc::language
     const SymbolDescriptor* FindLongestCommandPrefix(LanguageProfile Profile, std::string_view Text);
     // The most words any command's name has, which bounds the search for a name at the start of a line.
     std::size_t LongestCommandWords();
-    // The plugin a form removed from the catalogue came from, empty for any other name. The name may run on
-    // into the words of the form's arguments, which the parser cannot tell apart.
-    std::string_view RemovedPhysicsPlugin(std::string_view CanonicalName);
+
+    // A plugin whose forms OpenDBC leaves out, and the commands to use instead.
+    struct RemovedPlugin
+    {
+        std::string_view Name;
+        std::string_view Replacement;
+    };
+
+    // The plugin a form left out of the catalogue came from, with an empty name for any other form. The name
+    // may run on into the words of the form's arguments, which the parser cannot tell apart.
+    RemovedPlugin RemovedPluginOf(std::string_view CanonicalName);
     bool AvailableIn(const SymbolDescriptor& Descriptor, LanguageProfile Profile);
     SupportStatus SupportFor(const SymbolDescriptor& Descriptor, LanguageProfile Profile);
     CompatibilityStubPolicy StubPolicyFor(const SymbolDescriptor& Descriptor, LanguageProfile Profile);

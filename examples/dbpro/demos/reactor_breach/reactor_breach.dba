@@ -365,9 +365,9 @@ function build_world()
    shiny = OBJ_SHINY
    for limb = 0 to checklist quantity() - 1
       name$ = lower$(limb texture name(OBJ_LEVEL, limb))
-      if instr(name$, "ceiling") > 0 then texture limb OBJ_LEVEL, limb, 1, 32
-      if instr(name$, "machine") > 0 or instr(name$, "floor") > 0
-         if instr(name$, "floor") > 0 then texture limb OBJ_LEVEL, limb, 1, 31 else texture limb OBJ_LEVEL, limb, 1, 33
+      if has_text(name$, "ceiling") then texture limb OBJ_LEVEL, limb, 1, 32
+      if has_text(name$, "machine") or has_text(name$, "floor")
+         if has_text(name$, "floor") then texture limb OBJ_LEVEL, limb, 1, 31 else texture limb OBJ_LEVEL, limb, 1, 33
          make object from limb shiny, OBJ_LEVEL, limb
          exclude limb on OBJ_LEVEL, limb
          set cube mapping on shiny, 40, 41, 42, 43, 44, 45
@@ -1259,6 +1259,13 @@ function radar_dot(cx, cy, r, x#, z#, colour)
    ink colour, 0
    box cx + rx# - 2, cy - rz# - 2, cx + rx# + 2, cy - rz# + 2
 endfunction
+
+rem 1 when part$ occurs in text$.
+function has_text(text$, part$)
+   for i = 1 to len(text$) - len(part$) + 1
+      if left$(right$(text$, len(text$) - i + 1), len(part$)) = part$ then exitfunction 1
+   next i
+endfunction 0
 
 rem ------------------------------------------------------------------
 tour:

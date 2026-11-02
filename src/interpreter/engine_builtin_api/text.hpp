@@ -115,20 +115,6 @@ namespace dbc
         return Out;
     }
 
-    inline int Instr(const std::string& Haystack, const std::string& Needle)
-    {
-        if (Needle.empty())
-        {
-            return 0;
-        }
-        const std::size_t Pos = Haystack.find(Needle);
-        if (Pos == std::string::npos)
-        {
-            return 0;
-        }
-        return static_cast<int>(Pos) + 1; // DBA uses 1-based positions
-    }
-
     inline std::string Append(const std::string& Left, const std::string& Right)
     {
         return Left + Right;

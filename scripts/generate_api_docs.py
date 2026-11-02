@@ -202,7 +202,7 @@ def categorize(symbol: str, help_cat: str | None) -> str:
            "LOD", "BSP", "COLLISION", "STATIC", "GHOST", "SCORCH", "SHADOW",
            "SHADOWS", "INSTANCE", "CSG", "MAPPING", "SHADING", "TEXTURE", "MD3"):
         return "basic3d"
-    if has("TEXT", "FONT", "CHARSET", "PRINT", "PRINTC", "INSTR"):
+    if has("TEXT", "FONT", "CHARSET", "PRINT", "PRINTC"):
         return "text"
     if has("SOUND", "EAX", "LISTENER"):
         return "sound"

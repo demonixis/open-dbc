@@ -154,7 +154,6 @@ namespace dbc::studio
                     case SymbolId::Command_MakeObjectPlain:
                     case SymbolId::Command_MakeObjectPlane:
                     case SymbolId::Command_MakeObjectSphere:
-                    case SymbolId::Command_MakeObjectTerrain:
                     case SymbolId::Command_MakeObjectTriangle:
                     case SymbolId::Command_CloneObject:
                     case SymbolId::Command_InstanceObject:

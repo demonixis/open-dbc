@@ -1,5 +1,5 @@
 // The forms of the 3D Cloth & Particles plugin, sorted. Their names share no prefix, so a list says which
-// unknown commands came from it. DarkPHYSICS and Dark Dynamix are recognised by their prefixes.
+// unknown commands came from it.
 "ADD RAGDOLL FORCE",
 "ADD RAGDOLL IMPULSE",
 "ADD VEHICLE COLLISION POINT",

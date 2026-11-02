@@ -18,7 +18,6 @@ print floor(-1.2) = -2
 print bin$(5) = "101"
 print chr$(65) = "A"
 print hex$(255) = "FF"
-print instr("abc", "b") = 2
 print left$("abcd", 2) = "ab"
 print lower$("AbC") = "abc"
 print right$("abcd", 2) = "cd"

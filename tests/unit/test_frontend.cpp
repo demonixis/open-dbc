@@ -713,7 +713,7 @@ TEST_CASE("Professional does not inherit Classic bare user-function statement sy
     CHECK(HasCode(Program, "DBC2013"));
 }
 
-TEST_CASE("Forms of the removed physics plugins name their plugin")
+TEST_CASE("Forms of the removed plugins name their plugin")
 {
     const auto Diagnosed = [](const char* Text)
     {
@@ -727,6 +727,8 @@ TEST_CASE("Forms of the removed physics plugins name their plugin")
     CHECK(Diagnosed("x = dyn get gravity x()\n").find("Dark Dynamix") != std::string::npos);
     CHECK(Diagnosed("make cloth 1\n").find("3D Cloth & Particles") != std::string::npos);
     CHECK(Diagnosed("set object as vehicle body 1, 2\n").find("3D Cloth & Particles") != std::string::npos);
+    CHECK(Diagnosed("build terrain 1\n").find("Advanced Terrain") != std::string::npos);
+    CHECK(Diagnosed("h# = get terrain ground height(1, 2.0, 3.0)\n").find("use MAKE TERRAIN") != std::string::npos);
 
     const dbc::language::Program Ode =
         dbc::language::Compile(Source("ode start\n", dbc::language::LanguageProfile::DbPro, "dbpro-ode.dba"));

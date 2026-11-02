@@ -854,36 +854,6 @@ namespace dbc
         return true;
     }
 
-    bool MatrixManager::MakeAdvancedTerrain(int TerrainId, std::string* Error)
-    {
-        if (TerrainId < 1 || TerrainId > 65535)
-        {
-            if (Error)
-                *Error = "MAKE TERRAIN number must be between 1 and 65535";
-            return false;
-        }
-        if (Terrains_.contains(TerrainId))
-        {
-            if (Error)
-                *Error = "MAKE TERRAIN cannot replace terrain " + std::to_string(TerrainId);
-            return false;
-        }
-        Matrix Terrain;
-        Terrain.Wireframe = false;
-        Terrain.IsTerrain = true;
-        Terrain.SegX = 32;
-        Terrain.SegZ = 32;
-        Terrain.Width = 1000.0f;
-        Terrain.Depth = 1000.0f;
-        Terrain.Heights.assign(33 * 33, 0.0f);
-        Terrain.Tiles.assign(32 * 32, 1);
-        Terrain.TextureMode = 1;
-        Terrain.Revision = ++TerrainRevision_;
-        Terrains_.emplace(TerrainId, std::move(Terrain));
-        InvalidateRenderer();
-        return true;
-    }
-
     bool MatrixManager::DeleteTerrain(int TerrainId, std::string* Error)
     {
         Matrix* TerrainPointer = RequireTerrain(TerrainId, "DELETE TERRAIN", Error);
@@ -893,39 +863,6 @@ namespace dbc
         if (Terrain.OwnsImage)
             Kernel_.ImageStoreRef().ReleaseImageInternal(Terrain.ImageId);
         Terrains_.erase(TerrainId);
-        InvalidateRenderer();
-        return true;
-    }
-
-    bool MatrixManager::SetTerrainHeightmap(int TerrainId, const std::string& Path, std::string* Error)
-    {
-        Matrix* TerrainPointer = RequireTerrain(TerrainId, "SET TERRAIN HEIGHTMAP", Error);
-        if (!TerrainPointer)
-            return false;
-        Matrix& Terrain = *TerrainPointer;
-        if (!LoadTerrainHeightmap(Terrain, Path, "SET TERRAIN HEIGHTMAP", Error))
-            return false;
-        Terrain.Revision = ++TerrainRevision_;
-        InvalidateRenderer();
-        return true;
-    }
-
-    bool MatrixManager::SetTerrainScale(int TerrainId, float X, float Y, float Z, std::string* Error)
-    {
-        Matrix* TerrainPointer = RequireTerrain(TerrainId, "SET TERRAIN SCALE", Error);
-        if (!TerrainPointer)
-            return false;
-        Matrix& Terrain = *TerrainPointer;
-        if (!std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z) || X <= 0.0f || Z <= 0.0f)
-        {
-            if (Error)
-                *Error = "SET TERRAIN SCALE requires positive finite X/Z scales and a finite Y scale";
-            return false;
-        }
-        Terrain.Width = X * static_cast<float>(Terrain.SegX);
-        Terrain.Depth = Z * static_cast<float>(Terrain.SegZ);
-        Terrain.HeightScale = Y;
-        Terrain.Revision = ++TerrainRevision_;
         InvalidateRenderer();
         return true;
     }
@@ -948,45 +885,6 @@ namespace dbc
         Terrain.OwnsImage = false;
         Terrain.TilesX = 1;
         Terrain.TilesY = 1;
-        InvalidateRenderer();
-        return true;
-    }
-
-    bool MatrixManager::SetTerrainTiling(int TerrainId, int TilesX, int TilesY, std::string* Error)
-    {
-        Matrix* TerrainPointer = RequireTerrain(TerrainId, "SET TERRAIN TILING", Error);
-        if (!TerrainPointer)
-            return false;
-        Matrix& Terrain = *TerrainPointer;
-        if (TilesX <= 0 || TilesY <= 0)
-        {
-            if (Error)
-                *Error = "SET TERRAIN TILING divisions must be positive";
-            return false;
-        }
-        Terrain.TilesX = TilesX;
-        Terrain.TilesY = TilesY;
-        Terrain.Revision = ++TerrainRevision_;
-        InvalidateRenderer();
-        return true;
-    }
-
-    bool MatrixManager::SetTerrainSplit(int TerrainId, int Split, std::string* Error)
-    {
-        auto* CheckedMatrix = RequireTerrain(TerrainId, "SET TERRAIN SPLIT", Error);
-        if (!CheckedMatrix)
-            return false;
-        CheckedMatrix->SplitLevel = Split;
-        InvalidateRenderer();
-        return true;
-    }
-
-    bool MatrixManager::BuildTerrain(int TerrainId, std::string* Error)
-    {
-        auto* CheckedMatrix = RequireTerrain(TerrainId, "BUILD TERRAIN", Error);
-        if (!CheckedMatrix)
-            return false;
-        CheckedMatrix->Revision = ++TerrainRevision_;
         InvalidateRenderer();
         return true;
     }
@@ -1039,17 +937,6 @@ namespace dbc
         const float HeightZ = A + ((B + D) - (A + C)) * PercentZ;
         {
             Output = (HeightX + HeightZ) * 0.5f;
-            return true;
-        }
-    }
-
-    bool MatrixManager::GetTerrainSize(float& Output, int TerrainId, std::string* Error) const
-    {
-        auto* CheckedMatrix = RequireTerrain(TerrainId, "GET TERRAIN SIZE", Error);
-        if (!CheckedMatrix)
-            return false;
-        {
-            Output = CheckedMatrix->Width;
             return true;
         }
     }

@@ -23,7 +23,6 @@ CLASSIC_INDEX_SHA256 = "078263201bdaab13c24145e769dcdaabb40cb720bcc72915e4cd793f
 DBPRO_COMMIT = "af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9"
 DBPRO_BASE_KEYWORDS_SHA256 = "e42a81f2bf3437193d5c8e78afe7857db8d7d2eabae62b5f068f10da5f330135"
 DBPRO_KEYWORDS_SHA256 = "26f0146bb687795a613c9780b7cbe84701375e43ee418ebd9381c5e221666568"
-DBPRO_TERRAIN_KEYWORDS_SHA256 = "161719945555adb463c0445fb188bb92c407bb2457b58859d47b4a9e7e2ec99d"
 DBPRO_CORE_RESOURCE_EVIDENCE = (
     ("CHANGE MOUSE", "Dark Basic Public Shared/Dark Basic Pro SDK/DarkSDK/Input/Input.rc",
      "Cursor Number, Touch Friendly"),
@@ -223,7 +222,7 @@ def evidence_kind(name: str, signatures: list[str], known_kinds: set[str]) -> st
 def read_dbpro_sources(root: Path) -> dict[str, dict[str, object]]:
     keyword_root = root / "Install/Editor/Keywords"
     result: dict[str, dict[str, object]] = {}
-    for filename in ("Keywords100.ini", "keywords107.ini", "keywordsAT.ini"):
+    for filename in ("Keywords100.ini", "keywords107.ini"):
         path = keyword_root / filename
         for raw in path.read_text(errors="replace").splitlines():
             if not raw or raw.startswith("[") or raw.startswith(";") or "=" not in raw:
@@ -258,7 +257,6 @@ def refresh_dbpro_evidence(root: Path) -> None:
         output.write(f"# DBPro commit\t{DBPRO_COMMIT}\n")
         output.write(f"# Keywords100.ini sha256\t{DBPRO_BASE_KEYWORDS_SHA256}\n")
         output.write(f"# keywords107.ini sha256\t{DBPRO_KEYWORDS_SHA256}\n")
-        output.write(f"# keywordsAT.ini sha256\t{DBPRO_TERRAIN_KEYWORDS_SHA256}\n")
         writer = csv.writer(output, delimiter="\t", lineterminator="\n")
         writer.writerow(("name", "kind", "accepted_counts", "sources", "signatures"))
         for name, value in sorted(rows.items()):
@@ -471,10 +469,8 @@ def audit_dbpro(root: Path) -> None:
     require(commit == DBPRO_COMMIT, f"Expected DBPro {DBPRO_COMMIT}, found {commit}")
     keywords = root / "Install/Editor/Keywords/keywords107.ini"
     base = root / "Install/Editor/Keywords/Keywords100.ini"
-    terrain = root / "Install/Editor/Keywords/keywordsAT.ini"
     require(sha256(base) == DBPRO_BASE_KEYWORDS_SHA256, "DBPro Keywords100.ini hash mismatch")
     require(sha256(keywords) == DBPRO_KEYWORDS_SHA256, "DBPro keywords107.ini hash mismatch")
-    require(sha256(terrain) == DBPRO_TERRAIN_KEYWORDS_SHA256, "DBPro keywordsAT.ini hash mismatch")
     generated_extensions = extension_evidence.EvidenceText(extension_evidence.BuildEvidence(root))
     require(DBPRO_EXTENSION_EVIDENCE.read_text(encoding="utf-8") == generated_extensions,
             "DBPro extension evidence differs from pinned source")

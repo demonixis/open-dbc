@@ -16,7 +16,6 @@ ROOT = Path(__file__).resolve().parents[1]
 BLINN_PHONG_TEST = "test_engine_builtins.cpp::DBPro bump and cube mapping light objects through the Blinn-Phong path"
 CUSTOM_DATA_TEST = "test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file"
 LOD_TEST = "test_engine_builtins.cpp::DBPro LOD models take over past their distance and emitters are planes"
-TERRAIN_TEST = "test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap"
 REDUCE_TEST = (
     "test_engine_builtins.cpp::DBPro REDUCE MESH makes boxes of a mesh and CONVERT OBJECT FVF sets what its vertices carry"
 )
@@ -208,24 +207,6 @@ UNIT_WITNESSES = (
      CUSTOM_DATA_TEST),
     ("dbpro", "Command", "ADD LOD TO OBJECT", "add lod to object 1, 2, 0, 500\n", "pixel-capture", LOD_TEST),
     ("dbpro", "Command", "MAKE EMITTER", "make emitter 1, 40\n", "engine-state", LOD_TEST),
-    ("dbpro", "Command", "MAKE OBJECT TERRAIN", "make object terrain 1\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Command", "SET TERRAIN HEIGHTMAP", 'set terrain heightmap 1, "map.bmp"\n', "engine-state", TERRAIN_TEST),
-    ("dbpro", "Command", "SET TERRAIN SCALE", "set terrain scale 1, 3, 0.6, 3\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Command", "SET TERRAIN SPLIT", "set terrain split 1, 16\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Command", "SET TERRAIN TILING", "set terrain tiling 1, 4\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Command", "SET TERRAIN LIGHT", "set terrain light 1, 1, -0.25, 0, 1, 1, 0.78, 0.5\n", "pixel-capture",
-     TERRAIN_TEST),
-    ("dbpro", "Command", "SET TERRAIN TEXTURE", "set terrain texture 1, 1, 2\n", "pixel-capture", TERRAIN_TEST),
-    ("dbpro", "Command", "BUILD TERRAIN", "build terrain 1\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Command", "UPDATE TERRAIN", "update terrain\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Function", "GET TERRAIN GROUND HEIGHT", "value# = get terrain ground height(1, 10, 10)\n", "engine-state",
-     TERRAIN_TEST),
-    ("dbpro", "Function", "GET TERRAIN X SIZE", "value# = get terrain x size(1)\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Function", "GET TERRAIN Z SIZE", "value# = get terrain z size(1)\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Function", "GET TERRAIN SIZE", "value# = get terrain size(1)\n", "engine-state", TERRAIN_TEST),
-    ("dbpro", "Command", "SAVE TERRAIN", 'save terrain "map.ter", 1\n', "terrain-file", TERRAIN_TEST),
-    ("dbpro", "Command", "LOAD TERRAIN", 'load terrain "map.ter", 2\n', "terrain-file", TERRAIN_TEST),
-    ("dbpro", "Command", "DESTROY TERRAIN", "destroy terrain 2\n", "engine-state", TERRAIN_TEST),
     ("dbpro", "Command", "SET GLOBAL OBJECT CREATION", "set global object creation 4\n", "pixel-capture",
      "test_engine_builtins.cpp::DBPro global object creation orders the objects drawn without a depth test"),
     ("dbpro", "Command", "REDUCE MESH", "reduce mesh 1, 0, 0, 5, 5, 5\n", "engine-state", REDUCE_TEST),

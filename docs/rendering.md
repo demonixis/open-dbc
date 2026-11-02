@@ -189,61 +189,6 @@ drawing changes: collision, queries and textures stay the object's own, and the 
 object can then be deleted. Animated objects and DBPro's undocumented level 2, a
 camera-facing quad, are refused. DBPro's fade between levels is not reproduced.
 
-## Advanced Terrain
-
-```basic
-load image "texture.jpg", 1
-load image "detail.jpg", 2
-make object terrain 1
-set terrain heightmap 1, "map.bmp"
-set terrain scale 1, 3, 0.6, 3
-set terrain split 1, 16
-set terrain tiling 1, 4
-set terrain light 1, 1, -0.25, 0, 1, 1, 0.78, 0.5
-set terrain texture 1, 1, 2
-build terrain 1
-do
-   update terrain
-   sync
-loop
-```
-
-DBPro's repository has neither help pages nor source for these forms. Their syntax
-comes from TGC's DarkGDK sample and forum programs; what those leave open is decided
-here, as noted below. The `DBPro/Terrain.hpp` header of the Bullet ragdoll sample gives
-the signatures of `LOAD TERRAIN`, `SAVE TERRAIN`, `DESTROY TERRAIN` and the size readers.
-`GET TERRAIN SIZE` has no known signature.
-
-- The terrain is an object, so `POSITION OBJECT`, `SCALE OBJECT` and collision work on
-  it. Its corner is at its position and it extends along +X and +Z.
-- A map of W by H pixels makes W by H cells of `SET TERRAIN SCALE` units, each pixel's
-  red channel times the Y scale giving its height. Our choice: the image's top row lies
-  at the largest Z, as seen from above.
-- `SET TERRAIN SPLIT` makes N by N meshes, one by default and at most 64 by 64.
-  `UPDATE TERRAIN` hides those outside the current camera's frustum and shows the rest,
-  for that camera only. A terrain that was never updated draws whole; a turned one
-  stays whole.
-- The first image of `SET TERRAIN TEXTURE` covers the whole terrain. The second repeats
-  every `SET TERRAIN TILING` cells; a tiling of one fits it to each cell, the only value
-  a source defines. Our choice: it multiplies the base so that mid-grey leaves it nearly
-  unchanged. Its coordinates are a multiple of the base ones, which the shader applies, so
-  it draws from GPU buffers; scrolling or scaling the object's texture sends the terrain
-  back to the CPU path.
-- `SET TERRAIN LIGHT terrain, x#, y#, z#, r#, g#, b#, intensity#` takes the direction
-  the light travels, its colour and its intensity. Our formula, baked into the vertices:
-  `colour * (1 - intensity * (1 - max(dot(normal, -direction), 0)))`. Scene lights do
-  not reach a terrain unless `SET OBJECT LIGHT` asks for them.
-- Settings apply at the next `BUILD TERRAIN`.
-- `GET TERRAIN GROUND HEIGHT(terrain, x#, z#)` reads the drawn surface in world units,
-  stops at the edges, and ignores rotation.
-- `GET TERRAIN X SIZE(terrain)` and `GET TERRAIN Z SIZE(terrain)` return the built
-  terrain's extent before `SCALE OBJECT`. Our choice: `GET TERRAIN SIZE(terrain)`
-  returns the X extent, the size of the square terrains of the original DLL.
-- `SAVE TERRAIN file$, terrain` writes the heights and settings in OpenDBC's own format,
-  since DBPro's is undocumented; `LOAD TERRAIN file$, terrain` makes the terrain again,
-  built, using the images of the same numbers when they exist. `DESTROY TERRAIN terrain`
-  deletes the object.
-
 ## Where frame time goes
 
 On the CPU path, time grows with visible triangles, not objects: clipping and

@@ -62,17 +62,10 @@ namespace dbc
         }
 
         bool MakeTerrain(int TerrainId, const std::string& Path, std::string* Error = nullptr);
-        bool MakeAdvancedTerrain(int TerrainId, std::string* Error = nullptr);
         bool DeleteTerrain(int TerrainId, std::string* Error = nullptr);
-        bool SetTerrainHeightmap(int TerrainId, const std::string& Path, std::string* Error = nullptr);
-        bool SetTerrainScale(int TerrainId, float X, float Y, float Z, std::string* Error = nullptr);
         bool SetTerrainTexture(int TerrainId, int ImageId, std::string* Error = nullptr);
-        bool SetTerrainTiling(int TerrainId, int TilesX, int TilesY, std::string* Error = nullptr);
-        bool SetTerrainSplit(int TerrainId, int Split, std::string* Error = nullptr);
-        bool BuildTerrain(int TerrainId, std::string* Error = nullptr);
         bool PositionTerrain(int TerrainId, float X, float Y, float Z, std::string* Error = nullptr);
         bool GetTerrainHeight(float& Output, int TerrainId, float X, float Z, std::string* Error = nullptr) const;
-        bool GetTerrainSize(float& Output, int TerrainId, std::string* Error = nullptr) const;
         bool GetTotalTerrainHeight(float& Output, int TerrainId, std::string* Error = nullptr) const;
         bool TerrainExist(int& Output, int TerrainId, std::string* Error = nullptr) const;
         bool TerrainPositionX(float& Output, int TerrainId, std::string* Error = nullptr) const;

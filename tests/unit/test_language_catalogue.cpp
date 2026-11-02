@@ -123,20 +123,27 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
     CHECK(dbc::language::HasEvidence(ActiveOde, EvidenceSource::OdeExtension));
 }
 
-TEST_CASE("Removed physics plugins are named by their prefixes and forms")
+TEST_CASE("Removed plugins are named by their prefixes and forms")
 {
-    using dbc::language::RemovedPhysicsPlugin;
-    CHECK(RemovedPhysicsPlugin("PHY MAKE RIGID BODY STATIC CONVEX") == "DarkPHYSICS");
-    CHECK(RemovedPhysicsPlugin("PHYSX") == "DarkPHYSICS");
-    CHECK(RemovedPhysicsPlugin("DYN COOK CONVEX MESH") == "Dark Dynamix");
-    CHECK(RemovedPhysicsPlugin("MAKE CLOTH") == "3D Cloth & Particles");
-    CHECK(RemovedPhysicsPlugin("MAKE CLOTH CURTAIN") == "3D Cloth & Particles");
-    CHECK(RemovedPhysicsPlugin("SET OBJECT AS VEHICLE BODY") == "3D Cloth & Particles");
-    CHECK(RemovedPhysicsPlugin("ODE START").empty());
-    CHECK(RemovedPhysicsPlugin("SET OBJECT").empty());
-    CHECK(RemovedPhysicsPlugin("PHYSICAL").empty());
+    using dbc::language::RemovedPluginOf;
+    CHECK(RemovedPluginOf("PHY MAKE RIGID BODY STATIC CONVEX").Name == "DarkPHYSICS");
+    CHECK(RemovedPluginOf("PHYSX").Name == "DarkPHYSICS");
+    CHECK(RemovedPluginOf("DYN COOK CONVEX MESH").Name == "Dark Dynamix");
+    CHECK(RemovedPluginOf("MAKE CLOTH").Name == "3D Cloth & Particles");
+    CHECK(RemovedPluginOf("MAKE CLOTH CURTAIN").Name == "3D Cloth & Particles");
+    CHECK(RemovedPluginOf("SET OBJECT AS VEHICLE BODY").Name == "3D Cloth & Particles");
+    CHECK(RemovedPluginOf("MAKE CLOTH").Replacement == "the ODE commands");
+    CHECK(RemovedPluginOf("BUILD TERRAIN").Name == "Advanced Terrain");
+    CHECK(RemovedPluginOf("SET TERRAIN LIGHT OBJ").Name == "Advanced Terrain");
+    CHECK(RemovedPluginOf("GET TERRAIN SIZE").Replacement == "MAKE TERRAIN");
+    CHECK(RemovedPluginOf("MAKE TERRAIN").Name.empty());
+    CHECK(RemovedPluginOf("ODE START").Name.empty());
+    CHECK(RemovedPluginOf("SET OBJECT").Name.empty());
+    CHECK(RemovedPluginOf("PHYSICAL").Name.empty());
     CHECK(dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Command, "PHY MAKE RIGID BODY STATIC CONVEX") ==
           nullptr);
+    CHECK(dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Command, "BUILD TERRAIN") == nullptr);
+    CHECK(dbc::language::FindSymbol(LanguageProfile::DbPro, SymbolKind::Function, "INSTR") == nullptr);
 }
 
 TEST_CASE("DBPro math value creation and deletion retain command and integer function forms")

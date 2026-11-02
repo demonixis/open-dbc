@@ -1,7 +1,6 @@
 # DBPro commit	af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9
 # Keywords100.ini sha256	e42a81f2bf3437193d5c8e78afe7857db8d7d2eabae62b5f068f10da5f330135
 # keywords107.ini sha256	26f0146bb687795a613c9780b7cbe84701375e43ee418ebd9381c5e221666568
-# keywordsAT.ini sha256	161719945555adb463c0445fb188bb92c407bb2457b58859d47b4a9e7e2ec99d
 name	kind	accepted_counts	sources	signatures
 #CONSTANT	Directive	1	keywords107.ini	ConstantName ConstantValue
 #INCLUDE	Directive	1	keywords107.ini	DBA Filename
@@ -94,7 +93,6 @@ BUILD PERSPECTIVE RHMATRIX4	Command	5	keywords107.ini	Matrix4Result, Width, Heig
 BUILD REFLECTION MATRIX4	Command	5	keywords107.ini	Matrix4Result, PlaneA, PlaneB, PlaneC, PlaneD
 BUILD ROTATION AXIS MATRIX4	Command	3	keywords107.ini	Matrix4Result, Vector3Axis, Angle
 BUILD STATIC PORTALS	Command	0	keywords107.ini	*no parameters*
-BUILD TERRAIN	Command		keywordsAT.ini	-
 BYTE	Statement	1	Keywords100.ini	Range = 0..255
 CALCULATE AUTOMATIC COLLISION	Command	0	keywords107.ini	*no parameters*
 CALCULATE OBJECT BOUNDS	Command	1	keywords107.ini	Integer Value
@@ -227,7 +225,6 @@ DELETE VECTOR4	Command	1	keywords107.ini	(Vector)
 DELETE VERTEX SHADER	Command	1	keywords107.ini	VertexShader Number
 DESKTOP HEIGHT	Function	0	keywords107.ini	*no parameters*
 DESKTOP WIDTH	Function	0	keywords107.ini	*no parameters*
-DESTROY TERRAIN	Command		keywordsAT.ini	-
 DETACH OBJECT FROM STATIC	Command	1	keywords107.ini	Object Number
 DIM	Statement	1	keywords107.ini	ArrayName(Array Dimensions)
 DIR	Command	0	keywords107.ini	*no parameters*
@@ -410,10 +407,7 @@ GET STATIC COLLISION VALUE	Function	0	keywords107.ini	*no parameters*
 GET STATIC COLLISION X	Function	0	keywords107.ini	*no parameters*
 GET STATIC COLLISION Y	Function	0	keywords107.ini	*no parameters*
 GET STATIC COLLISION Z	Function	0	keywords107.ini	*no parameters*
-GET TERRAIN GROUND HEIGHT	Function		keywordsAT.ini	-
 GET TERRAIN HEIGHT	Function	3	keywords107.ini	(Terrain Number, X, Z)
-GET TERRAIN X SIZE	Function		keywordsAT.ini	-
-GET TERRAIN Z SIZE	Function		keywordsAT.ini	-
 GET TIME$	Function	0	keywords107.ini	*no parameters*
 GET TOTAL TERRAIN HEIGHT	Function	1	keywords107.ini	(Terrain Number)
 GET TYPE PATTERN$	Function	1,2	keywords107.ini	[(Type Name$)][(Type Name$,Type Index)]
@@ -565,7 +559,6 @@ LOAD MUSIC	Command	2	keywords107.ini	Filename,Music Number
 LOAD OBJECT	Command	2,3,4	keywords107.ini	[Filename, Object Number][Filename, Object Number, DBPro Mode][Filename, Object Number, DBPro Mode, Divide Texture]
 LOAD SOUND	Command	2,3,4,5	keywords107.ini	[Filename,Sound Number][Filename,Sound Number,Flag][Filename,Sound Number,Flag,Silent Fail][Filename,Sound Number,Flag,Silent Fail,Global Sound Flag]
 LOAD STATIC OBJECTS	Command	2	keywords107.ini	Filename, Divide Texture Size
-LOAD TERRAIN	Command		keywordsAT.ini	-
 LOCAL	Statement	1	Keywords100.ini	Variable Name
 LOCK BACKBUFFER	Command	0	keywords107.ini	*no parameters*
 LOCK OBJECT OFF	Command	1	keywords107.ini	Object Number
@@ -611,7 +604,6 @@ MAKE OBJECT FROM LIMB	Command	3,4	keywords107.ini	[Object Number, Second Object,
 MAKE OBJECT PLAIN	Command	3,4	keywords107.ini	[Object Number, Width, Height][Object Number, Width, Height, Orientation]
 MAKE OBJECT PLANE	Command	3,4	keywords107.ini	[Object Number, Width, Height][Object Number, Width, Height, Orientation]
 MAKE OBJECT SPHERE	Command	2,4	keywords107.ini	[Object Number, Size][Object Number, Size, Rows, Columns]
-MAKE OBJECT TERRAIN	Command		keywordsAT.ini	-
 MAKE OBJECT TRIANGLE	Command	10	keywords107.ini	Object Number, X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3
 MAKE PARTICLES	Command	4	keywords107.ini	Particle Number, Image Number, Frequency, Radius
 MAKE SNOW PARTICLES	Command	9	keywords107.ini	Particle Number, Image Number, Frequency, X, Y, Z, Width, Height, Depth
@@ -873,7 +865,6 @@ SAVE MESH	Command	2	keywords107.ini	Filename, Mesh Number
 SAVE OBJECT	Command	2	keywords107.ini	Filename, Object Number
 SAVE SOUND	Command	2	keywords107.ini	Filename,Sound Number
 SAVE STATIC OBJECTS	Command	1	keywords107.ini	Filename
-SAVE TERRAIN	Command		keywordsAT.ini	-
 SCALE LIMB	Command	5,6	keywords107.ini	[Object Number, Limb Number, XSize, YSize, ZSize][Object Number, Limb Number, XSize, YSize, ZSize, Bounds Flag]
 SCALE LIMB TEXTURE	Command	4,5	keywords107.ini	[Object Number, Limb Number, UScale, VScale][Object Number, Limb Number, Stage, UScale, VScale]
 SCALE LISTENER	Command	1	keywords107.ini	Scaling Factor
@@ -1058,12 +1049,6 @@ SET STATIC PORTALS OFF	Command	0	keywords107.ini	*no parameters*
 SET STATIC PORTALS ON	Command	0	keywords107.ini	*no parameters*
 SET STATIC SCORCH	Command	3	keywords107.ini	Image Number, Width, Height
 SET STATIC UNIVERSE	Command	3	keywords107.ini	X, Y, Z
-SET TERRAIN HEIGHTMAP	Command		keywordsAT.ini	-
-SET TERRAIN LIGHT	Command		keywordsAT.ini	-
-SET TERRAIN SCALE	Command		keywordsAT.ini	-
-SET TERRAIN SPLIT	Command		keywordsAT.ini	-
-SET TERRAIN TEXTURE	Command		keywordsAT.ini	-
-SET TERRAIN TILING	Command		keywordsAT.ini	-
 SET TEXT FONT	Command	1,2	keywords107.ini	[Fontname][Fontname, Charset Value]
 SET TEXT OPAQUE	Command	0	keywords107.ini	*no parameters*
 SET TEXT SIZE	Command	1	keywords107.ini	Point size
@@ -1231,7 +1216,6 @@ UNLOCK PIXELS	Command	0	keywords107.ini	*no parameters*
 UNLOCK VERTEXDATA	Command	0	keywords107.ini	*no parameters*
 UNTIL	Statement	1	keywords107.ini	Condition
 UPDATE MATRIX	Command	1	keywords107.ini	Matrix Number
-UPDATE TERRAIN	Command		keywordsAT.ini	-
 UPKEY	Function	0	keywords107.ini	*no parameters*
 UPPER$	Function	1	keywords107.ini	(String)
 VAL	Function	1	keywords107.ini	(String)

@@ -554,7 +554,7 @@ namespace dbc::language::detail
                             BindExpression(*Expression);
                         return;
                     }
-                    if (!ReportRemovedPhysics(Canonical(Value.Name), Value.Span))
+                    if (!ReportRemovedPlugin(Canonical(Value.Name), Value.Span))
                         Error("DBC2013", "Unknown command '" + Canonical(Value.Name) + "'", Value.Span);
                     for (auto& Expression : Value.Expressions)
                         BindExpression(*Expression);
@@ -1031,7 +1031,7 @@ namespace dbc::language::detail
                             BindExpression(*Argument);
                         return Value.ResolvedType = {TypeKind::Error, {}};
                     }
-                    if (!ReportRemovedPhysics(Name, Value.Span))
+                    if (!ReportRemovedPlugin(Name, Value.Span))
                         Error("DBC2035", "Unknown function or array '" + Name + "'", Value.Span);
                     for (auto& Argument : Value.Children)
                         BindExpression(*Argument);
@@ -1196,14 +1196,14 @@ namespace dbc::language::detail
                     Error("DBC2042", "Condition must be numeric or boolean", Span);
             }
 
-            bool ReportRemovedPhysics(const std::string& Name, SourceSpan Span)
+            bool ReportRemovedPlugin(const std::string& Name, SourceSpan Span)
             {
-                const std::string_view Plugin = RemovedPhysicsPlugin(Name);
-                if (Plugin.empty())
+                const RemovedPlugin Plugin = RemovedPluginOf(Name);
+                if (Plugin.Name.empty())
                     return false;
                 Error("DBC2049",
-                      "'" + Name + "' comes from " + std::string(Plugin) +
-                          ", which OpenDBC does not implement; use the ODE commands",
+                      "'" + Name + "' comes from " + std::string(Plugin.Name) +
+                          ", which OpenDBC does not implement; use " + std::string(Plugin.Replacement),
                       Span);
                 return true;
             }

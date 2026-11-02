@@ -88,8 +88,9 @@ Each callable has a per-profile state:
 | Compatibility stub | Classic only: runs with a neutral result (no-op, `0`, `""`); permanent only for FTP, CD audio, the Windows folder and obsolete hardware switches |
 | Unsupported | Rejected at bind time with `DBC2043` |
 
-The forms of DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles are not in the catalogue:
-they stop at bind time with `DBC2049`, which names the plugin.
+The forms of DarkPHYSICS, Dark Dynamix, 3D Cloth & Particles and Advanced Terrain, a
+commercial plugin whose source was never released, are not in the catalogue: they stop at
+bind time with `DBC2049`, which names the plugin and what to use instead.
 
 Classic takes no additions. `DbPro` also takes OpenDBC's own forms, with multi-word names,
 among them VR ([vr.md](vr.md)).

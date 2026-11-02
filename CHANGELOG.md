@@ -33,6 +33,5 @@ First public release.
   `SET SCREEN EFFECT` show camera zero's image through a full-screen effect.
 - DBPro automatic collision for objects and cameras, force feedback, fire and snow
   particles, and global shadow colour, shades and light.
-- DBPro's Advanced Terrain with its own terrain files, `SET GLOBAL OBJECT CREATION`'s draw
-  orders, level of detail models, memblocks kept with objects and in DBO files,
-  `REDUCE MESH`, `CONVERT OBJECT FVF` and `MAKE EMITTER`.
+- DBPro's `SET GLOBAL OBJECT CREATION` draw orders, level of detail models, memblocks kept
+  with objects and in DBO files, `REDUCE MESH`, `CONVERT OBJECT FVF` and `MAKE EMITTER`.

@@ -19,12 +19,6 @@ print "VAL_FLOAT="; val("3.14")
 print "HEX="; hex$(255)
 print "BIN="; bin$(10)
 
-rem INSTR tests
-print "INSTR_FOUND="; instr("Hello World", "World")
-print "INSTR_NOTFOUND="; instr("Hello World", "xyz")
-print "INSTR_START="; instr("Hello World", "Hello")
-print "INSTR_EMPTY="; instr("Hello World", "")
-
 rem Edge cases
 print "LEFT_0="; left$("Test", 0)
 print "RIGHT_0="; right$("Test", 0)
