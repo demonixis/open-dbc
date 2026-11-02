@@ -386,6 +386,84 @@ float4 PSMain(PixelInput Input) : SV_Target0
     CHECK(Alpha >= 240);
 }
 
+TEST_CASE("A compiled HLSL effect draws the DBPro screen quad from camera zero's image")
+{
+    std::string Error;
+    TemporaryDirectory Directory;
+    const std::filesystem::path Source = Directory.Path / "swap.fx";
+    std::ofstream Stream(Source, std::ios::binary);
+    Stream << R"(
+struct VertexInput
+{
+    [[vk::location(0)]] float3 Position : POSITION;
+    [[vk::location(3)]] float2 Uv : TEXCOORD0;
+};
+
+struct PixelInput
+{
+    float4 Position : SV_Position;
+    float2 Uv : TEXCOORD0;
+};
+
+cbuffer VertexConstants : register(b0, space1)
+{
+    float4x4 ViewProjection;
+};
+
+Texture2D<float4> Screen : register(t0, space2);
+SamplerState ScreenSampler : register(s0, space2);
+
+PixelInput VSMain(VertexInput Input)
+{
+    PixelInput Output;
+    Output.Position = mul(ViewProjection, float4(Input.Position, 1.0));
+    Output.Uv = Input.Uv;
+    return Output;
+}
+
+float4 PSMain(PixelInput Input) : SV_Target0
+{
+    return float4(Screen.Sample(ScreenSampler, Input.Uv).bgr, 1.0);
+}
+)";
+    Stream.close();
+    REQUIRE(Stream.good());
+    const toolchain::ShaderCompileResult Compiled = toolchain::ShaderCompiler().CompileHlslEffect(Source);
+    INFO(Compiled.Error);
+    REQUIRE(Compiled.Success);
+
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 64, 48));
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    REQUIRE(Kernel.Gpu().LoadEffect(Source.string(), 1, 0, 0, &Error));
+    REQUIRE_MESSAGE(Kernel.Camera().SetBackdropColor(0, 0x000000FF, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().SetCameraToImage(0, 5, 64, 48, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Renderer().SetScreenEffect(1, &Error), Error);
+    REQUIRE(Kernel.Renderer().ScreenQuadActive());
+
+    // Camera zero sees blue; the effect swaps red and blue on the way to the screen.
+    SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+    REQUIRE(Capture != nullptr);
+    Uint8 Red = 0;
+    Uint8 Green = 0;
+    Uint8 Blue = 0;
+    Uint8 Alpha = 0;
+    REQUIRE(SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Red, &Green, &Blue, &Alpha));
+    SDL_DestroySurface(Capture);
+    CHECK(Red >= 240);
+    CHECK(Green <= 16);
+    CHECK(Blue <= 16);
+
+    // Deleting the effect leaves the plain copy.
+    REQUIRE(Kernel.Gpu().DeleteEffect(1, &Error));
+    Capture = Kernel.Renderer().CaptureScreen();
+    REQUIRE(Capture != nullptr);
+    REQUIRE(SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Red, &Green, &Blue, &Alpha));
+    SDL_DestroySurface(Capture);
+    CHECK(Red <= 16);
+    CHECK(Blue >= 240);
+}
+
 TEST_CASE("DBPro effect constants techniques transpose and checklists drive compiled HLSL")
 {
     std::string EffectError;

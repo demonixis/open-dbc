@@ -16,8 +16,8 @@ Publication:
 
 ## DBPro parity
 
-The catalogue counts 979 of DBPro's 1,264 core commands and functions as implemented,
-against 702 of 731 in Classic. The other 285 are sorted here by name only; confirm each
+The catalogue counts 982 of DBPro's 1,265 core commands and functions as implemented,
+against 702 of 731 in Classic. The other 283 are sorted here by name only; confirm each
 one when it is picked up.
 
 152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access
@@ -26,7 +26,6 @@ one when it is picked up.
 
 To port, in order:
 
-- [ ] `TEXTURE SCREEN` and `SET SCREEN EFFECT`, before the HDR target.
 - [ ] Multiplayer ([network.md](network.md)), 35 of 37 forms already in Classic, and
   animations ([video.md](video.md)), 16 of 21.
 - [ ] Force feedback (11, all in Classic) and what remains of the other gaps: the rest of

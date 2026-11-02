@@ -29,7 +29,8 @@ First public release.
   through a Blinn-Phong path, with Fresnel reflections and mipmapped cubes; the stage
   forms of `TEXTURE OBJECT` work.
 - DBPro cameras draw to images and clip at a plane; objects can be excluded, masked
-  per camera, and given their own field of view and depth bias.
+  per camera, and given their own field of view and depth bias. `TEXTURE SCREEN` and
+  `SET SCREEN EFFECT` show camera zero's image through a full-screen effect.
 - DBPro automatic collision for objects and cameras, fire and snow particles, and
   global shadow colour, shades and light.
 - DBPro's Advanced Terrain, level of detail models, memblocks kept with objects and in

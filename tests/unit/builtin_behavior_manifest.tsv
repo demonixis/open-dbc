@@ -1663,6 +1663,7 @@ dbpro	1392	1944	Command	SET KEY STATE TOGGLE	input-state	test_engine_builtins.cp
 dbpro	1393	1945	Command	SET LIMB NORMALS	geometry-render	test_engine_builtins.cpp::DBPro object and limb normal commands rewrite rendered geometry	-
 dbpro	1394	1946	Command	SET OBJECT FOV	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1395	1947	Command	SET OBJECT MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1399	1951	Command	SET SCREEN EFFECT	effect-pixel	test_shader_compiler.cpp::A compiled HLSL effect draws the DBPro screen quad from camera zero's image	-
 dbpro	1400	1952	Command	SET SHADOW LIGHT	global-shadow-pixel	test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow	-
 dbpro	1401	1953	Command	SET SPRITE IMAGE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1402	1954	Command	SET SPRITE RESIZE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
@@ -1677,6 +1678,7 @@ dbpro	1418	1971	Function	SPRITE FRAME	render-state	test_engine_builtins.cpp::DBP
 dbpro	1419	1972	Function	SPRITE PRIORITY	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1420	1973	Function	SPRITE VISIBLE	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	1425	1977	Command	SYNC MASK	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
+dbpro	1427	1979	Command	TEXTURE SCREEN	camera-image-pixel	test_engine_builtins.cpp::DBPro cameras draw to images and clip at a plane	-
 dbpro	1433	1985	Command	UPDATE TERRAIN	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	1436	1988	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and key waits suspend resume and cancel cooperatively	-
 dbpro	1439	1991	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e

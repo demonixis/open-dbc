@@ -158,6 +158,13 @@ one. An object that uses neither of the first two stays on the fixed-function pa
   and do not change anything: the image is 8-bit RGBA with an opaque alpha.
 - The result lives on the GPU only: memblocks and `SAVE IMAGE` read the image's CPU
   copy, which stays black. VR frames do not update camera images.
+- Once camera zero draws into an image, `TEXTURE SCREEN [stage,] image` and
+  `SET SCREEN EFFECT effect` make SYNC show a full-screen quad instead of camera
+  zero: stage 0's image, by default camera zero's own drawing, copied or through
+  the effect, under the other screen cameras and the 2D layer. Before that, both
+  commands are ignored with a warning, as in DBPro. An effect receives clip-space
+  corners with an identity `ViewProj` and samples stage 0 only, the one texture the
+  portable effect ABI allows; a deleted effect falls back to the copy.
 - `DRAW TO CAMERA` sends the frame's 2D layer over the current camera, in the
   image's pixels if it has one. `DRAW TO SCREEN` brings it back.
 - `SET CAMERA CLIP camera, mode, x#, y#, z#, nx#, ny#, nz#` keeps what the normal

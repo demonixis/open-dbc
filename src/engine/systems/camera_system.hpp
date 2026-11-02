@@ -41,6 +41,9 @@ namespace dbc
             return Current().TargetImage;
         }
 
+        // The image a camera draws into, or 0 for the screen or a camera that does not exist.
+        [[nodiscard]] int CameraTargetImage(int CameraId) const;
+
         [[nodiscard]] int TargetImageWidth() const
         {
             return Current().TargetImageWidth;

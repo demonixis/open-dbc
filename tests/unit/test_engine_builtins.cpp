@@ -10282,6 +10282,48 @@ TEST_CASE("DBPro cameras draw to images and clip at a plane")
         CHECK_FALSE(Command(SymbolId::Command_SetCameraToImage, {9, 5, 64, 64}));
     }
 
+    SUBCASE("the screen quad shows camera zero's image or another one, and the 2D layer over it")
+    {
+        Box(1, 5.0f, 0x00C04080);
+        const auto Direct = Center();
+        SDL_Surface* Blue = SDL_CreateSurface(4, 4, SDL_PIXELFORMAT_RGBA32);
+        REQUIRE(Blue != nullptr);
+        REQUIRE(SDL_FillSurfaceRect(Blue, nullptr, SDL_MapSurfaceRGBA(Blue, 0, 0, 255, 255)));
+        Kernel.ImageStoreRef().StoreImageFromSurface(7, Blue);
+        SDL_DestroySurface(Blue);
+        // Without camera zero in an image, DBPro has no quad and ignores both commands.
+        REQUIRE(Command(SymbolId::Command_TextureScreen, {7}));
+        REQUIRE(Command(SymbolId::Command_SetScreenEffect, {0}));
+        CHECK_FALSE(Kernel.Renderer().ScreenQuadActive());
+        CHECK(Center() == Direct);
+
+        REQUIRE(Command(SymbolId::Command_SetCameraToImage, {0, 5, 64, 64}));
+        REQUIRE(Command(SymbolId::Command_TextureScreen, {5}));
+        CHECK(Kernel.Renderer().ScreenQuadActive());
+        const auto Quad = Center();
+        for (int Channel = 0; Channel < 3; ++Channel)
+            CHECK(std::abs(Quad[static_cast<std::size_t>(Channel)] - Direct[static_cast<std::size_t>(Channel)]) <= 3);
+        // Another image replaces camera zero's, whose scene no longer reaches the screen.
+        REQUIRE(Command(SymbolId::Command_TextureScreen, {0, 7}));
+        auto Shown = Center();
+        CHECK(Shown[0] <= 3);
+        CHECK(Shown[2] >= 252);
+        // DBPro colours carry their alpha in the top byte.
+        REQUIRE(Command(SymbolId::Command_Ink, {static_cast<double>(static_cast<std::int32_t>(0xFFFFFF00u)), 0}));
+        // In screen coordinates, whatever the size of camera zero's image.
+        const double MiddleX = Kernel.Core().WindowWidth() / 2, MiddleY = Kernel.Core().WindowHeight() / 2;
+        REQUIRE(Command(SymbolId::Command_Box, {MiddleX - 8, MiddleY - 8, MiddleX + 8, MiddleY + 8}));
+        Shown = Center();
+        CHECK(Shown[0] >= 252);
+        CHECK(Shown[1] >= 252);
+        CHECK_FALSE(Command(SymbolId::Command_TextureScreen, {8, 7}));
+        CHECK_FALSE(Command(SymbolId::Command_TextureScreen, {9}));
+        CHECK_FALSE(Command(SymbolId::Command_SetScreenEffect, {4}));
+        // Back on the screen, camera zero draws its scene again.
+        REQUIRE(Command(SymbolId::Command_SetCameraToImage, {0, 0, 0, 0}));
+        CHECK_FALSE(Kernel.Renderer().ScreenQuadActive());
+    }
+
     SUBCASE("the 2D layer follows DRAW TO CAMERA")
     {
         RequireEngineStatus([&](std::string& CameraError) { return Kernel.Camera().MakeCamera(1, &CameraError); });

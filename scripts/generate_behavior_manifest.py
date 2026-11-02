@@ -1372,6 +1372,10 @@ UNIT_WITNESSES += (
     ("dbpro", "Command", "SET CAMERA CLIP", "set camera clip 0, 1, 0, 0, 6, 0, 0, 1\n", "camera-image-pixel", CAMERA_IMAGE_TEST),
     ("dbpro", "Command", "DRAW TO CAMERA", "draw to camera\n", "camera-image-state", CAMERA_IMAGE_TEST),
     ("dbpro", "Command", "DRAW TO SCREEN", "draw to screen\n", "camera-image-state", CAMERA_IMAGE_TEST),
+    ("dbpro", "Command", "TEXTURE SCREEN", "texture screen 5\n", "camera-image-pixel", CAMERA_IMAGE_TEST),
+    ("dbpro", "Command", "TEXTURE SCREEN", "texture screen 0, 7\n", "camera-image-pixel", CAMERA_IMAGE_TEST),
+    ("dbpro", "Command", "SET SCREEN EFFECT", "set screen effect 1\n", "effect-pixel",
+     "test_shader_compiler.cpp::A compiled HLSL effect draws the DBPro screen quad from camera zero's image"),
 )
 
 GLOBAL_SHADOW_TEST = "test_engine_builtins.cpp::DBPro sets the colour, the shades and the light of every shadow"

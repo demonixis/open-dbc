@@ -619,7 +619,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET POINT LIGHT` | Command | 4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET RAINBOW SHADING ON` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET REFLECTION SHADING ON` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `SET SCREEN EFFECT` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET SCREEN EFFECT` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET SHADING OFF` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET SHADOW LIGHT` | Command | 5 | number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET SHADOW POSITION` | Command | 4 | number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -728,7 +728,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `TEXT` | Command | 3 | number, number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TEXTURE LIMB` | Command | 3-4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TEXTURE OBJECT` | Command | 2-4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `TEXTURE SCREEN` | Command | 1-2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `TEXTURE SCREEN` | Command | 1-2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TEXTURE TERRAIN` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TRANSFORM COORDS VECTOR2` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `TRANSFORM COORDS VECTOR3` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |

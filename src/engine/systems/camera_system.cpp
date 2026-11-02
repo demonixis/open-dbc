@@ -213,6 +213,12 @@ namespace dbc
         return std::exchange(CurrentCameraId_, CameraId);
     }
 
+    int CameraSystem::CameraTargetImage(int CameraId) const
+    {
+        const auto It = Cameras_.find(CameraId);
+        return It != Cameras_.end() ? It->second.TargetImage : 0;
+    }
+
     int CameraSystem::CameraExist(int CameraId) const
     {
         return Cameras_.contains(CameraId) ? 1 : 0;

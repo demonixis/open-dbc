@@ -344,7 +344,12 @@ namespace dbc
                     });
             }
 
-            if (SceneDirty)
+            if (Geometry.SceneHidden)
+            {
+                static const auto EmptyScene = std::make_shared<const SceneTriangles>();
+                Geometry.Scene = EmptyScene;
+            }
+            else if (SceneDirty)
             {
                 Geometry.Scene = RebuildScene(HasReflection, ReflectionPoint, ReflectionNormal, OrderTicks);
                 K.Camera().ClearDirty();
@@ -402,12 +407,15 @@ namespace dbc
                                    static_cast<float>(View.LogicalWidth), static_cast<float>(View.LogicalHeight),
                                    UnpackColor(Color), 1.0f, false, true, ViewFillStyle);
             };
-            if (K.Camera().ClearRequested() && (K.Camera().HasCameraView() || Geometry.OverPreviousCamera))
-                FillView(K.Camera().ClearColor());
-            else if (Geometry.OverPreviousCamera && (K.Camera().BackdropEnabled() || K.Draw().FogOn()))
-                FillView(K.Camera().BackdropEnabled() ? K.Camera().BackdropColor() : K.Draw().FogColor());
+            if (!Geometry.SceneHidden)
+            {
+                if (K.Camera().ClearRequested() && (K.Camera().HasCameraView() || Geometry.OverPreviousCamera))
+                    FillView(K.Camera().ClearColor());
+                else if (Geometry.OverPreviousCamera && (K.Camera().BackdropEnabled() || K.Draw().FogOn()))
+                    FillView(K.Camera().BackdropEnabled() ? K.Camera().BackdropColor() : K.Draw().FogColor());
+            }
 
-            if (K.Camera().BackdropEnabled() && K.Draw().BackdropImageId() > 0)
+            if (!Geometry.SceneHidden && K.Camera().BackdropEnabled() && K.Draw().BackdropImageId() > 0)
             {
                 Image* BgImg = K.ImageStoreRef().GetImage(K.Draw().BackdropImageId());
                 if (BgImg && (BgImg->Texture || BgImg->GpuTexture) && BgImg->Width > 0 && BgImg->Height > 0)
@@ -471,7 +479,7 @@ namespace dbc
             // transparency.
             PrepareStaticTerrains(Geometry);
             constexpr std::array<int, 3> InsertionPriorities{-1, 0, 1};
-            std::size_t Inserted = 0;
+            std::size_t Inserted = Geometry.SceneHidden ? InsertionPriorities.size() : 0;
             const auto InsertNext = [&]
             {
                 if (InsertionPriorities[Inserted] == 0)
@@ -505,9 +513,9 @@ namespace dbc
                                    Shadow ? GlobalShadowColor_ : SDL_FColor{0.0f, 0.0f, 0.0f, 64.0f / 255.0f}, 0.0f,
                                    true, true, OverlayStyle);
             };
-            if (HasReflection)
+            if (HasReflection && !Geometry.SceneHidden)
                 AppendDarkening(false);
-            if (HasShadow)
+            if (HasShadow && !Geometry.SceneHidden)
                 AppendDarkening(true);
 
             const auto AppendHud = [&](std::vector<GpuVertex>& HudVertices, std::vector<GpuBatch>& HudBatches)
@@ -541,8 +549,8 @@ namespace dbc
         }
 
         Geometry.ClearColor = ClearColor;
-        Geometry.HasReflection = HasReflection;
-        Geometry.HasShadow = HasShadow;
+        Geometry.HasReflection = HasReflection && !Geometry.SceneHidden;
+        Geometry.HasShadow = HasShadow && !Geometry.SceneHidden;
         Current_.ConvertMilliseconds += TicksToMilliseconds(SDL_GetPerformanceCounter() - ConvertStart);
         return true;
     }
@@ -1343,6 +1351,9 @@ namespace dbc
         const std::size_t ImageCameras = CameraIds.size();
         for (const int Id : K.Camera().ScreenCameraIds())
             CameraIds.push_back(Id);
+        // The screen quad goes under the screen cameras. Camera zero, kept when no other reaches the screen, then
+        // draws only the 2D layer.
+        const bool ScreenQuad = K.Renderer().ScreenQuadActive();
         std::vector<RenderView> Views;
         std::vector<PreparedViewGeometry> Geometry(CameraIds.size());
         std::vector<GpuRenderTarget> Targets;
@@ -1372,9 +1383,21 @@ namespace dbc
             Prepared = Targets.back().Color != nullptr;
             if (Prepared)
             {
-                Views.push_back(K.Renderer().CameraView(Targets.back().Width, Targets.back().Height));
+                const RenderView Camera = K.Renderer().CameraView(Targets.back().Width, Targets.back().Height);
                 Geometry[Index].Hud = HasHud(Index);
-                Geometry[Index].OverPreviousCamera = Index > ImageCameras;
+                Geometry[Index].OverPreviousCamera = Index > ImageCameras || (ScreenQuad && !ToImage);
+                Geometry[Index].SceneHidden = ScreenQuad && !ToImage && K.Camera().TargetImage() != 0;
+                if (Geometry[Index].SceneHidden)
+                {
+                    // The 2D layer keeps the screen's coordinates, not those of camera zero's image.
+                    const int Width = K.Core().WindowWidth(), Height = K.Core().WindowHeight();
+                    Views.push_back(
+                        RenderView{Camera.WorldToView, Camera.Projection, Camera.AdditiveProjection,
+                                   SDL_FRect{0.0f, 0.0f, static_cast<float>(Width), static_cast<float>(Height)}, Width,
+                                   Height, Camera.PhysicalWidth, Camera.PhysicalHeight});
+                }
+                else
+                    Views.push_back(Camera);
                 Prepared = K.Renderer().BuildPreparedView(Views.back(), Geometry[Index], Frame);
             }
             K.Camera().SelectRenderCamera(Previous);
@@ -1386,6 +1409,7 @@ namespace dbc
             const int Previous = K.Camera().SelectRenderCamera(CameraIds[Index]);
             const int ImageId = Index < ImageCameras ? K.Camera().TargetImage() : 0;
             const bool Recorded =
+                (!ScreenQuad || Index != ImageCameras || K.Renderer().RecordScreenQuad(Target, Cmd)) &&
                 K.Renderer().RecordPreparedView(Views[Index], Targets[Index], Geometry[Index], Cmd, Frame) &&
                 (ImageId == 0 || K.Renderer().TransferCameraImage(CameraIds[Index], ImageId, Cmd));
             K.Camera().SelectRenderCamera(Previous);
@@ -1649,6 +1673,203 @@ namespace dbc
         return true;
     }
 
+    bool RendererSystem::TextureScreen(int Stage, int ImageId, std::string* Error)
+    {
+        if (Stage < 0 || Stage >= static_cast<int>(ScreenImages_.size()))
+        {
+            if (Error)
+                *Error = "TEXTURE SCREEN takes a stage from 0 to 7";
+            return false;
+        }
+        if (!Kernel_.ImageStoreRef().GetImage(ImageId))
+        {
+            if (Error)
+                *Error = "TEXTURE SCREEN image does not exist";
+            return false;
+        }
+        // As in DBPro, the screen quad only exists once camera zero draws into an image.
+        if (Kernel_.Camera().CameraTargetImage(0) == 0)
+        {
+            DBC_LOG_WARN("TEXTURE SCREEN ignored: camera 0 does not draw into an image");
+            return true;
+        }
+        ScreenQuad_ = true;
+        ScreenImages_[static_cast<std::size_t>(Stage)] = ImageId;
+        return true;
+    }
+
+    bool RendererSystem::SetScreenEffect(int EffectId, std::string* Error)
+    {
+        // DBPro ignores effect numbers below one.
+        if (EffectId <= 0)
+            return true;
+        if (Kernel_.Gpu().EffectExist(EffectId) == 0)
+        {
+            if (Error)
+                *Error = "SET SCREEN EFFECT effect does not exist";
+            return false;
+        }
+        if (Kernel_.Camera().CameraTargetImage(0) == 0)
+        {
+            DBC_LOG_WARN("SET SCREEN EFFECT ignored: camera 0 does not draw into an image");
+            return true;
+        }
+        ScreenQuad_ = true;
+        ScreenEffect_ = EffectId;
+        return true;
+    }
+
+    bool RendererSystem::ScreenQuadActive() const
+    {
+        return ScreenQuad_ && Kernel_.Camera().CameraTargetImage(0) != 0;
+    }
+
+    bool RendererSystem::RecordScreenQuad(const GpuRenderTarget& Target, SDL_GPUCommandBuffer* Cmd)
+    {
+        EngineKernel& K = Kernel_;
+        SDL_GPUDevice* Device = K.Gpu().GpuDevice();
+        if (!Device || !Cmd || !Target.Color)
+            return false;
+        // Stage 0 shows camera zero's own drawing unless TEXTURE SCREEN gave another image. That drawing holds the
+        // values the screen would have shown; an image decodes its sRGB texels, which the copy encodes again.
+        const int CameraImage = K.Camera().CameraTargetImage(0);
+        SDL_GPUTexture* Source = nullptr;
+        bool SourceSrgb = false;
+        if (ScreenImages_[0] != 0 && ScreenImages_[0] != CameraImage)
+            if (Image* Picture = K.ImageStoreRef().GetImage(ScreenImages_[0]))
+            {
+                Source = dbc::ImageGpuTexture(K, *Picture, false);
+                SourceSrgb = Source != nullptr;
+            }
+        if (!Source)
+        {
+            const auto Entry = CameraTargets_.find(0);
+            if (Entry == CameraTargets_.end() || !Entry->second.Color)
+                return true;
+            Source = Entry->second.Color;
+        }
+        SDL_GPUSampler* Sampler = K.Gpu().SurfaceSampler(2, true, 2);
+
+        // A deleted effect, or one whose pipeline fails, leaves the plain copy.
+        const int EffectId = K.Gpu().EffectExist(ScreenEffect_) != 0 ? ScreenEffect_ : 0;
+        SDL_GPUGraphicsPipeline* EffectPipeline =
+            EffectId != 0 ? K.Gpu().EffectPipeline(EffectId, false, false, false, false, false, false) : nullptr;
+        if (EffectPipeline && !ScreenQuadVertices_)
+        {
+            // Clip-space corners with an identity ViewProj, so that effects which transform the position and
+            // effects which take it as it is, as DBPro's quad.fx does, both cover the screen.
+            std::array<GpuVertex, 6> Corners{};
+            constexpr std::array<std::array<float, 2>, 6> Positions{
+                {{-1.0f, 1.0f}, {1.0f, 1.0f}, {-1.0f, -1.0f}, {-1.0f, -1.0f}, {1.0f, 1.0f}, {1.0f, -1.0f}}};
+            for (std::size_t Index = 0; Index < Corners.size(); ++Index)
+            {
+                Corners[Index].X = Positions[Index][0];
+                Corners[Index].Y = Positions[Index][1];
+                Corners[Index].U = (Positions[Index][0] + 1.0f) * 0.5f;
+                Corners[Index].V = (1.0f - Positions[Index][1]) * 0.5f;
+            }
+            SDL_GPUBufferCreateInfo BufferInfo{};
+            BufferInfo.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+            BufferInfo.size = sizeof(Corners);
+            SDL_GPUTransferBufferCreateInfo TransferInfo{};
+            TransferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+            TransferInfo.size = sizeof(Corners);
+            SDL_GPUBuffer* Buffer = SDL_CreateGPUBuffer(Device, &BufferInfo);
+            SDL_GPUTransferBuffer* Transfer = SDL_CreateGPUTransferBuffer(Device, &TransferInfo);
+            void* Mapped = Transfer ? SDL_MapGPUTransferBuffer(Device, Transfer, false) : nullptr;
+            SDL_GPUCopyPass* Copy = nullptr;
+            if (Buffer && Mapped)
+            {
+                SDL_memcpy(Mapped, Corners.data(), sizeof(Corners));
+                SDL_UnmapGPUTransferBuffer(Device, Transfer);
+                Copy = SDL_BeginGPUCopyPass(Cmd);
+            }
+            if (Copy)
+            {
+                const SDL_GPUTransferBufferLocation From{Transfer, 0};
+                const SDL_GPUBufferRegion To{Buffer, 0, sizeof(Corners)};
+                SDL_UploadToGPUBuffer(Copy, &From, &To, false);
+                SDL_EndGPUCopyPass(Copy);
+                ScreenQuadVertices_ = Buffer;
+            }
+            else if (Buffer)
+                SDL_ReleaseGPUBuffer(Device, Buffer);
+            // Released once the command buffer that uploads from it completes.
+            if (Transfer)
+                SDL_ReleaseGPUTransferBuffer(Device, Transfer);
+            if (!ScreenQuadVertices_)
+            {
+                ReportRenderError("screen quad vertices failed");
+                return false;
+            }
+        }
+
+        SDL_GPUColorTargetInfo Color{};
+        Color.texture = Target.Color;
+        Color.layer_or_depth_plane = Target.ColorLayer;
+        Color.clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f};
+        Color.load_op = SDL_GPU_LOADOP_CLEAR;
+        Color.store_op = SDL_GPU_STOREOP_STORE;
+        if (EffectPipeline)
+        {
+            // Effect pipelines expect the depth target the scene draws with; the quad neither tests nor writes it.
+            SDL_GPUDepthStencilTargetInfo Depth{};
+            Depth.texture = Target.Depth;
+            Depth.layer = static_cast<Uint8>(Target.DepthLayer);
+            Depth.clear_depth = 1.0f;
+            Depth.load_op = SDL_GPU_LOADOP_CLEAR;
+            Depth.store_op = SDL_GPU_STOREOP_DONT_CARE;
+            Depth.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
+            Depth.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
+            SDL_GPURenderPass* Pass = SDL_BeginGPURenderPass(Cmd, &Color, 1, &Depth);
+            if (!Pass)
+            {
+                ReportRenderError("screen quad pass failed");
+                return false;
+            }
+            SDL_BindGPUGraphicsPipeline(Pass, EffectPipeline);
+            GpuVertexUniforms Identity{};
+            const glm::mat4 IdentityMatrix(1.0f);
+            memcpy(Identity.ViewProj, &IdentityMatrix[0][0], sizeof(Identity.ViewProj));
+            K.Gpu().PushEffectUniformData(Cmd, EffectId, Identity, dbc::BuildFragmentUniforms(K));
+            // The portable effect ABI gives a fragment stage one texture at most: stage 0.
+            if (K.Gpu().EffectFragmentSamplerCount(EffectId) != 0)
+            {
+                const SDL_GPUTextureSamplerBinding Binding{Source, Sampler};
+                SDL_BindGPUFragmentSamplers(Pass, 0, &Binding, 1);
+            }
+            const SDL_GPUBufferBinding Vertices{ScreenQuadVertices_, 0};
+            SDL_BindGPUVertexBuffers(Pass, 0, &Vertices, 1);
+            SDL_DrawGPUPrimitives(Pass, 6, 1, 0, 0);
+            SDL_EndGPURenderPass(Pass);
+            return true;
+        }
+
+        if (!ScreenCopyPipeline_)
+        {
+            ScreenCopyPipeline_ = K.Gpu().CreateTransferPipeline(K.Gpu().GpuColorFormat());
+            if (!ScreenCopyPipeline_)
+            {
+                ReportRenderError("screen quad pipeline failed");
+                return false;
+            }
+        }
+        SDL_GPURenderPass* Pass = SDL_BeginGPURenderPass(Cmd, &Color, 1, nullptr);
+        if (!Pass)
+        {
+            ReportRenderError("screen quad pass failed");
+            return false;
+        }
+        SDL_BindGPUGraphicsPipeline(Pass, ScreenCopyPipeline_);
+        const std::array<float, 8> Uniforms{1.0f, 1.0f, 1.0f, 0.0f, SourceSrgb ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f};
+        SDL_PushGPUFragmentUniformData(Cmd, 0, Uniforms.data(), sizeof(Uniforms));
+        const SDL_GPUTextureSamplerBinding Binding{Source, Sampler};
+        SDL_BindGPUFragmentSamplers(Pass, 0, &Binding, 1);
+        SDL_DrawGPUPrimitives(Pass, 3, 1, 0, 0);
+        SDL_EndGPURenderPass(Pass);
+        return true;
+    }
+
     void RendererSystem::ReleaseCameraTargets()
     {
         SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
@@ -1664,9 +1885,15 @@ namespace dbc
             }
             if (CameraTransferPipeline_)
                 SDL_ReleaseGPUGraphicsPipeline(Device, CameraTransferPipeline_);
+            if (ScreenCopyPipeline_)
+                SDL_ReleaseGPUGraphicsPipeline(Device, ScreenCopyPipeline_);
+            if (ScreenQuadVertices_)
+                SDL_ReleaseGPUBuffer(Device, ScreenQuadVertices_);
         }
         CameraTargets_.clear();
         CameraTransferPipeline_ = nullptr;
+        ScreenCopyPipeline_ = nullptr;
+        ScreenQuadVertices_ = nullptr;
     }
 
     void RendererSystem::PrepareFrameSimulation(double DeltaSeconds)

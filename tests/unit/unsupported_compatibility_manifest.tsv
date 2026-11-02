@@ -253,7 +253,6 @@ dbpro	Command_SetCamerasToStereoscopic	Command	SET CAMERAS TO STEREOSCOPIC	Targe
 dbpro	Command_SetPixelShaderOff	Command	SET PIXEL SHADER OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetPixelShaderOn	Command	SET PIXEL SHADER ON	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetPixelShaderTexture	Command	SET PIXEL SHADER TEXTURE	Target	text	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetScreenEffect	Command	SET SCREEN EFFECT	Target	display	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticPortalsOff	Command	SET STATIC PORTALS OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticPortalsOn	Command	SET STATIC PORTALS ON	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticScorch	Command	SET STATIC SCORCH	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -267,7 +266,6 @@ dbpro	Function_StaticRaycast	Function	STATIC RAYCAST	Target	core	dbpro-reference
 dbpro	Function_StaticVolume	Function	STATIC VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_StopExecutable	Command	STOP EXECUTABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SyncSleep	Command	SYNC SLEEP	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_TextureScreen	Command	TEXTURE SCREEN	Target	display	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TexturesystemmemoryAvailable	Function	TEXTURESYSTEMMEMORY AVAILABLE	Target	text	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TexturevideomemoryAvailable	Function	TEXTUREVIDEOMEMORY AVAILABLE	Target	text	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TlvertexsystemmemoryAvailable	Function	TLVERTEXSYSTEMMEMORY AVAILABLE	Target	memory	dbpro-reference	engine-subsystem-and-oracle

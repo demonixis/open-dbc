@@ -78,6 +78,8 @@ namespace dbc
         // and each later camera draws over the earlier ones.
         bool Hud = true;
         bool OverPreviousCamera = false;
+        // The screen quad stands for the camera: the view draws its 2D layer only.
+        bool SceneHidden = false;
     };
 
     // What one presented frame drew, summed over its views, and the milliseconds each renderer step took.
@@ -120,6 +122,13 @@ namespace dbc
         [[nodiscard]] GpuRenderTarget CameraImageTarget(int CameraId, Uint32 Width, Uint32 Height);
         // Writes what the camera drew into its image, and the image's mipmaps.
         bool TransferCameraImage(int CameraId, int ImageId, SDL_GPUCommandBuffer* Cmd);
+        // TEXTURE SCREEN and SET SCREEN EFFECT. Once camera zero draws into an image, SYNC shows the screen quad
+        // instead: stage 0's image, by default camera zero's, through the effect or copied as it is.
+        bool TextureScreen(int Stage, int ImageId, std::string* Error = nullptr);
+        bool SetScreenEffect(int EffectId, std::string* Error = nullptr);
+        [[nodiscard]] bool ScreenQuadActive() const;
+        // Clears the target and draws the screen quad over it.
+        bool RecordScreenQuad(const GpuRenderTarget& Target, SDL_GPUCommandBuffer* Cmd);
         bool RenderPreparedView(const RenderView& View, const GpuRenderTarget& Target, SDL_GPUCommandBuffer* Commands,
                                 RenderFrameState& Frame);
         bool BuildPreparedView(const RenderView& View, PreparedViewGeometry& Geometry, RenderFrameState& Frame);
@@ -436,6 +445,11 @@ namespace dbc
 
         std::unordered_map<int, CameraTarget> CameraTargets_;
         SDL_GPUGraphicsPipeline* CameraTransferPipeline_ = nullptr;
+        bool ScreenQuad_ = false;
+        std::array<int, 8> ScreenImages_{};
+        int ScreenEffect_ = 0;
+        SDL_GPUBuffer* ScreenQuadVertices_ = nullptr;
+        SDL_GPUGraphicsPipeline* ScreenCopyPipeline_ = nullptr;
         SDL_GPUBuffer* TerrainIndexBuffer_ = nullptr;
         Uint32 TerrainIndexCapacity_ = 0;
         SDL_GPUBuffer* TerrainInstanceBuffer_ = nullptr;
