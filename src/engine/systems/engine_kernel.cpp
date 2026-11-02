@@ -7,6 +7,7 @@
 #include "debug_system.hpp"
 #include "dll_system.hpp"
 #include "draw_system.hpp"
+#include "file_block_system.hpp"
 #include "file_io_system.hpp"
 #include "file_map_system.hpp"
 #include "graphics_device_system.hpp"
@@ -76,6 +77,7 @@ namespace dbc
         Machine_ = std::make_unique<SystemInfo>();
         DataFiles_ = std::make_unique<DataFileSystem>();
         FileMaps_ = std::make_unique<FileMapSystem>();
+        FileBlocks_ = std::make_unique<FileBlockSystem>();
         dbc::log::AttachRingBuffer(DebugSystem_.get());
 
         Initialized_ = true;
@@ -93,6 +95,7 @@ namespace dbc
         Machine_.reset();
         DataFiles_.reset();
         FileMaps_.reset();
+        FileBlocks_.reset();
         Network_.reset();
         Video_.reset();
         DebugSystem_.reset();
@@ -383,6 +386,11 @@ namespace dbc
     FileMapSystem& EngineKernel::FileMaps()
     {
         return *FileMaps_;
+    }
+
+    FileBlockSystem& EngineKernel::FileBlocks()
+    {
+        return *FileBlocks_;
     }
 
 } // namespace dbc

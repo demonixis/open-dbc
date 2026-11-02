@@ -10,6 +10,7 @@
 #include "engine/systems/debug_system.hpp"
 #include "engine/systems/dll_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
+#include "engine/systems/file_block_system.hpp"
 #include "engine/systems/file_io_system.hpp"
 #include "engine/systems/file_map_system.hpp"
 #include "engine/systems/graphics_device_system.hpp"

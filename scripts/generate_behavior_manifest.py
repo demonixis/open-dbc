@@ -1847,6 +1847,44 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ENHANCEMENT_FILE_BLOCK_TESTS = {
+    "files": "test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files",
+    "media": "test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations",
+}
+UNIT_WITNESSES += tuple(
+    ("dbpro", kind, name, code, "zip-archive-state", ENHANCEMENT_FILE_BLOCK_TESTS[group])
+    for group, kind, name, code in (
+        ("files", "Command", "CREATE FILE BLOCK", "create file block 1, \"media.fb\"\n"),
+        ("files", "Command", "OPEN FILE BLOCK", "open file block \"media.fb\", 3\n"),
+        ("files", "Command", "OPEN FILE BLOCK", "open file block \"media.fb\", 2, \"mypassword\"\n"),
+        ("files", "Command", "SAVE FILE BLOCK", "save file block 1\n"),
+        ("files", "Command", "CLOSE FILE BLOCK", "close file block 1\n"),
+        ("files", "Command", "DELETE FILE BLOCK", "delete file block 2\n"),
+        ("files", "Command", "SET FILE BLOCK KEY", "set file block key 1, \"mypassword\"\n"),
+        ("files", "Command", "SET FILE BLOCK COMPRESSION", "set file block compression 1, 0\n"),
+        ("files", "Command", "ADD FILE TO BLOCK", "add file to block 1, \"media/raw.bin\"\n"),
+        ("files", "Command", "REMOVE FILE FROM BLOCK", "remove file from block 2, \"media/raw.bin\"\n"),
+        ("files", "Command", "EXTRACT FILE FROM BLOCK", "extract file from block 2, \"media/notes.txt\", \"out\"\n"),
+        ("files", "Command", "PERFORM CHECKLIST FOR FILE BLOCK DATA", "perform checklist for file block data 2\n"),
+        ("files", "Command", "LOAD MEMBLOCK FROM BLOCK", "load memblock from block 2, \"media/raw.bin\", 4\n"),
+        ("files", "Command", "LOAD FILE FROM BLOCK", "load file from block 2, \"media/notes.txt\", 1\n"),
+        ("files", "Function", "GET FILE BLOCK EXISTS", "value = get file block exists(1)\n"),
+        ("files", "Function", "GET FILE BLOCK COUNT", "value = get file block count(1)\n"),
+        ("files", "Function", "GET FILE BLOCK SIZE", "value = get file block size(1)\n"),
+        ("files", "Function", "GET FILE BLOCK DATA EXISTS", "value = get file block data exists(2, \"media/notes.txt\")\n"),
+        ("files", "Function", "GET FILE BLOCK COMPRESSION", "value = get file block compression(1)\n"),
+        ("files", "Function", "GET FILE BLOCK KEY", "value = get file block key(1)\n"),
+        ("media", "Command", "ADD IMAGE TO BLOCK", "add image to block 1, 1, \"image.bmp\"\n"),
+        ("media", "Command", "ADD BITMAP TO BLOCK", "add bitmap to block 1, 1, \"bitmap.bmp\"\n"),
+        ("media", "Command", "ADD OBJECT TO BLOCK", "add object to block 1, 1, \"object.dbo\"\n"),
+        ("media", "Command", "LOAD IMAGE FROM BLOCK", "load image from block 1, \"image.bmp\", 2\n"),
+        ("media", "Command", "LOAD BITMAP FROM BLOCK", "load bitmap from block 1, \"bitmap.bmp\", 2\n"),
+        ("media", "Command", "LOAD OBJECT FROM BLOCK", "load object from block 1, \"object.dbo\", 2\n"),
+        ("media", "Command", "LOAD SOUND FROM BLOCK", "load sound from block 1, \"behold.wav\", 2\n"),
+        ("media", "Command", "LOAD ANIMATION FROM BLOCK", "load animation from block 1, \"red_blue.mp4\", 1\n"),
+    )
+)
+
 def inspect(opendbc: Path, source: Path, profile: str, what: str) -> dict:
     result = subprocess.run([str(opendbc), "inspect", str(source), "--json", "--dialect", profile],
                             text=True, capture_output=True, check=False)

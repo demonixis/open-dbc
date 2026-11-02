@@ -381,48 +381,21 @@ dbpro	Function_ExtClothSizeEffectorAddKey	Function	SIZE EFFECTOR ADD KEY	Target	
 dbpro	Function_ExtClothSizeEffectorGetKeyTime	Function	SIZE EFFECTOR GET KEY TIME	Target	input	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtClothSizeEffectorGetKeyValue	Function	SIZE EFFECTOR GET KEY VALUE	Target	input	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtClothSizeEffectorGetNumKeys	Function	SIZE EFFECTOR GET NUM KEYS	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementAddBitmapToBlock	Command	ADD BITMAP TO BLOCK	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementAddFileToBlock	Command	ADD FILE TO BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementAddImageToBlock	Command	ADD IMAGE TO BLOCK	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementAddObjectToBlock	Command	ADD OBJECT TO BLOCK	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementCloseFileBlock	Command	CLOSE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementCreateFileBlock	Command	CREATE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementDeleteFileBlock	Command	DELETE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementDeleteOggVorbis	Command	DELETE OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementEncodeToOggVorbis	Command	ENCODE TO OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementExtractFileFromBlock	Command	EXTRACT FILE FROM BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementGetVoiceList	Command	GET VOICE LIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementLoadAnimationFromBlock	Command	LOAD ANIMATION FROM BLOCK	Deferred	video	dbpro-reference	media-backend
-dbpro	Command_ExtEnhancementLoadBitmapFromBlock	Command	LOAD BITMAP FROM BLOCK	Study	display	dbpro-reference	typed-load-errors
-dbpro	Command_ExtEnhancementLoadFileFromBlock	Command	LOAD FILE FROM BLOCK	Study	file	dbpro-reference	typed-load-errors
-dbpro	Command_ExtEnhancementLoadImageFromBlock	Command	LOAD IMAGE FROM BLOCK	Study	core	dbpro-reference	typed-load-errors
-dbpro	Command_ExtEnhancementLoadMemblockFromBlock	Command	LOAD MEMBLOCK FROM BLOCK	Study	memory	dbpro-reference	typed-load-errors
-dbpro	Command_ExtEnhancementLoadObjectFromBlock	Command	LOAD OBJECT FROM BLOCK	Study	3d	dbpro-reference	typed-load-errors
 dbpro	Command_ExtEnhancementLoadOggVorbis	Command	LOAD OGG VORBIS	Study	core	dbpro-reference	typed-load-errors
-dbpro	Command_ExtEnhancementLoadSoundFromBlock	Command	LOAD SOUND FROM BLOCK	Study	audio	dbpro-reference	typed-load-errors
 dbpro	Command_ExtEnhancementLoopOggVorbis	Command	LOOP OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementOpenFileBlock	Command	OPEN FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementPauseOggVorbis	Command	PAUSE OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementPerformChecklistForFileBlockData	Command	PERFORM CHECKLIST FOR FILE BLOCK DATA	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementPlayOggVorbis	Command	PLAY OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementRemoveFileFromBlock	Command	REMOVE FILE FROM BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementResumeOggVorbis	Command	RESUME OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSaveFileBlock	Command	SAVE FILE BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSendVoiceMessage	Command	SEND VOICE MESSAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSendVoiceMessageXml	Command	SEND VOICE MESSAGE XML	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetFileBlockCompression	Command	SET FILE BLOCK COMPRESSION	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementSetFileBlockKey	Command	SET FILE BLOCK KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetOggVorbisVolume	Command	SET OGG VORBIS VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetVoice	Command	SET VOICE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetVoiceSpeed	Command	SET VOICE SPEED	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementSetVoiceVolume	Command	SET VOICE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementStopOggVorbis	Command	STOP OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetFileBlockCompression	Function	GET FILE BLOCK COMPRESSION	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetFileBlockCount	Function	GET FILE BLOCK COUNT	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetFileBlockDataExists	Function	GET FILE BLOCK DATA EXISTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetFileBlockExists	Function	GET FILE BLOCK EXISTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetFileBlockKey	Function	GET FILE BLOCK KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetFileBlockSize	Function	GET FILE BLOCK SIZE	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetOggVorbisExists	Function	GET OGG VORBIS EXISTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetOggVorbisState	Function	GET OGG VORBIS STATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetOggVorbisVolume	Function	GET OGG VORBIS VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle

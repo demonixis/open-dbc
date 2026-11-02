@@ -3,6 +3,7 @@ add_library(dbc_engine STATIC
   systems/system_info.cpp
   systems/data_file_system.cpp
   systems/file_map_system.cpp
+  systems/file_block_system.cpp
   systems/vr_system.cpp
   systems/vr_tracking.cpp
   systems/vr_presenter.cpp
@@ -59,6 +60,7 @@ target_link_libraries(dbc_engine
     nlohmann_json::nlohmann_json
   PRIVATE
     Jolt
+    opendbc_miniz
     enet
 )
 

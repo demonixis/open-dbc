@@ -33,6 +33,7 @@ namespace dbc
     class SystemInfo;
     class DataFileSystem;
     class FileMapSystem;
+    class FileBlockSystem;
 
     class EngineKernel
     {
@@ -99,6 +100,7 @@ namespace dbc
         SystemInfo& Machine();
         DataFileSystem& DataFiles();
         FileMapSystem& FileMaps();
+        FileBlockSystem& FileBlocks();
 
       private:
         bool Initialized_ = false;
@@ -128,6 +130,7 @@ namespace dbc
         std::unique_ptr<SystemInfo> Machine_;
         std::unique_ptr<DataFileSystem> DataFiles_;
         std::unique_ptr<FileMapSystem> FileMaps_;
+        std::unique_ptr<FileBlockSystem> FileBlocks_;
     };
 
 } // namespace dbc

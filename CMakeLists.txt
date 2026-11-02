@@ -398,6 +398,22 @@ opendbc_fetch_dependency(enet
 )
 FetchContent_MakeAvailable(enet)
 target_include_directories(enet SYSTEM INTERFACE ${enet_SOURCE_DIR}/include)
+
+# The Enhancement Pack's file blocks deflate with miniz; OpenDBC writes the ZIP container itself.
+opendbc_fetch_dependency(miniz
+  https://github.com/richgel999/miniz.git
+  77d0dce8627735138c51770d1799a1ef48f2117d # 3.1.2
+  # Only its sources are built, not its CMake project.
+  SOURCE_SUBDIR opendbc-sources-only
+)
+FetchContent_MakeAvailable(miniz)
+file(WRITE "${CMAKE_BINARY_DIR}/miniz_export/miniz_export.h" "#pragma once\n#define MINIZ_EXPORT\n")
+add_library(opendbc_miniz STATIC "${miniz_SOURCE_DIR}/miniz.c" "${miniz_SOURCE_DIR}/miniz_tdef.c"
+            "${miniz_SOURCE_DIR}/miniz_tinfl.c")
+target_compile_definitions(opendbc_miniz PUBLIC MINIZ_NO_ARCHIVE_APIS MINIZ_NO_STDIO MINIZ_NO_TIME
+                           MINIZ_NO_ZLIB_COMPATIBLE_NAMES)
+target_include_directories(opendbc_miniz SYSTEM PUBLIC "${miniz_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/miniz_export")
+set_target_properties(opendbc_miniz PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # ENet links the Windows socket libraries for MinGW only.
 if(WIN32)
   target_link_libraries(enet INTERFACE ws2_32 winmm)

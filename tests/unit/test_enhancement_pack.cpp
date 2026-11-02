@@ -1,7 +1,10 @@
 #include "engine/runtime_compatibility.hpp"
 #include "engine/systems/data_file_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
+#include "engine/systems/file_block_system.hpp"
 #include "engine/systems/file_map_system.hpp"
+#include "engine/systems/image_store.hpp"
+#include "engine/systems/memblock_system.hpp"
 #include "interpreter/engine_builtin_context.hpp"
 #include "interpreter/engine_builtin_host.hpp"
 #include "interpreter/engine_builtin_registry.hpp"
@@ -426,4 +429,122 @@ TEST_CASE("Enhancement Pack file maps share memory between programs")
     CHECK(Guest.Fails(S::Function_ExtEnhancementGetFileMapDword, {Int(2), Int(0)}));
     Host.Require(S::Command_ExtEnhancementDestroyFileMap, {Int(1)});
     CHECK(Guest.CommandFails(S::Command_ExtEnhancementOpenFileMap, {Int(2), MapName}));
+}
+
+TEST_CASE("FileBlockSystem names entries as paths without a root or dot folders")
+{
+    CHECK(dbc::FileBlockSystem::NormaliseEntryName(".\\media\\a.bmp") == "media/a.bmp");
+    CHECK(dbc::FileBlockSystem::NormaliseEntryName("C:\\games//data/./b.bmp") == "games/data/b.bmp");
+    CHECK(dbc::FileBlockSystem::NormaliseEntryName("/object.dbo") == "object.dbo");
+    CHECK(dbc::FileBlockSystem::NormaliseEntryName("../up.txt") == "../up.txt");
+}
+
+TEST_CASE("Enhancement Pack file blocks store, encrypt and extract files")
+{
+    using S = SymbolId;
+    ScratchDirectory Scratch("opendbc-file-block");
+    std::filesystem::create_directories(Scratch.Path() / "media");
+    Scratch.Write("media/notes.txt", "hello file blocks, hello file blocks, hello file blocks");
+    Scratch.Write("media/raw.bin", std::string("\x01\x02\x03\x04", 4));
+    Application App("enhancement-file-blocks");
+    App.Context().AssetRoot = Scratch.Path();
+    const auto Str = [](const char* Text) { return BuiltinValue::FromString(Text); };
+
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockExists, {Int(1)}) == 0.0);
+    App.Require(S::Command_ExtEnhancementCreateFileBlock, {Int(1), Str("media.fb")});
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockCompression, {Int(1)}) == 9.0);
+    App.Require(S::Command_ExtEnhancementSetFileBlockKey, {Int(1), Str("mypassword")});
+    App.Require(S::Command_ExtEnhancementAddFileToBlock, {Int(1), Str(".\\media\\notes.txt")});
+    App.Require(S::Command_ExtEnhancementSetFileBlockCompression, {Int(1), Int(0)});
+    App.Require(S::Command_ExtEnhancementAddFileToBlock, {Int(1), Str("media/raw.bin")});
+    App.Require(S::Command_ExtEnhancementAddFileToBlock, {Int(1), Str("media/raw.bin")});
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockCount, {Int(1)}) == 2.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockKey, {Int(1)}) == 1.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockSize, {Int(1)}) > 0.0);
+    CHECK(std::filesystem::exists(Scratch.Path() / "media.fb"));
+    App.Require(S::Command_ExtEnhancementSaveFileBlock, {Int(1)});
+    App.Require(S::Command_ExtEnhancementCloseFileBlock, {Int(1)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockExists, {Int(1)}) == 0.0);
+
+    App.Require(S::Command_ExtEnhancementOpenFileBlock, {Str("media.fb"), Int(2), Str("mypassword")});
+    App.Require(S::Command_ExtEnhancementPerformChecklistForFileBlockData, {Int(2)});
+    CHECK(ChecklistNames(App.Context()) == std::vector<std::string>{"media/notes.txt", "media/raw.bin"});
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockDataExists, {Int(2), Str("MEDIA\\NOTES.TXT")}) == 1.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockDataExists, {Int(2), Str("missing.txt")}) == 0.0);
+    App.Require(S::Command_ExtEnhancementExtractFileFromBlock, {Int(2), Str("media/notes.txt"), Str("out")});
+    std::ifstream Extracted(Scratch.Path() / "out/media/notes.txt");
+    CHECK(std::string(std::istreambuf_iterator<char>(Extracted), {}) ==
+          "hello file blocks, hello file blocks, hello file blocks");
+    App.Require(S::Command_ExtEnhancementLoadMemblockFromBlock, {Int(2), Str("media/raw.bin"), Int(4)});
+    int Byte = 0;
+    std::string Error;
+    REQUIRE(App.Kernel().Memblocks().ReadMemblockByte(Byte, 4, 3, &Error));
+    CHECK(Byte == 4);
+    App.Require(S::Command_ExtEnhancementLoadFileFromBlock, {Int(2), Str("media/notes.txt"), Int(1)});
+    CHECK(App.Number(S::Function_FileOpen, {Int(1)}) == 1.0);
+    CHECK(App.Number(S::Function_ReadByte, {Int(1)}) == 'h');
+
+    App.Require(S::Command_ExtEnhancementRemoveFileFromBlock, {Int(2), Str("media/raw.bin")});
+    CHECK(App.CommandFails(S::Command_ExtEnhancementRemoveFileFromBlock, {Int(2), Str("media/raw.bin")}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementLoadMemblockFromBlock, {Int(2), Str("media/raw.bin"), Int(5)}));
+    // Deleting drops the removal instead of saving it.
+    App.Require(S::Command_ExtEnhancementDeleteFileBlock, {Int(2)});
+    App.Require(S::Command_ExtEnhancementOpenFileBlock, {Str("media.fb"), Int(3)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetFileBlockCount, {Int(3)}) == 2.0);
+    CHECK(App.CommandFails(S::Command_ExtEnhancementLoadMemblockFromBlock, {Int(3), Str("media/raw.bin"), Int(5)}));
+    CHECK(App.Error.find("key") != std::string::npos);
+
+    // An entry naming a parent folder never leaves the extraction folder.
+    std::vector<std::uint8_t> Payload = {'x'};
+    REQUIRE(App.Kernel().FileBlocks().AddBytes(3, "../escape.txt", Payload, &Error));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementExtractFileFromBlock, {Int(3), Str("../escape.txt"), Str("out")}));
+    CHECK_FALSE(std::filesystem::exists(Scratch.Path() / "escape.txt"));
+
+    CHECK(App.CommandFails(S::Command_ExtEnhancementOpenFileBlock, {Str("media/notes.txt"), Int(4)}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementSetFileBlockCompression, {Int(3), Int(10)}));
+    CHECK(App.Fails(S::Function_ExtEnhancementGetFileBlockCount, {Int(9)}));
+    CHECK(App.Fails(S::Function_ExtEnhancementGetFileBlockExists, {Int(256)}));
+}
+
+TEST_CASE("Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations")
+{
+    using S = SymbolId;
+    ScratchDirectory Scratch("opendbc-file-block-media");
+    Application App("enhancement-file-block-media");
+    App.Context().AssetRoot = Scratch.Path();
+    const auto Str = [](const char* Text) { return BuiltinValue::FromString(Text); };
+    dbc::EngineKernel& Kernel = App.Kernel();
+    std::string Error;
+    REQUIRE(Kernel.Memblocks().MakeMemblock(1, 20, &Error));
+    REQUIRE(Kernel.Memblocks().WriteMemblockDword(1, 0, 2, &Error));
+    REQUIRE(Kernel.Memblocks().WriteMemblockDword(1, 4, 1, &Error));
+    REQUIRE(Kernel.Memblocks().WriteMemblockDword(1, 8, 32, &Error));
+    REQUIRE(Kernel.Memblocks().MakeImageFromMemblock(1, 1, &Error));
+    REQUIRE(Kernel.ImageStoreRef().CreateBitmap(1, 4, 3, &Error));
+    App.Require(SymbolId::Command_MakeObjectCube, {Int(1), BuiltinValue::FromNumber(10.0)});
+    const std::filesystem::path Source(TEST_SOURCE_DIR);
+    std::filesystem::copy_file(Source / "examples/dbpro/tutorials/memblocks/behold.wav", Scratch.Path() / "behold.wav");
+    std::filesystem::copy_file(Source / "tests/fixtures/video/red_blue.mp4", Scratch.Path() / "red_blue.mp4");
+
+    App.Require(S::Command_ExtEnhancementCreateFileBlock, {Int(1), Str("media.zip")});
+    App.Require(S::Command_ExtEnhancementAddImageToBlock, {Int(1), Int(1), Str("image.bmp")});
+    App.Require(S::Command_ExtEnhancementAddBitmapToBlock, {Int(1), Int(1), Str("bitmap.bmp")});
+    App.Require(S::Command_ExtEnhancementAddObjectToBlock, {Int(1), Int(1), Str("object.dbo")});
+    App.Require(S::Command_ExtEnhancementAddFileToBlock, {Int(1), Str("behold.wav")});
+    App.Require(S::Command_ExtEnhancementAddFileToBlock, {Int(1), Str("red_blue.mp4")});
+    CHECK(App.CommandFails(S::Command_ExtEnhancementAddImageToBlock, {Int(2), Int(1), Str("image.bmp")}));
+    App.Require(S::Command_ExtEnhancementSaveFileBlock, {Int(1)});
+
+    App.Require(S::Command_ExtEnhancementLoadImageFromBlock, {Int(1), Str("image.bmp"), Int(2)});
+    CHECK(App.Number(S::Function_ImageExist, {Int(2)}) == 1.0);
+    App.Require(S::Command_ExtEnhancementLoadBitmapFromBlock, {Int(1), Str("bitmap.bmp"), Int(2)});
+    CHECK(App.Number(S::Function_BitmapExist, {Int(2)}) == 1.0);
+    App.Require(S::Command_ExtEnhancementLoadObjectFromBlock, {Int(1), Str("object.dbo"), Int(2)});
+    CHECK(App.Number(S::Function_ObjectExist, {Int(2)}) == 1.0);
+    App.Require(S::Command_ExtEnhancementLoadSoundFromBlock, {Int(1), Str("behold.wav"), Int(2)});
+    CHECK(App.Number(S::Function_SoundExist, {Int(2)}) == 1.0);
+#if defined(__APPLE__) || defined(_WIN32)
+    App.Require(S::Command_ExtEnhancementLoadAnimationFromBlock, {Int(1), Str("red_blue.mp4"), Int(1)});
+    CHECK(App.Number(S::Function_AnimationHeight, {Int(1)}) == 48.0);
+#endif
 }

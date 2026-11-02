@@ -16,9 +16,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | Symbol | Kind | Arity | Typed overloads | OpenDBC status | Provenance | Description |
 |---|---|---:|---|---|---|---|
 | `3DS2X` | Command | 2 | string, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ADD BITMAP TO BLOCK` | Command | 3 | integer, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ADD FILE TO BLOCK` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `ADD IMAGE TO BLOCK` | Command | 3 | integer, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD BITMAP TO BLOCK` | Command | 3 | integer, integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `ADD FILE TO BLOCK` | Command | 2 | integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `ADD IMAGE TO BLOCK` | Command | 3 | integer, integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD LIGHT MAP LIGHT` | Command | 9 | number, number, number, number, number, number, number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD LIMB` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD LIMB TO LIGHT MAP POOL` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -26,7 +26,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `ADD MATRIX4` | Command | 3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD MEMBLOCK TO OBJECT` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD MESH TO VERTEXDATA` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `ADD OBJECT TO BLOCK` | Command | 3 | integer, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `ADD OBJECT TO BLOCK` | Command | 3 | integer, integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `ADD OBJECT TO LIGHT MAP POOL` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD RAGDOLL FORCE` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `ADD RAGDOLL IMPULSE` | Command | 5 | integer, integer, real, real, real -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -115,7 +115,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CLONE SPRITE` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLOSE DATA FILE` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLOSE FILE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `CLOSE FILE BLOCK` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `CLOSE FILE BLOCK` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLOSE FILE MAP` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLOSE IMAGEBLOCK` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CLS` | Command | 0-1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -141,7 +141,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `COPY VECTOR4` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CREATE ANIMATED SPRITE` | Command | 5 | number, string, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CREATE BITMAP` | Command | 3-4 | number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `CREATE FILE BLOCK` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `CREATE FILE BLOCK` | Command | 2 | integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CREATE FILE MAP` | Command | 3 | integer, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CREATE LIGHT MAPS` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CREATE NET GAME` | Command | 3-4 | string, string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -162,7 +162,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DELETE EFFECTOR` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE EMITTER` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE FILE` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `DELETE FILE BLOCK` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `DELETE FILE BLOCK` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE ICON` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `DELETE IMAGE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `DELETE LIGHT` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -241,7 +241,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `EXCLUDE OBJECT ON` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `EXECUTE FILE` | Command | 3-4 | string, string, string, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `EXIT PROMPT` | Command | 2 | string, string -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `EXTRACT FILE FROM BLOCK` | Command | 3 | integer, string, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `EXTRACT FILE FROM BLOCK` | Command | 3 | integer, string, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FADE BITMAP` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FADE OBJECT` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `FASTSYNC` | Command | 0-1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -349,27 +349,27 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `LINK LIMB` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD 3DSOUND` | Command | 2-4 | string, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD ANIMATION` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `LOAD ANIMATION FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD ANIMATION FROM BLOCK` | Command | 3 | integer, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD ARRAY` | Command | 2 | string, any array -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD BITMAP` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `LOAD BITMAP FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD BITMAP FROM BLOCK` | Command | 3 | integer, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD BSP` | Command | 2 | string, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD CDMUSIC` | Command | 2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD CLOTH STATE` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD DLL` | Command | 2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD DVD ANIMATION` | Command | 1 | number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD EFFECT` | Command | 3-4 | string, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `LOAD FILE FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD FILE FROM BLOCK` | Command | 3 | integer, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD IMAGE` | Command | 2-4 | string, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `LOAD IMAGE FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `LOAD MEMBLOCK FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD IMAGE FROM BLOCK` | Command | 3 | integer, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `LOAD MEMBLOCK FROM BLOCK` | Command | 3 | integer, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD MESH` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD MUSIC` | Command | 2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD OBJECT` | Command | 2-4 | string, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `LOAD OBJECT FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD OBJECT FROM BLOCK` | Command | 3 | integer, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD OGG VORBIS` | Command | 2 | string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOAD SOUND` | Command | 2-5 | string, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `LOAD SOUND FROM BLOCK` | Command | 3 | integer, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `LOAD SOUND FROM BLOCK` | Command | 3 | integer, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `LOAD STATIC OBJECTS` | Command | 2 | string, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOCK BACKBUFFER` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `LOCK OBJECT OFF` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -498,7 +498,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `OFFSET LIMB` | Command | 5-6 | number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OFFSET SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OPEN DATA FILE` | Command | 3 | string, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `OPEN FILE BLOCK` | Command | 2-3 | string, integer -> void; string, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `OPEN FILE BLOCK` | Command | 2-3 | string, integer -> void; string, integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OPEN FILE MAP` | Command | 2 | integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OPEN IMAGEBLOCK` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `OPEN TO READ` | Command | 2 | number, string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -515,7 +515,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `PERFORM CHECKLIST FOR EAX EFFECTS` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR EFFECT ERRORS` | Command | 0-1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR EFFECT VALUES` | Command | 1 | number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `PERFORM CHECKLIST FOR FILE BLOCK DATA` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `PERFORM CHECKLIST FOR FILE BLOCK DATA` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR FILES` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR FONTS` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `PERFORM CHECKLIST FOR GRAPHICS CARDS` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -967,7 +967,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `RECORD SOUND` | Command | 1-2 | number, number -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `REDUCE MESH` | Command | 6 | number, number, number, number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `RELAX CLOTH` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `REMOVE FILE FROM BLOCK` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `REMOVE FILE FROM BLOCK` | Command | 2 | integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REMOVE FROM QUEUE` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REMOVE FROM STACK` | Command | 1 | any array -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `REMOVE LIMB` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -1004,7 +1004,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SAVE ARRAY` | Command | 2 | string, any array -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SAVE BITMAP` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SAVE CLOTH STATE` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SAVE FILE BLOCK` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SAVE FILE BLOCK` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SAVE ICON FROM IMAGE` | Command | 2 | string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SAVE IMAGE` | Command | 2-3 | string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SAVE MESH` | Command | 2 | string, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -1165,8 +1165,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET EMULATION OFF` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET EMULATION ON` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET FAST BOUNDS CALCULATION` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET FILE BLOCK COMPRESSION` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `SET FILE BLOCK KEY` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET FILE BLOCK COMPRESSION` | Command | 2 | integer, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `SET FILE BLOCK KEY` | Command | 2 | integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET FILE MAP DWORD` | Command | 3 | integer, integer, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET FILE MAP FLOAT` | Command | 3 | integer, integer, real -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET FILE MAP STRING$` | Command | 3 | integer, integer, string -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
@@ -1738,12 +1738,12 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET EAX SOURCE ROOM` | Function | 1 | integer -> integer | Compatibility stub (permanent) | DBPro snapshot | Historical DarkBASIC Professional function callable through a documented neutral compatibility stub. |
 | `GET EAX SOURCE ROOM HF` | Function | 1 | integer -> real | Compatibility stub (permanent) | DBPro snapshot | Historical DarkBASIC Professional function callable through a documented neutral compatibility stub. |
 | `GET EFFECT PARAMETER INDEX` | Function | 2 | integer, string -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET FILE BLOCK COMPRESSION` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET FILE BLOCK COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET FILE BLOCK DATA EXISTS` | Function | 2 | integer, string -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET FILE BLOCK EXISTS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET FILE BLOCK KEY` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET FILE BLOCK SIZE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET FILE BLOCK COMPRESSION` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET FILE BLOCK COUNT` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET FILE BLOCK DATA EXISTS` | Function | 2 | integer, string -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET FILE BLOCK EXISTS` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET FILE BLOCK KEY` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET FILE BLOCK SIZE` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET FILE CREATION$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET FILE DATE$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET FILE MAP DWORD` | Function | 2 | integer, integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |

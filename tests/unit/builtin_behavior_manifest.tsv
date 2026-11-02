@@ -1747,16 +1747,38 @@ dbpro	1436	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and 
 dbpro	1439	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1441	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbpro	1443	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1608	2165	Command	ADD BITMAP TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1609	2166	Command	ADD FILE TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1610	2167	Command	ADD IMAGE TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1611	2168	Command	ADD OBJECT TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
 dbpro	1613	2170	Command	CLOSE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1614	2171	Command	CLOSE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1615	2172	Command	CLOSE FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1616	2173	Command	CREATE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1617	2174	Command	CREATE FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1618	2175	Command	DELETE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1620	2177	Command	DESTROY FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1622	2180	Command	EXTRACT FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1623	2181	Command	GET PROCESSOR ON CHIP FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1624	2182	Command	GET PROCESSOR POWER MANAGEMENT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1625	2183	Command	GET PROCESSOR SUPPORTED FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1627	2185	Command	LOAD ANIMATION FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1628	2186	Command	LOAD BITMAP FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1629	2187	Command	LOAD FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1630	2188	Command	LOAD IMAGE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1631	2189	Command	LOAD MEMBLOCK FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1632	2190	Command	LOAD OBJECT FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1634	2192	Command	LOAD SOUND FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
 dbpro	1636	2194	Command	OPEN DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1637	2195	Command	OPEN FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1637	2196	Command	OPEN FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1638	2197	Command	OPEN FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1640	2199	Command	PERFORM CHECKLIST FOR EAX EFFECTS	checklist-state	test_enhancement_pack.cpp::PERFORM CHECKLIST FOR EAX EFFECTS lists the presets in the Enhancement Pack's order	-
+dbpro	1641	2200	Command	PERFORM CHECKLIST FOR FILE BLOCK DATA	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1643	2202	Command	REMOVE FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1645	2204	Command	SAVE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1691	2250	Command	SET FILE BLOCK COMPRESSION	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1692	2251	Command	SET FILE BLOCK KEY	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1693	2252	Command	SET FILE MAP DWORD	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1694	2253	Command	SET FILE MAP FLOAT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1695	2254	Command	SET FILE MAP STRING$	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
@@ -1784,6 +1806,12 @@ dbpro	1721	2280	Function	GET DRIVE SERIAL$	host-system-query	test_enhancement_pa
 dbpro	1722	2281	Function	GET DRIVE TOTAL SIZE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
 dbpro	1723	2282	Function	GET DRIVE TRACK COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
 dbpro	1724	2283	Function	GET DRIVE USED SPACE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1761	2320	Function	GET FILE BLOCK COMPRESSION	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1762	2321	Function	GET FILE BLOCK COUNT	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1763	2322	Function	GET FILE BLOCK DATA EXISTS	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1764	2323	Function	GET FILE BLOCK EXISTS	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1765	2324	Function	GET FILE BLOCK KEY	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1766	2325	Function	GET FILE BLOCK SIZE	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
 dbpro	1767	2326	Function	GET FILE MAP DWORD	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1768	2327	Function	GET FILE MAP FLOAT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
 dbpro	1769	2328	Function	GET FILE MAP STRING$	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
