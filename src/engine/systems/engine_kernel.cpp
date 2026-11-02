@@ -19,6 +19,7 @@
 #include "physics_system.hpp"
 #include "renderer_system.hpp"
 #include "sprite_system.hpp"
+#include "system_info.hpp"
 #include "text_system.hpp"
 #include "video_system.hpp"
 #include "vr_system.hpp"
@@ -70,6 +71,7 @@ namespace dbc
         Video_ = std::make_unique<VideoSystem>(*this);
         Network_ = std::make_unique<NetworkSystem>();
         Dlls_ = std::make_unique<DllSystem>(*this);
+        Machine_ = std::make_unique<SystemInfo>();
         dbc::log::AttachRingBuffer(DebugSystem_.get());
 
         Initialized_ = true;
@@ -84,6 +86,7 @@ namespace dbc
         if (Vr_)
             Vr_->DetachDevice();
         Dlls_.reset();
+        Machine_.reset();
         Network_.reset();
         Video_.reset();
         DebugSystem_.reset();
@@ -359,6 +362,11 @@ namespace dbc
     const DllSystem& EngineKernel::Dlls() const
     {
         return *Dlls_;
+    }
+
+    SystemInfo& EngineKernel::Machine()
+    {
+        return *Machine_;
     }
 
 } // namespace dbc

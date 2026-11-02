@@ -395,9 +395,6 @@ dbpro	Command_ExtEnhancementDeleteOggVorbis	Command	DELETE OGG VORBIS	Target	cor
 dbpro	Command_ExtEnhancementDestroyFileMap	Command	DESTROY FILE MAP	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementEncodeToOggVorbis	Command	ENCODE TO OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementExtractFileFromBlock	Command	EXTRACT FILE FROM BLOCK	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementGetProcessorOnChipFeatures	Command	GET PROCESSOR ON CHIP FEATURES	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementGetProcessorPowerManagement	Command	GET PROCESSOR POWER MANAGEMENT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtEnhancementGetProcessorSupportedFeatures	Command	GET PROCESSOR SUPPORTED FEATURES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementGetVoiceList	Command	GET VOICE LIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementLoadAnimationFromBlock	Command	LOAD ANIMATION FROM BLOCK	Deferred	video	dbpro-reference	media-backend
 dbpro	Command_ExtEnhancementLoadBitmapFromBlock	Command	LOAD BITMAP FROM BLOCK	Study	display	dbpro-reference	typed-load-errors
@@ -431,28 +428,10 @@ dbpro	Command_ExtEnhancementSetVoiceVolume	Command	SET VOICE VOLUME	Target	core	
 dbpro	Command_ExtEnhancementStopOggVorbis	Command	STOP OGG VORBIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementUpdateDataFile	Command	UPDATE DATA FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtEnhancementWaitForFileMapEvent	Command	WAIT FOR FILE MAP EVENT	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetCdCount	Function	GET CD COUNT	Target	audio	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetCdLetter	Function	GET CD LETTER$	Target	audio	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetComputerName	Function	GET COMPUTER NAME$	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetDataFileCell	Function	GET DATA FILE CELL	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetDataFileColumnCount	Function	GET DATA FILE COLUMN COUNT	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetDataFileExists	Function	GET DATA FILE EXISTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetDataFileRowCount	Function	GET DATA FILE ROW COUNT	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDisplayDepth	Function	GET DISPLAY DEPTH	Study	display	dbpro-reference	platform-display-mode-matrix
-dbpro	Function_ExtEnhancementGetDisplayHeight	Function	GET DISPLAY HEIGHT	Study	display	dbpro-reference	platform-display-mode-matrix
-dbpro	Function_ExtEnhancementGetDisplayRefreshRate	Function	GET DISPLAY REFRESH RATE	Study	display	dbpro-reference	platform-display-mode-matrix
-dbpro	Function_ExtEnhancementGetDisplayWidth	Function	GET DISPLAY WIDTH	Study	display	dbpro-reference	platform-display-mode-matrix
-dbpro	Function_ExtEnhancementGetDriveBytesPerSector	Function	GET DRIVE BYTES PER SECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveCount	Function	GET DRIVE COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveCylinderCount	Function	GET DRIVE CYLINDER COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveFileLengthSupport	Function	GET DRIVE FILE LENGTH SUPPORT	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveFileSystem	Function	GET DRIVE FILE SYSTEM$	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveFreeSpace	Function	GET DRIVE FREE SPACE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveSectorsPerTrack	Function	GET DRIVE SECTORS PER TRACK	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveSerial	Function	GET DRIVE SERIAL$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveTotalSize	Function	GET DRIVE TOTAL SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveTrackCount	Function	GET DRIVE TRACK COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetDriveUsedSpace	Function	GET DRIVE USED SPACE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetFileBlockCompression	Function	GET FILE BLOCK COMPRESSION	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetFileBlockCount	Function	GET FILE BLOCK COUNT	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetFileBlockDataExists	Function	GET FILE BLOCK DATA EXISTS	Target	file	dbpro-reference	engine-subsystem-and-oracle
@@ -462,30 +441,12 @@ dbpro	Function_ExtEnhancementGetFileBlockSize	Function	GET FILE BLOCK SIZE	Targe
 dbpro	Function_ExtEnhancementGetFileMapDword	Function	GET FILE MAP DWORD	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetFileMapFloat	Function	GET FILE MAP FLOAT	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetFileMapString	Function	GET FILE MAP STRING$	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetInstalledMemory	Function	GET INSTALLED MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetIpAddress	Function	GET IP ADDRESS$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetMemoryAvailable	Function	GET MEMORY AVAILABLE	Target	memory	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetMemoryPercentFree	Function	GET MEMORY PERCENT FREE	Target	memory	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetMemoryPercentUsed	Function	GET MEMORY PERCENT USED	Target	memory	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetOggVorbisExists	Function	GET OGG VORBIS EXISTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetOggVorbisState	Function	GET OGG VORBIS STATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetOggVorbisVolume	Function	GET OGG VORBIS VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorBrand	Function	GET PROCESSOR BRAND$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorCount	Function	GET PROCESSOR COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorFamilyId	Function	GET PROCESSOR FAMILY ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorFrequency	Function	GET PROCESSOR FREQUENCY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorModelId	Function	GET PROCESSOR MODEL ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorName	Function	GET PROCESSOR NAME$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorPlatform	Function	GET PROCESSOR PLATFORM$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorSteppingId	Function	GET PROCESSOR STEPPING ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorTypeId	Function	GET PROCESSOR TYPE ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorUsage	Function	GET PROCESSOR USAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetProcessorVendor	Function	GET PROCESSOR VENDOR$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetUserName	Function	GET USER NAME$	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetVoiceApi	Function	GET VOICE API	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetVoiceSpeed	Function	GET VOICE SPEED	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementGetVoiceVolume	Function	GET VOICE VOLUME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtEnhancementGetWebClient	Function	GET WEB CLIENT$	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementOpenFileDialog	Function	OPEN FILE DIALOG	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtEnhancementSaveFileDialog	Function	SAVE FILE DIALOG	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtOdeCreateRagdollFromBoneModel	Command	ODE CREATE RAGDOLL FROM BONE MODEL	Target	physics	ode-extension	jolt-adapter-and-oracle

@@ -306,9 +306,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET IMAGE` | Command | 5-6 | number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `GET MEMBLOCK FROM OBJECT` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `GET NET MESSAGE` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `GET PROCESSOR ON CHIP FEATURES` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR POWER MANAGEMENT` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR SUPPORTED FEATURES` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR ON CHIP FEATURES` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `GET PROCESSOR POWER MANAGEMENT` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
+| `GET PROCESSOR SUPPORTED FEATURES` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `GET VOICE LIST` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `GET VR CONTROLLER POSITION` | Command | 2 | integer, integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
 | `GET VR CONTROLLER ROTATION` | Command | 2 | integer, integer -> void | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
@@ -1670,14 +1670,14 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET BACKBUFFER PITCH` | Function | 0 | none -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET BACKBUFFER PTR` | Function | 0 | none -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET BACKBUFFER WIDTH` | Function | 0 | none -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET CD COUNT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET CD LETTER$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET CD COUNT` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET CD LETTER$` | Function | 1 | integer -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET CHILD WINDOW HEIGHT` | Function | 0-1 | none -> integer; integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CHILD WINDOW WIDTH` | Function | 0-1 | none -> integer; integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CHILD WINDOW X` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CHILD WINDOW Y` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CLIPBOARD$` | Function | 0 | none -> string | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET COMPUTER NAME$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET COMPUTER NAME$` | Function | 0 | none -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET DATA FILE CELL` | Function | 3 | integer, integer, integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET DATA FILE COLUMN COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET DATA FILE EXISTS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
@@ -1685,21 +1685,21 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET DATE$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET DEVICE TYPE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET DIR$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `GET DISPLAY DEPTH` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DISPLAY HEIGHT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DISPLAY REFRESH RATE` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DISPLAY WIDTH` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE BYTES PER SECTOR` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE COUNT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE CYLINDER COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE FILE LENGTH SUPPORT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE FILE SYSTEM$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE FREE SPACE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE SECTORS PER TRACK` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE SERIAL$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE TOTAL SIZE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE TRACK COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DRIVE USED SPACE` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DISPLAY DEPTH` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DISPLAY HEIGHT` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DISPLAY REFRESH RATE` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DISPLAY WIDTH` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE BYTES PER SECTOR` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE COUNT` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE CYLINDER COUNT` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE FILE LENGTH SUPPORT` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE FILE SYSTEM$` | Function | 1 | integer -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE FREE SPACE` | Function | 2 | integer, integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE SECTORS PER TRACK` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE SERIAL$` | Function | 1 | integer -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE TOTAL SIZE` | Function | 2 | integer, integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE TRACK COUNT` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DRIVE USED SPACE` | Function | 2 | integer, integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET DX VERSION$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET EAX` | Function | 0 | none -> integer | Compatibility stub (permanent) | DBPro snapshot | Historical DarkBASIC Professional function callable through a documented neutral compatibility stub. |
 | `GET EAX AIR ABSORPTION` | Function | 1 | integer -> real | Compatibility stub (permanent) | DBPro snapshot | Historical DarkBASIC Professional function callable through a documented neutral compatibility stub. |
@@ -1761,8 +1761,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET FTP STATUS` | Function | 0 | none -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET GROUND HEIGHT` | Function | 3 | number, number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET INDEXDATA` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `GET INSTALLED MEMORY` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET IP ADDRESS$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET INSTALLED MEMORY` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET IP ADDRESS$` | Function | 0 | none -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET KEY STATE` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET LIMB POLYGON COUNT` | Function | 2 | integer, integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET MATRIX HEIGHT` | Function | 3 | number, number, number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1778,9 +1778,9 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET MEMBLOCK FROM OBJECT` | Function | 2 | number, number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET MEMBLOCK PTR` | Function | 1 | number -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET MEMBLOCK SIZE` | Function | 1 | number -> integer | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `GET MEMORY AVAILABLE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET MEMORY PERCENT FREE` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET MEMORY PERCENT USED` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET MEMORY AVAILABLE` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET MEMORY PERCENT FREE` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET MEMORY PERCENT USED` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET MULTIMATERIAL COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET NUMBER OF CD TRACKS` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET NUMBER OF CLOTH POINTS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
@@ -1799,17 +1799,17 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET PICK VECTOR Z` | Function | 0 | none -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET PIXELS PITCH` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET PIXELS POINTER` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR BRAND$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR COUNT` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR FAMILY ID` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR FREQUENCY` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR MODEL ID` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR NAME$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR PLATFORM$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR STEPPING ID` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR TYPE ID` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR USAGE` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET PROCESSOR VENDOR$` | Function | 1 | integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET PROCESSOR BRAND$` | Function | 1 | integer -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR COUNT` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR FAMILY ID` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR FREQUENCY` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR MODEL ID` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR NAME$` | Function | 1 | integer -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR PLATFORM$` | Function | 1 | integer -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR STEPPING ID` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR TYPE ID` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR USAGE` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET PROCESSOR VENDOR$` | Function | 1 | integer -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET REGISTRY` | Function | 2 | number, number -> real | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET REGISTRY$` | Function | 2 | number, number -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET STATIC COLLISION COUNT` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
@@ -1826,7 +1826,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET TRACKING ROLL` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET TRACKING YAW` | Function | 1 | integer -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET TYPE PATTERN$` | Function | 1-2 | number, number -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET USER NAME$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET USER NAME$` | Function | 0 | none -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA DIFFUSE` | Function | 1 | number -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA INDEX COUNT` | Function | 0 | none -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET VERTEXDATA NORMALS X` | Function | 1 | number -> real | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
@@ -1843,7 +1843,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET VOICE SPEED` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET VOICE VOLUME` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET VR CAMERA HEIGHT` | Function | 0 | none -> real | Implemented | OpenDBC extension | Shared OpenDBC VR addition; see docs/vr.md for its observable contract. |
-| `GET WEB CLIENT$` | Function | 0 | none -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET WEB CLIENT$` | Function | 0 | none -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `HCOS` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `HEX$` | Function | 1 | number -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `HSIN` | Function | 1 | number -> real | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |

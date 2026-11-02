@@ -1,5 +1,6 @@
 add_library(dbc_engine STATIC
   systems/engine_kernel.cpp
+  systems/system_info.cpp
   systems/vr_system.cpp
   systems/vr_tracking.cpp
   systems/vr_presenter.cpp
@@ -89,13 +90,18 @@ dbc_enable_warnings(dbc_engine)
 
 # Animations decode with the platform's media framework; other platforms load them inert.
 if(APPLE)
-    target_sources(dbc_engine PRIVATE systems/video_decoder_avfoundation.mm)
-    set_source_files_properties(systems/video_decoder_avfoundation.mm PROPERTIES COMPILE_OPTIONS -fobjc-arc)
+    target_sources(dbc_engine PRIVATE systems/video_decoder_avfoundation.mm systems/system_info_apple.mm)
+    set_source_files_properties(systems/video_decoder_avfoundation.mm systems/system_info_apple.mm
+                                PROPERTIES COMPILE_OPTIONS -fobjc-arc)
     target_link_libraries(dbc_engine PUBLIC "-framework Foundation" "-framework AVFoundation"
                           "-framework CoreMedia" "-framework CoreVideo")
+    if(NOT IOS)
+        # GET WEB CLIENT$ asks the workspace for the default browser.
+        target_link_libraries(dbc_engine PUBLIC "-framework AppKit")
+    endif()
 elseif(WIN32)
     target_sources(dbc_engine PRIVATE systems/video_decoder_media_foundation.cpp)
-    target_link_libraries(dbc_engine PRIVATE mfplat mfuuid ole32 oleaut32 windowscodecs)
+    target_link_libraries(dbc_engine PRIVATE mfplat mfuuid ole32 oleaut32 windowscodecs ws2_32 shlwapi advapi32)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET GLOBAL

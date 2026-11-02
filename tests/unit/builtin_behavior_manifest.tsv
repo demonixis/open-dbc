@@ -1747,7 +1747,46 @@ dbpro	1436	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and 
 dbpro	1439	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1441	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbpro	1443	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1623	2181	Command	GET PROCESSOR ON CHIP FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1624	2182	Command	GET PROCESSOR POWER MANAGEMENT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1625	2183	Command	GET PROCESSOR SUPPORTED FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1640	2199	Command	PERFORM CHECKLIST FOR EAX EFFECTS	checklist-state	test_enhancement_pack.cpp::PERFORM CHECKLIST FOR EAX EFFECTS lists the presets in the Enhancement Pack's order	-
+dbpro	1703	2262	Function	GET CD COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1704	2263	Function	GET CD LETTER$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1705	2264	Function	GET COMPUTER NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1710	2269	Function	GET DISPLAY DEPTH	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1711	2270	Function	GET DISPLAY HEIGHT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1712	2271	Function	GET DISPLAY REFRESH RATE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1713	2272	Function	GET DISPLAY WIDTH	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1714	2273	Function	GET DRIVE BYTES PER SECTOR	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1715	2274	Function	GET DRIVE COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1716	2275	Function	GET DRIVE CYLINDER COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1717	2276	Function	GET DRIVE FILE LENGTH SUPPORT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1718	2277	Function	GET DRIVE FILE SYSTEM$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1719	2278	Function	GET DRIVE FREE SPACE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1720	2279	Function	GET DRIVE SECTORS PER TRACK	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1721	2280	Function	GET DRIVE SERIAL$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1722	2281	Function	GET DRIVE TOTAL SIZE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1723	2282	Function	GET DRIVE TRACK COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1724	2283	Function	GET DRIVE USED SPACE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1770	2329	Function	GET INSTALLED MEMORY	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1771	2330	Function	GET IP ADDRESS$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1772	2331	Function	GET MEMORY AVAILABLE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1773	2332	Function	GET MEMORY PERCENT FREE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1774	2333	Function	GET MEMORY PERCENT USED	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1778	2337	Function	GET PROCESSOR BRAND$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1779	2338	Function	GET PROCESSOR COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1780	2339	Function	GET PROCESSOR FAMILY ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1781	2340	Function	GET PROCESSOR FREQUENCY	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1782	2341	Function	GET PROCESSOR MODEL ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1783	2342	Function	GET PROCESSOR NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1784	2343	Function	GET PROCESSOR PLATFORM$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1785	2344	Function	GET PROCESSOR STEPPING ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1786	2345	Function	GET PROCESSOR TYPE ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1787	2346	Function	GET PROCESSOR USAGE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1788	2347	Function	GET PROCESSOR VENDOR$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1789	2348	Function	GET USER NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1793	2352	Function	GET WEB CLIENT$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
 dbpro	1796	2355	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
 dbpro	1797	2356	Command	ODE ADD STATIC OBJECT BOX	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
 dbpro	1798	2357	Command	ODE COLLISION GET MESSAGE	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-

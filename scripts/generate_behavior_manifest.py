@@ -1764,6 +1764,57 @@ UNIT_WITNESSES += (
      ENHANCEMENT_EAX_TEST),
 )
 
+ENHANCEMENT_SYSTEM_TESTS = {
+    "processor": "test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor",
+    "memory": "test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero",
+    "drives": "test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did",
+    "names": "test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display",
+}
+UNIT_WITNESSES += tuple(
+    ("dbpro", kind, name, code, "host-system-query", ENHANCEMENT_SYSTEM_TESTS[group])
+    for group, kind, name, code in (
+        ("processor", "Command", "GET PROCESSOR ON CHIP FEATURES", "get processor on chip features 0\n"),
+        ("processor", "Command", "GET PROCESSOR POWER MANAGEMENT", "get processor power management 0\n"),
+        ("processor", "Command", "GET PROCESSOR SUPPORTED FEATURES", "get processor supported features 0\n"),
+        ("processor", "Function", "GET PROCESSOR COUNT", "value = get processor count()\n"),
+        ("processor", "Function", "GET PROCESSOR VENDOR$", "text$ = get processor vendor$(0)\n"),
+        ("processor", "Function", "GET PROCESSOR BRAND$", "text$ = get processor brand$(0)\n"),
+        ("processor", "Function", "GET PROCESSOR NAME$", "text$ = get processor name$(0)\n"),
+        ("processor", "Function", "GET PROCESSOR PLATFORM$", "text$ = get processor platform$(0)\n"),
+        ("processor", "Function", "GET PROCESSOR TYPE ID", "value = get processor type id(0)\n"),
+        ("processor", "Function", "GET PROCESSOR FAMILY ID", "value = get processor family id(0)\n"),
+        ("processor", "Function", "GET PROCESSOR MODEL ID", "value = get processor model id(0)\n"),
+        ("processor", "Function", "GET PROCESSOR STEPPING ID", "value = get processor stepping id(0)\n"),
+        ("processor", "Function", "GET PROCESSOR FREQUENCY", "value = get processor frequency(0)\n"),
+        ("processor", "Function", "GET PROCESSOR USAGE", "value = get processor usage(0)\n"),
+        ("memory", "Function", "GET INSTALLED MEMORY", "value = get installed memory(1)\n"),
+        ("memory", "Function", "GET MEMORY AVAILABLE", "value = get memory available(1)\n"),
+        ("memory", "Function", "GET MEMORY PERCENT USED", "value = get memory percent used()\n"),
+        ("memory", "Function", "GET MEMORY PERCENT FREE", "value = get memory percent free()\n"),
+        ("drives", "Function", "GET DRIVE COUNT", "value = get drive count()\n"),
+        ("drives", "Function", "GET DRIVE CYLINDER COUNT", "value = get drive cylinder count(0)\n"),
+        ("drives", "Function", "GET DRIVE TRACK COUNT", "value = get drive track count(0)\n"),
+        ("drives", "Function", "GET DRIVE SECTORS PER TRACK", "value = get drive sectors per track(0)\n"),
+        ("drives", "Function", "GET DRIVE BYTES PER SECTOR", "value = get drive bytes per sector(0)\n"),
+        ("drives", "Function", "GET DRIVE TOTAL SIZE", "value = get drive total size(0, 1)\n"),
+        ("drives", "Function", "GET DRIVE USED SPACE", "value = get drive used space(0, 1)\n"),
+        ("drives", "Function", "GET DRIVE FREE SPACE", "value = get drive free space(0, 1)\n"),
+        ("drives", "Function", "GET DRIVE FILE LENGTH SUPPORT", "value = get drive file length support(0)\n"),
+        ("drives", "Function", "GET DRIVE SERIAL$", "text$ = get drive serial$(0)\n"),
+        ("drives", "Function", "GET DRIVE FILE SYSTEM$", "text$ = get drive file system$(0)\n"),
+        ("drives", "Function", "GET CD COUNT", "value = get cd count()\n"),
+        ("drives", "Function", "GET CD LETTER$", "text$ = get cd letter$(1)\n"),
+        ("names", "Function", "GET DISPLAY WIDTH", "value = get display width()\n"),
+        ("names", "Function", "GET DISPLAY HEIGHT", "value = get display height()\n"),
+        ("names", "Function", "GET DISPLAY DEPTH", "value = get display depth()\n"),
+        ("names", "Function", "GET DISPLAY REFRESH RATE", "value = get display refresh rate()\n"),
+        ("names", "Function", "GET COMPUTER NAME$", "text$ = get computer name$()\n"),
+        ("names", "Function", "GET USER NAME$", "text$ = get user name$()\n"),
+        ("names", "Function", "GET IP ADDRESS$", "text$ = get ip address$()\n"),
+        ("names", "Function", "GET WEB CLIENT$", "text$ = get web client$()\n"),
+    )
+)
+
 def inspect(opendbc: Path, source: Path, profile: str, what: str) -> dict:
     result = subprocess.run([str(opendbc), "inspect", str(source), "--json", "--dialect", profile],
                             text=True, capture_output=True, check=False)

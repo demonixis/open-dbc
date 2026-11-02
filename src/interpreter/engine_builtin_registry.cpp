@@ -21,6 +21,7 @@
 #include "engine/systems/object_manager.hpp"
 #include "engine/systems/physics_system.hpp"
 #include "engine/systems/renderer_system.hpp"
+#include "engine/systems/system_info.hpp"
 #include "engine/systems/video_system.hpp"
 #include "engine/systems/vr_system.hpp"
 #include "engine_builtin_api/all.hpp"
@@ -2512,6 +2513,73 @@ namespace dbc::interpreter::detail
             const SDL_DisplayID Display = Window ? SDL_GetDisplayForWindow(Window) : SDL_GetPrimaryDisplay();
             const SDL_DisplayMode* Desktop = Display ? SDL_GetDesktopDisplayMode(Display) : nullptr;
             return Desktop ? std::pair<int, int>{Desktop->w, Desktop->h} : std::pair<int, int>{0, 0};
+        }
+
+        const SDL_DisplayMode* CurrentDisplayMode(BuiltinContext& Ctx)
+        {
+            SDL_Window* Window = Ctx.Kernel ? Ctx.Kernel->Core().Window() : nullptr;
+            const SDL_DisplayID Display = Window ? SDL_GetDisplayForWindow(Window) : SDL_GetPrimaryDisplay();
+            return Display ? SDL_GetCurrentDisplayMode(Display) : nullptr;
+        }
+
+        // The Enhancement Pack raised its error 7 for a drive number outside 0 to 24.
+        bool EnhancementDrive(const BuiltinValue& Argument, int& Drive, std::string& Error)
+        {
+            if (!Argument.AsInt(Drive, &Error))
+                return false;
+            if (Drive >= 0 && Drive <= 24)
+                return true;
+            Error = "Drive number must be between 0 and 24";
+            return false;
+        }
+
+        // One value of a drive, or the Enhancement Pack's answer for a drive that is not there.
+        template <typename Reader>
+        BuiltinValue DriveValue(BuiltinContext& Ctx, const std::vector<BuiltinValue>& Args, std::string& Error,
+                                BuiltinValue Missing, Reader&& Read)
+        {
+            int Drive = 0;
+            if (!EnhancementDrive(Args[0], Drive, Error))
+                return BuiltinValue{};
+            DriveDetails Details;
+            if (!Ctx.Kernel->Machine().Drive(Drive, Details))
+                return Missing;
+            return Read(Details);
+        }
+
+        // Drive sizes in bytes, megabytes (unit 1) or gigabytes (unit 2), rounded down and capped at the integer
+        // range.
+        BuiltinValue DriveSpace(std::uint64_t Bytes, const BuiltinValue& Unit, std::string& Error)
+        {
+            int Scale = 0;
+            if (!Unit.AsInt(Scale, &Error))
+                return BuiltinValue{};
+            if (Scale == 1)
+                Bytes >>= 20;
+            else if (Scale == 2)
+                Bytes >>= 30;
+            return BuiltinValue::FromNumber(
+                static_cast<double>(std::min<std::uint64_t>(Bytes, std::numeric_limits<std::int32_t>::max())));
+        }
+
+        // Memory in kilobytes, megabytes or gigabytes, rounded up; other units read 0, as in the Enhancement Pack.
+        BuiltinValue MemoryUnits(std::uint64_t Bytes, const BuiltinValue& Unit, std::string& Error)
+        {
+            int Scale = 0;
+            if (!Unit.AsInt(Scale, &Error))
+                return BuiltinValue{};
+            if (Scale < 0 || Scale > 2)
+                return BuiltinValue::FromNumber(0.0);
+            const std::uint64_t Divisor = std::uint64_t{1} << (10 * (Scale + 1));
+            return BuiltinValue::FromNumber(static_cast<double>(
+                std::min<std::uint64_t>((Bytes + Divisor - 1) / Divisor, std::numeric_limits<std::int32_t>::max())));
+        }
+
+        void FillChecklist(BuiltinContext& Ctx, const std::vector<std::string>& Names)
+        {
+            Ctx.Checklist.clear();
+            for (const std::string& Name : Names)
+                Ctx.Checklist.push_back(ChecklistItem{Name});
         }
 
         double CheckDisplayMode(BuiltinContext& Ctx, int Width, int Height, int Depth, int Vsync, int Multisampling,

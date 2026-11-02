@@ -30,6 +30,7 @@ namespace dbc
     class NetworkSystem;
     class DllSystem;
     class VrSystem;
+    class SystemInfo;
 
     class EngineKernel
     {
@@ -93,6 +94,7 @@ namespace dbc
         const NetworkSystem& Network() const;
         DllSystem& Dlls();
         const DllSystem& Dlls() const;
+        SystemInfo& Machine();
 
       private:
         bool Initialized_ = false;
@@ -119,6 +121,7 @@ namespace dbc
         std::unique_ptr<NetworkSystem> Network_;
         std::unique_ptr<DllSystem> Dlls_;
         std::unique_ptr<VrSystem> Vr_;
+        std::unique_ptr<SystemInfo> Machine_;
     };
 
 } // namespace dbc
