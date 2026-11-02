@@ -72,6 +72,10 @@ namespace dbc
         bool CreateGame(std::string_view GameName, std::string_view PlayerName, int MaxPlayers, int Mode,
                         std::string* Error = nullptr);
         bool JoinGame(int SessionNumber, std::string_view PlayerName, std::string* Error = nullptr);
+        // DEFAULT NET GAME: joins the first session the connection finds, or else hosts the game. Returns the local
+        // player's number, or 0 when neither works.
+        bool DefaultGame(int& Output, std::string_view GameName, std::string_view PlayerName, int MaxPlayers, int Mode,
+                         std::string* Error = nullptr);
         void FreeGame();
 
         // Returns 0 when there is no game or the game is full.
@@ -86,6 +90,8 @@ namespace dbc
         void NextMessage();
         // The current message or a waiting one exists, so both Classic message loops terminate.
         bool MessageExists() const;
+        // NET BUFFER SIZE: the received messages that wait behind the current one.
+        int WaitingMessages() const;
         const Message& CurrentMessage() const;
         // Reading another type than the current message's fails; without a current message it reads 0.
         bool CurrentInteger(std::int32_t& Output, std::string* Error = nullptr) const;

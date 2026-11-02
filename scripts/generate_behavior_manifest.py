@@ -1634,9 +1634,13 @@ UNIT_WITNESSES += tuple(
     )
 )
 
-DBC_NETWORK_TEST = "test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback"
+NETWORK_TESTS = (
+    ("dbc", "test_network.cpp::Classic net games connect, list players and exchange typed messages over loopback"),
+    ("dbpro", "test_network.cpp::DBPro net games connect, list players and exchange typed messages over loopback"),
+)
 UNIT_WITNESSES += tuple(
-    ("dbc", kind, name, code, "loopback-net-game", DBC_NETWORK_TEST)
+    (profile, kind, name, code, "loopback-net-game", test)
+    for profile, test in NETWORK_TESTS
     for kind, name, code in (
         ("Command", "PERFORM CHECKLIST FOR NET CONNECTIONS", "perform checklist for net connections\n"),
         ("Command", "SET NET CONNECTION", "set net connection 1\n"),
@@ -1669,6 +1673,15 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+DBPRO_NETWORK_DEFAULT_TEST = ("test_network.cpp::DBPro DEFAULT NET GAME hosts or joins, and NET BUFFER SIZE counts "
+                              "waiting messages")
+UNIT_WITNESSES += (
+    ("dbpro", "Function", "DEFAULT NET GAME", 'value = default net game("duel", "Ann", 2, 1)\n', "loopback-net-game",
+     DBPRO_NETWORK_DEFAULT_TEST),
+    ("dbpro", "Function", "NET BUFFER SIZE", "value = net buffer size()\n", "loopback-net-game",
+     DBPRO_NETWORK_DEFAULT_TEST),
+)
+
 DBC_DLL_TEST = "test_dll.cpp::Classic DLL commands load OpenDBC plugins and call them with typed values"
 UNIT_WITNESSES += tuple(
     ("dbc", kind, name, code, "native-plugin-call", DBC_DLL_TEST)
@@ -1693,9 +1706,13 @@ UNIT_WITNESSES += tuple(
     )
 )
 
-DBC_NETWORK_MEDIA_TEST = "test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes"
+NETWORK_MEDIA_TESTS = (
+    ("dbc", "test_network.cpp::Classic net games carry memblocks, images, bitmaps, sounds and meshes"),
+    ("dbpro", "test_network.cpp::DBPro net games carry memblocks, images, bitmaps, sounds and meshes"),
+)
 UNIT_WITNESSES += tuple(
-    ("dbc", kind, name, code, "loopback-net-media", DBC_NETWORK_MEDIA_TEST)
+    (profile, kind, name, code, "loopback-net-media", test)
+    for profile, test in NETWORK_MEDIA_TESTS
     for kind, name, code in (
         ("Command", "SEND NET MESSAGE MEMBLOCK", "send net message memblock 2, 1\n"),
         ("Command", "SEND NET MESSAGE MEMBLOCK", "send net message memblock 2, 1, 1\n"),

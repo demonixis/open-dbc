@@ -135,6 +135,14 @@ PROFILE_PARAMETER_SPECS = {
     ("Dbc", "SEND NET MESSAGE STRING"): "N,S",
     ("Dbc", "SET NET CONNECTION"): "N,S",
     ("Dbc", "WRITE TO REGISTRY"): "S,S,N",
+
+    # The DBPro keyword files type every multiplayer string as a number; Multiplayer.rc takes strings.
+    ("DbPro", "CREATE NET GAME"): "S,S,N,N",
+    ("DbPro", "CREATE NET PLAYER"): "S",
+    ("DbPro", "DEFAULT NET GAME"): "S,S,N,N",
+    ("DbPro", "JOIN NET GAME"): "N,S",
+    ("DbPro", "SEND NET MESSAGE STRING"): "N,S",
+    ("DbPro", "SET NET CONNECTION"): "N,S",
 }
 
 INTEGER_RETURNS = {

@@ -2,7 +2,6 @@ profile	symbol_id	kind	name	disposition	family	proof	prerequisite
 dbpro	Command_AttachObjectToStatic	Command	ATTACH OBJECT TO STATIC	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CallDll	Command	CALL DLL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Cd	Command	CD	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_CreateNetGame	Command	CREATE NET GAME	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CreateVertexShaderFromFile	Command	CREATE VERTEX SHADER FROM FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteAnimation	Command	DELETE ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Command_DeleteDll	Command	DELETE DLL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -26,8 +25,6 @@ dbpro	Command_ForceNoEffect	Command	FORCE NO EFFECT	Target	core	dbc-help,dbpro-r
 dbpro	Command_ForceRight	Command	FORCE RIGHT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ForceUp	Command	FORCE UP	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ForceWaterEffect	Command	FORCE WATER EFFECT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_FreeNetGame	Command	FREE NET GAME	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_FreeNetPlayer	Command	FREE NET PLAYER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_FtpConnect	Command	FTP CONNECT	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Command_FtpDeleteFile	Command	FTP DELETE FILE	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Command_FtpDisconnect	Command	FTP DISCONNECT	Never	ftp	dbc-help,dbpro-reference	none
@@ -38,8 +35,6 @@ dbpro	Command_FtpProceed	Command	FTP PROCEED	Never	ftp	dbc-help,dbpro-reference	
 dbpro	Command_FtpPutFile	Command	FTP PUT FILE	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Command_FtpSetDir	Command	FTP SET DIR	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Command_FtpTerminate	Command	FTP TERMINATE	Never	ftp	dbc-help,dbpro-reference	none
-dbpro	Command_GetNetMessage	Command	GET NET MESSAGE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_JoinNetGame	Command	JOIN NET GAME	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_LoadAnimation	Command	LOAD ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Command_LoadCdmusic	Command	LOAD CDMUSIC	Study	audio	dbc-help,dbpro-reference	typed-load-errors
 dbpro	Command_LoadDll	Command	LOAD DLL	Study	core	dbc-help,dbpro-reference	typed-load-errors
@@ -49,16 +44,8 @@ dbpro	Command_LoadTerrain	Command	LOAD TERRAIN	Study	core	dbpro-reference,legacy
 dbpro	Command_LockBackbuffer	Command	LOCK BACKBUFFER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_LoopAnimation	Command	LOOP ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Command_MakeStaticObject	Command	MAKE STATIC OBJECT	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_NetMessageBitmap	Command	NET MESSAGE BITMAP	Target	display	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_NetMessageImage	Command	NET MESSAGE IMAGE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_NetMessageMemblock	Command	NET MESSAGE MEMBLOCK	Target	memory	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_NetMessageMesh	Command	NET MESSAGE MESH	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_NetMessageSound	Command	NET MESSAGE SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PauseAnimation	Command	PAUSE ANIMATION	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Command_PerformChecklistForDrives	Command	PERFORM CHECKLIST FOR DRIVES	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_PerformChecklistForNetConnections	Command	PERFORM CHECKLIST FOR NET CONNECTIONS	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_PerformChecklistForNetPlayers	Command	PERFORM CHECKLIST FOR NET PLAYERS	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_PerformChecklistForNetSessions	Command	PERFORM CHECKLIST FOR NET SESSIONS	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformCsgDifference	Command	PERFORM CSG DIFFERENCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformCsgIntersection	Command	PERFORM CSG INTERSECTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformCsgUnion	Command	PERFORM CSG UNION	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -71,18 +58,9 @@ dbpro	Command_ResumeAnimation	Command	RESUME ANIMATION	Deferred	video	dbc-help,d
 dbpro	Command_SaveSound	Command	SAVE SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveStaticObjects	Command	SAVE STATIC OBJECTS	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveTerrain	Command	SAVE TERRAIN	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
-dbpro	Command_SendNetMessageBitmap	Command	SEND NET MESSAGE BITMAP	Target	display	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SendNetMessageFloat	Command	SEND NET MESSAGE FLOAT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SendNetMessageImage	Command	SEND NET MESSAGE IMAGE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SendNetMessageInteger	Command	SEND NET MESSAGE INTEGER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SendNetMessageMemblock	Command	SEND NET MESSAGE MEMBLOCK	Target	memory	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SendNetMessageMesh	Command	SEND NET MESSAGE MESH	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SendNetMessageSound	Command	SEND NET MESSAGE SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SendNetMessageString	Command	SEND NET MESSAGE STRING	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetDvdChapter	Command	SET DVD CHAPTER	Deferred	video	dbpro-reference	media-backend
 dbpro	Command_SetGlobalObjectCreation	Command	SET GLOBAL OBJECT CREATION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetNetConnection	Command	SET NET CONNECTION	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOff	Command	SET STATIC OBJECTS WIREFRAME OFF	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOn	Command	SET STATIC OBJECTS WIREFRAME ON	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetVertexShaderOff	Command	SET VERTEX SHADER OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -101,7 +79,6 @@ dbpro	Function_AnimationPlaying	Function	ANIMATION PLAYING	Deferred	video	dbc-he
 dbpro	Function_AnimationPositionX	Function	ANIMATION POSITION X	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Function_AnimationPositionY	Function	ANIMATION POSITION Y	Deferred	video	dbc-help,dbpro-reference	media-backend
 dbpro	Function_AnimationWidth	Function	ANIMATION WIDTH	Deferred	video	dbc-help,dbpro-reference	media-backend
-dbpro	Function_CreateNetPlayer	Function	CREATE NET PLAYER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DllCallExist	Function	DLL CALL EXIST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DllExist	Function	DLL EXIST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetBackbufferDepth	Function	GET BACKBUFFER DEPTH	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -121,18 +98,6 @@ dbpro	Function_GetFtpStatus	Function	GET FTP STATUS	Never	ftp	dbc-help,dbpro-ref
 dbpro	Function_GetMemblockPtr	Function	GET MEMBLOCK PTR	Target	memory	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetRegistryString	Function	GET REGISTRY$	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetTerrainSize	Function	GET TERRAIN SIZE	Target	core	legacy-unverified	engine-subsystem-and-oracle
-dbpro	Function_NetGameExists	Function	NET GAME EXISTS	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetGameLost	Function	NET GAME LOST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetGameNowHosting	Function	NET GAME NOW HOSTING	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetMessageExists	Function	NET MESSAGE EXISTS	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetMessageFloat	Function	NET MESSAGE FLOAT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetMessageInteger	Function	NET MESSAGE INTEGER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetMessagePlayerFrom	Function	NET MESSAGE PLAYER FROM	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetMessagePlayerTo	Function	NET MESSAGE PLAYER TO	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetMessageStringString	Function	NET MESSAGE STRING$	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetMessageType	Function	NET MESSAGE TYPE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetPlayerCreated	Function	NET PLAYER CREATED	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetPlayerDestroyed	Function	NET PLAYER DESTROYED	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_StaticLineOfSight	Function	STATIC LINE OF SIGHT	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_StaticLineOfSightX	Function	STATIC LINE OF SIGHT X	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_StaticLineOfSightY	Function	STATIC LINE OF SIGHT Y	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -174,7 +139,6 @@ dbpro	Command_CreatePixelShaderFromFile	Command	CREATE PIXEL SHADER FROM FILE	Ta
 dbpro	Function_CubemapAvailable	Function	CUBEMAP AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_CullccwAvailable	Function	CULLCCW AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_CullcwAvailable	Function	CULLCW AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_DefaultNetGame	Function	DEFAULT NET GAME	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteIcon	Command	DELETE ICON	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteLightMapLights	Command	DELETE LIGHT MAP LIGHTS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteMemory	Command	DELETE MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
@@ -225,7 +189,6 @@ dbpro	Function_MipcubemapAvailable	Function	MIPCUBEMAP AVAILABLE	Target	core	dbp
 dbpro	Function_MipmapAvailable	Function	MIPMAP AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_MipmaplodbiasAvailable	Function	MIPMAPLODBIAS AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_MipmapvolumeAvailable	Function	MIPMAPVOLUME AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NetBufferSize	Function	NET BUFFER SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NonlocalvideomemoryAvailable	Function	NONLOCALVIDEOMEMORY AVAILABLE	Target	memory	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NonpowtexturesAvailable	Function	NONPOWTEXTURES AVAILABLE	Target	text	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_OnlysquaretexturesAvailable	Function	ONLYSQUARETEXTURES AVAILABLE	Target	text	dbpro-reference	engine-subsystem-and-oracle

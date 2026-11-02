@@ -42,7 +42,7 @@ ctest --preset default
 <!-- BEGIN GENERATED COMPATIBILITY METRICS -->
 - BASIC execution goldens: **78**.
 - Full corpus expectations: **95** sources, including **86** that reach verified bytecode.
-- Observable implemented-overload contracts: **1800**.
+- Observable implemented-overload contracts: **1838**.
 <!-- END GENERATED COMPATIBILITY METRICS -->
 
 ## Documentation
@@ -59,7 +59,7 @@ ctest --preset default
 | DBPro BSP worlds | [docs/bsp.md](docs/bsp.md) |
 | Physics through the DBPro ODE forms | [docs/physics.md](docs/physics.md) |
 | Classic animations (video) | [docs/video.md](docs/video.md) |
-| Classic multiplayer | [docs/network.md](docs/network.md) |
+| Multiplayer | [docs/network.md](docs/network.md) |
 | Native plugins (Classic DLLs) | [docs/plugins.md](docs/plugins.md) |
 | Example programs | [examples/README.md](examples/README.md) |
 | Security and reporting vulnerabilities | [docs/SECURITY.md](docs/SECURITY.md) |

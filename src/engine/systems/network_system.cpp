@@ -1185,6 +1185,31 @@ namespace dbc
         return true;
     }
 
+    bool NetworkSystem::DefaultGame(int& Output, std::string_view GameName, std::string_view PlayerName,
+                                    int MaxPlayers, int Mode, std::string* Error)
+    {
+        Output = 0;
+        if (Worker_)
+            return Fail(Error, "DEFAULT NET GAME requires FREE NET GAME before another game");
+        if (MaxPlayers < 2 || MaxPlayers > 256)
+            return Fail(Error, "DEFAULT NET GAME number of players must be between 2 and 256");
+        if (Mode < 0 || Mode > 2)
+            return Fail(Error, "DEFAULT NET GAME type must be 1 for peer to peer or 2 for client/server");
+        if (GameName.size() > KMaxNameBytes || PlayerName.size() > KMaxNameBytes)
+            return Fail(Error, "DEFAULT NET GAME names are limited to 4096 bytes");
+        // As DBPro's MagicNetGame: session 1 of a fresh list, whatever its name, else a new game.
+        if (!FindSessions().empty() && !JoinGame(1, PlayerName, Error))
+            return false;
+        if (!GameExists() && !CreateGame(GameName, PlayerName, MaxPlayers, Mode, Error))
+            return false;
+        if (GameExists())
+        {
+            const std::lock_guard Lock(Shared_->Mutex);
+            Output = Shared_->LocalPlayer;
+        }
+        return true;
+    }
+
     void NetworkSystem::FreeGame()
     {
         StopWorker();
@@ -1265,6 +1290,14 @@ namespace dbc
             return false;
         const std::lock_guard Lock(Shared_->Mutex);
         return !Shared_->Inbox.empty();
+    }
+
+    int NetworkSystem::WaitingMessages() const
+    {
+        if (!Shared_)
+            return 0;
+        const std::lock_guard Lock(Shared_->Mutex);
+        return static_cast<int>(Shared_->Inbox.size());
     }
 
     const NetworkSystem::Message& NetworkSystem::CurrentMessage() const

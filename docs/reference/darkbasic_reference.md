@@ -51,7 +51,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `COPY MEMBLOCK` | Command | 5 | number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CREATE BITMAP` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `CREATE NET GAME` | Command | 3-4 | string, string, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
-| `CREATE NET PLAYER` | Command | 1 | string -> void | Implemented | Classic help | DarkBASIC Classic command implemented with an observable contract. |
+| `CREATE NET PLAYER` | Command | 1 | string -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DATA` | Command | 1-99 | any... -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DELETE ANIMATION` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |
 | `DELETE BITMAP` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Classic command implemented with an observable contract. |

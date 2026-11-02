@@ -1,7 +1,7 @@
-# Classic multiplayer
+# Multiplayer
 
-`dbc` only; DBPro multiplayer commands stay unsupported. DirectPlay no longer
-exists, so OpenDBC games talk to other OpenDBC games over
+Classic and DBPro share the commands below; DBPro adds `DEFAULT NET GAME` and
+`NET BUFFER SIZE`. DirectPlay no longer exists, so OpenDBC games talk to other OpenDBC games over
 [ENet](https://github.com/lsalzman/enet) (UDP with reliable ordered delivery).
 They cannot reach a game running on the original DarkBASIC.
 
@@ -21,6 +21,10 @@ address. `PERFORM CHECKLIST FOR NET SESSIONS` waits half a second for answers an
 lists each running game's name. `JOIN NET GAME` uses that list. If no list was
 taken since the connection was set, it takes one first, so `JOIN NET GAME 1, name$`
 works on its own as in the Classic examples.
+
+`DEFAULT NET GAME(game$, player$, players, type)` takes a fresh list of sessions and
+joins the first one, whatever its name, or hosts the game when none answers or the
+join fails. It returns the local player's number, or 0 when neither works.
 
 A game that cannot be created or joined is not an error. This happens when the
 port is taken, the session is missing or full, or the host does not answer within
@@ -58,7 +62,8 @@ current message when none is waiting. `NET MESSAGE EXISTS()` is 1 while a curren
 or waiting message exists, so both Classic message loops end:
 `get; while exists: …; get` and `repeat: …; get: until exists() = 0`.
 Without a current message, the readers return 0 or an empty string. Reading
-another type than `NET MESSAGE TYPE()` fails.
+another type than `NET MESSAGE TYPE()` fails. `NET BUFFER SIZE()` counts the
+received messages waiting behind the current one.
 
 When the host leaves, the others get `NET GAME LOST() = 1` and `NET GAME EXISTS() = 0`.
 There is no host migration yet, so `NET GAME NOW HOSTING()` is always 0.

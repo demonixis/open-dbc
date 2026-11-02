@@ -1019,6 +1019,8 @@ DBC_VALUE("CREATE NET PLAYER", 1, 1, return BuiltinValue::FromNumber(Ctx.Kernel-
 DBC_VALUE("NET GAME EXISTS", 0, 0, return BuiltinValue::FromNumber(Ctx.Kernel->Network().GameExists() ? 1.0 : 0.0);)
 DBC_VALUE("NET GAME LOST", 0, 0, return BuiltinValue::FromNumber(Ctx.Kernel->Network().GameLost() ? 1.0 : 0.0);)
 DBC_VALUE("NET GAME NOW HOSTING", 0, 0, return BuiltinValue::FromNumber(Ctx.Kernel->Network().TakeNowHosting() ? 1.0 : 0.0);)
+DBC_VALUE("DEFAULT NET GAME", 4, 4, int MaxPlayers = 0; if (!Args[2].AsInt(MaxPlayers, &Error)) return BuiltinValue{}; int Mode = 0; if (!Args[3].AsInt(Mode, &Error)) return BuiltinValue{}; int Player = 0; if (!Ctx.Kernel->Network().DefaultGame(Player, Args[0].AsString(), Args[1].AsString(), MaxPlayers, Mode, &Error)) return BuiltinValue{}; return BuiltinValue::FromNumber(Player);)
+DBC_VALUE("NET BUFFER SIZE", 0, 0, return BuiltinValue::FromNumber(Ctx.Kernel->Network().WaitingMessages());)
 DBC_VALUE("NET MESSAGE EXISTS", 0, 0, return BuiltinValue::FromNumber(Ctx.Kernel->Network().MessageExists() ? 1.0 : 0.0);)
 DBC_VALUE("NET MESSAGE INTEGER", 0, 0, std::int32_t Value = 0; if (!Ctx.Kernel->Network().CurrentInteger(Value, &Error)) return BuiltinValue{}; return BuiltinValue::FromNumber(Value);)
 DBC_VALUE("NET MESSAGE FLOAT", 0, 0, float Value = 0.0f; if (!Ctx.Kernel->Network().CurrentFloat(Value, &Error)) return BuiltinValue{}; return BuiltinValue::FromNumber(Value);)

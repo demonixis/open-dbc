@@ -15,7 +15,7 @@ First public release.
   levels written for Classic are BASIC and keep running.
 - Exports to macOS (Apple silicon), Windows, Linux, Android and iOS with
   `opendbc-runner`.
-- Classic multiplayer over ENet, native plugins through `LOAD DLL`, DBPro BSP
+- Multiplayer over ENet in Classic and DBPro, native plugins through `LOAD DLL`, DBPro BSP
   worlds, Classic animations and DBPro desktop VR through OpenXR.
 - Physics on Jolt through the DBPro ODE forms, stepped at a fixed rate: boxes, spheres,
   capsules, cylinders, triangle meshes and static compounds, forces and surfaces,
