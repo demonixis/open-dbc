@@ -90,14 +90,15 @@ namespace
             return Context_.Checklist;
         }
 
-        // Takes the next message, waiting for the network thread to deliver it.
+        // Takes the next message, waiting for the network thread to deliver it. NET MESSAGE EXISTS also counts
+        // a message that arrived after GET NET MESSAGE found none, so only the current type proves one was taken.
         bool NextMessage()
         {
             const auto Deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
             for (;;)
             {
                 Require(SymbolId::Command_GetNetMessage);
-                if (Value(SymbolId::Function_NetMessageExists) == 1.0)
+                if (Value(SymbolId::Function_NetMessageType) != 0.0)
                     return true;
                 if (std::chrono::steady_clock::now() > Deadline)
                     return false;
