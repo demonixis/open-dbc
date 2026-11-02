@@ -61,6 +61,7 @@ ctest --preset default
 | Animations (video) | [docs/video.md](docs/video.md) |
 | Multiplayer | [docs/network.md](docs/network.md) |
 | Native plugins (Classic DLLs) | [docs/plugins.md](docs/plugins.md) |
+| DBPro Enhancement Pack | [docs/enhancement-pack.md](docs/enhancement-pack.md) |
 | Example programs | [examples/README.md](examples/README.md) |
 | Security and reporting vulnerabilities | [docs/SECURITY.md](docs/SECURITY.md) |
 | Changes per version | [CHANGELOG.md](CHANGELOG.md) |

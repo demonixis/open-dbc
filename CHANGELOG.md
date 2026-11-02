@@ -35,7 +35,10 @@ First public release.
   particles, and global shadow colour, shades and light.
 - The DBPro profile catalogues every core form of the free DBPro release and those of
   DarkPHYSICS, the Enhancement Pack and 3D Cloth & Particles; those that do not run yet
-  stop with `DBC2043`. The forms of Dark Dynamix, DarkLIGHTS and Advanced Terrain stop
+  stop with `DBC2043`.
+- The DBPro Enhancement Pack runs on every platform: file blocks as ZIP archives, data
+  files, file maps, Ogg Vorbis playback and encoding, system information, speech, file
+  dialogs, and EAX as stubs ([enhancement-pack.md](docs/enhancement-pack.md)). The forms of Dark Dynamix, DarkLIGHTS and Advanced Terrain stop
   with `DBC2049`, which names the plugin.
 - DBPro's `SET GLOBAL OBJECT CREATION` draw orders, level of detail models, memblocks kept
   with objects and in DBO files, `REDUCE MESH`, `CONVERT OBJECT FVF` and `MAKE EMITTER`.

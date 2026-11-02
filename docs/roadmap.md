@@ -39,14 +39,9 @@ Validation and scope:
 
 ## Official plugins
 
-The forms of three plugins of the free release are catalogued and stop with `DBC2043`
+The forms of two plugins of the free release are catalogued and stop with `DBC2043`
 until they run; the reference lists them. In order of priority:
 
-- [ ] Enhancement Pack (188 forms), cross-platform: file blocks (27), data files (7),
-  file maps (11), Ogg Vorbis (12), system information (39), file dialogs and the rest.
-  EAX (81) becomes stubs. Speech (9) uses the platform's synthesiser (`say` or
-  `AVSpeechSynthesizer` on macOS, SAPI on Windows, the mobile ones) and finds no voice
-  on Linux.
 - [ ] DarkPHYSICS (491 forms) on Jolt, the one physics abstraction beside the ODE forms
   ([physics.md](physics.md)): rigid bodies, joints, rays, triggers, materials, the
   character controller, then vehicles, ragdolls, heightfield terrains and the
@@ -188,6 +183,8 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 ## Rendering and media
 
+- [ ] Enhancement Pack speech on Android through `android.speech.tts`, and a voice on
+  Linux; both report no voice today ([enhancement-pack.md](enhancement-pack.md)).
 - [ ] Android video decoder and an iOS run of AVFoundation; platforms without a
   decoder load every animation inert today ([video.md](video.md)).
 - [ ] Qualify Windows Media Foundation with audible output and hardware decoding.
