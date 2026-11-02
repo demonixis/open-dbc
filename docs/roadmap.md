@@ -1,69 +1,11 @@
 # Roadmap
 
-## Decisions
-
-- The public repository is `demonixis/open-dbc`; its history starts from a single initial import.
-- Classic is frozen: it keeps running historical programs on every target, mobile
-  included, and takes no new commands. DBPro is the language that evolves: OpenDBC's
-  additions go into the `dbpro` profile, with no third profile (`DbcNew`, `DbProNew`
-  or a hybrid).
-- An addition changes nothing for programs that do not call it, pixels included, and
-  has a name of several words.
-- Features reach the engine through commands. The Studio writes those commands
-  (`SetupGame()`, levels) rather than sending settings to the runner another way, so
-  the CLI, exports and in-game options menus reach them too. Only asset generation
-  and baking stay in the Studio; what they produce is a file that a command loads.
-- New features go into the engine, not into native plugins: a plugin needs a binary
-  and a signature per target, cannot reach the renderer and escapes the typed
-  catalogue. `LOAD DLL` stays for Classic programs.
-- The Scene view and the future 2D view are for DBPro only; levels already written
-  for Classic are BASIC and keep running. New projects default to DBPro.
-- Signing OpenDBC's own releases (Apple notarisation, Windows) is done later, in one batch with
-  openblood2 and oxrsys. Exported games are signed by the export ([usage.md](usage.md#export)).
-- Yannick Comte owns the code. No DarkBASIC Classic content is published or
-  linked; reused DBPro code comes from the MIT repository and keeps its notice.
-- Project assets are CC0. Version 0.5 ships with the current examples: six demos
-  and tutorials covering the 747 Classic help symbols.
-- macOS releases target Apple Silicon only, exported games included: one binary per
-  target, no universal build.
-- No SBOM, `CODEOWNERS` or Dependabot: one maintainer, dependencies pinned in
-  `cmake/fetch_dependency.cmake`. AppStream and Flatpak wait until someone asks for
-  them.
-
 ## Before 0.5
 
-Build and release:
-
-- [ ] Linux AppImage on demand, built on an old glibc so that it starts on older
-  distributions, with the Studio's `.desktop` entry.
-
-Validation:
-
-- [ ] Run the GPU mesh path on Vulkan, on Windows and Linux: `VSMesh` draws nearly
-  every opaque object and has only run on Metal.
-- [ ] Play the demos by hand, and export a game end to end with the new shader stage,
-  on each announced target.
-
-Robustness:
-
-- [ ] Check on Windows that a Studio run opens no console window beside the program:
-  `opendbc-runner` is a console executable and SDL only hides consoles for
-  background processes.
-
 Repository files:
-
-- [ ] Issue and PR templates.
-- [ ] Run on Windows with a real GPU what its CI leaves out, under SwiftShader: why
-  the DBPro tutorials `basic3d3`, `camera1`, `light1` and `music1` timed out in
-  `example_frames` (last seen 2026-10-27), and why "A DBPro shadow does not depend
-  on how the camera sees its caster" darkens nothing from its first camera.
-- [ ] Find the crash at exit of "Classic animations validate numbers, files, bitmaps
-  and areas" on Windows, once in three CI runs, after the file Media Foundation
-  rejects. Windows CI runs a failed test twice to get past it.
 - [ ] README screenshots.
 
 Publication:
-
 - [ ] Signed tag `v0.5.0`, release with `SHA256SUMS`; its notes say that multiplayer
   and animations are still Classic only.
 
@@ -138,6 +80,9 @@ Studio:
   library using `TYPE` and `#CONSTANT`. The language has no callbacks, so an update
   function returns the widget clicked. Check the 2D commands first for nine-slice and
   clipping. Tilemaps come after the UI.
+- [ ] Split each generated files into specific folders. 
+  - [ ] Levels folder for levels: Contains the level and the world settings, two files
+  - [ ] UI folder for UI: UI are not called directly in the code, the editor is just a designer, similar to the Widget Blueprint Editor in Unreal
 
 Gameplay:
 
