@@ -5658,6 +5658,77 @@ TEST_CASE("SDL virtual joysticks expose the DBPro control device model")
     CHECK_NOTHROW(Kernel.Input().ForceShoot(100, 100));
 }
 
+TEST_CASE("DBPro force feedback commands reach the control device")
+{
+    struct RumbleState
+    {
+        Uint16 Low = 0;
+        int Calls = 0;
+    } Rumble;
+
+    SDL_JoystickID Identifier = 0;
+    {
+        dbc::EngineKernel Kernel;
+        REQUIRE(Kernel.Initialize("dbpro-force-feedback", 16, 16));
+        SDL_VirtualJoystickDesc Description{};
+        SDL_INIT_INTERFACE(&Description);
+        Description.type = SDL_JOYSTICK_TYPE_GAMEPAD;
+        Description.naxes = 2;
+        Description.nbuttons = 2;
+        Description.name = "OpenDBC Virtual Force Controller";
+        Description.userdata = &Rumble;
+        Description.Rumble = [](void* Userdata, Uint16 Low, Uint16) -> bool
+        {
+            auto& State = *static_cast<RumbleState*>(Userdata);
+            State.Low = Low;
+            ++State.Calls;
+            return true;
+        };
+        Identifier = SDL_AttachVirtualJoystick(&Description);
+        REQUIRE(Identifier != 0);
+        std::string Error;
+        REQUIRE(Kernel.Input().SetControlDevice("OpenDBC Virtual Force Controller", 0, &Error));
+
+        BuiltinContext Context;
+        Context.Kernel = &Kernel;
+        Context.Profile = dbc::language::LanguageProfile::DbPro;
+        const auto Command = [&](dbc::language::SymbolId Symbol, std::initializer_list<int> Values)
+        {
+            std::vector<BuiltinValue> Arguments;
+            for (const int Value : Values)
+                Arguments.push_back(BuiltinValue::FromNumber(Value));
+            Error.clear();
+            return InvokeCommand(Context, Symbol, Arguments, Error);
+        };
+        using dbc::language::SymbolId;
+
+        // A gamepad without haptic effects rumbles as a whole for the periodic forms.
+        REQUIRE(Command(SymbolId::Command_ForceChainsaw, {50, 200}));
+        CHECK(Rumble.Calls == 1);
+        CHECK(Rumble.Low == std::numeric_limits<Uint16>::max() / 2);
+        REQUIRE(Command(SymbolId::Command_ForceImpact, {100, 300}));
+        CHECK(Rumble.Calls == 2);
+        CHECK(Rumble.Low == std::numeric_limits<Uint16>::max());
+        // Directional and condition effects need a haptic device; without one they do nothing.
+        for (const SymbolId Symbol : {SymbolId::Command_ForceUp, SymbolId::Command_ForceDown,
+                                      SymbolId::Command_ForceLeft, SymbolId::Command_ForceRight})
+            CHECK_MESSAGE(Command(Symbol, {100}), Error);
+        CHECK_MESSAGE(Command(SymbolId::Command_ForceAngle, {100, 45, 100}), Error);
+        CHECK_MESSAGE(Command(SymbolId::Command_ForceWaterEffect, {100, 100}), Error);
+        CHECK(Command(SymbolId::Command_ForceAutoCenterOn, {}));
+        CHECK(Command(SymbolId::Command_ForceAutoCenterOff, {}));
+        CHECK(Command(SymbolId::Command_ForceNoEffect, {}));
+
+        CHECK_FALSE(Command(SymbolId::Command_ForceImpact, {101, 300}));
+        CHECK(Error == "FORCE IMPACT magnitude must be between zero and 100");
+        CHECK_FALSE(Command(SymbolId::Command_ForceAngle, {50, 361, 0}));
+        CHECK(Error == "FORCE ANGLE angle must be between zero and 360 degrees");
+        CHECK_FALSE(Command(SymbolId::Command_ForceWaterEffect, {50, -1}));
+        CHECK(Error == "FORCE WATER EFFECT duration must be non-negative");
+    }
+    CHECK(SDL_DetachVirtualJoystick(Identifier));
+}
+
 TEST_CASE("Every implemented value builtin has one typed engine handler")
 {
     for (const dbc::language::SymbolDescriptor& Descriptor : dbc::language::Symbols())

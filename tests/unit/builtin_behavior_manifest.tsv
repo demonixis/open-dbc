@@ -824,7 +824,18 @@ dbpro	141	214	Command	FOG COLOR	render-pixel	test_engine_builtins.cpp::Portable 
 dbpro	142	216	Command	FOG DISTANCE	render-pixel	test_engine_builtins.cpp::Portable backdrops and linear fog preserve profile semantics	-
 dbpro	143	218	Command	FOG OFF	render-pixel	test_engine_builtins.cpp::Portable backdrops and linear fog preserve profile semantics	-
 dbpro	144	220	Command	FOG ON	render-pixel	test_engine_builtins.cpp::Portable backdrops and linear fog preserve profile semantics	-
+dbpro	145	222	Command	FORCE ANGLE	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	146	224	Command	FORCE AUTO CENTER OFF	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	147	226	Command	FORCE AUTO CENTER ON	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	148	228	Command	FORCE CHAINSAW	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	149	230	Command	FORCE DOWN	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	150	232	Command	FORCE IMPACT	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	151	234	Command	FORCE LEFT	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	152	236	Command	FORCE NO EFFECT	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	153	238	Command	FORCE RIGHT	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
 dbpro	154	240	Command	FORCE SHOOT	input-haptic-no-device	test_engine_builtins.cpp::SDL virtual joysticks expose the DBPro control device model	-
+dbpro	155	242	Command	FORCE UP	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
+dbpro	156	244	Command	FORCE WATER EFFECT	input-haptic-device	test_engine_builtins.cpp::DBPro force feedback commands reach the control device	-
 dbpro	157	246	Command	FREE NET GAME	loopback-net-game	test_network.cpp::DBPro net games connect, list players and exchange typed messages over loopback	-
 dbpro	158	248	Command	FREE NET PLAYER	loopback-net-game	test_network.cpp::DBPro net games connect, list players and exchange typed messages over loopback	-
 dbpro	172	271	Command	GET IMAGE	golden-output	test_dbpro_matrix.dba	30249d63af2c68ea4bd5e89b776ddc8b417c3da3efe3e2ea7615212e0196b210

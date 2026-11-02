@@ -871,6 +871,15 @@ UNIT_WITNESSES += tuple(
     for Kind, Name, Code in DBC_HAPTIC_WITNESSES
 )
 
+DBPRO_HAPTIC_TEST = "test_engine_builtins.cpp::DBPro force feedback commands reach the control device"
+UNIT_WITNESSES += tuple(
+    ("dbpro", Kind, Name, Code, "input-haptic-device", DBPRO_HAPTIC_TEST)
+    for Kind, Name, Code in DBC_HAPTIC_WITNESSES + (
+        ("Command", "FORCE ANGLE", "force angle 100, 45, 100\n"),
+        ("Command", "FORCE WATER EFFECT", "force water effect 100, 100\n"),
+    )
+)
+
 UNIT_WITNESSES += (
     ("dbc", "Command", "RECORD SOUND", "record sound 13, 1\n", "audio-capture-validation", AUDIO_TEST),
     ("dbc", "Command", "SAVE SOUND", "save sound \"saved.wav\", 3\n", "audio-wave-file", AUDIO_TEST),

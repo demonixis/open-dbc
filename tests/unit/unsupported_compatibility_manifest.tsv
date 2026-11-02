@@ -13,17 +13,6 @@ dbpro	Command_EnableSystemkeys	Command	ENABLE SYSTEMKEYS	Study	input	dbc-help,db
 dbpro	Command_ExecuteFile	Command	EXECUTE FILE	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExitPrompt	Command	EXIT PROMPT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Fastsync	Command	FASTSYNC	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceAngle	Command	FORCE ANGLE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceAutoCenterOff	Command	FORCE AUTO CENTER OFF	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceAutoCenterOn	Command	FORCE AUTO CENTER ON	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceChainsaw	Command	FORCE CHAINSAW	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceDown	Command	FORCE DOWN	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceImpact	Command	FORCE IMPACT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceLeft	Command	FORCE LEFT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceNoEffect	Command	FORCE NO EFFECT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceRight	Command	FORCE RIGHT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceUp	Command	FORCE UP	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceWaterEffect	Command	FORCE WATER EFFECT	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_FtpConnect	Command	FTP CONNECT	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Command_FtpDeleteFile	Command	FTP DELETE FILE	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Command_FtpDisconnect	Command	FTP DISCONNECT	Never	ftp	dbc-help,dbpro-reference	none
