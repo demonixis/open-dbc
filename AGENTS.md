@@ -25,17 +25,19 @@
 
 ## Build and validation
 - Use `cmake --preset default`, `cmake --build --preset default`, then `ctest --preset default`. The local Classic qualification (`scripts/qualify_dbc_examples.py --corpus-root`, corpus not redistributed) remains macOS Debug only; no clean-first, Release, sanitizers or packaging/mobile builds for that gate.
+- While working on a feature, run only the tests it can affect (`ctest --preset default -R <name>` or `-L <label>`): keyboard input needs no GPU rendering or network tests. CI runs the full suite; locally it costs time and battery and interrupts the maintainer.
+- Run tests and programs headless and without sound (`--headless`, `OPENDBC_HEADLESS`) unless the change needs a window or audio.
 - Add regression tests for changed behavior. Catalogue edits require audits and regenerated references; implemented overloads need witnesses in `tests/unit/builtin_behavior_manifest.tsv`.
 - Edit sources and regenerate derived files with existing tools. Never bypass validators to make a build pass.
 - Consult `README.md` and relevant `docs/` pages as needed, not wholesale. Update affected documentation only; keep feature details and migration history out of `AGENTS.md`.
 - Report what was tested and remains unverified. Compilation does not prove runtime, visual, audio or hardware correctness.
 
 ## Documentation
-- Keep documentation compact and precise: one topic per file, stated once, no repetition across files.
+- Keep documentation short and precise: only what a reader needs, no long prose. One topic per file, stated once, no repetition across files.
 - `README.md` holds one example, the build/run/test commands and links to `docs/`; details belong in `docs/`.
 - Keep a single committed form of any data; do not add parallel JSON/CSV/XLSX exports.
 - Audit and generator inputs live in `scripts/data/`, not in `docs/`.
-- `docs/roadmap.md` lists decisions and remaining work only; remove items once done.
+- `docs/roadmap.md` lists remaining work only; remove items once done.
 
 ## Commits
 - Commit each completed step separately, with a focused English message.
