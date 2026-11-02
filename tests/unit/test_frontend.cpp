@@ -483,15 +483,14 @@ TEST_CASE("A multiword command beginning with EXIT is never swallowed by the EXI
     CHECK(Program.Statements.front().Name == "EXIT PROMPT");
 }
 
-TEST_CASE("Classic video commands compile while DBPro remains unsupported")
+TEST_CASE("Video commands compile in both profiles while DBPro DVD playback remains unsupported")
 {
     const std::string Text = "load animation \"clip.avi\", 1\nprint animation exist(1)\n";
-    const dbc::language::Program Classic =
-        dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::Dbc, "video.dba"));
-    CHECK_FALSE(Classic.HasErrors());
+    for (const auto Profile : {dbc::language::LanguageProfile::Dbc, dbc::language::LanguageProfile::DbPro})
+        CHECK_FALSE(dbc::language::Compile(Source(Text, Profile, "video.dba")).HasErrors());
 
     const dbc::language::Program Professional =
-        dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro, "video.dba"));
+        dbc::language::Compile(Source("load dvd animation 1\n", dbc::language::LanguageProfile::DbPro, "video.dba"));
     CHECK(HasCode(Professional, "DBC2043"));
     CHECK_FALSE(std::any_of(Professional.Diagnostics.begin(), Professional.Diagnostics.end(), [](const auto& Diagnostic)
                             { return Diagnostic.Message.find("Unknown") != std::string::npos; }));
