@@ -879,6 +879,7 @@ dbpro	215	337	Command	LOAD MESH	engine-state	test_engine_builtins.cpp::Portable 
 dbpro	216	339	Command	LOAD MUSIC	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
 dbpro	217	341	Command	LOAD OBJECT	engine-state	test_engine_builtins.cpp::DBPro object loading primitives transforms and size queries preserve historical behavior	-
 dbpro	218	343	Command	LOAD SOUND	audio-state	test_engine_builtins.cpp::Portable sound music 3D audio and memblocks preserve DBPro state	-
+dbpro	221	346	Command	LOAD TERRAIN	terrain-file	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	223	350	Command	LOCK OBJECT OFF	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	224	352	Command	LOCK OBJECT ON	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
 dbpro	225	353	Command	LOCK VERTEXDATA FOR LIMB	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
@@ -1051,6 +1052,7 @@ dbpro	423	645	Command	SAVE BITMAP	golden-output	test_dbpro_display_image_text.db
 dbpro	424	647	Command	SAVE IMAGE	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	425	648	Command	SAVE MESH	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	426	649	Command	SAVE OBJECT	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
+dbpro	430	655	Command	SAVE TERRAIN	terrain-file	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	432	658	Command	SCALE LIMB	golden-output	test_dbpro_objects_pro.dba	0147c25fbf83ad7bd7481f4fdcd3c6696fb745ea1668ea4b094537a2305fd1bb
 dbpro	433	660	Command	SCALE LIMB TEXTURE	render-state	test_engine_builtins.cpp::Portable limb checklist colour and texture transforms preserve stage semantics	-
 dbpro	434	661	Command	SCALE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
@@ -1111,6 +1113,7 @@ dbpro	492	746	Command	SET EFFECT TRANSPOSE	effect-control	test_shader_compiler.c
 dbpro	495	750	Command	SET GAMMA	render-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	496	752	Command	SET GLOBAL COLLISION OFF	collision-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
 dbpro	497	754	Command	SET GLOBAL COLLISION ON	collision-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
+dbpro	498	755	Command	SET GLOBAL OBJECT CREATION	pixel-capture	test_engine_builtins.cpp::DBPro global object creation orders the objects drawn without a depth test	-
 dbpro	502	758	Command	SET IDENTITY MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	503	759	Command	SET IMAGE COLORKEY	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	504	760	Command	SET INDEXDATA	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
@@ -1660,6 +1663,7 @@ dbpro	1238	1796	Function	DEFAULT NET GAME	loopback-net-game	test_network.cpp::DB
 dbpro	1241	1799	Command	DELETE MEMBLOCK FROM OBJECT	engine-state	test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file	-
 dbpro	1245	1803	Function	DESKTOP HEIGHT	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1246	1804	Function	DESKTOP WIDTH	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
+dbpro	1247	1805	Command	DESTROY TERRAIN	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	1248	1806	Command	DISABLE OBJECT ZBIAS	object-selection-pixel	test_engine_builtins.cpp::DBPro chooses what each camera and SYNC draws, and how an object projects	-
 dbpro	1249	1807	Command	DISABLE OBJECT ZREAD	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
 dbpro	1250	1808	Command	DISABLE OBJECT ZWRITE	render-state	test_engine_builtins.cpp::DBPro object depth UV alpha and bounds controls drive portable rendering	-
@@ -1683,6 +1687,8 @@ dbpro	1276	1830	Function	FLOOR	golden-output	test_dbpro_core.dba	8d62c939abc6506
 dbpro	1288	1842	Function	GET KEY STATE	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbpro	1289	1843	Function	GET MAXIMUM LIGHTS	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	1295	1849	Function	GET MEMBLOCK FROM OBJECT	engine-state	test_engine_builtins.cpp::DBPro memblocks travel with objects through a DBO file	-
+dbpro	1302	1856	Function	GET TERRAIN X SIZE	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
+dbpro	1303	1857	Function	GET TERRAIN Z SIZE	engine-state	test_engine_builtins.cpp::DBPro Advanced Terrain builds an object from a heightmap	-
 dbpro	1305	1859	Function	GET VERTEXDATA DIFFUSE	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	1306	1860	Function	GET VERTEXDATA NORMALS X	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	1307	1861	Function	GET VERTEXDATA NORMALS Y	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-

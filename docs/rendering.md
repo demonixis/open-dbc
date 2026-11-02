@@ -30,6 +30,9 @@ coordinates, under all cameras after `DRAW TO BACK` and over them otherwise.
    priority first within each phase. Opaque triangles go front to back, except
    that each run of triangles that are depth tested and written and not blended
    is grouped by draw-state hash; the others keep their place between the runs.
+   `SET GLOBAL OBJECT CREATION` 2 to 5 sorts the opaque triangles of objects by object
+   number instead, and 6 or 7 by object distance, far first; these follow the other
+   opaque triangles of their priority. 0 and 1, DBPro's texture order, keep the above.
    Reflection shading gathers the scene again with the mirrored view.
 3. The ordered triangles become 164-byte `GpuVertex` records. Consecutive
    triangles that share textures, blending, depth state and `SurfaceStyle` merge
@@ -207,8 +210,9 @@ loop
 
 DBPro's repository has neither help pages nor source for these forms. Their syntax
 comes from TGC's DarkGDK sample and forum programs; what those leave open is decided
-here, as noted below. `LOAD TERRAIN`, `SAVE TERRAIN`, `DESTROY TERRAIN` and the size
-readers appear in no code found, so they stay unimplemented.
+here, as noted below. The `DBPro/Terrain.hpp` header of the Bullet ragdoll sample gives
+the signatures of `LOAD TERRAIN`, `SAVE TERRAIN`, `DESTROY TERRAIN` and the size readers.
+`GET TERRAIN SIZE` appears nowhere and stays unsupported.
 
 - The terrain is an object, so `POSITION OBJECT`, `SCALE OBJECT` and collision work on
   it. Its corner is at its position and it extends along +X and +Z.
@@ -232,6 +236,12 @@ readers appear in no code found, so they stay unimplemented.
 - Settings apply at the next `BUILD TERRAIN`.
 - `GET TERRAIN GROUND HEIGHT(terrain, x#, z#)` reads the drawn surface in world units,
   stops at the edges, and ignores rotation.
+- `GET TERRAIN X SIZE(terrain)` and `GET TERRAIN Z SIZE(terrain)` return the built
+  terrain's extent before `SCALE OBJECT`.
+- `SAVE TERRAIN file$, terrain` writes the heights and settings in OpenDBC's own format,
+  since DBPro's is undocumented; `LOAD TERRAIN file$, terrain` makes the terrain again,
+  built, using the images of the same numbers when they exist. `DESTROY TERRAIN terrain`
+  deletes the object.
 
 ## Where frame time goes
 

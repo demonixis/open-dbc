@@ -27,7 +27,6 @@ dbpro	Command_LoadCdmusic	Command	LOAD CDMUSIC	Study	audio	dbc-help,dbpro-refere
 dbpro	Command_LoadDll	Command	LOAD DLL	Study	core	dbc-help,dbpro-reference	typed-load-errors
 dbpro	Command_LoadDvdAnimation	Command	LOAD DVD ANIMATION	Deferred	video	dbpro-reference	media-backend
 dbpro	Command_LoadStaticObjects	Command	LOAD STATIC OBJECTS	Study	3d	dbc-help,dbpro-reference	typed-load-errors
-dbpro	Command_LoadTerrain	Command	LOAD TERRAIN	Study	core	dbpro-reference,legacy-unverified	typed-load-errors
 dbpro	Command_LockBackbuffer	Command	LOCK BACKBUFFER	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_MakeStaticObject	Command	MAKE STATIC OBJECT	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_PerformChecklistForDrives	Command	PERFORM CHECKLIST FOR DRIVES	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -38,9 +37,7 @@ dbpro	Command_ReadDirblock	Command	READ DIRBLOCK	Target	file	dbc-help,dbpro-refe
 dbpro	Command_RecordSound	Command	RECORD SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveSound	Command	SAVE SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveStaticObjects	Command	SAVE STATIC OBJECTS	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SaveTerrain	Command	SAVE TERRAIN	Target	core	dbpro-reference,legacy-unverified	engine-subsystem-and-oracle
 dbpro	Command_SetDvdChapter	Command	SET DVD CHAPTER	Deferred	video	dbpro-reference	media-backend
-dbpro	Command_SetGlobalObjectCreation	Command	SET GLOBAL OBJECT CREATION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOff	Command	SET STATIC OBJECTS WIREFRAME OFF	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetStaticObjectsWireframeOn	Command	SET STATIC OBJECTS WIREFRAME ON	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -114,7 +111,6 @@ dbpro	Command_DeleteLightMapLights	Command	DELETE LIGHT MAP LIGHTS	Target	3d	dbp
 dbpro	Command_DeleteMemory	Command	DELETE MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeletePixelShader	Command	DELETE PIXEL SHADER	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteStaticObject	Command	DELETE STATIC OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_DestroyTerrain	Command	DESTROY TERRAIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DitherAvailable	Function	DITHER AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExcludeFromImageblock	Command	EXCLUDE FROM IMAGEBLOCK	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExecutableRunning	Function	EXECUTABLE RUNNING	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -142,8 +138,6 @@ dbpro	Function_GetPixelsPointer	Function	GET PIXELS POINTER	Target	core	dbpro-re
 dbpro	Function_GetStaticCollisionCount	Function	GET STATIC COLLISION COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetStaticCollisionFloor	Function	GET STATIC COLLISION FLOOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetStaticCollisionValue	Function	GET STATIC COLLISION VALUE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetTerrainXSize	Function	GET TERRAIN X SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetTerrainZSize	Function	GET TERRAIN Z SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetTypePattern	Function	GET TYPE PATTERN$	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetVertexdataPtr	Function	GET VERTEXDATA PTR	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_HttpConnect	Command	HTTP CONNECT	Target	core	dbpro-reference	engine-subsystem-and-oracle

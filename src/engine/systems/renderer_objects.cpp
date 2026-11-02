@@ -487,6 +487,7 @@ namespace dbc
                     Object.ViewFov > 0.0f ? std::tan(glm::radians(std::clamp(K.Camera().Fov(), 10.0f, 170.0f)) * 0.5f) /
                                                 std::tan(glm::radians(Object.ViewFov) * 0.5f)
                                           : 1.0f;
+                const std::size_t FirstTriangle = WorldTris.size();
                 for (const Mesh& MeshValue : Object.Meshes)
                 {
                     if (!MeshValue.Visible || MeshValue.Excluded)
@@ -870,6 +871,20 @@ namespace dbc
                             Surface->Style, AlphaPhase, VeryEarly, DepthBias, -1, 0, Object.DepthWrite,
                             Object.DepthTest, Surface->AuxiliaryGpuTextures, Surface->CubeGpuTexture,
                             Surface->StyleHash);
+                    }
+                }
+                if (const ObjectDrawOrder Order = K.Objects().GlobalObjectDrawOrder(); Order != ObjectDrawOrder::Depth)
+                {
+                    const Vec3 Origin = Object.LockToScreen ? Vec3{Object.PosX, Object.PosY, Object.PosZ}
+                                                            : dbc::WorldObjectOrigin(K, Object);
+                    const float Key =
+                        Order == ObjectDrawOrder::ObjectNumber
+                            ? static_cast<float>(Id)
+                            : -std::hypot(Origin.X - EyePoint.X, Origin.Y - EyePoint.Y, Origin.Z - EyePoint.Z);
+                    for (std::size_t Index = FirstTriangle; Index < WorldTris.size(); ++Index)
+                    {
+                        WorldTris[Index].ObjectOrdered = true;
+                        WorldTris[Index].ObjectOrder = Key;
                     }
                 }
                 dbc::RenderObjectBounds(K, Object, WorldTris);

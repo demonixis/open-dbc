@@ -10431,6 +10431,75 @@ TEST_CASE("DBPro chooses what each camera and SYNC draws, and how an object proj
     }
 }
 
+TEST_CASE("DBPro global object creation orders the objects drawn without a depth test")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 64, 64));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    Kernel.Camera().SetAutoCamOff();
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(0.0f, 0.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().RotateCamera(0.0f, 0.0f, 0.0f, &Error); });
+
+    using dbc::language::SymbolId;
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, std::move(Values), Error);
+    };
+    // Which of the red or the blue square was drawn last, both covering the centre.
+    const auto RedOnTop = [&]()
+    {
+        SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+        REQUIRE(Capture != nullptr);
+        std::array<Uint8, 4> Pixel{};
+        REQUIRE(
+            SDL_ReadSurfacePixel(Capture, Capture->w / 2, Capture->h / 2, &Pixel[0], &Pixel[1], &Pixel[2], &Pixel[3]));
+        SDL_DestroySurface(Capture);
+        REQUIRE(std::max(Pixel[0], Pixel[2]) > 200);
+        return Pixel[0] > Pixel[2];
+    };
+    const auto Square = [&](int Id, float Z, int Color)
+    {
+        Kernel.Objects().MakeObjectBox(Id, 2.0f, 2.0f, 0.1f);
+        Kernel.Objects().PositionObject(Id, 0.0f, 0.0f, Z);
+        Kernel.Objects().SetObjectLight(Id, 0);
+        Kernel.Objects().ColorObject(Id, Color);
+        REQUIRE(Command(SymbolId::Command_DisableObjectZread, {static_cast<double>(Id)}));
+    };
+    // Object 1 is blue and far, object 2 red and near.
+    Square(1, 8.0f, 0x000000FF);
+    Square(2, 5.0f, 0x00FF0000);
+
+    // The renderer's own order goes from near to far.
+    CHECK_FALSE(RedOnTop());
+    REQUIRE(Command(SymbolId::Command_SetGlobalObjectCreation, {4}));
+    CHECK(RedOnTop());
+    REQUIRE(Command(SymbolId::Command_SetGlobalObjectCreation, {7}));
+    CHECK(RedOnTop());
+    // Swapped, the far red square goes first by distance and last by number.
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 5.0f);
+    Kernel.Objects().PositionObject(2, 0.0f, 0.0f, 8.0f);
+    CHECK_FALSE(RedOnTop());
+    REQUIRE(Command(SymbolId::Command_SetGlobalObjectCreation, {3}));
+    CHECK(RedOnTop());
+    // Unknown modes keep the order; the texture modes give it back to the renderer.
+    REQUIRE(Command(SymbolId::Command_SetGlobalObjectCreation, {9}));
+    CHECK(RedOnTop());
+    REQUIRE(Command(SymbolId::Command_SetGlobalObjectCreation, {0}));
+    CHECK(RedOnTop());
+    Kernel.Objects().PositionObject(1, 0.0f, 0.0f, 8.0f);
+    Kernel.Objects().PositionObject(2, 0.0f, 0.0f, 5.0f);
+    CHECK_FALSE(RedOnTop());
+}
+
 TEST_CASE("DBPro cameras draw to images and clip at a plane")
 {
     dbc::EngineKernel Kernel;
@@ -12260,6 +12329,70 @@ TEST_CASE("DBPro Advanced Terrain builds an object from a heightmap")
         CHECK(Ground(104, 203) == doctest::Approx(30.0f));
         REQUIRE(Command(SymbolId::Command_ScaleObject, {1, 100, 200, 100}));
         CHECK(Ground(104, 203) == doctest::Approx(40.0f));
+    }
+
+    SUBCASE("a built terrain gives its size, saves, loads again built and is destroyed")
+    {
+        const auto Size = [&](SymbolId Symbol, int ObjectId)
+        {
+            BuiltinValue Result;
+            REQUIRE_MESSAGE(InvokeFunction(Context, Symbol, {BuiltinValue::FromNumber(ObjectId)}, Result, Error),
+                            Error);
+            float Value = 0.0f;
+            REQUIRE(Result.AsFloat(Value, &Error));
+            return Value;
+        };
+        const std::string Saved = dbc::PathToUtf8(std::filesystem::path(Path).replace_extension(".ter"));
+        const auto WithFile = [&](SymbolId Symbol, const std::string& File, int ObjectId)
+        {
+            Error.clear();
+            return InvokeCommand(Context, Symbol, {BuiltinValue::FromString(File), BuiltinValue::FromNumber(ObjectId)},
+                                 Error);
+        };
+        BuiltinValue Unused;
+        CHECK_FALSE(
+            InvokeFunction(Context, SymbolId::Function_GetTerrainXSize, {BuiltinValue::FromNumber(1)}, Unused, Error));
+        CHECK(Error == "GET TERRAIN X SIZE requires a built terrain");
+        CHECK_FALSE(WithFile(SymbolId::Command_SaveTerrain, Saved, 1));
+        CHECK(Error == "SAVE TERRAIN requires a built terrain");
+
+        StoreColor(3, 10, 20, 30);
+        REQUIRE(UsePath());
+        REQUIRE(Command(SymbolId::Command_SetTerrainScale, {1, 2, 0.5, 3}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainSplit, {1, 2}));
+        REQUIRE(Command(SymbolId::Command_SetTerrainTexture, {1, 3, 0}));
+        REQUIRE(Command(SymbolId::Command_BuildTerrain, {1}));
+        CHECK(Size(SymbolId::Function_GetTerrainXSize, 1) == doctest::Approx(16.0f));
+        CHECK(Size(SymbolId::Function_GetTerrainZSize, 1) == doctest::Approx(12.0f));
+        REQUIRE_MESSAGE(WithFile(SymbolId::Command_SaveTerrain, Saved, 1), Error);
+
+        // Loaded built, without the heightmap, with its split and texture.
+        REQUIRE_MESSAGE(WithFile(SymbolId::Command_LoadTerrain, Saved, 2), Error);
+        const dbc::Object3D* Loaded = Kernel.Objects().GetObject(2);
+        REQUIRE(Loaded != nullptr);
+        CHECK(Loaded->Meshes.size() == 4);
+        CHECK(Loaded->TextureImageId == 3);
+        CHECK(Size(SymbolId::Function_GetTerrainXSize, 2) == doctest::Approx(16.0f));
+        BuiltinValue Height;
+        REQUIRE(InvokeFunction(Context, SymbolId::Function_GetTerrainGroundHeight,
+                               {BuiltinValue::FromNumber(2), BuiltinValue::FromNumber(5), BuiltinValue::FromNumber(3)},
+                               Height, Error));
+        float Value = 0.0f;
+        REQUIRE(Height.AsFloat(Value, &Error));
+        CHECK(Value == doctest::Approx(Ground(5, 3)));
+
+        // DBPro's own terrain files are not readable, nor is any other file.
+        CHECK_FALSE(WithFile(SymbolId::Command_LoadTerrain, dbc::PathToUtf8(Path), 3));
+        CHECK(Error == "LOAD TERRAIN found an invalid file signature");
+        CHECK(Kernel.Objects().ObjectExist(3) == 0);
+
+        REQUIRE(Command(SymbolId::Command_DestroyTerrain, {2}));
+        CHECK(Kernel.Objects().ObjectExist(2) == 0);
+        REQUIRE(Command(SymbolId::Command_MakeObjectBox, {4, 1, 1, 1}));
+        CHECK_FALSE(Command(SymbolId::Command_DestroyTerrain, {4}));
+        CHECK(Error == "DESTROY TERRAIN requires a terrain made with MAKE OBJECT TERRAIN");
+        std::error_code Ignored;
+        std::filesystem::remove(dbc::PathFromUtf8(Saved), Ignored);
     }
 
     SUBCASE("textures and light reach the frame")

@@ -256,7 +256,13 @@ namespace dbc
         if (!ReadTerrainHeights(Terrain, Error))
             return false;
 
-        Object3D& Object = Objects_[ObjectId];
+        MeshTerrain(Objects_[ObjectId]);
+        return true;
+    }
+
+    void ObjectManager::MeshTerrain(Object3D& Object)
+    {
+        AdvancedTerrain& Terrain = *Object.Terrain;
         const int SplitX = std::min(Terrain.Split, Terrain.Width);
         const int SplitZ = std::min(Terrain.Split, Terrain.Depth);
         Object.Meshes.clear();
@@ -305,6 +311,31 @@ namespace dbc
         Object.BoundingRadius = std::hypot(SizeX, SizeZ) * 0.5f;
         Object.RenderBoundingRadius = -1.0f;
         Object.TransformDirty = true;
+    }
+
+    bool ObjectManager::GetTerrainSize(float& Output, int ObjectId, bool AlongZ, std::string* Error) const
+    {
+        const char* Command = AlongZ ? "GET TERRAIN Z SIZE" : "GET TERRAIN X SIZE";
+        const Object3D* Object = RequireObject(ObjectId, Command, Error);
+        if (!Object)
+            return false;
+        if (!Object->Terrain || Object->Terrain->Heights.empty())
+        {
+            if (Error)
+                *Error = std::string(Command) + " requires a built terrain";
+            return false;
+        }
+        const AdvancedTerrain& Terrain = *Object->Terrain;
+        Output = AlongZ ? static_cast<float>(Terrain.Depth) * Terrain.CellDepth
+                        : static_cast<float>(Terrain.Width) * Terrain.CellWidth;
+        return true;
+    }
+
+    bool ObjectManager::DestroyTerrain(int ObjectId, std::string* Error)
+    {
+        if (!RequireTerrainSettings(ObjectId, "DESTROY TERRAIN", Error))
+            return false;
+        DeleteObject(ObjectId);
         return true;
     }
 

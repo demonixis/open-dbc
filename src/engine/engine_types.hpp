@@ -694,6 +694,9 @@ namespace dbc
         bool DepthTest = true;
         bool DepthWrite = true;
         int RenderPriority = 0;
+        // SET GLOBAL OBJECT CREATION: an opaque object triangle sorted by ObjectOrder instead of its depth.
+        bool ObjectOrdered = false;
+        float ObjectOrder = 0.0f;
         bool Is2d = false;
         SurfaceStyle Style{};
         float Pos[3][3]{};

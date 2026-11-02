@@ -142,6 +142,9 @@ PROFILE_PARAMETER_SPECS = {
     ("DbPro", "DEFAULT NET GAME"): "S,S,N,N",
     ("DbPro", "JOIN NET GAME"): "N,S",
     ("DbPro", "LOAD ANIMATION"): "S,N",
+    # Advanced Terrain's keyword file gives no parameters; DBPro/Terrain.hpp of the Bullet ragdoll sample does.
+    ("DbPro", "LOAD TERRAIN"): "S,N",
+    ("DbPro", "SAVE TERRAIN"): "S,N",
     ("DbPro", "SEND NET MESSAGE STRING"): "N,S",
     ("DbPro", "SET NET CONNECTION"): "N,S",
 }

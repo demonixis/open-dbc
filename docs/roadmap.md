@@ -15,19 +15,13 @@ Publication:
 
 ## DBPro parity
 
-The catalogue counts 1,052 of DBPro's 1,266 core commands and functions as implemented,
-against 702 of 731 in Classic. The other 214 are sorted here by name only; confirm each
+The catalogue counts 1,058 of DBPro's 1,266 core commands and functions as implemented,
+against 702 of 731 in Classic. The other 208 are sorted here by name only; confirm each
 one when it is picked up.
 
 152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access
 (89); raw memory and pointers, assembly shaders and DLLs (42); FTP and HTTP without TLS
 (21).
-
-To port, in order:
-
-- [ ] What remains of the other gaps: the rest of Advanced Terrain once a source gives its signatures (`LOAD TERRAIN`, `SAVE TERRAIN`,
-  `DESTROY TERRAIN`, the size readers), and `SET GLOBAL OBJECT CREATION`, whose draw
-  orders the renderer decides for itself.
 
 To rethink rather than port:
 

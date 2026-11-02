@@ -12,7 +12,8 @@ namespace dbc
 {
     namespace
     {
-        // Phase, render priority and depth packed so that comparing two keys compares them in that order.
+        // Phase, render priority, object ordering and depth packed so that comparing two keys compares them in that
+        // order.
         struct OrderKey
         {
             uint64_t Key = 0;
@@ -54,12 +55,15 @@ namespace dbc
             return (Bits & 0x80000000u) ? ~Bits : (Bits | 0x80000000u);
         }
 
-        uint64_t PackKey(int Phase, int Priority, float Depth)
+        // Object-ordered triangles follow the other opaque triangles of their priority, sorted by Depth, which then
+        // holds their object order.
+        uint64_t PackKey(int Phase, int Priority, bool ObjectOrdered, float Depth)
         {
-            constexpr int64_t PriorityBias = int64_t{1} << 29;
+            constexpr int64_t PriorityBias = int64_t{1} << 28;
             const auto Biased =
                 static_cast<uint64_t>(std::clamp<int64_t>(Priority + PriorityBias, 0, 2 * PriorityBias - 1));
-            return (static_cast<uint64_t>(Phase) << 62) | (Biased << 32) | SortableDepth(Depth);
+            return (static_cast<uint64_t>(Phase) << 62) | (Biased << 33) |
+                   (static_cast<uint64_t>(ObjectOrdered) << 32) | SortableDepth(Depth);
         }
 
         // The index breaks ties, so the order matches a stable sort of the triangles.
@@ -159,14 +163,16 @@ namespace dbc
         {
             const Triangle& TriangleValue = Triangles[Index];
             const int Phase = DrawPhase(TriangleValue);
-            Keys[Index] = {
-                PackKey(Phase, TriangleValue.RenderPriority, Phase == 2 ? -TriangleValue.Depth : TriangleValue.Depth),
-                static_cast<uint32_t>(Index),
-                OrderIndependent(TriangleValue) ? std::max(TriangleValue.StateHash, 1u) : 0u};
+            const bool ObjectOrdered = Phase != 2 && TriangleValue.ObjectOrdered;
+            const float Depth =
+                Phase == 2 ? -TriangleValue.Depth : (ObjectOrdered ? TriangleValue.ObjectOrder : TriangleValue.Depth);
+            Keys[Index] = {PackKey(Phase, TriangleValue.RenderPriority, ObjectOrdered, Depth),
+                           static_cast<uint32_t>(Index),
+                           OrderIndependent(TriangleValue) ? std::max(TriangleValue.StateHash, 1u) : 0u};
         }
         SortKeys(Keys);
 
-        // A run shares its phase and priority, the upper half of the key.
+        // A run shares its phase, priority and object ordering, the upper half of the key.
         GroupScratch Scratch;
         for (std::size_t Begin = 0; Begin < Keys.size();)
         {
@@ -189,7 +195,7 @@ namespace dbc
     {
         std::vector<OrderKey> Keys(List.Triangles.size());
         for (std::size_t Index = 0; Index < List.Triangles.size(); ++Index)
-            Keys[Index] = {PackKey(0, 0, -List.Triangles[Index].Depth), static_cast<uint32_t>(Index), 0};
+            Keys[Index] = {PackKey(0, 0, false, -List.Triangles[Index].Depth), static_cast<uint32_t>(Index), 0};
         SortKeys(Keys);
         WriteOrder(Keys, List.Order);
     }

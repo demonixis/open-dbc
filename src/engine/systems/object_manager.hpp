@@ -20,6 +20,14 @@ namespace dbc
 {
     class EngineKernel;
 
+    // What orders the opaque triangles of objects: their depth, or SET GLOBAL OBJECT CREATION's object order.
+    enum class ObjectDrawOrder
+    {
+        Depth,
+        ObjectNumber,
+        FarToNear,
+    };
+
     class ObjectManager
     {
       public:
@@ -111,6 +119,12 @@ namespace dbc
         bool BuildTerrain(int ObjectId, std::string* Error = nullptr);
         void UpdateTerrains();
         bool GetTerrainGroundHeight(float& Output, int ObjectId, float X, float Z, std::string* Error = nullptr) const;
+        // The built terrain's extent along X or Z, in the units of the object.
+        bool GetTerrainSize(float& Output, int ObjectId, bool AlongZ, std::string* Error = nullptr) const;
+        bool DestroyTerrain(int ObjectId, std::string* Error = nullptr);
+        // An OpenDBC file of the built terrain's heights and settings; LOAD TERRAIN makes it again, built.
+        bool SaveTerrain(const std::string& Path, int ObjectId, std::string* Error = nullptr) const;
+        bool LoadTerrain(const std::string& Path, int ObjectId, std::string* Error = nullptr);
         bool ConvertObjectFvf(int ObjectId, uint32_t Fvf, std::string* Error = nullptr);
         void MakeObject(int ObjectId, int MeshId, int ImageId);
         bool MakeObjectFromLimb(int ObjectId, int SourceObjectId, int LimbId, int AllLimbs = 0,
@@ -198,6 +212,16 @@ namespace dbc
         bool LoadStaticObjects(const std::string& Path, std::string* Error = nullptr);
         void SetGlobalCollision(bool Enabled);
         [[nodiscard]] bool GlobalCollisionEnabled() const;
+        // DBPro's creation modes pick the opaque draw order: by texture (0, 1) leaves the renderer's own, near to far
+        // grouped by state; none (2, 3) and object number (4, 5) follow the numbers, as DBPro's object list does; 6
+        // and 7 go from the farthest object to the nearest. Other modes change nothing.
+        void SetGlobalObjectCreation(int Mode);
+
+        [[nodiscard]] ObjectDrawOrder GlobalObjectDrawOrder() const
+        {
+            return GlobalObjectDrawOrder_;
+        }
+
         bool StaticLineOfSight(float& Output, float SourceX, float SourceY, float SourceZ, float DestinationX,
                                float DestinationY, float DestinationZ, float Width, float Accuracy,
                                std::string* Error = nullptr);
@@ -504,6 +528,7 @@ namespace dbc
         float StaticHitZ_ = 0.0f;
         bool StaticOcclusionEnabled_ = true;
         bool GlobalCollisionEnabled_ = false;
+        ObjectDrawOrder GlobalObjectDrawOrder_ = ObjectDrawOrder::Depth;
         enum class VertexLockKind
         {
             None,
@@ -519,6 +544,8 @@ namespace dbc
         void NotifyObjectCreated(int ObjectId);
         Object3D* RequireObject(int ObjectId, const char* Command, std::string* Error = nullptr);
         AdvancedTerrain* RequireTerrainSettings(int ObjectId, const char* Command, std::string* Error = nullptr);
+        // Makes the object's meshes from its terrain's heights.
+        void MeshTerrain(Object3D& Object);
         const Object3D* RequireObject(int ObjectId, const char* Command, std::string* Error = nullptr) const;
         ParticleEmitter* RequireParticles(int ParticleId, const char* Command, std::string* Error = nullptr);
         const ParticleEmitter* RequireParticles(int ParticleId, const char* Command,
