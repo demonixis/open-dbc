@@ -1,6 +1,7 @@
 #include "engine/runtime_compatibility.hpp"
 #include "engine/systems/data_file_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
+#include "engine/systems/file_map_system.hpp"
 #include "interpreter/engine_builtin_context.hpp"
 #include "interpreter/engine_builtin_host.hpp"
 #include "interpreter/engine_builtin_registry.hpp"
@@ -13,6 +14,8 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <chrono>
+#include <thread>
 
 #include <cstdint>
 #include <filesystem>
@@ -370,4 +373,57 @@ TEST_CASE("Enhancement Pack data files read delimited cells by column and row")
                            {BuiltinValue::FromString((Scratch.Path() / "missing.csv").generic_string()),
                             BuiltinValue::FromString(","), Int(4)}));
     CHECK(App.Number(S::Function_ExtEnhancementGetDataFileExists, {Int(4)}) == 0.0);
+}
+
+TEST_CASE("Enhancement Pack file maps share memory between programs")
+{
+    using S = SymbolId;
+    const std::string Name = "opendbc-test-map-" + std::to_string(dbc::testing::UniqueSuffix());
+    const BuiltinValue MapName = BuiltinValue::FromString(Name);
+    Application Host("enhancement-file-map-host");
+    Application Guest("enhancement-file-map-guest");
+    CHECK(Guest.CommandFails(S::Command_ExtEnhancementOpenFileMap, {Int(1), MapName}));
+
+    Host.Require(S::Command_ExtEnhancementCreateFileMap, {Int(1), MapName, Int(1024)});
+    Host.Require(S::Command_ExtEnhancementSetFileMapDword, {Int(1), Int(0), Int(-2)});
+    Host.Require(S::Command_ExtEnhancementSetFileMapFloat, {Int(1), Int(4), BuiltinValue::FromNumber(1.5)});
+    Host.Require(S::Command_ExtEnhancementSetFileMapString,
+                 {Int(1), Int(8), BuiltinValue::FromString("hello from host")});
+    Host.Require(S::Command_ExtEnhancementSetFileMapString, {Int(1), Int(8), BuiltinValue::FromString("hi")});
+
+    // Creating a map another program made joins it, keeping its size.
+    Guest.Require(S::Command_ExtEnhancementCreateFileMap, {Int(2), MapName, Int(16)});
+    CHECK(Guest.Number(S::Function_ExtEnhancementGetFileMapDword, {Int(2), Int(0)}) == -2.0);
+    CHECK(Guest.Number(S::Function_ExtEnhancementGetFileMapFloat, {Int(2), Int(4)}) == 1.5);
+    CHECK(Guest.Text(S::Function_ExtEnhancementGetFileMapString, {Int(2), Int(8)}) == "hi");
+    Guest.Require(S::Command_ExtEnhancementSetFileMapDword, {Int(2), Int(1020), Int(7)});
+    CHECK(Host.Number(S::Function_ExtEnhancementGetFileMapDword, {Int(1), Int(1020)}) == 7.0);
+
+    CHECK(Host.Fails(S::Function_ExtEnhancementGetFileMapDword, {Int(1), Int(1021)}));
+    CHECK(Host.Fails(S::Function_ExtEnhancementGetFileMapDword, {Int(1), Int(-1)}));
+    CHECK(Host.CommandFails(S::Command_ExtEnhancementSetFileMapString,
+                            {Int(1), Int(1020), BuiltinValue::FromString("too long")}));
+    CHECK(Host.Fails(S::Function_ExtEnhancementGetFileMapDword, {Int(9), Int(0)}));
+    CHECK(Host.CommandFails(S::Command_ExtEnhancementCreateFileMap, {Int(256), MapName, Int(16)}));
+    CHECK(Host.CommandFails(S::Command_ExtEnhancementCreateFileMap, {Int(3), MapName, Int(0)}));
+
+    // Another program's write ends the wait long before its five-second timeout.
+    const auto Started = std::chrono::steady_clock::now();
+    std::thread Writer(
+        [&]
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::string Ignored;
+            Host.Kernel().FileMaps().WriteDword(1, 0, 3, &Ignored);
+        });
+    Guest.Require(S::Command_ExtEnhancementWaitForFileMapEvent, {Int(2)});
+    Writer.join();
+    CHECK(std::chrono::steady_clock::now() - Started < std::chrono::seconds(4));
+    CHECK(Guest.Number(S::Function_ExtEnhancementGetFileMapDword, {Int(2), Int(0)}) == 3.0);
+
+    Guest.Require(S::Command_ExtEnhancementCloseFileMap, {Int(2)});
+    Guest.Require(S::Command_ExtEnhancementDestroyFileMap, {Int(2)});
+    CHECK(Guest.Fails(S::Function_ExtEnhancementGetFileMapDword, {Int(2), Int(0)}));
+    Host.Require(S::Command_ExtEnhancementDestroyFileMap, {Int(1)});
+    CHECK(Guest.CommandFails(S::Command_ExtEnhancementOpenFileMap, {Int(2), MapName}));
 }

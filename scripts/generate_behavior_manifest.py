@@ -1829,6 +1829,24 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ENHANCEMENT_FILE_MAP_TEST = "test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs"
+UNIT_WITNESSES += tuple(
+    ("dbpro", kind, name, code, "shared-memory-state", ENHANCEMENT_FILE_MAP_TEST)
+    for kind, name, code in (
+        ("Command", "CREATE FILE MAP", "create file map 1, \"FILEMAPPING\", 1024\n"),
+        ("Command", "OPEN FILE MAP", "open file map 1, \"FILEMAPPING\"\n"),
+        ("Command", "CLOSE FILE MAP", "close file map 1\n"),
+        ("Command", "DESTROY FILE MAP", "destroy file map 1\n"),
+        ("Command", "WAIT FOR FILE MAP EVENT", "wait for file map event 1\n"),
+        ("Command", "SET FILE MAP DWORD", "set file map dword 1, 0, 7\n"),
+        ("Command", "SET FILE MAP FLOAT", "set file map float 1, 4, 1.5\n"),
+        ("Command", "SET FILE MAP STRING$", "set file map string$ 1, 8, \"hi\"\n"),
+        ("Function", "GET FILE MAP DWORD", "value = get file map dword(1, 0)\n"),
+        ("Function", "GET FILE MAP FLOAT", "value# = get file map float(1, 4)\n"),
+        ("Function", "GET FILE MAP STRING$", "text$ = get file map string$(1, 8)\n"),
+    )
+)
+
 def inspect(opendbc: Path, source: Path, profile: str, what: str) -> dict:
     result = subprocess.run([str(opendbc), "inspect", str(source), "--json", "--dialect", profile],
                             text=True, capture_output=True, check=False)

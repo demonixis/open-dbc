@@ -8,6 +8,7 @@
 #include "dll_system.hpp"
 #include "draw_system.hpp"
 #include "file_io_system.hpp"
+#include "file_map_system.hpp"
 #include "graphics_device_system.hpp"
 #include "image_store.hpp"
 #include "input_system.hpp"
@@ -74,6 +75,7 @@ namespace dbc
         Dlls_ = std::make_unique<DllSystem>(*this);
         Machine_ = std::make_unique<SystemInfo>();
         DataFiles_ = std::make_unique<DataFileSystem>();
+        FileMaps_ = std::make_unique<FileMapSystem>();
         dbc::log::AttachRingBuffer(DebugSystem_.get());
 
         Initialized_ = true;
@@ -90,6 +92,7 @@ namespace dbc
         Dlls_.reset();
         Machine_.reset();
         DataFiles_.reset();
+        FileMaps_.reset();
         Network_.reset();
         Video_.reset();
         DebugSystem_.reset();
@@ -375,6 +378,11 @@ namespace dbc
     DataFileSystem& EngineKernel::DataFiles()
     {
         return *DataFiles_;
+    }
+
+    FileMapSystem& EngineKernel::FileMaps()
+    {
+        return *FileMaps_;
     }
 
 } // namespace dbc

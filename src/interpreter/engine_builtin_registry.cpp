@@ -11,6 +11,7 @@
 #include "engine/systems/dll_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
 #include "engine/systems/file_io_system.hpp"
+#include "engine/systems/file_map_system.hpp"
 #include "engine/systems/graphics_device_system.hpp"
 #include "engine/systems/image_store.hpp"
 #include "engine/systems/input_system.hpp"
