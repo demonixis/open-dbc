@@ -104,6 +104,7 @@ namespace dbc
                 *Error = "DELETE CAMERA requires existing camera " + std::to_string(CameraId);
             return false;
         }
+        Kernel_.Renderer().ReleaseCameraImageTarget(CameraId);
         if (CurrentCameraId_ == CameraId)
         {
             CurrentCameraId_ = 0;
@@ -153,6 +154,7 @@ namespace dbc
         if (ImageId < 1)
         {
             Camera->TargetImage = 0;
+            Kernel_.Renderer().ReleaseCameraImageTarget(CameraId);
             Kernel_.Renderer().InvalidateTriCache();
             return true;
         }
@@ -176,6 +178,8 @@ namespace dbc
         SDL_DestroySurface(Surface);
         if (!Stored)
             return false;
+        if (Camera->TargetImageWidth != Width || Camera->TargetImageHeight != Height)
+            Kernel_.Renderer().ReleaseCameraImageTarget(CameraId);
         Camera->TargetImage = ImageId;
         Camera->TargetImageWidth = Width;
         Camera->TargetImageHeight = Height;

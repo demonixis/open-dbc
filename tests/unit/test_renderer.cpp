@@ -398,6 +398,35 @@ TEST_CASE("Every DBPro camera draws its viewport and screen 2D stays in screen c
     CHECK(Kernel.Camera().CurrentCameraId() == 0);
 }
 
+TEST_CASE("Camera image targets are released when their cameras stop using them")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("camera-target-lifetime", 80, 60));
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    std::string Error;
+    REQUIRE_MESSAGE(Kernel.Camera().MakeCamera(1, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().MakeCamera(2, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().SetCameraToImage(1, 1, 16, 16, &Error), Error);
+    REQUIRE_MESSAGE(Kernel.Camera().SetCameraToImage(2, 2, 16, 16, &Error), Error);
+    REQUIRE(Kernel.Renderer().CameraImageTarget(1, 16, 16).Color != nullptr);
+    REQUIRE(Kernel.Renderer().CameraImageTarget(2, 16, 16).Color != nullptr);
+
+    SUBCASE("Deleting the camera")
+    {
+        REQUIRE_MESSAGE(Kernel.Camera().DeleteCamera(1, &Error), Error);
+    }
+    SUBCASE("Returning the camera to the screen")
+    {
+        REQUIRE_MESSAGE(Kernel.Camera().SetCameraToImage(1, 0, 0, 0, &Error), Error);
+    }
+    SUBCASE("Replacing the camera image with another size")
+    {
+        REQUIRE_MESSAGE(Kernel.Camera().SetCameraToImage(1, 1, 32, 16, &Error), Error);
+    }
+    CHECK_FALSE(Kernel.Renderer().ReleaseCameraImageTarget(1));
+    CHECK(Kernel.Renderer().ReleaseCameraImageTarget(2));
+}
+
 TEST_CASE("Failed GPU submission consumes ownership without retry or cancellation")
 {
     Submissions = 0;

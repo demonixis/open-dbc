@@ -120,6 +120,8 @@ namespace dbc
         [[nodiscard]] RenderView CameraView(Uint32 PhysicalWidth, Uint32 PhysicalHeight) const;
         // The textures a camera sends to an image draws in, remade when the size changes. Empty on failure.
         [[nodiscard]] GpuRenderTarget CameraImageTarget(int CameraId, Uint32 Width, Uint32 Height);
+        // Releases an image target after its camera is deleted or returns to the screen; false if none existed.
+        bool ReleaseCameraImageTarget(int CameraId);
         // Writes what the camera drew into its image, and the image's mipmaps.
         bool TransferCameraImage(int CameraId, int ImageId, SDL_GPUCommandBuffer* Cmd);
         // TEXTURE SCREEN and SET SCREEN EFFECT. Once camera zero draws into an image, SYNC shows the screen quad

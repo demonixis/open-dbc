@@ -1632,6 +1632,22 @@ namespace dbc
         return {Entry.Color, Entry.Depth, K.Gpu().GpuColorFormat(), K.Gpu().GpuDepthFormat(), Width, Height};
     }
 
+    bool RendererSystem::ReleaseCameraImageTarget(int CameraId)
+    {
+        const auto Entry = CameraTargets_.find(CameraId);
+        if (Entry == CameraTargets_.end())
+            return false;
+        if (SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice())
+        {
+            if (Entry->second.Color)
+                SDL_ReleaseGPUTexture(Device, Entry->second.Color);
+            if (Entry->second.Depth)
+                SDL_ReleaseGPUTexture(Device, Entry->second.Depth);
+        }
+        CameraTargets_.erase(Entry);
+        return true;
+    }
+
     bool RendererSystem::TransferCameraImage(int CameraId, int ImageId, SDL_GPUCommandBuffer* Cmd)
     {
         EngineKernel& K = Kernel_;
@@ -1872,17 +1888,11 @@ namespace dbc
 
     void RendererSystem::ReleaseCameraTargets()
     {
+        while (!CameraTargets_.empty())
+            ReleaseCameraImageTarget(CameraTargets_.begin()->first);
         SDL_GPUDevice* Device = Kernel_.Gpu().GpuDevice();
         if (Device)
         {
-            for (auto& [CameraId, Entry] : CameraTargets_)
-            {
-                (void)CameraId;
-                if (Entry.Color)
-                    SDL_ReleaseGPUTexture(Device, Entry.Color);
-                if (Entry.Depth)
-                    SDL_ReleaseGPUTexture(Device, Entry.Depth);
-            }
             if (CameraTransferPipeline_)
                 SDL_ReleaseGPUGraphicsPipeline(Device, CameraTransferPipeline_);
             if (ScreenCopyPipeline_)
@@ -1890,7 +1900,6 @@ namespace dbc
             if (ScreenQuadVertices_)
                 SDL_ReleaseGPUBuffer(Device, ScreenQuadVertices_);
         }
-        CameraTargets_.clear();
         CameraTransferPipeline_ = nullptr;
         ScreenCopyPipeline_ = nullptr;
         ScreenQuadVertices_ = nullptr;
