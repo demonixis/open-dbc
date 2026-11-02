@@ -1,4 +1,5 @@
 #include "program_image.hpp"
+#include "opendbc_runtime_fingerprint.h"
 #include "path_utf8.hpp"
 
 #include <bit>

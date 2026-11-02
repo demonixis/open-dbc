@@ -70,10 +70,8 @@ endif()
 if(NOT OPENDBC_REVISION MATCHES "^[0-9a-f]+$")
     set(OPENDBC_REVISION "source-archive")
 endif()
+# The runtime manifest ships with the Studio; export hosts record its hash to prove they run the same runtime.
 include(cmake/runtime_fingerprint.cmake)
-# Shipped by the Studio; export hosts record its hash to prove they run the same runtime.
-set(OPENDBC_RUNTIME_MANIFEST "${CMAKE_BINARY_DIR}/opendbc-runtime.json")
-configure_file(cmake/opendbc-runtime.json.in "${OPENDBC_RUNTIME_MANIFEST}" @ONLY)
 message(STATUS "open-dbc version ${OPENDBC_VERSION} build ${OPENDBC_BUILD_NUMBER}")
 
 # --- Bundle identity -------------------------------------------------------

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify that incremental builds invalidate the runtime identity after source changes."""
+"""Verify that incremental builds refresh the runtime identity after source changes without reconfiguring."""
 
 import argparse
 import shutil
@@ -21,14 +21,17 @@ class RuntimeFingerprintTests(unittest.TestCase):
         self.build = Path(self.temporary.name) / "build"
         self.write("CMakeLists.txt", """cmake_minimum_required(VERSION 3.24)
 project(RuntimeFingerprintTest LANGUAGES NONE)
+set(OPENDBC_VERSION 0.0.0)
+set(OPENDBC_REVISION fixture)
 include(cmake/runtime_fingerprint.cmake)
-file(WRITE "${CMAKE_BINARY_DIR}/fingerprint.txt" "${OPENDBC_RUNTIME_FINGERPRINT}")
+add_custom_target(fixture_runtime ALL DEPENDS opendbc_runtime_fingerprint)
 """)
         for directory in ("src/engine", "src/interpreter", "src/language", "src/vm",
                           "tools/studio", "tools/runner"):
             self.write(f"{directory}/CMakeLists.txt", "# Fixture build contract\n")
-        self.write("cmake/runtime_fingerprint.cmake", "")
-        shutil.copyfile(ROOT / "cmake/runtime_fingerprint.cmake", self.source / "cmake/runtime_fingerprint.cmake")
+        (self.source / "cmake").mkdir(parents=True, exist_ok=True)
+        for name in ("runtime_fingerprint.cmake", "write_runtime_fingerprint.cmake", "opendbc-runtime.json.in"):
+            shutil.copyfile(ROOT / "cmake" / name, self.source / "cmake" / name)
         self.inputs = ("src/vm/bytecode.hpp", "src/vm/execution_session.cpp",
                        "src/engine/systems/video_decoder_avfoundation.mm", "tools/runner/main.cpp",
                        "tools/runner/CMakeLists.txt", "tools/studio/src/app.cpp", "shaders/basic.hlsl",
@@ -43,19 +46,25 @@ file(WRITE "${CMAKE_BINARY_DIR}/fingerprint.txt" "${OPENDBC_RUNTIME_FINGERPRINT}
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
 
-    def run_cmake(self, *arguments: str) -> None:
+    def run_cmake(self, *arguments: str) -> str:
         result = subprocess.run([CMAKE, *arguments], capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        return result.stdout
 
     def fingerprint(self) -> str:
-        return (self.build / "fingerprint.txt").read_text(encoding="utf-8")
+        header = (self.build / "generated/runtime/opendbc_runtime_fingerprint.h").read_text(encoding="utf-8")
+        manifest = (self.build / "opendbc-runtime.json").read_text(encoding="utf-8")
+        value = header.split('"')[1]
+        self.assertIn(f'"fingerprint": "{value}"', manifest)
+        return value
 
-    def test_existing_runtime_inputs_trigger_incremental_reconfiguration(self) -> None:
+    def test_edited_runtime_inputs_refresh_identity_without_reconfiguring(self) -> None:
         for path in self.inputs:
             with self.subTest(path=path):
                 original = self.fingerprint()
                 self.write(path, "// Changed fixture input\n")
-                self.run_cmake("--build", str(self.build))
+                output = self.run_cmake("--build", str(self.build))
+                self.assertNotIn("Re-running CMake", output)
                 self.assertNotEqual(self.fingerprint(), original)
 
     def test_platform_sources_are_discovered_and_removed_incrementally(self) -> None:

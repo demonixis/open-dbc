@@ -38,8 +38,9 @@ target_include_directories(dbc_interpreter
 target_link_libraries(dbc_interpreter PUBLIC dbc_engine unordered_dense::unordered_dense dbc_language opendbc_vm
   nlohmann_json::nlohmann_json)
 dbc_enable_warnings(dbc_interpreter)
-# Only this source sees the fingerprint, so a new fingerprint recompiles one file.
-set_source_files_properties(program_image.cpp PROPERTIES
-    COMPILE_DEFINITIONS "OPENDBC_RUNTIME_FINGERPRINT=\"${OPENDBC_RUNTIME_FINGERPRINT}\"")
+# Only this source includes the fingerprint, so a new fingerprint recompiles one file.
+add_dependencies(dbc_interpreter opendbc_runtime_fingerprint)
+target_include_directories(dbc_interpreter PRIVATE "${OPENDBC_RUNTIME_FINGERPRINT_DIR}")
+set_source_files_properties(program_image.cpp PROPERTIES OBJECT_DEPENDS "${OPENDBC_RUNTIME_FINGERPRINT_HEADER}")
 set_source_files_properties(command_line_run.cpp PROPERTIES
     COMPILE_DEFINITIONS "OPENDBC_VERSION_STRING=\"${OPENDBC_VERSION}\"")

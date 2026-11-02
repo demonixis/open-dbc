@@ -384,6 +384,8 @@ add_custom_command(
     VERBATIM)
 add_custom_target(opendbc_studio_fonts DEPENDS "${STUDIO_FONT_INCLUDE}")
 add_dependencies(opendbc opendbc_studio_fonts)
+# The bundle ships the runtime manifest.
+add_dependencies(opendbc opendbc_runtime_fingerprint)
 
 target_link_libraries(opendbc PRIVATE
     dbc_interpreter
@@ -422,7 +424,7 @@ if(APPLE)
     set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/editor.png"
         PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_source_files_properties("${OPENDBC_RUNTIME_MANIFEST}"
-        PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        PROPERTIES GENERATED TRUE MACOSX_PACKAGE_LOCATION Resources)
     target_sources(opendbc PRIVATE ${OPENDBC_REFERENCE_FILES} "${CMAKE_SOURCE_DIR}/licenses/NOTICE.md"
         "${CMAKE_SOURCE_DIR}/resources/editor.png" "${OPENDBC_RUNTIME_MANIFEST}"
         ${OPENDBC_REPOSITORY_LICENSES} ${OPENDBC_GENERATED_LICENSES})

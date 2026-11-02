@@ -19,6 +19,8 @@ if(WIN32)
     target_sources(opendbc-runner PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/runner.rc")
 endif()
 target_link_libraries(opendbc-runner PRIVATE dbc_interpreter)
+# The host manifest written after linking hashes the runtime manifest.
+add_dependencies(opendbc-runner opendbc_runtime_fingerprint)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # The linker extracts an archive member for any symbol it defines, inline copies included, and then
     # keeps all of it. The runner shares headers with the frontend, so it would ship the parser unused.
