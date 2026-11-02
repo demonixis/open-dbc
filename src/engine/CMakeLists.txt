@@ -1,6 +1,7 @@
 add_library(dbc_engine STATIC
   systems/engine_kernel.cpp
   systems/system_info.cpp
+  systems/data_file_system.cpp
   systems/vr_system.cpp
   systems/vr_tracking.cpp
   systems/vr_presenter.cpp

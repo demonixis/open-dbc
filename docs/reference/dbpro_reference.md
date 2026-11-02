@@ -113,7 +113,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `CLONE OBJECT` | Command | 2-3 | number, number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLONE SOUND` | Command | 2 | number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLONE SPRITE` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `CLOSE DATA FILE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `CLOSE DATA FILE` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLOSE FILE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `CLOSE FILE BLOCK` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `CLOSE FILE MAP` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -497,7 +497,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `NORMALIZE VECTOR4` | Command | 2 | number, number -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OFFSET LIMB` | Command | 5-6 | number, number, number, number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OFFSET SPRITE` | Command | 3 | number, number, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `OPEN DATA FILE` | Command | 3 | string, string, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `OPEN DATA FILE` | Command | 3 | string, string, integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `OPEN FILE BLOCK` | Command | 2-3 | string, integer -> void; string, integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `OPEN FILE MAP` | Command | 2 | integer, string -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `OPEN IMAGEBLOCK` | Command | 2 | number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -1436,7 +1436,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `UNLOCK BACKBUFFER` | Command | 0 | none -> void | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `UNLOCK PIXELS` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `UNLOCK VERTEXDATA` | Command | 0 | none -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
-| `UPDATE DATA FILE` | Command | 1 | integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `UPDATE DATA FILE` | Command | 1 | integer -> void | Implemented | DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `UPDATE MATRIX` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `UPDATE PHYSICS` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `USE EFFECTOR CYLINDER FALLOFF` | Command | 2 | integer, integer -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
@@ -1678,10 +1678,10 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `GET CHILD WINDOW Y` | Function | 0 | none -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET CLIPBOARD$` | Function | 0 | none -> string | Unsupported (DBC2043) | Classic help, DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET COMPUTER NAME$` | Function | 0 | none -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
-| `GET DATA FILE CELL` | Function | 3 | integer, integer, integer -> string | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DATA FILE COLUMN COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DATA FILE EXISTS` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
-| `GET DATA FILE ROW COUNT` | Function | 1 | integer -> integer | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
+| `GET DATA FILE CELL` | Function | 3 | integer, integer, integer -> string | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DATA FILE COLUMN COUNT` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DATA FILE EXISTS` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
+| `GET DATA FILE ROW COUNT` | Function | 1 | integer -> integer | Implemented | DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET DATE$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |
 | `GET DEVICE TYPE` | Function | 0 | none -> real | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional function recognized for a stable unsupported diagnostic. |
 | `GET DIR$` | Function | 0 | none -> string | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional function implemented with an observable contract. |

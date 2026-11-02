@@ -31,6 +31,7 @@ namespace dbc
     class DllSystem;
     class VrSystem;
     class SystemInfo;
+    class DataFileSystem;
 
     class EngineKernel
     {
@@ -95,6 +96,7 @@ namespace dbc
         DllSystem& Dlls();
         const DllSystem& Dlls() const;
         SystemInfo& Machine();
+        DataFileSystem& DataFiles();
 
       private:
         bool Initialized_ = false;
@@ -122,6 +124,7 @@ namespace dbc
         std::unique_ptr<DllSystem> Dlls_;
         std::unique_ptr<VrSystem> Vr_;
         std::unique_ptr<SystemInfo> Machine_;
+        std::unique_ptr<DataFileSystem> DataFiles_;
     };
 
 } // namespace dbc

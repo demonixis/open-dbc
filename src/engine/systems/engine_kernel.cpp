@@ -3,6 +3,7 @@
 #include "bsp_world.hpp"
 #include "camera_system.hpp"
 #include "core_system.hpp"
+#include "data_file_system.hpp"
 #include "debug_system.hpp"
 #include "dll_system.hpp"
 #include "draw_system.hpp"
@@ -72,6 +73,7 @@ namespace dbc
         Network_ = std::make_unique<NetworkSystem>();
         Dlls_ = std::make_unique<DllSystem>(*this);
         Machine_ = std::make_unique<SystemInfo>();
+        DataFiles_ = std::make_unique<DataFileSystem>();
         dbc::log::AttachRingBuffer(DebugSystem_.get());
 
         Initialized_ = true;
@@ -87,6 +89,7 @@ namespace dbc
             Vr_->DetachDevice();
         Dlls_.reset();
         Machine_.reset();
+        DataFiles_.reset();
         Network_.reset();
         Video_.reset();
         DebugSystem_.reset();
@@ -367,6 +370,11 @@ namespace dbc
     SystemInfo& EngineKernel::Machine()
     {
         return *Machine_;
+    }
+
+    DataFileSystem& EngineKernel::DataFiles()
+    {
+        return *DataFiles_;
     }
 
 } // namespace dbc

@@ -1,9 +1,11 @@
 #include "engine/runtime_compatibility.hpp"
+#include "engine/systems/data_file_system.hpp"
 #include "engine/systems/engine_kernel.hpp"
 #include "interpreter/engine_builtin_context.hpp"
 #include "interpreter/engine_builtin_host.hpp"
 #include "interpreter/engine_builtin_registry.hpp"
 #include "language/frontend.hpp"
+#include "unique_suffix.hpp"
 #include "vm/compiler.hpp"
 #include "vm/verifier.hpp"
 
@@ -13,6 +15,8 @@
 #include <algorithm>
 
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -66,6 +70,12 @@ namespace
             return Function(Symbol, std::move(Arguments)).AsString();
         }
 
+        bool CommandFails(SymbolId Symbol, std::vector<BuiltinValue> Arguments)
+        {
+            Error.clear();
+            return !Command(Symbol, std::move(Arguments)) && !Error.empty();
+        }
+
         bool Fails(SymbolId Symbol, std::vector<BuiltinValue> Arguments)
         {
             BuiltinValue Result;
@@ -89,6 +99,39 @@ namespace
       private:
         dbc::EngineKernel Kernel_;
         BuiltinContext Context_;
+    };
+
+    // A directory of its own for one test, removed afterwards.
+    class ScratchDirectory
+    {
+      public:
+        explicit ScratchDirectory(const char* Name)
+            : Path_(std::filesystem::temp_directory_path() /
+                    (std::string(Name) + "-" + std::to_string(dbc::testing::UniqueSuffix())))
+        {
+            std::filesystem::create_directories(Path_);
+        }
+
+        ~ScratchDirectory()
+        {
+            std::error_code Ignored;
+            std::filesystem::remove_all(Path_, Ignored);
+        }
+
+        std::string Write(const char* Name, const std::string& Contents) const
+        {
+            const std::filesystem::path File = Path_ / Name;
+            std::ofstream(File, std::ios::binary) << Contents;
+            return File.generic_string();
+        }
+
+        const std::filesystem::path& Path() const
+        {
+            return Path_;
+        }
+
+      private:
+        std::filesystem::path Path_;
     };
 
     BuiltinValue Int(int Value)
@@ -275,4 +318,56 @@ TEST_CASE("Enhancement Pack names, address and display queries answer without a 
     CHECK(App.Number(SymbolId::Function_ExtEnhancementGetDisplayHeight) >= 0.0);
     CHECK(App.Number(SymbolId::Function_ExtEnhancementGetDisplayDepth) >= -1.0);
     CHECK(App.Number(SymbolId::Function_ExtEnhancementGetDisplayRefreshRate) >= -1.0);
+}
+
+TEST_CASE("DataFileSystem splits rows as the Enhancement Pack did")
+{
+    using Fields = std::vector<std::string>;
+    CHECK(dbc::DataFileSystem::SplitRow("a,b,,c", ",") == Fields{"a", "b", "", "c"});
+    CHECK(dbc::DataFileSystem::SplitRow("\"x, y\",\"z\"", ",") == Fields{"x, y", "z"});
+    CHECK(dbc::DataFileSystem::SplitRow("a::b", "::") == Fields{"a", "b"});
+    CHECK(dbc::DataFileSystem::SplitRow("\"alone\"", ",") == Fields{"alone"});
+    CHECK(dbc::DataFileSystem::SplitRow("plain", ",") == Fields{"plain"});
+    CHECK(dbc::DataFileSystem::SplitRow("", ",") == Fields{""});
+    CHECK(dbc::DataFileSystem::SplitRow("a,b", "") == Fields{"a,b"});
+}
+
+TEST_CASE("Enhancement Pack data files read delimited cells by column and row")
+{
+    ScratchDirectory Scratch("opendbc-data-file");
+    const std::string Table = Scratch.Write("scores.csv", "name;score\r\n\"Ada\";\"42\"\r\nBob;7;extra\r\n");
+    Application App("enhancement-data-files");
+    using S = SymbolId;
+    CHECK(App.Number(S::Function_ExtEnhancementGetDataFileExists, {Int(3)}) == 0.0);
+    App.Require(S::Command_ExtEnhancementOpenDataFile,
+                {BuiltinValue::FromString(Table), BuiltinValue::FromString(";"), Int(3)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetDataFileExists, {Int(3)}) == 1.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetDataFileRowCount, {Int(3)}) == 3.0);
+    CHECK(App.Number(S::Function_ExtEnhancementGetDataFileColumnCount, {Int(3)}) == 3.0);
+    CHECK(App.Text(S::Function_ExtEnhancementGetDataFileCell, {Int(3), Int(1), Int(1)}) == "name");
+    CHECK(App.Text(S::Function_ExtEnhancementGetDataFileCell, {Int(3), Int(2), Int(2)}) == "42");
+    CHECK(App.Text(S::Function_ExtEnhancementGetDataFileCell, {Int(3), Int(3), Int(3)}) == "extra");
+    CHECK(App.Text(S::Function_ExtEnhancementGetDataFileCell, {Int(3), Int(3), Int(1)}).empty());
+    CHECK(App.Text(S::Function_ExtEnhancementGetDataFileCell, {Int(3), Int(0), Int(1)}).empty());
+    CHECK(App.Text(S::Function_ExtEnhancementGetDataFileCell, {Int(3), Int(1), Int(9)}).empty());
+
+    Scratch.Write("scores.csv", "only;row\n");
+    App.Require(S::Command_ExtEnhancementUpdateDataFile, {Int(3)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetDataFileRowCount, {Int(3)}) == 1.0);
+    CHECK(App.Text(S::Function_ExtEnhancementGetDataFileCell, {Int(3), Int(2), Int(1)}) == "row");
+
+    CHECK(App.CommandFails(S::Command_ExtEnhancementOpenDataFile,
+                           {BuiltinValue::FromString(Table), BuiltinValue::FromString(";"), Int(3)}));
+    App.Require(S::Command_ExtEnhancementCloseDataFile, {Int(3)});
+    CHECK(App.Number(S::Function_ExtEnhancementGetDataFileExists, {Int(3)}) == 0.0);
+    CHECK(App.CommandFails(S::Command_ExtEnhancementCloseDataFile, {Int(3)}));
+    CHECK(App.Fails(S::Function_ExtEnhancementGetDataFileRowCount, {Int(3)}));
+    CHECK(App.Fails(S::Function_ExtEnhancementGetDataFileExists, {Int(256)}));
+    CHECK(App.CommandFails(
+        S::Command_ExtEnhancementOpenDataFile,
+        {BuiltinValue::FromString(Scratch.Write("book.XLS", "")), BuiltinValue::FromString("Sheet1"), Int(4)}));
+    CHECK(App.CommandFails(S::Command_ExtEnhancementOpenDataFile,
+                           {BuiltinValue::FromString((Scratch.Path() / "missing.csv").generic_string()),
+                            BuiltinValue::FromString(","), Int(4)}));
+    CHECK(App.Number(S::Function_ExtEnhancementGetDataFileExists, {Int(4)}) == 0.0);
 }

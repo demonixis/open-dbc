@@ -1815,6 +1815,20 @@ UNIT_WITNESSES += tuple(
     )
 )
 
+ENHANCEMENT_DATA_FILE_TEST = "test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row"
+UNIT_WITNESSES += tuple(
+    ("dbpro", kind, name, code, "delimited-text-table", ENHANCEMENT_DATA_FILE_TEST)
+    for kind, name, code in (
+        ("Command", "OPEN DATA FILE", "open data file \"scores.csv\", \";\", 3\n"),
+        ("Command", "CLOSE DATA FILE", "close data file 3\n"),
+        ("Command", "UPDATE DATA FILE", "update data file 3\n"),
+        ("Function", "GET DATA FILE EXISTS", "value = get data file exists(3)\n"),
+        ("Function", "GET DATA FILE CELL", "text$ = get data file cell(3, 2, 2)\n"),
+        ("Function", "GET DATA FILE ROW COUNT", "value = get data file row count(3)\n"),
+        ("Function", "GET DATA FILE COLUMN COUNT", "value = get data file column count(3)\n"),
+    )
+)
+
 def inspect(opendbc: Path, source: Path, profile: str, what: str) -> dict:
     result = subprocess.run([str(opendbc), "inspect", str(source), "--json", "--dialect", profile],
                             text=True, capture_output=True, check=False)

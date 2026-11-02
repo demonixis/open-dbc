@@ -6,6 +6,7 @@
 #include "engine/systems/bsp_world.hpp"
 #include "engine/systems/camera_system.hpp"
 #include "engine/systems/core_system.hpp"
+#include "engine/systems/data_file_system.hpp"
 #include "engine/systems/debug_system.hpp"
 #include "engine/systems/dll_system.hpp"
 #include "engine/systems/engine_kernel.hpp"

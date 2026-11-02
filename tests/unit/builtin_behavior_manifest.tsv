@@ -1747,13 +1747,20 @@ dbpro	1436	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and 
 dbpro	1439	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1441	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbpro	1443	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
+dbpro	1613	2170	Command	CLOSE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
 dbpro	1623	2181	Command	GET PROCESSOR ON CHIP FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1624	2182	Command	GET PROCESSOR POWER MANAGEMENT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
 dbpro	1625	2183	Command	GET PROCESSOR SUPPORTED FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1636	2194	Command	OPEN DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
 dbpro	1640	2199	Command	PERFORM CHECKLIST FOR EAX EFFECTS	checklist-state	test_enhancement_pack.cpp::PERFORM CHECKLIST FOR EAX EFFECTS lists the presets in the Enhancement Pack's order	-
+dbpro	1701	2260	Command	UPDATE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
 dbpro	1703	2262	Function	GET CD COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
 dbpro	1704	2263	Function	GET CD LETTER$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
 dbpro	1705	2264	Function	GET COMPUTER NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1706	2265	Function	GET DATA FILE CELL	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1707	2266	Function	GET DATA FILE COLUMN COUNT	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1708	2267	Function	GET DATA FILE EXISTS	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1709	2268	Function	GET DATA FILE ROW COUNT	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
 dbpro	1710	2269	Function	GET DISPLAY DEPTH	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
 dbpro	1711	2270	Function	GET DISPLAY HEIGHT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
 dbpro	1712	2271	Function	GET DISPLAY REFRESH RATE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
