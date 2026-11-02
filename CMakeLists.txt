@@ -70,27 +70,7 @@ endif()
 if(NOT OPENDBC_REVISION MATCHES "^[0-9a-f]+$")
     set(OPENDBC_REVISION "source-archive")
 endif()
-file(GLOB_RECURSE OPENDBC_RUNTIME_FINGERPRINT_INPUTS CONFIGURE_DEPENDS
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "src/*.cpp" "src/*.hpp" "src/*.inc"
-    "tools/studio/src/*.cpp" "tools/studio/src/*.hpp"
-    "shaders/*.hlsl" "shaders/*.spv" "shaders/*.msl"
-    "cmake/*.cmake" "cmake/*.patch")
-list(APPEND OPENDBC_RUNTIME_FINGERPRINT_INPUTS
-    "CMakeLists.txt"
-    "src/engine/CMakeLists.txt"
-    "src/interpreter/CMakeLists.txt"
-    "src/language/CMakeLists.txt"
-    "src/vm/CMakeLists.txt"
-    "tools/studio/CMakeLists.txt")
-list(SORT OPENDBC_RUNTIME_FINGERPRINT_INPUTS)
-set(OPENDBC_RUNTIME_FINGERPRINT_MATERIAL "OpenDBC-runtime-v1\n")
-foreach(OPENDBC_RUNTIME_INPUT IN LISTS OPENDBC_RUNTIME_FINGERPRINT_INPUTS)
-    file(SHA256 "${CMAKE_CURRENT_SOURCE_DIR}/${OPENDBC_RUNTIME_INPUT}" OPENDBC_RUNTIME_INPUT_HASH)
-    string(APPEND OPENDBC_RUNTIME_FINGERPRINT_MATERIAL
-        "${OPENDBC_RUNTIME_INPUT}:${OPENDBC_RUNTIME_INPUT_HASH}\n")
-endforeach()
-string(SHA256 OPENDBC_RUNTIME_FINGERPRINT "${OPENDBC_RUNTIME_FINGERPRINT_MATERIAL}")
+include(cmake/runtime_fingerprint.cmake)
 # Shipped by the Studio; export hosts record its hash to prove they run the same runtime.
 set(OPENDBC_RUNTIME_MANIFEST "${CMAKE_BINARY_DIR}/opendbc-runtime.json")
 configure_file(cmake/opendbc-runtime.json.in "${OPENDBC_RUNTIME_MANIFEST}" @ONLY)
@@ -700,6 +680,13 @@ if(BUILD_TESTS)
     # "portable" marks checks whose result does not depend on the host platform (committed data,
     # generated references, frontend output), so one host can run them; the dba_* tests still
     # execute every behavior witness on each platform.
+    add_test(
+        NAME runtime_fingerprint_invalidation
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/test_runtime_fingerprint.py
+            --cmake ${CMAKE_COMMAND}
+    )
+    set_tests_properties(runtime_fingerprint_invalidation PROPERTIES LABELS "unit;runner;portable")
+
     add_test(
         NAME language_catalogue_audit
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/audit_language_catalogue.py
