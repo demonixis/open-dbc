@@ -7,6 +7,7 @@
 #include "graphics_device_system.hpp"
 #include "image_store.hpp"
 #include "log.hpp"
+#include "model_import.hpp"
 #include "path_utf8.hpp"
 #include "platform_io.hpp"
 #include "polygon_collision.hpp"
@@ -122,44 +123,6 @@ namespace dbc
                 return;
             }
             ApplyAnimationClip(Object, AnimationClipIndexForFrame(Object.AnimationClips, Frame), Frame);
-        }
-
-        [[nodiscard]] bool HasAssimpSyntheticRoot(const aiNode* Node)
-        {
-            if (!Node)
-                return false;
-            const std::string_view Name = Node->mName.C_Str();
-            return Name == "$dummy_root" || Name == "$dummy_node";
-        }
-
-        void BuildImportedLimbMap(const aiScene* Scene, Object3D& Object, bool AddSyntheticRoot)
-        {
-            if (!Scene || !Scene->mRootNode)
-                return;
-
-            if (!AddSyntheticRoot)
-            {
-                RendererSystem::BuildLimbMapRecursive(Scene->mRootNode, Object.LimbNodes, Object.LimbIndexByNode);
-                return;
-            }
-
-            Object.CompatibilityRootNode = std::make_unique<aiNode>();
-            const aiNode* CompatibilityRoot = Object.CompatibilityRootNode.get();
-            Object.LimbNodes.push_back(CompatibilityRoot);
-            Object.LimbIndexByNode[CompatibilityRoot] = 0;
-
-            if (HasAssimpSyntheticRoot(Scene->mRootNode))
-            {
-                Object.CompatibilitySkippedRootNode = Scene->mRootNode;
-                for (unsigned int Child = 0; Child < Scene->mRootNode->mNumChildren; ++Child)
-                {
-                    RendererSystem::BuildLimbMapRecursive(Scene->mRootNode->mChildren[Child], Object.LimbNodes,
-                                                          Object.LimbIndexByNode);
-                }
-                return;
-            }
-
-            RendererSystem::BuildLimbMapRecursive(Scene->mRootNode, Object.LimbNodes, Object.LimbIndexByNode);
         }
 
         // Limb mesh iteration helper
@@ -2449,33 +2412,6 @@ namespace dbc
             }
         }
 
-        constexpr unsigned int ObjectImportFlags =
-            aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType |
-            aiProcess_ImproveCacheLocality | aiProcess_ConvertToLeftHanded | aiProcess_GenSmoothNormals |
-            aiProcess_CalcTangentSpace | aiProcess_GenUVCoords | aiProcess_TransformUVCoords |
-            aiProcess_FindInvalidData | aiProcess_FindDegenerates;
-        constexpr unsigned int PretransformedObjectImportFlags =
-            ObjectImportFlags | aiProcess_PreTransformVertices | aiProcess_OptimizeMeshes;
-
-        [[nodiscard]] AssimpImportResult ImportObjectModel(const std::string& Path, std::string& Error)
-        {
-            AssimpImportResult Primary = RendererSystem::ImportSceneWithFlags(Path, ObjectImportFlags);
-            AssimpImportResult Pretransformed =
-                RendererSystem::ImportSceneWithFlags(Path, PretransformedObjectImportFlags);
-            Error = Primary.ImporterValue && *Primary.ImporterValue->GetErrorString()
-                        ? Primary.ImporterValue->GetErrorString()
-                        : "unsupported or unreadable model";
-
-            bool UsePrimary = Primary.Scene && Primary.Scene->HasMeshes();
-            if ((!UsePrimary || Primary.TriangleCount == 0) && Pretransformed.Scene &&
-                Pretransformed.Scene->HasMeshes())
-                UsePrimary = false;
-            if (UsePrimary && Pretransformed.Scene && !Primary.Scene->HasAnimations() &&
-                Pretransformed.TriangleCount > Primary.TriangleCount)
-                UsePrimary = false;
-            return UsePrimary ? std::move(Primary) : std::move(Pretransformed);
-        }
-
         class StructureHasher
         {
           public:
@@ -2587,13 +2523,14 @@ namespace dbc
             return Hasher.Finish();
         }
 
-        [[nodiscard]] std::string SceneStructureSignature(const aiScene* Scene, bool AddSyntheticRoot)
+        [[nodiscard]] std::string SceneStructureSignature(const aiScene* Scene,
+                                                          const RuntimeCompatibilityPolicy& Policy)
         {
             if (!Scene || !Scene->mRootNode || !Scene->HasMeshes())
                 return {};
             Object3D Shape;
             Shape.AssimpScene = Scene;
-            BuildImportedLimbMap(Scene, Shape, AddSyntheticRoot);
+            BuildImportedLimbMap(Scene, Shape, Policy);
             return ImportedObjectStructureSignature(Shape);
         }
 
@@ -2638,8 +2575,8 @@ namespace dbc
             return Hasher.Finish();
         }
 
-        bool LoadModelStructureSignature(std::string& Output, const std::string& Path, bool AddSyntheticRoot,
-                                         std::string* Error = nullptr)
+        bool LoadModelStructureSignature(std::string& Output, const std::string& Path,
+                                         const RuntimeCompatibilityPolicy& Policy, std::string* Error = nullptr)
         {
             std::string Extension = dbc::PathToUtf8(dbc::PathFromUtf8(Path).extension());
             std::transform(Extension.begin(), Extension.end(), Extension.begin(),
@@ -2678,7 +2615,7 @@ namespace dbc
                 return false;
             }
             {
-                Output = SceneStructureSignature(Imported.Scene, AddSyntheticRoot);
+                Output = SceneStructureSignature(Imported.Scene, Policy);
                 return true;
             }
         }
@@ -3325,8 +3262,7 @@ namespace dbc
         Object.Visible = true;
         Object.ImporterValue = std::move(ImporterValue);
         Object.AssimpScene = Scene;
-        Object.ModelStructureSignature =
-            SceneStructureSignature(Scene, Kernel_.RuntimeCompatibility().AddSyntheticObjectRoot());
+        Object.ModelStructureSignature = SceneStructureSignature(Scene, Kernel_.RuntimeCompatibility());
         Object.AnimIndex = 0;
         Object.ActiveAnimationClip = 0;
         Object.ActiveAnimDurationTicks = 0.0;
@@ -3344,7 +3280,7 @@ namespace dbc
         if (Scene->mRootNode)
         {
             RendererSystem::BuildMeshNodeMapRecursive(Scene->mRootNode, Object.MeshNodeByIndex);
-            BuildImportedLimbMap(Scene, Object, Kernel_.RuntimeCompatibility().AddSyntheticObjectRoot());
+            BuildImportedLimbMap(Scene, Object, Kernel_.RuntimeCompatibility());
             Object.LimbTransforms.resize(Object.LimbNodes.size());
         }
 
@@ -8764,8 +8700,7 @@ namespace dbc
             return false;
         }
         std::string ModelSignature;
-        if (!LoadModelStructureSignature(ModelSignature, Model, Kernel_.RuntimeCompatibility().AddSyntheticObjectRoot(),
-                                         Error))
+        if (!LoadModelStructureSignature(ModelSignature, Model, Kernel_.RuntimeCompatibility(), Error))
             return false;
         if (!Objects_.contains(ObjectId))
             if (!LoadObject(Model, ObjectId, 0, 0, Error))

@@ -6,6 +6,7 @@
 #include "engine/systems/engine_kernel.hpp"
 #include "engine/systems/gpu_command_buffer.hpp"
 #include "engine/systems/graphics_device_system.hpp"
+#include "engine/systems/model_import.hpp"
 #include "engine/systems/object_manager.hpp"
 #include "engine/systems/renderer_system.hpp"
 #include "engine/systems/shadow_mesh.hpp"
@@ -514,4 +515,58 @@ TEST_CASE("GPU initialization failure releases partial state and permits retry")
     CHECK_FALSE(Kernel.Core().Initialized());
     CHECK(Kernel.Gpu().GpuDevice() == nullptr);
     REQUIRE(Kernel.Core().EnsureInitialized());
+}
+
+TEST_CASE("Shared model limb maps preserve Classic and Pro hierarchy numbering")
+{
+    const char* RootName = "Root";
+    bool SyntheticRoot = false;
+    SUBCASE("Named root") {}
+    SUBCASE("Assimp dummy root")
+    {
+        RootName = "$dummy_root";
+        SyntheticRoot = true;
+    }
+    SUBCASE("Assimp dummy node")
+    {
+        RootName = "$dummy_node";
+        SyntheticRoot = true;
+    }
+
+    aiScene Scene;
+    Scene.mRootNode = new aiNode(RootName);
+    aiNode* Root = Scene.mRootNode;
+    Root->mNumChildren = 2;
+    Root->mChildren = new aiNode*[2]{new aiNode("Arm"), new aiNode("Leg")};
+    for (unsigned int Child = 0; Child < Root->mNumChildren; ++Child)
+        Root->mChildren[Child]->mParent = Root;
+    aiNode* Arm = Root->mChildren[0];
+    Arm->mNumChildren = 1;
+    Arm->mChildren = new aiNode*[1]{new aiNode("Hand")};
+    Arm->mChildren[0]->mParent = Arm;
+
+    dbc::Object3D Pro;
+    dbc::BuildImportedLimbMap(&Scene, Pro, dbc::RuntimeCompatibilityPolicy::Professional());
+    REQUIRE(Pro.LimbNodes.size() == 4);
+    CHECK(Pro.LimbNodes[0] == Root);
+    CHECK(Pro.LimbNodes[1] == Arm);
+    CHECK(Pro.LimbNodes[2] == Arm->mChildren[0]);
+    CHECK(Pro.LimbNodes[3] == Root->mChildren[1]);
+    CHECK(Pro.CompatibilityRootNode == nullptr);
+    CHECK(Pro.CompatibilitySkippedRootNode == nullptr);
+
+    dbc::Object3D Classic;
+    dbc::BuildImportedLimbMap(&Scene, Classic, dbc::RuntimeCompatibilityPolicy::Classic());
+    REQUIRE(Classic.LimbNodes.size() == (SyntheticRoot ? 4 : 5));
+    REQUIRE(Classic.CompatibilityRootNode != nullptr);
+    CHECK(Classic.LimbNodes[0] == Classic.CompatibilityRootNode.get());
+    CHECK(Classic.LimbNodes[0]->mName.length == 0);
+    CHECK(Classic.CompatibilitySkippedRootNode == (SyntheticRoot ? Root : nullptr));
+    const std::size_t Offset = SyntheticRoot ? 0 : 1;
+    if (!SyntheticRoot)
+        CHECK(Classic.LimbNodes[1] == Root);
+    for (std::size_t Index = 1; Index < Pro.LimbNodes.size(); ++Index)
+        CHECK(Classic.LimbNodes[Index + Offset] == Pro.LimbNodes[Index]);
+    for (std::size_t Index = 0; Index < Classic.LimbNodes.size(); ++Index)
+        CHECK(Classic.LimbIndexByNode.at(Classic.LimbNodes[Index]) == static_cast<int>(Index));
 }

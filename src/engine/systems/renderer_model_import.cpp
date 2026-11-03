@@ -1,9 +1,31 @@
 #include "engine_kernel.hpp"
+#include "model_import.hpp"
 #include "platform_io.hpp"
 #include "renderer_internal.hpp"
 
+#include <assimp/postprocess.h>
+
 namespace dbc
 {
+    namespace
+    {
+        constexpr unsigned int ObjectImportFlags =
+            aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType |
+            aiProcess_ImproveCacheLocality | aiProcess_ConvertToLeftHanded | aiProcess_GenSmoothNormals |
+            aiProcess_CalcTangentSpace | aiProcess_GenUVCoords | aiProcess_TransformUVCoords |
+            aiProcess_FindInvalidData | aiProcess_FindDegenerates;
+        constexpr unsigned int PretransformedObjectImportFlags =
+            ObjectImportFlags | aiProcess_PreTransformVertices | aiProcess_OptimizeMeshes;
+
+        [[nodiscard]] bool HasAssimpSyntheticRoot(const aiNode* Node)
+        {
+            if (!Node)
+                return false;
+            const std::string_view Name = Node->mName.C_Str();
+            return Name == "$dummy_root" || Name == "$dummy_node";
+        }
+    } // namespace
+
     [[nodiscard]] uint64_t CountSceneTriangles(const aiScene* Scene)
     {
         if (!Scene)
@@ -208,5 +230,52 @@ namespace dbc
             Result.TriangleCount = CountSceneTriangles(Result.Scene);
         }
         return Result;
+    }
+
+    [[nodiscard]] AssimpImportResult ImportObjectModel(const std::string& Path, std::string& Error)
+    {
+        AssimpImportResult Primary = RendererSystem::ImportSceneWithFlags(Path, ObjectImportFlags);
+        AssimpImportResult Pretransformed = RendererSystem::ImportSceneWithFlags(Path, PretransformedObjectImportFlags);
+        Error = Primary.ImporterValue && *Primary.ImporterValue->GetErrorString()
+                    ? Primary.ImporterValue->GetErrorString()
+                    : "unsupported or unreadable model";
+
+        bool UsePrimary = Primary.Scene && Primary.Scene->HasMeshes();
+        if ((!UsePrimary || Primary.TriangleCount == 0) && Pretransformed.Scene && Pretransformed.Scene->HasMeshes())
+            UsePrimary = false;
+        if (UsePrimary && Pretransformed.Scene && !Primary.Scene->HasAnimations() &&
+            Pretransformed.TriangleCount > Primary.TriangleCount)
+            UsePrimary = false;
+        return UsePrimary ? std::move(Primary) : std::move(Pretransformed);
+    }
+
+    void BuildImportedLimbMap(const aiScene* Scene, Object3D& Object, const RuntimeCompatibilityPolicy& Policy)
+    {
+        if (!Scene || !Scene->mRootNode)
+            return;
+
+        if (!Policy.AddSyntheticObjectRoot())
+        {
+            RendererSystem::BuildLimbMapRecursive(Scene->mRootNode, Object.LimbNodes, Object.LimbIndexByNode);
+            return;
+        }
+
+        Object.CompatibilityRootNode = std::make_unique<aiNode>();
+        const aiNode* CompatibilityRoot = Object.CompatibilityRootNode.get();
+        Object.LimbNodes.push_back(CompatibilityRoot);
+        Object.LimbIndexByNode[CompatibilityRoot] = 0;
+
+        if (HasAssimpSyntheticRoot(Scene->mRootNode))
+        {
+            Object.CompatibilitySkippedRootNode = Scene->mRootNode;
+            for (unsigned int Child = 0; Child < Scene->mRootNode->mNumChildren; ++Child)
+            {
+                RendererSystem::BuildLimbMapRecursive(Scene->mRootNode->mChildren[Child], Object.LimbNodes,
+                                                      Object.LimbIndexByNode);
+            }
+            return;
+        }
+
+        RendererSystem::BuildLimbMapRecursive(Scene->mRootNode, Object.LimbNodes, Object.LimbIndexByNode);
     }
 } // namespace dbc
