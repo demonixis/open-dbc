@@ -79,6 +79,25 @@ namespace dbc::studio
             unsigned int Count = 0; // animations in the file, 0 for a still model
         };
 
+        struct ModelLimb
+        {
+            int Id = 0;
+            std::string Name;
+        };
+
+        // The source file as LOAD OBJECT imports it in the Scene view's DBPro profile.
+        struct ModelInfo
+        {
+            std::string Name;
+            std::size_t Vertices = 0;
+            std::size_t Triangles = 0;
+            std::size_t Meshes = 0;
+            std::size_t ReferencedTextures = 0;
+            std::vector<ModelLimb> Limbs;
+            ModelAnimation Animation;
+        };
+
+        bool ReadModelInfo(const std::filesystem::path& Path, ModelInfo& Out, std::string& Error);
         bool ReadModelAnimation(const std::filesystem::path& Path, ModelAnimation& Out, std::string& Error);
 
         // Rotation in degrees, applied X, then Y, then Z, as ROTATE OBJECT does.

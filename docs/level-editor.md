@@ -104,6 +104,14 @@ the Hierarchy, groups what a level can hold by type:
 
 Models and sounds from the menu land in front of the editor camera.
 
+Select a model in the Hierarchy or Viewport, or single-click its Assets tile,
+to see **Model details** in the Inspector: filename, triangles, vertices,
+meshes, distinct referenced textures and the limb IDs and names used by
+`LOAD OBJECT`. Texture references count even when their files are missing.
+These describe the source file, before changes made by the program. **Refresh**
+reloads the details after an external edit. Inspecting an asset does not add it
+to the level; double-clicking still adds it.
+
 The Inspector edits the selected node:
 - name, number, position, rotation (degrees, applied X, then Y, then Z) and scale (%).
   **Uniform scale** keeps the scale's proportions, in the Inspector and with the gizmo;

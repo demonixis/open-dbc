@@ -192,10 +192,19 @@ namespace dbc::studio
 
         void SceneEditor::DrawInspector()
         {
+            if (!InspectedModel_.empty())
+            {
+                DrawModelDetails(InspectedModel_);
+                return;
+            }
             if (!HasLevel_)
                 return;
             if (const scene::SceneNode* Shown = CameraSelected_ ? nullptr : Selected())
+            {
                 DrawNodeOrigin(*Shown);
+                if (Shown->Kind == scene::NodeKind::Model)
+                    DrawModelDetails(Shown->Asset);
+            }
             ImGui::BeginDisabled(!Editable());
             if (CameraSelected_)
             {
@@ -393,26 +402,100 @@ namespace dbc::studio
             }
         }
 
-        const scene::ModelAnimation* SceneEditor::ModelAnimationOf(const std::string& Asset)
+        const SceneEditor::ModelInspection* SceneEditor::ModelInfoOf(const std::string& Asset)
         {
             if (!Project_ || Asset.empty())
                 return nullptr;
-            auto Found = ModelAnimations_.find(Asset);
-            if (Found == ModelAnimations_.end())
+            auto Found = ModelInfos_.find(Asset);
+            if (Found == ModelInfos_.end())
             {
-                std::optional<scene::ModelAnimation> Read(std::in_place);
-                std::string Error;
-                if (!scene::ReadModelAnimation(Project_->AssetRoot / dbc::PathFromUtf8(Asset), *Read, Error))
-                    Read.reset();
-                Found = ModelAnimations_.emplace(Asset, std::move(Read)).first;
+                ModelInspection Read;
+                Read.Info.emplace();
+                if (!scene::ReadModelInfo(Project_->AssetRoot / dbc::PathFromUtf8(Asset), *Read.Info, Read.Error))
+                    Read.Info.reset();
+                Found = ModelInfos_.emplace(Asset, std::move(Read)).first;
             }
-            return Found->second ? &*Found->second : nullptr;
+            return &Found->second;
+        }
+
+        void SceneEditor::DrawModelDetails(const std::string& Asset)
+        {
+            Heading("Model details");
+            if (Asset.empty())
+            {
+                Hint(Tr("Pick a model file first."));
+                return;
+            }
+            if (ImGui::SmallButton(TrId("Refresh##model-details")))
+                ModelInfos_.erase(Asset);
+            ImGui::TextWrapped("%s", Asset.c_str());
+            const ModelInspection* Read = ModelInfoOf(Asset);
+            if (Read == nullptr || !Read->Info)
+            {
+                Hint(Tr("The model file cannot be read."));
+                if (Read != nullptr && !Read->Error.empty())
+                    ImGui::TextWrapped("%s", Read->Error.c_str());
+                return;
+            }
+            const scene::ModelInfo& Info = *Read->Info;
+            if (ImGui::BeginTable("##model-statistics", 2, ImGuiTableFlags_SizingStretchProp))
+            {
+                const auto Row = [](const char* Label, const std::string& Value)
+                {
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::TextUnformatted(Label);
+                    ImGui::TableNextColumn();
+                    ImGui::TextWrapped("%s", Value.c_str());
+                };
+                Row(Tr("Name"), Info.Name);
+                Row(Tr("Triangles"), std::to_string(Info.Triangles));
+                Row(Tr("Vertices"), std::to_string(Info.Vertices));
+                Row(Tr("Meshes"), std::to_string(Info.Meshes));
+                Row(Tr("Referenced textures"), std::to_string(Info.ReferencedTextures));
+                Row(Tr("Limbs"), std::to_string(Info.Limbs.size()));
+                ImGui::EndTable();
+            }
+            Hint(Tr("File contents at LOAD OBJECT; later changes made by the program are not shown."));
+            if (Info.Limbs.empty())
+                return;
+            const float RowHeight = ImGui::GetTextLineHeight() + ImGui::GetStyle().CellPadding.y * 2.0f;
+            const float Height = RowHeight * static_cast<float>(std::min<std::size_t>(Info.Limbs.size(), 8) + 1) +
+                                 ImGui::GetStyle().FramePadding.y * 2.0f;
+            if (ImGui::BeginTable("##model-limbs", 2,
+                                  ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_ScrollY |
+                                      ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingStretchProp,
+                                  ImVec2(0.0f, Height)))
+            {
+                ImGui::TableSetupColumn(Tr("ID"), ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("00000").x);
+                ImGui::TableSetupColumn(Tr("Name"), ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetupScrollFreeze(0, 1);
+                ImGui::TableHeadersRow();
+                ImGuiListClipper Clipper;
+                Clipper.Begin(static_cast<int>(Info.Limbs.size()));
+                while (Clipper.Step())
+                {
+                    for (int Index = Clipper.DisplayStart; Index < Clipper.DisplayEnd; ++Index)
+                    {
+                        const scene::ModelLimb& Limb = Info.Limbs[static_cast<std::size_t>(Index)];
+                        ImGui::TableNextRow();
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%d", Limb.Id);
+                        ImGui::TableNextColumn();
+                        ImGui::TextUnformatted(Limb.Name.empty() ? Tr("(unnamed)") : Limb.Name.c_str());
+                        if (ImGui::IsItemHovered())
+                            ImGui::SetTooltip("%s", Limb.Name.empty() ? Tr("(unnamed)") : Limb.Name.c_str());
+                    }
+                }
+                ImGui::EndTable();
+            }
         }
 
         void SceneEditor::DrawAnimation(scene::SceneNode& Node)
         {
             Heading("Animation");
-            const scene::ModelAnimation* Info = ModelAnimationOf(Node.Asset);
+            const ModelInspection* Read = ModelInfoOf(Node.Asset);
+            const scene::ModelAnimation* Info = Read != nullptr && Read->Info ? &Read->Info->Animation : nullptr;
             const bool HasClip = Info != nullptr && Info->Count > 0;
             if (!HasClip && !Node.Frames)
             {

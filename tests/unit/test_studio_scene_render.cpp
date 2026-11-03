@@ -1,5 +1,7 @@
 #include <doctest/doctest.h>
 
+#include "engine/systems/engine_kernel.hpp"
+#include "engine/systems/object_manager.hpp"
 #include "scene/heightmap.hpp"
 #include "scene/scene_geometry.hpp"
 #include "scene/scene_renderer.hpp"
@@ -488,6 +490,110 @@ TEST_CASE("Scene models and terrains load from the project's files")
     CHECK(Mesh.Max.z == doctest::Approx(0.0f));
     CHECK(Mesh.Min.z < 0.0f);
     CHECK(Mesh.Max.y <= scene::KTerrainHeightScale);
+}
+
+TEST_CASE("Scene model details keep the runtime's limb identifiers and names")
+{
+    const std::filesystem::path Model =
+        std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/tutorials/basic3d/models/ninja.X";
+    scene::ModelInfo Info;
+    std::string Error;
+    REQUIRE_MESSAGE(scene::ReadModelInfo(Model, Info, Error), Error);
+    CHECK(Error.empty());
+    CHECK(Info.Name == "ninja.X");
+    REQUIRE(Info.Limbs.size() == 17);
+    CHECK(Info.Limbs[16].Id == 16);
+    CHECK(Info.Limbs[16].Name == "x3ds_Head");
+
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("model-details", 16, 16));
+    REQUIRE_MESSAGE(Kernel.Objects().LoadObject(Model.string(), 1, 0, 0, &Error), Error);
+    const dbc::Object3D* Object = Kernel.Objects().GetObject(1);
+    REQUIRE(Object != nullptr);
+    REQUIRE(Info.Limbs.size() == Object->LimbNodes.size());
+    for (const scene::ModelLimb& Limb : Info.Limbs)
+    {
+        std::string Name;
+        REQUIRE(Kernel.Objects().LimbName(Name, 1, Limb.Id, &Error));
+        CHECK(Limb.Name == Name);
+    }
+    std::size_t Vertices = 0;
+    std::size_t Triangles = 0;
+    for (const dbc::Mesh& Mesh : Object->Meshes)
+    {
+        Vertices += Mesh.Geometry().Vertices.size();
+        Triangles += Mesh.Geometry().Indices.size() / 3;
+    }
+    CHECK(Info.Meshes == Object->Meshes.size());
+    CHECK(Info.Vertices == Vertices);
+    CHECK(Info.Triangles == Triangles);
+}
+
+TEST_CASE("Scene model details count triangulated geometry and distinct texture references")
+{
+    const std::filesystem::path Folder = std::filesystem::path(TEST_OUTPUT_DIR) / "model_details";
+    std::filesystem::remove_all(Folder);
+    std::filesystem::create_directories(Folder);
+    std::ofstream(Folder / "pair.mtl") << "newmtl First\n"
+                                          "map_Kd textures\\shared.png\n"
+                                          "map_Ks textures/specular.png\n"
+                                          "newmtl Second\n"
+                                          "map_Kd textures/./shared.png\n"
+                                          "map_Ks textures/specular.png\n"
+                                          "map_Bump textures/missing.png\n";
+    std::ofstream(Folder / "pair.obj") << "mtllib pair.mtl\n"
+                                          "v -40 -20 0\nv -5 -20 0\nv -5 20 0\nv -40 20 0\n"
+                                          "v 5 -20 0\nv 40 -20 0\nv 40 20 0\nv 5 20 0\n"
+                                          "vt 0 0\nvt 1 0\nvt 1 1\nvt 0 1\n"
+                                          "usemtl First\nf 1/1 2/2 3/3 4/4\n"
+                                          "usemtl Second\nf 5/1 6/2 7/3 8/4\n";
+    scene::ModelInfo Info;
+    std::string Error;
+    REQUIRE_MESSAGE(scene::ReadModelInfo(Folder / "pair.obj", Info, Error), Error);
+    CHECK(Info.Vertices == 8);
+    CHECK(Info.Triangles == 4);
+    CHECK(Info.Meshes == 2);
+    // Missing images still count, and the same image in several materials or slots counts once.
+    CHECK(Info.ReferencedTextures == 3);
+    CHECK(Info.Animation.Count == 0);
+}
+
+TEST_CASE("Scene model details reset stale results and include the first animation")
+{
+    const std::filesystem::path Models = std::filesystem::path(TEST_SOURCE_DIR) / "tests/fixtures/classic/models";
+    scene::ModelInfo Info;
+    std::string Error = "previous failure";
+    REQUIRE_MESSAGE(scene::ReadModelInfo(Models / "walk.x", Info, Error), Error);
+    CHECK(Error.empty());
+    CHECK(Info.Animation.Count == 1);
+    CHECK(Info.Animation.LastFrame == 25);
+    REQUIRE_MESSAGE(scene::ReadModelInfo(Models / "dome.x", Info, Error), Error);
+    CHECK(Info.Name == "dome.x");
+    CHECK(Info.Animation.Count == 0);
+    CHECK(Info.Animation.LastFrame == 0);
+    CHECK(Info.Animation.Name.empty());
+    CHECK(Info.ReferencedTextures == 0);
+    REQUIRE_FALSE(scene::ReadModelInfo(Models / "missing.x", Info, Error));
+    CHECK_FALSE(Error.empty());
+    CHECK(Info.Name.empty());
+    CHECK(Info.Limbs.empty());
+    CHECK(Info.Vertices == 0);
+    CHECK(Info.Triangles == 0);
+    CHECK(Info.Meshes == 0);
+
+    const std::filesystem::path Invalid = std::filesystem::path(TEST_OUTPUT_DIR) / "invalid_model_details.x";
+    std::ofstream(Invalid) << "invalid model";
+    REQUIRE_FALSE(scene::ReadModelInfo(Invalid, Info, Error));
+    CHECK_FALSE(Error.empty());
+    CHECK(Info.Limbs.empty());
+
+    const std::filesystem::path Lines = std::filesystem::path(TEST_OUTPUT_DIR) / "line_model_details.obj";
+    std::ofstream(Lines) << "v 0 0 0\nv 1 0 0\nl 1 2\n";
+    REQUIRE_FALSE(scene::ReadModelInfo(Lines, Info, Error));
+    CHECK(Error == "The model has no triangles");
+    CHECK(Info.Name.empty());
+    CHECK(Info.Meshes == 0);
+    CHECK(Info.Vertices == 0);
 }
 
 TEST_CASE("The Scene renderer draws a lit, textured level offscreen")

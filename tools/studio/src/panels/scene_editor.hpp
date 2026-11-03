@@ -329,8 +329,16 @@ namespace dbc::studio
             void DrawShape(scene::SceneNode& Node);
             void DrawMaterial(scene::SceneNode& Node);
             void DrawAnimation(scene::SceneNode& Node);
-            // The model file's animation, read once per file; nullptr when unreadable.
-            const scene::ModelAnimation* ModelAnimationOf(const std::string& Asset);
+            void DrawModelDetails(const std::string& Asset);
+
+            struct ModelInspection
+            {
+                std::optional<scene::ModelInfo> Info;
+                std::string Error;
+            };
+
+            // Metadata and failures are cached until the assets or these details are refreshed.
+            const ModelInspection* ModelInfoOf(const std::string& Asset);
             void DrawCameraSettings();
             void DrawSettings();
 
@@ -440,7 +448,8 @@ namespace dbc::studio
             // Draws model thumbnails, apart from the viewport's renderer and its targets.
             scene::SceneRenderer ThumbnailRenderer_;
             std::optional<bool> ThumbnailRendererReady_;
-            std::unordered_map<std::string, std::optional<scene::ModelAnimation>> ModelAnimations_;
+            std::unordered_map<std::string, ModelInspection> ModelInfos_;
+            std::string InspectedModel_;
             char AssetFilter_[64] = {};
             int AssetFilterKind_ = 0;
 

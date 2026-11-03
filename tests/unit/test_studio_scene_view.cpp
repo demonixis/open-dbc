@@ -17,6 +17,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -58,7 +59,8 @@ namespace
     class SceneViewDriver
     {
       public:
-        SceneViewDriver(const std::string& Name, const scene::SceneDocument& Level)
+        SceneViewDriver(const std::string& Name, const scene::SceneDocument& Level,
+                        const std::function<void(const std::filesystem::path&)>& PrepareAssets = {})
             : Root_(std::filesystem::path(TEST_OUTPUT_DIR) / "scene_view" / Name)
         {
             REQUIRE(SDL_Init(SDL_INIT_VIDEO));
@@ -69,6 +71,8 @@ namespace
             WriteText(Root_ / "main.dba", "SYNC\n");
             WriteText(Root_ / scene::LevelRelativePath(Level.Name), scene::WriteLevel(Level));
             WriteText(Root_ / scene::WorldRelativePath(Level.Name), scene::WriteWorld(Level));
+            if (PrepareAssets)
+                PrepareAssets(Root_);
 
             ImGui::CreateContext();
             ImGuiIO& Io = ImGui::GetIO();
@@ -135,7 +139,14 @@ namespace
                     Editor_.BuildDefaultLayout(Dock, "Output");
                 }
                 ImGui::DockSpaceOverViewport(Dock, ImGui::GetMainViewport());
+                if (CaptureText_)
+                    ImGui::LogToBuffer();
                 Editor_.DrawPanels();
+                if (CaptureText_)
+                {
+                    DrawnText_ = ImGui::GetCurrentContext()->LogBuffer.c_str();
+                    ImGui::LogFinish();
+                }
                 Editor_.HandleShortcuts();
                 ImGui::Render();
             }
@@ -285,6 +296,52 @@ namespace
             Button(false);
         }
 
+        std::string DrawnText()
+        {
+            CaptureText_ = true;
+            Frame(1);
+            CaptureText_ = false;
+            return DrawnText_;
+        }
+
+        glm::vec2 FirstAssetPosition() const
+        {
+            const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelAssets));
+            REQUIRE(Window != nullptr);
+            REQUIRE(Window->DC.ChildWindows.Size == 1);
+            const ImGuiWindow* Grid = Window->DC.ChildWindows[0];
+            return glm::vec2(Grid->DC.CursorStartPos.x + 30.0f, Grid->DC.CursorStartPos.y + 30.0f);
+        }
+
+        void ClickFirstAsset()
+        {
+            // Each click is a fresh selection, not the double-click that inserts a model.
+            Frame(30);
+            MoveMouse(FirstAssetPosition());
+            Button(true);
+            Button(false);
+        }
+
+        void RefreshAssets()
+        {
+            const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelAssets));
+            REQUIRE(Window != nullptr);
+            MoveMouse(glm::vec2(Window->DC.CursorStartPos.x + 20.0f,
+                                Window->DC.CursorStartPos.y + ImGui::GetFrameHeight() * 0.5f));
+            Button(true);
+            Button(false);
+        }
+
+        void ClickCamera()
+        {
+            const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelHierarchy));
+            REQUIRE(Window != nullptr);
+            MoveMouse(glm::vec2(Window->WorkRect.Min.x + 70.0f,
+                                Window->DC.CursorMaxPos.y - ImGui::GetTextLineHeight() * 0.5f));
+            Button(true);
+            Button(false);
+        }
+
         panels::SceneEditor& Editor()
         {
             return Editor_;
@@ -351,10 +408,132 @@ namespace
         panels::SceneEditor Editor_;
         bool LayoutBuilt_ = false;
         bool ExpectErrors_ = false;
+        bool CaptureText_ = false;
+        std::string DrawnText_;
         std::vector<std::string> Log_;
         int BarRows_ = 1;
     };
+
+    void WriteInspectorModel(const std::filesystem::path& Root, const std::string& SecondLimb = "Turret")
+    {
+        std::ofstream(Root / "pair.mtl") << "newmtl Paint\nKd 1 1 1\nmap_Kd missing.png\n";
+        std::ofstream(Root / "pair.obj") << "mtllib pair.mtl\n"
+                                            "v -20 0 0\nv 0 0 0\nv 0 20 0\nv 20 0 0\nv 20 20 0\n"
+                                            "o Hull\nusemtl Paint\nf 1 2 3\no "
+                                         << SecondLimb << "\nusemtl Paint\nf 2 4 5\n";
+    }
 } // namespace
+
+TEST_CASE("A single model asset click shows limb mapping without inserting or editing a node")
+{
+    SceneViewDriver Driver("inspect_model_asset", LevelOfCubes({glm::vec3(0.0f)}),
+                           [](const std::filesystem::path& Root) { WriteInspectorModel(Root); });
+    Driver.ClickFirstAsset();
+    const std::string Text = Driver.DrawnText();
+    INFO(Text);
+    for (const char* Label : {"Model details", "pair.obj", "Triangles", "Vertices", "Meshes", "Referenced textures",
+                              "Limbs", "ID", "Hull", "Turret"})
+        CHECK(Text.find(Label) != std::string::npos);
+    CHECK_FALSE(Driver.Editor().Dirty());
+    CHECK(Driver.SavedNodes().size() == 1);
+
+    // A second click still follows the established double-click insertion flow.
+    Driver.Button(true);
+    Driver.Button(false);
+    CHECK(Driver.DrawnText().find("Model file") != std::string::npos);
+    CHECK(Driver.Editor().Dirty());
+    const std::vector<scene::SceneNode> Nodes = Driver.SavedNodes();
+    REQUIRE(Nodes.size() == 2);
+    CHECK(Nodes.back().Kind == scene::NodeKind::Model);
+    CHECK(Nodes.back().Asset == "pair.obj");
+}
+
+TEST_CASE("Holding and dragging a model tile keeps the selected model file field available")
+{
+    scene::SceneDocument Level;
+    Level.Name = "Level";
+    Level.Add(scene::NodeKind::Model).Asset = "pair.obj";
+    SceneViewDriver Driver("inspect_model_drag", Level,
+                           [](const std::filesystem::path& Root) { WriteInspectorModel(Root); });
+    Driver.ClickHierarchyRow(0);
+    REQUIRE(Driver.DrawnText().find("Model file") != std::string::npos);
+
+    Driver.Frame(30);
+    const glm::vec2 Tile = Driver.FirstAssetPosition();
+    Driver.MoveMouse(Tile);
+    Driver.Button(true);
+    CHECK(Driver.DrawnText().find("Model file") != std::string::npos);
+
+    Driver.MoveMouse(Tile + glm::vec2(40.0f, 0.0f));
+    const ImGuiPayload* Payload = ImGui::GetDragDropPayload();
+    REQUIRE(Payload != nullptr);
+    CHECK(Payload->IsDataType(panels::SceneEditor::KAssetPayload));
+    CHECK(Driver.DrawnText().find("Model file") != std::string::npos);
+    // Cancel the drag outside every drop target; it must not turn into an asset selection.
+    Driver.MoveMouse(glm::vec2(1.0f, 1.0f));
+    Driver.Button(false);
+    CHECK(Driver.DrawnText().find("Model file") != std::string::npos);
+    CHECK_FALSE(Driver.Editor().Dirty());
+    CHECK(Driver.SavedNodes().size() == 1);
+}
+
+TEST_CASE("Model details follow scene selection and leave the Inspector for a cube or camera")
+{
+    scene::SceneDocument Level = LevelOfCubes({glm::vec3(-45.0f, 0.0f, 0.0f)});
+    scene::SceneNode& Model = Level.Add(scene::NodeKind::Model);
+    Model.Asset = "pair.obj";
+    Model.Position = glm::vec3(45.0f, 0.0f, 0.0f);
+    Level.Env.UseCamera = true;
+    SceneViewDriver Driver("inspect_model_selection", Level,
+                           [](const std::filesystem::path& Root) { WriteInspectorModel(Root); });
+
+    Driver.ClickHierarchyRow(1);
+    const std::string ModelText = Driver.DrawnText();
+    INFO(ModelText);
+    CHECK(ModelText.find("Model details") != std::string::npos);
+    CHECK(ModelText.find("Hull") != std::string::npos);
+    CHECK(ModelText.find("Turret") != std::string::npos);
+
+    Driver.ClickHierarchyRow(0);
+    CHECK(Driver.DrawnText().find("Model details") == std::string::npos);
+    Driver.ClickFirstAsset();
+    REQUIRE(Driver.DrawnText().find("Model details") != std::string::npos);
+    Driver.ClickCamera();
+    CHECK(Driver.DrawnText().find("Model details") == std::string::npos);
+    Driver.ClickFirstAsset();
+    REQUIRE(Driver.DrawnText().find("Model details") != std::string::npos);
+    Driver.Click(glm::vec3(-45.0f, 0.0f, 0.0f));
+    CHECK(Driver.DrawnText().find("Model details") == std::string::npos);
+    CHECK_FALSE(Driver.Editor().Dirty());
+}
+
+TEST_CASE("Refreshing assets rereads model details and a missing model cannot keep stale limbs")
+{
+    scene::SceneDocument Level;
+    Level.Name = "Level";
+    Level.Add(scene::NodeKind::Model).Asset = "pair.obj";
+    SceneViewDriver Driver("inspect_model_refresh", Level,
+                           [](const std::filesystem::path& Root) { WriteInspectorModel(Root); });
+    Driver.ClickHierarchyRow(0);
+    REQUIRE(Driver.DrawnText().find("Turret") != std::string::npos);
+
+    WriteInspectorModel(Driver.Root(), "Barrel");
+    Driver.RefreshAssets();
+    const std::string Changed = Driver.DrawnText();
+    INFO(Changed);
+    CHECK(Changed.find("Barrel") != std::string::npos);
+    CHECK(Changed.find("Turret") == std::string::npos);
+
+    REQUIRE(std::filesystem::remove(Driver.Root() / "pair.obj"));
+    Driver.RefreshAssets();
+    const std::string Missing = Driver.DrawnText();
+    INFO(Missing);
+    CHECK(Missing.find("Model details") != std::string::npos);
+    CHECK(Missing.find("The model file cannot be read.") != std::string::npos);
+    CHECK(Missing.find("Barrel") == std::string::npos);
+    CHECK(Missing.find("Hull") == std::string::npos);
+    CHECK_FALSE(Driver.Editor().Dirty());
+}
 
 TEST_CASE("A gizmo move lands on the grid by default, and the command key inverts it")
 {

@@ -73,6 +73,8 @@ namespace dbc::studio
             ReleaseThumbnails();
             AssetScan_ = {};
             AssetScanRoot_.clear();
+            ModelInfos_.clear();
+            InspectedModel_.clear();
             HasLevel_ = false;
             Program_.reset();
             Document_ = {};
@@ -164,7 +166,7 @@ namespace dbc::studio
             Saved_ = Document_;
             History_.Reset(Document_);
             HasLevel_ = true;
-            Selection_.clear();
+            Select(nullptr);
         }
 
         bool SceneEditor::NewLevel(const std::string& Name)
@@ -183,7 +185,7 @@ namespace dbc::studio
             ReadErrors_.clear();
             History_.Reset(Document_);
             HasLevel_ = true;
-            Selection_.clear();
+            Select(nullptr);
             return true;
         }
 
@@ -210,8 +212,7 @@ namespace dbc::studio
             PruneSelection();
             if (SameProgram)
                 return;
-            Selection_.clear();
-            CameraSelected_ = false;
+            Select(nullptr);
             // Start where the program looks from.
             Camera_.Position = Document_.Env.CameraPosition;
             Camera_.Pitch = Document_.Env.CameraRotation.x;
@@ -546,6 +547,7 @@ namespace dbc::studio
 
         void SceneEditor::Select(const scene::SceneNode* Node)
         {
+            InspectedModel_.clear();
             CameraSelected_ = false;
             Selection_.clear();
             if (Node != nullptr)
@@ -554,6 +556,7 @@ namespace dbc::studio
 
         void SceneEditor::ToggleSelect(const scene::SceneNode& Node)
         {
+            InspectedModel_.clear();
             CameraSelected_ = false;
             const Selection Entry{scene::IdSpaceOf(Node.Kind), Node.Id};
             if (Selection_.contains(Entry))
@@ -797,7 +800,7 @@ namespace dbc::studio
                 if (ImGui::MenuItem(TrId("Level Camera"), nullptr, Document_.Env.UseCamera))
                 {
                     Document_.Env.UseCamera = !Document_.Env.UseCamera;
-                    Selection_.clear();
+                    Select(nullptr);
                     CameraSelected_ = Document_.Env.UseCamera;
                     Commit();
                 }
@@ -824,8 +827,7 @@ namespace dbc::studio
                 DuplicateSelected();
             else if (Command && ImGui::IsKeyPressed(ImGuiKey_A, false) && HasLevel_)
             {
-                CameraSelected_ = false;
-                Selection_.clear();
+                Select(nullptr);
                 for (const scene::SceneNode& Node : Document_.Nodes)
                     Selection_.push_back(Selection{scene::IdSpaceOf(Node.Kind), Node.Id});
             }
@@ -1027,6 +1029,7 @@ namespace dbc::studio
                 // A click selects the whole group, to move, edit or delete it together.
                 if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
                 {
+                    InspectedModel_.clear();
                     const ImGuiIO& Io = ImGui::GetIO();
                     if (!Io.KeyCtrl && !Io.KeySuper)
                         Select(nullptr);
@@ -1053,7 +1056,7 @@ namespace dbc::studio
                 ImGui::Separator();
                 if (ImGui::Selectable(TrId("Level Camera"), CameraSelected_))
                 {
-                    Selection_.clear();
+                    Select(nullptr);
                     CameraSelected_ = true;
                 }
                 if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))

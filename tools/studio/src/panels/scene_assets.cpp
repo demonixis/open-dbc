@@ -63,7 +63,7 @@ namespace dbc::studio
         void SceneEditor::RefreshAssets()
         {
             ReleaseThumbnails();
-            ModelAnimations_.clear();
+            ModelInfos_.clear();
             AssetScan_ = {};
             AssetScanRoot_.clear();
             if (Project_)
@@ -127,10 +127,24 @@ namespace dbc::studio
                 ImGui::BeginGroup();
                 const ImVec2 Min = ImGui::GetCursorScreenPos();
                 const ImVec2 Max(Min.x + Tile, Min.y + Tile);
-                ImGui::InvisibleButton("##tile", ImVec2(Tile, Tile));
+                const bool Clicked = ImGui::InvisibleButton("##tile", ImVec2(Tile, Tile));
                 const bool Hovered = ImGui::IsItemHovered();
+                // Wait for release so dragging preserves the Inspector's file drop targets.
+                // The second click adds a node below; keep that node selected on release.
+                if (Clicked && ImGui::GetIO().MouseClickedLastCount[ImGuiMouseButton_Left] == 1)
+                {
+                    if (Model)
+                    {
+                        Select(nullptr);
+                        InspectedModel_ = File.RelativeName;
+                    }
+                    else
+                        InspectedModel_.clear();
+                }
                 ImDrawList* Draw = ImGui::GetWindowDrawList();
                 Draw->AddRectFilled(Min, Max, Hovered ? Theme::Hover : Theme::Panel, 4.0f);
+                if (InspectedModel_ == File.RelativeName)
+                    Draw->AddRect(Min, Max, Theme::Keyword, 4.0f, 0, 2.0f);
 
                 SDL_GPUTexture* Thumbnail = nullptr;
                 if ((Image || Model) && ImGui::IsItemVisible())
@@ -200,7 +214,8 @@ namespace dbc::studio
                 }
                 if (Hovered)
                     ImGui::SetTooltip("%s\n%s", File.RelativeName.c_str(),
-                                      Tr("Drag onto the viewport or a file field; double-click to apply."));
+                                      Tr(Model ? "Click to inspect; drag onto the viewport or double-click to add."
+                                               : "Drag onto the viewport or a file field; double-click to apply."));
                 if (Hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && Editable())
                 {
                     scene::SceneNode* Node = Selected();

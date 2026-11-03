@@ -8,6 +8,7 @@
 #include <cstring>
 #include <limits>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <SDL3_image/SDL_image.h>
 #include <assimp/Importer.hpp>
@@ -16,6 +17,8 @@
 #include <assimp/scene.h>
 #include <utility>
 
+#include "engine/runtime_compatibility.hpp"
+#include "engine/systems/model_import.hpp"
 #include "engine/systems/renderer_system.hpp"
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
@@ -266,24 +269,76 @@ namespace dbc::studio
             return Mesh;
         }
 
-        bool ReadModelAnimation(const std::filesystem::path& Path, ModelAnimation& Out, std::string& Error)
+        bool ReadModelInfo(const std::filesystem::path& Path, ModelInfo& Out, std::string& Error)
         {
-            // ObjectManager's import that keeps the skeleton and its animations.
-            constexpr unsigned int Flags =
-                aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType |
-                aiProcess_ImproveCacheLocality | aiProcess_ConvertToLeftHanded | aiProcess_GenSmoothNormals |
-                aiProcess_CalcTangentSpace | aiProcess_GenUVCoords | aiProcess_TransformUVCoords |
-                aiProcess_FindInvalidData | aiProcess_FindDegenerates;
-            const AssimpImportResult Imported = RendererSystem::ImportSceneWithFlags(dbc::PathToUtf8(Path), Flags);
-            if (Imported.Scene == nullptr)
+            Out = {};
+            Error.clear();
+            const AssimpImportResult Imported = ImportObjectModel(dbc::PathToUtf8(Path), Error);
+            if (Imported.Scene == nullptr || !Imported.Scene->HasMeshes())
             {
-                Error = Imported.ImporterValue && *Imported.ImporterValue->GetErrorString()
-                            ? Imported.ImporterValue->GetErrorString()
-                            : Tr("unsupported or unreadable model");
+                if (Error.empty())
+                    Error = Tr("unsupported or unreadable model");
                 return false;
             }
-            Out = {};
+            Error.clear();
             const aiScene& Scene = *Imported.Scene;
+            for (unsigned int Index = 0; Index < Scene.mNumMeshes; ++Index)
+            {
+                const aiMesh* Mesh = Scene.mMeshes[Index];
+                if (Mesh == nullptr || Mesh->mNumVertices == 0 || Mesh->mNumFaces == 0)
+                    continue;
+                std::size_t Triangles = 0;
+                for (unsigned int FaceIndex = 0; FaceIndex < Mesh->mNumFaces; ++FaceIndex)
+                    if (Mesh->mFaces[FaceIndex].mNumIndices == 3)
+                        ++Triangles;
+                // LOAD OBJECT discards point/line-only meshes after collecting triangle indices.
+                if (Triangles == 0)
+                    continue;
+                ++Out.Meshes;
+                Out.Vertices += Mesh->mNumVertices;
+                Out.Triangles += Triangles;
+            }
+            if (Out.Meshes == 0)
+            {
+                Error = Tr("The model has no triangles");
+                return false;
+            }
+            Out.Name = dbc::PathToUtf8(Path.filename());
+
+            // Count references, including missing files and embedded textures, without decoding images.
+            std::unordered_set<std::string> Textures;
+            for (unsigned int Index = 0; Index < Scene.mNumMaterials; ++Index)
+            {
+                const aiMaterial* Material = Scene.mMaterials[Index];
+                if (Material == nullptr)
+                    continue;
+                for (unsigned int PropertyIndex = 0; PropertyIndex < Material->mNumProperties; ++PropertyIndex)
+                {
+                    const aiMaterialProperty* Property = Material->mProperties[PropertyIndex];
+                    if (Property == nullptr || std::strcmp(Property->mKey.C_Str(), "$tex.file") != 0)
+                        continue;
+                    aiString Name;
+                    if (Material->Get(Property->mKey.C_Str(), Property->mSemantic, Property->mIndex, Name) !=
+                        aiReturn_SUCCESS)
+                        continue;
+                    std::string Texture = Name.C_Str();
+                    std::replace(Texture.begin(), Texture.end(), '\\', '/');
+                    if (!Texture.empty())
+                        Textures.insert(dbc::GenericPathToUtf8(dbc::PathFromUtf8(Texture).lexically_normal()));
+                }
+            }
+            Out.ReferencedTextures = Textures.size();
+
+            Object3D Object;
+            Object.AssimpScene = Imported.Scene;
+            BuildImportedLimbMap(Imported.Scene, Object, RuntimeCompatibilityPolicy::Professional());
+            Out.Limbs.reserve(Object.LimbNodes.size());
+            for (std::size_t Index = 0; Index < Object.LimbNodes.size(); ++Index)
+            {
+                const aiNode* Node = Object.LimbNodes[Index];
+                Out.Limbs.push_back({static_cast<int>(Index), Node != nullptr ? Node->mName.C_Str() : ""});
+            }
+
             if (Scene.mNumAnimations == 0 || Scene.mAnimations[0] == nullptr)
                 return true;
             // The frame count ObjectManager gives the clip: its duration at 25 frames a second.
@@ -292,11 +347,19 @@ namespace dbc::studio
             const double PerSecond = std::isfinite(Animation.mTicksPerSecond) && Animation.mTicksPerSecond > 0.0
                                          ? Animation.mTicksPerSecond
                                          : 25.0;
-            Out.Name = Animation.mName.C_Str();
-            Out.LastFrame = static_cast<int>(std::lround(
+            Out.Animation.Name = Animation.mName.C_Str();
+            Out.Animation.LastFrame = static_cast<int>(std::lround(
                 std::clamp(Ticks * 25.0 / PerSecond, 0.0, static_cast<double>(std::numeric_limits<int>::max()))));
-            Out.Count = Scene.mNumAnimations;
+            Out.Animation.Count = Scene.mNumAnimations;
             return true;
+        }
+
+        bool ReadModelAnimation(const std::filesystem::path& Path, ModelAnimation& Out, std::string& Error)
+        {
+            ModelInfo Info;
+            const bool Read = ReadModelInfo(Path, Info, Error);
+            Out = std::move(Info.Animation);
+            return Read;
         }
 
         bool LoadModelMesh(const std::filesystem::path& Path, CpuMesh& Out, std::string& Error)

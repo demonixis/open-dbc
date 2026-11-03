@@ -434,6 +434,7 @@ namespace dbc::studio
 
         void SceneEditor::PickAt(const ImVec2& Mouse, bool Toggle)
         {
+            InspectedModel_.clear();
             const auto Pick = [&](const scene::SceneNode* Node)
             {
                 if (!Toggle)
