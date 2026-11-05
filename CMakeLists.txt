@@ -154,6 +154,7 @@ set(CMAKE_XCODE_GENERATE_SCHEME OFF)
 
 include(FetchContent)
 include(cmake/fetch_dependency.cmake)
+opendbc_begin_dependencies()
 
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
@@ -515,6 +516,7 @@ if(APPLE OR (NOT ANDROID AND NOT IOS))
         endif()
     endforeach()
 endif()
+opendbc_end_dependencies()
 
 set(OPENDBC_SHADER_SOURCE_DIR "${PROJECT_SOURCE_DIR}/shaders")
 set(OPENDBC_SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")

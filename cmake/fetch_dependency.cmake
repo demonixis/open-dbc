@@ -54,3 +54,28 @@ function(opendbc_fetch_dependency Name Repository Commit)
     FetchContent_Declare(${Name} SOURCE_DIR "${OPENDBC_SOURCE}" ${ARGN})
     set(${Name}_CACHE_DIR "${OPENDBC_SOURCE}" PARENT_SCOPE)
 endfunction()
+
+option(OPENDBC_DEPENDENCY_DEBUG_INFO
+    "Build pinned dependencies with debug information (DXC alone then takes several GB)" OFF)
+set(OPENDBC_DEBUG_INFO_FLAG_VARIABLES
+    CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+
+# Dependency subdirectories keep the flags in effect when they are added, so stripping the debug
+# information flags between these two calls reaches only them; OpenDBC's own targets keep theirs.
+macro(opendbc_begin_dependencies)
+    foreach(OPENDBC_FLAGS_VARIABLE IN LISTS OPENDBC_DEBUG_INFO_FLAG_VARIABLES)
+        set(OPENDBC_SAVED_${OPENDBC_FLAGS_VARIABLE} "${${OPENDBC_FLAGS_VARIABLE}}")
+        if(NOT OPENDBC_DEPENDENCY_DEBUG_INFO)
+            separate_arguments(OPENDBC_FLAGS NATIVE_COMMAND "${${OPENDBC_FLAGS_VARIABLE}}")
+            list(FILTER OPENDBC_FLAGS EXCLUDE REGEX "^(-g.*|[-/]Z[7iI])$")
+            list(JOIN OPENDBC_FLAGS " " ${OPENDBC_FLAGS_VARIABLE})
+        endif()
+    endforeach()
+endmacro()
+
+macro(opendbc_end_dependencies)
+    foreach(OPENDBC_FLAGS_VARIABLE IN LISTS OPENDBC_DEBUG_INFO_FLAG_VARIABLES)
+        set(${OPENDBC_FLAGS_VARIABLE} "${OPENDBC_SAVED_${OPENDBC_FLAGS_VARIABLE}}")
+        unset(OPENDBC_SAVED_${OPENDBC_FLAGS_VARIABLE})
+    endforeach()
+endmacro()

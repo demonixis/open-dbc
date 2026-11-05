@@ -118,6 +118,10 @@ transpiles at run time. After `cmake --preset shader-verify`, the
 `shader-update` regenerates them. Animations decode with the platform's
 media framework ([video.md](video.md)); OpenDBC bundles no codecs.
 
+Pinned dependencies build without debug information, which would make DXC alone
+take several GB per build directory; configure with
+`-DOPENDBC_DEPENDENCY_DEBUG_INFO=ON` to step into them.
+
 [rendering.md](rendering.md) describes how a frame is drawn and what a faster
 renderer must preserve.
 
