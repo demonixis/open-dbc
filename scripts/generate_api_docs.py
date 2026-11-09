@@ -23,7 +23,9 @@ import argparse
 import html
 import json
 import re
+import struct
 import tempfile
+import zlib
 from collections import OrderedDict
 from pathlib import Path
 
@@ -1931,7 +1933,7 @@ input.addEventListener('input', () => {{
 
 
 def build_index(by_cat: dict, search_index: list[dict], basics_count: int,
-                total_rows: int, example_stats: dict) -> None:
+                total_rows: int, example_stats: dict) -> str:
     group_cards: "OrderedDict[str, list[str]]" = OrderedDict()
     group_cards["Examples"] = [
         ('<a class="card" href="examples-dbc.html"><h3>DBC examples</h3>'
@@ -1969,12 +1971,14 @@ def build_index(by_cat: dict, search_index: list[dict], basics_count: int,
              f"{n_examples} documented example programs, covering DBC and DBPro together. "
              "Shared commands carry both “dbc” and “dbpro” tags; commands whose behavior "
              "differs get one section per profile.")
+    index_json = json.dumps(search_index, ensure_ascii=False, separators=(",", ":"))
     page = INDEX_TEMPLATE.format(
         stats=esc(stats), groups="\n".join(groups_html),
-        index_json=json.dumps(search_index, ensure_ascii=False, separators=(",", ":")),
+        index_json=index_json,
         note=esc(GENERATOR_NOTE),
     )
     (OUT / "index.html").write_text(page, encoding="utf-8")
+    return index_json
 
 
 def validate_output(Output: Path) -> None:
@@ -2012,7 +2016,7 @@ def validate_output(Output: Path) -> None:
                 raise SystemExit(f"broken HTML anchor in {PageName}: {Link}")
 
 
-def generate(Output: Path) -> None:
+def generate(Output: Path) -> str:
     global OUT
     OUT = Output
     OUT.mkdir(parents=True, exist_ok=True)
@@ -2027,7 +2031,7 @@ def generate(Output: Path) -> None:
         "dbc": build_examples_page("dbc", matcher, anchor_map, search_index),
         "dbpro": build_examples_page("dbpro", matcher, anchor_map, search_index),
     }
-    build_index(by_cat, search_index, basics_count, len(rows), example_stats)
+    index_json = build_index(by_cat, search_index, basics_count, len(rows), example_stats)
 
     print(f"DBC help: {len(helpmap)} pages parsed.")
     for slug in CATEGORIES:
@@ -2041,18 +2045,47 @@ def generate(Output: Path) -> None:
         print(f"  examples-{profile}: {count} programs ({lines} lines)")
     validate_output(OUT)
     print(f"Output: {OUT}")
+    return index_json
+
+
+def generate_archive(output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="opendbc-api-", dir=output.parent) as directory:
+        pages = Path(directory) / "pages"
+        index_json = generate(pages)
+        files = [(path.name, path.read_bytes()) for path in sorted(pages.iterdir())]
+        files.append(("search.json", index_json.encode("utf-8")))
+
+        # DBCREF1: magic, count, then (name size, raw size, compressed size, name,
+        # zlib stream) for each entry. All integers are unsigned little-endian 32-bit.
+        archive = bytearray(b"DBCREF1\0" + struct.pack("<I", len(files)))
+        for name, content in files:
+            filename = name.encode("ascii")
+            compressed = zlib.compress(content, level=9)
+            archive.extend(struct.pack("<III", len(filename), len(content), len(compressed)))
+            archive.extend(filename)
+            archive.extend(compressed)
+        temporary = Path(directory) / "archive"
+        temporary.write_bytes(archive)
+        temporary.replace(output)
+    print(f"Studio reference archive: {len(files)} files, {len(archive)} bytes ({output})")
 
 
 def main() -> None:
     Parser = argparse.ArgumentParser(description="Generate and validate the OpenDBC HTML reference")
-    Parser.add_argument("--output", type=Path, default=OUT)
-    Parser.add_argument("--check", action="store_true",
-                        help="generate into a temporary directory and validate every local link and anchor")
+    Mode = Parser.add_mutually_exclusive_group()
+    Mode.add_argument("--output", type=Path, default=OUT)
+    Mode.add_argument("--check", action="store_true",
+                      help="generate into a temporary directory and validate every local link and anchor")
+    Mode.add_argument("--archive", type=Path, help="generate the compressed Studio reference archive")
     Args = Parser.parse_args()
     if Args.check:
         with tempfile.TemporaryDirectory(prefix="opendbc-api-") as Directory:
             generate(Path(Directory))
         print("HTML reference generation check passed")
+        return
+    if Args.archive is not None:
+        generate_archive(Args.archive)
         return
     generate(Args.output)
 

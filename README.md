@@ -20,6 +20,7 @@ loop
 ## Build and run
 
 Requires CMake 3.24+, Ninja and a C++20 compiler (Visual Studio 2022+ on Windows).
+Building the Studio also requires Python 3.10+ to generate the offline reference.
 
 ```bash
 cmake --preset default

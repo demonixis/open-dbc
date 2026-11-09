@@ -194,6 +194,8 @@ set(STUDIO_SOURCES
     src/core/project_settings.hpp
     src/core/recovery.cpp
     src/core/recovery.hpp
+    src/core/reference_archive.cpp
+    src/core/reference_archive.hpp
     src/core/platform.hpp
     src/core/settings.cpp
     src/core/settings.hpp
@@ -329,6 +331,38 @@ add_custom_target(opendbc_scene_shaders DEPENDS "${STUDIO_SHADER_INCLUDE}")
 add_dependencies(opendbc opendbc_scene_shaders)
 target_include_directories(opendbc PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
+# Keep the site generator's category pages compressed as a single Studio resource.
+find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
+file(GLOB_RECURSE STUDIO_REFERENCE_EXAMPLES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/examples/*.dba")
+set(STUDIO_REFERENCE_ARCHIVE "${CMAKE_CURRENT_BINARY_DIR}/generated/reference.dbcref")
+set(STUDIO_REFERENCE_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated/studio_reference.inc")
+add_custom_command(
+    OUTPUT "${STUDIO_REFERENCE_ARCHIVE}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/scripts/generate_api_docs.py"
+        --archive "${STUDIO_REFERENCE_ARCHIVE}"
+    DEPENDS "${CMAKE_SOURCE_DIR}/scripts/generate_api_docs.py"
+            "${CMAKE_SOURCE_DIR}/scripts/generate_language_references.py"
+            "${CMAKE_SOURCE_DIR}/scripts/audit_language_catalogue.py"
+            "${CMAKE_SOURCE_DIR}/scripts/data/dbc_catalogue_evidence.tsv"
+            "${CMAKE_SOURCE_DIR}/scripts/data/language_catalogue_editorial.json"
+            "${CMAKE_SOURCE_DIR}/src/language/language_catalogue.cpp"
+            "${CMAKE_SOURCE_DIR}/src/language/language_catalogue.inc"
+            "${CMAKE_SOURCE_DIR}/src/language/dbpro_compatibility_stubs.inc"
+            ${STUDIO_REFERENCE_EXAMPLES}
+    COMMENT "Generate the compressed OpenDBC HTML reference"
+    VERBATIM)
+add_custom_command(
+    OUTPUT "${STUDIO_REFERENCE_INCLUDE}"
+    COMMAND ${CMAKE_COMMAND} -DOUTPUT=${STUDIO_REFERENCE_INCLUDE}
+            -DSOURCE_DIR=${CMAKE_CURRENT_BINARY_DIR}/generated -DFILES=reference.dbcref
+            -DARRAY=KStudioReferenceFiles -P "${CMAKE_SOURCE_DIR}/cmake/embed_files.cmake"
+    DEPENDS "${STUDIO_REFERENCE_ARCHIVE}" "${CMAKE_SOURCE_DIR}/cmake/embed_files.cmake"
+    COMMENT "Embed the offline Studio reference"
+    VERBATIM)
+add_custom_target(opendbc_studio_reference DEPENDS "${STUDIO_REFERENCE_INCLUDE}")
+add_dependencies(opendbc opendbc_studio_reference)
+
 # Built-in snippets are .dba files embedded the same way.
 set(STUDIO_SNIPPET_DIR "${CMAKE_CURRENT_LIST_DIR}/snippets")
 file(GLOB STUDIO_SNIPPET_INPUTS CONFIGURE_DEPENDS "${STUDIO_SNIPPET_DIR}/*.dba")
@@ -392,6 +426,7 @@ target_link_libraries(opendbc PRIVATE
     imgui_texteditor
     imguizmo
     nlohmann_json::nlohmann_json
+    opendbc_miniz
 )
 if(NOT ANDROID AND NOT IOS)
     target_link_libraries(opendbc PRIVATE SDL3_shadercross::SDL3_shadercross spirv-cross-core)
