@@ -33,6 +33,40 @@ target_include_directories(imgui SYSTEM PUBLIC
 target_compile_definitions(imgui PUBLIC IMGUI_ENABLE_FREETYPE)
 target_link_libraries(imgui PUBLIC SDL3::SDL3 PRIVATE freetype)
 
+# --- Offline HTML reference ------------------------------------------------
+opendbc_begin_dependencies()
+opendbc_fetch_dependency(litehtml
+    https://github.com/litehtml/litehtml.git
+    8836bc1bc35ca0cfd71dc0386ef841d5cbc3bd5e # Required by ImHTML v0.4.0
+    SOURCE_SUBDIR opendbc-sources-only
+    PATCH_COMMAND ${CMAKE_COMMAND}
+                  -DOPENDBC_GIT_EXECUTABLE=${GIT_EXECUTABLE}
+                  -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
+                  -DOPENDBC_PATCH_FILE=${CMAKE_SOURCE_DIR}/cmake/patches/litehtml-reference-viewport.patch
+                  -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
+)
+FetchContent_MakeAvailable(litehtml)
+set(LITEHTML_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(EXTERNAL_GUMBO OFF CACHE BOOL "" FORCE)
+add_subdirectory("${litehtml_SOURCE_DIR}" "${litehtml_BINARY_DIR}" EXCLUDE_FROM_ALL)
+
+opendbc_fetch_dependency(imhtml
+    https://github.com/BigJk/ImHTML.git
+    5ef184de785e763d250f93ada84145e301bae301 # v0.4.0
+    SOURCE_SUBDIR opendbc-sources-only
+    PATCH_COMMAND ${CMAKE_COMMAND}
+                  -DOPENDBC_GIT_EXECUTABLE=${GIT_EXECUTABLE}
+                  -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
+                  -DOPENDBC_PATCH_FILE=${CMAKE_SOURCE_DIR}/cmake/patches/imhtml-reference-viewer.patch
+                  -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
+)
+FetchContent_MakeAvailable(imhtml)
+add_library(imhtml STATIC "${imhtml_SOURCE_DIR}/imhtml.cpp")
+target_include_directories(imhtml SYSTEM PUBLIC "${imhtml_SOURCE_DIR}")
+target_link_libraries(imhtml PUBLIC imgui PRIVATE litehtml)
+set_target_properties(imhtml litehtml gumbo PROPERTIES POSITION_INDEPENDENT_CODE ON)
+opendbc_end_dependencies()
+
 # --- ImGuiColorTextEdit (goossens fork) ------------------------------------
 # Syntax-highlighting code editor widget: markers, squigglies, autocomplete,
 # hover callbacks and a built-in find/replace window.
@@ -102,6 +136,9 @@ set(OPENDBC_THIRD_PARTY_LICENSES
     "${glm_SOURCE_DIR}/copying.txt|GLM.txt"
     "${spdlog_SOURCE_DIR}/LICENSE|spdlog.txt"
     "${imgui_SOURCE_DIR}/LICENSE.txt|Dear_ImGui.txt"
+    "${imhtml_SOURCE_DIR}/LICENSE|ImHTML.txt"
+    "${litehtml_SOURCE_DIR}/LICENSE|litehtml.txt"
+    "${litehtml_SOURCE_DIR}/src/gumbo/LICENSE|Gumbo.txt"
     "${imgui_texteditor_SOURCE_DIR}/LICENSE|ImGuiColorTextEdit.txt"
     "${imguizmo_SOURCE_DIR}/LICENSE|ImGuizmo.txt"
     "${nlohmann_json_SOURCE_DIR}/LICENSE.MIT|nlohmann_json.txt"
@@ -241,6 +278,8 @@ set(STUDIO_SOURCES
     src/panels/project_panel.hpp
     src/panels/project_settings_window.cpp
     src/panels/project_settings_window.hpp
+    src/panels/reference_panel.cpp
+    src/panels/reference_panel.hpp
     src/panels/scene_assets.cpp
     src/panels/scene_editor.cpp
     src/panels/scene_editor.hpp
@@ -423,6 +462,7 @@ add_dependencies(opendbc opendbc_runtime_fingerprint)
 
 target_link_libraries(opendbc PRIVATE
     dbc_interpreter
+    imhtml
     imgui_texteditor
     imguizmo
     nlohmann_json::nlohmann_json

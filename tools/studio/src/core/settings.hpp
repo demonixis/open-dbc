@@ -10,7 +10,13 @@ namespace dbc::studio
 {
     namespace core
     {
-        // Edit > Editor Settings, as multipliers.
+        enum class DocumentationReader
+        {
+            Studio,
+            Browser,
+        };
+
+        // Edit > Editor Settings.
         struct EditorSettings
         {
             static constexpr float KMinSpeed = 0.1f;
@@ -24,6 +30,7 @@ namespace dbc::studio
             float CameraSpeed = 1.0f;
             // The size of the code font, in the editor and the panels that use it.
             float TextZoom = 1.0f;
+            DocumentationReader DocReader = DocumentationReader::Studio;
         };
 
         // Preferences use JSON in the per-user directory; ImGui persists window geometry and docking.

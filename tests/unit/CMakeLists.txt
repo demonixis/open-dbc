@@ -330,6 +330,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
 
     add_executable(test_studio_reference
         test_studio_reference_archive.cpp
+        test_studio_reference_panel.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/reference_archive.cpp
     )
     add_dependencies(test_studio_reference opendbc_studio_reference)
@@ -339,7 +340,7 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     )
     target_compile_definitions(test_studio_reference PRIVATE
         OPENDBC_REFERENCE_ARCHIVE_PATH="${CMAKE_BINARY_DIR}/tools/studio/generated/reference.dbcref")
-    target_link_libraries(test_studio_reference PRIVATE doctest_with_main opendbc_miniz)
+    target_link_libraries(test_studio_reference PRIVATE doctest_with_main imhtml opendbc_miniz)
     doctest_discover_tests(test_studio_reference PROPERTIES LABELS "unit-studio")
 
     add_executable(test_studio_new_project

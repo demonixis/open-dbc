@@ -30,10 +30,13 @@ SHADER_NAMES = tuple(
 REQUIRED_LICENSES = (
     "LICENSE",
     "Dark-Basic-Pro-LICENSE.md",
+    "Gumbo.txt",
+    "ImHTML.txt",
     "MuseScore-General-SoundFont-LICENSE.md",
     "RapidJSON.txt",
     "VintageDreamsWaves-COPYRIGHT.txt",
     "TinySoundFont.txt",
+    "litehtml.txt",
 )
 
 

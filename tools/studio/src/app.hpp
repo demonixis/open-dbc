@@ -13,6 +13,7 @@
 #include "core/platform.hpp"
 #include "core/project_settings.hpp"
 #include "core/recovery.hpp"
+#include "core/reference_archive.hpp"
 #include "core/settings.hpp"
 #include "core/workspace.hpp"
 #include "toolchain/active_run_planner.hpp"
@@ -38,6 +39,7 @@
 #include "panels/problems_panel.hpp"
 #include "panels/project_panel.hpp"
 #include "panels/project_settings_window.hpp"
+#include "panels/reference_panel.hpp"
 #include "panels/scene_editor.hpp"
 #include "panels/snippet_window.hpp"
 
@@ -65,6 +67,7 @@ namespace dbc::studio
         void DrawToolbar();
         void DrawStatusBar();
         void DrawAbout();
+        void OpenDocumentation();
         void DrawQuitConfirm();
         void DrawRecovery();
         void UpdateRecovery();
@@ -200,6 +203,8 @@ namespace dbc::studio
         panels::SceneEditor Scene_;
         panels::SnippetWindow Snippets_;
 
+        core::ReferenceArchive Documentation_;
+        panels::ReferencePanel DocumentationPanel_;
         dba::Reference Reference_;
         dba::CommandDatabase Commands_;
         bool SettingsLoaded_ = false;

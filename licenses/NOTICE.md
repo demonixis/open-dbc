@@ -24,7 +24,7 @@ sponsored by The Game Creators Ltd or Dark Basic Software Limited.
 
 Build dependencies (SDL3, SDL3_image, SDL3_mixer, SDL3_ttf, SDL3_shadercross with DXC
 and SPIRV-Cross, TinySoundFont, Assimp, GLM, spdlog, unordered_dense, ENet, miniz, libogg, libvorbis, Jolt Physics, Dear ImGui,
-ImGuiColorTextEdit, ImGuizmo, nlohmann/json, OpenXR-SDK, and doctest for the tests) are
+ImGuiColorTextEdit, ImGuizmo, ImHTML, litehtml with Gumbo, nlohmann/json, OpenXR-SDK, and doctest for the tests) are
 fetched at build time and carry their own licences; none of their source is vendored
 here. Desktop builds ship the OpenXR loader with its OpenXR-SDK and jsoncpp notices.
 MoltenVK and the headset runtime are installed separately.

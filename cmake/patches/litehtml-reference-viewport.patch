@@ -1,0 +1,18 @@
+diff --git a/src/render_item.cpp b/src/render_item.cpp
+index 29b9d6e..fbd5321 100644
+--- a/src/render_item.cpp
++++ b/src/render_item.cpp
+@@ -834,6 +834,13 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
+             bdr_radius -= m_borders;
+             bdr_radius -= m_padding;
+
++            // In-flow children of an overflow-clipped block cannot paint outside it.
++            // Keep visiting positioned descendants, which may use another containing block.
++            if (flag != draw_positioned && !clip_box.does_intersect(clip))
++            {
++                return;
++            }
++
+             doc->container()->set_clip(clip_box, bdr_radius);
+         }
+     }

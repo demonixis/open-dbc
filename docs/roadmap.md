@@ -212,6 +212,6 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 - [ ] Remove the `DbcNew` / `DbProNew` remnants: the reserved touch, orientation and
   accelerometer commands become DBPro additions or go away; update the editorial data
   and the generators.
-- [ ] Studio: embedded help, installed samples, welcome screen.
+- [ ] Studio: installed samples, welcome screen.
 - [ ] Split the largest source files; measure coverage; negative verifier tests.
 - [ ] One policy for missing objects, documented integer semantics, deterministic `RND`.

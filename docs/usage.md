@@ -60,6 +60,10 @@ or UNC paths.
 **View > Theme** picks a dark or light theme or follows the system; the Studio
 starts dark.
 
+**Help > DBA Reference** opens the bundled reference offline. On desktop,
+**Edit > Editor Settings > Documentation reader** chooses between **Studio
+(ImHTML)** (default) and **Default browser**. Sandboxed builds use the Studio reader.
+
 Pinching with two fingers, or **Ctrl** or **Cmd** with the wheel, zooms the code
 text under the pointer in the editor or the Output panel. The **View** menu does the
 same with **Ctrl+=**, **Ctrl+-** and **Ctrl+0** (**Cmd** on macOS), and **Edit >

@@ -236,6 +236,25 @@ TEST_CASE("Studio preferences keep the text zoom within its range")
     CHECK_FALSE(Error.empty());
 }
 
+TEST_CASE("Studio preferences select the offline documentation reader")
+{
+    std::string Error;
+    CHECK(core::Settings::Parse("{}", Error).Editor.DocReader == core::DocumentationReader::Studio);
+    CHECK(Error.empty());
+    CHECK(core::Settings::Parse(R"({"documentationReader":"studio"})", Error).Editor.DocReader ==
+          core::DocumentationReader::Studio);
+    CHECK(Error.empty());
+    CHECK(core::Settings::Parse(R"({"documentationReader":"browser"})", Error).Editor.DocReader ==
+          core::DocumentationReader::Browser);
+    CHECK(Error.empty());
+    CHECK(core::Settings::Parse(R"({"documentationReader":"unknown"})", Error).Editor.DocReader ==
+          core::DocumentationReader::Studio);
+    CHECK_FALSE(Error.empty());
+    CHECK(core::Settings::Parse(R"({"documentationReader":true})", Error).Editor.DocReader ==
+          core::DocumentationReader::Studio);
+    CHECK_FALSE(Error.empty());
+}
+
 TEST_CASE("Invalid project settings cannot replace the original descriptor")
 {
     TemporaryProject Project;

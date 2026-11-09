@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
 #include <cfloat>
 #include <cmath>
 #include <fstream>
@@ -13,6 +12,8 @@
 #include <imgui_internal.h>
 #include <iterator>
 #include <limits>
+#include <string_view>
+#include <utility>
 
 #include "core/i18n.hpp"
 #include "core/locales.hpp"
@@ -22,6 +23,8 @@
 #include "scene/scene_integration.hpp"
 #include "theme.hpp"
 #include "toolchain/active_run_planner.hpp"
+
+#include "studio_reference.inc"
 
 namespace dbc::studio
 {
@@ -177,16 +180,22 @@ namespace dbc::studio
         constexpr const char* KOpenFilter = "dba;dbpro;json;fx;hlsl";
         constexpr const char* KProjectFilter = "dbpro;json";
 
-        // Opens the folder holding Path in Finder, Explorer or the desktop's file manager.
-        void RevealInFileManager(const std::filesystem::path& Path)
+        std::string LocalFileUrl(const std::filesystem::path& Path)
         {
-            const std::string Folder = dbc::GenericPathToUtf8(std::filesystem::absolute(Path).parent_path());
-            std::string Url = Folder.starts_with('/') ? "file://" : "file:///";
+            const std::string Local = dbc::GenericPathToUtf8(Path);
+            std::string Url = "file://";
+            if (Local.starts_with("//"))
+                Url = "file:";
+            else if (!Local.starts_with('/'))
+                Url += '/';
             static constexpr char Hex[] = "0123456789ABCDEF";
-            for (const unsigned char Character : Folder)
+            for (const unsigned char Character : Local)
             {
-                if (std::isalnum(Character) || Character == '/' || Character == '-' || Character == '_' ||
-                    Character == '.' || Character == '~' || Character == ':')
+                const bool Alphanumeric = (Character >= 'a' && Character <= 'z') ||
+                                          (Character >= 'A' && Character <= 'Z') ||
+                                          (Character >= '0' && Character <= '9');
+                if (Alphanumeric || Character == '/' || Character == '-' || Character == '_' || Character == '.' ||
+                    Character == '~' || Character == ':')
                 {
                     Url += static_cast<char>(Character);
                 }
@@ -197,8 +206,15 @@ namespace dbc::studio
                     Url += Hex[Character & 0x0f];
                 }
             }
-            if (!SDL_OpenURL(Url.c_str()))
-                DBC_LOG_WARN("Cannot reveal '{}': {}", Folder, SDL_GetError());
+            return Url;
+        }
+
+        // Opens the folder holding Path in Finder, Explorer or the desktop's file manager.
+        void RevealInFileManager(const std::filesystem::path& Path)
+        {
+            const auto Folder = std::filesystem::absolute(Path).parent_path();
+            if (!SDL_OpenURL(LocalFileUrl(Folder).c_str()))
+                DBC_LOG_WARN("Cannot reveal '{}': {}", dbc::PathToUtf8(Folder), SDL_GetError());
         }
     } // namespace
 
@@ -1291,6 +1307,8 @@ namespace dbc::studio
 
         DrawDockSpace();
         DrawPanels();
+        if (core::platform::IsSandboxed() || Settings_.Editor.DocReader == core::DocumentationReader::Studio)
+            DocumentationPanel_.Draw(Documentation_);
         HandleShortcuts();
 
         if (ShowAbout_)
@@ -1705,6 +1723,28 @@ namespace dbc::studio
             if (ImGui::SliderFloat(TrId("Text zoom"), &TextZoom, core::EditorSettings::KMinTextZoom,
                                    core::EditorSettings::KMaxTextZoom, "%.2f", Flags))
                 SetTextZoom(TextZoom);
+            if constexpr (!core::platform::IsSandboxed())
+            {
+                using core::DocumentationReader;
+                const DocumentationReader Reader = Settings_.Editor.DocReader;
+                const char* Studio = TrId("Studio (ImHTML)");
+                const char* Browser = TrId("Default browser");
+                if (ImGui::BeginCombo(TrId("Documentation reader"),
+                                      Reader == DocumentationReader::Studio ? Studio : Browser))
+                {
+                    if (ImGui::Selectable(Studio, Reader == DocumentationReader::Studio))
+                    {
+                        Settings_.Editor.DocReader = DocumentationReader::Studio;
+                        Settings_.Save();
+                    }
+                    if (ImGui::Selectable(Browser, Reader == DocumentationReader::Browser))
+                    {
+                        Settings_.Editor.DocReader = DocumentationReader::Browser;
+                        Settings_.Save();
+                    }
+                    ImGui::EndCombo();
+                }
+            }
             ImGui::PopItemWidth();
         }
         ImGui::End();
@@ -2150,12 +2190,43 @@ namespace dbc::studio
 
         if (ImGui::BeginMenu(TrId("Help")))
         {
-            ImGui::MenuItem(TrId("DBA Reference"), nullptr, false, false);
+            if (ImGui::MenuItem(TrId("DBA Reference")))
+                OpenDocumentation();
             ImGui::MenuItem(TrId("About"), nullptr, &ShowAbout_);
             ImGui::EndMenu();
         }
 
         ImGui::EndMenuBar();
+    }
+
+    void App::OpenDocumentation()
+    {
+        if (!Documentation_.IsOpen() && !Documentation_.Open(KStudioReferenceFiles[0].second))
+        {
+            DBC_LOG_ERROR("Cannot load the embedded DBA reference archive");
+            Status_ = Tr("Could not load the offline DBA reference.");
+            return;
+        }
+
+        // Sandboxed builds cannot hand their private documentation files to a browser.
+        if (core::platform::IsSandboxed() || Settings_.Editor.DocReader == core::DocumentationReader::Studio)
+        {
+            DocumentationPanel_.Open();
+            return;
+        }
+
+        const auto& Preferences = core::paths::PrefDir();
+        const auto Index = Preferences.empty() ? std::nullopt : Documentation_.Materialize(Preferences / "reference");
+        if (!Index)
+        {
+            DBC_LOG_ERROR("Cannot extract the offline DBA reference to '{}'", dbc::PathToUtf8(Preferences));
+            Status_ = Tr("Could not load the offline DBA reference.");
+        }
+        else if (!SDL_OpenURL(LocalFileUrl(*Index).c_str()))
+        {
+            DBC_LOG_WARN("Cannot open the offline DBA reference: {}", SDL_GetError());
+            Status_ = Tr("Could not open the offline DBA reference in the browser.");
+        }
     }
 
 #ifndef OPENDBC_VERSION_STRING

@@ -1,0 +1,166 @@
+diff --git a/imhtml.cpp b/imhtml.cpp
+index 72e107b..d09f86e 100644
+--- a/imhtml.cpp
++++ b/imhtml.cpp
+@@ -1,5 +1,6 @@
+
+ #include <chrono>
++#include <cmath>
+ #include <fstream>
+ #include <iostream>
+ #include <string>
+@@ -147,11 +148,17 @@ class BrowserContainer : public litehtml::document_container {
+   std::string currentUrl = "";
+   std::vector<std::string> history = {};
+   float width;
++  float height = 0.0f;
+   Config config;
+
+  public:
+   BrowserContainer(float width) : width(width) {}
+
++  void set_viewport(float width, float height) {
++    this->width = width;
++    this->height = height;
++  }
++
+   void reset() { bottomRight = ImVec2(0, 0); }
+   ImVec2 get_bottom_right() { return bottomRight; }
+   void push_bottom_right(ImVec2 point) {
+@@ -1038,7 +1045,7 @@ class BrowserContainer : public litehtml::document_container {
+     client.x = 0;
+     client.y = 0;
+     client.width = width > 0 ? width : ImGui::GetContentRegionAvail().x;
+-    client.height = ImGui::GetContentRegionAvail().y;
++    client.height = height > 0 ? height : ImGui::GetContentRegionAvail().y;
+   }
+
+   virtual litehtml::element::ptr create_element(const char* tag_name, const litehtml::string_map& attributes,
+@@ -1054,9 +1061,9 @@ class BrowserContainer : public litehtml::document_container {
+     media.color = 8;
+     media.resolution = 96;
+     media.width = width > 0 ? width : ImGui::GetContentRegionAvail().x;
+-    media.height = ImGui::GetContentRegionAvail().y;
++    media.height = height > 0 ? height : ImGui::GetContentRegionAvail().y;
+     media.device_width = width > 0 ? width : ImGui::GetContentRegionAvail().x;
+-    media.device_height = ImGui::GetContentRegionAvail().y;
++    media.device_height = media.height;
+     media.type = litehtml::media_type_screen;
+   }
+
+@@ -1160,4 +1167,82 @@ bool Canvas(const char* id, const char* html, float width, std::string* clickedU
+
+   return false;
+ }
++struct Document::State {
++  BrowserContainer container{0.0f};
++  litehtml::document::ptr doc;
++  int width = 0;
++  int height = 0;
++  bool hovered = false;
++  bool pressed = false;
++};
++
++Document::Document(const char* html, const Config& config) : state_(std::make_unique<State>()) {
++  state_->container.set_config(config);
++  state_->doc = litehtml::document::createFromString(html, &state_->container);
++}
++
++Document::~Document() = default;
++
++void Document::Layout(ImVec2 viewport) {
++  const int width = std::max(1, (int)viewport.x);
++  const int height = std::max(1, (int)viewport.y);
++  if (state_->width == width && state_->height == height) {
++    return;
++  }
++
++  state_->container.set_viewport(width, height);
++  state_->doc->media_changed();
++  state_->doc->render(width);
++  state_->width = width;
++  state_->height = height;
++}
++
++std::optional<float> Document::AnchorY(const char* id) const {
++  const auto root = state_->doc->root();
++  if (root) {
++    const auto anchor = root->select_one(std::string("[id=\"") + id + "\"]");
++    if (anchor) {
++      return anchor->get_placement().y;
++    }
++  }
++  return std::nullopt;
++}
++
++std::string Document::Draw() {
++  const ImVec2 origin = ImGui::GetCursorScreenPos();
++  auto* draw_list = ImGui::GetWindowDrawList();
++  const ImVec2 top = draw_list->GetClipRectMin();
++  const ImVec2 bottom = draw_list->GetClipRectMax();
++  const auto x = (litehtml::pixel_t)std::floor(top.x - origin.x);
++  const auto y = (litehtml::pixel_t)std::floor(top.y - origin.y);
++  const litehtml::position clip(x, y, std::ceil(bottom.x - origin.x) - x, std::ceil(bottom.y - origin.y) - y);
++  const ImVec2 mouse = ImGui::GetMousePos() - origin;
++  litehtml::position::vector redraw;
++
++  const bool hovered = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(top, bottom);
++  if (hovered) {
++    state_->doc->on_mouse_over(mouse.x, mouse.y, mouse.x, mouse.y, redraw);
++    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
++      state_->doc->on_lbutton_down(mouse.x, mouse.y, mouse.x, mouse.y, redraw);
++      state_->pressed = true;
++    }
++  } else if (state_->hovered) {
++    state_->doc->on_mouse_leave(redraw);
++  }
++
++  if (state_->pressed && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
++    if (hovered) {
++      state_->doc->on_lbutton_up(mouse.x, mouse.y, mouse.x, mouse.y, redraw);
++    } else {
++      state_->doc->on_button_cancel(redraw);
++    }
++    state_->pressed = false;
++  }
++
++  state_->hovered = hovered;
++  state_->container.reset();
++  state_->doc->draw(0, 0, 0, &clip);
++  ImGui::Dummy(ImVec2(state_->doc->width(), state_->doc->height()));
++  return state_->container.pop_load_url();
++}
+ };  // namespace ImHTML
+diff --git a/imhtml.hpp b/imhtml.hpp
+index 41b4e48..e7f084a 100644
+--- a/imhtml.hpp
++++ b/imhtml.hpp
+@@ -2,6 +2,8 @@
+
+ #include <functional>
+ #include <map>
++#include <memory>
++#include <optional>
+ #include <string>
+
+ #include "imgui.h"
+@@ -123,4 +125,19 @@ void UnregisterCustomElement(const char *tagName);
+  * @return True if any link was clicked, false otherwise
+  */
+ bool Canvas(const char *id, const char *html, float width = 0.0f, std::string *clickedURL = nullptr);
++// A retained canvas for scrollable documentation. Call Layout and Draw inside
++// the ImGui child window that owns scrolling.
++class Document {
++ public:
++  Document(const char* html, const Config& config);
++  ~Document();
++
++  void Layout(ImVec2 viewport);
++  std::optional<float> AnchorY(const char* id) const;
++  std::string Draw();
++
++ private:
++  struct State;
++  std::unique_ptr<State> state_;
++};
+ };  // namespace ImHTML

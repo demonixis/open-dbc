@@ -93,6 +93,11 @@ namespace dbc::studio
                                               EditorSettings::KMinSpeed, EditorSettings::KMaxSpeed);
             S.Editor.TextZoom = std::clamp(Get<float>(J, "textZoom", S.Editor.TextZoom, Error),
                                            EditorSettings::KMinTextZoom, EditorSettings::KMaxTextZoom);
+            const std::string DocReader = Get<std::string>(J, "documentationReader", "studio", Error);
+            if (DocReader == "browser")
+                S.Editor.DocReader = DocumentationReader::Browser;
+            else if (DocReader != "studio" && Error.empty())
+                Error = "Ignoring invalid Studio setting: documentationReader";
             if (const auto Values = J.find("projectPathRemappings"); Values != J.end() && Values->is_object())
             {
                 for (const auto& [Key, Value] : Values->items())
@@ -163,6 +168,7 @@ namespace dbc::studio
             J["scrollSpeed"] = Editor.ScrollSpeed;
             J["cameraSpeed"] = Editor.CameraSpeed;
             J["textZoom"] = Editor.TextZoom;
+            J["documentationReader"] = Editor.DocReader == DocumentationReader::Browser ? "browser" : "studio";
             J["projectPathRemappings"] = ProjectPathRemappings;
             J["javaHome"] = JavaHome;
             J["androidSdk"] = AndroidSdk;
