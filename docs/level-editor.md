@@ -139,6 +139,12 @@ The Inspector edits the selected node:
   `DISABLE OBJECT ZDEPTH`, `ZREAD` and `ZWRITE`, which the viewport does not show.
   A level may also set one flag at a time (`SET OBJECT WIREFRAME`, `FOG`...); it is
   written back as `SET OBJECT`.
+- texture stages, which the viewport does not show: one of light, detail, sphere,
+  bump or blend mapping on the second stage, a cube map (alone or over a bump map),
+  `SET BLEND MAPPING ON` for stages 2 to 7, `SET ALPHA MAPPING ON`, cartoon or
+  rainbow shading, which replace every stage, and `SET REFLECTION SHADING ON`,
+  which ends shadow casting. Each image is loaded once, whatever uses it. A level
+  that orders these commands in a way the Inspector cannot express stays read-only.
 
 Level Settings holds:
 - ambient light and colour, backdrop colour and fog;

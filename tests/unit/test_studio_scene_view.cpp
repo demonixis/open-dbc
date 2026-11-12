@@ -465,6 +465,22 @@ TEST_CASE("A single model asset click shows limb mapping without inserting or ed
         CHECK(Text.find(Label) != std::string::npos);
 }
 
+TEST_CASE("The Inspector offers the texture stages of an object, not of a light")
+{
+    scene::SceneDocument Level = LevelOfCubes({glm::vec3(0.0f)});
+    Level.Add(scene::NodeKind::Light);
+    SceneViewDriver Driver("inspect_texture_stages", Level);
+    Driver.ClickHierarchyRow(0);
+    const std::string Text = Driver.DrawnText();
+    INFO(Text);
+    for (const char* Label : {"Texture stages", "Shading", "Second texture", "Cube map", "Alpha", "Reflection",
+                              "Depth buffer"})
+        CHECK(Text.find(Label) != std::string::npos);
+    Driver.ClickHierarchyRow(1);
+    CHECK(Driver.DrawnText().find("Texture stages") == std::string::npos);
+    CHECK_FALSE(Driver.Editor().Dirty());
+}
+
 TEST_CASE("Holding and dragging a model tile keeps the selected model file field available")
 {
     scene::SceneDocument Level;

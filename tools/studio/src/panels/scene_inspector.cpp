@@ -676,10 +676,101 @@ namespace dbc::studio
             OptionalFloat("Specular power", Mat.SpecularPower, 10.0f, 0.25f, 0.0f, 255.0f);
             // Without SET SHADOW POSITION the engine casts from light 0 at the origin, which
             // lies on the ground of most levels; the first caster gets a fixed source above.
-            if (ImGui::Checkbox(TrId("Casts a shadow"), &Mat.CastShadow) && Mat.CastShadow && !Document_.Env.ShadowMode)
-                Document_.Env.ShadowMode = -1;
+            if (ImGui::Checkbox(TrId("Casts a shadow"), &Mat.CastShadow) && Mat.CastShadow)
+            {
+                // The engine keeps one of shadow casting and reflection shading.
+                Mat.Reflection = false;
+                if (!Document_.Env.ShadowMode)
+                    Document_.Env.ShadowMode = -1;
+            }
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("%s", Tr("SET SHADOW SHADING ON, cast from the shadow source in Level Settings"));
+            DrawTextureStages(Mat);
+        }
+
+        void SceneEditor::DrawTextureStages(scene::Material& Mat)
+        {
+            Heading("Texture stages");
+            Hint(Tr("Written to the level; the Scene view shows the first texture only."));
+
+            int Shade = static_cast<int>(Mat.Shade);
+            const char* const Shadings[] = {Tr("None"), Tr("Cartoon"), Tr("Rainbow")};
+            if (ImGui::Combo(TrId("Shading"), &Shade, Shadings, 3))
+                Mat.Shade = static_cast<scene::Shading>(Shade);
+            if (Mat.Shade != scene::Shading::None)
+            {
+                AssetField(Mat.Shade == scene::Shading::Cartoon ? "Shade image" : "Rainbow image", Mat.ShadeTexture,
+                           core::MediaKind::Image);
+                if (Mat.Shade == scene::Shading::Cartoon)
+                    AssetField("Edge image", Mat.EdgeTexture, core::MediaKind::Image);
+                Hint(Tr("Cartoon and rainbow shading replace the texture and every other stage."));
+            }
+            else
+            {
+                int Second = static_cast<int>(Mat.Second);
+                const char* const Maps[] = {Tr("None"),       Tr("Light map"), Tr("Detail map"),
+                                            Tr("Sphere map"), Tr("Bump map"),  Tr("Blend")};
+                if (ImGui::Combo(TrId("Second texture"), &Second, Maps, 6))
+                    Mat.Second = static_cast<scene::SecondMap>(Second);
+                if (Mat.Second != scene::SecondMap::None)
+                {
+                    AssetField("Second image", Mat.SecondTexture, core::MediaKind::Image);
+                    if (Mat.Second == scene::SecondMap::Light)
+                        ImGui::Checkbox(TrId("Reverse stages"), &Mat.LightReverse);
+                    if (Mat.Second == scene::SecondMap::Blend)
+                        ImGui::SliderInt(TrId("Blend mode"), &Mat.BlendMode, 1, 26);
+                }
+
+                // A cube map takes the second stage, which only a normal map shares with it.
+                const bool CubeAllowed = Mat.Second == scene::SecondMap::None || Mat.Second == scene::SecondMap::Bump;
+                ImGui::BeginDisabled(!CubeAllowed);
+                bool Cube = Mat.Cube.has_value();
+                if (ImGui::Checkbox(TrId("Cube map"), &Cube))
+                    Mat.Cube = Cube ? std::optional<std::array<std::string, 6>>(std::in_place) : std::nullopt;
+                ImGui::EndDisabled();
+                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                    ImGui::SetTooltip("%s", Tr("SET CUBE MAPPING ON; it combines with a bump map only"));
+                if (Mat.Cube)
+                {
+                    const char* const Faces[] = {"+X", "-X", "+Y", "-Y", "+Z", "-Z"};
+                    for (std::size_t Face = 0; Face < Mat.Cube->size(); ++Face)
+                        AssetField(Faces[Face], (*Mat.Cube)[Face], core::MediaKind::Image);
+                }
+
+                std::optional<std::size_t> Removed;
+                for (std::size_t Index = 0; Index < Mat.Blends.size(); ++Index)
+                {
+                    scene::BlendStage& Blend = Mat.Blends[Index];
+                    ImGui::PushID(static_cast<int>(Index));
+                    ImGui::SliderInt(TrId("Stage"), &Blend.Stage, 2, 7);
+                    AssetField("Stage image", Blend.Texture, core::MediaKind::Image);
+                    ImGui::DragInt(TrId("Coordinate mode"), &Blend.CoordinateMode, 0.1f, 0, 17);
+                    // The engine takes 0 to 3 and 10 to 17.
+                    if (Blend.CoordinateMode > 3 && Blend.CoordinateMode < 10)
+                        Blend.CoordinateMode = 10;
+                    ImGui::SliderInt(TrId("Blend mode"), &Blend.BlendMode, 1, 26);
+                    if (ImGui::SmallButton(TrId("Remove stage")))
+                        Removed = Index;
+                    ImGui::PopID();
+                }
+                if (Removed)
+                    Mat.Blends.erase(Mat.Blends.begin() + static_cast<std::ptrdiff_t>(*Removed));
+                if (Mat.Blends.size() < 6 && ImGui::SmallButton(TrId("Add blend stage")))
+                {
+                    // The first stage from 2 that no entry holds.
+                    scene::BlendStage Blend;
+                    while (std::any_of(Mat.Blends.begin(), Mat.Blends.end(),
+                                       [&](const scene::BlendStage& Other) { return Other.Stage == Blend.Stage; }))
+                        ++Blend.Stage;
+                    Mat.Blends.push_back(std::move(Blend));
+                }
+            }
+
+            OptionalFloat("Alpha", Mat.Alpha, 100.0f, 0.5f, 0.0f, 100.0f);
+            ImGui::Checkbox(TrId("Reflection"), &Mat.Reflection);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s", Tr("SET REFLECTION SHADING ON; it ends shadow casting"));
+            scene::ResolveMaterial(Mat);
         }
 
         void SceneEditor::DrawCameraSettings()

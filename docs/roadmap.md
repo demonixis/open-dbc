@@ -22,9 +22,6 @@ Conformance:
 
 Scene view:
 
-- [ ] Lot 6, Inspector textures: a level section declaring shared images, then light,
-  detail, blend, sphere, cube, bump and alpha mapping, and cartoon, rainbow and
-  reflection shading with their exclusion rules.
 - [ ] Lot 7, Inspector links: `GLUE OBJECT TO LIMB` with a limb picker, `UNGLUE
   OBJECT`, then effects (an effect id space, `LOAD EFFECT`, `SET OBJECT EFFECT`).
 - [ ] Lot 8, BSP worlds in a level: `LOAD BSP`, `SET BSP CAMERA` and BSP collision

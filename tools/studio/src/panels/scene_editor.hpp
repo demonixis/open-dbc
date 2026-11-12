@@ -333,6 +333,7 @@ namespace dbc::studio
             void DrawInspector();
             void DrawShape(scene::SceneNode& Node);
             void DrawMaterial(scene::SceneNode& Node);
+            void DrawTextureStages(scene::Material& Mat);
             void DrawAnimation(scene::SceneNode& Node);
             void DrawModelDetails(const std::string& Asset);
 
