@@ -33,7 +33,7 @@ Conformance:
   lists the rest.
 - [ ] Lot 3, remove unreferenced commands from the catalogue, from the lot 2 list:
   about 195 names known only from SDK string tables (quaternions and vectors, 117
-  names, stay), the Cloth forms no example uses (108), 25 undocumented DarkPHYSICS
+  names, stay), the whole 3D Cloth & Particles plugin (157), 25 undocumented DarkPHYSICS
   forms and the 98 reserved placeholders. They never existed for a DBPro user, so
   they go without a diagnostic. Regenerate evidence, manifests, references and the parity numbers below.
 - [ ] Lot 4, GameFX and help-only commands: a per-form status of the 50 GameFX
@@ -117,8 +117,8 @@ Validation and scope:
 
 ## Official plugins
 
-The forms of two plugins of the free release are catalogued and stop with `DBC2043`
-until they run; the reference lists them. In order of priority:
+The forms of DarkPHYSICS are catalogued and stop with `DBC2043` until they run; the
+reference lists them. 3D Cloth & Particles leaves the catalogue in lot 3.
 
 - [ ] DarkPHYSICS (491 forms) on Jolt, the one physics abstraction beside the ODE forms
   ([physics.md](physics.md)): rigid bodies, joints, rays, triggers, materials, the
@@ -126,8 +126,6 @@ until they run; the reference lists them. In order of priority:
   character's water line. A body belongs to ODE or to DarkPHYSICS, not both. Decide what
   replaces the ODE terrain forms, which take a memory pointer. Fluids, emitters and
   cloth stay unsupported.
-- [ ] 3D Cloth & Particles (157 forms), on the GPU as far as possible: cloth, emitters,
-  effectors and colliders.
 
 ## Modern features
 
