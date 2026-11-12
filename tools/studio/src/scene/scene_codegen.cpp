@@ -812,6 +812,15 @@ namespace dbc::studio
                     return Existing(IdSpace::Object, Id);
                 }
 
+                // The engine ignores BSP setup before LOAD BSP, so a level that orders them so is not rewritten.
+                BspWorld* LoadedBsp()
+                {
+                    if (Result_.Document.Bsp)
+                        return &*Result_.Document.Bsp;
+                    Error(Line_, *Name_ + " comes before LOAD BSP");
+                    return nullptr;
+                }
+
                 // A stage command after cartoon or rainbow shading leaves a state the Scene view cannot write.
                 bool StageFree(const SceneNode& Node)
                 {
@@ -971,6 +980,25 @@ namespace dbc::studio
                                 Error(Line_, "Image " + Integer(I(A, 1)) + " is loaded twice");
                                 Images_[I(A, 1)] = Path;
                             }
+                            return;
+                        }
+                        case SymbolId::Command_LoadBsp:
+                        {
+                            std::string Archive;
+                            std::string Map;
+                            if (A.size() != 2 || !S(A, 0, Archive) || !S(A, 1, Map))
+                                return;
+                            if (Result_.Document.Bsp)
+                            {
+                                Error(Line_, "A level loads one BSP world");
+                                return;
+                            }
+                            if (!Result_.Document.Nodes.empty())
+                            {
+                                Error(Line_, "LOAD BSP is written before the nodes of a level");
+                                return;
+                            }
+                            Result_.Document.Bsp = BspWorld{Archive, Map, {}, {}};
                             return;
                         }
                         case SymbolId::Command_LoadEffect:
@@ -1183,6 +1211,26 @@ namespace dbc::studio
                         case SymbolId::Command_SetObjectAmbient:
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Mat.Flags.Ambient = I(A, 1) != 0;
+                            break;
+                        case SymbolId::Command_SetBspCamera:
+                            if (BspWorld* World = LoadedBsp())
+                                World->Camera = I(A, 0);
+                            break;
+                        case SymbolId::Command_SetBspCameraCollision:
+                        case SymbolId::Command_SetBspObjectCollision:
+                            if (BspWorld* World = LoadedBsp())
+                            {
+                                const bool OfObject = Id == SymbolId::Command_SetBspObjectCollision;
+                                if (OfObject && Object(I(A, 1)) == nullptr)
+                                    break;
+                                World->Collisions.push_back({I(A, 0), OfObject, I(A, 1), F(A, 2), I(A, 3)});
+                                if (!BspCollisionValid(Result_.Document, World->Collisions.back()))
+                                {
+                                    World->Collisions.pop_back();
+                                    Error(Line_,
+                                          *Name_ + " takes an index from 1 to 24 that is set once, and a radius above 0");
+                                }
+                            }
                             break;
                         case SymbolId::Command_SetObjectEffect:
                             if (SceneNode* Node = Object(I(A, 0)))
@@ -1633,6 +1681,14 @@ namespace dbc::studio
             Out.Line("FUNCTION " + LevelFunctionName(Document) + "()");
             Out.Push();
 
+            // First: the BSP setup commands do nothing before a world is loaded.
+            if (Document.Bsp && !Document.Bsp->Map.empty())
+            {
+                Out.Command(SymbolId::Command_LoadBsp, {Quoted(Document.Bsp->Archive), Quoted(Document.Bsp->Map)});
+                if (Document.Bsp->Camera)
+                    Out.Command(SymbolId::Command_SetBspCamera, {Integer(*Document.Bsp->Camera)});
+            }
+
             std::map<std::string, int> Images;
             int NextImage = Document.Base(IdSpace::Image);
             // One LOAD IMAGE per file, shared by every object and stage that names it.
@@ -1690,6 +1746,19 @@ namespace dbc::studio
                 else
                     Out.Command(SymbolId::Command_GlueObjectToLimb,
                                 {Integer(Node.Id), Integer(Glued.Object), Integer(Glued.Limb)});
+            }
+
+            // Once the objects exist. Without a map nothing is written: the commands would do nothing.
+            if (Document.Bsp && !Document.Bsp->Map.empty())
+            {
+                for (const BspCollision& Collision : Document.Bsp->Collisions)
+                {
+                    if (BspCollisionValid(Document, Collision))
+                        Out.Command(Collision.OfObject ? SymbolId::Command_SetBspObjectCollision
+                                                       : SymbolId::Command_SetBspCameraCollision,
+                                    {Integer(Collision.Index), Integer(Collision.Id), NumberLiteral(Collision.Radius),
+                                     Integer(Collision.Response)});
+                }
             }
 
             Out.Pop();

@@ -335,6 +335,7 @@ namespace dbc::studio
             void DrawMaterial(scene::SceneNode& Node);
             void DrawTextureStages(scene::Material& Mat);
             void DrawGlue(scene::SceneNode& Node);
+            void DrawBspWorld();
             void DrawAnimation(scene::SceneNode& Node);
             void DrawModelDetails(const std::string& Asset);
 

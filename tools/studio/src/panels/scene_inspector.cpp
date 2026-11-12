@@ -251,11 +251,17 @@ namespace dbc::studio
                 if (ImGui::InputInt(TrId("Number"), &Id, 0) && Id > 0 &&
                     Document_.Find(scene::IdSpaceOf(Node->Kind), Id) == nullptr)
                 {
-                    // What is glued to this object follows its new number.
+                    // What is glued to this object, and its BSP collisions, follow its new number.
                     if (scene::IdSpaceOf(Node->Kind) == scene::IdSpace::Object)
+                    {
                         for (scene::SceneNode& Other : Document_.Nodes)
                             if (Other.Glued && Other.Glued->Object == Node->Id)
                                 Other.Glued->Object = Id;
+                        if (Document_.Bsp)
+                            for (scene::BspCollision& Collision : Document_.Bsp->Collisions)
+                                if (Collision.OfObject && Collision.Id == Node->Id)
+                                    Collision.Id = Id;
+                    }
                     Node->Id = Id;
                     Select(Node);
                 }
@@ -696,6 +702,81 @@ namespace dbc::studio
             DrawTextureStages(Mat);
         }
 
+        void SceneEditor::DrawBspWorld()
+        {
+            Heading("BSP world");
+            bool Loaded = Document_.Bsp.has_value();
+            if (ImGui::Checkbox(TrId("Load a BSP world"), &Loaded))
+                Document_.Bsp = Loaded ? std::optional<scene::BspWorld>(std::in_place) : std::nullopt;
+            if (!Document_.Bsp)
+                return;
+            scene::BspWorld& World = *Document_.Bsp;
+            AssetField("Map file", World.Map, std::nullopt);
+            Hint(Tr("LOAD BSP, written first; the Scene view does not draw the world."));
+            Optional("BSP camera", World.Camera, 0,
+                     [](int& Camera) { ImGui::InputInt(TrId("BSP camera"), &Camera, 0); });
+
+            const auto ObjectLabel = [this](int Id)
+            {
+                const scene::SceneNode* Node = Document_.Find(scene::IdSpace::Object, Id);
+                return Node != nullptr ? Node->Name + " (" + std::to_string(Id) + ")"
+                                       : TrFmt("Object {0} is not in the level", {std::to_string(Id)});
+            };
+            std::optional<std::size_t> Removed;
+            for (std::size_t Entry = 0; Entry < World.Collisions.size(); ++Entry)
+            {
+                scene::BspCollision& Collision = World.Collisions[Entry];
+                ImGui::PushID(static_cast<int>(Entry));
+                ImGui::Separator();
+                ImGui::SliderInt(TrId("Collision index"), &Collision.Index, 1, 24);
+                int Kind = Collision.OfObject ? 1 : 0;
+                const char* const Kinds[] = {Tr("Camera"), Tr("Object")};
+                if (ImGui::Combo(TrId("Collides"), &Kind, Kinds, 2))
+                {
+                    Collision.OfObject = Kind == 1;
+                    Collision.Id = 0;
+                }
+                if (Collision.OfObject)
+                {
+                    if (ImGui::BeginCombo(TrId("Object"), ObjectLabel(Collision.Id).c_str()))
+                    {
+                        for (const scene::SceneNode& Node : Document_.Nodes)
+                            if (scene::IdSpaceOf(Node.Kind) == scene::IdSpace::Object &&
+                                ImGui::Selectable(ObjectLabel(Node.Id).c_str(), Node.Id == Collision.Id))
+                                Collision.Id = Node.Id;
+                        ImGui::EndCombo();
+                    }
+                }
+                else
+                {
+                    ImGui::InputInt(TrId("Camera"), &Collision.Id, 0);
+                    Collision.Id = std::max(0, Collision.Id);
+                }
+                ImGui::DragFloat(TrId("Radius"), &Collision.Radius, 0.25f, 0.01f, 100000.0f, "%.2f");
+                int Response = std::clamp(Collision.Response, 0, 2);
+                const char* const Responses[] = {Tr("Slide"), Tr("Go back"), Tr("Record the hit only")};
+                if (ImGui::Combo(TrId("Response"), &Response, Responses, 3))
+                    Collision.Response = Response;
+                if (!scene::BspCollisionValid(Document_, Collision))
+                    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s",
+                                       Tr("Not written: the index is used above or the object is missing."));
+                if (ImGui::SmallButton(TrId("Remove collision")))
+                    Removed = Entry;
+                ImGui::PopID();
+            }
+            if (Removed)
+                World.Collisions.erase(World.Collisions.begin() + static_cast<std::ptrdiff_t>(*Removed));
+            if (World.Collisions.size() < 24 && ImGui::SmallButton(TrId("Add BSP collision")))
+            {
+                // The first index no entry holds.
+                scene::BspCollision Collision;
+                while (std::any_of(World.Collisions.begin(), World.Collisions.end(),
+                                   [&](const scene::BspCollision& Other) { return Other.Index == Collision.Index; }))
+                    ++Collision.Index;
+                World.Collisions.push_back(Collision);
+            }
+        }
+
         void SceneEditor::DrawGlue(scene::SceneNode& Node)
         {
             Heading("Attachment");
@@ -908,6 +989,7 @@ namespace dbc::studio
                         Document_.IdBase[Space] = Base;
                 }
                 Hint(Tr("New nodes take free numbers from these, away from the program's own."));
+                DrawBspWorld();
             }
 
             if (ImGui::CollapsingHeader(TrId("World Settings"), ImGuiTreeNodeFlags_DefaultOpen))

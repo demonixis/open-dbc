@@ -22,8 +22,6 @@ Conformance:
 
 Scene view:
 
-- [ ] Lot 8, BSP worlds in a level: `LOAD BSP`, `SET BSP CAMERA` and BSP collision
-  written from Level Settings; the preview of BSP geometry comes after.
 - [ ] Lot 9, code completion: names of the file and of its includes (variables,
   arrays, functions, labels, constants), `TYPE` fields after a dot, user function
   signatures; parse-only, shared with the Code panel.
@@ -250,6 +248,7 @@ Exports build signed packages from the Build window ([usage.md](usage.md#export)
 
 ## Studio Scene view
 
+- [ ] Draw a level's BSP world in the viewport: the Studio renderer has no BSP reader.
 - [ ] Preview `.dbo` models (Assimp cannot read them; a box stands in) and
   `.dds` textures and thumbnails (SDL_image cannot read them).
 - [ ] Interactive UI coverage: `test_studio_scene_view` drives gizmo moves and

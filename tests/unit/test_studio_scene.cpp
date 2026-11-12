@@ -679,6 +679,53 @@ TEST_CASE("Effects are loaded once from their own numbers and set on their objec
     CHECK(Level("   LOAD EFFECT \"b.fx\", 2, 1, 1\n").Errors.size() == 1);
 }
 
+TEST_CASE("A level loads its BSP world first and sets its collisions once the objects exist")
+{
+    scene::SceneDocument Document;
+    Document.Name = "World";
+    Document.Bsp = scene::BspWorld{"", "maps/arena.bsp", 0, {}};
+    Document.Add(scene::NodeKind::Cube);
+    Document.Bsp->Collisions.push_back({1, false, 0, 12.5f, 0});
+    Document.Bsp->Collisions.push_back({2, true, 1000, 5.0f, 1});
+    // Not written: an index held twice, an object the level does not create, an index out of range.
+    Document.Bsp->Collisions.push_back({2, false, 1, 5.0f, 0});
+    Document.Bsp->Collisions.push_back({3, true, 4000, 5.0f, 0});
+    Document.Bsp->Collisions.push_back({25, false, 0, 5.0f, 0});
+
+    const std::string Text = scene::WriteLevel(Document);
+    INFO(Text);
+    const std::size_t Load = Text.find("LOAD BSP \"\", \"maps/arena.bsp\"\n");
+    REQUIRE(Load != std::string::npos);
+    CHECK(Load < Text.find("SET BSP CAMERA 0\n"));
+    CHECK(Text.find("SET BSP CAMERA 0\n") < Text.find("MAKE OBJECT CUBE 1000"));
+    CHECK(Text.find("MAKE OBJECT CUBE 1000") < Text.find("SET BSP CAMERA COLLISION 1, 0, 12.5, 0\n"));
+    CHECK(Text.find("SET BSP OBJECT COLLISION 2, 1000, 5, 1\n") != std::string::npos);
+    CHECK(Text.find("SET BSP CAMERA COLLISION 2,") == std::string::npos);
+    CHECK(Text.find("COLLISION 3,") == std::string::npos);
+    CHECK(Text.find("COLLISION 25,") == std::string::npos);
+
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
+    REQUIRE(Read.Ok());
+    REQUIRE(Read.Document.Bsp.has_value());
+    CHECK(Read.Document.Bsp->Map == "maps/arena.bsp");
+    CHECK(Read.Document.Bsp->Camera == 0);
+    REQUIRE(Read.Document.Bsp->Collisions.size() == 2);
+    CHECK(Read.Document.Bsp->Collisions[1] == Document.Bsp->Collisions[1]);
+    CHECK(scene::WriteLevel(Read.Document) == Text);
+
+    // A world without a map writes nothing.
+    Document.Bsp->Map.clear();
+    CHECK(scene::WriteLevel(Document).find("BSP") == std::string::npos);
+
+    const auto Level = [](const std::string& Body)
+    { return scene::ReadLevel("FUNCTION LoadLevel_Test()\n" + Body + "ENDFUNCTION\n", "Test"); };
+    CHECK(Level("   SET BSP CAMERA 0\n").Errors.size() == 1);
+    CHECK(Level("   LOAD BSP \"\", \"a.bsp\"\n   LOAD BSP \"\", \"b.bsp\"\n").Errors.size() == 1);
+    CHECK(Level("   MAKE OBJECT CUBE 1000, 10\n   LOAD BSP \"\", \"a.bsp\"\n").Errors.size() == 1);
+    CHECK(Level("   LOAD BSP \"\", \"a.bsp\"\n   SET BSP OBJECT COLLISION 1, 1000, 5, 0\n").Errors.size() == 1);
+    CHECK(Level("   LOAD BSP \"\", \"a.bsp\"\n   SET BSP CAMERA COLLISION 30, 0, 5, 0\n").Errors.size() == 1);
+}
+
 TEST_CASE("A level holding a command only Classic runs stays read-only, and says why")
 {
     const scene::LevelReadResult Read = scene::ReadLevel("FUNCTION LoadLevel_Test()\n"

@@ -276,9 +276,37 @@ namespace dbc::studio
             bool operator==(const DisplaySettings&) const = default;
         };
 
+        // SET BSP CAMERA COLLISION or SET BSP OBJECT COLLISION: an ellipsoid kept out of the BSP world.
+        struct BspCollision
+        {
+            int Index = 1; // 1 to 24
+            bool OfObject = false;
+            int Id = 0; // camera or object number
+            float Radius = 10.0f;
+            int Response = 0; // 0 slides, 1 goes back, others only record the hit
+
+            bool operator==(const BspCollision&) const = default;
+        };
+
+        // LOAD BSP: the level's world, which a level holds at most one of.
+        struct BspWorld
+        {
+            std::string Archive; // LOAD BSP's pk3 argument, empty for a map file of the project
+            std::string Map;     // asset-relative
+            std::optional<int> Camera; // SET BSP CAMERA; the engine uses camera 0 without it
+            std::vector<BspCollision> Collisions;
+
+            bool operator==(const BspWorld&) const = default;
+        };
+
+        // Whether a collision is written: an index the engine takes, held once, and an object of the level.
+        struct SceneDocument;
+        bool BspCollisionValid(const SceneDocument& Document, const BspCollision& Collision);
+
         struct SceneDocument
         {
             std::string Name; // level name, also the function suffix
+            std::optional<BspWorld> Bsp;
             std::array<int, KIdSpaceCount> IdBase{1000, 1000, 1, 1, 1, 1, 1};
             Environment Env;
             DisplaySettings Display;

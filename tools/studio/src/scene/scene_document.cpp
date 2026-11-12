@@ -232,6 +232,21 @@ namespace dbc::studio
             }
         }
 
+        bool BspCollisionValid(const SceneDocument& Document, const BspCollision& Collision)
+        {
+            if (!Document.Bsp || Collision.Index < 1 || Collision.Index > 24 || Collision.Radius <= 0.0f)
+                return false;
+            // The engine keeps one entity per index: the first entry holds it.
+            for (const BspCollision& Other : Document.Bsp->Collisions)
+            {
+                if (&Other == &Collision)
+                    break;
+                if (Other.Index == Collision.Index)
+                    return false;
+            }
+            return Collision.OfObject ? Document.Find(IdSpace::Object, Collision.Id) != nullptr : Collision.Id >= 0;
+        }
+
         const SceneNode* GlueTarget(const SceneDocument& Document, const SceneNode& Node)
         {
             if (!Node.Glued || IdSpaceOf(Node.Kind) != IdSpace::Object || Node.Glued->Object == Node.Id)

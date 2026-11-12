@@ -148,6 +148,10 @@ The Inspector edits the selected node:
 - an effect (`LOAD EFFECT`, `SET OBJECT EFFECT`), numbered from the level's first
   effect and loaded once per file. It replaces cartoon and rainbow shading, and
   needs its [compiled manifest](usage.md): the Inspector warns when it is missing.
+- a BSP world, under **Level Settings**: `LOAD BSP` with a map of the project,
+  written first, `SET BSP CAMERA`, and `SET BSP CAMERA COLLISION` or `SET BSP
+  OBJECT COLLISION` per index, written once the objects exist
+  ([bsp.md](bsp.md)). The viewport does not draw the world.
 - **Attachment**: `GLUE OBJECT TO LIMB` to another object of the level, with the
   limb picked by name for a model. It is written after every node; the viewport
   draws the object where it stands.
