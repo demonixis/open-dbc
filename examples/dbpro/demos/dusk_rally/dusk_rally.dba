@@ -8,6 +8,13 @@ rem steer, SPACE is the handbrake, C changes the camera, ESC quits.
 rem Code and media are part of OpenDBC (MIT code, CC0 media).
 rem ==================================================================
 
+rem The display, the camera lens, the sky dome and the lamp bulbs are a level of the
+rem Studio's Scene view: open levels/DuskRally there to edit them.
+#include "levels/DuskRally/world_settings.dba"
+#include "levels/DuskRally/DuskRally.dba"
+SetupWorld_DuskRally()
+LoadLevel_DuskRally()
+
 #constant CONTROLS 14
 #constant SPS 24
 #constant SAMPLES 336
@@ -26,7 +33,7 @@ rem ==================================================================
 #constant TOP_SPEED 62.0
 #constant SUN_AZIMUTH -35.0
 
-rem Object, image and light numbers
+rem Object, image and light numbers; the level makes OBJ_SKY and OBJ_BULBS
 #constant OBJ_SKY 1
 #constant OBJ_GROUND 3
 #constant OBJ_SEA 4
@@ -110,12 +117,6 @@ dim lampx#(LAMPS) : dim lampz#(LAMPS)
 dim cars(CARS) as Car
 dim flarelamp(FLARE_POOL)
 
-set display mode 1280, 720, 32
-sync on : sync rate 60
-hide mouse
-autocam off
-set camera range 0.5, 950
-set camera fov 68
 randomize 7
 
 BuildCircuit()
@@ -271,13 +272,7 @@ function BuildWorld()
    load image "textures/sky_cube_nz.jpg", 45
    for c = 1 to CARS : load image "textures/car_" + str$(c) + ".jpg", 10 + c : next c
 
-   rem The sky dome follows the camera; nightfall darkens it through its vertex colours
-   load object "models/sky.x", OBJ_SKY
-   scale object OBJ_SKY, 90000, 90000, 90000
-   set object cull OBJ_SKY, 0
-   set object light OBJ_SKY, 0
-   set object fog OBJ_SKY, 0
-   disable object zwrite OBJ_SKY
+   rem The level's sky dome follows the camera; nightfall darkens it through its vertex colours
    skytod = -1.0
 
    rem The island, with a tiled detail map on a second UV set written from the vertex positions
@@ -314,9 +309,6 @@ function BuildWorld()
       set cube mapping on OBJ_ROAD + c, 40, 41, 42, 43, 44, 45
    next c
    delete object OBJ_CIRCUIT
-
-   load object "models/bulbs.x", OBJ_BULBS
-   set object light OBJ_BULBS, 0
 
    rem Start gantry, its five lights and the grandstand facing the line
    load object "models/gantry.x", OBJ_GANTRY

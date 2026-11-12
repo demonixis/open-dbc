@@ -361,6 +361,28 @@ TEST_CASE("The BASIC goldens run the generator's exact output")
     CHECK(scene::WriteWorld(Read.Document) == World);
 }
 
+TEST_CASE("The demos' levels are what the Scene view writes, so it can edit them")
+{
+    const std::filesystem::path Demos = std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/demos";
+    for (const auto& [Folder, Name] : {std::pair{"dusk_rally", "DuskRally"}, std::pair{"sky_gardens", "SkyGardens"}})
+    {
+        CAPTURE(Name);
+        const std::filesystem::path Root = Demos / Folder;
+        const std::string Level = ReadText(Root / scene::LevelRelativePath(Name));
+        scene::LevelReadResult Read = scene::ReadLevel(Level, Name);
+        for (const scene::ReadError& Error : Read.Errors)
+            FAIL_CHECK(Error.Line << ": " << Error.Message);
+        CHECK(Read.Document.Nodes.size() == 2);
+        CHECK(scene::WriteLevel(Read.Document) == Level);
+
+        const std::string World = ReadText(Root / scene::WorldRelativePath(Name));
+        for (const scene::ReadError& Error : scene::ReadWorld(World, Read.Document))
+            FAIL_CHECK(Error.Line << ": " << Error.Message);
+        CHECK(Read.Document.Display.SyncRate == 60);
+        CHECK(scene::WriteWorld(Read.Document) == World);
+    }
+}
+
 TEST_CASE("Scene levels share one image per texture and use the reserved numbers")
 {
     scene::SceneDocument Document = FullLevel();

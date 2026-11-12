@@ -8,10 +8,13 @@ rem ESC quits. The title screen plays itself until a key or click.
 rem Code and media are part of OpenDBC (MIT code, CC0 media).
 rem ==================================================================
 
-set display mode 1280, 720, 32
-sync on : sync rate 60
-autocam off
-hide mouse
+rem The display, the camera lens, the ambient light, the sky dome and the sun disc are a
+rem level of the Studio's Scene view: open levels/SkyGardens there to edit them.
+#include "levels/SkyGardens/world_settings.dba"
+#include "levels/SkyGardens/SkyGardens.dba"
+SetupWorld_SkyGardens()
+LoadLevel_SkyGardens()
+
 randomize 7
 
 #constant GRAVITY 0.032
@@ -155,18 +158,13 @@ loop
 rem ------------------------------------------------------------------
 function load_media()
    backdrop on : color backdrop FOG_RGB
-   set camera range 0.5, 4000
-   set camera fov 65
    fog on : fog color FOG_RGB : fog distance 200, 1600
 
    rem Low golden sun behind the start, so shadows fall along the route
    sunX# = -0.42 : sunY# = 0.52 : sunZ# = -0.74
    set directional light 0, 0 - sunX#, 0 - sunY#, 0 - sunZ#
    color light 0, rgb(255, 214, 168)
-   set ambient light 46
-   color ambient light rgb(160, 150, 190)
 
-   load image "textures/sky.jpg", 1
    load image "textures/clouds.jpg", 2
    load image "textures/wisps.jpg", 3
    load image "textures/ruin.jpg", 4
@@ -185,21 +183,8 @@ function load_media()
    load image "textures/sky_cube_pz.jpg", 44
    load image "textures/sky_cube_nz.jpg", 45
 
-   rem Sky dome around the camera, seen from inside
-   make object sphere 3, 3200, 16, 12
-   texture object 3, 1
-   set object cull 3, 0
-   set object light 3, 0
-   set object fog 3, 0
-   disable object zwrite 3
-
-   rem The sun: a soft additive disc kept far along the light direction
-   make object plain 6, 420, 420
-   texture object 6, 6
-   ghost object on 6
-   set object light 6, 0
-   set object fog 6, 0
-   disable object zwrite 6
+   rem The level holds the sky dome (object 3), seen from inside, and the sun (object 6),
+   rem a soft additive disc kept far along the light direction
 
    rem Cloud sea far below and a faster layer of wisps above it
    make object plain 4, 4000, 4000

@@ -1,0 +1,12 @@
+REM OpenDBC level. Edited by the Studio Scene view.
+REM @level objects=1 images=1000 matrices=1 terrains=1 lights=1 sounds=1 effects=1
+FUNCTION LoadLevel_DuskRally()
+   REM @object 1 "Sky"
+   LOAD OBJECT "models/sky.x", 1
+   SCALE OBJECT 1, 90000, 90000, 90000
+   SET OBJECT 1, 1, 0, 0, 1, 0, 0, 1
+   DISABLE OBJECT ZWRITE 1
+   REM @object 5 "Lamp bulbs"
+   LOAD OBJECT "models/bulbs.x", 5
+   SET OBJECT 5, 1, 0, 1, 1, 0, 1, 1
+ENDFUNCTION

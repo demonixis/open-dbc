@@ -1,0 +1,18 @@
+REM OpenDBC level. Edited by the Studio Scene view.
+REM @level objects=1 images=100 matrices=1 terrains=1 lights=1 sounds=1 effects=1
+FUNCTION LoadLevel_SkyGardens()
+   LOAD IMAGE "textures/sky.jpg", 100
+   LOAD IMAGE "textures/glow.jpg", 101
+   REM @object 3 "Sky dome"
+   MAKE OBJECT SPHERE 3, 3200, 16, 12
+   TEXTURE OBJECT 3, 100
+   SET OBJECT 3, 1, 0, 0, 1, 0, 0, 1
+   DISABLE OBJECT ZWRITE 3
+   REM @object 6 "Sun"
+   MAKE OBJECT PLAIN 6, 420, 420
+   ROTATE OBJECT 6, 0, 0, 0
+   TEXTURE OBJECT 6, 101
+   GHOST OBJECT ON 6
+   SET OBJECT 6, 1, 0, 1, 1, 0, 0, 1
+   DISABLE OBJECT ZWRITE 6
+ENDFUNCTION
