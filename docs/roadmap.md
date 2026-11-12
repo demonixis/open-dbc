@@ -17,7 +17,8 @@ The DBPro help (`Install/Help`) is the reference; arrays already match it
 Conformance:
 
 - [ ] Lot 1, language syntax against `principals/`:
-  - `ELSEIF` exists in neither the help nor the original compiler: remove it.
+  - `ELSEIF` exists in neither the help nor the original compiler: remove it,
+    without a diagnostic of its own.
   - `NOT` in `dbpro`: lowest priority and a boolean result in conditions
     (`IF NOT b=2`).
   - `..` bitwise NOT is documented: implement it, drop `DBC1004`.
@@ -31,9 +32,10 @@ Conformance:
   "referenced" (help, examples, implemented plugin, mobile and VR additions) and
   lists the rest.
 - [ ] Lot 3, remove unreferenced commands from the catalogue, from the lot 2 list:
-  about 312 names known only from SDK string tables, the Cloth forms no example
-  uses (108), 25 undocumented DarkPHYSICS forms and the 98 reserved placeholders.
-  Regenerate evidence, manifests, references and the parity numbers below.
+  about 195 names known only from SDK string tables (quaternions and vectors, 117
+  names, stay), the Cloth forms no example uses (108), 25 undocumented DarkPHYSICS
+  forms and the 98 reserved placeholders. They never existed for a DBPro user, so
+  they go without a diagnostic. Regenerate evidence, manifests, references and the parity numbers below.
 - [ ] Lot 4, GameFX and help-only commands: a per-form status of the 50 GameFX
   pages; the 12 static forms Classic already runs with the same signature, enabled
   in `dbpro`; `OBJECT BLOCKING` and the 19 `LFX` pages catalogued or named by a
