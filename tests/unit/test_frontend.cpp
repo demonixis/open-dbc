@@ -5,11 +5,14 @@
 #include "vm/verifier.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <map>
 #include <memory>
+#include <set>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -1138,6 +1141,42 @@ namespace
     }
 } // namespace
 
+namespace
+{
+    // The sources another example names in an #INCLUDE: parts of a program, checked through it.
+    std::set<std::filesystem::path> IncludedSources(const std::filesystem::path& Examples)
+    {
+        std::set<std::filesystem::path> Result;
+        for (const char* Root : {"dbc", "dbpro", "open-dbc"})
+        {
+            for (const std::filesystem::directory_entry& Entry :
+                 std::filesystem::recursive_directory_iterator(Examples / Root))
+            {
+                if (!Entry.is_regular_file() || !dbc::language::IsLanguageSource(Entry.path()))
+                    continue;
+                std::istringstream Lines(ReadAll(Entry.path()));
+                for (std::string Line; std::getline(Lines, Line);)
+                {
+                    const std::size_t Start = Line.find_first_not_of(" \t");
+                    if (Start == std::string::npos || Line.size() < Start + 8)
+                        continue;
+                    std::string Word = Line.substr(Start, 8);
+                    std::transform(Word.begin(), Word.end(), Word.begin(),
+                                   [](unsigned char Character) { return static_cast<char>(std::tolower(Character)); });
+                    const std::size_t Open = Line.find('"', Start + 8);
+                    const std::size_t Close = Open == std::string::npos ? Open : Line.find('"', Open + 1);
+                    if (Word != "#include" || Close == std::string::npos)
+                        continue;
+                    std::string Written = Line.substr(Open + 1, Close - Open - 1);
+                    std::replace(Written.begin(), Written.end(), '\\', '/');
+                    Result.insert(std::filesystem::weakly_canonical(Entry.path().parent_path() / Written));
+                }
+            }
+        }
+        return Result;
+    }
+} // namespace
+
 TEST_CASE("Every example has an exact parse bind lower and verify expectation")
 {
     const std::filesystem::path Examples = std::filesystem::path(TEST_SOURCE_DIR) / "examples";
@@ -1148,6 +1187,7 @@ TEST_CASE("Every example has an exact parse bind lower and verify expectation")
 
     std::map<std::string, CorpusExpectation> Actual;
     std::size_t Verified = 0;
+    const std::set<std::filesystem::path> Included = IncludedSources(Examples);
     for (const char* Root : {"dbc", "dbpro", "open-dbc"})
     {
         for (const std::filesystem::directory_entry& Entry :
@@ -1159,6 +1199,11 @@ TEST_CASE("Every example has an exact parse bind lower and verify expectation")
             const auto ExpectedEntry = Expected.find(Key);
             REQUIRE(ExpectedEntry != Expected.end());
             const std::string Profile = ExpectedEntry->second.Profile;
+            if (Included.contains(std::filesystem::weakly_canonical(Entry.path())))
+            {
+                Actual.emplace(Key, CorpusExpectation{Profile, "included", "-"});
+                continue;
+            }
             const dbc::language::LanguageProfile LanguageProfile =
                 Profile == "dbc" ? dbc::language::LanguageProfile::Dbc : dbc::language::LanguageProfile::DbPro;
             const auto Document = std::make_shared<const dbc::language::SourceDocument>(

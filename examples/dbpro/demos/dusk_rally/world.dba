@@ -1,0 +1,348 @@
+rem Dusk Rally - the island: scenery, cars, lights, sounds and the falling night.
+rem Included by dusk_rally.dba.
+
+function BuildWorld()
+   load image "textures/detail.jpg", 3
+   load image "textures/sea.jpg", 4
+   load image "textures/gloss.jpg", 5
+   load image "textures/flare.jpg", 6
+   load image "textures/flare_red.jpg", 7
+   load image "textures/barrier_bump.jpg", 8
+   load image "textures/rock_bump.jpg", 9
+   load image "textures/water_normal.jpg", 20
+   load image "textures/asphalt_normal.jpg", 21
+   rem The dusk sky's cube, in the order SET CUBE MAPPING ON takes: +X, -X, +Y, -Y, +Z, -Z
+   load image "textures/sky_cube_px.jpg", 40
+   load image "textures/sky_cube_nx.jpg", 41
+   load image "textures/sky_cube_py.jpg", 42
+   load image "textures/sky_cube_ny.jpg", 43
+   load image "textures/sky_cube_pz.jpg", 44
+   load image "textures/sky_cube_nz.jpg", 45
+   for c = 1 to CARS : load image "textures/car_" + str$(c) + ".jpg", 10 + c : next c
+
+   rem The level's sky dome follows the camera; nightfall darkens it through its vertex colours
+   skytod = -1.0
+
+   rem The island, with a tiled detail map on a second UV set written from the vertex positions
+   load object "models/ground.x", OBJ_GROUND
+   lock vertexdata for limb OBJ_GROUND, 0
+   for v = 0 to get vertexdata vertex count() - 1
+      set vertexdata uv v, 1, get vertexdata position x(v) / 7.0, get vertexdata position z(v) / 7.0
+   next v
+   unlock vertexdata
+   set blend mapping on OBJ_GROUND, 1, 3, 11, 5
+
+   make object box OBJ_SEA, 6000, 1, 6000
+   position object OBJ_SEA, 0, -1.0, 0
+   texture object OBJ_SEA, 4
+   scale object texture OBJ_SEA, 150, 150
+   rem The specular colour is what the surface reflects head on: 56 is water's 4 percent
+   set object specular OBJ_SEA, rgb(56, 50, 44)
+   set object specular power OBJ_SEA, 180
+   rem Ripples drift on coordinates of their own and bend the sky's reflection
+   set bump mapping on OBJ_SEA, 20
+   scale object texture OBJ_SEA, 1, 0.5, 0.5
+   set cube mapping on OBJ_SEA, 40, 41, 42, 43, 44, 45
+
+   rem One model holds the whole circuit: its limbs become separate objects so hidden chunks are culled
+   load object "models/circuit.x", OBJ_CIRCUIT
+   for c = 0 to 15
+      make object from limb OBJ_ROAD + c, OBJ_CIRCUIT, c + 1
+      make object from limb OBJ_WALL + c, OBJ_CIRCUIT, c + 17
+      set bump mapping on OBJ_WALL + c, 8
+      set bump mapping on OBJ_ROAD + c, 21
+      set object specular OBJ_ROAD + c, rgb(70, 60, 50)
+      set object specular power OBJ_ROAD + c, 20
+      rem Asphalt shines mostly at grazing angles, towards the low sun
+      set cube mapping on OBJ_ROAD + c, 40, 41, 42, 43, 44, 45
+   next c
+   delete object OBJ_CIRCUIT
+
+   rem Start gantry, its five lights and the grandstand facing the line
+   load object "models/gantry.x", OBJ_GANTRY
+   position object OBJ_GANTRY, px#(0), 0, pz#(0)
+   yrotate object OBJ_GANTRY, atanfull(0 - rz#(0), rx#(0))
+   for l = 0 to 4
+      make object cube OBJ_STARTLAMP + l, 0.55
+      position object OBJ_STARTLAMP + l, px#(0) + rx#(0) * (l - 2) * 1.6, 6.45, pz#(0) + rz#(0) * (l - 2) * 1.6
+      set object light OBJ_STARTLAMP + l, 0
+   next l
+   load object "models/grandstand.x", OBJ_STAND
+   k = 6
+   position object OBJ_STAND, px#(k) - rx#(k) * 26, 0, pz#(k) - rz#(k) * 26
+   yrotate object OBJ_STAND, atanfull(rx#(k), rz#(k))
+
+   rem Lighthouse on the headland
+   a# = -150.0
+   r# = CoastRadius(a#) - 22.0
+   lhx# = 15 + cos(a#) * r# : lhz# = 30 + sin(a#) * r#
+   load object "models/lighthouse.x", OBJ_LIGHTHOUSE
+   position object OBJ_LIGHTHOUSE, lhx#, 0, lhz#
+
+   rem Palms away from the road, rocks along the beach, islets out at sea
+   load object "models/palm.x", OBJ_PALM
+   n = 0
+   for j = 0 to 47
+      k = (j * 7 + 3) mod SAMPLES
+      side = 1 - (j mod 2) * 2
+      d# = 20.0 + rnd(14)
+      x# = px#(k) + rx#(k) * side * d# : z# = pz#(k) + rz#(k) * side * d#
+      if n < 26 and TrackDistance(x#, z#) > 17.0 and CoastMargin(x#, z#) > 12.0
+         o = OBJ_PALM + n
+         if n > 0 then instance object o, OBJ_PALM
+         position object o, x#, 0, z#
+         yrotate object o, rnd(359)
+         set object cull o, 0
+         s = 85 + rnd(35) : scale object o, s, s, s
+         inc n
+      endif
+   next j
+   load object "models/rock.x", OBJ_ROCK
+   n = 0
+   for j = 0 to 60
+      a# = j * 6.0
+      r# = CoastRadius(a#) + 1.0
+      x# = 15 + cos(a#) * r# : z# = 30 + sin(a#) * r#
+      if n < 24 and TrackDistance(x#, z#) > 22.0 and rnd(2) > 0
+         o = OBJ_ROCK + n
+         if n > 0 then clone object o, OBJ_ROCK
+         position object o, x#, -0.6, z#
+         rotate object o, rnd(20), rnd(359), rnd(20)
+         s = 250 + rnd(350) : scale object o, s, s * 0.8, s
+         set bump mapping on o, 9
+         inc n
+      endif
+   next j
+   load object "models/hill.x", OBJ_ISLE
+   restore isle_data
+   for j = 0 to 4
+      read a#, r#, w#, h#
+      o = OBJ_ISLE + j
+      if j > 0 then clone object o, OBJ_ISLE
+      position object o, 15 + cos(a#) * r#, -2.0, 30 + sin(a#) * r#
+      yrotate object o, a# * 3
+      scale object o, w# * 100, h# * 100, w# * 80
+      set bump mapping on o, 9
+   next j
+
+   rem Additive glows: two pools reused every frame for car lamps and street lamps
+   for f = 0 to CARS * 4 - 1
+      make object plain OBJ_FLARE + f, 1, 1
+      if f mod 4 < 2 then texture object OBJ_FLARE + f, 6 else texture object OBJ_FLARE + f, 7
+      rem Additive glows stay out of the fog, which would otherwise add its colour to them
+      ghost object on OBJ_FLARE + f
+      set object light OBJ_FLARE + f, 0
+      set object fog OBJ_FLARE + f, 0
+      disable object zwrite OBJ_FLARE + f
+   next f
+   for f = 0 to FLARE_POOL - 1
+      make object plain OBJ_LAMPFLARE + f, 5, 5
+      texture object OBJ_LAMPFLARE + f, 6
+      ghost object on OBJ_LAMPFLARE + f
+      set object light OBJ_LAMPFLARE + f, 0
+      set object fog OBJ_LAMPFLARE + f, 0
+      disable object zwrite OBJ_LAMPFLARE + f
+   next f
+
+   rem Lights: the sun is light 0, cars own 1-4, three point lights follow the nearest street lamps
+   fog on
+   set ambient light 42
+   for i = 1 to CARS
+      make light i
+      set spot light i, 18, 42
+      set light range i, 55
+   next i
+   for l = 0 to POOL_SIZE - 1
+      make light LIGHT_POOL + l
+      set point light LIGHT_POOL + l, 0, 0, 0
+      set light range LIGHT_POOL + l, 24
+   next l
+
+   rem Tyre smoke and grass dust
+   make particles 1, 6, 4, 2.0
+   color particles 1, 120, 110, 105
+   set particle gravity 1, -1
+   set particle velocity 1, 1
+   set particle life 1, 40
+   set particle emissions 1, 0
+   ghost particles on 1, 1
+   make particles 2, 6, 4, 2.5
+   color particles 2, 150, 120, 70
+   set particle gravity 2, -1
+   set particle velocity 2, 2
+   set particle life 2, 35
+   set particle emissions 2, 0
+   ghost particles on 2, 1
+endfunction
+
+function BuildCars()
+   load mesh "models/car_shadow.x", 1
+   restore car_data
+   for i = 1 to CARS
+      read cars(i).name, cars(i).lane, cars(i).skill
+      o = OBJ_CAR + i - 1
+      cars(i).obj = o
+      if i = 1 then load object "models/car.x", o else clone object o, OBJ_CAR
+      texture limb o, 0, 10 + i
+      set object specular o, rgb(81, 78, 74)
+      set object specular power o, 64
+      rem The clones share the first car's cube
+      if i = 1 then set cube mapping on o, 40, 41, 42, 43, 44, 45
+      set shadow shading on o, 1, 14, 0
+      load object "models/car_lamps.x", OBJ_CARLAMPS + i - 1
+      set object light OBJ_CARLAMPS + i - 1, 0
+   next i
+   cars(1).ai = 0
+endfunction
+
+rem The minimap is drawn once into an image, then pasted every frame
+function BuildMinimap()
+   minx# = 999999999.0 : maxx# = -999999999.0 : minz# = 999999999.0 : maxz# = -999999999.0
+   for k = 0 to SAMPLES - 1
+      if px#(k) < minx# then minx# = px#(k)
+      if px#(k) > maxx# then maxx# = px#(k)
+      if pz#(k) < minz# then minz# = pz#(k)
+      if pz#(k) > maxz# then maxz# = pz#(k)
+   next k
+   mapscale = 170.0 / Larger(maxx# - minx#, maxz# - minz#)
+   mapx = minx# : mapz = maxz#
+   create bitmap 1, 200, 200
+   set current bitmap 1
+   cls 0
+   for pass = 0 to 1
+      if pass = 0 then ink rgb(20, 20, 30), 0 else ink rgb(235, 225, 210), 0
+      for k = 0 to SAMPLES - 1
+         n = Wrap(k + 1)
+         x1 = 15 + (px#(k) - mapx) * mapscale : y1 = 15 + (mapz - pz#(k)) * mapscale
+         x2 = 15 + (px#(n) - mapx) * mapscale : y2 = 15 + (mapz - pz#(n)) * mapscale
+         for o = 0 - (2 - pass) to 2 - pass
+            line x1 + o, y1, x2 + o, y2
+            line x1, y1 + o, x2, y2 + o
+         next o
+      next k
+   next pass
+   get image 30, 0, 0, 200, 200
+   set current bitmap 0
+   delete bitmap 1
+endfunction
+
+function LoadSounds()
+   load sound "sounds/motor.wav", 1
+   load sound "sounds/screech.wav", 2
+   load sound "sounds/surf.wav", 3
+   load sound "sounds/beep.wav", 4
+   load sound "sounds/go.wav", 5
+   load sound "sounds/lap.wav", 6
+   load sound "sounds/finish.wav", 7
+   load sound "sounds/bump.wav", 8
+   for i = 2 to CARS : load 3dsound "sounds/motor.wav", 10 + i : loop sound 10 + i : next i
+   loop sound 1 : loop sound 2 : loop sound 3
+   set sound volume 2, 0
+   set sound volume 3, 70
+endfunction
+
+rem Time of day: the sun sinks, the sky domes cross-fade, lamps come up
+function UpdateLights()
+   elevation# = 13.0 - tod * 10.0
+   sunx = cos(elevation#) * cos(SUN_AZIMUTH) : suny = sin(elevation#) : sunz = cos(elevation#) * sin(SUN_AZIMUTH)
+   set directional light 0, 0 - sunx, 0 - suny, 0 - sunz
+   color light 0, Blend(255, 170, tod), Blend(165, 70, tod), Blend(105, 60, tod)
+   color ambient light rgb(Blend(120, 50, tod), Blend(105, 56, tod), Blend(125, 100, tod))
+   fogr = Blend(205, 52, tod) : fogg = Blend(135, 48, tod) : fogb = Blend(105, 80, tod)
+   fog color rgb(fogr, fogg, fogb)
+   fog distance 120, 820 - tod * 280
+   color backdrop rgb(fogr, fogg, fogb)
+   if abs(tod - skytod) > 0.01 then TintSky()
+   set shadow position -1, camera position x() + sunx * 900, suny * 900, camera position z() + sunz * 900
+   scroll limb texture OBJ_SEA, 0, 0.0004, 0.0002
+   scroll object texture OBJ_SEA, 1, 0.0007, 0.00028
+
+   rem Headlights: a spot per car, aimed at the road ahead
+   for i = 1 to CARS
+      hx# = sin(cars(i).yaw) : hz# = cos(cars(i).yaw)
+      position light i, cars(i).x + hx# * 2.3, 0.9, cars(i).z + hz# * 2.3
+      point light i, cars(i).x + hx# * 22, 0, cars(i).z + hz# * 22
+      lv# = 1.1 + tod * 0.9
+      color light i, 255 * lv#, 235 * lv#, 200 * lv#
+   next i
+
+   rem The street lamps nearest the point the camera looks at get the point lights and the glows
+   fx# = camera position x() + sin(camera angle y()) * 30 : fz# = camera position z() + cos(camera angle y()) * 30
+   for f = 0 to FLARE_POOL - 1
+      best# = 999999999.0 : bestj = -1
+      for j = 0 to LAMPS - 1
+         d# = (lampx#(j) - fx#) ^ 2 + (lampz#(j) - fz#) ^ 2
+         if d# < best#
+            taken = 0
+            for g = 0 to f - 1
+               if flarelamp(g) = j then taken = 1
+            next g
+            if taken = 0 then best# = d# : bestj = j
+         endif
+      next j
+      flarelamp(f) = bestj
+   next f
+   lamp# = 0.55 + tod * 0.9
+   for f = 0 to FLARE_POOL - 1
+      j = flarelamp(f)
+      o = OBJ_LAMPFLARE + f
+      position object o, lampx#(j), LAMP_HEIGHT - 0.45, lampz#(j)
+      point object o, camera position x(), camera position y(), camera position z()
+      glow = 55 + tod * 65 : scale object o, glow, glow, glow
+      if f < POOL_SIZE
+         position light LIGHT_POOL + f, lampx#(j), LAMP_HEIGHT - 0.8, lampz#(j)
+         color light LIGHT_POOL + f, 255 * lamp#, 185 * lamp#, 110 * lamp#
+      endif
+   next f
+endfunction
+
+rem The horizon keeps a red glow while the upper sky sinks to night blue
+function TintSky()
+   skytod = tod
+   lock vertexdata for limb OBJ_SKY, 0
+   for v = 0 to get vertexdata vertex count() - 1
+      up# = get vertexdata position y(v)
+      if up# < 0 then up# = 0
+      r# = 1.0 - tod * (0.15 + up# * 0.75)
+      g# = 1.0 - tod * (0.45 + up# * 0.4)
+      b# = 1.0 - tod * (0.35 + up# * 0.3)
+      rem The top byte is the vertex alpha: subtracting 2^24 sets it to 255 in the signed colour
+      set vertexdata diffuse v, rgb(r# * 255, g# * 255, b# * 255) - 16777216
+   next v
+   unlock vertexdata
+   rem The cube holds the dusk sky, so what reflects it dims as that sky does
+   fade# = 1.0 - tod * 0.8
+   set object specular OBJ_SEA, rgb(56 * fade#, 50 * fade#, 44 * fade#)
+   for c = 0 to 15
+      set object specular OBJ_ROAD + c, rgb(70 * fade#, 60 * fade#, 50 * fade#)
+   next c
+   for i = 1 to CARS
+      set object specular cars(i).obj, rgb(81 * fade#, 78 * fade#, 74 * fade#)
+   next i
+endfunction
+
+function UpdateSounds()
+   f# = abs(cars(1).forward)
+   set sound speed 1, 9000 + f# * 380
+   set sound volume 1, 70 + Smaller(f#, 30.0)
+   skid# = cars(1).slip * 9.0
+   if mode = 0 or mode = 1 then skid# = 0
+   if skid# > 90 then skid# = 90
+   set sound volume 2, skid#
+   position listener camera position x(), camera position y(), camera position z()
+   rotate listener 0, camera angle y(), 0
+   for i = 2 to CARS
+      position sound 10 + i, cars(i).x, 1, cars(i).z
+      set sound speed 10 + i, 9000 + abs(cars(i).forward) * 380
+   next i
+endfunction
+
+car_data:
+data "YOU", 0.0, 1.0
+data "TEAL", 1.5, 0.965
+data "VIOLET", -1.5, 0.95
+data "PEARL", 0.5, 0.94
+
+rem Islets out at sea: angle, distance from the island centre, width and height scale
+isle_data:
+data -100, 560, 45, 20, -128, 640, 70, 30, -152, 600, 35, 16, -70, 620, 55, 24, -178, 600, 40, 18

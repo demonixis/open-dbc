@@ -10,6 +10,16 @@ from basic_profiles import load_corpus_profiles
 
 ROOT = Path(__file__).resolve().parents[1]
 CODE = re.compile(r"\b(DBC\d{4})\b")
+INCLUDE = re.compile(r'^\s*#include\s+"([^"]+)"', re.IGNORECASE | re.MULTILINE)
+
+
+# The sources another example names in an #INCLUDE: parts of a program, checked through it.
+def included_sources(sources: list[Path]) -> set[Path]:
+    result = set()
+    for source in sources:
+        for written in INCLUDE.findall(source.read_text(encoding="latin-1")):
+            result.add((source.parent / written.replace("\\", "/")).resolve())
+    return result
 
 
 def stage(code: str) -> str:
@@ -40,6 +50,7 @@ def main() -> None:
                       if path.is_file() and path.suffix.lower() == ".dba"),
                      key=lambda path: path.as_posix())
     profiles = load_corpus_profiles(args.output)
+    included = included_sources(sources)
     rows = []
     for source in sources:
         relative = source.relative_to(examples).as_posix()
@@ -50,6 +61,9 @@ def main() -> None:
             profile = "dbpro"
         if profile is None:
             raise SystemExit(f"new OpenDBC example needs an explicit corpus profile: {relative}")
+        if source.resolve() in included:
+            rows.append("|".join((relative, profile, "included", "-")))
+            continue
         result = subprocess.run([str(args.opendbc), "check", str(source), "--dialect", profile],
                                 text=True, capture_output=True, check=False)
         if result.returncode == 0:

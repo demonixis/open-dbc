@@ -33,7 +33,7 @@ def corpus_rows() -> list[list[str]]:
         raise SystemExit("corpus expectation header is invalid")
     rows = [line.split("|") for line in lines[1:] if line]
     if any(len(row) != 4 or row[1] not in {"dbc", "dbpro"} or
-           row[2] not in {"lex", "parse", "bind", "lower", "verify", "verified"} for row in rows):
+           row[2] not in {"lex", "parse", "bind", "lower", "verify", "verified", "included"} for row in rows):
         raise SystemExit("corpus expectation row is invalid")
     paths = [row[0] for row in rows]
     if len(paths) != len(set(paths)):
@@ -58,13 +58,14 @@ def behavior_rows() -> list[list[str]]:
 
 def generated_block() -> str:
     basic_tests = basic_golden_count()
-    corpus = corpus_rows()
+    # A source another one includes is a part of that program, not a program of its own.
+    corpus = [row for row in corpus_rows() if row[2] != "included"]
     verified = sum(row[2] == "verified" for row in corpus)
     behavior = behavior_rows()
     return "\n".join((
         BEGIN,
         f"- BASIC execution goldens: **{basic_tests}**.",
-        f"- Full corpus expectations: **{len(corpus)}** sources, including **{verified}** that reach verified bytecode.",
+        f"- Full corpus expectations: **{len(corpus)}** programs, including **{verified}** that reach verified bytecode.",
         f"- Observable implemented-overload contracts: **{len(behavior)}**.",
         END,
     ))

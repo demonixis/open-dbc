@@ -1,0 +1,272 @@
+rem Sky Gardens - what surrounds the explorer: media, seeds, moving platforms, lights
+rem and what is hidden in the distance. Included by sky_gardens.dba.
+
+function load_media()
+   backdrop on : color backdrop FOG_RGB
+   fog on : fog color FOG_RGB : fog distance 200, 1600
+
+   rem Low golden sun behind the start, so shadows fall along the route
+   sunX# = -0.42 : sunY# = 0.52 : sunZ# = -0.74
+   set directional light 0, 0 - sunX#, 0 - sunY#, 0 - sunZ#
+   color light 0, rgb(255, 214, 168)
+
+   load image "textures/clouds.jpg", 2
+   load image "textures/wisps.jpg", 3
+   load image "textures/ruin.jpg", 4
+   load image "textures/ruin_normal.jpg", 5
+   load image "textures/glow.jpg", 6
+   load image "textures/wood.jpg", 7
+   load image "textures/fern.png", 8
+   load image "textures/seed_icon.png", 9
+   load image "textures/rock_normal.jpg", 10
+   load image "textures/wood_normal.jpg", 11
+   rem The sky's cube, in the order SET CUBE MAPPING ON takes: +X, -X, +Y, -Y, +Z, -Z
+   load image "textures/sky_cube_px.jpg", 40
+   load image "textures/sky_cube_nx.jpg", 41
+   load image "textures/sky_cube_py.jpg", 42
+   load image "textures/sky_cube_ny.jpg", 43
+   load image "textures/sky_cube_pz.jpg", 44
+   load image "textures/sky_cube_nz.jpg", 45
+
+   rem The level holds the sky dome (object 3), seen from inside, and the sun (object 6),
+   rem a soft additive disc kept far along the light direction
+
+   rem Cloud sea far below and a faster layer of wisps above it
+   make object plain 4, 4000, 4000
+   xrotate object 4, 270
+   texture object 4, 2
+   scale object texture 4, 10, 10
+   set object light 4, 0
+   make object plain 5, 3000, 3000
+   xrotate object 5, 270
+   texture object 5, 3
+   scale object texture 5, 10, 10
+   ghost object on 5
+   set object light 5, 0
+
+   rem Reusable pieces, hidden and cloned into the level
+   load object "models/island.x", 900
+   load object "models/arch.x", 901
+   load object "models/tree.x", 902
+   load object "models/lantern.x", 903
+   load object "models/banner.x", 904
+   load object "models/mushroom.x", 905
+   load object "models/shrine.x", 906
+   load object "models/seed.x", 907
+   rem Its clones share the cube
+   set cube mapping on 907, 40, 41, 42, 43, 44, 45
+   for o = 900 to 907 : hide object o : next o
+
+   load object "models/explorer.x", 1
+   set object interpolation 1, 30
+   rem The explorer casts a real stencil shadow from a low pill-shaped proxy mesh, whose
+   rem volume is rebuilt every frame on the CPU; it is kept short so it never reaches the clouds
+   make object cylinder 10, 1
+   lock vertexdata for limb 10, 0
+   for v = 0 to get vertexdata vertex count() - 1
+      set vertexdata position v, get vertexdata position x(v) * 0.9, (get vertexdata position y(v) + 0.5) * 3.0, get vertexdata position z(v) * 0.6
+   next v
+   unlock vertexdata
+   make mesh from object 1, 10
+   delete object 10
+   set shadow shading on 1, 1, 40, 0
+   set object specular 1, rgb(90, 90, 90)
+   set object specular power 1, 12
+
+   rem Burst of light when a seed is gathered, dust on landing
+   make particles 1, 6, 1, 1.5
+   color particles 1, 120, 255, 210
+   set particle velocity 1, 1
+   set particle gravity 1, 1
+   set particle life 1, 40
+   set particle emissions 1, 0
+   ghost particles on 1, 0
+   make particles 2, 6, 1, 0.8
+   color particles 2, 255, 230, 200
+   set particle velocity 2, 1
+   set particle gravity 2, 0
+   set particle life 2, 25
+   set particle emissions 2, 0
+   ghost particles on 2, 0
+
+   rem Pooled point lights: 1-3 follow the nearest seeds, 4 the nearest lantern,
+   rem 5 the shrine, 6 a flash where a seed was just gathered
+   for l = 1 to 6 : make light l : set point light l, 0, 0, 0 : next l
+   for l = 1 to 3
+      color light l, rgb(120, 230, 190)
+      set light range l, 10
+   next l
+   color light 4, rgb(255, 190, 90) : set light range 4, 18
+   color light 5, rgb(255, 200, 110) : set light range 5, 45
+   color light 6, rgb(160, 255, 220) : set light range 6, 1 : hide light 6
+
+   load sound "sounds/jump.wav", 1
+   load sound "sounds/land.wav", 2
+   load sound "sounds/seed.wav", 3
+   load sound "sounds/bounce.wav", 4
+   load sound "sounds/checkpoint.wav", 5
+   load sound "sounds/fall.wav", 6
+   load sound "sounds/bloom.wav", 7
+   load sound "sounds/wind.wav", 8
+   loop sound 8
+   set sound volume 8, 70
+
+   set text font "Arial"
+   set text to bold
+
+   rem Title texts are drawn once into images and shown as sprites: TEXT blits on the CPU
+   rem every frame, a sprite is a single textured quad. Black is the transparent colour.
+   create bitmap 1, 1280, 120
+   set text size 72 : title_image(30, "SKY GARDENS", 110)
+   set text size 26 : title_image(31, "PRESS ANY KEY OR CLICK TO EXPLORE", 44)
+   set text size 20 : title_image(32, "WASD / ARROWS RUN   SPACE JUMP, DOUBLE JUMP, WALL JUMP   MOUSE LOOKS AROUND", 36)
+   set current bitmap 0
+   delete bitmap 1
+   sprite 1, 0, 80, 30
+   sprite 2, 0, 186, 31
+   sprite 3, 0, 662, 32
+   sprite 4, 24, 20, 9
+   hide sprite 4
+endfunction
+
+function collect_seeds()
+   rem Only seeds near the explorer are shown, animated and tested
+   if frame mod 10 = 0 or nearSeedCount < 0
+      nearSeedCount = 0
+      for s = 1 to seedCount
+         if seeds(s).taken = 0
+            seed_on_mover(s)
+            if (seeds(s).x - px#) ^ 2 + (seeds(s).z - pz#) ^ 2 < 12000
+               inc nearSeedCount
+               nearSeed(nearSeedCount) = s
+               if seeds(s).shown = 0 then show object seeds(s).obj : show object seeds(s).halo : seeds(s).shown = 1
+            else
+               if seeds(s).shown = 1 then hide object seeds(s).obj : hide object seeds(s).halo : seeds(s).shown = 0
+            endif
+         endif
+      next s
+   endif
+   for n = 1 to nearSeedCount
+      s = nearSeed(n)
+      if seeds(s).taken = 0
+         seed_on_mover(s)
+         bob# = sin(frame * 3 + s * 40) * 0.25
+         position object seeds(s).obj, seeds(s).x, seeds(s).y + bob#, seeds(s).z
+         yrotate object seeds(s).obj, wrapvalue(frame * 2 + s * 30)
+         position object seeds(s).halo, seeds(s).x, seeds(s).y + bob#, seeds(s).z
+         point object seeds(s).halo, camX#, camY#, camZ#
+         dx# = seeds(s).x - px# : dy# = seeds(s).y - (py# + 1.4) : dz# = seeds(s).z - pz#
+         if dx# * dx# + dy# * dy# + dz# * dz# < 4.8
+            seeds(s).taken = 1
+            inc seedsTaken
+            hide object seeds(s).obj : hide object seeds(s).halo
+            play sound 3
+            position particles 1, seeds(s).x, seeds(s).y, seeds(s).z
+            set particle emissions 1, 12
+            burst = 4
+            position light 6, seeds(s).x, seeds(s).y, seeds(s).z
+            show light 6 : flash = 20
+         endif
+      endif
+   next n
+   if burst > 0
+      dec burst
+      if burst = 0 then set particle emissions 1, 0
+   endif
+   if flash > 0
+      dec flash
+      set light range 6, flash * 1.2
+      if flash = 0 then hide light 6
+   endif
+endfunction
+
+function update_scenery()
+   rem Sky, sun and cloud layers follow the camera; the clouds snap to
+   rem whole texture tiles so their pattern never slides with it
+   position object 3, camX#, camY#, camZ#
+   position object 6, camX# + sunX# * 1300, camY# + sunY# * 1300, camZ# + sunZ# * 1300
+   point object 6, camX#, camY#, camZ#
+   position object 4, int(camX# / 400) * 400, -46, int(camZ# / 400) * 400
+   position object 5, int(camX# / 300) * 300, -30, int(camZ# / 300) * 300
+   scroll limb texture 5, 0, 0.0004, 0.0002
+   scroll limb texture 4, 0, 0.0001, 0.00005
+
+   if frame mod 10 = 0 then cull_scenery()
+
+   rem Pooled lights: the three nearest seeds and the nearest lantern glow
+   if frame mod 5 = 0 then nearest_lights()
+   for l = 1 to 3
+      if bestSeed(l) > 0
+         if seeds(bestSeed(l)).taken = 1 then bestSeed(l) = 0
+      endif
+      if bestSeed(l) > 0
+         show light l
+         position light l, seeds(bestSeed(l)).x, seeds(bestSeed(l)).y + 0.5, seeds(bestSeed(l)).z
+      else
+         hide light l
+      endif
+   next l
+   set light range 4, 16 + sin(frame * 7) * 1.5
+   if finished = 1 then yrotate object shrineCrystal, wrapvalue(frame * 3)
+endfunction
+
+function nearest_lights()
+   for l = 1 to 3 : best#(l) = 1000000 : bestSeed(l) = 0 : next l
+   for s = 1 to seedCount
+      if seeds(s).taken = 0
+         d# = (seeds(s).x - px#) ^ 2 + (seeds(s).z - pz#) ^ 2
+         for l = 1 to 3
+            if d# < best#(l)
+               for k = 3 to l + 1 step -1 : best#(k) = best#(k - 1) : bestSeed(k) = bestSeed(k - 1) : next k
+               best#(l) = d# : bestSeed(l) = s
+               exit
+            endif
+         next l
+      endif
+   next s
+   nearest# = 1000000
+   for k = 1 to lanternCount
+      d# = (object position x(lanterns(k)) - px#) ^ 2 + (object position z(lanterns(k)) - pz#) ^ 2
+      if d# < nearest# then nearest# = d# : lamp = lanterns(k)
+   next k
+   if lanternCount > 0 then position light 4, object position x(lamp), object position y(lamp) + 2.6, object position z(lamp)
+endfunction
+
+function update_movers()
+   for m = 1 to moverCount
+      s = movers(m).solid
+      t# = wrapvalue((frame * 360.0) / movers(m).period + movers(m).phase)
+      nx# = movers(m).ox + sin(t#) * movers(m).ax
+      ny# = movers(m).oy + sin(t#) * movers(m).ay
+      nz# = movers(m).oz + sin(t#) * movers(m).az
+      movers(m).dx = nx# - solids(s).x : movers(m).dy = ny# - solids(s).bottom : movers(m).dz = nz# - solids(s).z
+      solids(s).x = nx# : solids(s).z = nz#
+      solids(s).top = ny# + (solids(s).top - solids(s).bottom) : solids(s).bottom = ny#
+      position object solids(s).obj, nx#, ny# + 0.5, nz#
+   next m
+endfunction
+
+function seed_on_mover(s)
+   if seeds(s).mover > 0
+      ms = movers(seeds(s).mover).solid
+      seeds(s).x = solids(ms).x : seeds(s).z = solids(ms).z
+      seeds(s).y = solids(ms).top + 1.6
+   endif
+endfunction
+
+function cull_add(o, x#, z#, range#)
+   inc cullCount
+   cullObj(cullCount) = o : cullX#(cullCount) = x# : cullZ#(cullCount) = z#
+   cullRange#(cullCount) = range# * range# : cullShown(cullCount) = 1
+endfunction
+
+function cull_scenery()
+   for c = 1 to cullCount
+      d# = (cullX#(c) - camX#) ^ 2 + (cullZ#(c) - camZ#) ^ 2
+      if d# < cullRange#(c)
+         if cullShown(c) = 0 then show object cullObj(c) : cullShown(c) = 1
+      else
+         if cullShown(c) = 1 then hide object cullObj(c) : cullShown(c) = 0
+      endif
+   next c
+endfunction
