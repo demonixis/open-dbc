@@ -34,7 +34,9 @@ namespace dbc::language::detail
                         CanStartComment_ = true;
                         continue;
                     }
-                    if (Character == '`' || Character == '\'')
+                    // DBPro also opens a line comment with `//`.
+                    if (Character == '`' || Character == '\'' ||
+                        (Character == '/' && Peek(1) == '/' && Source_.Profile == LanguageProfile::DbPro))
                     {
                         SkipComment();
                         continue;
@@ -358,13 +360,13 @@ namespace dbc::language::detail
                         Kind = TokenKind::Power;
                         break;
                     case '=':
-                        // Classic also accepts the reversed spellings of >= and <=.
-                        if (Source_.Profile == LanguageProfile::Dbc && Peek() == '>')
+                        // Both compilers also accept the reversed spellings of >= and <=.
+                        if (Peek() == '>')
                         {
                             Advance();
                             Kind = TokenKind::GreaterEqual;
                         }
-                        else if (Source_.Profile == LanguageProfile::Dbc && Peek() == '<')
+                        else if (Peek() == '<')
                         {
                             Advance();
                             Kind = TokenKind::LessEqual;

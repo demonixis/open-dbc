@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iterator>
 #include <sstream>
 #include <unordered_set>
 
@@ -44,7 +45,9 @@ namespace dbc::studio
         // therefore case-sensitive, which does not suit DBA.
         Iterator Tokenize(Iterator Start, Iterator End, TextEditor::Color& ColorValue)
         {
-            if (MatchesWord(Start, End, "rem"))
+            // `//` opens a DBPro comment; in Classic it is not valid code either.
+            const bool DoubleSlash = Start != End && *Start == '/' && std::next(Start) != End && *std::next(Start) == '/';
+            if (MatchesWord(Start, End, "rem") || DoubleSlash)
             {
                 ColorValue = TextEditor::Color::comment;
                 return End;

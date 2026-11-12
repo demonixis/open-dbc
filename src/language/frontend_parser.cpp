@@ -463,6 +463,9 @@ namespace dbc::language::detail
                     const std::string Word = Canonical(Lexeme(Source_, Value.Span));
                     if (Word == "MOD")
                         return OperatorInfo{60, false, "MOD"};
+                    // The DBPro compiler reads DIV as the division operator.
+                    if (Word == "DIV" && Source_.Profile == LanguageProfile::DbPro)
+                        return OperatorInfo{60, false, "/"};
                     if (Word == "AND")
                         return OperatorInfo{KAndPrecedence, false, Source_.Profile == LanguageProfile::DbPro ? "&&" : "AND"};
                     if (Word == "OR")

@@ -570,6 +570,12 @@ TEST_CASE("The '..' operator belongs to the DBPro profile")
     CHECK(HasCode(dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::Dbc, "dots.dba")), "DBC1007"));
 }
 
+TEST_CASE("Classic has neither // comments nor DIV")
+{
+    CHECK(dbc::language::Compile(Source("a = 7 // 2\n", dbc::language::LanguageProfile::Dbc, "slash.dba")).HasErrors());
+    CHECK(dbc::language::Compile(Source("a = 7 div 2\n", dbc::language::LanguageProfile::Dbc, "div.dba")).HasErrors());
+}
+
 TEST_CASE("ELSEIF is not a DBPro keyword")
 {
     const std::string Text = "if 0\n"

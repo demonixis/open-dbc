@@ -391,6 +391,28 @@ TEST_CASE("DBPro DIM resizes an existing array, declares empty lists and follows
     CHECK(Session.Global("result")->AsInteger() == 4);
 }
 
+TEST_CASE("DBPro reads // comments, reversed comparisons and DIV as the original compiler")
+{
+    const auto Module = Compile("a = 7 // trailing comment\n"
+                                "// whole line\n"
+                                "b = 2 : // after a colon\n"
+                                "if a => b then ge = 1\n"
+                                "if b =< a then le = 1\n"
+                                "quotient = a div b\n"
+                                "div = 4\n"
+                                "text$ = \"a//b\"\n",
+                                dbc::language::LanguageProfile::DbPro);
+    TestHost Host;
+    dbc::vm::ExecutionSession Session;
+    REQUIRE(Session.Prepare(Module, Host));
+    RunToCompletion(Session);
+    CHECK(Session.Global("ge")->AsInteger() == 1);
+    CHECK(Session.Global("le")->AsInteger() == 1);
+    CHECK(Session.Global("quotient")->AsInteger() == 3);
+    CHECK(Session.Global("div")->AsInteger() == 4);
+    CHECK(Session.Global("text$")->AsString() == "a//b");
+}
+
 TEST_CASE("DBPro dynamic array collections use verified VM state")
 {
     const auto Module = Compile("type Item\n"
