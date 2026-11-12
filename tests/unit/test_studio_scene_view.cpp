@@ -304,6 +304,16 @@ namespace
             return DrawnText_;
         }
 
+        // What is drawn with the limb list open. The popup is closed again: it would take the next click.
+        std::string DrawnTextWithLimbs()
+        {
+            Editor_.ShowLimbs();
+            std::string Text = DrawnText();
+            if (ImGui::GetCurrentContext()->OpenPopupStack.Size > 0)
+                ImGui::ClosePopupToLevel(0, false);
+            return Text;
+        }
+
         glm::vec2 FirstAssetPosition() const
         {
             const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelAssets));
@@ -429,11 +439,13 @@ TEST_CASE("A single model asset click shows limb mapping without inserting or ed
     SceneViewDriver Driver("inspect_model_asset", LevelOfCubes({glm::vec3(0.0f)}),
                            [](const std::filesystem::path& Root) { WriteInspectorModel(Root); });
     Driver.ClickFirstAsset();
-    const std::string Text = Driver.DrawnText();
-    INFO(Text);
+    // The Inspector holds the statistics and a Limbs button; the list opens in its own popup.
+    const std::string Closed = Driver.DrawnText();
+    INFO(Closed);
     for (const char* Label : {"Model details", "pair.obj", "Triangles", "Vertices", "Meshes", "Referenced textures",
-                              "Limbs", "ID", "Hull", "Turret"})
-        CHECK(Text.find(Label) != std::string::npos);
+                              "Limbs (3)..."})
+        CHECK(Closed.find(Label) != std::string::npos);
+    CHECK(Closed.find("Turret") == std::string::npos);
     CHECK_FALSE(Driver.Editor().Dirty());
     CHECK(Driver.SavedNodes().size() == 1);
 
@@ -446,6 +458,11 @@ TEST_CASE("A single model asset click shows limb mapping without inserting or ed
     REQUIRE(Nodes.size() == 2);
     CHECK(Nodes.back().Kind == scene::NodeKind::Model);
     CHECK(Nodes.back().Asset == "pair.obj");
+
+    const std::string Text = Driver.DrawnTextWithLimbs();
+    INFO(Text);
+    for (const char* Label : {"ID", "Hull", "Turret"})
+        CHECK(Text.find(Label) != std::string::npos);
 }
 
 TEST_CASE("Holding and dragging a model tile keeps the selected model file field available")
@@ -488,7 +505,7 @@ TEST_CASE("Model details follow scene selection and leave the Inspector for a cu
                            [](const std::filesystem::path& Root) { WriteInspectorModel(Root); });
 
     Driver.ClickHierarchyRow(1);
-    const std::string ModelText = Driver.DrawnText();
+    const std::string ModelText = Driver.DrawnTextWithLimbs();
     INFO(ModelText);
     CHECK(ModelText.find("Model details") != std::string::npos);
     CHECK(ModelText.find("Hull") != std::string::npos);
@@ -515,18 +532,18 @@ TEST_CASE("Refreshing assets rereads model details and a missing model cannot ke
     SceneViewDriver Driver("inspect_model_refresh", Level,
                            [](const std::filesystem::path& Root) { WriteInspectorModel(Root); });
     Driver.ClickHierarchyRow(0);
-    REQUIRE(Driver.DrawnText().find("Turret") != std::string::npos);
+    REQUIRE(Driver.DrawnTextWithLimbs().find("Turret") != std::string::npos);
 
     WriteInspectorModel(Driver.Root(), "Barrel");
     Driver.RefreshAssets();
-    const std::string Changed = Driver.DrawnText();
+    const std::string Changed = Driver.DrawnTextWithLimbs();
     INFO(Changed);
     CHECK(Changed.find("Barrel") != std::string::npos);
     CHECK(Changed.find("Turret") == std::string::npos);
 
     REQUIRE(std::filesystem::remove(Driver.Root() / "pair.obj"));
     Driver.RefreshAssets();
-    const std::string Missing = Driver.DrawnText();
+    const std::string Missing = Driver.DrawnTextWithLimbs();
     INFO(Missing);
     CHECK(Missing.find("Model details") != std::string::npos);
     CHECK(Missing.find("The model file cannot be read.") != std::string::npos);

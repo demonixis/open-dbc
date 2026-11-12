@@ -22,10 +22,6 @@ Conformance:
 
 Scene view:
 
-- [ ] Lot 5, Inspector basics: z-depth, z-read and z-write toggles; a "Limbs" button
-  opening the limb list (names and IDs) in a popup; the reader accepts the standalone
-  `SET OBJECT WIREFRAME`, `FOG`, `LIGHT`... forms and the four-argument
-  `SET SHADOW SHADING ON`.
 - [ ] Lot 6, Inspector textures: a level section declaring shared images, then light,
   detail, blend, sphere, cube, bump and alpha mapping, and cartoon, rainbow and
   reflection shading with their exclusion rules.

@@ -102,6 +102,11 @@ namespace dbc::studio
             }
 
             bool Dirty() const;
+            // Opens the limb list of the model the Inspector shows, as its Limbs button does.
+            void ShowLimbs()
+            {
+                ShowLimbs_ = true;
+            }
             // Ctrl+S: a program's scene is read again after its edits, to show what they did.
             bool SaveAndRefresh();
             void RefreshProgram();
@@ -449,6 +454,7 @@ namespace dbc::studio
             scene::SceneRenderer ThumbnailRenderer_;
             std::optional<bool> ThumbnailRendererReady_;
             std::unordered_map<std::string, ModelInspection> ModelInfos_;
+            bool ShowLimbs_ = false;
             std::string InspectedModel_;
             char AssetFilter_[64] = {};
             int AssetFilterKind_ = 0;

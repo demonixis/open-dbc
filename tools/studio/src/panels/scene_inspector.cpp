@@ -459,13 +459,23 @@ namespace dbc::studio
             Hint(Tr("File contents at LOAD OBJECT; later changes made by the program are not shown."));
             if (Info.Limbs.empty())
                 return;
+            // The list opens on demand: a rigged model has dozens of limbs, too many for the Inspector.
+            if (ImGui::Button((TrFmt("Limbs ({0})...", {std::to_string(Info.Limbs.size())}) + "##model-limbs").c_str()) ||
+                ShowLimbs_)
+                ImGui::OpenPopup("##model-limbs-popup");
+            ShowLimbs_ = false;
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s", Tr("Lists each limb with the number LIMB commands take"));
+            if (!ImGui::BeginPopup("##model-limbs-popup"))
+                return;
+            ImGui::TextUnformatted(Info.Name.empty() ? Asset.c_str() : Info.Name.c_str());
             const float RowHeight = ImGui::GetTextLineHeight() + ImGui::GetStyle().CellPadding.y * 2.0f;
-            const float Height = RowHeight * static_cast<float>(std::min<std::size_t>(Info.Limbs.size(), 8) + 1) +
+            const float Height = RowHeight * static_cast<float>(std::min<std::size_t>(Info.Limbs.size(), 20) + 1) +
                                  ImGui::GetStyle().FramePadding.y * 2.0f;
             if (ImGui::BeginTable("##model-limbs", 2,
                                   ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_ScrollY |
                                       ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingStretchProp,
-                                  ImVec2(0.0f, Height)))
+                                  ImVec2(ImGui::GetFontSize() * 22.0f, Height)))
             {
                 ImGui::TableSetupColumn(Tr("ID"), ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("00000").x);
                 ImGui::TableSetupColumn(Tr("Name"), ImGuiTableColumnFlags_WidthStretch);
@@ -483,12 +493,11 @@ namespace dbc::studio
                         ImGui::Text("%d", Limb.Id);
                         ImGui::TableNextColumn();
                         ImGui::TextUnformatted(Limb.Name.empty() ? Tr("(unnamed)") : Limb.Name.c_str());
-                        if (ImGui::IsItemHovered())
-                            ImGui::SetTooltip("%s", Limb.Name.empty() ? Tr("(unnamed)") : Limb.Name.c_str());
                     }
                 }
                 ImGui::EndTable();
             }
+            ImGui::EndPopup();
         }
 
         void SceneEditor::DrawAnimation(scene::SceneNode& Node)

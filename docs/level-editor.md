@@ -106,8 +106,8 @@ Models and sounds from the menu land in front of the editor camera.
 
 Select a model in the Hierarchy or Viewport, or single-click its Assets tile,
 to see **Model details** in the Inspector: filename, triangles, vertices,
-meshes, distinct referenced textures and the limb IDs and names used by
-`LOAD OBJECT`. Texture references count even when their files are missing.
+meshes and distinct referenced textures. **Limbs** opens the list of limb IDs
+and names used by `LOAD OBJECT`. Texture references count even when their files are missing.
 These describe the source file, before changes made by the program. **Refresh**
 reloads the details after an external edit. Inspecting an asset does not add it
 to the level; double-clicking still adds it.
@@ -135,7 +135,10 @@ The Inspector edits the selected node:
   its volume. The program hears it from `POSITION LISTENER`, which stays at
   0, 0, 0 until the program moves it;
 - texture, `COLOR OBJECT`, `GHOST OBJECT ON`, the `SET OBJECT` flags, diffuse,
-  ambience, emissive, specular colour and power, and `SET SHADOW SHADING ON`.
+  ambience, emissive, specular colour and power, `SET SHADOW SHADING ON`, and
+  `DISABLE OBJECT ZDEPTH`, `ZREAD` and `ZWRITE`, which the viewport does not show.
+  A level may also set one flag at a time (`SET OBJECT WIREFRAME`, `FOG`...); it is
+  written back as `SET OBJECT`.
 
 Level Settings holds:
 - ambient light and colour, backdrop colour and fog;
