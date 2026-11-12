@@ -458,6 +458,56 @@ TEST_CASE("DBPro BYTE, WORD and DWORD wrap to their range when stored")
     CHECK(Session.Global("low")->AsInteger() == 1);
 }
 
+TEST_CASE("DBPro integers are 32 bits wide, DWORD is unsigned and DOUBLE INTEGER keeps 64 bits")
+{
+    const auto Module = Compile("stored = 2147483647\n"
+                                "stored = stored + 1\n"
+                                "computed = 0\n"
+                                "if 2147483647 + 1 < 0 then computed = 1\n"
+                                "wide as double integer\n"
+                                "wide = 4294967296\n"
+                                "wide = wide * 2\n"
+                                "colour = 0xFFFFFFFF\n"
+                                "if colour = 0xFFFFFFFF then same = 1\n"
+                                "unsigned as dword\n"
+                                "unsigned = 3000000000\n"
+                                "next_unsigned as double integer\n"
+                                "next_unsigned = unsigned + 1\n"
+                                "unsigned = 0 : dec unsigned\n"
+                                "shifted = 1 << 31\n"
+                                "flag as boolean\n"
+                                "flag = 257\n"
+                                "dim cells(1)\n"
+                                "cells(1) = 4294967297\n"
+                                "cell = cells(1)\n"
+                                "returned = Big()\n"
+                                "function Big()\n"
+                                "endfunction 4294967298\n",
+                                dbc::language::LanguageProfile::DbPro);
+    TestHost Host;
+    dbc::vm::ExecutionSession Session;
+    REQUIRE(Session.Prepare(Module, Host));
+    RunToCompletion(Session);
+    CHECK(Session.Global("stored")->AsInteger() == std::numeric_limits<std::int32_t>::min());
+    CHECK(Session.Global("computed")->AsInteger() == 1);
+    CHECK(Session.Global("wide")->AsInteger() == 8589934592);
+    CHECK(Session.Global("colour")->AsInteger() == -1);
+    CHECK(Session.Global("same")->AsInteger() == 1);
+    CHECK(Session.Global("next_unsigned")->AsInteger() == 3000000001);
+    CHECK(Session.Global("unsigned")->AsInteger() == 4294967295);
+    CHECK(Session.Global("shifted")->AsInteger() == std::numeric_limits<std::int32_t>::min());
+    CHECK(Session.Global("flag")->AsInteger() == 1);
+    CHECK(Session.Global("cell")->AsInteger() == 1);
+    CHECK(Session.Global("returned")->AsInteger() == 2);
+
+    const auto Classic = Compile("stored = 2147483647\nstored = stored + 1\n", dbc::language::LanguageProfile::Dbc);
+    TestHost ClassicHost;
+    dbc::vm::ExecutionSession ClassicSession;
+    REQUIRE(ClassicSession.Prepare(Classic, ClassicHost));
+    RunToCompletion(ClassicSession);
+    CHECK(ClassicSession.Global("stored")->AsInteger() == 2147483648);
+}
+
 TEST_CASE("DBPro dynamic array collections use verified VM state")
 {
     const auto Module = Compile("type Item\n"
@@ -620,7 +670,8 @@ TEST_CASE("Function calls and GOSUB stop at their depth limits")
 
 TEST_CASE("Integer literals keep their exact 64-bit value")
 {
-    const auto Module = Compile("big = 9223372036854775807\n"
+    const auto Module = Compile("big as double integer : listed as double integer\n"
+                                "big = 9223372036854775807\n"
                                 "data 9223372036854775806\n"
                                 "read listed\n",
                                 dbc::language::LanguageProfile::DbPro);

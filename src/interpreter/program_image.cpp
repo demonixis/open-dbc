@@ -192,8 +192,9 @@ namespace dbc::interpreter
                     return false;
                 Value.Kind = static_cast<language::TypeKind>(Kind);
                 std::uint8_t Width = 0;
-                if (!U8(Width) || Width > static_cast<std::uint8_t>(language::IntegerWidth::DWord) ||
-                    (Width != 0 && Value.Kind != language::TypeKind::Integer))
+                if (!U8(Width) || Width > static_cast<std::uint8_t>(language::IntegerWidth::Int64) ||
+                    (Width != 0 && Value.Kind != language::TypeKind::Integer &&
+                     Value.Kind != language::TypeKind::Boolean))
                     return false;
                 Value.Width = static_cast<language::IntegerWidth>(Width);
                 return String(Value.Name);

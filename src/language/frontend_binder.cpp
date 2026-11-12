@@ -1,6 +1,8 @@
 #include "frontend_internal.hpp"
 
 #include <algorithm>
+#include <cstdint>
+#include <limits>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -834,7 +836,7 @@ namespace dbc::language::detail
                     case ExpressionKind::Error:
                         return Value.ResolvedType = {TypeKind::Error, {}};
                     case ExpressionKind::IntegerLiteral:
-                        return Value.ResolvedType = {TypeKind::Integer, {}};
+                        return Value.ResolvedType = {TypeKind::Integer, {}, LiteralWidth(Value.Integer)};
                     case ExpressionKind::RealLiteral:
                         return Value.ResolvedType = {TypeKind::Real, {}};
                     case ExpressionKind::StringLiteral:
@@ -911,7 +913,7 @@ namespace dbc::language::detail
                         Error("DBC2028", "DBPro NOT requires an integer operand", Value.Span);
                         return Value.ResolvedType = {TypeKind::Error, {}};
                     }
-                    return Value.ResolvedType = {TypeKind::Integer, {}};
+                    return Value.ResolvedType = {TypeKind::Integer, {}, WiderWidth(Operand, Operand)};
                 }
                 if (!Operand.IsNumeric() && Operand.Kind != TypeKind::Error)
                 {
@@ -933,6 +935,20 @@ namespace dbc::language::detail
                                         Value.Text == "<=" || Value.Text == ">" || Value.Text == ">=";
                 if (Comparison)
                 {
+                    // `colour = 0xFFFFFFFF` compares a 32-bit integer: the DWORD literal takes its bits.
+                    for (std::size_t Side = 0; Side < 2; ++Side)
+                    {
+                        Expression& Literal = *Value.Children[Side];
+                        const Type& Other = Side == 0 ? Right : Left;
+                        if (Literal.Kind == ExpressionKind::IntegerLiteral &&
+                            Literal.ResolvedType.Width == IntegerWidth::DWord && Other.Kind == TypeKind::Integer &&
+                            Other.Width != IntegerWidth::DWord && Other.Width != IntegerWidth::Int64)
+                        {
+                            Literal.Integer = static_cast<std::int32_t>(static_cast<std::uint32_t>(Literal.Integer));
+                            Literal.Number = static_cast<double>(Literal.Integer);
+                            Literal.ResolvedType.Width = IntegerWidth::Native;
+                        }
+                    }
                     if (!CanConvert(Left, Right) && !CanConvert(Right, Left))
                         Error("DBC2029", "Comparison operands are incompatible", Value.Span);
                     return Value.ResolvedType = {TypeKind::Boolean, {}};
@@ -953,7 +969,7 @@ namespace dbc::language::detail
                         Error("DBC2030", "Operator '" + Value.Text + "' requires integer operands", Value.Span);
                         return Value.ResolvedType = {TypeKind::Error, {}};
                     }
-                    return Value.ResolvedType = {TypeKind::Integer, {}};
+                    return Value.ResolvedType = {TypeKind::Integer, {}, WiderWidth(Left, Right)};
                 }
                 if (Value.Text == "+" && Left.Kind == TypeKind::String && Right.Kind == TypeKind::String)
                     return Value.ResolvedType = {TypeKind::String, {}};
@@ -963,10 +979,27 @@ namespace dbc::language::detail
                     Error("DBC2030", "Operator '" + Value.Text + "' requires numeric operands", Value.Span);
                     return Value.ResolvedType = {TypeKind::Error, {}};
                 }
-                return Value.ResolvedType =
-                           Type{Left.Kind == TypeKind::Real || Right.Kind == TypeKind::Real ? TypeKind::Real
-                                                                                            : TypeKind::Integer,
-                                {}};
+                if (Left.Kind == TypeKind::Real || Right.Kind == TypeKind::Real)
+                    return Value.ResolvedType = {TypeKind::Real, {}};
+                return Value.ResolvedType = {TypeKind::Integer, {}, WiderWidth(Left, Right)};
+            }
+
+            // A DBPro literal past the signed 32-bit range is a DWORD, and past 32 bits a DOUBLE INTEGER.
+            IntegerWidth LiteralWidth(std::int64_t Number) const
+            {
+                if (Source_.Profile != LanguageProfile::DbPro || Number <= std::numeric_limits<std::int32_t>::max())
+                    return IntegerWidth::Native;
+                return Number <= std::numeric_limits<std::uint32_t>::max() ? IntegerWidth::DWord : IntegerWidth::Int64;
+            }
+
+            // The width an integer operation computes in: DOUBLE INTEGER wins, then DWORD, then the integer.
+            static IntegerWidth WiderWidth(const Type& Left, const Type& Right)
+            {
+                if (Left.Width == IntegerWidth::Int64 || Right.Width == IntegerWidth::Int64)
+                    return IntegerWidth::Int64;
+                if (Left.Width == IntegerWidth::DWord || Right.Width == IntegerWidth::DWord)
+                    return IntegerWidth::DWord;
+                return IntegerWidth::Native;
             }
 
             Type BindCallOrIndex(Expression& Value, bool LValue)

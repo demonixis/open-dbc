@@ -116,13 +116,16 @@ namespace dbc::language
         UserDefined,
     };
 
-    // The storage of a DBPro BYTE, WORD or DWORD: a value wraps to it when it is stored.
+    // The storage of an integer: a value wraps to it when it is stored. Native is the runtime's own
+    // width, which a DBPro program narrows to Int32 unless the type is DOUBLE INTEGER (Int64).
     enum class IntegerWidth : std::uint8_t
     {
         Native,
         Byte,
         Word,
         DWord,
+        Int32,
+        Int64,
     };
 
     struct Type

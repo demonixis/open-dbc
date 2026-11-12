@@ -40,7 +40,9 @@ namespace dbc::vm
         bool AsInteger(std::int64_t& Result, std::string& Error) const;
         double AsReal() const;
         std::string AsString() const;
-        bool ConvertTo(const language::Type& Target, Value& Result, std::string& Error) const;
+        // NativeWidth is the width an integer target of Native width stores: Int32 in a DBPro program.
+        bool ConvertTo(const language::Type& Target, Value& Result, std::string& Error,
+                       language::IntegerWidth NativeWidth = language::IntegerWidth::Native) const;
         Value Clone() const;
 
       private:
@@ -63,4 +65,6 @@ namespace dbc::vm
 
         bool FlatIndex(const std::vector<std::int64_t>& Indices, std::size_t& Result, std::string& Error) const;
     };
+    // Keeps the bits of Number that an integer of Width stores.
+    std::int64_t WrapInteger(std::int64_t Number, language::IntegerWidth Width);
 } // namespace dbc::vm

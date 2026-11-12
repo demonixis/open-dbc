@@ -409,6 +409,17 @@ namespace dbc::vm
         Observer_ = std::move(Observer);
     }
 
+    void ExecutionSession::WrapArithmetic(const language::Type& ResultType, Value& Result) const
+    {
+        if (NativeWidth_ == language::IntegerWidth::Native || ResultType.Kind != language::TypeKind::Integer ||
+            ResultType.Width == language::IntegerWidth::Int64 || !std::holds_alternative<std::int64_t>(Result.Data()))
+            return;
+        // BYTE and WORD operands compute as integers; only DWORD keeps its own unsigned range.
+        const language::IntegerWidth Width =
+            ResultType.Width == language::IntegerWidth::DWord ? language::IntegerWidth::DWord : NativeWidth_;
+        Result = Value::Integer(WrapInteger(Result.AsInteger(), Width));
+    }
+
     bool ExecutionSession::Prepare(std::shared_ptr<const Module> Bytecode, BuiltinHost& Host, bool TrackBuiltinCoverage)
     {
         std::string CancellationError;
@@ -439,6 +450,9 @@ namespace dbc::vm
             return false;
         }
 
+        // DBPro integers are 32 bits wide unless declared DOUBLE INTEGER; Classic keeps the runtime's width.
+        NativeWidth_ = Bytecode->Profile == language::LanguageProfile::DbPro ? language::IntegerWidth::Int32
+                                                                             : language::IntegerWidth::Native;
         HasSizedFields_ = std::any_of(Bytecode->Types.begin(), Bytecode->Types.end(), [](const TypeLayout& Layout) {
             return std::any_of(Layout.Fields.begin(), Layout.Fields.end(), [](const TypeField& Field) {
                 return Field.ValueType.Width != language::IntegerWidth::Native;
@@ -664,7 +678,7 @@ namespace dbc::vm
                 if (Instruction.A >= Globals_.size() || Instruction.A >= Bytecode_->Globals.size())
                     return Reject("Global slot is out of range");
                 Value Result;
-                if (!Pop().ConvertTo(Bytecode_->Globals[Instruction.A].ValueType, Result, Error))
+                if (!Pop().ConvertTo(Bytecode_->Globals[Instruction.A].ValueType, Result, Error, NativeWidth_))
                     return Reject(Error);
                 GlobalSlot(Instruction.A) = std::move(Result);
                 Advance();
@@ -679,7 +693,7 @@ namespace dbc::vm
                 if (Instruction.A >= Current.Locals.size() || Instruction.A >= CurrentFunction.Locals.size())
                     return Reject("Local slot is out of range");
                 Value Result;
-                if (!Pop().ConvertTo(CurrentFunction.Locals[Instruction.A].ValueType, Result, Error))
+                if (!Pop().ConvertTo(CurrentFunction.Locals[Instruction.A].ValueType, Result, Error, NativeWidth_))
                     return Reject(Error);
                 LocalSlot(Instruction.A) = std::move(Result);
                 Advance();
@@ -753,7 +767,7 @@ namespace dbc::vm
                 std::size_t Index = 0;
                 if (!Array.FlatIndex(Indices, Index, Error))
                     return Reject(Error);
-                if (!Result.ConvertTo(Array.ElementType, Array.Elements[Index], Error))
+                if (!Result.ConvertTo(Array.ElementType, Array.Elements[Index], Error, NativeWidth_))
                     return Reject(Error);
                 Advance();
                 return true;
@@ -807,7 +821,7 @@ namespace dbc::vm
                         }
                     }
                 }
-                if (!Field.ConvertTo(FieldType, Iterator->second, Error))
+                if (!Field.ConvertTo(FieldType, Iterator->second, Error, NativeWidth_))
                     return Reject(Error);
                 Current.Stack.push_back(std::move(Record));
                 Advance();
@@ -853,7 +867,7 @@ namespace dbc::vm
                     if (!DefaultValue(Instruction.ResultType, *Bytecode_, Converted, Error))
                         return Reject(Error);
                 }
-                else if (!Result.ConvertTo(Instruction.ResultType, Converted, Error))
+                else if (!Result.ConvertTo(Instruction.ResultType, Converted, Error, NativeWidth_))
                     return Reject(Error);
                 Current.Stack.push_back(std::move(Converted));
                 ++DataCursor_;
@@ -873,6 +887,7 @@ namespace dbc::vm
                 if (!EvaluateUnary(static_cast<UnaryOperation>(Instruction.A), Instruction.ResultType, Operand, Result,
                                    Error))
                     return Reject(Error);
+                WrapArithmetic(Instruction.ResultType, Result);
                 Current.Stack.push_back(std::move(Result));
                 Advance();
                 return true;
@@ -885,6 +900,7 @@ namespace dbc::vm
                 if (!EvaluateBinary(static_cast<BinaryOperation>(Instruction.A), Instruction.ResultType, Left, Right,
                                     Bytecode_->Profile, Result, Error))
                     return Reject(Error);
+                WrapArithmetic(Instruction.ResultType, Result);
                 Current.Stack.push_back(std::move(Result));
                 Advance();
                 return true;
@@ -1180,7 +1196,7 @@ namespace dbc::vm
                 for (std::size_t Index = 0; Index < Called.ParameterCount; ++Index)
                 {
                     if (!Current.Stack[Begin + Index].ConvertTo(Called.Locals[Index].ValueType, Next.Locals[Index],
-                                                                Error))
+                                                                Error, NativeWidth_))
                         return Reject(Error);
                 }
 
@@ -1248,7 +1264,7 @@ namespace dbc::vm
                 if (CurrentFunction.ReturnType.Kind != language::TypeKind::Void)
                 {
                     Value Converted;
-                    if (!Pop().ConvertTo(CurrentFunction.ReturnType, Converted, Error))
+                    if (!Pop().ConvertTo(CurrentFunction.ReturnType, Converted, Error, NativeWidth_))
                         return Reject(Error);
                     Result = std::move(Converted);
                 }

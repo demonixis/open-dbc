@@ -137,21 +137,35 @@ namespace dbc::vm
         return {};
     }
 
-    bool Value::ConvertTo(const language::Type& Target, Value& Result, std::string& Error) const
+    std::int64_t WrapInteger(std::int64_t Number, language::IntegerWidth Width)
+    {
+        switch (Width)
+        {
+            case language::IntegerWidth::Byte:
+                return Number & 0xFF;
+            case language::IntegerWidth::Word:
+                return Number & 0xFFFF;
+            case language::IntegerWidth::DWord:
+                return Number & 0xFFFFFFFF;
+            case language::IntegerWidth::Int32:
+                return static_cast<std::int32_t>(static_cast<std::uint32_t>(Number & 0xFFFFFFFF));
+            case language::IntegerWidth::Native:
+            case language::IntegerWidth::Int64:
+                break;
+        }
+        return Number;
+    }
+
+    bool Value::ConvertTo(const language::Type& Target, Value& Result, std::string& Error,
+                          language::IntegerWidth NativeWidth) const
     {
         if (Target.Kind == language::TypeKind::Boolean || Target.Kind == language::TypeKind::Integer)
         {
             std::int64_t Number = 0;
             if (!AsInteger(Number, Error))
                 return false;
-            // BYTE, WORD and DWORD keep the low bits, unsigned.
-            if (Target.Width == language::IntegerWidth::Byte)
-                Number &= 0xFF;
-            else if (Target.Width == language::IntegerWidth::Word)
-                Number &= 0xFFFF;
-            else if (Target.Width == language::IntegerWidth::DWord)
-                Number &= 0xFFFFFFFF;
-            Result = Integer(Number);
+            Result = Integer(WrapInteger(
+                Number, Target.Width == language::IntegerWidth::Native ? NativeWidth : Target.Width));
             return true;
         }
         if (Target.Kind == language::TypeKind::Real &&

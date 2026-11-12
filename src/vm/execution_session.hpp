@@ -151,6 +151,10 @@ namespace dbc::vm
         std::size_t DataCursor_ = 0;
         // Whether any user type declares a BYTE, WORD or DWORD field, so field stores look the layout up.
         bool HasSizedFields_ = false;
+        language::IntegerWidth NativeWidth_ = language::IntegerWidth::Native;
+
+        // A DBPro integer result wraps as the original's 32-bit arithmetic does.
+        void WrapArithmetic(const language::Type& ResultType, Value& Result) const;
         std::atomic_bool StopRequested_ = false;
         std::uint64_t NextInvocationId_ = 1;
         std::optional<std::uint64_t> ActiveInvocation_{};

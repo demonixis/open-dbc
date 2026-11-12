@@ -52,7 +52,8 @@ namespace dbc::language::detail
             Name = Canonical(Name);
             if (Name == "BOOLEAN" || Name == "BOOL")
             {
-                return {TypeKind::Boolean, {}};
+                // The original runtime stores a BOOLEAN as an unsigned byte.
+                return {TypeKind::Boolean, {}, IntegerWidth::Byte};
             }
             if (Name == "BYTE")
                 return {TypeKind::Integer, {}, IntegerWidth::Byte};
@@ -60,7 +61,9 @@ namespace dbc::language::detail
                 return {TypeKind::Integer, {}, IntegerWidth::Word};
             if (Name == "DWORD")
                 return {TypeKind::Integer, {}, IntegerWidth::DWord};
-            if (Name == "INTEGER" || Name == "DOUBLE INTEGER")
+            if (Name == "DOUBLE INTEGER")
+                return {TypeKind::Integer, {}, IntegerWidth::Int64};
+            if (Name == "INTEGER")
             {
                 return {TypeKind::Integer, {}};
             }
