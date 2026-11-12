@@ -10,7 +10,7 @@ Publication:
 
 ## Work lots
 
-In order. Each lot is one session; lots 2 to 4 come before any new command set.
+In order. Each lot is one session; lots 3 and 4 come before any new command set.
 The DBPro help (`Install/Help`) is the reference; arrays already match it
 (`DIM a(10)` gives indices 0 to 10).
 
@@ -19,19 +19,17 @@ Conformance:
 - [ ] Arithmetic ranking, left from lot 1: the original compiler reduces `/` before
   `*` and `-` before `+` (`2*6/4` would be 2). Confirm on a real DBPro build before
   following it.
-- [ ] Lot 2, reference evidence: pinned snapshots of the help pages and of the
-  commands the official examples use, in `scripts/data/`; the audit computes
-  "referenced" (help, examples, implemented plugin, mobile and VR additions) and
-  lists the rest.
-- [ ] Lot 3, remove unreferenced commands from the catalogue, from the lot 2 list:
-  about 195 names known only from SDK string tables (quaternions and vectors, 117
-  names, stay), the whole 3D Cloth & Particles plugin (157), 25 undocumented DarkPHYSICS
-  forms and the 98 reserved placeholders. They never existed for a DBPro user, so
-  they go without a diagnostic. Regenerate evidence, manifests, references and the parity numbers below.
+- [ ] Lot 3, remove the 410 symbols `audit_language_catalogue.py --list-unreferenced`
+  prints, then make the audit reject any new one: the whole 3D Cloth & Particles
+  plugin (157), the reserved placeholders (98), 129 forms known only from SDK string
+  tables (objects 35, MultiplayerPlus 28, core 20, Bullet ragdolls 20, setup 16, ten
+  others; quaternions and vectors stay) and 26 undocumented DarkPHYSICS forms. They
+  never existed for a DBPro user, so they go without a diagnostic. Regenerate
+  evidence, manifests, references and the parity numbers below.
 - [ ] Lot 4, GameFX and help-only commands: a per-form status of the 50 GameFX
   pages; the 12 static forms Classic already runs with the same signature, enabled
-  in `dbpro`; `OBJECT BLOCKING` and the 19 `LFX` pages catalogued or named by a
-  diagnostic.
+  in `dbpro`; `OBJECT BLOCKING` and the 19 `LFX` pages, the only help pages without a
+  catalogue row, catalogued or named by a diagnostic.
 
 Scene view:
 

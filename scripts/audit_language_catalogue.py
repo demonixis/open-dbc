@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 
 import generate_dbpro_extension_evidence as extension_evidence
+import generate_dbpro_reference_evidence as reference_evidence
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -487,6 +488,87 @@ def audit_free_sources(entries: list[tuple]) -> None:
             require(entry[2] in names, f"DBPro form has no free source: {entry[1]} {entry[2]}")
 
 
+# Decisions that override the evidence: the quaternion and vector forms stay although only the SDK
+# string tables name them, and 3D Cloth & Particles goes although its examples call it.
+KEPT_SDK_SOURCES = ("DarkSDK/Transforms/Transforms.rc", "DarkSDK/Vectors/Vectors.rc")
+REMOVED_SURFACES = {"Cloth"}
+
+
+def reference_reasons(entries: list[tuple]) -> dict[str, list[str]]:
+    """SymbolId -> why a DBPro symbol is referenced; an empty list marks one that exists nowhere."""
+    help_names = reference_evidence.ReadNames(reference_evidence.HELP_EVIDENCE)
+    example_names = reference_evidence.ReadNames(reference_evidence.EXAMPLE_EVIDENCE)
+    with DBPRO_EVIDENCE.open(newline="") as source:
+        keyword_names = {row["name"] for row in
+                         csv.DictReader((line for line in source if not line.startswith("#")), delimiter="\t")}
+    with DBPRO_EXTENSION_EVIDENCE.open(newline="", encoding="utf-8") as source:
+        extensions = list(csv.DictReader((line for line in source if not line.startswith("#")), delimiter="\t"))
+    surfaces: dict[str, set[str]] = {}
+    kept = set()
+    for row in extensions:
+        surfaces.setdefault(row["symbol_id"], set()).add(row["surface"])
+        if any(source in row["sources"] for source in KEPT_SDK_SOURCES):
+            kept.add(row["symbol_id"])
+    result = {}
+    for symbol_id, kind, name, profiles, *_, implemented, evidence in entries:
+        if profiles == 1:
+            continue  # Classic is frozen.
+        reasons = []
+        if surfaces.get(symbol_id, set()) & REMOVED_SURFACES:
+            result[symbol_id] = reasons
+            continue
+        if name in help_names:
+            reasons.append("help")
+        if evidence & 1:
+            reasons.append("classic help")
+        if name in example_names and kind != "Reserved":
+            reasons.append("examples")
+        if evidence & 4:
+            reasons.append("opendbc")
+        if evidence & 16 or "Enhancement" in surfaces.get(symbol_id, set()):
+            reasons.append("implemented plugin")
+        if symbol_id in kept:
+            reasons.append("kept")
+        if kind in {"Statement", "Operator", "Directive"} and name in keyword_names:
+            reasons.append("keywords")
+        if kind != "Reserved" and implemented & 2 and not reasons:
+            reasons.append("implemented")
+        result[symbol_id] = reasons
+    return result
+
+
+def list_unreferenced(entries: list[tuple]) -> None:
+    reasons = reference_reasons(entries)
+    with DBPRO_EXTENSION_EVIDENCE.open(newline="", encoding="utf-8") as source:
+        origins = {row["symbol_id"]: row["surface"] + " " + row["sources"].split(",")[0].rsplit("/", 1)[-1]
+                   for row in csv.DictReader((line for line in source if not line.startswith("#")), delimiter="\t")}
+    groups: dict[str, list[str]] = {}
+    only_implemented = []
+    for symbol_id, kind, name, *_ in entries:
+        if symbol_id not in reasons:
+            continue
+        if not reasons[symbol_id]:
+            origin = "Reserved placeholder" if kind == "Reserved" else origins.get(symbol_id, "keyword files only")
+            groups.setdefault(origin, []).append(f"{kind} {name}")
+        elif reasons[symbol_id] == ["implemented"]:
+            only_implemented.append(f"{kind} {name}")
+    total = sum(map(len, groups.values()))
+    print(f"Unreferenced DBPro symbols: {total}")
+    for origin, names in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
+        print(f"\n{origin} ({len(names)})")
+        for name in sorted(names):
+            print(f"  {name}")
+    print(f"\nKept only because they run ({len(only_implemented)})")
+    for name in sorted(only_implemented):
+        print(f"  {name}")
+    catalogued = {entry[2] for entry in entries}
+    missing = sorted(name for name in reference_evidence.ReadNames(reference_evidence.HELP_EVIDENCE)
+                     if name not in catalogued)
+    print(f"\nHelp pages without a catalogue row ({len(missing)})")
+    for name in missing:
+        print(f"  {name}")
+
+
 def audit_dbpro(root: Path) -> None:
     commit = subprocess.check_output(
         ["git", "-C", str(root), "rev-parse", "HEAD"], text=True
@@ -499,6 +581,9 @@ def audit_dbpro(root: Path) -> None:
     generated_extensions = extension_evidence.EvidenceText(extension_evidence.BuildEvidence(root))
     require(DBPRO_EXTENSION_EVIDENCE.read_text(encoding="utf-8") == generated_extensions,
             "DBPro extension evidence differs from pinned source")
+    for path, generated in zip((reference_evidence.HELP_EVIDENCE, reference_evidence.EXAMPLE_EVIDENCE),
+                               reference_evidence.Generate(root)):
+        require(path.read_text(encoding="utf-8") == generated, f"{path.name} differs from pinned source")
 
 
 def main() -> None:
@@ -511,6 +596,8 @@ def main() -> None:
                         help="rewrite the tracked Classic evidence snapshot from --dbc-help-root")
     parser.add_argument("--refresh-dbpro-evidence", action="store_true",
                         help="rewrite the tracked DBPro evidence snapshot from --dbpro-root")
+    parser.add_argument("--list-unreferenced", action="store_true",
+                        help="print the DBPro symbols that no help page, example or implemented plugin names")
     args = parser.parse_args()
     entries, catalogue = audit_catalogue()
     if args.dbc_help_root:
@@ -531,6 +618,10 @@ def main() -> None:
     audit_dbpro_evidence(catalogue)
     audit_dbpro_extension_evidence(catalogue)
     audit_free_sources(entries)
+    reference_reasons(entries)
+    if args.list_unreferenced:
+        list_unreferenced(entries)
+        return
     callables = sum(entry[1] in {"Command", "Function"} for entry in entries)
     print(f"Language catalogue audit passed: {len(entries)} symbols, {callables} callables")
 

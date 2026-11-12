@@ -166,6 +166,10 @@ Generated files are never edited by hand; each has a `--check` gate:
 `scripts/data/` also holds the audit inputs:
 
 - per-symbol provenance for Classic, DBPro and ODE;
+- the DBPro commands its help documents and its official examples call
+  (`generate_dbpro_reference_evidence.py --dbpro-root`):
+  `audit_language_catalogue.py --list-unreferenced` prints the `DbPro` symbols that
+  no help page, example, implemented plugin or OpenDBC addition names;
 - the digests of removed DarkBASIC files, which must never return;
 - the MIDI fallback list and the DBPro project inventory;
 - the [Studio literals](localization.md#audit) that stay untranslated.
