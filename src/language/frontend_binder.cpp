@@ -764,7 +764,11 @@ namespace dbc::language::detail
                     // Classic programs DIM an array again for each new level; the VM reallocates it.
                     const bool ClassicRedim = Source_.Profile == LanguageProfile::Dbc && Value.ArrayRank != 0 &&
                                               Iterator->second.ArrayRank == Value.ArrayRank;
-                    if (!GlobalReference && !ClassicRedim)
+                    // DBPro resizes an array that is dimensioned again and keeps its contents.
+                    const bool ProfessionalRedim = Source_.Profile == LanguageProfile::DbPro && Value.ArrayRank != 0 &&
+                                                   Iterator->second.ArrayRank == Value.ArrayRank &&
+                                                   Iterator->second.ValueType == Value.DeclaredType;
+                    if (!GlobalReference && !ClassicRedim && !ProfessionalRedim)
                     {
                         Duplicate("DBC2019", "Duplicate variable declaration '" + Name + "'", Value.Span,
                                   Iterator->second.Declaration);

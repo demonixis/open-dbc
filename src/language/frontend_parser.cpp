@@ -1145,10 +1145,13 @@ namespace dbc::language::detail
                     return ParseAssignment(Value);
                 if (FirstIs(Value, "DIM"))
                     return ParseDeclaration(Value, StorageClass::Dim, 1);
+                // `LOCAL DIM a(n)` and `GLOBAL DIM a(n)` name the array after DIM.
+                const std::size_t ScopedName =
+                    Value.Tokens.size() > 1 && IsWord(Source_, Value.Tokens[1], "DIM") ? 2 : 1;
                 if (FirstIs(Value, "LOCAL"))
-                    return ParseDeclaration(Value, StorageClass::Local, 1);
+                    return ParseDeclaration(Value, StorageClass::Local, ScopedName);
                 if (FirstIs(Value, "GLOBAL"))
-                    return ParseDeclaration(Value, StorageClass::Global, 1);
+                    return ParseDeclaration(Value, StorageClass::Global, ScopedName);
                 if (FirstIs(Value, "INC") || FirstIs(Value, "DEC"))
                     return ParseIncDec(Value);
                 if (FirstIs(Value, "GOTO") || FirstIs(Value, "GOSUB"))
@@ -1283,7 +1286,15 @@ namespace dbc::language::detail
                         AddError(Program_.Diagnostics, "DBC1210", "Array dimensions require ')'", Value.Span);
                         return Result;
                     }
-                    Result.Expressions = ParseExpressionList(Value.Tokens, Position + 1, Close);
+                    if (Close == Position + 1 && Source_.Profile == LanguageProfile::DbPro)
+                    {
+                        // DBPro `DIM a()` declares an empty list, which the original writes as a bound of -1.
+                        Result.Expressions.push_back(MakeInteger(Value.Span, -1));
+                    }
+                    else
+                    {
+                        Result.Expressions = ParseExpressionList(Value.Tokens, Position + 1, Close);
+                    }
                     Result.ArrayRank = Result.Expressions.size();
                     Position = Close + 1;
                 }

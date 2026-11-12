@@ -284,8 +284,12 @@ TEST_CASE("Classic tolerates the array and call slips its shipped programs conta
     CHECK(HasCode(Unknown, "DBC2031"));
 
     const dbc::language::Program Professional = dbc::language::Compile(
-        Source("dim map(2)\ndim map(3)\nundim nothing(1)\nx=abs(1\n", dbc::language::LanguageProfile::DbPro));
-    CHECK(HasCode(Professional, "DBC2019"));
+        Source("dim map(2)\ndim map(3)\ndim map(2,2)\nundim nothing(1)\nx=abs(1\n",
+               dbc::language::LanguageProfile::DbPro));
+    // DBPro resizes an array dimensioned again; only a change of rank or type is a duplicate.
+    REQUIRE(Professional.Diagnostics.size() >= 1);
+    CHECK(std::count_if(Professional.Diagnostics.begin(), Professional.Diagnostics.end(),
+                        [](const auto& Diagnostic) { return Diagnostic.Code == "DBC2019"; }) == 1);
     CHECK(HasCode(Professional, "DBC2048"));
     CHECK(HasCode(Professional, "DBC1106"));
 }

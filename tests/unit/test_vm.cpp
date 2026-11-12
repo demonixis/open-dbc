@@ -349,6 +349,48 @@ TEST_CASE("DBPro NOT complements a value, tests a condition for zero and '..' co
     CHECK(Session.Global("m")->AsInteger() == 5);
 }
 
+TEST_CASE("DBPro DIM resizes an existing array, declares empty lists and follows LOCAL and GLOBAL")
+{
+    const auto Module = Compile("dim row(3)\n"
+                                "row(3) = 4\n"
+                                "dim row(5)\n"
+                                "kept = row(3)\n"
+                                "dim grid(2,2)\n"
+                                "grid(1,2) = 5 : grid(2,1) = 6\n"
+                                "dim grid(3,1)\n"
+                                "grid_kept = grid(2,1)\n"
+                                "grid_cut = grid(1,1)\n"
+                                "undim row()\n"
+                                "dim row(8)\n"
+                                "cleared = row(3)\n"
+                                "dim list() as integer\n"
+                                "empty_count = array count(list())\n"
+                                "array insert at bottom list()\n"
+                                "list() = 7\n"
+                                "list_count = array count(list())\n"
+                                "first = list(0)\n"
+                                "global dim shared(5)\n"
+                                "shared(5) = 2\n"
+                                "result = Twice()\n"
+                                "function Twice()\n"
+                                "  local dim work(3)\n"
+                                "  work(3) = shared(5) * 2\n"
+                                "endfunction work(3)\n",
+                                dbc::language::LanguageProfile::DbPro);
+    TestHost Host;
+    dbc::vm::ExecutionSession Session;
+    REQUIRE(Session.Prepare(Module, Host));
+    RunToCompletion(Session);
+    CHECK(Session.Global("kept")->AsInteger() == 4);
+    CHECK(Session.Global("grid_kept")->AsInteger() == 6);
+    CHECK(Session.Global("grid_cut")->AsInteger() == 0);
+    CHECK(Session.Global("cleared")->AsInteger() == 0);
+    CHECK(Session.Global("empty_count")->AsInteger() == -1);
+    CHECK(Session.Global("list_count")->AsInteger() == 0);
+    CHECK(Session.Global("first")->AsInteger() == 7);
+    CHECK(Session.Global("result")->AsInteger() == 4);
+}
+
 TEST_CASE("DBPro dynamic array collections use verified VM state")
 {
     const auto Module = Compile("type Item\n"

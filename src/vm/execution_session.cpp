@@ -364,6 +364,33 @@ namespace dbc::vm
             }
         }
 
+        // DBPro DIM on an existing array resizes it: elements whose indices fit the new bounds stay.
+        void KeepArrayContents(const ArrayValue* Old, ArrayValue& New)
+        {
+            if (!Old || Old->Elements.empty() || New.Elements.empty() || Old->Dimensions.size() != New.Dimensions.size() ||
+                !(Old->ElementType == New.ElementType))
+                return;
+            const std::size_t Rank = Old->Dimensions.size();
+            for (std::size_t OldFlat = 0; OldFlat < Old->Elements.size(); ++OldFlat)
+            {
+                // Indices are flattened with the last dimension varying fastest.
+                std::size_t Remainder = OldFlat;
+                std::size_t NewFlat = 0;
+                std::size_t Scale = 1;
+                bool Fits = true;
+                for (std::size_t Dimension = Rank; Dimension > 0 && Fits; --Dimension)
+                {
+                    const std::size_t Index = Remainder % Old->Dimensions[Dimension - 1];
+                    Remainder /= Old->Dimensions[Dimension - 1];
+                    Fits = Index < New.Dimensions[Dimension - 1];
+                    NewFlat += Index * Scale;
+                    Scale *= New.Dimensions[Dimension - 1];
+                }
+                if (Fits)
+                    New.Elements[NewFlat] = Old->Elements[OldFlat];
+            }
+        }
+
         ArrayValue* FindArray(Value& Slot)
         {
             auto* Array = std::get_if<std::shared_ptr<ArrayValue>>(&Slot.Data());
@@ -662,14 +689,17 @@ namespace dbc::vm
                 Array->ElementType = Definition.ValueType;
                 std::size_t ElementCount = 1;
                 Array->Dimensions.reserve(Bounds.size());
+                const bool Professional = Bytecode_->Profile == language::LanguageProfile::DbPro;
                 for (const std::int64_t Bound : Bounds)
                 {
-                    if (Bound < 0)
+                    // A DBPro list starts empty with a bound of -1, as `DIM a()` declares it.
+                    const bool EmptyList = Professional && Bound == -1 && Bounds.size() == 1;
+                    if (Bound < 0 && !EmptyList)
                         return Reject("Array dimension cannot be negative");
                     const auto UnsignedBound = static_cast<std::uint64_t>(Bound);
-                    if (UnsignedBound >= std::numeric_limits<std::size_t>::max())
+                    if (!EmptyList && UnsignedBound >= std::numeric_limits<std::size_t>::max())
                         return Reject("Array dimension is too large");
-                    const std::size_t Extent = static_cast<std::size_t>(UnsignedBound) + 1;
+                    const std::size_t Extent = EmptyList ? 0 : static_cast<std::size_t>(UnsignedBound) + 1;
                     if (Extent != 0 && ElementCount > std::numeric_limits<std::size_t>::max() / Extent)
                         return Reject("Array size is too large");
                     ElementCount *= Extent;
@@ -682,6 +712,8 @@ namespace dbc::vm
                 if (!DefaultValue(Array->ElementType, *Bytecode_, Initial, Error))
                     return Reject(Error);
                 Array->Elements.resize(ElementCount, Initial);
+                if (Professional)
+                    KeepArrayContents(FindArray(ScopedSlot(Instruction.A, Instruction.C)), *Array);
                 ScopedSlot(Instruction.A, Instruction.C) = Value::Array(std::move(Array), Definition.ValueType);
                 Advance();
                 return true;
