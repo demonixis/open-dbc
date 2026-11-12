@@ -46,7 +46,7 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 
 | Limit | Value | Diagnostic |
 | --- | --- | --- |
-| Statement blocks, ELSEIF branches, inline `IF` bodies and expression operands, nested together | 100 levels | `DBC1226` for a block, `DBC1107` for an expression |
+| Statement blocks, inline `IF` bodies and expression operands, nested together | 100 levels | `DBC1226` for a block, `DBC1107` for an expression |
 | Function call depth, the main program included | 100,000 frames | `DBC5000` at run time |
 | `GOSUB` without `RETURN` in one function | 100,000 | `DBC5000` at run time |
 | Elements of one array, from `DIM` or `ARRAY INSERT` | 2^25 (2 GiB of values) | `DBC5000` at run time |

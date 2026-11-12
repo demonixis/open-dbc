@@ -810,7 +810,7 @@ namespace dbc::language::detail
             static bool IsTerminatorWord(std::string_view Word)
             {
                 static const std::set<std::string_view> Words = {
-                    "NEXT",  "ENDWHILE",  "UNTIL", "LOOP",    "ELSEIF",      "ELSE",
+                    "NEXT",  "ENDWHILE",  "UNTIL", "LOOP",    "ELSE",
                     "ENDIF", "ENDSELECT", "CASE",  "ENDCASE", "ENDFUNCTION", "ENDTYPE",
                 };
                 return Words.contains(Word);
@@ -1065,34 +1065,11 @@ namespace dbc::language::detail
                     return Result;
                 }
 
-                Result.Body = ParseBlock({"ELSEIF", "ELSE", "ENDIF"});
-                const DepthScope Scope(Depth_);
-                Statement* Branch = &Result;
-                while (!AtEnd() && FirstIs(Peek(), "ELSEIF"))
-                {
-                    // Each ELSEIF branch sits in the ELSE body of the previous one.
-                    ++Depth_;
-                    if (!RoomForBlock(Peek().Span))
-                    {
-                        SkipBlock({"ENDIF"});
-                        break;
-                    }
-                    Segment ElseIfHeader = Take();
-                    const std::size_t ElseIfThen = FindTopLevelWord(ElseIfHeader.Tokens, "THEN", 1);
-                    Statement ElseIf;
-                    ElseIf.Kind = StatementKind::If;
-                    ElseIf.Span = ElseIfHeader.Span;
-                    ElseIf.Builtin = SymbolId::Statement_Elseif;
-                    ElseIf.Expressions.push_back(ParseExpression(
-                        ElseIfHeader.Tokens, 1, ElseIfThen == Npos ? ElseIfHeader.Tokens.size() : ElseIfThen));
-                    ElseIf.Body = ParseBlock({"ELSEIF", "ELSE", "ENDIF"});
-                    Branch->ElseBody.push_back(std::move(ElseIf));
-                    Branch = &Branch->ElseBody.back();
-                }
+                Result.Body = ParseBlock({"ELSE", "ENDIF"});
                 if (!AtEnd() && FirstIs(Peek(), "ELSE"))
                 {
                     Take();
-                    Branch->ElseBody = ParseBlock({"ENDIF"});
+                    Result.ElseBody = ParseBlock({"ENDIF"});
                 }
                 CloseBlock(Result, "ENDIF", "IF has no matching ENDIF");
                 return Result;

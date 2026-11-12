@@ -2472,7 +2472,6 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `DOUBLE INTEGER` | Statement | 13 | grammar form | Implemented | DBPro snapshot | DarkBASIC Professional statement implemented with an observable contract. |
 | `DWORD` | Statement | 4 | grammar form | Implemented | DBPro snapshot | DarkBASIC Professional statement implemented with an observable contract. |
 | `ELSE` | Statement | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional statement implemented with an observable contract. |
-| `ELSEIF` | Statement | 0 | grammar form | Implemented | DBPro snapshot | DarkBASIC Professional statement implemented with an observable contract. |
 | `END` | Statement | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional statement implemented with an observable contract. |
 | `ENDCASE` | Statement | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional statement implemented with an observable contract. |
 | `ENDFUNCTION` | Statement | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional statement implemented with an observable contract. |

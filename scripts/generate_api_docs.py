@@ -513,10 +513,6 @@ BASICS_DOC = {
         "desc": "Alternative branch of an IF block, executed when the condition is false.",
         "syntax": "IF Condition\n   Actions\nELSE\n   Other actions\nENDIF",
         "example": 'age = 15\nif age >= 18\n   print "Adult"\nelse\n   print "Minor"\nendif\nwait key'},
-    "ELSEIF": {
-        "desc": "DBPro only: chains another condition inside an IF block without nesting a new block.",
-        "syntax": "IF Condition1\n   …\nELSEIF Condition2\n   …\nELSE\n   …\nENDIF",
-        "example": 'grade = 14\nif grade >= 16\n   print "Very good"\nelseif grade >= 10\n   print "Pass"\nelse\n   print "Fail"\nendif\nwait key'},
     "ENDIF": {
         "desc": "Ends a multi-line IF block.",
         "syntax": "IF Condition\n   Actions\nENDIF",
@@ -757,7 +753,7 @@ def esc(s: str) -> str:
 
 
 HIGHLIGHT_KEYWORDS = {
-    "IF", "THEN", "ELSE", "ELSEIF", "ENDIF", "FOR", "NEXT", "STEP", "TO",
+    "IF", "THEN", "ELSE", "ENDIF", "FOR", "NEXT", "STEP", "TO",
     "WHILE", "ENDWHILE", "REPEAT", "UNTIL", "DO", "LOOP", "EXIT", "SELECT",
     "CASE", "ENDCASE", "ENDSELECT", "DEFAULT", "GOSUB", "RETURN", "GOTO",
     "FUNCTION", "ENDFUNCTION", "EXITFUNCTION", "DIM", "UNDIM", "DATA", "READ",

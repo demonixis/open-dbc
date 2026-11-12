@@ -317,7 +317,7 @@ TEST_CASE("Arrays and UDT assignments preserve value semantics")
     CHECK(Session.Global("answer")->AsInteger() == 6);
 }
 
-TEST_CASE("DBPro ELSEIF and dynamic array collections use verified VM state")
+TEST_CASE("DBPro dynamic array collections use verified VM state")
 {
     const auto Module = Compile("type Item\n"
                                 "  value as integer\n"
@@ -357,10 +357,8 @@ TEST_CASE("DBPro ELSEIF and dynamic array collections use verified VM state")
                                 "empty_valid = array index valid(items())\n"
                                 "if count_before = 99 then\n"
                                 "  branch = 1\n"
-                                "elseif count_after = 2 then\n"
-                                "  branch = 2\n"
                                 "else\n"
-                                "  branch = 3\n"
+                                "  if count_after = 2 then branch = 2 else branch = 3\n"
                                 "endif\n",
                                 dbc::language::LanguageProfile::DbPro);
     TestHost Host;

@@ -53,18 +53,12 @@ namespace
         Loops += "x = 1\n";
         for (std::size_t Index = Depth; Index > 0; --Index)
             Loops += "next i" + std::to_string(Index - 1) + "\n";
-        std::string ElseIfs = "if x = 0\nx = 1\n";
-        // The IF body is one level deep and each ELSEIF branch nests one more.
-        for (std::size_t Index = 1; Index < Depth; ++Index)
-            ElseIfs += "elseif x = " + std::to_string(Index) + "\nx = 2\n";
-        ElseIfs += "endif\n";
         return {
             "x = " + Repeat("(", Depth) + "1" + Repeat(")", Depth) + "\n",
             "x = 1" + Repeat("+1", Depth) + "\n",
             "x = " + Repeat("- ", Depth) + "1\n",
             "x = " + Repeat("abs(", Depth) + "1" + Repeat(")", Depth) + "\n",
             Loops,
-            ElseIfs,
             Repeat("if x = 0 then ", Depth) + "x = 1\n",
             Repeat("if x = 0\n", Depth / 2) + "x = " + Repeat("(", Depth - Depth / 2) + "1" +
                 Repeat(")", Depth - Depth / 2) + "\n" + Repeat("endif\n", Depth / 2),
@@ -565,28 +559,15 @@ TEST_CASE("Parser builds structured control-flow AST")
     CHECK(If.ElseBody.size() == 1);
 }
 
-TEST_CASE("DBPro block ELSEIF retains profile ownership and trailing THEN")
+TEST_CASE("ELSEIF is not a DBPro keyword")
 {
-    const std::string Text = "if 0 then\n"
+    const std::string Text = "if 0\n"
                              "  print 0\n"
-                             "elseif 1 then\n"
+                             "elseif 1\n"
                              "  print 1\n"
-                             "else\n"
-                             "  print 2\n"
                              "endif\n";
-    const dbc::language::Program Professional =
-        dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro, "elseif.dba"));
-    REQUIRE_FALSE(Professional.HasErrors());
-    REQUIRE(Professional.Statements.size() == 1);
-    REQUIRE(Professional.Statements.front().ElseBody.size() == 1);
-    const dbc::language::Statement& ElseIf = Professional.Statements.front().ElseBody.front();
-    CHECK(ElseIf.Builtin == dbc::language::SymbolId::Statement_Elseif);
-    CHECK(ElseIf.Body.size() == 1);
-    CHECK(ElseIf.ElseBody.size() == 1);
-
-    const dbc::language::Program Classic =
-        dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::Dbc, "elseif.dba"));
-    CHECK(HasCode(Classic, "DBC2014"));
+    for (const auto Profile : {dbc::language::LanguageProfile::DbPro, dbc::language::LanguageProfile::Dbc})
+        CHECK(dbc::language::Compile(Source(Text, Profile, "elseif.dba")).HasErrors());
 }
 
 TEST_CASE("Binder resolves scopes arrays UDTs functions and numeric conversions")
@@ -1256,7 +1237,7 @@ TEST_CASE("Nesting past the limit reports one diagnostic and parses what follows
 {
     const std::vector<std::string> Programs = NestedPrograms(dbc::language::KMaxNestingDepth + 1);
     const std::vector<std::string> Expected = {"DBC1107", "DBC1107", "DBC1107", "DBC1107",
-                                               "DBC1226", "DBC1226", "DBC1226", "DBC1107"};
+                                               "DBC1226", "DBC1226", "DBC1107"};
     REQUIRE(Programs.size() == Expected.size());
     const std::vector<NestedBuild> Results = BuildOnSecondaryThread(Programs);
     REQUIRE(Results.size() == Programs.size());

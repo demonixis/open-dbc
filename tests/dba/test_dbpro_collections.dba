@@ -46,8 +46,6 @@ print array count(values())
 
 if 0 then
     print "wrong"
-elseif 1 then
-    print "elseif"
 else
-    print "wrong"
+    print "else"
 endif
