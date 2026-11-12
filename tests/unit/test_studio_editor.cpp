@@ -385,6 +385,11 @@ namespace
             return *Editor_.CurrentEditor();
         }
 
+        panels::EditorPanel& Panel()
+        {
+            return Editor_;
+        }
+
         const ImGuiWindow* EditorWindow() const
         {
             for (const ImGuiWindow* Window : ImGui::GetCurrentContext()->Windows)
@@ -1253,4 +1258,45 @@ TEST_CASE("Recovery copies follow the unsaved tabs and survive for the next Stud
     CHECK(CountCopies() == 1);
     Writer.Clear();
     CHECK(CountCopies() == 0);
+}
+
+TEST_CASE("Studio completion writes the program's own names, fields and included functions")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "opendbc-test-studio-completion";
+    std::error_code Error;
+    std::filesystem::remove_all(Root, Error);
+    std::filesystem::create_directories(Root / "lib", Error);
+    REQUIRE_FALSE(Error);
+    std::ofstream(Root / "lib" / "hud.dba") << "function DrawHud(lives)\nendfunction\n";
+    std::ofstream(Root / "game.dba") << "\n"
+                                        "#include \"lib/hud.dba\"\n"
+                                        "type Player\n"
+                                        "  Score\n"
+                                        "  name$\n"
+                                        "endtype\n"
+                                        "hero as Player\n";
+
+    CompletionHarness Harness(Root / "game.dba");
+    Harness.Panel().SetProfile(dbc::language::LanguageProfile::DbPro);
+    Harness.Frame();
+
+    // A field after the dot, in the spelling of its declaration.
+    Harness.Type("hero.sc");
+    REQUIRE(Harness.Popup() != nullptr);
+    Harness.Press(ImGuiKey_Enter);
+    CHECK(Harness.Text().starts_with("hero.Score\n"));
+
+    // A function of an included file comes before the builtins, and its parameters show in the hint.
+    Harness.Type(" = dra");
+    Harness.Press(ImGuiKey_Enter);
+    CHECK(Harness.Text().starts_with("hero.Score = DrawHud\n"));
+    Harness.Type("(");
+    CHECK(Harness.Hint() != nullptr);
+
+    // A name typed in full keeps Enter for the new line.
+    Harness.Type("hero");
+    Harness.Press(ImGuiKey_Enter);
+    // The editor closed the parenthesis, which the new line carries down.
+    CHECK(Harness.Text().starts_with("hero.Score = DrawHud(hero\n)\n"));
+    std::filesystem::remove_all(Root, Error);
 }

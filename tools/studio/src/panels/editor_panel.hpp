@@ -10,6 +10,7 @@
 
 #include "core/recovery.hpp"
 #include "core/text_encoding.hpp"
+#include "dba/source_symbols.hpp"
 #include "language/language_profile.hpp"
 #include "panels/completion_popup.hpp"
 #include <TextEditor.h>
@@ -146,7 +147,14 @@ namespace dbc::studio
                 float RenderedFontSize = 0.0f;
                 // Identifies the document in the order the tab bar keeps.
                 ImGuiID TabId = 0;
+                // What completion offers beside the builtins, parsed again a moment after an edit.
+                dba::SourceSymbols Symbols;
+                std::optional<size_t> SymbolsUndoIndex;
+                double SymbolsDueAt = 0.0;
             };
+
+            // Keeps Doc.Symbols current: at once the first time, then once typing pauses.
+            void RefreshSymbols(Document& Doc);
 
             void ApplyErrorMarkers(Document& Doc);
 

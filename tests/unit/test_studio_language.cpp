@@ -21,7 +21,7 @@ namespace
     bool Contains(const dba::Completion& Completion, std::string_view Name)
     {
         return std::any_of(Completion.Items.begin(), Completion.Items.end(),
-                           [&](const dba::Command* Entry) { return Entry->Classic == Name; });
+                           [&](const dba::CompletionItem& Entry) { return Entry.Name == Name; });
     }
 } // namespace
 
@@ -59,20 +59,21 @@ TEST_CASE("Studio completion follows a command name across its words")
     CHECK(Set.Items.size() == SetCommands);
     CHECK(Set.Items.size() > 40);
     CHECK(Set.Selection == dba::CompletionSelection::None);
-    CHECK(std::is_sorted(Set.Items.begin(), Set.Items.end(), [](const dba::Command* Left, const dba::Command* Right)
-                         { return Left->Classic < Right->Classic; }));
+    CHECK(std::is_sorted(Set.Items.begin(), Set.Items.end(),
+                         [](const dba::CompletionItem& Left, const dba::CompletionItem& Right)
+                         { return Left.Name < Right.Name; }));
 
     const dba::Completion Window = Complete("set window ");
     CHECK(Window.ReplaceStart == 0);
     CHECK(Contains(Window, "SET WINDOW TITLE"));
-    for (const dba::Command* Entry : Window.Items)
+    for (const dba::CompletionItem& Entry : Window.Items)
     {
-        CHECK(Entry->Classic.starts_with("SET WINDOW "));
+        CHECK(Entry.Name.starts_with("SET WINDOW "));
     }
 
     const dba::Completion Title = Complete("    set window ti");
     REQUIRE(Title.Items.size() == 1);
-    CHECK(Title.Items[0]->Classic == "SET WINDOW TITLE");
+    CHECK(Title.Items[0].Name == "SET WINDOW TITLE");
     CHECK(Title.ReplaceStart == 4);
     CHECK(Title.Typed == "set window ti");
     CHECK(Title.Selection == dba::CompletionSelection::Hard);
@@ -94,7 +95,7 @@ TEST_CASE("Studio completion follows a command name across its words")
     const dba::Completion Loose = Complete("title");
     CHECK(Contains(Loose, "SET WINDOW TITLE"));
     CHECK(Loose.Selection == dba::CompletionSelection::Soft);
-    CHECK(Complete("set").Items[0]->Words[0] == "set");
+    CHECK(Complete("set").Items[0].Builtin->Words[0] == "set");
     CHECK(Complete("set").Selection == dba::CompletionSelection::Hard);
     CHECK(Contains(Complete("swt"), "SET WINDOW TITLE"));
     CHECK(Complete("s").Selection == dba::CompletionSelection::Soft);
@@ -445,4 +446,161 @@ TEST_CASE("Program symbols follow includes from the folder of the file that name
     CHECK(Symbols.Types[0].Name == "Widget");
     REQUIRE(Symbols.Shared.size() == 1);
     CHECK(Symbols.Shared[0].Name == "HudScale#");
+}
+
+TEST_CASE("Completion offers the names the program declares, by scope, beside the builtins")
+{
+    dba::Reference Reference;
+    dba::CommandDatabase Commands;
+    Commands.Build(Reference);
+    const dba::SourceSymbols Symbols = dba::BuildSourceSymbols(
+        "game.dba",
+        "type Point\n  x as float\n  y as float\nendtype\n"
+        "type Player\n  Position as Point\n  Score\n  name$\nendtype\n"
+        "#constant ScreenCenter 320\n"
+        "global ScoreTotal\n"
+        "hero as Player\n"
+        "dim Enemies(10) as Player\n"
+        "scale# = 1.0\n"
+        "_Setup:\n"
+        "function Scatter(amount#, who as Player)\n"
+        "  local spread as Point\n"
+        "endfunction\n",
+        LanguageProfile::DbPro);
+    const auto Complete = [&](std::string_view Line, std::uint32_t CursorLine = 14)
+    { return dba::Complete(Commands, LanguageProfile::DbPro, Line, false, &Symbols, CursorLine); };
+    const auto Names = [](const dba::Completion& Completion)
+    {
+        std::vector<std::string> Result;
+        for (const dba::CompletionItem& Item : Completion.Items)
+            if (Item.Builtin == nullptr)
+                Result.push_back(Item.Name);
+        return Result;
+    };
+
+    // The program's names come first, in their own spelling, then the builtins.
+    const dba::Completion Sc = Complete("x = sc");
+    CHECK(Names(Sc) == std::vector<std::string>{"scale#", "Scatter", "ScoreTotal", "ScreenCenter"});
+    REQUIRE(Sc.Items.size() > 4);
+    CHECK(Sc.Items[0].What == dba::CompletionItem::Kind::Variable);
+    CHECK(Sc.Items[0].Detail == "real");
+    CHECK(Sc.Items[1].Detail == "Scatter(amount#, who as Player)");
+    CHECK(Sc.Items[4].Builtin != nullptr);
+    CHECK(Contains(Sc, "SCREEN WIDTH"));
+    CHECK(Sc.ReplaceStart == 4);
+    CHECK(Sc.Selection == dba::CompletionSelection::Hard);
+    CHECK(dba::CompletionText(Sc.Items[1], "sc") == "Scatter");
+    CHECK(dba::CompletionText(Sc.Items[4], "sc") == dba::ApplyTypedCase(Sc.Items[4].Name, "sc"));
+
+    // A name typed in full is not replaced on Enter, and one letter never is.
+    CHECK(Complete("x = hero").Selection == dba::CompletionSelection::Soft);
+    CHECK(Complete("x = h").Selection == dba::CompletionSelection::Soft);
+
+    // Inside a function: its parameters and locals, and what is global; not the main program's variables.
+    const dba::Completion Inside = Complete("  x = s", 16);
+    CHECK(Names(Inside) == std::vector<std::string>{"Scatter", "ScoreTotal", "ScreenCenter", "spread"});
+    CHECK(Names(Complete("  x = am", 16)) == std::vector<std::string>{"amount#"});
+    CHECK(Names(Complete("  x = ene", 16)) == std::vector<std::string>{"Enemies"});
+    CHECK(Names(Complete("x = am")).empty());
+
+    // Labels follow a jump, types follow AS, and neither shows elsewhere.
+    CHECK(Names(Complete("gosub _s")) == std::vector<std::string>{"_Setup"});
+    CHECK(Names(Complete("x = _s")).empty());
+    CHECK(Names(Complete("foe as p")) == std::vector<std::string>{"Player", "Point"});
+    CHECK(Names(Complete("x = po")).empty());
+
+    // A command name over several words keeps the list, and a space or a number suggests no name.
+    CHECK(Names(Complete("set sc")).empty());
+    CHECK(Names(Complete("x = hero ")).empty());
+    CHECK(Names(Complete("x = 12")).empty());
+
+    // Ctrl+Space with nothing typed lists the names in scope, then every builtin.
+    const dba::Completion Everything =
+        dba::Complete(Commands, LanguageProfile::DbPro, "x = ", true, &Symbols, 14);
+    CHECK(Names(Everything).size() == 6);
+    CHECK(Everything.Items.size() > 500);
+    CHECK(Everything.ReplaceStart == 4);
+
+    const dba::CommandHelp Help = dba::DescribeItem(Commands, LanguageProfile::DbPro, Sc.Items[0]);
+    REQUIRE(Help.Signatures.size() == 1);
+    CHECK(Help.Signatures[0] == "scale# as real");
+    CHECK_FALSE(Help.Description.empty());
+}
+
+TEST_CASE("Completion lists the fields of the user type left of a dot")
+{
+    dba::Reference Reference;
+    dba::CommandDatabase Commands;
+    Commands.Build(Reference);
+    const dba::SourceSymbols Symbols = dba::BuildSourceSymbols(
+        "game.dba",
+        "type Point\n  x as float\n  y as float\nendtype\n"
+        "type Player\n  Position as Point\n  Score\n  name$\nendtype\n"
+        "hero as Player\n"
+        "dim Enemies(10) as Player\n"
+        "count = 3\n"
+        "function Reset(who as Player)\n"
+        "endfunction\n",
+        LanguageProfile::DbPro);
+    const auto Complete = [&](std::string_view Line, std::uint32_t CursorLine = 12)
+    { return dba::Complete(Commands, LanguageProfile::DbPro, Line, false, &Symbols, CursorLine); };
+    const auto Names = [](const dba::Completion& Completion)
+    {
+        std::vector<std::string> Result;
+        for (const dba::CompletionItem& Item : Completion.Items)
+            Result.push_back(Item.Name);
+        return Result;
+    };
+
+    // Right after the dot: every field, and no builtin.
+    const dba::Completion All = Complete("hero.");
+    CHECK(Names(All) == std::vector<std::string>{"name$", "Position", "Score"});
+    CHECK(All.Items[1].What == dba::CompletionItem::Kind::Field);
+    CHECK(All.Items[1].Detail == "Point");
+    CHECK(All.ReplaceStart == 5);
+    CHECK(All.Selection == dba::CompletionSelection::Soft);
+
+    const dba::Completion Typed = Complete("print hero.sc");
+    CHECK(Names(Typed) == std::vector<std::string>{"Score"});
+    CHECK(Typed.ReplaceStart == 11);
+    CHECK(Typed.Selection == dba::CompletionSelection::Hard);
+
+    // Through a nested type, an array element and a parameter.
+    CHECK(Names(Complete("hero.position.")) == std::vector<std::string>{"x", "y"});
+    CHECK(Names(Complete("x# = Enemies(count + abs(2)).Position.y")) == std::vector<std::string>{"y"});
+    CHECK(Names(Complete("  who.", 13)) == std::vector<std::string>{"name$", "Position", "Score"});
+
+    // Nothing for a field of a builtin type, an unknown name, a number or a parameter out of scope.
+    CHECK(Complete("hero.score.").Items.empty());
+    CHECK(Complete("nobody.").Items.empty());
+    CHECK(Complete("x = 1.5").Items.empty());
+    CHECK(Complete("who.").Items.empty());
+    // Without symbols a dot suggests nothing, as before.
+    CHECK(dba::Complete(Commands, LanguageProfile::DbPro, "hero.", false).Items.empty());
+}
+
+TEST_CASE("The parameter hint shows a function of the program when no builtin has the name")
+{
+    dba::Reference Reference;
+    dba::CommandDatabase Commands;
+    Commands.Build(Reference);
+    const dba::SourceSymbols Symbols = dba::BuildSourceSymbols(
+        "game.dba",
+        "type Player\n  id\nendtype\nfunction Scatter(amount#, who as Player)\nendfunction\n"
+        "function Idle()\nendfunction\n",
+        LanguageProfile::DbPro);
+    const auto Hint = [&](std::string_view Line)
+    { return dba::FindParameterHint(Commands, LanguageProfile::DbPro, Line, false, &Symbols); };
+
+    const std::optional<dba::ParameterHint> Found = Hint("x = scatter(1.0, ");
+    REQUIRE(Found.has_value());
+    REQUIRE(Found->Overloads.size() == 1);
+    CHECK(Found->Overloads[0].Text() == "Scatter(amount#, who as Player)");
+    CHECK(Found->Argument == 1);
+    CHECK(Found->NameStart == 4);
+    CHECK_FALSE(Hint("idle(").has_value());
+    // A builtin keeps its own hint.
+    const std::optional<dba::ParameterHint> Builtin = Hint("x = rgb(1, ");
+    REQUIRE(Builtin.has_value());
+    CHECK(Builtin->Overloads[0].Prefix == "RGB(");
 }

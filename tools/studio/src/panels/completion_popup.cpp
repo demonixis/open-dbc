@@ -246,14 +246,14 @@ namespace dbc::studio
 
         void CompletionPopup::UpdateHelp()
         {
-            Help_ = Selected_ >= 0 ? dba::DescribeCommand(*Commands_, Profile_,
-                                                          Completion_.Items[static_cast<size_t>(Selected_)]->Classic)
-                                   : dba::CommandHelp{};
+            Help_ = Selected_ >= 0
+                        ? dba::DescribeItem(*Commands_, Profile_, Completion_.Items[static_cast<size_t>(Selected_)])
+                        : dba::CommandHelp{};
         }
 
         void CompletionPopup::Accept(TextEditor& Editor, size_t Item)
         {
-            const std::string Name = dba::ApplyTypedCase(Completion_.Items[Item]->Classic, Completion_.Typed);
+            const std::string Name = dba::CompletionText(Completion_.Items[Item], Completion_.Typed);
             const TextEditor::DocPos Cursor = Editor.GetMainCursorPosition();
             const std::string Line = Editor.GetLineText(Cursor.line);
             const size_t CursorByte = Editor.GetSectionText(TextEditor::DocPos(Cursor.line, 0), Cursor).size();
@@ -286,7 +286,8 @@ namespace dbc::studio
                 return;
             }
 
-            Completion_ = dba::Complete(*Commands_, Profile, Before, Manual);
+            Completion_ = dba::Complete(*Commands_, Profile, Before, Manual, Symbols_,
+                                        static_cast<std::uint32_t>(Cursor.line) + 1);
             if (Completion_.Items.empty())
             {
                 Close();
@@ -296,9 +297,9 @@ namespace dbc::studio
             ReplaceStart_ = TextEditor::DocPos(
                 Cursor.line, GlyphCount(std::string_view(Before).substr(0, Completion_.ReplaceStart)));
             LongestName_ = 0;
-            for (const dba::Command* Entry : Completion_.Items)
+            for (const dba::CompletionItem& Entry : Completion_.Items)
             {
-                LongestName_ = std::max(LongestName_, Entry->Classic.size());
+                LongestName_ = std::max(LongestName_, Entry.Name.size());
             }
             Selected_ = Completion_.Selection == dba::CompletionSelection::None ? -1 : 0;
             Soft_ = Completion_.Selection == dba::CompletionSelection::Soft;
@@ -313,7 +314,7 @@ namespace dbc::studio
                                           const std::string& Before, bool InBlockComment, bool Follow, bool Reopen)
         {
             std::optional<dba::ParameterHint> Found =
-                dba::FindParameterHint(*Commands_, Profile, Before, InBlockComment);
+                dba::FindParameterHint(*Commands_, Profile, Before, InBlockComment, Symbols_);
             if (!Found)
             {
                 Hint_.reset();
@@ -609,7 +610,7 @@ namespace dbc::studio
                         DrawName(
                             DrawList,
                             ImVec2(Min.x + Style.FramePadding.x, Min.y + (RowHeight - ImGui::GetFontSize()) * 0.5f),
-                            Completion_.Items[static_cast<size_t>(Row)]->Classic, Completion_.Typed);
+                            Completion_.Items[static_cast<size_t>(Row)].Name, Completion_.Typed);
                     }
                 }
                 ImGui::EndChild();

@@ -20,12 +20,6 @@ Conformance:
   `*` and `-` before `+` (`2*6/4` would be 2). Confirm on a real DBPro build before
   following it.
 
-Scene view:
-
-- [ ] Lot 9, code completion: names of the file and of its includes (variables,
-  arrays, functions, labels, constants), `TYPE` fields after a dot, user function
-  signatures; parse-only, shared with the Code panel.
-
 Examples:
 
 - [ ] Lot 10, DBPro demos: a dedicated `dbpro` `GOSUB` test, then functions instead

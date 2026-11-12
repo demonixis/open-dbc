@@ -135,8 +135,17 @@ name; only Tab accepts a single letter or a loose match, which may be a variable
 Up, Down, Page Up and Page Down move in the list, Escape closes it and Ctrl+Space
 opens it, listing everything when nothing matches.
 
+The names the program declares come first, in their own spelling: its functions and
+constants, the variables the line sees (a function's parameters and locals, globals
+and arrays, or the main program's variables outside a function), labels after `GOTO`,
+`GOSUB` and `RESTORE`, and user types after `AS`. After a dot the list holds the fields
+of the user type on its left, through nested types and array elements. Files reached
+by `#INCLUDE` count, as they stand in an open tab. Enter starts a new line when a name
+of the program is typed in full. A variable typed only by what it is assigned has no
+fields to list.
+
 Typing the arguments of a builtin, as a statement (`position object 1, `) or a call
-(`rgb(255, `), shows its overloads above the line with the current parameter
+(`rgb(255, `), or those of a function of the program, shows its overloads above the line with the current parameter
 highlighted and optional ones in brackets; an overload that takes fewer arguments dims.
 Escape hides the hint until the next comma or parenthesis, and Ctrl+Shift+Space shows it.
 

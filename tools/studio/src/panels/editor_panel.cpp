@@ -54,6 +54,42 @@ namespace dbc::studio
             Completion_.Initialize(Commands);
         }
 
+        void EditorPanel::RefreshSymbols(Document& Doc)
+        {
+            // Parsing waits for a pause: a keystroke leaves the names of the line being typed unfinished.
+            constexpr double KReparseDelay = 0.3;
+            const size_t UndoIndex = Doc.Editor->GetUndoIndex();
+            const double Now = ImGui::GetTime();
+            const bool First = !Doc.SymbolsUndoIndex.has_value();
+            if (First || *Doc.SymbolsUndoIndex != UndoIndex)
+            {
+                Doc.SymbolsUndoIndex = UndoIndex;
+                Doc.SymbolsDueAt = First ? Now : Now + KReparseDelay;
+            }
+            if (Doc.SymbolsDueAt < 0.0 || Now < Doc.SymbolsDueAt)
+                return;
+            Doc.SymbolsDueAt = -1.0;
+
+            // An included file open in a tab is read as it stands there, saved or not.
+            const dba::SourceReader Read = [this](const std::filesystem::path& Path) -> std::optional<std::string>
+            {
+                std::error_code Ignored;
+                for (const std::unique_ptr<Document>& Other : Documents_)
+                {
+                    if (Other->Basic && !Other->Path.empty() &&
+                        (Other->Path.lexically_normal() == Path || std::filesystem::equivalent(Other->Path, Path, Ignored)))
+                        return Other->Editor->GetText();
+                }
+                std::ifstream In(Path, std::ios::binary);
+                if (!In)
+                    return std::nullopt;
+                const std::string Bytes((std::istreambuf_iterator<char>(In)), std::istreambuf_iterator<char>());
+                core::TextFormat Format;
+                return core::DecodeText(Bytes, Format);
+            };
+            Doc.Symbols = dba::BuildProgramSymbols(Doc.Path, Doc.Editor->GetText(), Doc.Profile, Read);
+        }
+
         void EditorPanel::SetProfile(dbc::language::LanguageProfile Profile)
         {
             ProjectProfile_ = Profile;
@@ -935,6 +971,8 @@ namespace dbc::studio
                         const ImGuiID EditorId = ImGui::GetID("##editor");
                         if (Doc.Basic)
                         {
+                            RefreshSymbols(Doc);
+                            Completion_.SetSymbols(&Doc.Symbols);
                             Completion_.BeforeEditor(*Doc.Editor, EditorId);
                         }
                         const float FontSize = Theme::ZoomedCodeFontSize();

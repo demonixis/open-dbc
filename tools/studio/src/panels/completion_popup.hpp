@@ -27,6 +27,13 @@ namespace dbc::studio
                 Commands_ = Commands;
             }
 
+            // The names the visible tab's program declares, null for none. Only read while the
+            // editor runs: the owner keeps them alive across BeforeEditor and AfterEditor.
+            void SetSymbols(const dba::SourceSymbols* Symbols)
+            {
+                Symbols_ = Symbols;
+            }
+
             // Both run every frame around TextEditor::Render of the visible BASIC tab:
             // the list needs its keys before the editor reads them. `EditorId` is
             // ImGui::GetID of the title given to Render.
@@ -54,6 +61,7 @@ namespace dbc::studio
             void CloseAll();
 
             const dba::CommandDatabase* Commands_ = nullptr;
+            const dba::SourceSymbols* Symbols_ = nullptr;
             bool Open_ = false;
             // Only compared: the tab may have been closed since.
             const TextEditor* Owner_ = nullptr;

@@ -5,6 +5,7 @@
 #include <span>
 
 #include "command_database.hpp"
+#include "source_symbols.hpp"
 #include "language/language_catalogue.hpp"
 
 namespace dbc::studio
@@ -327,7 +328,8 @@ namespace dbc::studio
         // The builtin whose name ends the text, which an opening parenthesis follows. A
         // call in an expression is a function, but a command may also take parentheses.
         std::optional<dba::ParameterHint> CallBefore(const dba::CommandDatabase& Commands,
-                                                     dbc::language::LanguageProfile Profile, std::string_view Text)
+                                                     dbc::language::LanguageProfile Profile, std::string_view Text,
+                                                     const dba::SourceSymbols* Symbols)
         {
             const WordRun Run = ReadWordsBefore(Text);
             for (size_t First = Run.AfterDot ? 1 : 0; First < Run.Words.size(); ++First)
@@ -357,14 +359,197 @@ namespace dbc::studio
                     return Hint;
                 }
             }
+            // A function of the program is one word, the last before the parenthesis.
+            if (Symbols != nullptr && !Run.Words.empty() && !(Run.AfterDot && Run.Words.size() == 1))
+            {
+                for (const dba::SourceFunction& Function : Symbols->Functions)
+                {
+                    if (!EqualsLower(Function.Name, Run.Words.back()) || Function.Parameters.empty())
+                        continue;
+                    dba::ParameterHint Hint;
+                    Hint.Overloads.push_back({Function.Name + "(", Function.Parameters, ")", false});
+                    Hint.NameStart = Run.Starts.back();
+                    return Hint;
+                }
+            }
             return std::nullopt;
+        }
+
+        using ItemKind = dba::CompletionItem::Kind;
+
+        // The names a line of the program sees whose spelling starts with `Prefix` (lower case).
+        class ProgramNames
+        {
+          public:
+            ProgramNames(const dba::SourceSymbols& Symbols, std::uint32_t CursorLine, std::string_view Prefix)
+                : Symbols_(Symbols), Scope_(Symbols.FunctionAt(CursorLine)), Prefix_(Prefix)
+            {
+            }
+
+            void AddVariables()
+            {
+                for (const dba::SourceVariable& Value : Scope_ != nullptr ? Scope_->Locals : Symbols_.Main)
+                    AddVariable(Value);
+                for (const dba::SourceVariable& Value : Symbols_.Shared)
+                    AddVariable(Value);
+            }
+
+            void AddFunctions()
+            {
+                for (const dba::SourceFunction& Function : Symbols_.Functions)
+                {
+                    std::string Signature = Function.Name + "(";
+                    for (std::size_t Index = 0; Index < Function.Parameters.size(); ++Index)
+                        Signature += (Index > 0 ? ", " : "") + Function.Parameters[Index];
+                    Add(Function.Name, ItemKind::Function, Signature + ")");
+                }
+            }
+
+            void AddConstants()
+            {
+                for (const std::string& Name : Symbols_.Constants)
+                    Add(Name, ItemKind::Constant, {});
+            }
+
+            void AddLabels()
+            {
+                for (const std::string& Name : Symbols_.Labels)
+                    Add(Name, ItemKind::Label, {});
+            }
+
+            void AddTypes()
+            {
+                for (const dba::SourceType& Type : Symbols_.Types)
+                    Add(Type.Name, ItemKind::Type, {});
+            }
+
+            void AddFields(const dba::SourceType& Type)
+            {
+                for (const dba::SourceVariable& Field : Type.Fields)
+                    Add(Field.Name, ItemKind::Field, Field.Type);
+            }
+
+            // A variable the line sees, by its lower-case name.
+            const dba::SourceVariable* FindVariable(std::string_view Lower, bool Array) const
+            {
+                const dba::SourceVariable* Other = nullptr;
+                for (const auto* Values : {Scope_ != nullptr ? &Scope_->Locals : &Symbols_.Main, &Symbols_.Shared})
+                {
+                    for (const dba::SourceVariable& Value : *Values)
+                    {
+                        if (!EqualsLower(Value.Name, Lower))
+                            continue;
+                        if (Value.Array == Array)
+                            return &Value;
+                        Other = Other != nullptr ? Other : &Value;
+                    }
+                }
+                return Other;
+            }
+
+            // Alphabetical, a name typed in full first.
+            std::vector<dba::CompletionItem> Take()
+            {
+                std::stable_sort(Items_.begin(), Items_.end(),
+                                 [&](const dba::CompletionItem& Left, const dba::CompletionItem& Right)
+                                 {
+                                     const bool LeftExact = Left.Name.size() == Prefix_.size();
+                                     const bool RightExact = Right.Name.size() == Prefix_.size();
+                                     if (LeftExact != RightExact)
+                                         return LeftExact;
+                                     return ToLower(Left.Name) < ToLower(Right.Name);
+                                 });
+                return std::move(Items_);
+            }
+
+          private:
+            void AddVariable(const dba::SourceVariable& Value)
+            {
+                Add(Value.Name, Value.Array ? ItemKind::Array : ItemKind::Variable, Value.Type);
+            }
+
+            void Add(const std::string& Name, ItemKind Kind, std::string Detail)
+            {
+                if (Name.size() < Prefix_.size() || !EqualsLower(std::string_view(Name).substr(0, Prefix_.size()), Prefix_))
+                    return;
+                const bool Known = std::any_of(Items_.begin(), Items_.end(), [&](const dba::CompletionItem& Item)
+                                               { return Item.What == Kind && Item.Name == Name; });
+                if (!Known)
+                    Items_.push_back({Name, Kind, std::move(Detail), nullptr});
+            }
+
+            const dba::SourceSymbols& Symbols_;
+            const dba::SourceFunction* Scope_;
+            std::string_view Prefix_;
+            std::vector<dba::CompletionItem> Items_;
+        };
+
+        // The names of `enemies(i).position.` read backwards from the dot at `Dot`, root first and in
+        // lower case; nothing when the text on its left is not such a chain. `RootIsArray` tells
+        // whether the root takes indices.
+        std::vector<std::string> MemberChain(std::string_view Line, size_t Dot, bool& RootIsArray)
+        {
+            std::vector<std::string> Names;
+            for (size_t End = Dot;;)
+            {
+                size_t Index = End;
+                RootIsArray = false;
+                if (Index > 0 && Line[Index - 1] == ')')
+                {
+                    int Depth = 0;
+                    while (Index > 0)
+                    {
+                        --Index;
+                        Depth += Line[Index] == ')' ? 1 : Line[Index] == '(' ? -1 : 0;
+                        if (Depth == 0)
+                            break;
+                    }
+                    if (Depth != 0)
+                        return {};
+                    RootIsArray = true;
+                    while (Index > 0 && IsSpace(Line[Index - 1]))
+                        --Index;
+                }
+                const size_t WordStop = Index;
+                while (Index > 0 && IsWordChar(Line[Index - 1]))
+                    --Index;
+                if (Index == WordStop)
+                    return {};
+                Names.push_back(ToLower(Line.substr(Index, WordStop - Index)));
+                if (Index == 0 || Line[Index - 1] != '.')
+                    break;
+                End = Index - 1;
+            }
+            std::reverse(Names.begin(), Names.end());
+            return Names;
+        }
+
+        // The user type the chain left of a dot ends on, if the program declares it.
+        const dba::SourceType* MemberType(const dba::SourceSymbols& Symbols, const ProgramNames& Names,
+                                          std::string_view Line, size_t Dot)
+        {
+            bool RootIsArray = false;
+            const std::vector<std::string> Chain = MemberChain(Line, Dot, RootIsArray);
+            if (Chain.empty())
+                return nullptr;
+            const dba::SourceVariable* Root = Names.FindVariable(Chain.front(), RootIsArray);
+            const dba::SourceType* Type = Root != nullptr ? Symbols.FindType(Root->UserType) : nullptr;
+            for (size_t Index = 1; Type != nullptr && Index < Chain.size(); ++Index)
+            {
+                const auto Field =
+                    std::find_if(Type->Fields.begin(), Type->Fields.end(), [&](const dba::SourceVariable& Value)
+                                 { return EqualsLower(Value.Name, Chain[Index]); });
+                Type = Field != Type->Fields.end() ? Symbols.FindType(Field->UserType) : nullptr;
+            }
+            return Type;
         }
     } // namespace
 
     namespace dba
     {
         Completion Complete(const CommandDatabase& Commands, dbc::language::LanguageProfile Profile,
-                            std::string_view LineBeforeCursor, bool Manual)
+                            std::string_view LineBeforeCursor, bool Manual, const SourceSymbols* Symbols,
+                            std::uint32_t CursorLine)
         {
             const std::string_view Line = LineBeforeCursor;
             const WordRun Run = ReadWordsBefore(Line);
@@ -378,6 +563,32 @@ namespace dbc::studio
 
             Completion Result;
             std::vector<Match> Matches;
+
+            // A name of the program typed in full must not be replaced on Enter.
+            const auto SelectionFor = [](const std::vector<CompletionItem>& Items, std::string_view Typed)
+            {
+                const bool Exact = !Items.empty() && Items.front().Name.size() == Typed.size();
+                return Typed.size() >= 2 && !Exact ? CompletionSelection::Hard : CompletionSelection::Soft;
+            };
+
+            // After a dot only the fields of the user type on its left make sense.
+            const bool FieldWord = Words.size() == 1 && Run.AfterDot && !AfterSpace;
+            if (Symbols != nullptr && (FieldWord || (!Line.empty() && Line.back() == '.')))
+            {
+                const size_t Start = FieldWord ? Starts[0] : Line.size();
+                const std::string_view Prefix = FieldWord ? std::string_view(Words[0]) : std::string_view();
+                ProgramNames Names(*Symbols, CursorLine, Prefix);
+                if (const SourceType* Type = MemberType(*Symbols, Names, Line, Start - 1))
+                {
+                    Names.AddFields(*Type);
+                    Result.Items = Names.Take();
+                }
+                Result.ReplaceStart = Start;
+                Result.Typed = std::string(Line.substr(Start));
+                if (!Result.Items.empty())
+                    Result.Selection = SelectionFor(Result.Items, Result.Typed);
+                return Result;
+            }
 
             // The longest run of words that fits a name wins, so "print set w" replaces "set w".
             for (size_t First = Run.AfterDot ? 1 : 0; !InNumber && First < Words.size() && Matches.empty(); ++First)
@@ -397,12 +608,58 @@ namespace dbc::studio
                 Result.ReplaceStart = Starts[First];
             }
 
-            if (Matches.empty())
+            // The program's names complete the last word alone: they hold no space.
+            std::vector<CompletionItem> Program;
+            const bool TypingWord = !AfterSpace && !InNumber && !Words.empty();
+            if (Symbols != nullptr && (TypingWord || (Manual && !InNumber)))
             {
-                if (!Manual)
+                // The word before the one being typed, or the last one when nothing is typed yet.
+                const std::size_t Before = TypingWord ? 2 : 1;
+                const std::string_view Previous =
+                    Words.size() >= Before ? std::string_view(Words[Words.size() - Before]) : std::string_view();
+                ProgramNames Names(*Symbols, CursorLine, TypingWord ? std::string_view(Words.back()) : "");
+                // After these words the grammar takes a label or a type, not a command.
+                bool NamesOnly = false;
+                if (Previous == "goto" || Previous == "gosub" || Previous == "restore")
                 {
-                    return Result;
+                    Names.AddLabels();
+                    NamesOnly = true;
                 }
+                else if (Previous == "as")
+                {
+                    Names.AddTypes();
+                    NamesOnly = true;
+                }
+                else
+                {
+                    Names.AddVariables();
+                    Names.AddFunctions();
+                    Names.AddConstants();
+                }
+                Program = Names.Take();
+                const size_t Start = TypingWord ? Starts.back() : Line.size();
+                if (NamesOnly && !Program.empty())
+                {
+                    Matches.clear();
+                }
+                // A command name running over several words keeps the list to itself.
+                if (!Matches.empty() && Result.ReplaceStart != Start)
+                {
+                    Program.clear();
+                }
+                else if (!Program.empty())
+                {
+                    Result.ReplaceStart = Start;
+                }
+            }
+
+            if (Matches.empty() && Program.empty() && !Manual)
+            {
+                return Result;
+            }
+            // Ctrl+Space with nothing to match lists every builtin, after the names in scope.
+            if (Matches.empty() && Manual && (Program.empty() || !TypingWord))
+            {
                 for (const Command& Entry : Commands.All())
                 {
                     if (dbc::language::AvailableIn(*Entry.Descriptor, Profile))
@@ -417,24 +674,36 @@ namespace dbc::studio
             std::stable_sort(Matches.begin(), Matches.end(),
                              [](const Match& Left, const Match& Right) { return Left.Value > Right.Value; });
 
-            Result.Items.reserve(Matches.size());
-            for (const Match& Value : Matches)
-            {
-                // A command and a function may share a name.
-                if (Result.Items.empty() || Result.Items.back()->Classic != Value.Entry->Classic)
-                {
-                    Result.Items.push_back(Value.Entry);
-                }
-            }
-
             Result.Typed = std::string(Line.substr(Result.ReplaceStart));
-            if (!AfterSpace && !Matches.empty() && Matches.front().Value != Rank::None)
+            if (!Program.empty() && !AfterSpace && !Result.Typed.empty())
+            {
+                Result.Selection = SelectionFor(Program, Result.Typed);
+            }
+            else if (!AfterSpace && !Matches.empty() && Matches.front().Value != Rank::None)
             {
                 Result.Selection = Matches.front().Value == Rank::Prefix && Result.Typed.size() >= 2
                                        ? CompletionSelection::Hard
                                        : CompletionSelection::Soft;
             }
+
+            Result.Items = std::move(Program);
+            Result.Items.reserve(Result.Items.size() + Matches.size());
+            const Command* Last = nullptr;
+            for (const Match& Value : Matches)
+            {
+                // A command and a function may share a name.
+                if (Last == nullptr || Last->Classic != Value.Entry->Classic)
+                {
+                    Result.Items.push_back({Value.Entry->Classic, CompletionItem::Kind::Builtin, {}, Value.Entry});
+                    Last = Value.Entry;
+                }
+            }
             return Result;
+        }
+
+        std::string CompletionText(const CompletionItem& Item, std::string_view Typed)
+        {
+            return Item.Builtin != nullptr ? ApplyTypedCase(Item.Name, Typed) : Item.Name;
         }
 
         size_t CompletionWordEnd(std::string_view Line, size_t Cursor)
@@ -463,7 +732,8 @@ namespace dbc::studio
 
         std::optional<ParameterHint> FindParameterHint(const CommandDatabase& Commands,
                                                        dbc::language::LanguageProfile Profile,
-                                                       std::string_view LineBeforeCursor, bool InBlockComment)
+                                                       std::string_view LineBeforeCursor, bool InBlockComment,
+                                                       const SourceSymbols* Symbols)
         {
             const std::string_view Line = LineBeforeCursor;
 
@@ -522,7 +792,7 @@ namespace dbc::studio
             // to the argument of whatever holds them.
             for (auto Value = Groups.rbegin(); Value != Groups.rend(); ++Value)
             {
-                if (std::optional<ParameterHint> Hint = CallBefore(Commands, Profile, Line.substr(0, Value->Open)))
+                if (std::optional<ParameterHint> Hint = CallBefore(Commands, Profile, Line.substr(0, Value->Open), Symbols))
                 {
                     Hint->Argument = Value->Commas;
                     return Hint;
@@ -594,6 +864,48 @@ namespace dbc::studio
                 {
                     Help.Description = Entry->Description;
                 }
+            }
+            return Help;
+        }
+
+        CommandHelp DescribeItem(const CommandDatabase& Commands, dbc::language::LanguageProfile Profile,
+                                 const CompletionItem& Item)
+        {
+            if (Item.Builtin != nullptr)
+            {
+                return DescribeCommand(Commands, Profile, Item.Name);
+            }
+            CommandHelp Help;
+            const bool Typed = Item.What == CompletionItem::Kind::Variable ||
+                               Item.What == CompletionItem::Kind::Array || Item.What == CompletionItem::Kind::Field;
+            Help.Signatures.push_back(Item.Detail.empty() ? Item.Name
+                                      : Typed             ? Item.Name + " as " + Item.Detail
+                                                          : Item.Detail);
+            switch (Item.What)
+            {
+                case CompletionItem::Kind::Function:
+                    Help.Description = Tr("Function of this program.");
+                    break;
+                case CompletionItem::Kind::Variable:
+                    Help.Description = Tr("Variable of this program.");
+                    break;
+                case CompletionItem::Kind::Array:
+                    Help.Description = Tr("Array of this program.");
+                    break;
+                case CompletionItem::Kind::Field:
+                    Help.Description = Tr("Field of a user type.");
+                    break;
+                case CompletionItem::Kind::Label:
+                    Help.Description = Tr("Label of this program.");
+                    break;
+                case CompletionItem::Kind::Constant:
+                    Help.Description = Tr("Constant of this program.");
+                    break;
+                case CompletionItem::Kind::Type:
+                    Help.Description = Tr("User type of this program.");
+                    break;
+                case CompletionItem::Kind::Builtin:
+                    break;
             }
             return Help;
         }
