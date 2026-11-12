@@ -1096,8 +1096,9 @@ TEST_CASE("DBPro artifacts execute ordered sources with independent media and in
 {
     TemporaryDirectory Directory("opendbc-artifact-multisource");
     const fs::path Project = Directory.Root / "project";
-    Write(Project / "main.dba", "#include \"include/shared.dba\"\nprint answer() + offset\nend\n");
-    Write(Project / "include/shared.dba", "offset=2\n");
+    // DBPro appends included source after the program, so the include contributes a function.
+    Write(Project / "main.dba", "#include \"include/shared.dba\"\nprint answer() + offset()\nend\n");
+    Write(Project / "include/shared.dba", "function offset()\nendfunction 2\n");
     Write(Directory.Root / "external/answer.dba", "function answer()\nendfunction 40\n");
     Write(Directory.Root / "media/pixel.txt", "media");
     Write(Directory.Root / "media/signing.bin", "private signing material");

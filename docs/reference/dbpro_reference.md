@@ -2442,6 +2442,7 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `+` | Operator | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional operator implemented with an observable contract. |
 | `-` | Operator | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional operator implemented with an observable contract. |
 | `.` | Operator | 0 | grammar form | Implemented | DBPro snapshot | DarkBASIC Professional operator implemented with an observable contract. |
+| `..` | Operator | 0 | grammar form | Implemented | DBPro snapshot | DarkBASIC Professional operator implemented with an observable contract. |
 | `/` | Operator | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional operator implemented with an observable contract. |
 | `<` | Operator | 0 | grammar form | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional operator implemented with an observable contract. |
 | `<<` | Operator | 0 | grammar form | Implemented | DBPro snapshot | DarkBASIC Professional operator implemented with an observable contract. |

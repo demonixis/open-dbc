@@ -498,7 +498,7 @@ BASICS_DOC = {
         "syntax": "#CONSTANT Name Value",
         "example": "#constant MAX_SPEED 8\nprint MAX_SPEED\nwait key"},
     "#INCLUDE": {
-        "desc": "Inserts another .dba source file into the project. The included file inherits the project profile (DBC or DBPro).",
+        "desc": "Adds another .dba source file to the program: in place in DBC, after the end of the program in DBPro, so only its functions, types and subroutines are reached. The included file inherits the project profile (DBC or DBPro).",
         "syntax": '#INCLUDE "Filename.dba"',
         "example": '#include "tools.dba"\nrem functions from tools.dba are available here'},
     "IF": {
@@ -602,7 +602,7 @@ BASICS_DOC = {
         "syntax": "EXITFUNCTION [Return Value]",
         "example": "print first_even(7, 10)\nwait key\nend\nfunction first_even(a, b)\n   if a mod 2 = 0 then exitfunction a\nendfunction b"},
     "DIM": {
-        "desc": "Declares an array (up to 5 dimensions in DBC). Arrays keep their historical shared namespace, including inside functions.",
+        "desc": "Declares an array (up to 5 dimensions in DBC) with indices 0 to Size. Arrays keep their historical shared namespace, including inside functions. In DBPro, DIM on an existing array resizes it and keeps its contents, and DIM Name() declares an empty list.",
         "syntax": "DIM Array Name(Size [, Size…])",
         "example": "dim scores(9)\nfor i = 0 to 9\n   scores(i) = rnd(100)\nnext i\nprint scores(0)\nwait key"},
     "UNDIM": {
@@ -614,7 +614,7 @@ BASICS_DOC = {
         "syntax": "DATA Value [, Value…]",
         "example": "data 10, 20, 30\nfor i = 1 to 3\n   read v\n   print v\nnext i\nwait key"},
     "READ": {
-        "desc": "Reads the next value declared with DATA into a variable.",
+        "desc": "Reads the next value declared with DATA into a variable. Past the last value, or in DBPro for a value of the wrong type, the variable receives 0 or an empty string.",
         "syntax": "READ Variable",
         "example": 'data "sword", "bow", "shield"\nread item$\nprint item$\nwait key'},
     "RESTORE": {
@@ -723,7 +723,7 @@ BASICS_DOC = {
     "OR": {"desc": "Logical OR between two conditions.",
            "syntax": "Condition1 OR Condition2",
            "example": 'if spacekey() = 1 or returnkey() = 1 then print "confirmed"'},
-    "NOT": {"desc": "Logical negation of a condition.",
+    "NOT": {"desc": "Logical negation of a condition. In DBPro it complements the bits of a value (NOT 1 is -2) and covers the comparison that follows; as the whole condition of IF, WHILE or UNTIL it is true when the value is zero.",
             "syntax": "NOT Condition",
             "example": 'if not (1 = 2) then print "1 is not 2"\nwait key'},
     "XOR": {"desc": "DBPro only: logical exclusive OR.",
@@ -734,6 +734,8 @@ BASICS_DOC = {
            "syntax": "a || b", "example": "print 12 || 10\nwait key"},
     "~~": {"desc": "DBPro only: bitwise exclusive OR.",
            "syntax": "a ~~ b", "example": "print 12 ~~ 10\nwait key"},
+    "..": {"desc": "DBPro only: bitwise NOT. The result is the complement of the left operand; the right operand is evaluated and unused.",
+           "syntax": "a .. b", "example": "print 5 .. 0\nwait key"},
     "<<": {"desc": "DBPro only: bitwise left shift.",
            "syntax": "a << n", "example": "print 1 << 4\nwait key"},
     ">>": {"desc": "DBPro only: bitwise right shift.",
