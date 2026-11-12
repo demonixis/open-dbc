@@ -10,20 +10,15 @@ Publication:
 
 ## Work lots
 
-In order. Each lot is one session; lots 1 to 4 come before any new command set.
+In order. Each lot is one session; lots 2 to 4 come before any new command set.
 The DBPro help (`Install/Help`) is the reference; arrays already match it
 (`DIM a(10)` gives indices 0 to 10).
 
 Conformance:
 
-- [ ] Lot 1, what is left of the language syntax against `principals/`:
-  - `*Ptr` and the memory commands stop with generic parse errors (`DBC1101`,
-    `DBC1105`): give them a diagnostic of their own.
-  - `INTEGER` wraps at 32 bits in DBPro and `BOOLEAN` holds 0 or 1; both are 64-bit
-    integers here.
-  - The original reduces `/` before `*` and `-` before `+` (`2*6/4` would be 2):
-    confirm on a real DBPro build before following it.
-  - Limits of the help left unchecked: five array dimensions, 255 parameters.
+- [ ] Arithmetic ranking, left from lot 1: the original compiler reduces `/` before
+  `*` and `-` before `+` (`2*6/4` would be 2). Confirm on a real DBPro build before
+  following it.
 - [ ] Lot 2, reference evidence: pinned snapshots of the help pages and of the
   commands the official examples use, in `scripts/data/`; the audit computes
   "referenced" (help, examples, implemented plugin, mobile and VR additions) and

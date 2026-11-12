@@ -665,7 +665,7 @@ BASICS_DOC = {
         "desc": "DBPro only: explicitly declares a variable local to the current function.",
         "syntax": "LOCAL Variable [AS Datatype]",
         "example": "function compute()\n   local temp as float\n   temp = 1.5\nendfunction temp"},
-    "BOOLEAN": {"desc": "DBPro only: boolean type used with AS.",
+    "BOOLEAN": {"desc": "DBPro only: boolean type used with AS, stored as an unsigned byte.",
                 "syntax": "Variable AS BOOLEAN",
                 "example": "active as boolean\nactive = 1"},
     "BYTE": {"desc": "DBPro only: unsigned 8-bit integer used with AS.",
