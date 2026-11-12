@@ -288,12 +288,6 @@ TEST_CASE("Classic READ past the end of DATA gives empty values")
     CHECK(Host.Output[0] == "7");
     CHECK(Host.Output[1] == "0");
     CHECK(Host.Output[3] == "");
-
-    const auto Professional = Compile("read a\n", dbc::language::LanguageProfile::DbPro);
-    TestHost ProfessionalHost;
-    dbc::vm::ExecutionSession ProfessionalSession;
-    REQUIRE(ProfessionalSession.Prepare(Professional, ProfessionalHost));
-    CHECK(ProfessionalSession.Tick(1000).State == dbc::vm::SessionState::Failed);
 }
 
 TEST_CASE("Arrays and UDT assignments preserve value semantics")
@@ -411,6 +405,25 @@ TEST_CASE("DBPro reads // comments, reversed comparisons and DIV as the original
     CHECK(Session.Global("quotient")->AsInteger() == 3);
     CHECK(Session.Global("div")->AsInteger() == 4);
     CHECK(Session.Global("text$")->AsString() == "a//b");
+}
+
+TEST_CASE("DBPro READ stores an empty value on a type mismatch and past the end of DATA")
+{
+    const auto Module = Compile("data \"text\", 5, 9\n"
+                                "number = 3 : word$ = \"kept\" : past = 4\n"
+                                "read number\n"
+                                "read word$\n"
+                                "read last\n"
+                                "read past\n",
+                                dbc::language::LanguageProfile::DbPro);
+    TestHost Host;
+    dbc::vm::ExecutionSession Session;
+    REQUIRE(Session.Prepare(Module, Host));
+    RunToCompletion(Session);
+    CHECK(Session.Global("number")->AsInteger() == 0);
+    CHECK(Session.Global("word$")->AsString().empty());
+    CHECK(Session.Global("last")->AsInteger() == 9);
+    CHECK(Session.Global("past")->AsInteger() == 0);
 }
 
 TEST_CASE("DBPro dynamic array collections use verified VM state")

@@ -803,9 +803,7 @@ namespace dbc::vm
             {
                 if (DataCursor_ >= Bytecode_->Data.size())
                 {
-                    if (Bytecode_->Profile != language::LanguageProfile::Dbc)
-                        return Reject("READ has passed the end of DATA");
-                    // Classic reads the type's empty value there: shoot_to_kill's last sprite relies on it.
+                    // Both runtimes read the type's empty value there: shoot_to_kill's last sprite relies on it.
                     Value Empty;
                     if (!DefaultValue(Instruction.ResultType, *Bytecode_, Empty, Error))
                         return Reject(Error);
@@ -825,7 +823,15 @@ namespace dbc::vm
                 else
                     return Reject("DATA item has an invalid type");
                 Value Converted;
-                if (!Result.ConvertTo(Instruction.ResultType, Converted, Error))
+                const bool TextItem = Item.ValueType.Kind == language::TypeKind::String;
+                const bool TextTarget = Instruction.ResultType.Kind == language::TypeKind::String;
+                if (Bytecode_->Profile == language::LanguageProfile::DbPro && TextItem != TextTarget)
+                {
+                    // DBPro reads a zero or an empty string into a variable of the wrong type.
+                    if (!DefaultValue(Instruction.ResultType, *Bytecode_, Converted, Error))
+                        return Reject(Error);
+                }
+                else if (!Result.ConvertTo(Instruction.ResultType, Converted, Error))
                     return Reject(Error);
                 Current.Stack.push_back(std::move(Converted));
                 ++DataCursor_;

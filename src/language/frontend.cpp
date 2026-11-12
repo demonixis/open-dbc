@@ -66,9 +66,13 @@ namespace dbc::language
                     Destination.Diagnostics.insert(Destination.Diagnostics.end(),
                                                    std::make_move_iterator(Child.Diagnostics.begin()),
                                                    std::make_move_iterator(Child.Diagnostics.end()));
+                    // DBPro appends included source to the end of the program; Classic reads it in place.
+                    const bool Appended = Destination.Source->Profile == LanguageProfile::DbPro;
                     const std::size_t Position =
-                        std::min(Include.StatementIndex + Parent.InsertedStatements, Destination.Statements.size());
-                    const std::size_t ChildStatementCount = Child.Statements.size();
+                        Appended ? Destination.Statements.size()
+                                 : std::min(Include.StatementIndex + Parent.InsertedStatements,
+                                            Destination.Statements.size());
+                    const std::size_t ChildStatementCount = Appended ? 0 : Child.Statements.size();
                     Destination.Statements.insert(Destination.Statements.begin() +
                                                       static_cast<std::ptrdiff_t>(Position),
                                                   std::make_move_iterator(Child.Statements.begin()),

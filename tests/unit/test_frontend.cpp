@@ -850,7 +850,7 @@ TEST_CASE("Includes reject profile changes and cycles")
     CHECK(HasCode(Cycle, "DBC1225"));
 }
 
-TEST_CASE("Deep include chains preserve directive order on a 512 KB thread")
+TEST_CASE("Deep include chains keep each profile's order on a 512 KB thread")
 {
     constexpr std::size_t Depth = 400;
     std::map<std::filesystem::path, std::string> Sources;
@@ -890,17 +890,34 @@ TEST_CASE("Deep include chains preserve directive order on a 512 KB thread")
         REQUIRE(Program.Statements.size() == Depth * 4 + 3);
         CHECK(Program.Includes.size() == Depth * 2);
         CHECK(Program.Statements.front().Expressions.front()->Text == "BEFORE");
-        CHECK(Program.Statements[Depth * 2 + 1].Expressions.front()->Text == "MIDDLE");
-        CHECK(Program.Statements.back().Expressions.front()->Text == "AFTER");
-        for (std::size_t Pass = 0; Pass < 2; ++Pass)
+        const auto Name = [&Program](std::size_t Index) { return Program.Statements[Index].Expressions.front()->Text; };
+        if (Profile == dbc::language::LanguageProfile::DbPro)
         {
-            const std::size_t Begin = Pass * (Depth * 2 + 1) + 1;
-            for (std::size_t Index = 1; Index <= Depth; ++Index)
+            // DBPro appends each included file after the program, and a nested file after its parent.
+            CHECK(Name(1) == "MIDDLE");
+            CHECK(Name(2) == "AFTER");
+            for (std::size_t Pass = 0; Pass < 2; ++Pass)
             {
-                CHECK(Program.Statements[Begin + Index - 1].Expressions.front()->Text ==
-                      "ENTER" + std::to_string(Index));
-                CHECK(Program.Statements[Begin + Depth * 2 - Index].Expressions.front()->Text ==
-                      "LEAVE" + std::to_string(Index));
+                for (std::size_t Index = 1; Index <= Depth; ++Index)
+                {
+                    const std::size_t Enter = 3 + Pass * Depth * 2 + (Index - 1) * 2;
+                    CHECK(Name(Enter) == "ENTER" + std::to_string(Index));
+                    CHECK(Name(Enter + 1) == "LEAVE" + std::to_string(Index));
+                }
+            }
+        }
+        else
+        {
+            CHECK(Name(Depth * 2 + 1) == "MIDDLE");
+            CHECK(Program.Statements.back().Expressions.front()->Text == "AFTER");
+            for (std::size_t Pass = 0; Pass < 2; ++Pass)
+            {
+                const std::size_t Begin = Pass * (Depth * 2 + 1) + 1;
+                for (std::size_t Index = 1; Index <= Depth; ++Index)
+                {
+                    CHECK(Name(Begin + Index - 1) == "ENTER" + std::to_string(Index));
+                    CHECK(Name(Begin + Depth * 2 - Index) == "LEAVE" + std::to_string(Index));
+                }
             }
         }
         const dbc::vm::CompileResult Lowered = dbc::vm::Lower(Program);
