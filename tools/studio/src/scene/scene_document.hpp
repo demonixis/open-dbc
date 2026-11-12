@@ -154,6 +154,16 @@ namespace dbc::studio
             bool operator==(const Material&) const = default;
         };
 
+        // GLUE OBJECT TO LIMB: the object follows a limb of another object.
+        struct Glue
+        {
+            int Object = 0;
+            int Limb = 0;
+            int Mode = 0; // the optional fourth argument, 0 to 2
+
+            bool operator==(const Glue&) const = default;
+        };
+
         // One field set covers every kind; each kind reads the fields it uses.
         struct SceneNode
         {
@@ -208,6 +218,8 @@ namespace dbc::studio
             // Object: placed by the paint tool. The Hierarchy folds these together, and they are
             // written with INSTANCE OBJECT of the first object that looks the same.
             bool Painted = false;
+            // Object: written after every node, once the object it follows exists.
+            std::optional<Glue> Glued;
             // Read from a running program that hides this node or locks it to the screen: listed, not drawn.
             bool Hidden = false;
 
@@ -300,6 +312,9 @@ namespace dbc::studio
         std::vector<std::string> NodeTextures(const SceneNode& Node);
         // Drops what a choice rules out: a shading leaves no stage of its own, a cube map only bump mapping.
         void ResolveMaterial(Material& Mat);
+        // The object a node is glued to, or null when the glue names itself, a missing object or a
+        // chain of glued objects that comes back to the node: the engine refuses those.
+        const SceneNode* GlueTarget(const SceneDocument& Document, const SceneNode& Node);
         // A painted copy's name: "tree" or "tree_2" -> "tree_<Id>".
         std::string PaintedName(const std::string& Name, int Id);
         // "tree_12" -> "tree".

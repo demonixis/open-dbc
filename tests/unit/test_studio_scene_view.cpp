@@ -474,7 +474,7 @@ TEST_CASE("The Inspector offers the texture stages of an object, not of a light"
     const std::string Text = Driver.DrawnText();
     INFO(Text);
     for (const char* Label : {"Texture stages", "Shading", "Second texture", "Cube map", "Alpha", "Reflection",
-                              "Depth buffer"})
+                              "Depth buffer", "Attachment", "Glued to"})
         CHECK(Text.find(Label) != std::string::npos);
     Driver.ClickHierarchyRow(1);
     CHECK(Driver.DrawnText().find("Texture stages") == std::string::npos);

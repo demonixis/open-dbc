@@ -230,6 +230,22 @@ namespace dbc::studio
             }
         }
 
+        const SceneNode* GlueTarget(const SceneDocument& Document, const SceneNode& Node)
+        {
+            if (!Node.Glued || IdSpaceOf(Node.Kind) != IdSpace::Object || Node.Glued->Object == Node.Id)
+                return nullptr;
+            const SceneNode* Target = Document.Find(IdSpace::Object, Node.Glued->Object);
+            // A chain is no longer than the document: more steps than nodes means a loop elsewhere.
+            std::size_t Steps = 0;
+            for (const SceneNode* Ancestor = Target; Ancestor != nullptr && Ancestor->Glued;
+                 Ancestor = Document.Find(IdSpace::Object, Ancestor->Glued->Object))
+            {
+                if (Ancestor->Glued->Object == Node.Id || ++Steps > Document.Nodes.size())
+                    return nullptr;
+            }
+            return Target;
+        }
+
         bool SameLook(const SceneNode& First, const SceneNode& Second)
         {
             return First.Kind == Second.Kind && First.Size == Second.Size && First.Extent == Second.Extent &&
@@ -396,6 +412,7 @@ namespace dbc::studio
             Take(From.SpecularPower, To.SpecularPower, Into.SpecularPower);
             Take(From.CastShadow, To.CastShadow, Into.CastShadow);
             Take(From.ShadowOptions, To.ShadowOptions, Into.ShadowOptions);
+            Take(Before.Glued, After.Glued, Target.Glued);
             Take(From.Second, To.Second, Into.Second);
             Take(From.SecondTexture, To.SecondTexture, Into.SecondTexture);
             Take(From.LightReverse, To.LightReverse, Into.LightReverse);

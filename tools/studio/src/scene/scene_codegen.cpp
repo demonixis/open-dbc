@@ -1159,6 +1159,26 @@ namespace dbc::studio
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Mat.Flags.Ambient = I(A, 1) != 0;
                             break;
+                        case SymbolId::Command_GlueObjectToLimb:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                if (Object(I(A, 1)) == nullptr)
+                                    break;
+                                const std::optional<Glue> Previous = Node->Glued;
+                                Node->Glued = Glue{I(A, 1), I(A, 2), A.size() == 4 ? I(A, 3) : 0};
+                                if (Node->Glued->Limb < 0 || Node->Glued->Mode < 0 || Node->Glued->Mode > 2 ||
+                                    GlueTarget(Result_.Document, *Node) == nullptr)
+                                {
+                                    Node->Glued = Previous;
+                                    Error(Line_, "GLUE OBJECT TO LIMB names the object itself, a chain of glued "
+                                                 "objects that returns to it, or a limb or mode out of range");
+                                }
+                            }
+                            break;
+                        case SymbolId::Command_UnglueObject:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Glued.reset();
+                            break;
                         case SymbolId::Command_SetLightMappingOn:
                         case SymbolId::Command_SetDetailMappingOn:
                         case SymbolId::Command_SetSphereMappingOn:
@@ -1598,6 +1618,20 @@ namespace dbc::studio
                         Original = *Found;
                 }
                 WriteNode(Out, Node, Original, Images);
+            }
+
+            // After every node: the object a glue names may be created later than the one it holds.
+            for (const SceneNode& Node : Document.Nodes)
+            {
+                if (GlueTarget(Document, Node) == nullptr)
+                    continue;
+                const Glue& Glued = *Node.Glued;
+                if (Glued.Mode != 0)
+                    Out.Command(SymbolId::Command_GlueObjectToLimb,
+                                {Integer(Node.Id), Integer(Glued.Object), Integer(Glued.Limb), Integer(Glued.Mode)});
+                else
+                    Out.Command(SymbolId::Command_GlueObjectToLimb,
+                                {Integer(Node.Id), Integer(Glued.Object), Integer(Glued.Limb)});
             }
 
             Out.Pop();

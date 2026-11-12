@@ -251,6 +251,11 @@ namespace dbc::studio
                 if (ImGui::InputInt(TrId("Number"), &Id, 0) && Id > 0 &&
                     Document_.Find(scene::IdSpaceOf(Node->Kind), Id) == nullptr)
                 {
+                    // What is glued to this object follows its new number.
+                    if (scene::IdSpaceOf(Node->Kind) == scene::IdSpace::Object)
+                        for (scene::SceneNode& Other : Document_.Nodes)
+                            if (Other.Glued && Other.Glued->Object == Node->Id)
+                                Other.Glued->Object = Id;
                     Node->Id = Id;
                     Select(Node);
                 }
@@ -304,6 +309,9 @@ namespace dbc::studio
 
             if (!IsMarker)
                 DrawMaterial(*Node);
+            // One object at a time: a glue names another node, which a shared edit would hand to itself.
+            if (!Multi && scene::IdSpaceOf(Node->Kind) == scene::IdSpace::Object)
+                DrawGlue(*Node);
             if (Multi && *Node != Before)
                 for (scene::SceneNode* Other : Nodes)
                     if (Other != Node)
@@ -686,6 +694,69 @@ namespace dbc::studio
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("%s", Tr("SET SHADOW SHADING ON, cast from the shadow source in Level Settings"));
             DrawTextureStages(Mat);
+        }
+
+        void SceneEditor::DrawGlue(scene::SceneNode& Node)
+        {
+            Heading("Attachment");
+            const auto Label = [](const scene::SceneNode& Other)
+            { return Other.Name + " (" + std::to_string(Other.Id) + ")"; };
+            const scene::SceneNode* Target = scene::GlueTarget(Document_, Node);
+            const std::string Current = !Node.Glued ? std::string(Tr("None"))
+                                        : Target    ? Label(*Target)
+                                                    : TrFmt("Object {0} cannot hold it", {std::to_string(Node.Glued->Object)});
+            if (ImGui::BeginCombo(TrId("Glued to"), Current.c_str()))
+            {
+                if (ImGui::Selectable(Tr("None"), !Node.Glued))
+                    Node.Glued.reset();
+                for (const scene::SceneNode& Other : Document_.Nodes)
+                {
+                    if (&Other == &Node || scene::IdSpaceOf(Other.Kind) != scene::IdSpace::Object)
+                        continue;
+                    // Only what the engine accepts is offered: no object that already follows this one.
+                    scene::SceneNode Candidate = Node;
+                    Candidate.Glued = scene::Glue{Other.Id, 0, Node.Glued ? Node.Glued->Mode : 0};
+                    if (scene::GlueTarget(Document_, Candidate) == nullptr)
+                        continue;
+                    ImGui::PushID(Other.Id);
+                    if (ImGui::Selectable(Label(Other).c_str(), Target == &Other) && Target != &Other)
+                        Node.Glued = Candidate.Glued;
+                    ImGui::PopID();
+                }
+                ImGui::EndCombo();
+            }
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s", Tr("GLUE OBJECT TO LIMB, written once every object exists"));
+            if (!Node.Glued)
+                return;
+
+            // A model lists its limbs; any other object has its root alone, limb 0.
+            const ModelInspection* Read = Target != nullptr && Target->Kind == scene::NodeKind::Model
+                                              ? ModelInfoOf(Target->Asset)
+                                              : nullptr;
+            if (Read != nullptr && Read->Info && !Read->Info->Limbs.empty())
+            {
+                const auto LimbLabel = [](const scene::ModelLimb& Limb)
+                { return std::to_string(Limb.Id) + "  " + (Limb.Name.empty() ? std::string(Tr("(unnamed)")) : Limb.Name); };
+                const auto& Limbs = Read->Info->Limbs;
+                const auto Chosen = std::find_if(Limbs.begin(), Limbs.end(), [&](const scene::ModelLimb& Limb)
+                                                 { return Limb.Id == Node.Glued->Limb; });
+                const std::string Shown = Chosen != Limbs.end() ? LimbLabel(*Chosen) : std::to_string(Node.Glued->Limb);
+                if (ImGui::BeginCombo(TrId("Limb"), Shown.c_str()))
+                {
+                    for (const scene::ModelLimb& Limb : Limbs)
+                        if (ImGui::Selectable(LimbLabel(Limb).c_str(), Limb.Id == Node.Glued->Limb))
+                            Node.Glued->Limb = Limb.Id;
+                    ImGui::EndCombo();
+                }
+            }
+            else
+            {
+                ImGui::InputInt(TrId("Limb"), &Node.Glued->Limb, 0);
+                Node.Glued->Limb = std::max(0, Node.Glued->Limb);
+            }
+            ImGui::SliderInt(TrId("Glue mode"), &Node.Glued->Mode, 0, 2);
+            Hint(Tr("The Scene view draws a glued object where it stands, not on the limb."));
         }
 
         void SceneEditor::DrawTextureStages(scene::Material& Mat)

@@ -573,6 +573,54 @@ TEST_CASE("A level follows the engine where one stage command replaces another")
     CHECK(Level("   SET LIGHT MAPPING ON 1000, 2005\n").Errors.size() == 1);
 }
 
+TEST_CASE("A glued object is written after every node and read back")
+{
+    scene::SceneDocument Document;
+    Document.Name = "Glue";
+    // The sword is created before the hand that holds it.
+    Document.Add(scene::NodeKind::Cube);
+    Document.Add(scene::NodeKind::Model).Asset = "hero.x";
+    Document.Add(scene::NodeKind::Cube);
+    Document.Nodes[0].Glued = scene::Glue{1001, 7, 0};
+    Document.Nodes[2].Glued = scene::Glue{1000, 0, 2};
+    const std::string Text = scene::WriteLevel(Document);
+    INFO(Text);
+    const std::size_t Sword = Text.find("GLUE OBJECT TO LIMB 1000, 1001, 7\n");
+    REQUIRE(Sword != std::string::npos);
+    CHECK(Text.find("GLUE OBJECT TO LIMB 1002, 1000, 0, 2\n") != std::string::npos);
+    CHECK(Sword > Text.find("LOAD OBJECT \"hero.x\", 1001"));
+
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
+    REQUIRE(Read.Ok());
+    REQUIRE(Read.Document.Nodes.size() == 3);
+    CHECK(Read.Document.Nodes[0].Glued == Document.Nodes[0].Glued);
+    CHECK(Read.Document.Nodes[2].Glued == Document.Nodes[2].Glued);
+    CHECK(scene::WriteLevel(Read.Document) == Text);
+
+    // A glue the engine refuses is not written: to itself, to a missing object, or around a loop.
+    Document.Nodes[1].Glued = scene::Glue{1002, 0, 0};
+    CHECK(scene::GlueTarget(Document, Document.Nodes[1]) == nullptr);
+    Document.Nodes[1].Glued = scene::Glue{1001, 0, 0};
+    CHECK(scene::GlueTarget(Document, Document.Nodes[1]) == nullptr);
+    Document.Nodes[1].Glued = scene::Glue{4000, 0, 0};
+    CHECK(scene::WriteLevel(Document).find("GLUE OBJECT TO LIMB 1001") == std::string::npos);
+
+    const auto Level = [](const std::string& Body)
+    {
+        return scene::ReadLevel("FUNCTION LoadLevel_Test()\n   MAKE OBJECT CUBE 1000, 10\n"
+                                "   MAKE OBJECT CUBE 1001, 10\n" +
+                                    Body + "ENDFUNCTION\n",
+                                "Test");
+    };
+    CHECK(Level("   GLUE OBJECT TO LIMB 1000, 1000, 0\n").Errors.size() == 1);
+    CHECK(Level("   GLUE OBJECT TO LIMB 1000, 1001, 0\n   GLUE OBJECT TO LIMB 1001, 1000, 0\n").Errors.size() == 1);
+    CHECK(Level("   GLUE OBJECT TO LIMB 1000, 1002, 0\n").Errors.size() == 1);
+    const scene::LevelReadResult Unglued =
+        Level("   GLUE OBJECT TO LIMB 1000, 1001, 0\n   UNGLUE OBJECT 1000\n");
+    REQUIRE(Unglued.Ok());
+    CHECK_FALSE(Unglued.Document.Nodes[0].Glued.has_value());
+}
+
 TEST_CASE("A level holding a command only Classic runs stays read-only, and says why")
 {
     const scene::LevelReadResult Read = scene::ReadLevel("FUNCTION LoadLevel_Test()\n"
