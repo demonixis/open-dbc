@@ -652,6 +652,13 @@ namespace dbc::studio
             ImGui::Checkbox(TrId("Fog"), &Flags.Fog);
             ImGui::SameLine();
             ImGui::Checkbox(TrId("Ambient"), &Flags.Ambient);
+            ImGui::Checkbox(TrId("Depth buffer"), &Mat.ZDepth);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s", Tr("Unchecked writes DISABLE OBJECT ZDEPTH; the Scene view does not preview it"));
+            ImGui::SameLine();
+            ImGui::Checkbox(TrId("Depth read"), &Mat.ZRead);
+            ImGui::SameLine();
+            ImGui::Checkbox(TrId("Depth write"), &Mat.ZWrite);
 
             OptionalColor("Diffuse", Mat.Diffuse, 0xFFFFFF);
             OptionalColor("Ambience", Mat.Ambience, 0xFFFFFF);

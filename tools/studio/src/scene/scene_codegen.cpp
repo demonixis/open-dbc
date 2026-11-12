@@ -223,7 +223,21 @@ namespace dbc::studio
                 if (Mat.SpecularPower)
                     Out.Command(SymbolId::Command_SetObjectSpecularPower, {Id, NumberLiteral(*Mat.SpecularPower)});
                 if (Mat.CastShadow)
-                    Out.Command(SymbolId::Command_SetShadowShadingOn, {Id});
+                {
+                    if (Mat.ShadowOptions)
+                        Out.Command(SymbolId::Command_SetShadowShadingOn,
+                                    {Id, Integer(Mat.ShadowOptions->x), Integer(Mat.ShadowOptions->y),
+                                     Integer(Mat.ShadowOptions->z)});
+                    else
+                        Out.Command(SymbolId::Command_SetShadowShadingOn, {Id});
+                }
+                // The depth buffer is on by default, so only what is switched off is written.
+                if (!Mat.ZDepth)
+                    Out.Command(SymbolId::Command_DisableObjectZdepth, {Id});
+                if (!Mat.ZRead)
+                    Out.Command(SymbolId::Command_DisableObjectZread, {Id});
+                if (!Mat.ZWrite)
+                    Out.Command(SymbolId::Command_DisableObjectZwrite, {Id});
             }
 
             // A copy starts with the original's transform and everything SameLook compares.
@@ -1022,9 +1036,78 @@ namespace dbc::studio
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Mat.SpecularPower = F(A, 1);
                             break;
-                        case SymbolId::Command_SetShadowShadingOn:
+                        // The single-flag forms of SET OBJECT; a level is written back with SET OBJECT.
+                        case SymbolId::Command_SetObjectWireframe:
                             if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.Flags.Wireframe = I(A, 1) != 0;
+                            break;
+                        case SymbolId::Command_SetObjectTransparency:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.Flags.Transparency = I(A, 1);
+                            break;
+                        case SymbolId::Command_SetObjectCull:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.Flags.Cull = I(A, 1) != 0;
+                            break;
+                        case SymbolId::Command_SetObjectFilter:
+                            // A stage or a mode past linear filtering has no place in SET OBJECT's flag.
+                            if (A.size() != 2 || I(A, 1) < 0 || I(A, 1) > 1)
+                            {
+                                if (Skipped_ != nullptr)
+                                    Skipped_->insert(*Name_);
+                                Error(Line_, "The Scene view edits SET OBJECT FILTER with a mode of 0 or 1 only");
+                                break;
+                            }
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.Flags.Filter = I(A, 1) != 0;
+                            break;
+                        case SymbolId::Command_SetObjectLight:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.Flags.Lighting = I(A, 1) != 0;
+                            break;
+                        case SymbolId::Command_SetObjectFog:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.Flags.Fog = I(A, 1) != 0;
+                            break;
+                        case SymbolId::Command_SetObjectAmbient:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.Flags.Ambient = I(A, 1) != 0;
+                            break;
+                        case SymbolId::Command_SetShadowShadingOn:
+                            if (A.size() != 1 && A.size() != 4)
+                            {
+                                Error(Line_, "SET SHADOW SHADING ON is written with one or four arguments");
+                                break;
+                            }
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
                                 Node->Mat.CastShadow = true;
+                                Node->Mat.ShadowOptions.reset();
+                                if (A.size() == 4)
+                                    Node->Mat.ShadowOptions = glm::ivec3(I(A, 1), I(A, 2), I(A, 3));
+                            }
+                            break;
+                        case SymbolId::Command_SetShadowShadingOff:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                Node->Mat.CastShadow = false;
+                                Node->Mat.ShadowOptions.reset();
+                            }
+                            break;
+                        case SymbolId::Command_DisableObjectZdepth:
+                        case SymbolId::Command_EnableObjectZdepth:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.ZDepth = Id == SymbolId::Command_EnableObjectZdepth;
+                            break;
+                        case SymbolId::Command_DisableObjectZread:
+                        case SymbolId::Command_EnableObjectZread:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.ZRead = Id == SymbolId::Command_EnableObjectZread;
+                            break;
+                        case SymbolId::Command_DisableObjectZwrite:
+                        case SymbolId::Command_EnableObjectZwrite:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.ZWrite = Id == SymbolId::Command_EnableObjectZwrite;
                             break;
                         case SymbolId::Command_SetObjectSpeed:
                             if (SceneNode* Node = Object(I(A, 0)))

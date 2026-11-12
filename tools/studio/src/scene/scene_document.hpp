@@ -100,6 +100,13 @@ namespace dbc::studio
             std::optional<Rgb> Specular;
             std::optional<float> SpecularPower;
             bool CastShadow = false;
+            // SET SHADOW SHADING ON's mesh, range and shader arguments, kept as a level gives them.
+            std::optional<glm::ivec3> ShadowOptions;
+
+            // The depth buffer: DISABLE OBJECT ZDEPTH, ZREAD and ZWRITE clear these.
+            bool ZDepth = true;
+            bool ZRead = true;
+            bool ZWrite = true;
 
             bool operator==(const Material&) const = default;
         };

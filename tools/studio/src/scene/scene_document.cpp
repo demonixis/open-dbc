@@ -344,6 +344,10 @@ namespace dbc::studio
             Take(From.Specular, To.Specular, Into.Specular);
             Take(From.SpecularPower, To.SpecularPower, Into.SpecularPower);
             Take(From.CastShadow, To.CastShadow, Into.CastShadow);
+            Take(From.ShadowOptions, To.ShadowOptions, Into.ShadowOptions);
+            Take(From.ZDepth, To.ZDepth, Into.ZDepth);
+            Take(From.ZRead, To.ZRead, Into.ZRead);
+            Take(From.ZWrite, To.ZWrite, Into.ZWrite);
         }
     } // namespace scene
 

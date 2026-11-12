@@ -413,6 +413,61 @@ TEST_CASE("Scene levels refuse statements they did not write")
     CHECK_FALSE(scene::ReadLevel("FUNCTION LoadLevel_Other()\nENDFUNCTION\n", "Test").Ok());
 }
 
+TEST_CASE("Depth buffer switches and shadow arguments round-trip through a level")
+{
+    scene::SceneDocument Document;
+    Document.Name = "Depth";
+    scene::SceneNode& Glass = Document.Add(scene::NodeKind::Cube);
+    Glass.Mat.ZDepth = false;
+    Glass.Mat.ZRead = false;
+    Glass.Mat.ZWrite = false;
+    Glass.Mat.CastShadow = true;
+    Glass.Mat.ShadowOptions = glm::ivec3(-1, 500, 1);
+    const std::string Text = scene::WriteLevel(Document);
+    CHECK(Text.find("DISABLE OBJECT ZDEPTH 1000") != std::string::npos);
+    CHECK(Text.find("DISABLE OBJECT ZREAD 1000") != std::string::npos);
+    CHECK(Text.find("DISABLE OBJECT ZWRITE 1000") != std::string::npos);
+    CHECK(Text.find("SET SHADOW SHADING ON 1000, -1, 500, 1") != std::string::npos);
+
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
+    REQUIRE(Read.Ok());
+    REQUIRE(Read.Document.Nodes.size() == 1);
+    CHECK(Read.Document.Nodes[0].Mat == Glass.Mat);
+    CHECK(scene::WriteLevel(Read.Document) == Text);
+}
+
+TEST_CASE("A level reads the single-flag forms of SET OBJECT and writes SET OBJECT back")
+{
+    const std::string Edited = "FUNCTION LoadLevel_Test()\n"
+                               "   MAKE OBJECT CUBE 1000, 10\n"
+                               "   SET OBJECT WIREFRAME 1000, 1\n"
+                               "   SET OBJECT TRANSPARENCY 1000, 2\n"
+                               "   SET OBJECT CULL 1000, 0\n"
+                               "   SET OBJECT FILTER 1000, 0\n"
+                               "   SET OBJECT LIGHT 1000, 0\n"
+                               "   SET OBJECT FOG 1000, 0\n"
+                               "   SET OBJECT AMBIENT 1000, 0\n"
+                               "   DISABLE OBJECT ZWRITE 1000\n"
+                               "   ENABLE OBJECT ZWRITE 1000\n"
+                               "   SET SHADOW SHADING ON 1000\n"
+                               "   SET SHADOW SHADING OFF 1000\n"
+                               "ENDFUNCTION\n";
+    const scene::LevelReadResult Read = scene::ReadLevel(Edited, "Test");
+    REQUIRE(Read.Ok());
+    REQUIRE(Read.Document.Nodes.size() == 1);
+    const scene::Material& Mat = Read.Document.Nodes[0].Mat;
+    CHECK(Mat.Flags == scene::ObjectFlags{true, 2, false, false, false, false, false});
+    CHECK(Mat.ZWrite);
+    CHECK_FALSE(Mat.CastShadow);
+    CHECK(scene::WriteLevel(Read.Document).find("SET OBJECT 1000, 0, 2, 0, 0, 0, 0, 0") != std::string::npos);
+
+    // A filter stage or an anisotropic mode does not fit SET OBJECT's flag.
+    const scene::LevelReadResult Staged = scene::ReadLevel(
+        "FUNCTION LoadLevel_Test()\n   MAKE OBJECT CUBE 1000, 10\n   SET OBJECT FILTER 1000, 2\nENDFUNCTION\n", "Test");
+    REQUIRE(Staged.Errors.size() == 1);
+    CHECK(Staged.Errors[0].Line == 3);
+}
+
 TEST_CASE("A level holding a command only Classic runs stays read-only, and says why")
 {
     const scene::LevelReadResult Read = scene::ReadLevel("FUNCTION LoadLevel_Test()\n"
