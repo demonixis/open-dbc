@@ -1,0 +1,490 @@
+rem Reactor Breach - the facility: its layout read from DATA, collision and ray tests
+rem against it, media, scenery and effects. Included by reactor_breach.dba.
+
+function read_layout()
+   restore layout
+   read kind$
+   while kind$ <> "end"
+      select kind$
+         case "room"
+            inc roomcount
+            read rooms(roomcount).x1, rooms(roomcount).z1, rooms(roomcount).x2, rooms(roomcount).z2, rooms(roomcount).height
+         endcase
+         case "pillar"
+            read x#, z#, w#
+            add_box(x# - w# / 2, 0, z# - w# / 2, x# + w# / 2, 90, z# + w# / 2)
+         endcase
+         case "core"
+            read corex#, corez#, r#
+            add_box(corex# - r#, 0, corez# - r#, corex# + r#, 90, corez# + r#)
+         endcase
+         case "pump"
+            read x#, z#, r#
+            add_box(x# - r# - 1.5, 0, z# - r# - 1.5, x# + r# + 1.5, 56, z# + r# + 1.5)
+         endcase
+         case "console"
+            read x#, z#, a#
+            add_box(x# - 8, 0, z# - 5, x# + 8, 20, z# + 5)
+         endcase
+         case "crate"
+            read x#, z#, s#, a#
+            inc cratecount
+            crates(cratecount).x = x# : crates(cratecount).z = z# : crates(cratecount).size = s# : crates(cratecount).yaw = a#
+            rem The collision box is the crate's footprint after rotation.
+            h# = s# / 2 * (abs(cos(a#)) + abs(sin(a#)))
+            add_box(x# - h#, 0, z# - h#, x# + h#, s#, z# + h#)
+         endcase
+         case "valve"
+            inc valvecount
+            read valves(valvecount).x, valves(valvecount).z, valves(valvecount).facing
+         endcase
+         case "drone"
+            inc dronecount
+            read drones(dronecount).postx, drones(dronecount).postz
+         endcase
+         case "medkit", "cell"
+            inc pickupcount
+            read pickups(pickupcount).x, pickups(pickupcount).z
+            if kind$ = "cell" then pickups(pickupcount).kind = 1
+         endcase
+         case "start" : read startx#, startz#, startyaw# : endcase
+         case "field" : read fieldx1#, fieldz#, fieldx2# : endcase
+         case "exit" : read exitx#, exitz# : endcase
+      endselect
+      read kind$
+   endwhile
+   rem The attract tour: points the camera visits in turn.
+   restore tour
+   read pathcount
+   for i = 1 to pathcount
+      read path#(i, 1), path#(i, 2)
+   next i
+endfunction
+
+function add_box(x1#, y1#, z1#, x2#, y2#, z2#)
+   inc boxcount
+   boxes(boxcount).x1 = x1# : boxes(boxcount).y1 = y1# : boxes(boxcount).z1 = z1#
+   boxes(boxcount).x2 = x2# : boxes(boxcount).y2 = y2# : boxes(boxcount).z2 = z2#
+   rem A bounding circle lets ray tests skip most boxes after a few sums.
+   boxes(boxcount).cx = (x1# + x2#) / 2 : boxes(boxcount).cz = (z1# + z2#) / 2
+   boxes(boxcount).radius = sqrt((x2# - x1#) ^ 2 + (z2# - z1#) ^ 2) / 2
+   rem The layout lists the floor-to-ceiling props first; they alone block sight.
+   if y2# >= 50 and boxcount = tallcount + 1 then tallcount = boxcount
+endfunction
+
+rem Static collision boxes are rebuilt whenever the force field changes.
+function build_collision()
+   delete static objects
+   for i = 1 to boxcount
+      make static collision box boxes(i).x1, boxes(i).y1, boxes(i).z1, boxes(i).x2, boxes(i).y2, boxes(i).z2
+   next i
+   for i = 1 to valvecount
+      make static collision box valves(i).x - 3, 0, valves(i).z - 3, valves(i).x + 3, 20, valves(i).z + 3
+   next i
+   if fieldon = 1 then make static collision box fieldx1#, 0, fieldz# - 2, fieldx2#, 40, fieldz# + 2
+endfunction
+
+function load_media()
+   load image "textures/lightmap.jpg", 1
+   load image "textures/glow.jpg", 2
+   load image "textures/flash.jpg", 3
+   load image "textures/crate.jpg", 4
+   load image "textures/crate_normal.jpg", 5
+   load image "textures/plasma.jpg", 6
+   load image "textures/field.jpg", 7
+   load image "textures/chrome.jpg", 8
+   load image "textures/medkit.jpg", 9
+   load image "textures/cell.jpg", 10
+   load image "textures/eye.jpg", 11
+   load image "textures/blob.png", 12
+   load image "textures/wall_normal.jpg", 30
+   load image "textures/floor_normal.jpg", 31
+   load image "textures/ceiling_normal.jpg", 32
+   load image "textures/machine_normal.jpg", 33
+   rem The room's cube, in the order SET CUBE MAPPING ON takes: +X, -X, +Y, -Y, +Z, -Z
+   load image "textures/room_cube_px.jpg", 40
+   load image "textures/room_cube_nx.jpg", 41
+   load image "textures/room_cube_py.jpg", 42
+   load image "textures/room_cube_ny.jpg", 43
+   load image "textures/room_cube_pz.jpg", 44
+   load image "textures/room_cube_nz.jpg", 45
+   rem A plain red image for the damage flash.
+   ink rgb(255, 20, 10), 0 : box 0, 0, 16, 16 : get image 20, 0, 0, 16, 16
+
+   load sound "sounds/shot.wav", 1
+   load sound "sounds/hit.wav", 4
+   load sound "sounds/hurt.wav", 6
+   load sound "sounds/pickup.wav", 7
+   load sound "sounds/valve.wav", 8
+   load sound "sounds/clank.wav", 9
+   load sound "sounds/reload.wav", 11
+   load sound "sounds/empty.wav", 12
+   load sound "sounds/alarm.wav", 13
+   load sound "sounds/field.wav", 14
+   load sound "sounds/win.wav", 15
+   load sound "sounds/lose.wav", 16
+   load 3dsound "sounds/reactor.wav", 10
+   load 3dsound "sounds/zap.wav", 30
+   load 3dsound "sounds/boom.wav", 31
+   load 3dsound "sounds/ricochet.wav", 32
+   for i = 1 to dronecount
+      load 3dsound "sounds/hum.wav", 20 + i
+   next i
+   set sound volume 13, 70
+endfunction
+
+function build_world()
+   rem The level shares one lightmap atlas between its five limbs. Copy the
+   rem atlas UVs to stage 1 for the lightmap, then repeat stage 0 for the materials.
+   load object "models/level.x", OBJ_LEVEL
+   perform checklist for object limbs OBJ_LEVEL
+   for limb = 0 to checklist quantity() - 1
+      lock vertexdata for limb OBJ_LEVEL, limb, 0
+      for v = 0 to get vertexdata vertex count() - 1
+         set vertexdata uv v, 1, get vertexdata u(v, 0), get vertexdata v(v, 0)
+      next v
+      unlock vertexdata
+   next limb
+   scale object texture OBJ_LEVEL, 0, LEVEL_TILING, LEVEL_TILING
+   rem Stage 1 holds each limb's normal map. Stage 2 modulates by two, on the coordinates
+   rem of stage 1's set: mid grey in the lightmap leaves a surface as painted.
+   set bump mapping on OBJ_LEVEL, 30
+   set blend mapping on OBJ_LEVEL, 2, 1, 11, 5
+
+   rem Each limb holds one material. Floors and machines reflect the room, which takes
+   rem an object of their own: bump and cube mapping belong to an object.
+   shiny = OBJ_SHINY
+   for limb = 0 to checklist quantity() - 1
+      name$ = lower$(limb texture name(OBJ_LEVEL, limb))
+      if has_text(name$, "ceiling") then texture limb OBJ_LEVEL, limb, 1, 32
+      if has_text(name$, "machine") or has_text(name$, "floor")
+         if has_text(name$, "floor") then texture limb OBJ_LEVEL, limb, 1, 31 else texture limb OBJ_LEVEL, limb, 1, 33
+         make object from limb shiny, OBJ_LEVEL, limb
+         exclude limb on OBJ_LEVEL, limb
+         set cube mapping on shiny, 40, 41, 42, 43, 44, 45
+         set object specular shiny, rgb(80, 80, 84)
+         set object specular power shiny, 60
+         inc shiny
+      endif
+   next limb
+
+   rem The baked light carries the room lighting: the world settings' full white ambient
+   rem shows it as baked, the dim directional light only gives the props some shape.
+   set directional light 0, 0.3, -1, 0.4
+   color light 0, rgb(60, 62, 70)
+
+   rem The reactor: a glass column reflecting the room, a swirling energy core.
+   make object cylinder OBJ_GLASS, 24
+   scale object OBJ_GLASS, 100, 210, 100
+   position object OBJ_GLASS, corex#, 35, corez#
+   texture object OBJ_GLASS, 8
+   set cube mapping on OBJ_GLASS, 40, 41, 42, 43, 44, 45
+   ghost object on OBJ_GLASS
+   set object light OBJ_GLASS, 0
+   make object cylinder OBJ_ENERGY, 13
+   scale object OBJ_ENERGY, 100, 380, 100
+   position object OBJ_ENERGY, corex#, 35, corez#
+   texture object OBJ_ENERGY, 6
+   set object light OBJ_ENERGY, 0
+   set object emissive OBJ_ENERGY, rgb(255, 255, 255)
+
+   make object plain OBJ_FIELD, fieldx2# - fieldx1#, 36
+   position object OBJ_FIELD, (fieldx1# + fieldx2#) / 2, 18, fieldz#
+   texture object OBJ_FIELD, 7
+   ghost object on OBJ_FIELD
+   set object cull OBJ_FIELD, 0
+   set object light OBJ_FIELD, 0
+
+   make object cylinder OBJ_PAD, 22
+   scale object OBJ_PAD, 100, 4, 100
+   position object OBJ_PAD, exitx#, 0.5, exitz#
+   texture object OBJ_PAD, 6
+   set object light OBJ_PAD, 0
+
+   rem Alarm beacons on the hall walls; the red spot lights sweep from them.
+   for i = 0 to 1
+      make object sphere OBJ_BEACON + i * 100, 4
+      texture object OBJ_BEACON + i * 100, 11
+      set object light OBJ_BEACON + i * 100, 0
+      position object OBJ_BEACON + i * 100, -87 + i * 174, 62, corez#
+   next i
+
+   for i = 1 to cratecount
+      s# = crates(i).size
+      make object box OBJ_CRATE + i, s#, s#, s#
+      position object OBJ_CRATE + i, crates(i).x, s# / 2, crates(i).z
+      yrotate object OBJ_CRATE + i, crates(i).yaw
+      texture object OBJ_CRATE + i, 4
+      set bump mapping on OBJ_CRATE + i, 5
+      set object ambience OBJ_CRATE + i, rgb(130, 130, 140)
+      set object specular OBJ_CRATE + i, rgb(255, 255, 255)
+      set object specular power OBJ_CRATE + i, 24
+   next i
+
+   load object "models/valve.x", OBJ_VALVE
+   for i = 1 to valvecount
+      if i > 1 then clone object OBJ_VALVE + i - 1, OBJ_VALVE
+      position object OBJ_VALVE + i - 1, valves(i).x, 0, valves(i).z
+      yrotate object OBJ_VALVE + i - 1, valves(i).facing - 90
+      set object ambience OBJ_VALVE + i - 1, rgb(140, 140, 150)
+      set object specular OBJ_VALVE + i - 1, rgb(255, 230, 220)
+      set object specular power OBJ_VALVE + i - 1, 18
+   next i
+
+   rem Drones: each is loaded on its own so it animates independently. Each
+   rem carries a glowing halo glued to its eye limb and a soft blob shadow.
+   for i = 1 to dronecount
+      d = OBJ_DRONE + i
+      load object "models/drone.x", d
+      set object ambience d, rgb(90, 92, 105)
+      set object specular d, rgb(81, 76, 70)
+      set object specular power d, 30
+      set cube mapping on d, 40, 41, 42, 43, 44, 45
+      set object speed d, 30
+      set object interpolation d, 25
+      make object sphere OBJ_HALO + i, 5
+      texture object OBJ_HALO + i, 11
+      ghost object on OBJ_HALO + i
+      set object light OBJ_HALO + i, 0
+      disable object zwrite OBJ_HALO + i
+      glue object to limb OBJ_HALO + i, d, 1
+      make object plain OBJ_BLOB + i, 18, 18
+      xrotate object OBJ_BLOB + i, 90
+      texture object OBJ_BLOB + i, 12
+      ghost object on OBJ_BLOB + i, 1
+      set object light OBJ_BLOB + i, 0
+      disable object zwrite OBJ_BLOB + i
+   next i
+
+   for i = 1 to MAX_BOLTS
+      make object plain OBJ_BOLT + i, 9, 9
+      texture object OBJ_BOLT + i, 11
+      set object cull OBJ_BOLT + i, 0
+      ghost object on OBJ_BOLT + i
+      set object light OBJ_BOLT + i, 0
+      disable object zwrite OBJ_BOLT + i
+      hide object OBJ_BOLT + i
+   next i
+
+   for i = 1 to pickupcount
+      p = OBJ_PICKUP + i
+      if pickups(i).kind = 0
+         make object box p, 7, 4, 5
+         texture object p, 9
+      else
+         make object cylinder p, 3
+         scale object p, 100, 220, 100
+         texture object p, 10
+         set object emissive p, rgb(40, 90, 110)
+      endif
+      set object ambience p, rgb(150, 150, 160)
+   next i
+
+   rem The pulse rifle lives in camera space; the flash sits on its muzzle.
+   load object "models/rifle.x", OBJ_GUN
+   scale object OBJ_GUN, 70, 70, 70
+   lock object on OBJ_GUN
+   set object ambience OBJ_GUN, rgb(70, 72, 80)
+   set object specular OBJ_GUN, rgb(255, 255, 255)
+   set object specular power OBJ_GUN, 40
+   disable object zdepth OBJ_GUN
+   make object plain OBJ_FLASH, 6, 6
+   texture object OBJ_FLASH, 3
+   ghost object on OBJ_FLASH
+   set object light OBJ_FLASH, 0
+   lock object on OBJ_FLASH
+   disable object zdepth OBJ_FLASH
+   hide object OBJ_FLASH
+
+   rem Dynamic lights: 1 reactor core, 2-3 alarm spots, 4 muzzle and blasts,
+   rem 5-6 plasma bolts, 7 a failing corridor lamp.
+   make light 1 : set point light 1, corex#, 35, corez# : set light range 1, 170
+   for l = 2 to 3
+      make light l
+      set spot light l, 25, 50
+      color light l, rgb(255, 40, 20)
+      set light range l, 260
+      position light l, -84 + (l - 2) * 168, 62, corez#
+   next l
+   for l = 4 to 6
+      make light l : set point light l, 0, 0, 0 : set light range l, 90 : hide light l
+   next l
+   color light 5, rgb(255, 60, 40) : color light 6, rgb(255, 60, 40)
+   make light 7 : set point light 7, 0, 32, -70 : color light 7, rgb(200, 220, 255) : set light range 7, 70
+
+   rem Particles: impact sparks and drone explosions.
+   make particles 1, 2, 30, 4
+   color particles 1, 255, 190, 90
+   set particle speed 1, 0.04
+   set particle velocity 1, 14
+   set particle gravity 1, 6
+   set particle floor 1, 0
+   set particle emissions 1, 0
+   make particles 2, 2, 60, 6
+   color particles 2, 255, 120, 40
+   set particle speed 2, 0.03
+   set particle velocity 2, 26
+   set particle gravity 2, 4
+   set particle floor 2, 0
+   set particle emissions 2, 0
+
+   sprite 1, 0, 0, 20 : size sprite 1, screen width(), screen height() : hide sprite 1
+
+   position sound 10, corex#, 35, corez#
+   loop sound 10
+endfunction
+
+function body_fits(x#, z#, r#)
+   if point_in_level(x# - r#, z# - r#) = 0 then exitfunction 0
+   if point_in_level(x# + r#, z# - r#) = 0 then exitfunction 0
+   if point_in_level(x# - r#, z# + r#) = 0 then exitfunction 0
+   if point_in_level(x# + r#, z# + r#) = 0 then exitfunction 0
+endfunction 1
+
+function point_in_level(x#, z#)
+   if room_at(x#, z#) > 0 then exitfunction 1
+endfunction 0
+
+rem The room holding a point, or 0 inside the walls. The last room found is
+rem tried first: bodies rarely change room, so most calls test a single box.
+function room_at(x#, z#)
+   r = roomhint
+   if x# >= rooms(r).x1 and x# <= rooms(r).x2 and z# >= rooms(r).z1 and z# <= rooms(r).z2 then exitfunction r
+   for r = 1 to roomcount
+      if x# >= rooms(r).x1 and x# <= rooms(r).x2 and z# >= rooms(r).z1 and z# <= rooms(r).z2
+         roomhint = r
+         exitfunction r
+      endif
+   next r
+endfunction 0
+
+rem Distance along a unit ray to the first wall, floor or ceiling. The level is
+rem a set of boxes: leave the current room, and carry on only through a doorway.
+function ray_level(x#, y#, z#, dx#, dy#, dz#, far#)
+   t# = 0.0
+   for step = 1 to 8
+      r = room_at(x# + dx# * (t# + 0.05), z# + dz# * (t# + 0.05))
+      if r = 0 then exitfunction t#
+      if y# + dy# * t# > rooms(r).height then exitfunction t#
+      t# = slab_exit(x#, dx#, rooms(r).x1, rooms(r).x2)
+      tz# = slab_exit(z#, dz#, rooms(r).z1, rooms(r).z2)
+      ty# = slab_exit(y#, dy#, 0, rooms(r).height)
+      if tz# < t# then t# = tz#
+      if ty# <= t# then exitfunction ty#
+      if t# >= far# then exitfunction far#
+   next step
+endfunction t#
+
+function slab_exit(p#, d#, lo#, hi#)
+   if d# > 0.0001 then exitfunction (hi# - p#) / d#
+   if d# < -0.0001 then exitfunction (lo# - p#) / d#
+endfunction 100000.0
+
+rem Distance along a unit ray to the nearest prop box among the first count
+rem boxes, or far# if none is hit.
+function ray_boxes(x#, y#, z#, dx#, dy#, dz#, far#, count)
+   best# = far#
+   flat# = dx# * dx# + dz# * dz# : if flat# < 0.0001 then flat# = 0.0001
+   for i = 1 to count
+      ox# = boxes(i).cx - x# : oz# = boxes(i).cz - z#
+      along# = (ox# * dx# + oz# * dz#) / flat#
+      r# = boxes(i).radius
+      if along# > -r# and along# < best# + r#
+         if ox# * ox# + oz# * oz# - along# * along# * flat# < r# * r#
+            clipnear# = 0.0 : clipfar# = best#
+            if slab_clip(x#, dx#, boxes(i).x1, boxes(i).x2) = 1
+               if slab_clip(y#, dy#, boxes(i).y1, boxes(i).y2) = 1
+                  if slab_clip(z#, dz#, boxes(i).z1, boxes(i).z2) = 1 then best# = clipnear#
+               endif
+            endif
+         endif
+      endif
+   next i
+endfunction best#
+
+rem Narrows clipnear#..clipfar# to the part of the ray inside one slab.
+function slab_clip(p#, d#, lo#, hi#)
+   if abs(d#) < 0.0001
+      if p# < lo# or p# > hi# then exitfunction 0
+      exitfunction 1
+   endif
+   a# = (lo# - p#) / d# : b# = (hi# - p#) / d#
+   if a# > b# then c# = a# : a# = b# : b# = c#
+   if a# > clipnear# then clipnear# = a#
+   if b# < clipfar# then clipfar# = b#
+   if clipnear# > clipfar# then exitfunction 0
+endfunction 1
+
+function world_update()
+   t# = timer() / 1000.0
+   rem The core pulses cyan while critical and settles to a calm blue once cooled.
+   if closedcount < valvecount
+      pulse# = 0.75 + 0.25 * sin(t# * 220)
+      color light 1, rgb(60 * pulse#, 210 * pulse#, 255 * pulse#)
+      set object emissive OBJ_ENERGY, rgb(255 * pulse#, 255 * pulse#, 255 * pulse#)
+      for l = 2 to 3
+         a# = wrapvalue(t# * 160 + (l - 2) * 180)
+         point light l, light position x(l) + sin(a#) * 10, 40, light position z(l) + cos(a#) * 10
+      next l
+   else
+      color light 1, rgb(40, 90, 200)
+      set object emissive OBJ_ENERGY, rgb(120, 140, 200)
+   endif
+   yrotate object OBJ_ENERGY, wrapvalue(t# * 40)
+   scroll limb texture OBJ_ENERGY, 0, 0, 0.004
+   scroll limb texture OBJ_FIELD, 0, 0.003, 0.006
+   scroll limb texture OBJ_PAD, 0, 0.002, 0.0
+   rem A corridor lamp with a failing starter.
+   if rnd(30) = 0 then hide light 7
+   if rnd(6) = 0 then show light 7
+   for i = 1 to pickupcount
+      if pickups(i).taken = 0
+         position object OBJ_PICKUP + i, pickups(i).x, 5 + sin(t# * 120 + i * 50) * 1.2, pickups(i).z
+         yrotate object OBJ_PICKUP + i, wrapvalue(t# * 90 + i * 40)
+      endif
+   next i
+endfunction
+
+function sparks(x#, y#, z#)
+   position particles 1, x#, y#, z#
+   sparkframes = 2
+endfunction
+
+function muzzle_light(x#, y#, z#, colour)
+   position light 4, x#, y#, z#
+   color light 4, colour
+   show light 4
+   flashlight = 4
+endfunction
+
+function effects_update()
+   if sparkframes > 0 then set particle emissions 1, 10 : dec sparkframes else set particle emissions 1, 0
+   if boomframes > 0 then set particle emissions 2, 20 : dec boomframes else set particle emissions 2, 0
+   if flashlight > 0
+      dec flashlight
+      if flashlight = 0 then hide light 4
+   endif
+   if flash > 0
+      show object OBJ_FLASH
+      position object OBJ_FLASH, 2.3, -2.2, 11.5 - recoil#
+      zrotate object OBJ_FLASH, rnd(359)
+      dec flash
+   else
+      hide object OBJ_FLASH
+   endif
+   if hurt > 0
+      show sprite 1
+      set sprite alpha 1, hurt * 6
+      dec hurt
+   else
+      hide sprite 1
+   endif
+   if messagetime > 0 then dec messagetime
+endfunction
+
+rem 1 when part$ occurs in text$.
+function has_text(text$, part$)
+   for i = 1 to len(text$) - len(part$) + 1
+      if left$(right$(text$, len(text$) - i + 1), len(part$)) = part$ then exitfunction 1
+   next i
+endfunction 0

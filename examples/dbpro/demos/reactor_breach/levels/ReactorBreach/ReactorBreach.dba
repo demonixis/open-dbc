@@ -1,0 +1,7 @@
+REM OpenDBC level. Edited by the Studio Scene view.
+REM @level objects=1 images=1000 matrices=1 terrains=1 lights=1 sounds=1 effects=1
+FUNCTION LoadLevel_ReactorBreach()
+   REM @object 2 "Ceiling lamps"
+   LOAD OBJECT "models/lamps.x", 2
+   SET OBJECT 2, 1, 0, 1, 1, 0, 1, 1
+ENDFUNCTION

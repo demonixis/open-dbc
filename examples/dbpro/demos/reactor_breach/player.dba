@@ -1,0 +1,192 @@
+rem Reactor Breach - the player: movement, the rifle and the valves.
+rem Included by reactor_breach.dba.
+
+function player_update()
+   inc modetimer
+   if mode <> 1
+      rem After the game ends the camera settles; a key or click returns to the title.
+      if mode = 2 and py# > 4 then py# = py# - 0.15
+      position camera px#, py#, pz#
+      rotate camera pitch#, yaw#, 0
+      if modetimer > 90 and (scancode() <> 0 or mouseclick() <> 0)
+         mode = 0 : modetimer = 0 : reset_game()
+      endif
+      exitfunction
+   endif
+
+   yaw# = wrapvalue(yaw# + mousemovex() * 0.15)
+   pitch# = pitch# + mousemovey() * 0.15
+   if pitch# > 75 then pitch# = 75
+   if pitch# < -75 then pitch# = -75
+   if keystate(203) = 1 then yaw# = wrapvalue(yaw# - 2.5)
+   if keystate(205) = 1 then yaw# = wrapvalue(yaw# + 2.5)
+
+   forward# = 0.0 : strafe# = 0.0
+   if keystate(17) = 1 or keystate(200) = 1 then forward# = 1.0
+   if keystate(31) = 1 or keystate(208) = 1 then forward# = -1.0
+   if keystate(32) = 1 then strafe# = 1.0
+   if keystate(30) = 1 then strafe# = -1.0
+   speed# = 1.5
+   if forward# <> 0 and strafe# <> 0 then speed# = 1.06
+   dx# = (sin(yaw#) * forward# + cos(yaw#) * strafe#) * speed#
+   dz# = (cos(yaw#) * forward# - sin(yaw#) * strafe#) * speed#
+   if grounded = 1 and keystate(57) = 1 then vy# = 2.3 : grounded = 0
+   vy# = vy# - 0.12
+   move_player(dx#, vy#, dz#)
+   if dx# <> 0 or dz# <> 0 then bob# = bob# + 9 else bob# = curvevalue(0, bob#, 8)
+
+   position camera px#, py# + sin(bob# * 2) * 0.25, pz#
+   rotate camera pitch#, yaw#, 0
+   position listener px#, py#, pz#
+   rotate listener 0, yaw#, 0
+
+   player_weapon()
+   player_interact()
+   if health <= 0 then start_mode(2)
+   if closedcount = valvecount
+      dx# = px# - exitx# : dz# = pz# - exitz#
+      if dx# * dx# + dz# * dz# < 100 then start_mode(3)
+   endif
+   remaining = CORE_SECONDS - (timer() - starttime) / 1000
+   if remaining <= 0 and closedcount < valvecount then message$ = "CORE MELTDOWN" : health = 0 : start_mode(2)
+endfunction
+
+rem Slide against the static boxes (crates can be stood on), then keep the
+rem body inside the rooms one axis at a time so the walls slide too.
+function move_player(dx#, dy#, dz#)
+   roomhint = playerroom
+   feet# = py# - EYE
+   nx# = px# + dx# : ny# = feet# + dy# : nz# = pz# + dz#
+   grounded = 0
+   if get static collision hit(px# - RADIUS, feet#, pz# - RADIUS, px# + RADIUS, feet# + 18, pz# + RADIUS, nx# - RADIUS, ny#, nz# - RADIUS, nx# + RADIUS, ny# + 18, nz# + RADIUS) = 1
+      nx# = nx# + get static collision x()
+      ny# = ny# + get static collision y()
+      nz# = nz# + get static collision z()
+      if get static collision y() > 0 then vy# = 0 : grounded = 1
+   endif
+   if ny# <= 0 then ny# = 0 : vy# = 0 : grounded = 1
+   if body_fits(nx#, pz#, RADIUS) = 1 then px# = nx#
+   if body_fits(px#, nz#, RADIUS) = 1 then pz# = nz#
+   py# = ny# + EYE
+   playerroom = roomhint
+endfunction
+
+function player_weapon()
+   if cooldown > 0 then dec cooldown
+   recoil# = curvevalue(0, recoil#, 5)
+   if reload > 0
+      dec reload
+      if reload = 0
+         take = 24 - ammo
+         if take > reserve then take = reserve
+         ammo = ammo + take : reserve = reserve - take
+      endif
+   endif
+   if keystate(19) = 1 and reload = 0 and ammo < 24 and reserve > 0 then reload = 70 : play sound 11
+   if mouseclick() = 1 and cooldown = 0 and reload = 0
+      if ammo > 0
+         fire_rifle()
+      else
+         cooldown = 20 : play sound 12
+         if reserve > 0 then reload = 70 : play sound 11
+      endif
+   endif
+   rem Bob with the walk, kick with the shot, dip while reloading.
+   dip# = 0
+   if reload > 0 then dip# = sin(reload * 180.0 / 70) * 5
+   position object OBJ_GUN, 2.3 + cos(bob#) * 0.2, -2.7 - abs(sin(bob#)) * 0.2 - dip#, 5.6 - recoil#
+   rotate object OBJ_GUN, 0 - recoil# * 2 + dip# * 4, -2, 0
+endfunction
+
+function fire_rifle()
+   dec ammo
+   cooldown = 7
+   recoil# = 1.2
+   flash = 3
+   play sound 1
+   rem The ray leaves the eye along the view direction.
+   cx# = camera position x() : cy# = camera position y() : cz# = camera position z()
+   dirx# = sin(yaw#) * cos(pitch#) : diry# = 0 - sin(pitch#) : dirz# = cos(yaw#) * cos(pitch#)
+   ex# = cx# + dirx# * 600 : ey# = cy# + diry# * 600 : ez# = cz# + dirz# * 600
+   best# = ray_level(cx#, cy#, cz#, dirx#, diry#, dirz#, 600)
+   best# = ray_boxes(cx#, cy#, cz#, dirx#, diry#, dirz#, best#, boxcount)
+   rem Only drones close to the ray get the exact (and costlier) mesh test.
+   target = 0
+   for i = 1 to dronecount
+      if drones(i).state < 3
+         ox# = drones(i).x - cx# : oy# = 15 - cy# : oz# = drones(i).z - cz#
+         along# = ox# * dirx# + oy# * diry# + oz# * dirz#
+         if along# > 0 and along# < best#
+            miss# = ox# * ox# + oy# * oy# + oz# * oz# - along# * along#
+            if miss# < 100
+               d# = intersect object(OBJ_DRONE + i, cx#, cy#, cz#, ex#, ey#, ez#)
+               if d# > 0 and d# < best# then best# = d# : target = i
+            endif
+         endif
+      endif
+   next i
+   hx# = cx# + dirx# * (best# - 1) : hy# = cy# + diry# * (best# - 1) : hz# = cz# + dirz# * (best# - 1)
+   sparks(hx#, hy#, hz#)
+   muzzle_light(cx# + dirx# * 8, cy# + diry# * 8 - 2, cz# + dirz# * 8, rgb(120, 220, 255))
+   if target > 0
+      damage_drone(target)
+   else
+      position sound 32, hx#, hy#, hz# : play sound 32
+   endif
+endfunction
+
+function player_interact()
+   for i = 1 to pickupcount
+      if pickups(i).taken = 0
+         dx# = px# - pickups(i).x : dz# = pz# - pickups(i).z
+         if dx# * dx# + dz# * dz# < 80
+            if pickups(i).kind = 0 and health < 100
+               health = health + 40 : if health > 100 then health = 100
+               pickups(i).taken = 1 : say("MEDKIT +40")
+            endif
+            if pickups(i).kind = 1
+               reserve = reserve + 24 : pickups(i).taken = 1 : say("PULSE CELLS +24")
+            endif
+            if pickups(i).taken = 1 then hide object OBJ_PICKUP + i : play sound 7
+         endif
+      endif
+   next i
+   turning = 0
+   for i = 1 to valvecount
+      if valves(i).closed = 0
+         dx# = px# - valves(i).x : dz# = pz# - valves(i).z
+         if dx# * dx# + dz# * dz# < 400
+            if keystate(18) = 1
+               turning = 1
+               valves(i).turn = valves(i).turn + 6
+               rotate limb OBJ_VALVE + i - 1, 2, valves(i).turn, 0, 0
+               if valves(i).turn >= 720 then close_valve(i)
+            else
+               say("HOLD E TO CLOSE THE VALVE")
+            endif
+         endif
+      endif
+   next i
+   if turning = 1
+      if sound playing(8) = 0 then loop sound 8
+   else
+      if sound playing(8) = 1 then stop sound 8
+   endif
+endfunction
+
+function close_valve(i)
+   valves(i).closed = 1
+   inc closedcount
+   stop sound 8 : play sound 9
+   if closedcount < valvecount
+      say("VALVE CLOSED  " + str$(closedcount) + " / " + str$(valvecount))
+   else
+      rem All coolant valves shut: the alarm stops and the force field drops.
+      fieldon = 0
+      hide object OBJ_FIELD
+      build_collision()
+      stop sound 13 : play sound 14
+      hide light 2 : hide light 3
+      say("FORCE FIELD DOWN - GET TO THE EXIT LIFT")
+   endif
+endfunction

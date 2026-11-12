@@ -1,0 +1,111 @@
+rem Reactor Breach - messages, the status display and the radar.
+rem Included by reactor_breach.dba.
+
+function say(text$)
+   message$ = text$
+   messagetime = 120
+endfunction
+
+function draw_hud()
+   w = screen width() : h = screen height()
+   if mode = 0
+      set text font "Arial" : set text size 64 : set text to bold
+      shadow_text(w / 2, 40, "REACTOR BREACH", rgb(255, 200, 60))
+      set text size 20 : set text to normal
+      shadow_text(w / 2, 118, "Close the three coolant valves, then reach the exit lift.", rgb(200, 230, 255))
+      shadow_text(w / 2, 144, "WASD move   MOUSE aim   LEFT BUTTON fire   R reload   E valve   SPACE jump", rgb(200, 230, 255))
+      if (modetimer / 30) mod 2 = 0 then shadow_text(w / 2, h - 60, "CLICK OR PRESS ANY KEY TO START", rgb(255, 255, 255))
+      exitfunction
+   endif
+
+   set text font "Arial" : set text size 22 : set text to bold
+   rem Crosshair
+   ink rgb(160, 240, 255), 0
+   cx = w / 2 : cy = h / 2
+   line cx - 12, cy, cx - 4, cy : line cx + 4, cy, cx + 12, cy
+   line cx, cy - 12, cx, cy - 4 : line cx, cy + 4, cx, cy + 12
+
+   rem Health and ammunition
+   ink rgb(20, 30, 40), 0 : box 30, h - 52, 262, h - 28
+   c = rgb(80, 220, 120)
+   if health < 35 then c = rgb(255, 70, 50)
+   ink c, 0 : box 32, h - 50, 32 + health * 228 / 100, h - 30
+   ink rgb(230, 240, 255), 0 : text 30, h - 82, "HEALTH " + str$(health)
+   set text size 40
+   a$ = str$(ammo) + " / " + str$(reserve)
+   text w - 40 - text width(a$), h - 76, a$
+   set text size 22
+   if reload > 0 then text w - 40 - text width("RELOADING"), h - 104, "RELOADING"
+
+   rem Objectives and the core countdown
+   text 30, 24, "VALVES " + str$(closedcount) + " / " + str$(valvecount)
+   s = remaining : if s < 0 then s = 0
+   s$ = str$(s mod 60) : if len(s$) < 2 then s$ = "0" + s$
+   if closedcount < valvecount
+      c = rgb(255, 210, 90)
+      if s < 60 and (s mod 2) = 0 then c = rgb(255, 60, 40)
+      ink c, 0
+      text 30, 52, "CORE MELTDOWN " + str$(s / 60) + ":" + s$
+   else
+      ink rgb(120, 200, 255), 0
+      text 30, 52, "CORE STABLE - REACH THE LIFT"
+   endif
+   ink rgb(230, 240, 255), 0
+   text 30, 80, "DRONES DOWN " + str$(kills) + " / " + str$(dronecount)
+
+   draw_radar(w - 110, 110, 80)
+
+   if messagetime > 0
+      ink rgb(255, 230, 140), 0
+      center text w / 2, h / 2 + 80, message$
+   endif
+   for i = 1 to valvecount
+      if valves(i).closed = 0 and valves(i).turn > 0
+         ink rgb(20, 30, 40), 0 : box w / 2 - 102, h / 2 + 112, w / 2 + 102, h / 2 + 126
+         ink rgb(255, 200, 60), 0 : box w / 2 - 100, h / 2 + 114, w / 2 - 100 + valves(i).turn * 200 / 720, h / 2 + 124
+      endif
+   next i
+
+   if mode = 2
+      set text size 56
+      ink rgb(255, 60, 40), 0
+      if remaining <= 0 then center text w / 2, h / 2 - 90, "CORE MELTDOWN" else center text w / 2, h / 2 - 90, "TERMINATED"
+   endif
+   if mode = 3
+      set text size 56
+      ink rgb(120, 255, 160), 0
+      center text w / 2, h / 2 - 110, "LOCKDOWN LIFTED"
+      set text size 26
+      ink rgb(230, 240, 255), 0
+      center text w / 2, h / 2 - 40, "You escaped with " + str$(remaining / 60) + " min " + str$(remaining mod 60) + " s to spare."
+   endif
+endfunction
+
+function shadow_text(x, y, text$, colour)
+   ink rgb(0, 0, 0), 0 : center text x + 2, y + 2, text$
+   ink colour, 0 : center text x, y, text$
+endfunction
+
+rem The radar turns with the player: straight ahead is always up.
+function draw_radar(cx, cy, r)
+   ink rgb(30, 60, 70), 0 : circle cx, cy, r : circle cx, cy, r / 2
+   ink rgb(160, 240, 255), 0 : line cx, cy - 6, cx - 4, cy + 4 : line cx, cy - 6, cx + 4, cy + 4
+   for i = 1 to dronecount
+      if drones(i).state < 3
+         radar_dot(cx, cy, r, drones(i).x, drones(i).z, rgb(255, 60, 40))
+      endif
+   next i
+   for i = 1 to valvecount
+      if valves(i).closed = 0 then radar_dot(cx, cy, r, valves(i).x, valves(i).z, rgb(255, 210, 60))
+   next i
+   if closedcount = valvecount then radar_dot(cx, cy, r, exitx#, exitz#, rgb(120, 200, 255))
+endfunction
+
+function radar_dot(cx, cy, r, x#, z#, colour)
+   dx# = (x# - px#) * 0.3 : dz# = (z# - pz#) * 0.3
+   rx# = dx# * cos(yaw#) - dz# * sin(yaw#)
+   rz# = dx# * sin(yaw#) + dz# * cos(yaw#)
+   if rx# * rx# + rz# * rz# > r * r then exitfunction
+   ink colour, 0
+   box cx + rx# - 2, cy - rz# - 2, cx + rx# + 2, cy - rz# + 2
+endfunction

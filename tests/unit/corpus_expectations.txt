@@ -62,6 +62,12 @@ dbpro/demos/dusk_rally/hud.dba|dbpro|included|-
 dbpro/demos/dusk_rally/levels/DuskRally/DuskRally.dba|dbpro|included|-
 dbpro/demos/dusk_rally/levels/DuskRally/world_settings.dba|dbpro|included|-
 dbpro/demos/dusk_rally/world.dba|dbpro|included|-
+dbpro/demos/reactor_breach/drones.dba|dbpro|included|-
+dbpro/demos/reactor_breach/facility.dba|dbpro|included|-
+dbpro/demos/reactor_breach/hud.dba|dbpro|included|-
+dbpro/demos/reactor_breach/levels/ReactorBreach/ReactorBreach.dba|dbpro|included|-
+dbpro/demos/reactor_breach/levels/ReactorBreach/world_settings.dba|dbpro|included|-
+dbpro/demos/reactor_breach/player.dba|dbpro|included|-
 dbpro/demos/reactor_breach/reactor_breach.dba|dbpro|verified|-
 dbpro/demos/sky_gardens/garden.dba|dbpro|included|-
 dbpro/demos/sky_gardens/hud.dba|dbpro|included|-
