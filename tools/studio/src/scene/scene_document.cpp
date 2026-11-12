@@ -209,6 +209,8 @@ namespace dbc::studio
 
         void ResolveMaterial(Material& Mat)
         {
+            if (!Mat.Effect.empty())
+                Mat.Shade = Shading::None;
             if (Mat.Shade != Shading::None)
             {
                 Mat.Second = SecondMap::None;
@@ -424,6 +426,8 @@ namespace dbc::studio
             Take(From.ShadeTexture, To.ShadeTexture, Into.ShadeTexture);
             Take(From.EdgeTexture, To.EdgeTexture, Into.EdgeTexture);
             Take(From.Reflection, To.Reflection, Into.Reflection);
+            Take(From.Effect, To.Effect, Into.Effect);
+            Take(From.EffectTextures, To.EffectTextures, Into.EffectTextures);
             // An edit to one of them may rule out what the target had.
             ResolveMaterial(Into);
             Take(From.ZDepth, To.ZDepth, Into.ZDepth);

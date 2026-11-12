@@ -124,9 +124,12 @@ namespace dbc::studio
                 }
             }
 
+            // LOAD EFFECT numbers, one per file and texture flag.
+            using EffectNumbers = std::map<std::pair<std::string, bool>, int>;
+
             // The texture stages past the first and the shadings. A form that lacks an image is left out.
             void WriteStages(Emitter& Out, const std::string& Id, const Material& Mat,
-                             const std::map<std::string, int>& Images)
+                             const std::map<std::string, int>& Images, const EffectNumbers& Effects)
             {
                 const auto Image = [&Images](const std::string& Texture) { return Integer(Images.at(Texture)); };
                 if (!Mat.SecondTexture.empty())
@@ -181,9 +184,13 @@ namespace dbc::studio
                     Out.Command(SymbolId::Command_SetRainbowShadingOn, {Id, Image(Mat.ShadeTexture)});
                 if (Mat.Reflection)
                     Out.Command(SymbolId::Command_SetReflectionShadingOn, {Id});
+                // Last: an effect takes the object over from the built-in shadings.
+                if (!Mat.Effect.empty())
+                    Out.Command(SymbolId::Command_SetObjectEffect,
+                                {Id, Integer(Effects.at({Mat.Effect, Mat.EffectTextures}))});
             }
 
-            void WriteObject(Emitter& Out, const SceneNode& Node, const std::map<std::string, int>& Images)
+            void WriteObject(Emitter& Out, const SceneNode& Node, const std::map<std::string, int>& Images, const EffectNumbers& Effects)
             {
                 const std::string Id = Integer(Node.Id);
                 switch (Node.Kind)
@@ -285,7 +292,7 @@ namespace dbc::studio
                     else
                         Out.Command(SymbolId::Command_SetShadowShadingOn, {Id});
                 }
-                WriteStages(Out, Id, Mat, Images);
+                WriteStages(Out, Id, Mat, Images, Effects);
                 // The depth buffer is on by default, so only what is switched off is written.
                 if (!Mat.ZDepth)
                     Out.Command(SymbolId::Command_DisableObjectZdepth, {Id});
@@ -338,7 +345,7 @@ namespace dbc::studio
             }
 
             void WriteNode(Emitter& Out, const SceneNode& Node, const SceneNode* Original,
-                           const std::map<std::string, int>& Images)
+                           const std::map<std::string, int>& Images, const EffectNumbers& Effects)
             {
                 Out.Line(std::string("REM @") + MetadataTag(Node.Kind) + " " + Integer(Node.Id) + " " +
                          Quoted(Node.Name) + (Node.Painted ? " " + std::string(KPaintedTag) : std::string()));
@@ -348,7 +355,7 @@ namespace dbc::studio
                     if (Original != nullptr)
                         WriteInstance(Out, Node, *Original);
                     else
-                        WriteObject(Out, Node, Images);
+                        WriteObject(Out, Node, Images, Effects);
                     if (Node.Speed)
                         Out.Command(SymbolId::Command_SetObjectSpeed, {Id, Integer(*Node.Speed)});
                     if (Node.Frames)
@@ -696,7 +703,8 @@ namespace dbc::studio
                 {
                     static const std::pair<const char*, IdSpace> Keys[] = {
                         {"objects", IdSpace::Object},   {"images", IdSpace::Image}, {"matrices", IdSpace::Matrix},
-                        {"terrains", IdSpace::Terrain}, {"lights", IdSpace::Light}, {"sounds", IdSpace::Sound}};
+                        {"terrains", IdSpace::Terrain}, {"lights", IdSpace::Light}, {"sounds", IdSpace::Sound},
+                        {"effects", IdSpace::Effect}};
                     std::istringstream Stream(Rest);
                     std::string Pair;
                     while (Stream >> Pair)
@@ -827,6 +835,9 @@ namespace dbc::studio
                     std::string Path;
                     if (!Texture(ImageId, Path))
                         return;
+                    // The engine drops the object's effect when a normal map takes over.
+                    if (Map == SecondMap::Bump)
+                        Mat.Effect.clear();
                     Mat.Second = Map;
                     Mat.SecondTexture = std::move(Path);
                     Mat.LightReverse = Reverse;
@@ -960,6 +971,20 @@ namespace dbc::studio
                                 Error(Line_, "Image " + Integer(I(A, 1)) + " is loaded twice");
                                 Images_[I(A, 1)] = Path;
                             }
+                            return;
+                        }
+                        case SymbolId::Command_LoadEffect:
+                        {
+                            std::string Path;
+                            if (!S(A, 0, Path) || !Numbers(A, 1))
+                                return;
+                            if (A.size() != 3 || (I(A, 2) != 0 && I(A, 2) != 1))
+                            {
+                                Error(Line_, "LOAD EFFECT is written with a file, a number and a texture flag of 0 or 1");
+                                return;
+                            }
+                            if (!Effects_.emplace(I(A, 1), std::pair(Path, I(A, 2) != 0)).second)
+                                Error(Line_, "Effect " + Integer(I(A, 1)) + " is loaded twice");
                             return;
                         }
                         case SymbolId::Command_LoadObject:
@@ -1159,6 +1184,23 @@ namespace dbc::studio
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Mat.Flags.Ambient = I(A, 1) != 0;
                             break;
+                        case SymbolId::Command_SetObjectEffect:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                Material& Mat = Node->Mat;
+                                const auto Found = Effects_.find(I(A, 1));
+                                if (I(A, 1) == 0)
+                                    Mat.Effect.clear();
+                                else if (Found == Effects_.end())
+                                    Error(Line_, "SET OBJECT EFFECT uses effect " + Integer(I(A, 1)) + " before LOAD EFFECT");
+                                else
+                                {
+                                    Mat.Effect = Found->second.first;
+                                    Mat.EffectTextures = Found->second.second;
+                                    ResolveMaterial(Mat);
+                                }
+                            }
+                            break;
                         case SymbolId::Command_GlueObjectToLimb:
                             if (SceneNode* Node = Object(I(A, 0)))
                             {
@@ -1258,6 +1300,7 @@ namespace dbc::studio
                                 const bool Cartoon = Id == SymbolId::Command_SetCartoonShadingOn;
                                 if (!Texture(I(A, 1), Shade) || (Cartoon && !Texture(I(A, 2), Edge)))
                                     break;
+                                Mat.Effect.clear();
                                 Mat.Shade = Cartoon ? Shading::Cartoon : Shading::Rainbow;
                                 Mat.ShadeTexture = std::move(Shade);
                                 Mat.EdgeTexture = std::move(Edge);
@@ -1518,6 +1561,7 @@ namespace dbc::studio
                 LevelReadResult& Result_;
                 std::map<std::pair<IdSpace, int>, std::size_t> Index_;
                 std::map<int, std::string> Images_;
+                std::map<int, std::pair<std::string, bool>> Effects_;
                 // Set when replaying a program: nothing is an error, and this names what is not understood.
                 std::set<std::string>* Skipped_ = nullptr;
                 // Set when reading a world settings file: no nodes, and the display as well.
@@ -1584,7 +1628,8 @@ namespace dbc::studio
             Out.Line("REM @level objects=" + Integer(Document.Base(IdSpace::Object)) + " images=" +
                      Integer(Document.Base(IdSpace::Image)) + " matrices=" + Integer(Document.Base(IdSpace::Matrix)) +
                      " terrains=" + Integer(Document.Base(IdSpace::Terrain)) + " lights=" +
-                     Integer(Document.Base(IdSpace::Light)) + " sounds=" + Integer(Document.Base(IdSpace::Sound)));
+                     Integer(Document.Base(IdSpace::Light)) + " sounds=" + Integer(Document.Base(IdSpace::Sound)) +
+                     " effects=" + Integer(Document.Base(IdSpace::Effect)));
             Out.Line("FUNCTION " + LevelFunctionName(Document) + "()");
             Out.Push();
 
@@ -1603,6 +1648,19 @@ namespace dbc::studio
                 }
             }
 
+            EffectNumbers Effects;
+            int NextEffect = Document.Base(IdSpace::Effect);
+            for (const SceneNode& Node : Document.Nodes)
+            {
+                const Material& Mat = Node.Mat;
+                if (!IsObject(Node.Kind) || Mat.Effect.empty() || Effects.count({Mat.Effect, Mat.EffectTextures}) != 0)
+                    continue;
+                Effects[{Mat.Effect, Mat.EffectTextures}] = NextEffect;
+                Out.Command(SymbolId::Command_LoadEffect,
+                            {Quoted(Mat.Effect), Integer(NextEffect), Integer(Mat.EffectTextures ? 1 : 0)});
+                ++NextEffect;
+            }
+
             // Painted objects copy the first object that looks the same.
             std::vector<const SceneNode*> Originals;
             for (const SceneNode& Node : Document.Nodes)
@@ -1617,7 +1675,7 @@ namespace dbc::studio
                     else if (Node.Painted)
                         Original = *Found;
                 }
-                WriteNode(Out, Node, Original, Images);
+                WriteNode(Out, Node, Original, Images, Effects);
             }
 
             // After every node: the object a glue names may be created later than the one it holds.

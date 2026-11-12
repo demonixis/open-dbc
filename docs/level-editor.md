@@ -145,6 +145,12 @@ The Inspector edits the selected node:
   rainbow shading, which replace every stage, and `SET REFLECTION SHADING ON`,
   which ends shadow casting. Each image is loaded once, whatever uses it. A level
   that orders these commands in a way the Inspector cannot express stays read-only.
+- an effect (`LOAD EFFECT`, `SET OBJECT EFFECT`), numbered from the level's first
+  effect and loaded once per file. It replaces cartoon and rainbow shading, and
+  needs its [compiled manifest](usage.md): the Inspector warns when it is missing.
+- **Attachment**: `GLUE OBJECT TO LIMB` to another object of the level, with the
+  limb picked by name for a model. It is written after every node; the viewport
+  draws the object where it stands.
 
 Level Settings holds:
 - ambient light and colour, backdrop colour and fog;

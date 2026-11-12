@@ -621,6 +621,64 @@ TEST_CASE("A glued object is written after every node and read back")
     CHECK_FALSE(Unglued.Document.Nodes[0].Glued.has_value());
 }
 
+TEST_CASE("Effects are loaded once from their own numbers and set on their objects")
+{
+    scene::SceneDocument Document;
+    Document.Name = "Effects";
+    Document.Base(scene::IdSpace::Effect) = 40;
+    scene::SceneNode& Water = Document.Add(scene::NodeKind::Plain);
+    Water.Mat.Effect = "fx/water.fx";
+    scene::SceneNode& Pond = Document.Add(scene::NodeKind::Plain);
+    Pond.Mat.Effect = "fx/water.fx";
+    scene::SceneNode& Plain = Document.Add(scene::NodeKind::Cube);
+    Plain.Mat.Effect = "fx/water.fx";
+    Plain.Mat.EffectTextures = false;
+    Plain.Mat.Second = scene::SecondMap::Bump;
+    Plain.Mat.SecondTexture = "waves.png";
+
+    const std::string Text = scene::WriteLevel(Document);
+    INFO(Text);
+    CHECK(Text.find(" effects=40\n") != std::string::npos);
+    // One LOAD EFFECT per file and texture flag.
+    CHECK(Text.find("LOAD EFFECT \"fx/water.fx\", 40, 1\n") != std::string::npos);
+    CHECK(Text.find("LOAD EFFECT \"fx/water.fx\", 41, 0\n") != std::string::npos);
+    CHECK(Text.find("LOAD EFFECT \"fx/water.fx\", 42") == std::string::npos);
+    CHECK(Text.find("SET OBJECT EFFECT 1000, 40\n") != std::string::npos);
+    CHECK(Text.find("SET OBJECT EFFECT 1001, 40\n") != std::string::npos);
+    // After the normal map, which would otherwise end the effect.
+    CHECK(Text.find("SET BUMP MAPPING ON 1002") < Text.find("SET OBJECT EFFECT 1002, 41\n"));
+
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
+    REQUIRE(Read.Ok());
+    CHECK(Read.Document.Base(scene::IdSpace::Effect) == 40);
+    REQUIRE(Read.Document.Nodes.size() == 3);
+    for (std::size_t Index = 0; Index < 3; ++Index)
+        CHECK(Read.Document.Nodes[Index].Mat == Document.Nodes[Index].Mat);
+    CHECK(scene::WriteLevel(Read.Document) == Text);
+
+    const auto Level = [](const std::string& Body)
+    {
+        return scene::ReadLevel("FUNCTION LoadLevel_Test()\n   LOAD IMAGE \"a.png\", 1000\n"
+                                "   LOAD EFFECT \"a.fx\", 1, 1\n   MAKE OBJECT CUBE 1000, 10\n" +
+                                    Body + "ENDFUNCTION\n",
+                                "Test");
+    };
+    // As in the engine: a shading or a normal map written after the effect ends it, and effect 0 removes it.
+    scene::LevelReadResult Ended = Level("   SET OBJECT EFFECT 1000, 1\n   SET RAINBOW SHADING ON 1000, 1000\n");
+    REQUIRE(Ended.Ok());
+    CHECK(Ended.Document.Nodes[0].Mat.Effect.empty());
+    CHECK(Ended.Document.Nodes[0].Mat.Shade == scene::Shading::Rainbow);
+    Ended = Level("   SET RAINBOW SHADING ON 1000, 1000\n   SET OBJECT EFFECT 1000, 1\n");
+    REQUIRE(Ended.Ok());
+    CHECK(Ended.Document.Nodes[0].Mat.Effect == "a.fx");
+    CHECK(Ended.Document.Nodes[0].Mat.Shade == scene::Shading::None);
+    Ended = Level("   SET OBJECT EFFECT 1000, 1\n   SET OBJECT EFFECT 1000, 0\n");
+    REQUIRE(Ended.Ok());
+    CHECK(Ended.Document.Nodes[0].Mat.Effect.empty());
+    CHECK(Level("   SET OBJECT EFFECT 1000, 9\n").Errors.size() == 1);
+    CHECK(Level("   LOAD EFFECT \"b.fx\", 2, 1, 1\n").Errors.size() == 1);
+}
+
 TEST_CASE("A level holding a command only Classic runs stays read-only, and says why")
 {
     const scene::LevelReadResult Read = scene::ReadLevel("FUNCTION LoadLevel_Test()\n"

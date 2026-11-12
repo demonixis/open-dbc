@@ -764,10 +764,32 @@ namespace dbc::studio
             Heading("Texture stages");
             Hint(Tr("Written to the level; the Scene view shows the first texture only."));
 
+            AssetField("Effect", Mat.Effect, core::MediaKind::Effect);
+            if (!Mat.Effect.empty())
+            {
+                ImGui::Checkbox(TrId("Effect textures"), &Mat.EffectTextures);
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("%s", Tr("LOAD EFFECT's texture flag: the effect loads the textures it names"));
+                // LOAD EFFECT reads the compiled manifest beside the file; without it SET OBJECT EFFECT stops the game.
+                std::filesystem::path Manifest = dbc::PathFromUtf8(Mat.Effect);
+                const bool IsManifest = Mat.Effect.ends_with(".effect.json");
+                if (!IsManifest)
+                    Manifest.replace_extension(".effect.json");
+                std::error_code Ignored;
+                if (Project_ && !std::filesystem::is_regular_file(Project_->AssetRoot / Manifest, Ignored))
+                    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s",
+                                       TrFmt("{0} is missing: compile the effect from the Build menu.",
+                                             {dbc::GenericPathToUtf8(Manifest)})
+                                           .c_str());
+            }
+
+            // An effect takes the object over from cartoon and rainbow shading.
             int Shade = static_cast<int>(Mat.Shade);
             const char* const Shadings[] = {Tr("None"), Tr("Cartoon"), Tr("Rainbow")};
+            ImGui::BeginDisabled(!Mat.Effect.empty());
             if (ImGui::Combo(TrId("Shading"), &Shade, Shadings, 3))
                 Mat.Shade = static_cast<scene::Shading>(Shade);
+            ImGui::EndDisabled();
             if (Mat.Shade != scene::Shading::None)
             {
                 AssetField(Mat.Shade == scene::Shading::Cartoon ? "Shade image" : "Rainbow image", Mat.ShadeTexture,
@@ -877,8 +899,8 @@ namespace dbc::studio
                 ImGui::TextDisabled("%s", TrFmt("Function {0}()", {scene::LevelFunctionName(Document_)}).c_str());
 
                 Heading("Numbers");
-                static const char* const Labels[] = {"First object",  "First image", "First matrix",
-                                                     "First terrain", "First light", "First sound"};
+                static const char* const Labels[] = {"First object",  "First image", "First matrix", "First terrain",
+                                                     "First light",   "First sound", "First effect"};
                 for (std::size_t Space = 0; Space < scene::KIdSpaceCount; ++Space)
                 {
                     int Base = Document_.IdBase[Space];

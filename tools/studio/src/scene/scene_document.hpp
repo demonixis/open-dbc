@@ -53,9 +53,10 @@ namespace dbc::studio
             Terrain,
             Light,
             Sound,
+            Effect, // no node of its own: LOAD EFFECT numbers, as Image is for LOAD IMAGE
         };
 
-        inline constexpr std::size_t KIdSpaceCount = 6;
+        inline constexpr std::size_t KIdSpaceCount = 7;
 
         IdSpace IdSpaceOf(NodeKind Kind);
         // Lights and sounds: no geometry, drawn and picked as viewport icons.
@@ -145,6 +146,9 @@ namespace dbc::studio
             std::string ShadeTexture; // cartoon shade or rainbow image
             std::string EdgeTexture;  // cartoon edge image
             bool Reflection = false;  // SET REFLECTION SHADING ON, which ends shadow casting
+            // LOAD EFFECT and SET OBJECT EFFECT: an effect file, which ends cartoon and rainbow shading.
+            std::string Effect;
+            bool EffectTextures = true; // LOAD EFFECT's texture flag
 
             // The depth buffer: DISABLE OBJECT ZDEPTH, ZREAD and ZWRITE clear these.
             bool ZDepth = true;
@@ -275,7 +279,7 @@ namespace dbc::studio
         struct SceneDocument
         {
             std::string Name; // level name, also the function suffix
-            std::array<int, KIdSpaceCount> IdBase{1000, 1000, 1, 1, 1, 1};
+            std::array<int, KIdSpaceCount> IdBase{1000, 1000, 1, 1, 1, 1, 1};
             Environment Env;
             DisplaySettings Display;
             std::vector<SceneNode> Nodes;

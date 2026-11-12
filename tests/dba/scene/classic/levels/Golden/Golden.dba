@@ -1,5 +1,5 @@
 REM OpenDBC level. Edited by the Studio Scene view.
-REM @level objects=1000 images=1000 matrices=1 terrains=1 lights=1 sounds=1
+REM @level objects=1000 images=1000 matrices=1 terrains=1 lights=1 sounds=1 effects=1
 FUNCTION LoadLevel_Golden()
    LOAD IMAGE "../fixtures/classic/bmp/stone.bmp", 1000
    LOAD IMAGE "../fixtures/classic/bmp/brick.bmp", 1001
