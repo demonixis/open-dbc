@@ -344,6 +344,14 @@ namespace dbc::language::detail
                     }
                     return Result;
                 }
+                if (First.Kind == TokenKind::Star && Source_.Profile == LanguageProfile::DbPro)
+                {
+                    // `*pointer` reads raw memory, which no OpenDBC target exposes: one error for the expression.
+                    const SourceSpan Span = Merge(First.Span, Tokens_.back().Span);
+                    Position_ = Tokens_.size();
+                    AddError(Diagnostics_, "DBC1110", "Pointer dereference '*' is not supported", Span);
+                    return MakeError(Span);
+                }
                 if (First.Kind != TokenKind::Word)
                 {
                     Advance();
@@ -1151,6 +1159,12 @@ namespace dbc::language::detail
                 {
                     Result.Kind = StatementKind::Label;
                     Result.Name = Canonical(Lexeme(Source_, Value.Tokens.front().Span));
+                    return Result;
+                }
+                if (Value.Tokens.front().Kind == TokenKind::Star && Source_.Profile == LanguageProfile::DbPro)
+                {
+                    // `*pointer = value` writes raw memory.
+                    AddError(Program_.Diagnostics, "DBC1110", "Pointer dereference '*' is not supported", Value.Span);
                     return Result;
                 }
                 if (AssignsToCommandName(Value))

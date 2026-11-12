@@ -576,6 +576,15 @@ TEST_CASE("Classic has neither // comments nor DIV")
     CHECK(dbc::language::Compile(Source("a = 7 div 2\n", dbc::language::LanguageProfile::Dbc, "div.dba")).HasErrors());
 }
 
+TEST_CASE("DBPro pointer dereference reports one dedicated diagnostic per statement")
+{
+    const dbc::language::Program Program = dbc::language::Compile(
+        Source("*target = 42\nvalue = *target + 1\nprint *target\n", dbc::language::LanguageProfile::DbPro, "pointer.dba"));
+    REQUIRE(Program.Diagnostics.size() == 3);
+    for (const auto& Diagnostic : Program.Diagnostics)
+        CHECK(Diagnostic.Code == "DBC1110");
+}
+
 TEST_CASE("ELSEIF is not a DBPro keyword")
 {
     const std::string Text = "if 0\n"
@@ -1219,11 +1228,11 @@ TEST_CASE("The typed parser accepts every tracked BASIC example")
             const bool UsesDbProPointerDereference = Entry.path().filename() == "basic2d1.dba";
             if (UsesDbProPointerDereference)
             {
-                // `col = *workptr` is the DBPro pointer dereference, not yet in the grammar.
+                // `col = *workptr` is the DBPro pointer dereference, which stays unsupported.
                 INFO(Details);
                 CHECK(Program.HasErrors());
                 for (const auto& Diagnostic : Program.Diagnostics)
-                    CHECK((Diagnostic.Code == "DBC1101" || Diagnostic.Code == "DBC1105"));
+                    CHECK(Diagnostic.Code == "DBC1110");
             }
             else
             {
