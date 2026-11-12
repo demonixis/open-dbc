@@ -468,6 +468,111 @@ TEST_CASE("A level reads the single-flag forms of SET OBJECT and writes SET OBJE
     CHECK(Staged.Errors[0].Line == 3);
 }
 
+TEST_CASE("Texture stages and shadings round-trip through a level and share their images")
+{
+    scene::SceneDocument Document;
+    Document.Name = "Stages";
+    scene::SceneNode& Wall = Document.Add(scene::NodeKind::Cube);
+    Wall.Mat.Texture = "wall.png";
+    Wall.Mat.Second = scene::SecondMap::Light;
+    Wall.Mat.SecondTexture = "light.png";
+    Wall.Mat.LightReverse = true;
+    Wall.Mat.Blends.push_back({2, "dirt.png", 11, 5});
+    Wall.Mat.Alpha = 60.0f;
+    scene::SceneNode& Water = Document.Add(scene::NodeKind::Plain);
+    Water.Mat.Second = scene::SecondMap::Bump;
+    Water.Mat.SecondTexture = "waves.png";
+    Water.Mat.Cube = std::array<std::string, 6>{"px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png"};
+    Water.Mat.Reflection = true;
+    scene::SceneNode& Toon = Document.Add(scene::NodeKind::Sphere);
+    Toon.Mat.Shade = scene::Shading::Cartoon;
+    Toon.Mat.ShadeTexture = "shade.png";
+    Toon.Mat.EdgeTexture = "light.png";
+    scene::SceneNode& Rainbow = Document.Add(scene::NodeKind::Sphere);
+    Rainbow.Mat.Shade = scene::Shading::Rainbow;
+    Rainbow.Mat.ShadeTexture = "px.png";
+    scene::SceneNode& Detail = Document.Add(scene::NodeKind::Cube);
+    Detail.Mat.Second = scene::SecondMap::Detail;
+    Detail.Mat.SecondTexture = "dirt.png";
+    scene::SceneNode& Chrome = Document.Add(scene::NodeKind::Cube);
+    Chrome.Mat.Second = scene::SecondMap::Sphere;
+    Chrome.Mat.SecondTexture = "px.png";
+    scene::SceneNode& Mixed = Document.Add(scene::NodeKind::Cube);
+    Mixed.Mat.Second = scene::SecondMap::Blend;
+    Mixed.Mat.SecondTexture = "dirt.png";
+    Mixed.Mat.BlendMode = 7;
+
+    const std::string Text = scene::WriteLevel(Document);
+    INFO(Text);
+    // "light.png" serves the wall's light map and the cartoon edge: one LOAD IMAGE.
+    std::size_t Loads = 0;
+    for (std::size_t At = Text.find("LOAD IMAGE"); At != std::string::npos; At = Text.find("LOAD IMAGE", At + 1))
+        ++Loads;
+    CHECK(Loads == 11);
+    for (const char* Line : {"SET LIGHT MAPPING ON 1000, 1001, 1", "SET BLEND MAPPING ON 1000, 2, 1002, 11, 5",
+                             "SET ALPHA MAPPING ON 1000, 60", "SET BUMP MAPPING ON 1001, 1003",
+                             "SET CUBE MAPPING ON 1001, 1004, 1005, 1006, 1007, 1008, 1009",
+                             "SET REFLECTION SHADING ON 1001", "SET CARTOON SHADING ON 1002, 1010, 1001",
+                             "SET RAINBOW SHADING ON 1003, 1004", "SET DETAIL MAPPING ON 1004, 1002",
+                             "SET SPHERE MAPPING ON 1005, 1004", "SET BLEND MAPPING ON 1006, 1002, 7"})
+        CHECK_MESSAGE(Text.find(Line) != std::string::npos, Line);
+    CHECK(Text.find("SET BUMP MAPPING ON") < Text.find("SET CUBE MAPPING ON"));
+
+    const scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
+    REQUIRE(Read.Ok());
+    REQUIRE(Read.Document.Nodes.size() == Document.Nodes.size());
+    for (std::size_t Index = 0; Index < Document.Nodes.size(); ++Index)
+        CHECK(Read.Document.Nodes[Index].Mat == Document.Nodes[Index].Mat);
+    CHECK(scene::WriteLevel(Read.Document) == Text);
+}
+
+TEST_CASE("A level follows the engine where one stage command replaces another")
+{
+    const auto Level = [](const std::string& Body)
+    {
+        return scene::ReadLevel("FUNCTION LoadLevel_Test()\n"
+                                "   LOAD IMAGE \"a.png\", 2000\n"
+                                "   LOAD IMAGE \"b.png\", 2001\n"
+                                "   MAKE OBJECT CUBE 1000, 10\n" +
+                                    Body + "ENDFUNCTION\n",
+                                "Test");
+    };
+    // The mapping written last holds stage 1, and a cube map ends every one but the normal map.
+    scene::LevelReadResult Read = Level("   SET LIGHT MAPPING ON 1000, 2000\n   SET DETAIL MAPPING ON 1000, 2001\n");
+    REQUIRE(Read.Ok());
+    CHECK(Read.Document.Nodes[0].Mat.Second == scene::SecondMap::Detail);
+    CHECK(Read.Document.Nodes[0].Mat.SecondTexture == "b.png");
+
+    Read = Level("   SET SPHERE MAPPING ON 1000, 2000\n"
+                 "   SET CUBE MAPPING ON 1000, 2000, 2000, 2000, 2000, 2001, 2001\n");
+    REQUIRE(Read.Ok());
+    CHECK(Read.Document.Nodes[0].Mat.Second == scene::SecondMap::None);
+    CHECK(Read.Document.Nodes[0].Mat.Cube.has_value());
+
+    Read = Level("   SET CUBE MAPPING ON 1000, 2000, 2000, 2000, 2000, 2001, 2001\n"
+                 "   SET LIGHT MAPPING ON 1000, 2000\n");
+    REQUIRE(Read.Ok());
+    CHECK_FALSE(Read.Document.Nodes[0].Mat.Cube.has_value());
+
+    // The five-argument blend on stage 1 with the object's coordinates is the short form.
+    Read = Level("   SET BLEND MAPPING ON 1000, 1, 2000, 3, 9\n");
+    REQUIRE(Read.Ok());
+    CHECK(Read.Document.Nodes[0].Mat.Second == scene::SecondMap::Blend);
+    CHECK(Read.Document.Nodes[0].Mat.BlendMode == 9);
+
+    // Reflection shading ends shadow casting, and the reverse.
+    Read = Level("   SET SHADOW SHADING ON 1000\n   SET REFLECTION SHADING ON 1000\n");
+    REQUIRE(Read.Ok());
+    CHECK(Read.Document.Nodes[0].Mat.Reflection);
+    CHECK_FALSE(Read.Document.Nodes[0].Mat.CastShadow);
+
+    // States the Scene view cannot write back keep the level read-only.
+    CHECK(Level("   SET BUMP MAPPING ON 1000, 2000\n   SET LIGHT MAPPING ON 1000, 2001\n").Errors.size() == 1);
+    CHECK(Level("   SET RAINBOW SHADING ON 1000, 2000\n   SET DETAIL MAPPING ON 1000, 2001\n").Errors.size() == 1);
+    CHECK(Level("   SET BLEND MAPPING ON 1000, 0, 2000, 3, 4\n").Errors.size() == 1);
+    CHECK(Level("   SET LIGHT MAPPING ON 1000, 2005\n").Errors.size() == 1);
+}
+
 TEST_CASE("A level holding a command only Classic runs stays read-only, and says why")
 {
     const scene::LevelReadResult Read = scene::ReadLevel("FUNCTION LoadLevel_Test()\n"

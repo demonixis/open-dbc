@@ -84,6 +84,36 @@ namespace dbc::studio
             bool operator==(const ObjectFlags&) const = default;
         };
 
+        // What texture stage 1 holds; the engine keeps one of these at a time.
+        enum class SecondMap : std::uint8_t
+        {
+            None,
+            Light,  // SET LIGHT MAPPING ON
+            Detail, // SET DETAIL MAPPING ON
+            Sphere, // SET SPHERE MAPPING ON
+            Bump,   // SET BUMP MAPPING ON
+            Blend,  // SET BLEND MAPPING ON object, image, mode
+        };
+
+        // Cartoon and rainbow shading take stages 0 and 1 for themselves.
+        enum class Shading : std::uint8_t
+        {
+            None,
+            Cartoon,
+            Rainbow,
+        };
+
+        // SET BLEND MAPPING ON object, stage, image, coordinate mode, blend mode, on stages 2 to 7.
+        struct BlendStage
+        {
+            int Stage = 2;
+            std::string Texture;
+            int CoordinateMode = 3;
+            int BlendMode = 4;
+
+            bool operator==(const BlendStage&) const = default;
+        };
+
         struct Material
         {
             std::string Texture; // asset-relative path, empty for none
@@ -102,6 +132,19 @@ namespace dbc::studio
             bool CastShadow = false;
             // SET SHADOW SHADING ON's mesh, range and shader arguments, kept as a level gives them.
             std::optional<glm::ivec3> ShadowOptions;
+
+            SecondMap Second = SecondMap::None;
+            std::string SecondTexture;
+            bool LightReverse = false; // SET LIGHT MAPPING ON's third argument
+            int BlendMode = 4;         // SecondMap::Blend
+            // SET CUBE MAPPING ON's six faces: +x, -x, +y, -y, +z, -z. It combines with bump mapping only.
+            std::optional<std::array<std::string, 6>> Cube;
+            std::vector<BlendStage> Blends;
+            std::optional<float> Alpha; // SET ALPHA MAPPING ON, percent
+            Shading Shade = Shading::None;
+            std::string ShadeTexture; // cartoon shade or rainbow image
+            std::string EdgeTexture;  // cartoon edge image
+            bool Reflection = false;  // SET REFLECTION SHADING ON, which ends shadow casting
 
             // The depth buffer: DISABLE OBJECT ZDEPTH, ZREAD and ZWRITE clear these.
             bool ZDepth = true;
@@ -253,6 +296,10 @@ namespace dbc::studio
         // Whether two objects differ only in what each copy of an object sets for itself: its
         // number, name, transform and animation. INSTANCE OBJECT copies everything else.
         bool SameLook(const SceneNode& First, const SceneNode& Second);
+        // Every image a node's commands name, each once, in the order they are written.
+        std::vector<std::string> NodeTextures(const SceneNode& Node);
+        // Drops what a choice rules out: a shading leaves no stage of its own, a cube map only bump mapping.
+        void ResolveMaterial(Material& Mat);
         // A painted copy's name: "tree" or "tree_2" -> "tree_<Id>".
         std::string PaintedName(const std::string& Name, int Id);
         // "tree_12" -> "tree".

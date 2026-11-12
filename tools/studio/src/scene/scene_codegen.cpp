@@ -124,9 +124,63 @@ namespace dbc::studio
                 }
             }
 
-            std::string NodeTexture(const SceneNode& Node)
+            // The texture stages past the first and the shadings. A form that lacks an image is left out.
+            void WriteStages(Emitter& Out, const std::string& Id, const Material& Mat,
+                             const std::map<std::string, int>& Images)
             {
-                return IsMarker(Node.Kind) ? std::string() : Node.Mat.Texture;
+                const auto Image = [&Images](const std::string& Texture) { return Integer(Images.at(Texture)); };
+                if (!Mat.SecondTexture.empty())
+                {
+                    switch (Mat.Second)
+                    {
+                        case SecondMap::None:
+                            break;
+                        case SecondMap::Light:
+                            if (Mat.LightReverse)
+                                Out.Command(SymbolId::Command_SetLightMappingOn,
+                                            {Id, Image(Mat.SecondTexture), Integer(1)});
+                            else
+                                Out.Command(SymbolId::Command_SetLightMappingOn, {Id, Image(Mat.SecondTexture)});
+                            break;
+                        case SecondMap::Detail:
+                            Out.Command(SymbolId::Command_SetDetailMappingOn, {Id, Image(Mat.SecondTexture)});
+                            break;
+                        case SecondMap::Sphere:
+                            Out.Command(SymbolId::Command_SetSphereMappingOn, {Id, Image(Mat.SecondTexture)});
+                            break;
+                        case SecondMap::Bump:
+                            Out.Command(SymbolId::Command_SetBumpMappingOn, {Id, Image(Mat.SecondTexture)});
+                            break;
+                        case SecondMap::Blend:
+                            Out.Command(SymbolId::Command_SetBlendMappingOn,
+                                        {Id, Image(Mat.SecondTexture), Integer(Mat.BlendMode)});
+                            break;
+                    }
+                }
+                // After bump mapping: the cube then reflects around the normal map.
+                if (Mat.Cube && std::none_of(Mat.Cube->begin(), Mat.Cube->end(),
+                                             [](const std::string& Face) { return Face.empty(); }))
+                {
+                    const auto& C = *Mat.Cube;
+                    Out.Command(SymbolId::Command_SetCubeMappingOn,
+                                {Id, Image(C[0]), Image(C[1]), Image(C[2]), Image(C[3]), Image(C[4]), Image(C[5])});
+                }
+                for (const BlendStage& Blend : Mat.Blends)
+                {
+                    if (!Blend.Texture.empty())
+                        Out.Command(SymbolId::Command_SetBlendMappingOn,
+                                    {Id, Integer(Blend.Stage), Image(Blend.Texture), Integer(Blend.CoordinateMode),
+                                     Integer(Blend.BlendMode)});
+                }
+                if (Mat.Alpha)
+                    Out.Command(SymbolId::Command_SetAlphaMappingOn, {Id, NumberLiteral(*Mat.Alpha)});
+                if (Mat.Shade == Shading::Cartoon && !Mat.ShadeTexture.empty() && !Mat.EdgeTexture.empty())
+                    Out.Command(SymbolId::Command_SetCartoonShadingOn,
+                                {Id, Image(Mat.ShadeTexture), Image(Mat.EdgeTexture)});
+                if (Mat.Shade == Shading::Rainbow && !Mat.ShadeTexture.empty())
+                    Out.Command(SymbolId::Command_SetRainbowShadingOn, {Id, Image(Mat.ShadeTexture)});
+                if (Mat.Reflection)
+                    Out.Command(SymbolId::Command_SetReflectionShadingOn, {Id});
             }
 
             void WriteObject(Emitter& Out, const SceneNode& Node, const std::map<std::string, int>& Images)
@@ -231,6 +285,7 @@ namespace dbc::studio
                     else
                         Out.Command(SymbolId::Command_SetShadowShadingOn, {Id});
                 }
+                WriteStages(Out, Id, Mat, Images);
                 // The depth buffer is on by default, so only what is switched off is written.
                 if (!Mat.ZDepth)
                     Out.Command(SymbolId::Command_DisableObjectZdepth, {Id});
@@ -749,6 +804,37 @@ namespace dbc::studio
                     return Existing(IdSpace::Object, Id);
                 }
 
+                // A stage command after cartoon or rainbow shading leaves a state the Scene view cannot write.
+                bool StageFree(const SceneNode& Node)
+                {
+                    if (Node.Mat.Shade == Shading::None)
+                        return true;
+                    Error(Line_, *Name_ + " after a cartoon or rainbow shading is not edited by the Scene view");
+                    return false;
+                }
+
+                // Stage 1 takes the mapping written last; bump mapping alone keeps a cube map.
+                void SecondStage(SceneNode& Node, SecondMap Map, int ImageId, bool Reverse, int BlendMode)
+                {
+                    Material& Mat = Node.Mat;
+                    if (!StageFree(Node))
+                        return;
+                    if (Mat.Second == SecondMap::Bump && Map != SecondMap::Bump)
+                    {
+                        Error(Line_, *Name_ + " after SET BUMP MAPPING ON is not edited by the Scene view");
+                        return;
+                    }
+                    std::string Path;
+                    if (!Texture(ImageId, Path))
+                        return;
+                    Mat.Second = Map;
+                    Mat.SecondTexture = std::move(Path);
+                    Mat.LightReverse = Reverse;
+                    Mat.BlendMode = BlendMode;
+                    if (Map != SecondMap::Bump)
+                        Mat.Cube.reset();
+                }
+
                 bool Texture(int ImageId, std::string& Out)
                 {
                     const auto Found = Images_.find(ImageId);
@@ -1073,6 +1159,98 @@ namespace dbc::studio
                             if (SceneNode* Node = Object(I(A, 0)))
                                 Node->Mat.Flags.Ambient = I(A, 1) != 0;
                             break;
+                        case SymbolId::Command_SetLightMappingOn:
+                        case SymbolId::Command_SetDetailMappingOn:
+                        case SymbolId::Command_SetSphereMappingOn:
+                        case SymbolId::Command_SetBumpMappingOn:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                const SecondMap Map = Id == SymbolId::Command_SetLightMappingOn    ? SecondMap::Light
+                                                      : Id == SymbolId::Command_SetDetailMappingOn ? SecondMap::Detail
+                                                      : Id == SymbolId::Command_SetSphereMappingOn ? SecondMap::Sphere
+                                                                                                   : SecondMap::Bump;
+                                const bool Reverse = A.size() == 3 && I(A, 2) != 0;
+                                if (A.size() == 3 && I(A, 2) != 0 && I(A, 2) != 1)
+                                    Error(Line_, "SET LIGHT MAPPING ON is written with a reverse mode of 0 or 1");
+                                else
+                                    SecondStage(*Node, Map, I(A, 1), Reverse, 4);
+                            }
+                            break;
+                        case SymbolId::Command_SetBlendMappingOn:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                if (A.size() == 3)
+                                {
+                                    SecondStage(*Node, SecondMap::Blend, I(A, 1), false, I(A, 2));
+                                    break;
+                                }
+                                // Stage 1 on the object's own coordinates is the three-argument form.
+                                if (I(A, 1) == 1 && I(A, 3) == 3)
+                                {
+                                    SecondStage(*Node, SecondMap::Blend, I(A, 2), false, I(A, 4));
+                                    break;
+                                }
+                                BlendStage Blend{I(A, 1), {}, I(A, 3), I(A, 4)};
+                                if (Blend.Stage < 2 || Blend.Stage > 7)
+                                {
+                                    Error(Line_, "The Scene view edits SET BLEND MAPPING ON on stages 2 to 7, or on "
+                                                 "stage 1 with coordinate mode 3");
+                                    break;
+                                }
+                                if (!StageFree(*Node) || !Texture(I(A, 2), Blend.Texture))
+                                    break;
+                                auto& Blends = Node->Mat.Blends;
+                                std::erase_if(Blends,
+                                              [&](const BlendStage& Other) { return Other.Stage == Blend.Stage; });
+                                Blends.push_back(std::move(Blend));
+                            }
+                            break;
+                        case SymbolId::Command_SetCubeMappingOn:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                std::array<std::string, 6> Faces;
+                                bool Known = StageFree(*Node);
+                                for (std::size_t Face = 0; Known && Face < Faces.size(); ++Face)
+                                    Known = Texture(I(A, Face + 1), Faces[Face]);
+                                if (!Known)
+                                    break;
+                                Node->Mat.Cube = std::move(Faces);
+                                // The cube takes stage 1 from every mapping but the normal map.
+                                ResolveMaterial(Node->Mat);
+                            }
+                            break;
+                        case SymbolId::Command_SetAlphaMappingOn:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                                Node->Mat.Alpha = F(A, 1);
+                            break;
+                        case SymbolId::Command_SetCartoonShadingOn:
+                        case SymbolId::Command_SetRainbowShadingOn:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                Material& Mat = Node->Mat;
+                                if (!Mat.Blends.empty())
+                                {
+                                    Error(Line_, *Name_ + " after SET BLEND MAPPING ON is not edited by the Scene view");
+                                    break;
+                                }
+                                std::string Shade;
+                                std::string Edge;
+                                const bool Cartoon = Id == SymbolId::Command_SetCartoonShadingOn;
+                                if (!Texture(I(A, 1), Shade) || (Cartoon && !Texture(I(A, 2), Edge)))
+                                    break;
+                                Mat.Shade = Cartoon ? Shading::Cartoon : Shading::Rainbow;
+                                Mat.ShadeTexture = std::move(Shade);
+                                Mat.EdgeTexture = std::move(Edge);
+                                ResolveMaterial(Mat);
+                            }
+                            break;
+                        case SymbolId::Command_SetReflectionShadingOn:
+                            if (SceneNode* Node = Object(I(A, 0)))
+                            {
+                                Node->Mat.Reflection = true;
+                                ResolveMaterial(Node->Mat);
+                            }
+                            break;
                         case SymbolId::Command_SetShadowShadingOn:
                             if (A.size() != 1 && A.size() != 4)
                             {
@@ -1082,6 +1260,7 @@ namespace dbc::studio
                             if (SceneNode* Node = Object(I(A, 0)))
                             {
                                 Node->Mat.CastShadow = true;
+                                Node->Mat.Reflection = false;
                                 Node->Mat.ShadowOptions.reset();
                                 if (A.size() == 4)
                                     Node->Mat.ShadowOptions = glm::ivec3(I(A, 1), I(A, 2), I(A, 3));
@@ -1391,14 +1570,17 @@ namespace dbc::studio
 
             std::map<std::string, int> Images;
             int NextImage = Document.Base(IdSpace::Image);
+            // One LOAD IMAGE per file, shared by every object and stage that names it.
             for (const SceneNode& Node : Document.Nodes)
             {
-                const std::string Texture = NodeTexture(Node);
-                if (Texture.empty() || Images.count(Texture) != 0)
-                    continue;
-                Images[Texture] = NextImage;
-                Out.Command(SymbolId::Command_LoadImage, {Quoted(Texture), Integer(NextImage)});
-                ++NextImage;
+                for (const std::string& Texture : NodeTextures(Node))
+                {
+                    if (Images.count(Texture) != 0)
+                        continue;
+                    Images[Texture] = NextImage;
+                    Out.Command(SymbolId::Command_LoadImage, {Quoted(Texture), Integer(NextImage)});
+                    ++NextImage;
+                }
             }
 
             // Painted objects copy the first object that looks the same.

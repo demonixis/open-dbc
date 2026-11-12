@@ -179,6 +179,57 @@ namespace dbc::studio
             return std::clamp(Node.Tile, 1, Tiles);
         }
 
+        std::vector<std::string> NodeTextures(const SceneNode& Node)
+        {
+            std::vector<std::string> Result;
+            const auto Add = [&Result](const std::string& Texture)
+            {
+                if (!Texture.empty() && std::find(Result.begin(), Result.end(), Texture) == Result.end())
+                    Result.push_back(Texture);
+            };
+            if (IsMarker(Node.Kind))
+                return Result;
+            const Material& Mat = Node.Mat;
+            Add(Mat.Texture);
+            if (IdSpaceOf(Node.Kind) != IdSpace::Object)
+                return Result;
+            if (Mat.Second != SecondMap::None)
+                Add(Mat.SecondTexture);
+            if (Mat.Cube)
+                for (const std::string& Face : *Mat.Cube)
+                    Add(Face);
+            for (const BlendStage& Blend : Mat.Blends)
+                Add(Blend.Texture);
+            if (Mat.Shade != Shading::None)
+                Add(Mat.ShadeTexture);
+            if (Mat.Shade == Shading::Cartoon)
+                Add(Mat.EdgeTexture);
+            return Result;
+        }
+
+        void ResolveMaterial(Material& Mat)
+        {
+            if (Mat.Shade != Shading::None)
+            {
+                Mat.Second = SecondMap::None;
+                Mat.Cube.reset();
+                Mat.Blends.clear();
+            }
+            if (Mat.Cube && Mat.Second != SecondMap::None && Mat.Second != SecondMap::Bump)
+                Mat.Second = SecondMap::None;
+            if (Mat.Second == SecondMap::None)
+                Mat.SecondTexture.clear();
+            if (Mat.Shade == Shading::None)
+                Mat.ShadeTexture.clear();
+            if (Mat.Shade != Shading::Cartoon)
+                Mat.EdgeTexture.clear();
+            if (Mat.Reflection)
+            {
+                Mat.CastShadow = false;
+                Mat.ShadowOptions.reset();
+            }
+        }
+
         bool SameLook(const SceneNode& First, const SceneNode& Second)
         {
             return First.Kind == Second.Kind && First.Size == Second.Size && First.Extent == Second.Extent &&
@@ -345,6 +396,19 @@ namespace dbc::studio
             Take(From.SpecularPower, To.SpecularPower, Into.SpecularPower);
             Take(From.CastShadow, To.CastShadow, Into.CastShadow);
             Take(From.ShadowOptions, To.ShadowOptions, Into.ShadowOptions);
+            Take(From.Second, To.Second, Into.Second);
+            Take(From.SecondTexture, To.SecondTexture, Into.SecondTexture);
+            Take(From.LightReverse, To.LightReverse, Into.LightReverse);
+            Take(From.BlendMode, To.BlendMode, Into.BlendMode);
+            Take(From.Cube, To.Cube, Into.Cube);
+            Take(From.Blends, To.Blends, Into.Blends);
+            Take(From.Alpha, To.Alpha, Into.Alpha);
+            Take(From.Shade, To.Shade, Into.Shade);
+            Take(From.ShadeTexture, To.ShadeTexture, Into.ShadeTexture);
+            Take(From.EdgeTexture, To.EdgeTexture, Into.EdgeTexture);
+            Take(From.Reflection, To.Reflection, Into.Reflection);
+            // An edit to one of them may rule out what the target had.
+            ResolveMaterial(Into);
             Take(From.ZDepth, To.ZDepth, Into.ZDepth);
             Take(From.ZRead, To.ZRead, Into.ZRead);
             Take(From.ZWrite, To.ZWrite, Into.ZWrite);
