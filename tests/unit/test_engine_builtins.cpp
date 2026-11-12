@@ -11388,6 +11388,55 @@ TEST_CASE("Classic portable static world, line of sight, and global collision ha
     std::filesystem::remove_all(Root, CleanupError);
 }
 
+TEST_CASE("DBPro static world forms attach objects, set their render state, save them and test lines of sight")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() /
+                                       ("opendbc-dbpro-static-world-" + std::to_string(dbc::testing::UniqueSuffix()));
+    REQUIRE(std::filesystem::create_directory(Root));
+
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("dbpro-static-world", 32, 32));
+    Kernel.ConfigureRuntimeCompatibility(dbc::RuntimeCompatibilityPolicy::Professional());
+    Kernel.Objects().MakeObjectCube(1, 10.0f);
+
+    REQUIRE(Kernel.Objects().MakeStaticCollisionBox(20.0f, -5.0f, -5.0f, 30.0f, 5.0f, 5.0f));
+    const auto LineOfSight = [&](float FromY)
+    {
+        return ReadEngineNumber<float>(
+            [&](std::string& Error, float& Output)
+            {
+                return Kernel.Objects().StaticLineOfSight(Output, 0.0f, FromY, 0.0f, 100.0f, FromY, 0.0f, 2.0f, 1.0f,
+                                                          &Error);
+            });
+    };
+    CHECK(LineOfSight(1.0f) == 1.0f);
+    CHECK(Kernel.Objects().StaticLineOfSightX() == doctest::Approx(18.0f));
+    CHECK(Kernel.Objects().StaticLineOfSightY() == doctest::Approx(1.0f));
+    CHECK(Kernel.Objects().StaticLineOfSightZ() == doctest::Approx(0.0f));
+    CHECK(LineOfSight(20.0f) == 0.0f);
+
+    REQUIRE(Kernel.Objects().AttachObjectToStatic(1));
+    CHECK(Kernel.Objects().IsStaticRenderObject(1));
+    Kernel.Objects().SetStaticObjectsWireframe(true);
+    CHECK(Kernel.Objects().GetObject(1)->Wireframe);
+    Kernel.Objects().SetStaticObjectsWireframe(false);
+    CHECK_FALSE(Kernel.Objects().GetObject(1)->Wireframe);
+    REQUIRE(Kernel.Objects().SetStaticObjectsTexture(2));
+    Kernel.Objects().EnableStaticOcclusion(false);
+    CHECK_FALSE(Kernel.Objects().StaticOcclusionEnabled());
+    Kernel.Objects().EnableStaticOcclusion(true);
+    CHECK(Kernel.Objects().StaticOcclusionEnabled());
+
+    const std::filesystem::path Archive = Root / "world.odbstatic";
+    REQUIRE(Kernel.Objects().SaveStaticObjects(Archive.string()));
+    CHECK(std::filesystem::file_size(Archive) > 0);
+    REQUIRE(Kernel.Objects().DetachObjectFromStatic(1));
+    CHECK_FALSE(Kernel.Objects().IsStaticRenderObject(1));
+
+    std::error_code CleanupError;
+    std::filesystem::remove_all(Root, CleanupError);
+}
+
 TEST_CASE("Classic authored object keyframes round-trip through the portable animation format")
 {
     const auto Suffix = dbc::testing::UniqueSuffix();

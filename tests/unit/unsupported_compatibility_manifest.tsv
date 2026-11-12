@@ -2,7 +2,6 @@ profile	symbol_id	kind	name	disposition	family	proof	prerequisite
 dbpro	Command_AlwaysActiveOff	Command	ALWAYS ACTIVE OFF	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_AlwaysActiveOn	Command	ALWAYS ACTIVE ON	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_AppendObjectAnimation	Command	APPEND OBJECT ANIMATION	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_AttachObjectToStatic	Command	ATTACH OBJECT TO STATIC	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_CallDll	Command	CALL DLL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Cd	Command	CD	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ClearAllObjectKeyframes	Command	CLEAR ALL OBJECT KEYFRAMES	Target	input	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -10,13 +9,10 @@ dbpro	Command_ClearObjectKeyframe	Command	CLEAR OBJECT KEYFRAME	Target	input	dbc
 dbpro	Command_CreateVertexShaderFromFile	Command	CREATE VERTEX SHADER FROM FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteDll	Command	DELETE DLL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteVertexShader	Command	DELETE VERTEX SHADER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_DetachObjectFromStatic	Command	DETACH OBJECT FROM STATIC	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Dir	Command	DIR	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_DisableStaticOcclusion	Command	DISABLE STATIC OCCLUSION	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DisableSystemkeys	Command	DISABLE SYSTEMKEYS	Study	input	dbc-help,dbpro-reference	cross-platform-key-map
 dbpro	Command_DisableTnl	Command	DISABLE TNL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Drivelist	Command	DRIVELIST	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_EnableStaticOcclusion	Command	ENABLE STATIC OCCLUSION	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_EnableSystemkeys	Command	ENABLE SYSTEMKEYS	Study	input	dbc-help,dbpro-reference	cross-platform-key-map
 dbpro	Command_EnableTnl	Command	ENABLE TNL	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExecuteFile	Command	EXECUTE FILE	Target	file	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -46,7 +42,6 @@ dbpro	Command_ReadDirblock	Command	READ DIRBLOCK	Target	file	dbc-help,dbpro-refe
 dbpro	Command_RecordSound	Command	RECORD SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveObjectAnimation	Command	SAVE OBJECT ANIMATION	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveSound	Command	SAVE SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SaveStaticObjects	Command	SAVE STATIC OBJECTS	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetDvdChapter	Command	SET DVD CHAPTER	Deferred	video	dbpro-reference	media-backend
 dbpro	Command_SetEax	Command	SET EAX	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetEmulationOff	Command	SET EMULATION OFF	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -54,9 +49,6 @@ dbpro	Command_SetEmulationOn	Command	SET EMULATION ON	Target	core	dbc-help,dbpro
 dbpro	Command_SetGraphicsCard	Command	SET GRAPHICS CARD	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetMipmapMode	Command	SET MIPMAP MODE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetObjectKeyframe	Command	SET OBJECT KEYFRAME	Target	input	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetStaticObjectsTexture	Command	SET STATIC OBJECTS TEXTURE	Target	text	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetStaticObjectsWireframeOff	Command	SET STATIC OBJECTS WIREFRAME OFF	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetStaticObjectsWireframeOn	Command	SET STATIC OBJECTS WIREFRAME ON	Target	3d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetVertexShaderOff	Command	SET VERTEX SHADER OFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetVertexShaderOn	Command	SET VERTEX SHADER ON	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_StopRecordingSound	Command	STOP RECORDING SOUND	Target	audio	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -84,10 +76,6 @@ dbpro	Function_GetFtpProgress	Function	GET FTP PROGRESS	Never	ftp	dbc-help,dbpro
 dbpro	Function_GetFtpStatus	Function	GET FTP STATUS	Never	ftp	dbc-help,dbpro-reference	none
 dbpro	Function_GetMemblockPtr	Function	GET MEMBLOCK PTR	Target	memory	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetRegistryString	Function	GET REGISTRY$	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_StaticLineOfSight	Function	STATIC LINE OF SIGHT	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_StaticLineOfSightX	Function	STATIC LINE OF SIGHT X	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_StaticLineOfSightY	Function	STATIC LINE OF SIGHT Y	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_StaticLineOfSightZ	Function	STATIC LINE OF SIGHT Z	Target	2d	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_SystemDmemAvailable	Function	SYSTEM DMEM AVAILABLE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_SystemSmemAvailable	Function	SYSTEM SMEM AVAILABLE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_SystemTmemAvailable	Function	SYSTEM TMEM AVAILABLE	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
@@ -224,6 +212,26 @@ dbpro	Command_WriteStringToRegistry	Command	WRITE STRING TO REGISTRY	Target	text
 dbpro	Function_ZbufferAvailable	Function	ZBUFFER AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ZfogAvailable	Function	ZFOG AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetRegistry	Function	GET REGISTRY	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
+dbpro	Command_LfxEmulate	Command	LFX EMULATE	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetDeviceDescription	Function	LFX GET DEVICE DESCRIPTION	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetDevices	Function	LFX GET DEVICES	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLightColorB	Function	LFX GET LIGHT COLOR B	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLightColorG	Function	LFX GET LIGHT COLOR G	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLightColorI	Function	LFX GET LIGHT COLOR I	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLightColorR	Function	LFX GET LIGHT COLOR R	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLightDescription	Function	LFX GET LIGHT DESCRIPTION	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLightPositionX	Function	LFX GET LIGHT POSITION X	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLightPositionY	Function	LFX GET LIGHT POSITION Y	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLightPositionZ	Function	LFX GET LIGHT POSITION Z	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_LfxGetLights	Function	LFX GET LIGHTS	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Command_LfxInitialize	Command	LFX INITIALIZE	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Command_LfxLight	Command	LFX LIGHT	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Command_LfxRelease	Command	LFX RELEASE	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Command_LfxReset	Command	LFX RESET	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Command_LfxSetLightColor	Command	LFX SET LIGHT COLOR	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Command_LfxUpdate	Command	LFX UPDATE	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Command_LfxUpdateDefault	Command	LFX UPDATE DEFAULT	Study	hardware	dbpro-reference	lightfx-hardware
+dbpro	Function_ObjectBlocking	Function	OBJECT BLOCKING	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtOdeCreateRagdollFromBoneModel	Command	ODE CREATE RAGDOLL FROM BONE MODEL	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateStaticTerrain	Command	ODE CREATE STATIC TERRAIN	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateStaticUniverse	Command	ODE CREATE STATIC UNIVERSE	Target	physics	ode-extension	jolt-adapter-and-oracle

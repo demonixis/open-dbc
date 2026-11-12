@@ -477,8 +477,9 @@ def audit_dbpro_extension_evidence(catalogue: dict[tuple[str, str], tuple]) -> N
 
 
 def audit_free_sources(entries: list[tuple]) -> None:
-    # A DBPro command or function is OpenDBC's own or comes from the free DBPro release.
-    names = set()
+    # A DBPro command or function is OpenDBC's own or comes from the free DBPro release: its keyword
+    # files, its string tables or its help.
+    names = set(reference_evidence.ReadNames(reference_evidence.HELP_EVIDENCE))
     for path in (DBPRO_EVIDENCE, DBPRO_EXTENSION_EVIDENCE):
         with path.open(newline="", encoding="utf-8") as source:
             names.update(row["name"] for row in
@@ -613,6 +614,10 @@ def main() -> None:
     if args.list_unreferenced:
         list_unreferenced(entries)
         return
+    catalogued = {entry[2] for entry in entries}
+    undocumented = sorted(name for name in reference_evidence.ReadNames(reference_evidence.HELP_EVIDENCE)
+                          if name not in catalogued)
+    require(not undocumented, "DBPro help pages without a catalogue row: " + ", ".join(undocumented))
     reasons = reference_reasons(entries)
     unreferenced = sorted(entry[2] for entry in entries if reasons.get(entry[0]) == [])
     require(not unreferenced,

@@ -20,6 +20,8 @@ def family(name: str) -> str:
         return "physics"
     if "FTP" in name:
         return "ftp"
+    if name.startswith("LFX "):
+        return "hardware"
     if is_video(name):
         return "video"
     if "JOYSTICK" in name:
@@ -46,6 +48,9 @@ def family(name: str) -> str:
 def disposition(name: str) -> tuple[str, str]:
     if "FTP" in name:
         return "Never", "none"
+    # LightFX drives the case lights of one laptop range.
+    if name.startswith("LFX "):
+        return "Study", "lightfx-hardware"
     if is_video(name):
         return "Deferred", "media-backend"
     if "FILEBLOCK" in name or name.startswith(("READ FILE", "WRITE FILE")):

@@ -713,6 +713,7 @@ dbpro	3	4	Command	ADD VECTOR2	golden-output	test_vector.dba	4908758f1cdc4d8f1477
 dbpro	4	5	Command	ADD VECTOR3	golden-output	test_dbpro_vector3.dba	659ac5b90a10d29c88abf6699989dc61a5e407016c77c6353a79e384ede0d4f4
 dbpro	5	6	Command	ADD VECTOR4	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	8	12	Command	APPEND OBJECT	engine-state	test_engine_builtins.cpp::DBPro runs the common commands Classic already had	-
+dbpro	10	16	Command	ATTACH OBJECT TO STATIC	static-world	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
 dbpro	11	18	Command	AUTOCAM OFF	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	12	20	Command	AUTOCAM ON	engine-state	test_engine_builtins.cpp::Portable cameras and lights preserve DBPro state and typed failures	-
 dbpro	13	21	Command	AUTOMATIC CAMERA COLLISION	automatic-collision-state	test_engine_builtins.cpp::DBPro automatic collision stops and slides objects and cameras	-
@@ -796,8 +797,10 @@ dbpro	95	153	Command	DELETE TERRAIN	golden-output	test_dbpro_terrain.dba	41da670
 dbpro	96	154	Command	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	97	155	Command	DELETE VECTOR3	golden-output	test_dbpro_matrix.dba	30249d63af2c68ea4bd5e89b776ddc8b417c3da3efe3e2ea7615212e0196b210
 dbpro	98	156	Command	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	100	159	Command	DETACH OBJECT FROM STATIC	static-world	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
 dbpro	102	163	Command	DISABLE ESCAPEKEY	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbpro	103	165	Command	DISABLE OBJECT ZDEPTH	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
+dbpro	104	167	Command	DISABLE STATIC OCCLUSION	static-frustum	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
 dbpro	107	172	Command	DIVIDE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
 dbpro	108	173	Command	DIVIDE VECTOR2	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	109	174	Command	DIVIDE VECTOR3	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
@@ -809,6 +812,7 @@ dbpro	115	185	Command	ELLIPSE	golden-output	test_dbpro_display_image_text.dba	5c
 dbpro	116	187	Command	EMPTY CHECKLIST	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
 dbpro	117	189	Command	ENABLE ESCAPEKEY	input-state	test_engine_builtins.cpp::DBPro text keyboard mouse and escape controls preserve their historical state	-
 dbpro	118	191	Command	ENABLE OBJECT ZDEPTH	engine-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
+dbpro	119	193	Command	ENABLE STATIC OCCLUSION	static-frustum	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
 dbpro	124	203	Command	FADE BITMAP	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	125	205	Command	FADE OBJECT	engine-state	test_engine_builtins.cpp::Object material ghost and rotation commands update render state	-
 dbpro	127	208	Command	FILL MATRIX	golden-output	test_dbpro_matrix.dba	30249d63af2c68ea4bd5e89b776ddc8b417c3da3efe3e2ea7615212e0196b210
@@ -1048,6 +1052,7 @@ dbpro	375	651	Command	SAVE BITMAP	golden-output	test_dbpro_display_image_text.db
 dbpro	376	653	Command	SAVE IMAGE	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	377	654	Command	SAVE MESH	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
 dbpro	378	655	Command	SAVE OBJECT	engine-state	test_engine_builtins.cpp::Portable mesh vertex data memblocks and DBO preserve mutable geometry	-
+dbpro	381	661	Command	SAVE STATIC OBJECTS	static-file	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
 dbpro	383	664	Command	SCALE LIMB	golden-output	test_dbpro_objects_pro.dba	0147c25fbf83ad7bd7481f4fdcd3c6696fb745ea1668ea4b094537a2305fd1bb
 dbpro	384	666	Command	SCALE LIMB TEXTURE	render-state	test_engine_builtins.cpp::Portable limb checklist colour and texture transforms preserve stage semantics	-
 dbpro	385	667	Command	SCALE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
@@ -1188,6 +1193,9 @@ dbpro	523	879	Command	SET SPRITE DIFFUSE	golden-output	test_dbpro_sprites_pro.db
 dbpro	524	880	Command	SET SPRITE FRAME	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
 dbpro	525	881	Command	SET SPRITE PRIORITY	render-order	test_engine_builtins.cpp::Sprite priority determines the renderer traversal order	-
 dbpro	526	882	Command	SET SPRITE TEXTURE COORD	render-state	test_engine_builtins.cpp::DBPro sprites preserve transient paste atlas frame and render ordering state	-
+dbpro	527	884	Command	SET STATIC OBJECTS TEXTURE	static-render-state	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
+dbpro	528	886	Command	SET STATIC OBJECTS WIREFRAME OFF	static-render-state	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
+dbpro	529	888	Command	SET STATIC OBJECTS WIREFRAME ON	static-render-state	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
 dbpro	530	890	Command	SET TEXT FONT	text-state	test_engine_builtins.cpp::Text compatibility commands and functions expose observable state in both profiles	-
 dbpro	531	892	Command	SET TEXT OPAQUE	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	532	894	Command	SET TEXT SIZE	text-state	test_engine_builtins.cpp::Text compatibility commands and functions expose observable state in both profiles	-
@@ -1589,6 +1597,10 @@ dbpro	976	1677	Function	SQRT	golden-output	test_dbpro_core.dba	02f8d0c0f24002051
 dbpro	977	1678	Function	SQUARED LENGTH VECTOR2	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	978	1679	Function	SQUARED LENGTH VECTOR3	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
 dbpro	979	1680	Function	SQUARED LENGTH VECTOR4	golden-output	test_vector.dba	4908758f1cdc4d8f14774177981f2e9a7e45ac40995a91659413f38ba282fcdd
+dbpro	980	1682	Function	STATIC LINE OF SIGHT	static-collision	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
+dbpro	981	1684	Function	STATIC LINE OF SIGHT X	static-collision	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
+dbpro	982	1686	Function	STATIC LINE OF SIGHT Y	static-collision	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
+dbpro	983	1688	Function	STATIC LINE OF SIGHT Z	static-collision	test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight	-
 dbpro	984	1690	Function	STATISTIC	render-state	test_engine_builtins.cpp::Portable object visibility and GPU capability queries preserve DBPro semantics	-
 dbpro	985	1692	Function	STR$	value	test_engine_builtins.cpp::Text compatibility commands and functions expose observable state in both profiles	-
 dbpro	989	1700	Function	TAN	golden-output	test_dbpro_core.dba	02f8d0c0f240020510e34d8578d0ac2adee94589cf76312619fcf4f5288e2362
@@ -1747,228 +1759,228 @@ dbpro	1337	1990	Command	WAIT MOUSE	vm-state	test_engine_builtins.cpp::SLEEP and 
 dbpro	1340	1993	Function	WINDOW EXIST	golden-output	test_dbpro_display_image_text.dba	5ca6ba9f94221578b02fbc75f134a7cdfa7bb9250a51a88e224b67b6c21a801e
 dbpro	1342	1995	Command	WINDOW TO FRONT	window-state	test_engine_builtins.cpp::Portable display and window commands update SDL state and reject unavailable modes	-
 dbpro	1344	1996	Command	WRITE BYTE TO FILE	golden-output	test_dbpro_file_memblock.dba	f12c04922dbaf3cad9a462b820e7a99a1d4f67a39327858630b7560996f49f57
-dbpro	1352	2004	Command	ADD BITMAP TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
-dbpro	1353	2005	Command	ADD FILE TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1354	2006	Command	ADD IMAGE TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
-dbpro	1355	2007	Command	ADD OBJECT TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
-dbpro	1357	2009	Command	CLOSE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
-dbpro	1358	2010	Command	CLOSE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1359	2011	Command	CLOSE FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1360	2012	Command	CREATE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1361	2013	Command	CREATE FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1362	2014	Command	DELETE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1363	2015	Command	DELETE OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1364	2016	Command	DESTROY FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1365	2017	Command	ENCODE TO OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1365	2018	Command	ENCODE TO OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1366	2019	Command	EXTRACT FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1367	2020	Command	GET PROCESSOR ON CHIP FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1368	2021	Command	GET PROCESSOR POWER MANAGEMENT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1369	2022	Command	GET PROCESSOR SUPPORTED FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1370	2023	Command	GET VOICE LIST	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1371	2024	Command	LOAD ANIMATION FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
-dbpro	1372	2025	Command	LOAD BITMAP FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
-dbpro	1373	2026	Command	LOAD FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1374	2027	Command	LOAD IMAGE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
-dbpro	1375	2028	Command	LOAD MEMBLOCK FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1376	2029	Command	LOAD OBJECT FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
-dbpro	1377	2030	Command	LOAD OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1378	2031	Command	LOAD SOUND FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
-dbpro	1379	2032	Command	LOOP OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1380	2033	Command	OPEN DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
-dbpro	1381	2034	Command	OPEN FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1381	2035	Command	OPEN FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1382	2036	Command	OPEN FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1383	2037	Command	PAUSE OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1384	2038	Command	PERFORM CHECKLIST FOR EAX EFFECTS	checklist-state	test_enhancement_pack.cpp::PERFORM CHECKLIST FOR EAX EFFECTS lists the presets in the Enhancement Pack's order	-
-dbpro	1385	2039	Command	PERFORM CHECKLIST FOR FILE BLOCK DATA	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1386	2040	Command	PLAY OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1387	2041	Command	REMOVE FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1388	2042	Command	RESUME OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1389	2043	Command	SAVE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1390	2044	Command	SEND VOICE MESSAGE	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1391	2045	Command	SEND VOICE MESSAGE XML	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1435	2089	Command	SET FILE BLOCK COMPRESSION	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1436	2090	Command	SET FILE BLOCK KEY	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1437	2091	Command	SET FILE MAP DWORD	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1438	2092	Command	SET FILE MAP FLOAT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1439	2093	Command	SET FILE MAP STRING$	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1440	2094	Command	SET OGG VORBIS VOLUME	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1441	2095	Command	SET VOICE	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1442	2096	Command	SET VOICE SPEED	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1443	2097	Command	SET VOICE VOLUME	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1444	2098	Command	STOP OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1445	2099	Command	UPDATE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
-dbpro	1446	2100	Command	WAIT FOR FILE MAP EVENT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1447	2101	Function	GET CD COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1448	2102	Function	GET CD LETTER$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1449	2103	Function	GET COMPUTER NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
-dbpro	1450	2104	Function	GET DATA FILE CELL	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
-dbpro	1451	2105	Function	GET DATA FILE COLUMN COUNT	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
-dbpro	1452	2106	Function	GET DATA FILE EXISTS	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
-dbpro	1453	2107	Function	GET DATA FILE ROW COUNT	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
-dbpro	1454	2108	Function	GET DISPLAY DEPTH	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
-dbpro	1455	2109	Function	GET DISPLAY HEIGHT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
-dbpro	1456	2110	Function	GET DISPLAY REFRESH RATE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
-dbpro	1457	2111	Function	GET DISPLAY WIDTH	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
-dbpro	1458	2112	Function	GET DRIVE BYTES PER SECTOR	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1459	2113	Function	GET DRIVE COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1460	2114	Function	GET DRIVE CYLINDER COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1461	2115	Function	GET DRIVE FILE LENGTH SUPPORT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1462	2116	Function	GET DRIVE FILE SYSTEM$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1463	2117	Function	GET DRIVE FREE SPACE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1464	2118	Function	GET DRIVE SECTORS PER TRACK	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1465	2119	Function	GET DRIVE SERIAL$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1466	2120	Function	GET DRIVE TOTAL SIZE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1467	2121	Function	GET DRIVE TRACK COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1468	2122	Function	GET DRIVE USED SPACE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
-dbpro	1505	2159	Function	GET FILE BLOCK COMPRESSION	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1506	2160	Function	GET FILE BLOCK COUNT	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1507	2161	Function	GET FILE BLOCK DATA EXISTS	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1508	2162	Function	GET FILE BLOCK EXISTS	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1509	2163	Function	GET FILE BLOCK KEY	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1510	2164	Function	GET FILE BLOCK SIZE	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
-dbpro	1511	2165	Function	GET FILE MAP DWORD	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1512	2166	Function	GET FILE MAP FLOAT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1513	2167	Function	GET FILE MAP STRING$	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
-dbpro	1514	2168	Function	GET INSTALLED MEMORY	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
-dbpro	1515	2169	Function	GET IP ADDRESS$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
-dbpro	1516	2170	Function	GET MEMORY AVAILABLE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
-dbpro	1517	2171	Function	GET MEMORY PERCENT FREE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
-dbpro	1518	2172	Function	GET MEMORY PERCENT USED	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
-dbpro	1519	2173	Function	GET OGG VORBIS EXISTS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1520	2174	Function	GET OGG VORBIS STATE	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1521	2175	Function	GET OGG VORBIS VOLUME	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
-dbpro	1522	2176	Function	GET PROCESSOR BRAND$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1523	2177	Function	GET PROCESSOR COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1524	2178	Function	GET PROCESSOR FAMILY ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1525	2179	Function	GET PROCESSOR FREQUENCY	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1526	2180	Function	GET PROCESSOR MODEL ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1527	2181	Function	GET PROCESSOR NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1528	2182	Function	GET PROCESSOR PLATFORM$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1529	2183	Function	GET PROCESSOR STEPPING ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1530	2184	Function	GET PROCESSOR TYPE ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1531	2185	Function	GET PROCESSOR USAGE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1532	2186	Function	GET PROCESSOR VENDOR$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
-dbpro	1533	2187	Function	GET USER NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
-dbpro	1534	2188	Function	GET VOICE API	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1535	2189	Function	GET VOICE SPEED	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1536	2190	Function	GET VOICE VOLUME	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
-dbpro	1537	2191	Function	GET WEB CLIENT$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
-dbpro	1538	2192	Function	OPEN FILE DIALOG	file-dialog-result	test_enhancement_pack.cpp::Enhancement Pack file dialogs read Windows filters and answer headless runs as cancelled	-
-dbpro	1539	2193	Function	SAVE FILE DIALOG	file-dialog-result	test_enhancement_pack.cpp::Enhancement Pack file dialogs read Windows filters and answer headless runs as cancelled	-
-dbpro	1540	2194	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1541	2195	Command	ODE ADD STATIC OBJECT BOX	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
-dbpro	1542	2196	Command	ODE COLLISION GET MESSAGE	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1543	2197	Command	ODE CONTROL CHARACTER CONTROLLER	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
-dbpro	1544	2198	Command	ODE CREATE BALL JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
-dbpro	1545	2199	Command	ODE CREATE CHARACTER CONTROLLER	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
-dbpro	1546	2200	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1546	2201	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1546	2202	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1546	2203	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1547	2204	Command	ODE CREATE DYNAMIC BOX MANUAL	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1548	2205	Command	ODE CREATE DYNAMIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
-dbpro	1549	2206	Command	ODE CREATE DYNAMIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
-dbpro	1550	2207	Command	ODE CREATE DYNAMIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1551	2208	Command	ODE CREATE DYNAMIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1552	2209	Command	ODE CREATE HINGE JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
-dbpro	1552	2210	Command	ODE CREATE HINGE JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
-dbpro	1554	2213	Command	ODE CREATE STATIC BOX	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1555	2214	Command	ODE CREATE STATIC BOX LIMB	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
-dbpro	1556	2215	Command	ODE CREATE STATIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
-dbpro	1557	2216	Command	ODE CREATE STATIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
-dbpro	1558	2217	Command	ODE CREATE STATIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1560	2219	Command	ODE CREATE STATIC TERRAIN MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1561	2220	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1561	2221	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1561	2222	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1562	2223	Command	ODE CREATE STATIC TRIANGLE MESH LIMB	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
-dbpro	1565	2226	Command	ODE DESTROY OBJECT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1567	2228	Command	ODE END	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1568	2229	Command	ODE END STATIC OBJECT	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
-dbpro	1569	2230	Command	ODE SET ACTIVE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1570	2231	Command	ODE SET ANGULAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1571	2232	Command	ODE SET BODY FRICTION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1572	2233	Command	ODE SET BODY MASS	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
-dbpro	1573	2234	Command	ODE SET BODY POSITION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1574	2235	Command	ODE SET BODY ROTATION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1576	2237	Command	ODE SET CONTACT	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1577	2238	Command	ODE SET CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1578	2239	Command	ODE SET CONTACT BOUNCE VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1579	2240	Command	ODE SET CONTACT FDIR1	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1587	2248	Command	ODE SET CONTACT VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1588	2249	Command	ODE SET ENABLED	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1589	2250	Command	ODE SET GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1590	2251	Command	ODE SET HINGE JOINT LIMIT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
-dbpro	1591	2252	Command	ODE SET LINEAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1593	2254	Command	ODE SET RAY CAST	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1594	2255	Command	ODE SET RESPONSE	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
-dbpro	1595	2256	Command	ODE SET STEP MODE	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1598	2259	Command	ODE SET WORLD ERP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1599	2260	Command	ODE SET WORLD GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1600	2261	Command	ODE SET WORLD QUICK STEP NUM ITERATIONS	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1601	2262	Command	ODE SET WORLD STEP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
-dbpro	1602	2263	Command	ODE SETSURFACE MODE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1607	2268	Command	ODE SETSURFACE MODE CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
-dbpro	1615	2276	Command	ODE START	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1616	2277	Command	ODE START STATIC OBJECT	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
-dbpro	1617	2278	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1617	2279	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1619	2281	Function	ODE COLLISION MESSAGE EXISTS	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1620	2282	Function	ODE CREATE SWINGDOOR HINGE	jolt-rigid-body	test_physics.cpp::ODE swing door hinges hold a body to the world	-
-dbpro	1624	2286	Function	ODE GET BODY HEIGHT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1625	2287	Function	ODE GET BODY LINEAR VELOCITY X	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1626	2288	Function	ODE GET BODY LINEAR VELOCITY Y	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1627	2289	Function	ODE GET BODY LINEAR VELOCITY Z	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
-dbpro	1631	2293	Function	ODE GET CHARACTER CONTROLLER DUCKING	jolt-rigid-body	test_physics.cpp::ODE character controllers duck under what they cannot pass	-
-dbpro	1632	2294	Function	ODE GET CHARACTER FALL DISTANCE	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
-dbpro	1633	2295	Function	ODE GET CHARACTER HIT FLOOR	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
-dbpro	1634	2296	Function	ODE GET OBJECT A	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1635	2297	Function	ODE GET OBJECT A ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1636	2298	Function	ODE GET OBJECT A ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1637	2299	Function	ODE GET OBJECT A ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1638	2300	Function	ODE GET OBJECT A CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1639	2301	Function	ODE GET OBJECT A VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1640	2302	Function	ODE GET OBJECT A VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1641	2303	Function	ODE GET OBJECT A VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1642	2304	Function	ODE GET OBJECT B	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1643	2305	Function	ODE GET OBJECT B ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1644	2306	Function	ODE GET OBJECT B ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1645	2307	Function	ODE GET OBJECT B ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1646	2308	Function	ODE GET OBJECT B CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1647	2309	Function	ODE GET OBJECT B VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1648	2310	Function	ODE GET OBJECT B VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1649	2311	Function	ODE GET OBJECT B VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
-dbpro	1650	2312	Function	ODE GET RAY COLLISION X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1651	2313	Function	ODE GET RAY COLLISION Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1652	2314	Function	ODE GET RAY COLLISION Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1653	2315	Function	ODE GET RAY NORMAL X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1654	2316	Function	ODE GET RAY NORMAL Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1655	2317	Function	ODE GET RAY NORMAL Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1656	2318	Function	ODE GET RAY OBJECT HIT	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1657	2319	Function	ODE RAY	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1658	2320	Function	ODE RAY CAST	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1659	2321	Function	ODE RAY FORCE	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	1660	2322	Function	ODE RAY TERRAIN	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
-dbpro	2315	3043	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2316	3044	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2317	3045	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2318	3046	Function	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2319	3047	Function	MAKE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2320	3048	Function	MAKE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
-dbpro	2321	3049	Function	LIMB TEXTURE NAME	object-geometry-texture-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
-dbpro	2322	3050	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2323	3051	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2324	3052	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2325	3053	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2326	3054	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2327	3055	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2328	3056	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2329	3057	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2330	3058	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2331	3059	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2332	3060	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2333	3061	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2334	3062	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
-dbpro	2335	3063	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	1372	2024	Command	ADD BITMAP TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1373	2025	Command	ADD FILE TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1374	2026	Command	ADD IMAGE TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1375	2027	Command	ADD OBJECT TO BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1377	2029	Command	CLOSE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1378	2030	Command	CLOSE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1379	2031	Command	CLOSE FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1380	2032	Command	CREATE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1381	2033	Command	CREATE FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1382	2034	Command	DELETE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1383	2035	Command	DELETE OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1384	2036	Command	DESTROY FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1385	2037	Command	ENCODE TO OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1385	2038	Command	ENCODE TO OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1386	2039	Command	EXTRACT FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1387	2040	Command	GET PROCESSOR ON CHIP FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1388	2041	Command	GET PROCESSOR POWER MANAGEMENT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1389	2042	Command	GET PROCESSOR SUPPORTED FEATURES	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1390	2043	Command	GET VOICE LIST	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1391	2044	Command	LOAD ANIMATION FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1392	2045	Command	LOAD BITMAP FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1393	2046	Command	LOAD FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1394	2047	Command	LOAD IMAGE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1395	2048	Command	LOAD MEMBLOCK FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1396	2049	Command	LOAD OBJECT FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1397	2050	Command	LOAD OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1398	2051	Command	LOAD SOUND FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks carry images, bitmaps, objects, sounds and animations	-
+dbpro	1399	2052	Command	LOOP OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1400	2053	Command	OPEN DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1401	2054	Command	OPEN FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1401	2055	Command	OPEN FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1402	2056	Command	OPEN FILE MAP	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1403	2057	Command	PAUSE OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1404	2058	Command	PERFORM CHECKLIST FOR EAX EFFECTS	checklist-state	test_enhancement_pack.cpp::PERFORM CHECKLIST FOR EAX EFFECTS lists the presets in the Enhancement Pack's order	-
+dbpro	1405	2059	Command	PERFORM CHECKLIST FOR FILE BLOCK DATA	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1406	2060	Command	PLAY OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1407	2061	Command	REMOVE FILE FROM BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1408	2062	Command	RESUME OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1409	2063	Command	SAVE FILE BLOCK	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1410	2064	Command	SEND VOICE MESSAGE	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1411	2065	Command	SEND VOICE MESSAGE XML	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1455	2109	Command	SET FILE BLOCK COMPRESSION	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1456	2110	Command	SET FILE BLOCK KEY	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1457	2111	Command	SET FILE MAP DWORD	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1458	2112	Command	SET FILE MAP FLOAT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1459	2113	Command	SET FILE MAP STRING$	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1460	2114	Command	SET OGG VORBIS VOLUME	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1461	2115	Command	SET VOICE	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1462	2116	Command	SET VOICE SPEED	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1463	2117	Command	SET VOICE VOLUME	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1464	2118	Command	STOP OGG VORBIS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1465	2119	Command	UPDATE DATA FILE	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1466	2120	Command	WAIT FOR FILE MAP EVENT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1467	2121	Function	GET CD COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1468	2122	Function	GET CD LETTER$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1469	2123	Function	GET COMPUTER NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1470	2124	Function	GET DATA FILE CELL	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1471	2125	Function	GET DATA FILE COLUMN COUNT	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1472	2126	Function	GET DATA FILE EXISTS	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1473	2127	Function	GET DATA FILE ROW COUNT	delimited-text-table	test_enhancement_pack.cpp::Enhancement Pack data files read delimited cells by column and row	-
+dbpro	1474	2128	Function	GET DISPLAY DEPTH	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1475	2129	Function	GET DISPLAY HEIGHT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1476	2130	Function	GET DISPLAY REFRESH RATE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1477	2131	Function	GET DISPLAY WIDTH	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1478	2132	Function	GET DRIVE BYTES PER SECTOR	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1479	2133	Function	GET DRIVE COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1480	2134	Function	GET DRIVE CYLINDER COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1481	2135	Function	GET DRIVE FILE LENGTH SUPPORT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1482	2136	Function	GET DRIVE FILE SYSTEM$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1483	2137	Function	GET DRIVE FREE SPACE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1484	2138	Function	GET DRIVE SECTORS PER TRACK	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1485	2139	Function	GET DRIVE SERIAL$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1486	2140	Function	GET DRIVE TOTAL SIZE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1487	2141	Function	GET DRIVE TRACK COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1488	2142	Function	GET DRIVE USED SPACE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack drive queries read the system volume and answer absent drives as DBPro did	-
+dbpro	1525	2179	Function	GET FILE BLOCK COMPRESSION	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1526	2180	Function	GET FILE BLOCK COUNT	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1527	2181	Function	GET FILE BLOCK DATA EXISTS	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1528	2182	Function	GET FILE BLOCK EXISTS	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1529	2183	Function	GET FILE BLOCK KEY	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1530	2184	Function	GET FILE BLOCK SIZE	zip-archive-state	test_enhancement_pack.cpp::Enhancement Pack file blocks store, encrypt and extract files	-
+dbpro	1531	2185	Function	GET FILE MAP DWORD	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1532	2186	Function	GET FILE MAP FLOAT	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1533	2187	Function	GET FILE MAP STRING$	shared-memory-state	test_enhancement_pack.cpp::Enhancement Pack file maps share memory between programs	-
+dbpro	1534	2188	Function	GET INSTALLED MEMORY	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1535	2189	Function	GET IP ADDRESS$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1536	2190	Function	GET MEMORY AVAILABLE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1537	2191	Function	GET MEMORY PERCENT FREE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1538	2192	Function	GET MEMORY PERCENT USED	host-system-query	test_enhancement_pack.cpp::Enhancement Pack memory queries round up and reject unknown units with zero	-
+dbpro	1539	2193	Function	GET OGG VORBIS EXISTS	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1540	2194	Function	GET OGG VORBIS STATE	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1541	2195	Function	GET OGG VORBIS VOLUME	ogg-vorbis-state	test_enhancement_pack.cpp::Enhancement Pack Ogg Vorbis encodes WAV files and plays them apart from sounds	-
+dbpro	1542	2196	Function	GET PROCESSOR BRAND$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1543	2197	Function	GET PROCESSOR COUNT	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1544	2198	Function	GET PROCESSOR FAMILY ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1545	2199	Function	GET PROCESSOR FREQUENCY	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1546	2200	Function	GET PROCESSOR MODEL ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1547	2201	Function	GET PROCESSOR NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1548	2202	Function	GET PROCESSOR PLATFORM$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1549	2203	Function	GET PROCESSOR STEPPING ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1550	2204	Function	GET PROCESSOR TYPE ID	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1551	2205	Function	GET PROCESSOR USAGE	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1552	2206	Function	GET PROCESSOR VENDOR$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack processor queries describe the host processor	-
+dbpro	1553	2207	Function	GET USER NAME$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1554	2208	Function	GET VOICE API	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1555	2209	Function	GET VOICE SPEED	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1556	2210	Function	GET VOICE VOLUME	speech-state	test_enhancement_pack.cpp::Enhancement Pack speech uses the platform synthesiser and stays silent headless	-
+dbpro	1557	2211	Function	GET WEB CLIENT$	host-system-query	test_enhancement_pack.cpp::Enhancement Pack names, address and display queries answer without a display	-
+dbpro	1558	2212	Function	OPEN FILE DIALOG	file-dialog-result	test_enhancement_pack.cpp::Enhancement Pack file dialogs read Windows filters and answer headless runs as cancelled	-
+dbpro	1559	2213	Function	SAVE FILE DIALOG	file-dialog-result	test_enhancement_pack.cpp::Enhancement Pack file dialogs read Windows filters and answer headless runs as cancelled	-
+dbpro	1560	2214	Command	ODE ADD FORCE	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1561	2215	Command	ODE ADD STATIC OBJECT BOX	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
+dbpro	1562	2216	Command	ODE COLLISION GET MESSAGE	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1563	2217	Command	ODE CONTROL CHARACTER CONTROLLER	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
+dbpro	1564	2218	Command	ODE CREATE BALL JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
+dbpro	1565	2219	Command	ODE CREATE CHARACTER CONTROLLER	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
+dbpro	1566	2220	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1566	2221	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1566	2222	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1566	2223	Command	ODE CREATE DYNAMIC BOX	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1567	2224	Command	ODE CREATE DYNAMIC BOX MANUAL	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1568	2225	Command	ODE CREATE DYNAMIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1569	2226	Command	ODE CREATE DYNAMIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1570	2227	Command	ODE CREATE DYNAMIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1571	2228	Command	ODE CREATE DYNAMIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1572	2229	Command	ODE CREATE HINGE JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
+dbpro	1572	2230	Command	ODE CREATE HINGE JOINT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
+dbpro	1574	2233	Command	ODE CREATE STATIC BOX	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1575	2234	Command	ODE CREATE STATIC BOX LIMB	jolt-rigid-body	test_physics.cpp::ODE boxes measure their objects or take explicit sizes	-
+dbpro	1576	2235	Command	ODE CREATE STATIC CAPSULE	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1577	2236	Command	ODE CREATE STATIC CYLINDER	jolt-rigid-body	test_physics.cpp::ODE cylinders and capsules behave like their shapes	-
+dbpro	1578	2237	Command	ODE CREATE STATIC SPHERE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1580	2239	Command	ODE CREATE STATIC TERRAIN MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1581	2240	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1581	2241	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1581	2242	Command	ODE CREATE STATIC TRIANGLE MESH	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1582	2243	Command	ODE CREATE STATIC TRIANGLE MESH LIMB	jolt-rigid-body	test_physics.cpp::ODE triangle meshes are the real surface of their objects	-
+dbpro	1585	2246	Command	ODE DESTROY OBJECT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1587	2248	Command	ODE END	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1588	2249	Command	ODE END STATIC OBJECT	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
+dbpro	1589	2250	Command	ODE SET ACTIVE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1590	2251	Command	ODE SET ANGULAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1591	2252	Command	ODE SET BODY FRICTION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1592	2253	Command	ODE SET BODY MASS	jolt-rigid-body	test_physics.cpp::ODE forces act over the whole of one update	-
+dbpro	1593	2254	Command	ODE SET BODY POSITION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1594	2255	Command	ODE SET BODY ROTATION	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1596	2257	Command	ODE SET CONTACT	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1597	2258	Command	ODE SET CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1598	2259	Command	ODE SET CONTACT BOUNCE VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1599	2260	Command	ODE SET CONTACT FDIR1	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1607	2268	Command	ODE SET CONTACT VELOCITY	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1608	2269	Command	ODE SET ENABLED	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1609	2270	Command	ODE SET GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1610	2271	Command	ODE SET HINGE JOINT LIMIT	jolt-rigid-body	test_physics.cpp::ODE joints hold bodies together	-
+dbpro	1611	2272	Command	ODE SET LINEAR VELOCITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1613	2274	Command	ODE SET RAY CAST	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1614	2275	Command	ODE SET RESPONSE	jolt-rigid-body	test_physics.cpp::ODE bodies can leave the simulation's control	-
+dbpro	1615	2276	Command	ODE SET STEP MODE	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1618	2279	Command	ODE SET WORLD ERP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1619	2280	Command	ODE SET WORLD GRAVITY	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1620	2281	Command	ODE SET WORLD QUICK STEP NUM ITERATIONS	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1621	2282	Command	ODE SET WORLD STEP	jolt-rigid-body	test_physics.cpp::ODE world settings reach the solver	-
+dbpro	1622	2283	Command	ODE SETSURFACE MODE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1627	2288	Command	ODE SETSURFACE MODE CONTACT BOUNCE	jolt-rigid-body	test_physics.cpp::ODE contact surfaces bounce only when asked to	-
+dbpro	1635	2296	Command	ODE START	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1636	2297	Command	ODE START STATIC OBJECT	jolt-rigid-body	test_physics.cpp::ODE static objects are made of boxes	-
+dbpro	1637	2298	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1637	2299	Command	ODE UPDATE	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1639	2301	Function	ODE COLLISION MESSAGE EXISTS	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1640	2302	Function	ODE CREATE SWINGDOOR HINGE	jolt-rigid-body	test_physics.cpp::ODE swing door hinges hold a body to the world	-
+dbpro	1644	2306	Function	ODE GET BODY HEIGHT	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1645	2307	Function	ODE GET BODY LINEAR VELOCITY X	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1646	2308	Function	ODE GET BODY LINEAR VELOCITY Y	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1647	2309	Function	ODE GET BODY LINEAR VELOCITY Z	jolt-rigid-body	test_engine_builtins.cpp::DBPro ODE rigid bodies simulate through the portable Jolt backend	-
+dbpro	1651	2313	Function	ODE GET CHARACTER CONTROLLER DUCKING	jolt-rigid-body	test_physics.cpp::ODE character controllers duck under what they cannot pass	-
+dbpro	1652	2314	Function	ODE GET CHARACTER FALL DISTANCE	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
+dbpro	1653	2315	Function	ODE GET CHARACTER HIT FLOOR	jolt-rigid-body	test_physics.cpp::ODE character controllers walk and fall	-
+dbpro	1654	2316	Function	ODE GET OBJECT A	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1655	2317	Function	ODE GET OBJECT A ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1656	2318	Function	ODE GET OBJECT A ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1657	2319	Function	ODE GET OBJECT A ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1658	2320	Function	ODE GET OBJECT A CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1659	2321	Function	ODE GET OBJECT A VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1660	2322	Function	ODE GET OBJECT A VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1661	2323	Function	ODE GET OBJECT A VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1662	2324	Function	ODE GET OBJECT B	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1663	2325	Function	ODE GET OBJECT B ANGULAR VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1664	2326	Function	ODE GET OBJECT B ANGULAR VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1665	2327	Function	ODE GET OBJECT B ANGULAR VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1666	2328	Function	ODE GET OBJECT B CONTACT	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1667	2329	Function	ODE GET OBJECT B VELOCITY X	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1668	2330	Function	ODE GET OBJECT B VELOCITY Y	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1669	2331	Function	ODE GET OBJECT B VELOCITY Z	jolt-rigid-body	test_physics.cpp::ODE collisions arrive as messages	-
+dbpro	1670	2332	Function	ODE GET RAY COLLISION X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1671	2333	Function	ODE GET RAY COLLISION Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1672	2334	Function	ODE GET RAY COLLISION Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1673	2335	Function	ODE GET RAY NORMAL X	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1674	2336	Function	ODE GET RAY NORMAL Y	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1675	2337	Function	ODE GET RAY NORMAL Z	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1676	2338	Function	ODE GET RAY OBJECT HIT	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1677	2339	Function	ODE RAY	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1678	2340	Function	ODE RAY CAST	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1679	2341	Function	ODE RAY FORCE	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	1680	2342	Function	ODE RAY TERRAIN	jolt-rigid-body	test_physics.cpp::ODE rays find the first surface they meet	-
+dbpro	2335	3063	Function	DELETE MATRIX4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	2336	3064	Function	DELETE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	2337	3065	Function	DELETE VECTOR3	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	2338	3066	Function	DELETE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	2339	3067	Function	MAKE VECTOR2	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	2340	3068	Function	MAKE VECTOR4	golden-output	test_matrix4.dba	f6fceb82197ddce9a96ea3c501dcd2f7d5640565ad9a1bb93c1a7769d8a54dd5
+dbpro	2341	3069	Function	LIMB TEXTURE NAME	object-geometry-texture-state	test_engine_builtins.cpp::Portable object state animation and limbs preserve hierarchy and overload semantics	-
+dbpro	2342	3070	Command	SET VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2343	3071	Command	SET TRACKING SPACE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2344	3072	Command	RECENTER VR CAMERA	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2345	3073	Command	GET VR CONTROLLER POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2346	3074	Command	GET VR CONTROLLER ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2347	3075	Command	GET VR HEAD POSITION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2348	3076	Command	GET VR ROTATION	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2349	3077	Function	IS VR CONTROLLER TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2350	3078	Function	IS VR HEAD TRACKED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2351	3079	Function	IS VR SUPPORTED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2352	3080	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2353	3081	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2354	3082	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2355	3083	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-

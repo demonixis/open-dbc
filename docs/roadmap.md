@@ -10,7 +10,7 @@ Publication:
 
 ## Work lots
 
-In order. Each lot is one session; lot 4 comes before any new command set.
+In order. Each lot is one session.
 The DBPro help (`Install/Help`) is the reference; arrays already match it
 (`DIM a(10)` gives indices 0 to 10).
 
@@ -19,10 +19,6 @@ Conformance:
 - [ ] Arithmetic ranking, left from lot 1: the original compiler reduces `/` before
   `*` and `-` before `+` (`2*6/4` would be 2). Confirm on a real DBPro build before
   following it.
-- [ ] Lot 4, GameFX and help-only commands: a per-form status of the 50 GameFX
-  pages; the 12 static forms Classic already runs with the same signature, enabled
-  in `dbpro`; `OBJECT BLOCKING` and the 19 `LFX` pages, the only help pages without a
-  catalogue row, catalogued or named by a diagnostic.
 
 Scene view:
 
@@ -76,20 +72,22 @@ Canvas, a 2D mode for UI and HUD written and read back as BASIC:
 
 ## DBPro parity
 
-The catalogue counts 1,042 of DBPro's 1,455 core commands and functions as implemented,
-against 701 of 730 in Classic. The other 413 are sorted here by name only; confirm each
+The catalogue counts 1,054 of DBPro's 1,475 core commands and functions as implemented,
+against 701 of 730 in Classic. The other 421 are sorted here by name only; confirm each
 one when it is picked up.
 
 206 of them come from the string tables of the free release rather than its keyword files:
 quaternions and vectors (119 names) and a few forms the help documents.
 
-152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access
+172 stay `Unsupported`: the LightFX case lights (19); DirectX 9 capability queries, Windows, disc and registry access
 (89); raw memory and pointers, assembly shaders and DLLs (42); FTP and HTTP without TLS
 (21).
 
 To rethink rather than port:
 
-- [ ] Static objects, portals and lightmaps (36 forms, less those of lot 4).
+- [ ] GameFX, 23 documented forms that do not run: static queries and scorch marks (10),
+  `MAKE STATIC OBJECT` and `LOAD STATIC OBJECTS` with their DBPro arguments, portals
+  (3), lightmaps (7) and `OBJECT BLOCKING`.
 - [ ] CSG (7 forms).
 
 Validation and scope:

@@ -20,7 +20,35 @@ REDUCE_TEST = (
     "test_engine_builtins.cpp::DBPro REDUCE MESH makes boxes of a mesh and CONVERT OBJECT FVF sets what its vertices carry"
 )
 
+DBPRO_STATIC_TEST = (
+    "test_engine_builtins.cpp::DBPro static world forms attach objects, set their render state, save them and test lines of sight"
+)
+
 UNIT_WITNESSES = (
+    ("dbpro", "Command", "ATTACH OBJECT TO STATIC", "attach object to static 1\n",
+     "static-world", DBPRO_STATIC_TEST),
+    ("dbpro", "Command", "DETACH OBJECT FROM STATIC", "detach object from static 1\n",
+     "static-world", DBPRO_STATIC_TEST),
+    ("dbpro", "Command", "ENABLE STATIC OCCLUSION", "enable static occlusion\n",
+     "static-frustum", DBPRO_STATIC_TEST),
+    ("dbpro", "Command", "DISABLE STATIC OCCLUSION", "disable static occlusion\n",
+     "static-frustum", DBPRO_STATIC_TEST),
+    ("dbpro", "Command", "SET STATIC OBJECTS TEXTURE", "set static objects texture 2\n",
+     "static-render-state", DBPRO_STATIC_TEST),
+    ("dbpro", "Command", "SET STATIC OBJECTS WIREFRAME ON", "set static objects wireframe on\n",
+     "static-render-state", DBPRO_STATIC_TEST),
+    ("dbpro", "Command", "SET STATIC OBJECTS WIREFRAME OFF", "set static objects wireframe off\n",
+     "static-render-state", DBPRO_STATIC_TEST),
+    ("dbpro", "Command", "SAVE STATIC OBJECTS", "save static objects \"world.dat\"\n",
+     "static-file", DBPRO_STATIC_TEST),
+    ("dbpro", "Function", "STATIC LINE OF SIGHT", "value = static line of sight(0, 0, 0, 1, 1, 1, 0, 1)\n",
+     "static-collision", DBPRO_STATIC_TEST),
+    ("dbpro", "Function", "STATIC LINE OF SIGHT X", "value = static line of sight x()\n",
+     "static-collision", DBPRO_STATIC_TEST),
+    ("dbpro", "Function", "STATIC LINE OF SIGHT Y", "value = static line of sight y()\n",
+     "static-collision", DBPRO_STATIC_TEST),
+    ("dbpro", "Function", "STATIC LINE OF SIGHT Z", "value = static line of sight z()\n",
+     "static-collision", DBPRO_STATIC_TEST),
     ("dbc", "Command", "SET GAMMA", "set gamma 128, 255, 511\n",
      "pixel-capture", "test_engine_builtins.cpp::Classic gamma and mipmap modes drive final pixels and sampler state"),
     ("dbc", "Command", "SET MIPMAP MODE", "set mipmap mode 0\n",
