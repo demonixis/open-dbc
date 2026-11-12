@@ -8,6 +8,87 @@ Repository files:
 Publication:
 - [ ] Signed tag `v0.5.0`, release with `SHA256SUMS`.
 
+## Work lots
+
+In order. Each lot is one session; lots 1 to 4 come before any new command set.
+The DBPro help (`Install/Help`) is the reference; arrays already match it
+(`DIM a(10)` gives indices 0 to 10).
+
+Conformance:
+
+- [ ] Lot 1, language syntax against `principals/`:
+  - `ELSEIF` exists in neither the help nor the original compiler: remove it.
+  - `NOT` in `dbpro`: lowest priority and a boolean result in conditions
+    (`IF NOT b=2`).
+  - `..` bitwise NOT is documented: implement it, drop `DBC1004`.
+  - `DIM` after `UNDIM`, `dim a()` as an empty list, `GLOBAL DIM`.
+  - `//` comments, `=>` and `=<`, `DIV` in `dbpro`.
+  - `#INCLUDE` appends at the end of the program; `READ` type mismatches.
+  - Sized integers (`BYTE`, `WORD`, `DWORD`) and their ranges.
+  - `*Ptr` keeps an explicit diagnostic.
+- [ ] Lot 2, reference evidence: pinned snapshots of the help pages and of the
+  commands the official examples use, in `scripts/data/`; the audit computes
+  "referenced" (help, examples, implemented plugin, mobile and VR additions) and
+  lists the rest.
+- [ ] Lot 3, remove unreferenced commands from the catalogue, from the lot 2 list:
+  about 312 names known only from SDK string tables, the Cloth forms no example
+  uses (108), 25 undocumented DarkPHYSICS forms and the 98 reserved placeholders.
+  Regenerate evidence, manifests, references and the parity numbers below.
+- [ ] Lot 4, GameFX and help-only commands: a per-form status of the 50 GameFX
+  pages; the 12 static forms Classic already runs with the same signature, enabled
+  in `dbpro`; `OBJECT BLOCKING` and the 19 `LFX` pages catalogued or named by a
+  diagnostic.
+
+Scene view:
+
+- [ ] Lot 5, Inspector basics: z-depth, z-read and z-write toggles; a "Limbs" button
+  opening the limb list (names and IDs) in a popup; the reader accepts the standalone
+  `SET OBJECT WIREFRAME`, `FOG`, `LIGHT`... forms and the four-argument
+  `SET SHADOW SHADING ON`.
+- [ ] Lot 6, Inspector textures: a level section declaring shared images, then light,
+  detail, blend, sphere, cube, bump and alpha mapping, and cartoon, rainbow and
+  reflection shading with their exclusion rules.
+- [ ] Lot 7, Inspector links: `GLUE OBJECT TO LIMB` with a limb picker, `UNGLUE
+  OBJECT`, then effects (an effect id space, `LOAD EFFECT`, `SET OBJECT EFFECT`).
+- [ ] Lot 8, BSP worlds in a level: `LOAD BSP`, `SET BSP CAMERA` and BSP collision
+  written from Level Settings; the preview of BSP geometry comes after.
+- [ ] Lot 9, code completion: names of the file and of its includes (variables,
+  arrays, functions, labels, constants), `TYPE` fields after a dot, user function
+  signatures; parse-only, shared with the Code panel.
+
+Examples:
+
+- [ ] Lot 10, DBPro demos: a dedicated `dbpro` `GOSUB` test, then functions instead
+  of `GOSUB` in `dusk_rally` and `sky_gardens`; settings and literal scenery in
+  level files the Scene view can edit; three to five files per demo. The imported
+  TGC tutorials stay byte for byte.
+
+Building generator, baked by the Studio into a model that `LOAD OBJECT` loads:
+
+- [ ] Lot 11, core: output format settled on a hand-made model with a hinge limb
+  (text `.x` with named frames expected); building document (JSON, the editable
+  source) with walls, openings, textures per side and roof; wall, slab and flat roof
+  mesh generator; model writer.
+- [ ] Lot 12, plan editor: top-down drawing with grid snapping in Scene mode, doors,
+  doorless openings, windows and holes, interior and exterior textures per wall,
+  live 3D preview, regeneration on save.
+- [ ] Lot 13, model categories: doors (standard, garage), windows and stairs assigned
+  from the Assets panel; modelling convention and Blender exporter; door leaves as
+  limbs with their origin on the hinge; roof types and stairs.
+
+Canvas, a 2D mode for UI and HUD written and read back as BASIC:
+
+- [ ] Lot 14, BASIC UI library: a file included twice fails today, so include-once
+  first; a 2D clip rectangle and nine-slice if sprites cannot do them; rect and
+  anchor layout against a reference resolution; Panel, Text, Button, Checkbox,
+  Slider and InputField. The language has no callbacks, so an update function
+  returns the widget clicked.
+- [ ] Lot 15, Canvas designer: a third Studio mode with select, move, resize and
+  anchor presets, Hierarchy and Inspector; one `ui/<Name>Widget.dba` per widget
+  holding a `Widget<Name>` function; widgets placed inside a canvas.
+- [ ] Lot 16, world-space canvas for VR: controller buttons first, then the UI drawn
+  on a quad with the controller ray as its pointer.
+
 ## DBPro parity
 
 The catalogue counts 1,042 of DBPro's 1,584 core commands and functions as implemented,
@@ -24,7 +105,7 @@ quaternions and vectors (117 names), objects (47), MultiplayerPlus (28), Bullet 
 
 To rethink rather than port:
 
-- [ ] Static objects, portals and lightmaps (31 forms).
+- [ ] Static objects, portals and lightmaps (36 forms, less those of lot 4).
 - [ ] CSG (7 forms).
 
 Validation and scope:
@@ -78,10 +159,7 @@ Studio:
   the program running in its child process.
 - [ ] Normal maps generated from existing textures, then full PBR sets by heuristics
   with sliders: metalness cannot be derived from an albedo. No ML dependency.
-- [ ] 2D view for UI and HUD, written and read back as BASIC like levels, over a BASIC
-  library using `TYPE` and `#CONSTANT`. The language has no callbacks, so an update
-  function returns the widget clicked. Check the 2D commands first for nine-slice and
-  clipping. Tilemaps come after the UI.
+- [ ] Tilemaps, after the Canvas lots.
 - [ ] Split each generated files into specific folders. 
   - [ ] Levels folder for levels: Contains the level and the world settings, two files
   - [ ] UI folder for UI: UI are not called directly in the code, the editor is just a designer, similar to the Widget Blueprint Editor in Unreal
