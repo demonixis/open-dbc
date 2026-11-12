@@ -115,42 +115,45 @@ global inputX# : global inputZ# : global inputJump : global holdJump
 global autoStep : global autoWait
 global sunX# : global sunY# : global sunZ# : global frame
 global nearCount : global nearSeedCount : global cullCount : global autoTop# : global autoTopStep
+rem What one function sets for another, or keeps from one frame to the next
+global shrineX# : global shrineY# : global shrineZ# : global shrineCrystal
+global burst : global flash : global bounceSquash : global lastSpace
 
-gosub load_media
-gosub build_level
-gosub build_route
+load_media()
+build_level()
+build_route()
 attract = 1
-gosub new_run
+new_run()
 
 rem ------------------------------------------------------------------
 do
    inc frame
    if attract = 1
-      gosub autopilot
+      autopilot()
       if scancode() > 1 or mouseclick() > 0
          attract = 0
          for i = 1 to 3 : hide sprite i : next i
          show sprite 4
-         gosub new_run
+         new_run()
       endif
    else
-      gosub read_controls
+      read_controls()
    endif
    if escapekey() = 1 then end
 
    update_movers()
-   if finished = 0 then gosub move_player
-   gosub collect_seeds
-   gosub check_progress
-   gosub animate_player
-   gosub update_camera
-   gosub update_scenery
-   gosub draw_hud
+   if finished = 0 then move_player()
+   collect_seeds()
+   check_progress()
+   animate_player()
+   update_camera()
+   update_scenery()
+   draw_hud()
    sync
 loop
 
 rem ------------------------------------------------------------------
-load_media:
+function load_media()
    backdrop on : color backdrop FOG_RGB
    set camera range 0.5, 4000
    set camera fov 65
@@ -294,12 +297,12 @@ load_media:
    sprite 3, 0, 662, 32
    sprite 4, 24, 20, 9
    hide sprite 4
-return
+endfunction
 
 rem ------------------------------------------------------------------
 rem Level: every piece is placed from the DATA below. Heights are tops
 rem of walkable surfaces; blocks and pillars give their bottom.
-build_level:
+function build_level()
    nextObject = FIRST_OBJECT
    restore level_data
    repeat
@@ -441,11 +444,11 @@ build_level:
          endcase
       endselect
    until kind$ = "end"
-return
+endfunction
 
 rem ------------------------------------------------------------------
 rem The attract route: where the autopilot runs, leaps or waits for a mover
-build_route:
+function build_route()
    restore route_data
    repeat
       read x#, z#, m, leap, chimney
@@ -455,10 +458,10 @@ build_route:
          route(routeCount).mover = m : route(routeCount).leap = leap : route(routeCount).chimney = chimney
       endif
    until x# <= -999
-return
+endfunction
 
 rem ------------------------------------------------------------------
-new_run:
+function new_run()
    for s = 1 to seedCount
       seeds(s).taken = 0 : seeds(s).shown = 0
       hide object seeds(s).obj : hide object seeds(s).halo
@@ -477,10 +480,10 @@ new_run:
    message$ = "" : messageTime = 0
    set object emissive shrineCrystal, rgb(60, 60, 60)
    set light range 5, 45
-return
+endfunction
 
 rem ------------------------------------------------------------------
-read_controls:
+function read_controls()
    fx# = sin(camYaw#) : fz# = cos(camYaw#)
    ax# = 0.0 : az# = 0.0
    if upkey() = 1 or keystate(17) = 1 then ax# = ax# + fx# : az# = az# + fz#
@@ -501,21 +504,21 @@ read_controls:
    else
       inc idleCamera
    endif
-   if finished = 1 and inputJump = 1 and lastSpace = 0 then gosub new_run
+   if finished = 1 and inputJump = 1 and lastSpace = 0 then new_run()
    lastSpace = inputJump
-return
+endfunction
 
 rem ------------------------------------------------------------------
 rem The autopilot presses the same virtual controls as the player
-autopilot:
+function autopilot()
    inputX# = 0.0 : inputZ# = 0.0 : inputJump = 0 : holdJump = 0
    idleCamera = 100
    if finished = 1
       inc autoWait
-      if autoWait > 240 then gosub new_run
-      return
+      if autoWait > 240 then new_run()
+      exitfunction
    endif
-   if autoStep > routeCount or py# < -20 then return
+   if autoStep > routeCount or py# < -20 then exitfunction
    tx# = route(autoStep).x : tz# = route(autoStep).z
    m = route(autoStep).mover
    if m > 0 then tx# = solids(movers(m).solid).x : tz# = solids(movers(m).solid).z
@@ -524,7 +527,7 @@ autopilot:
    if route(autoStep).chimney = 1 and abs(tz# - pz#) < 4.5
       if py# >= 27.0
          inc autoStep
-         return
+         exitfunction
       endif
       holdJump = 1
       if onGround = 1
@@ -534,7 +537,7 @@ autopilot:
          if speed# > 0.05 then inputX# = vx# / speed#
          if wallTimer > 0 then inputJump = frame mod 2
       endif
-      return
+      exitfunction
    endif
 
    dx# = tx# - px# : dz# = tz# - pz#
@@ -549,7 +552,7 @@ autopilot:
       if arrived = 1
          if route(autoStep).leap = 0 or autoStep = routeCount
             inc autoStep
-            return
+            exitfunction
          endif
          rem Leap points wait until the next platform lines up
          nx# = route(autoStep + 1).x : nz# = route(autoStep + 1).z
@@ -565,13 +568,13 @@ autopilot:
          endif
          if ready = 0
             if distance# > 0.8 then inputX# = dx# / distance# * 0.4 : inputZ# = dz# / distance# * 0.4
-            return
+            exitfunction
          endif
          inc autoStep
          dx# = nx# - px# : dz# = nz# - pz# : distance# = sqrt(dx# * dx# + dz# * dz#)
          inputJump = 1 : holdJump = 1
          inputX# = dx# / distance# : inputZ# = dz# / distance#
-         return
+         exitfunction
       endif
       rem Ease off before a stop so the explorer does not overshoot it
       scale# = 1.0
@@ -583,7 +586,7 @@ autopilot:
       if vy# > 0.8 and distance# < 3.0
          rem Launched by the mushroom: head for the next stop
          inc autoStep
-         return
+         exitfunction
       endif
       if autoTopStep <> autoStep then autoTop# = top_at(tx#, tz#) : autoTopStep = autoStep
       disc# = vy# * vy# + 2.0 * GRAVITY * (py# - autoTop#)
@@ -598,10 +601,10 @@ autopilot:
       if scale# > 1.0 then scale# = 1.0
       if distance# > 0.1 then inputX# = dx# / distance# * scale# : inputZ# = dz# / distance# * scale#
    endif
-return
+endfunction
 
 rem ------------------------------------------------------------------
-move_player:
+function move_player()
    if frame mod 8 = 0 or nearCount = 0 then gather_near()
 
    rem Ride the platform under the feet
@@ -671,10 +674,10 @@ move_player:
    endif
 
    if py# < -40 then play sound 6 : respawn()
-return
+endfunction
 
 rem ------------------------------------------------------------------
-collect_seeds:
+function collect_seeds()
    rem Only seeds near the explorer are shown, animated and tested
    if frame mod 10 = 0 or nearSeedCount < 0
       nearSeedCount = 0
@@ -723,10 +726,10 @@ collect_seeds:
       set light range 6, flash * 1.2
       if flash = 0 then hide light 6
    endif
-return
+endfunction
 
 rem ------------------------------------------------------------------
-check_progress:
+function check_progress()
    for c = 1 to checkCount
       if checks(c).lit = 0
          dx# = checks(c).x - px# : dz# = checks(c).z - pz#
@@ -759,10 +762,10 @@ check_progress:
          messageTime = 100000
       endif
    endif
-return
+endfunction
 
 rem ------------------------------------------------------------------
-animate_player:
+function animate_player()
    position object 1, px#, py#, pz#
    yrotate object 1, heading#
    speed# = sqrt(vx# * vx# + vz# * vz#)
@@ -803,10 +806,10 @@ animate_player:
 
    rem Short stencil shadows: the light sits far along the sun direction
    set shadow position -1, px# + sunX# * 300, py# + sunY# * 300, pz# + sunZ# * 300
-return
+endfunction
 
 rem ------------------------------------------------------------------
-update_camera:
+function update_camera()
    rem When nobody touches the mouse, swing round behind the explorer
    speed# = sqrt(vx# * vx# + vz# * vz#)
    if idleCamera > 40 and speed# > 0.1 then camYaw# = curveangle(heading#, camYaw#, 45)
@@ -821,10 +824,10 @@ update_camera:
    camZ# = curvevalue(wantZ#, camZ#, 6)
    position camera camX#, camY#, camZ#
    point camera px#, targetY#, pz#
-return
+endfunction
 
 rem ------------------------------------------------------------------
-update_scenery:
+function update_scenery()
    rem Sky, sun and cloud layers follow the camera; the clouds snap to
    rem whole texture tiles so their pattern never slides with it
    position object 3, camX#, camY#, camZ#
@@ -838,7 +841,7 @@ update_scenery:
    if frame mod 10 = 0 then cull_scenery()
 
    rem Pooled lights: the three nearest seeds and the nearest lantern glow
-   if frame mod 5 = 0 then gosub nearest_lights
+   if frame mod 5 = 0 then nearest_lights()
    for l = 1 to 3
       if bestSeed(l) > 0
          if seeds(bestSeed(l)).taken = 1 then bestSeed(l) = 0
@@ -852,9 +855,9 @@ update_scenery:
    next l
    set light range 4, 16 + sin(frame * 7) * 1.5
    if finished = 1 then yrotate object shrineCrystal, wrapvalue(frame * 3)
-return
+endfunction
 
-nearest_lights:
+function nearest_lights()
    for l = 1 to 3 : best#(l) = 1000000 : bestSeed(l) = 0 : next l
    for s = 1 to seedCount
       if seeds(s).taken = 0
@@ -874,13 +877,13 @@ nearest_lights:
       if d# < nearest# then nearest# = d# : lamp = lanterns(k)
    next k
    if lanternCount > 0 then position light 4, object position x(lamp), object position y(lamp) + 2.6, object position z(lamp)
-return
+endfunction
 
 rem ------------------------------------------------------------------
-draw_hud:
+function draw_hud()
    if attract = 1
       if (frame / 30) mod 2 = 0 then show sprite 2 else hide sprite 2
-      return
+      exitfunction
    endif
    set text size 34
    shadow_text(100, 30, str$(seedsTaken) + " / " + str$(SEED_TOTAL), 0)
@@ -901,7 +904,7 @@ draw_hud:
          shadow_text(screen width() / 2, 205, "PRESS SPACE TO PLAY AGAIN", 1)
       endif
    endif
-return
+endfunction
 
 rem ------------------------------------------------------------------
 level_data:
