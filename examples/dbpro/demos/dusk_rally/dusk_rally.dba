@@ -98,6 +98,9 @@ global sunz as float
 global mapx as float
 global mapz as float
 global mapscale as float
+rem What the sky was last tinted for, and whether C was already down
+global skytod as float
+global ckey as integer
 
 dim cx#(CONTROLS) : dim cz#(CONTROLS)
 dim px#(SAMPLES) : dim pz#(SAMPLES)
@@ -115,15 +118,15 @@ set camera range 0.5, 950
 set camera fov 68
 randomize 7
 
-gosub build_circuit
-gosub build_world
-gosub build_cars
-gosub build_minimap
-gosub load_sounds
+BuildCircuit()
+BuildWorld()
+BuildCars()
+BuildMinimap()
+LoadSounds()
 
 mode = 0
-gosub new_race
-gosub update_camera
+NewRace()
+UpdateCamera()
 
 rem ==================================================================
 rem The simulation steps at a fixed 60 Hz for the real time elapsed, so the cars keep
@@ -138,27 +141,27 @@ do
    if steps > MAX_STEPS then steps = MAX_STEPS : pending = MAX_STEPS * 1000
    pending = pending - steps * 1000
    for step = 1 to steps
-      gosub simulate
+      Simulate()
    next step
    for i = 1 to CARS : PlaceCar(i) : next i
-   gosub update_lights
-   gosub update_sounds
-   gosub draw_hud
+   UpdateLights()
+   UpdateSounds()
+   DrawHud()
    sync
 loop
 
 rem ------------------------------------------------------------------
 rem One 60 Hz step: input, race logic, physics and the camera that follows it
-simulate:
+function Simulate()
    inc ticks
    inc modetick
-   gosub read_input
+   ReadInput()
    select mode
       case 0
          rem Attract: every car is driven by the AI behind the title
          tod = 0.3
          for i = 1 to CARS : DriveCar(i, 1) : next i
-         if anykey() = 1 then mode = 1 : gosub new_race
+         if anykey() = 1 then mode = 1 : NewRace()
       endcase
       case 1
          rem Countdown: the cars wait on the grid while the gantry lights come on
@@ -183,17 +186,17 @@ simulate:
       case 3
          inc racetick
          for i = 1 to CARS : DriveCar(i, 1) : next i
-         if spacekey() = 1 and modetick > 60 then mode = 1 : gosub new_race
+         if spacekey() = 1 and modetick > 60 then mode = 1 : NewRace()
       endcase
    endselect
-   if mode <> 1 then gosub collide_cars
-   gosub rank_cars
-   gosub update_camera
-return
+   if mode <> 1 then CollideCars()
+   RankCars()
+   UpdateCamera()
+endfunction
 
 rem ------------------------------------------------------------------
 rem The circuit: the same Catmull-Rom spline the Blender script modelled
-build_circuit:
+function BuildCircuit()
    restore circuit_data
    for i = 0 to CONTROLS - 1 : read cx#(i), cz#(i) : next i
    for v = 1 to 5 : r = make vector3(v) : next v
@@ -246,10 +249,10 @@ build_circuit:
       lampx#(j) = px#(k) + rx#(k) * side * LAMP_REACH
       lampz#(j) = pz#(k) + rz#(k) * side * LAMP_REACH
    next j
-return
+endfunction
 
 rem ------------------------------------------------------------------
-build_world:
+function BuildWorld()
    load image "textures/detail.jpg", 3
    load image "textures/sea.jpg", 4
    load image "textures/gloss.jpg", 5
@@ -275,7 +278,7 @@ build_world:
    set object light OBJ_SKY, 0
    set object fog OBJ_SKY, 0
    disable object zwrite OBJ_SKY
-   skytod# = -1.0
+   skytod = -1.0
 
    rem The island, with a tiled detail map on a second UV set written from the vertex positions
    load object "models/ground.x", OBJ_GROUND
@@ -430,10 +433,10 @@ build_world:
    set particle life 2, 35
    set particle emissions 2, 0
    ghost particles on 2, 1
-return
+endfunction
 
 rem ------------------------------------------------------------------
-build_cars:
+function BuildCars()
    load mesh "models/car_shadow.x", 1
    restore car_data
    for i = 1 to CARS
@@ -451,10 +454,10 @@ build_cars:
       set object light OBJ_CARLAMPS + i - 1, 0
    next i
    cars(1).ai = 0
-return
+endfunction
 
 rem The minimap is drawn once into an image, then pasted every frame
-build_minimap:
+function BuildMinimap()
    minx# = 999999999.0 : maxx# = -999999999.0 : minz# = 999999999.0 : maxz# = -999999999.0
    for k = 0 to SAMPLES - 1
       if px#(k) < minx# then minx# = px#(k)
@@ -482,9 +485,9 @@ build_minimap:
    get image 30, 0, 0, 200, 200
    set current bitmap 0
    delete bitmap 1
-return
+endfunction
 
-load_sounds:
+function LoadSounds()
    load sound "sounds/motor.wav", 1
    load sound "sounds/screech.wav", 2
    load sound "sounds/surf.wav", 3
@@ -497,11 +500,11 @@ load_sounds:
    loop sound 1 : loop sound 2 : loop sound 3
    set sound volume 2, 0
    set sound volume 3, 70
-return
+endfunction
 
 rem ------------------------------------------------------------------
 rem Grid: two columns behind the line; the player starts last
-new_race:
+function NewRace()
    for i = 1 to CARS
       g = CARS - i
       k = Wrap(0 - 3 - g * 3)
@@ -518,9 +521,9 @@ new_race:
    modetick = 0 : racetick = 0
    camyaw = cars(1).yaw : camx = cars(1).x : camz = cars(1).z : camy = 5
    for l = 0 to 4 : color object OBJ_STARTLAMP + l, rgb(25, 20, 20) : next l
-return
+endfunction
 
-read_input:
+function ReadInput()
    throttle = 0 : steering = 0 : handbrake = 0
    if upkey() = 1 or keystate(17) = 1 then throttle = 1
    if downkey() = 1 or keystate(31) = 1 then throttle = -1
@@ -533,10 +536,10 @@ read_input:
    else
       ckey = 0
    endif
-return
+endfunction
 
 rem Cars push each other apart and swap part of their closing speed
-collide_cars:
+function CollideCars()
    for i = 1 to CARS - 1
       for j = i + 1 to CARS
          dx# = cars(j).x - cars(i).x : dz# = cars(j).z - cars(i).z
@@ -555,10 +558,10 @@ collide_cars:
          endif
       next j
    next i
-return
+endfunction
 
 rem Places: finished cars by time, the others by distance run
-rank_cars:
+function RankCars()
    for i = 1 to CARS
       p = 1
       for j = 1 to CARS
@@ -574,11 +577,11 @@ rank_cars:
       next j
       cars(i).place = p
    next i
-return
+endfunction
 
 rem ------------------------------------------------------------------
 rem Camera: chase or bonnet while racing; the title screen cuts between shots
-update_camera:
+function UpdateCamera()
    if mode = 0
       focus = 1
       for i = 1 to CARS
@@ -627,11 +630,11 @@ update_camera:
    endselect
    if shot <> 0 then camx = camera position x() : camz = camera position z() : camy = 2.5 : camyaw = yaw#
    position object OBJ_SKY, camera position x(), -60, camera position z()
-return
+endfunction
 
 rem ------------------------------------------------------------------
 rem Time of day: the sun sinks, the sky domes cross-fade, lamps come up
-update_lights:
+function UpdateLights()
    elevation# = 13.0 - tod * 10.0
    sunx = cos(elevation#) * cos(SUN_AZIMUTH) : suny = sin(elevation#) : sunz = cos(elevation#) * sin(SUN_AZIMUTH)
    set directional light 0, 0 - sunx, 0 - suny, 0 - sunz
@@ -641,7 +644,7 @@ update_lights:
    fog color rgb(fogr, fogg, fogb)
    fog distance 120, 820 - tod * 280
    color backdrop rgb(fogr, fogg, fogb)
-   if abs(tod - skytod#) > 0.01 then gosub tint_sky
+   if abs(tod - skytod) > 0.01 then TintSky()
    set shadow position -1, camera position x() + sunx * 900, suny * 900, camera position z() + sunz * 900
    scroll limb texture OBJ_SEA, 0, 0.0004, 0.0002
    scroll object texture OBJ_SEA, 1, 0.0007, 0.00028
@@ -683,11 +686,11 @@ update_lights:
          color light LIGHT_POOL + f, 255 * lamp#, 185 * lamp#, 110 * lamp#
       endif
    next f
-return
+endfunction
 
 rem The horizon keeps a red glow while the upper sky sinks to night blue
-tint_sky:
-   skytod# = tod
+function TintSky()
+   skytod = tod
    lock vertexdata for limb OBJ_SKY, 0
    for v = 0 to get vertexdata vertex count() - 1
       up# = get vertexdata position y(v)
@@ -708,9 +711,9 @@ tint_sky:
    for i = 1 to CARS
       set object specular cars(i).obj, rgb(81 * fade#, 78 * fade#, 74 * fade#)
    next i
-return
+endfunction
 
-update_sounds:
+function UpdateSounds()
    f# = abs(cars(1).forward)
    set sound speed 1, 9000 + f# * 380
    set sound volume 1, 70 + Smaller(f#, 30.0)
@@ -724,10 +727,10 @@ update_sounds:
       position sound 10 + i, cars(i).x, 1, cars(i).z
       set sound speed 10 + i, 9000 + abs(cars(i).forward) * 380
    next i
-return
+endfunction
 
 rem ------------------------------------------------------------------
-draw_hud:
+function DrawHud()
    w = screen width() : h = screen height()
    set text font "arial" : set text to bold : set text transparent
    paste image 30, w - 215, 10, 1
@@ -755,7 +758,7 @@ draw_hud:
          next l
          set text size 48
          Shadowed(w / 2, h / 2 - 120, "GET READY", rgb(255, 120, 80), 1)
-         gosub draw_race_hud
+         DrawRaceHud(w, h)
       endcase
       case 2
          if racetick = 1
@@ -765,15 +768,15 @@ draw_hud:
             set text size 96
             Shadowed(w / 2, h / 2 - 140, "GO!", rgb(80, 255, 110), 1)
          endif
-         gosub draw_race_hud
+         DrawRaceHud(w, h)
       endcase
       case 3
-         gosub draw_results
+         DrawResults(w, h)
       endcase
    endselect
-return
+endfunction
 
-draw_race_hud:
+function DrawRaceHud(w, h)
    set text size 40
    Shadowed(30, 20, "POS " + str$(cars(1).place) + "/" + str$(CARS), rgb(255, 255, 255), 0)
    lap = Smaller(cars(1).run / SAMPLES + 1, LAPS)
@@ -791,9 +794,9 @@ draw_race_hud:
    bar = int(abs(cars(1).forward) / TOP_SPEED * 260)
    ink rgb(30, 25, 35), 0 : box w - 330, h - 40, w - 60, h - 30
    ink rgb(255, 140, 40), 0 : box w - 330, h - 40, w - 330 + bar, h - 30
-return
+endfunction
 
-draw_results:
+function DrawResults(w, h)
    set text size 56
    Shadowed(w / 2, 90, "RESULTS", rgb(255, 190, 110), 1)
    set text size 28
@@ -810,7 +813,7 @@ draw_results:
    set text size 22
    if cars(1).best > 0 then Shadowed(w / 2, 420, "Best lap " + Clock$(cars(1).best), rgb(240, 235, 225), 1)
    Shadowed(w / 2, h - 100, "SPACE to race again    ESC to quit", rgb(255, 255, 255), 1)
-return
+endfunction
 
 rem ==================================================================
 rem Driving: the same physics for everyone; the AI only chooses the inputs
