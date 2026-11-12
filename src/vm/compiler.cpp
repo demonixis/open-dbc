@@ -1204,6 +1204,8 @@ namespace dbc::vm
                     return BinaryOperation::BitOr;
                 if (Text == "~~" || Text == "XOR")
                     return BinaryOperation::BitXor;
+                if (Text == "..")
+                    return BinaryOperation::BitNotLeft;
                 assert(false && "Unknown bound binary operator");
                 return BinaryOperation::Add;
             }

@@ -317,6 +317,38 @@ TEST_CASE("Arrays and UDT assignments preserve value semantics")
     CHECK(Session.Global("answer")->AsInteger() == 6);
 }
 
+TEST_CASE("DBPro NOT complements a value, tests a condition for zero and '..' complements its left side")
+{
+    const auto Module = Compile("a = 5 : b = 11 : x = 3\n"
+                                "left_complement = a .. b\n"
+                                "value_not = not 1\n"
+                                "if not 1 then not_one = 1 else not_one = 2\n"
+                                "if not 0 then not_zero = 1 else not_zero = 2\n"
+                                "if not x = 2 then not_compare = 1 else not_compare = 2\n"
+                                "if not x = 3 and 1 then not_and = 1 else not_and = 2\n"
+                                "symbol_rank = 6 && 3 = 3\n"
+                                "repeat\n"
+                                "  n = n + 1\n"
+                                "until not n < 3\n"
+                                "while not m = 5\n"
+                                "  m = m + 1\n"
+                                "endwhile\n",
+                                dbc::language::LanguageProfile::DbPro);
+    TestHost Host;
+    dbc::vm::ExecutionSession Session;
+    REQUIRE(Session.Prepare(Module, Host));
+    RunToCompletion(Session);
+    CHECK(Session.Global("left_complement")->AsInteger() == -6);
+    CHECK(Session.Global("value_not")->AsInteger() == -2);
+    CHECK(Session.Global("not_one")->AsInteger() == 2);
+    CHECK(Session.Global("not_zero")->AsInteger() == 1);
+    CHECK(Session.Global("not_compare")->AsInteger() == 1);
+    CHECK(Session.Global("not_and")->AsInteger() == 2);
+    CHECK(Session.Global("symbol_rank")->AsInteger() == 0);
+    CHECK(Session.Global("n")->AsInteger() == 3);
+    CHECK(Session.Global("m")->AsInteger() == 5);
+}
+
 TEST_CASE("DBPro dynamic array collections use verified VM state")
 {
     const auto Module = Compile("type Item\n"

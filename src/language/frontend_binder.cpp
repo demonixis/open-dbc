@@ -331,7 +331,7 @@ namespace dbc::language::detail
                         if (Logical)
                             return {TypeKind::Integer, {}};
                         if (Value.Text == "XOR" || Value.Text == "<<" || Value.Text == ">>" || Value.Text == "&&" ||
-                            Value.Text == "||" || Value.Text == "~~")
+                            Value.Text == "||" || Value.Text == "~~" || Value.Text == "..")
                             return {TypeKind::Integer, {}};
                         if (Left.Kind == TypeKind::String || Right.Kind == TypeKind::String)
                             return Value.Text == "+" && Left.Kind == Right.Kind ? Type{TypeKind::String, {}}
@@ -940,7 +940,7 @@ namespace dbc::language::detail
                     return Value.ResolvedType = {TypeKind::Boolean, {}};
                 }
                 if (Value.Text == "XOR" || Value.Text == "<<" || Value.Text == ">>" || Value.Text == "&&" ||
-                    Value.Text == "||" || Value.Text == "~~")
+                    Value.Text == "||" || Value.Text == "~~" || Value.Text == "..")
                 {
                     const auto IsIntegerLike = [](TypeKind Kind)
                     { return Kind == TypeKind::Integer || Kind == TypeKind::Boolean; };

@@ -73,6 +73,8 @@ namespace dbc::vm
         BitAnd,
         BitOr,
         BitXor,
+        // DBPro `a .. b`: the complement of a; b is evaluated and unused.
+        BitNotLeft,
     };
 
     enum class SlotScope : std::uint8_t

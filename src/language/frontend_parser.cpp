@@ -225,13 +225,16 @@ namespace dbc::language::detail
                         return MakeError(Span);
                     }
                     const Token Operator = Advance();
-                    std::unique_ptr<Expression> Operand = ParseUnary();
+                    std::string Text = Canonical(Lexeme(Source_, Operator.Span));
+                    // DBPro NOT complements the bits of everything up to the next AND, OR or XOR:
+                    // `NOT b = 2` is `NOT (b = 2)`. The original ranks it below OR but then drops whatever
+                    // precedes it, so the usual BASIC rank is kept.
+                    const bool ProfessionalNot = Text == "NOT" && Source_.Profile == LanguageProfile::DbPro;
+                    std::unique_ptr<Expression> Operand = ProfessionalNot ? ParseBinary(KAndPrecedence + 1) : ParseUnary();
                     auto Result = std::make_unique<Expression>();
                     Result->Kind = ExpressionKind::Unary;
                     Result->Span = Merge(Operator.Span, Operand->Span);
-                    Result->Text = Canonical(Lexeme(Source_, Operator.Span));
-                    if (Result->Text == "NOT" && Source_.Profile == LanguageProfile::DbPro)
-                        Result->Text = "BITNOT";
+                    Result->Text = ProfessionalNot ? "BITNOT" : std::move(Text);
                     Result->Children.push_back(std::move(Operand));
                     return Result;
                 }
@@ -399,6 +402,8 @@ namespace dbc::language::detail
                 return Result;
             }
 
+            static constexpr int KAndPrecedence = 30;
+
             struct OperatorInfo
             {
                 int Precedence = 0;
@@ -426,16 +431,18 @@ namespace dbc::language::detail
                         return OperatorInfo{45, false, "<<"};
                     case TokenKind::ShiftRight:
                         return OperatorInfo{45, false, ">>"};
+                    // DBPro ranks its symbol operators below the comparisons, each on its own level:
+                    // `a && b = c` is `a && (b = c)`.
                     case TokenKind::BitAnd:
-                        return OperatorInfo{44, false, "&&"};
-                    case TokenKind::BitXor:
-                        return OperatorInfo{43, false, "~~"};
+                        return OperatorInfo{38, false, "&&"};
                     case TokenKind::BitOr:
-                        return OperatorInfo{42, false, "||"};
-                    case TokenKind::UnsupportedOperator:
-                        return OperatorInfo{44, false, ".."};
+                        return OperatorInfo{37, false, "||"};
+                    case TokenKind::BitXor:
+                        return OperatorInfo{36, false, "~~"};
+                    case TokenKind::BitNot:
+                        return OperatorInfo{35, false, ".."};
                     case TokenKind::LogicalAnd:
-                        return OperatorInfo{30, false, "AND"};
+                        return OperatorInfo{KAndPrecedence, false, "AND"};
                     case TokenKind::Equal:
                         return OperatorInfo{40, false, "="};
                     case TokenKind::NotEqual:
@@ -457,7 +464,7 @@ namespace dbc::language::detail
                     if (Word == "MOD")
                         return OperatorInfo{60, false, "MOD"};
                     if (Word == "AND")
-                        return OperatorInfo{30, false, Source_.Profile == LanguageProfile::DbPro ? "&&" : "AND"};
+                        return OperatorInfo{KAndPrecedence, false, Source_.Profile == LanguageProfile::DbPro ? "&&" : "AND"};
                     if (Word == "OR")
                         return OperatorInfo{20, false, Source_.Profile == LanguageProfile::DbPro ? "||" : "OR"};
                     if (Word == "XOR" && Source_.Profile == LanguageProfile::DbPro)
@@ -1008,7 +1015,7 @@ namespace dbc::language::detail
                 Statement Result;
                 Result.Kind = StatementKind::While;
                 Result.Span = Header.Span;
-                Result.Expressions.push_back(ParseExpression(Header.Tokens, 1, Header.Tokens.size()));
+                Result.Expressions.push_back(ParseCondition(Header.Tokens, 1, Header.Tokens.size()));
                 Result.Body = ParseBlock({"ENDWHILE"});
                 CloseBlock(Result, "ENDWHILE", "WHILE has no matching ENDWHILE");
                 return Result;
@@ -1028,7 +1035,7 @@ namespace dbc::language::detail
                 else
                 {
                     Segment End = Take();
-                    Result.Expressions.push_back(ParseExpression(End.Tokens, 1, End.Tokens.size()));
+                    Result.Expressions.push_back(ParseCondition(End.Tokens, 1, End.Tokens.size()));
                     Result.Span = Merge(Result.Span, End.Span);
                 }
                 return Result;
@@ -1053,7 +1060,7 @@ namespace dbc::language::detail
                 Result.Kind = StatementKind::If;
                 Result.Span = Header.Span;
                 Result.Expressions.push_back(
-                    ParseExpression(Header.Tokens, 1, Then == Npos ? Header.Tokens.size() : Then));
+                    ParseCondition(Header.Tokens, 1, Then == Npos ? Header.Tokens.size() : Then));
                 if (Then != Npos && Then + 1 < Header.Tokens.size())
                 {
                     const std::size_t Else = FindTopLevelWord(Header.Tokens, "ELSE", Then + 1);
@@ -1571,7 +1578,7 @@ namespace dbc::language::detail
                             Statement Nested;
                             Nested.Kind = StatementKind::If;
                             Nested.Span = Value.Span;
-                            Nested.Expressions.push_back(ParseExpression(Value.Tokens, 1, Then));
+                            Nested.Expressions.push_back(ParseCondition(Value.Tokens, 1, Then));
                             Nested.Body = ParseInlineBlock(Value.Tokens, Then + 1, Value.Tokens.size());
                             Result.push_back(std::move(Nested));
                         }
@@ -1631,6 +1638,17 @@ namespace dbc::language::detail
                     Result.push_back(ParseStatement());
                 std::swap(Segments_, Parts);
                 Position_ = Position;
+                return Result;
+            }
+
+            // A DBPro NOT that is the whole condition of IF, WHILE or UNTIL tests for zero: `IF NOT 1` is
+            // false, though `NOT 1` is -2 as a value.
+            std::unique_ptr<Expression> ParseCondition(const std::vector<Token>& Tokens, std::size_t Begin,
+                                                       std::size_t End)
+            {
+                std::unique_ptr<Expression> Result = ParseExpression(Tokens, Begin, End);
+                if (Result->Kind == ExpressionKind::Unary && Result->Text == "BITNOT")
+                    Result->Text = "NOT";
                 return Result;
             }
 

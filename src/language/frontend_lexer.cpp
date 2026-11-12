@@ -316,7 +316,6 @@ namespace dbc::language::detail
                 const SourcePosition Begin = Position();
                 const char Character = Advance();
                 TokenKind Kind = TokenKind::Invalid;
-                bool Diagnosed = false;
                 switch (Character)
                 {
                     case ':':
@@ -386,10 +385,8 @@ namespace dbc::language::detail
                         if (Peek() == '.')
                         {
                             Advance();
-                            AddError(Diagnostics_, "DBC1004", "The undocumented '..' operator is not supported",
-                                     {Begin, Position()});
-                            Kind = TokenKind::UnsupportedOperator;
-                            Diagnosed = true;
+                            Kind = TokenKind::BitNot;
+                            RequireProfessional(Begin, "Bitwise operators require the DBPro profile");
                         }
                         else
                         {
@@ -474,7 +471,7 @@ namespace dbc::language::detail
                 }
 
                 Push(Kind, Begin);
-                if (Kind == TokenKind::Invalid && !Diagnosed)
+                if (Kind == TokenKind::Invalid)
                 {
                     AddError(Diagnostics_, "DBC1006", "Unexpected character in source", {Begin, Position()});
                 }

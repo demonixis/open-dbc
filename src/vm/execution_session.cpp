@@ -214,7 +214,8 @@ namespace dbc::vm
             const bool BitOperation = Operation == BinaryOperation::ShiftLeft ||
                                       Operation == BinaryOperation::ShiftRight ||
                                       Operation == BinaryOperation::BitAnd || Operation == BinaryOperation::BitOr ||
-                                      Operation == BinaryOperation::BitXor;
+                                      Operation == BinaryOperation::BitXor ||
+                                      Operation == BinaryOperation::BitNotLeft;
             if ((NumericResult(ResultType) && Operation != BinaryOperation::Power) || BitOperation)
             {
                 std::int64_t A = 0, B = 0, Number = 0;
@@ -281,6 +282,9 @@ namespace dbc::vm
                         break;
                     case BinaryOperation::BitXor:
                         Number = A ^ B;
+                        break;
+                    case BinaryOperation::BitNotLeft:
+                        Number = ~A;
                         break;
                     default:
                         return RuntimeError(Error, "Unknown binary operation");

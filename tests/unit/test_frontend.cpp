@@ -559,6 +559,13 @@ TEST_CASE("Parser builds structured control-flow AST")
     CHECK(If.ElseBody.size() == 1);
 }
 
+TEST_CASE("The '..' operator belongs to the DBPro profile")
+{
+    const std::string Text = "a = 5\nr = a .. 3\n";
+    CHECK_FALSE(dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::DbPro, "dots.dba")).HasErrors());
+    CHECK(HasCode(dbc::language::Compile(Source(Text, dbc::language::LanguageProfile::Dbc, "dots.dba")), "DBC1007"));
+}
+
 TEST_CASE("ELSEIF is not a DBPro keyword")
 {
     const std::string Text = "if 0\n"
@@ -1182,15 +1189,8 @@ TEST_CASE("The typed parser accepts every tracked BASIC example")
                 Details += "\n" + dbc::language::FormatDiagnostic(*Document, Diagnostic) + " [" +
                            std::string(dbc::language::Lexeme(*Document, Diagnostic.Span)) + "]";
             }
-            const bool IsAmbiguousDbProOperator = Entry.path().filename() == "core1.dba";
             const bool UsesDbProPointerDereference = Entry.path().filename() == "basic2d1.dba";
-            if (IsAmbiguousDbProOperator)
-            {
-                INFO(Details);
-                REQUIRE(Program.Diagnostics.size() == 1);
-                CHECK(Program.Diagnostics.front().Code == "DBC1004");
-            }
-            else if (UsesDbProPointerDereference)
+            if (UsesDbProPointerDereference)
             {
                 // `col = *workptr` is the DBPro pointer dereference, not yet in the grammar.
                 INFO(Details);

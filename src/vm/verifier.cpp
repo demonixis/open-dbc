@@ -409,7 +409,7 @@ namespace dbc::vm
                         }
                         return ValidateType(Value.ResultType, false, Prefix + " result", Value.Span);
                     case OpCode::Binary:
-                        if (Value.A > static_cast<std::uint32_t>(BinaryOperation::BitXor))
+                        if (Value.A > static_cast<std::uint32_t>(BinaryOperation::BitNotLeft))
                         {
                             Error("DBC4002", Prefix + " has invalid binary operation " + std::to_string(Value.A),
                                   Value.Span);

@@ -93,7 +93,7 @@ namespace dbc::language
         BitOr,
         BitXor,
         LogicalAnd,
-        UnsupportedOperator,
+        BitNot,
         End,
         Invalid,
     };

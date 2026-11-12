@@ -72,7 +72,7 @@ dbpro/tutorials/basic3d/basic3d8.dba|dbpro|verified|-
 dbpro/tutorials/basic3d/basic3d9.dba|dbpro|verified|-
 dbpro/tutorials/bitmap/bitmap1.dba|dbpro|verified|-
 dbpro/tutorials/camera/camera1.dba|dbpro|verified|-
-dbpro/tutorials/core/core1.dba|dbpro|lex|DBC1004
+dbpro/tutorials/core/core1.dba|dbpro|verified|-
 dbpro/tutorials/core/extra.dba|dbpro|verified|-
 dbpro/tutorials/display/display1.dba|dbpro|bind|DBC2043
 dbpro/tutorials/file/file1.dba|dbpro|verified|-
