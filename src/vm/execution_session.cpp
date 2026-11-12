@@ -439,6 +439,12 @@ namespace dbc::vm
             return false;
         }
 
+        HasSizedFields_ = std::any_of(Bytecode->Types.begin(), Bytecode->Types.end(), [](const TypeLayout& Layout) {
+            return std::any_of(Layout.Fields.begin(), Layout.Fields.end(), [](const TypeField& Field) {
+                return Field.ValueType.Width != language::IntegerWidth::Native;
+            });
+        });
+
         const VerificationResult Verification = Verify(*Bytecode);
         if (!Verification.Success())
         {
@@ -785,7 +791,23 @@ namespace dbc::vm
                 const auto Iterator = Fields.find(Canonical(Bytecode_->Strings[Instruction.A]));
                 if (Iterator == Fields.end())
                     return Reject("Unknown user-defined type field");
-                if (!Field.ConvertTo(Iterator->second.Type(), Iterator->second, Error))
+                language::Type FieldType = Iterator->second.Type();
+                if (HasSizedFields_)
+                {
+                    // A BYTE, WORD or DWORD field wraps like a variable of that type.
+                    if (const TypeLayout* Layout = FindType(*Bytecode_, Found->TypeName))
+                    {
+                        for (const TypeField& Declared : Layout->Fields)
+                        {
+                            if (Canonical(Declared.Name) == Iterator->first)
+                            {
+                                FieldType.Width = Declared.ValueType.Width;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!Field.ConvertTo(FieldType, Iterator->second, Error))
                     return Reject(Error);
                 Current.Stack.push_back(std::move(Record));
                 Advance();

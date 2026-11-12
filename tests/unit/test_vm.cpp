@@ -426,6 +426,38 @@ TEST_CASE("DBPro READ stores an empty value on a type mismatch and past the end 
     CHECK(Session.Global("past")->AsInteger() == 0);
 }
 
+TEST_CASE("DBPro BYTE, WORD and DWORD wrap to their range when stored")
+{
+    const auto Module = Compile("type Packed\n"
+                                "  small as byte\n"
+                                "endtype\n"
+                                "b as byte : w as word : d as dword\n"
+                                "b = 300 : w = 70000 : d = -1\n"
+                                "top as byte\n"
+                                "top = 255 : inc top\n"
+                                "dim cells(2) as word\n"
+                                "cells(1) = -1\n"
+                                "cell = cells(1)\n"
+                                "record as Packed\n"
+                                "record.small = 257\n"
+                                "field = record.small\n"
+                                "low = Low(513)\n"
+                                "function Low(value as byte)\n"
+                                "endfunction value\n",
+                                dbc::language::LanguageProfile::DbPro);
+    TestHost Host;
+    dbc::vm::ExecutionSession Session;
+    REQUIRE(Session.Prepare(Module, Host));
+    RunToCompletion(Session);
+    CHECK(Session.Global("b")->AsInteger() == 44);
+    CHECK(Session.Global("w")->AsInteger() == 4464);
+    CHECK(Session.Global("d")->AsInteger() == 4294967295);
+    CHECK(Session.Global("top")->AsInteger() == 0);
+    CHECK(Session.Global("cell")->AsInteger() == 65535);
+    CHECK(Session.Global("field")->AsInteger() == 1);
+    CHECK(Session.Global("low")->AsInteger() == 1);
+}
+
 TEST_CASE("DBPro dynamic array collections use verified VM state")
 {
     const auto Module = Compile("type Item\n"

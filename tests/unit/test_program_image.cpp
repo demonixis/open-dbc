@@ -138,7 +138,7 @@ TEST_CASE("program images reject foreign runtimes, other formats and corruption"
     Modified[0] = 'X';
     CHECK(interpreter::ReadProgramImage(Modified, "test-runtime").Error == "not an OpenDBC program image");
     Modified = Image;
-    Modified[8] = 2;
+    Modified[8] = 0xFF;
     CHECK(interpreter::ReadProgramImage(Modified, "test-runtime").Error.find("unsupported program image format") == 0);
     Modified = Image;
     Modified.push_back(0);

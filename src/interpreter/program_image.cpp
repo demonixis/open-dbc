@@ -14,7 +14,7 @@ namespace dbc::interpreter
     {
         // The first byte is not ASCII and the CR/LF/EOF bytes reveal text-mode transfers, as in PNG.
         constexpr std::uint8_t KMagic[8] = {0x89, 'O', 'B', 'C', '\r', '\n', 0x1a, '\n'};
-        constexpr std::uint32_t KFormatVersion = 1;
+        constexpr std::uint32_t KFormatVersion = 2;
         constexpr std::uint32_t KNoPath = std::numeric_limits<std::uint32_t>::max();
 
         std::string PathText(const std::filesystem::path& Path)
@@ -63,6 +63,7 @@ namespace dbc::interpreter
             void Type(const language::Type& Value)
             {
                 U8(static_cast<std::uint8_t>(Value.Kind));
+                U8(static_cast<std::uint8_t>(Value.Width));
                 String(Value.Name);
             }
 
@@ -190,6 +191,11 @@ namespace dbc::interpreter
                 if (!U8(Kind) || Kind > static_cast<std::uint8_t>(language::TypeKind::UserDefined))
                     return false;
                 Value.Kind = static_cast<language::TypeKind>(Kind);
+                std::uint8_t Width = 0;
+                if (!U8(Width) || Width > static_cast<std::uint8_t>(language::IntegerWidth::DWord) ||
+                    (Width != 0 && Value.Kind != language::TypeKind::Integer))
+                    return false;
+                Value.Width = static_cast<language::IntegerWidth>(Width);
                 return String(Value.Name);
             }
 

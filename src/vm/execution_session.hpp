@@ -149,6 +149,8 @@ namespace dbc::vm
         std::vector<Value> Globals_{};
         std::vector<Frame> Frames_{};
         std::size_t DataCursor_ = 0;
+        // Whether any user type declares a BYTE, WORD or DWORD field, so field stores look the layout up.
+        bool HasSizedFields_ = false;
         std::atomic_bool StopRequested_ = false;
         std::uint64_t NextInvocationId_ = 1;
         std::optional<std::uint64_t> ActiveInvocation_{};

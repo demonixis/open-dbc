@@ -54,7 +54,13 @@ namespace dbc::language::detail
             {
                 return {TypeKind::Boolean, {}};
             }
-            if (Name == "BYTE" || Name == "WORD" || Name == "DWORD" || Name == "INTEGER" || Name == "DOUBLE INTEGER")
+            if (Name == "BYTE")
+                return {TypeKind::Integer, {}, IntegerWidth::Byte};
+            if (Name == "WORD")
+                return {TypeKind::Integer, {}, IntegerWidth::Word};
+            if (Name == "DWORD")
+                return {TypeKind::Integer, {}, IntegerWidth::DWord};
+            if (Name == "INTEGER" || Name == "DOUBLE INTEGER")
             {
                 return {TypeKind::Integer, {}};
             }

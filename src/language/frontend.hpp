@@ -116,10 +116,21 @@ namespace dbc::language
         UserDefined,
     };
 
+    // The storage of a DBPro BYTE, WORD or DWORD: a value wraps to it when it is stored.
+    enum class IntegerWidth : std::uint8_t
+    {
+        Native,
+        Byte,
+        Word,
+        DWord,
+    };
+
     struct Type
     {
         TypeKind Kind = TypeKind::Unresolved;
         std::string Name{};
+        // Left out of the comparison: every integer width converts to every other.
+        IntegerWidth Width = IntegerWidth::Native;
 
         bool IsNumeric() const;
         bool operator==(const Type& Other) const;

@@ -144,6 +144,13 @@ namespace dbc::vm
             std::int64_t Number = 0;
             if (!AsInteger(Number, Error))
                 return false;
+            // BYTE, WORD and DWORD keep the low bits, unsigned.
+            if (Target.Width == language::IntegerWidth::Byte)
+                Number &= 0xFF;
+            else if (Target.Width == language::IntegerWidth::Word)
+                Number &= 0xFFFF;
+            else if (Target.Width == language::IntegerWidth::DWord)
+                Number &= 0xFFFFFFFF;
             Result = Integer(Number);
             return true;
         }
