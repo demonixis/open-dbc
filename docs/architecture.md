@@ -90,16 +90,19 @@ Each callable has a per-profile state:
 | Compatibility stub | Runs with a neutral result (no-op, `0`, `""`). Every Classic form not implemented; permanent only for FTP, CD audio, the Windows folder and obsolete hardware switches. In `DbPro`, only the Enhancement Pack's EAX forms (`src/language/dbpro_compatibility_stubs.inc`), all permanent |
 | Unsupported | Rejected at bind time with `DBC2043` |
 
-`DbPro` lists every core form the free (MIT) DBPro release declares, in its editor keyword
+`DbPro` lists the core forms the free (MIT) DBPro release declares, in its editor keyword
 files and in the string tables of its SDK (`scripts/data/dbpro_*_evidence.tsv`). The
-catalogue audit rejects a `DbPro` form with no such source unless it is OpenDBC's own.
+catalogue audit rejects a `DbPro` form with no such source unless it is OpenDBC's own, and
+one that no help page, official example or implemented plugin names. A form that only a
+string table names is left out without a diagnostic; the quaternion and vector forms are
+the exception.
 
-`DbPro` also lists the forms of three official plugins: DarkPHYSICS, the Enhancement Pack
-and 3D Cloth & Particles. Dark Dynamix, a second PhysX wrapper, DarkLIGHTS, whose lightmaps
+`DbPro` also lists the forms of two official plugins: the Enhancement Pack and what the
+help documents of DarkPHYSICS. 3D Cloth & Particles is left out whole. Dark Dynamix, a second PhysX wrapper, DarkLIGHTS, whose lightmaps
 a GI system of OpenDBC's will replace, and Advanced Terrain, a commercial plugin whose source
 was never released, are left out: their forms stop at bind time with `DBC2049`, which names
 the plugin and what to use instead, if anything. The evidence generator checks that every
-official plugin form is catalogued or named by `DBC2049`. Physics has one abstraction,
+form of those three is named by `DBC2049`. Physics has one abstraction,
 Jolt, under the ODE and DarkPHYSICS forms.
 
 Classic takes no additions. `DbPro` also takes OpenDBC's own forms, with multi-word names,

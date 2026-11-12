@@ -47,8 +47,8 @@ def BuildHelp(DbProRoot: Path) -> dict[str, tuple[set[str], list[str]]]:
     for Page in sorted(Commands.rglob("*.htm")):
         Relative = Page.relative_to(Commands)
         TopLevel = len(Relative.parts) == 1
-        # A top-level page named after a folder, and PHYSX.htm, list a family instead of a command.
-        if TopLevel and (Page.stem.lower() in Families or Page.stem.upper() == "PHYSX"):
+        # A top-level page named after a folder lists a family instead of a command.
+        if TopLevel and Page.stem.lower() in Families:
             continue
         Name = PageName(Page.stem)
         Family = "-" if TopLevel else Relative.parts[0].lower()

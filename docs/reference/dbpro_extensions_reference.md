@@ -3,7 +3,7 @@
 This file is generated from `src/language/language_catalogue.inc` by
 `scripts/generate_language_references.py`. It describes OpenDBC support; edit the catalogue, not this file.
 The ODE commands are always available in the `DbPro` profile and run on the pinned Jolt backend; remaining forms retain explicit diagnostics.
-DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles forms are not in the catalogue: they fail to compile with `DBC2049`.
+Dark Dynamix, DarkLIGHTS and Advanced Terrain forms are not in the catalogue: they fail to compile with `DBC2049`.
 
 `.dba` is the source extension for both profiles. The project, detector or `--dialect` selects one
 profile before lexing; includes inherit it and OpenDBC never mixes profiles.

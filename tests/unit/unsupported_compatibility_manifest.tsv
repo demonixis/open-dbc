@@ -224,163 +224,6 @@ dbpro	Command_WriteStringToRegistry	Command	WRITE STRING TO REGISTRY	Target	text
 dbpro	Function_ZbufferAvailable	Function	ZBUFFER AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ZfogAvailable	Function	ZFOG AVAILABLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_GetRegistry	Function	GET REGISTRY	Target	core	dbc-help,dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothAddRagdollForce	Command	ADD RAGDOLL FORCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothAddRagdollImpulse	Command	ADD RAGDOLL IMPULSE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothAddVehicleCollisionPoint	Command	ADD VEHICLE COLLISION POINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothAddVehicleCollisionPoints	Command	ADD VEHICLE COLLISION POINTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothAddVehicleWheelForce	Command	ADD VEHICLE WHEEL FORCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothAddVehicleWheelImpulse	Command	ADD VEHICLE WHEEL IMPULSE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothBindColliderToObject	Command	BIND COLLIDER TO OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothBindEffectorToObject	Command	BIND EFFECTOR TO OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothClampPhysicsFrameRate	Command	CLAMP PHYSICS FRAME RATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothColorEffectorDeleteKey	Command	COLOR EFFECTOR DELETE KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothColorEffectorDeleteKeyAtTime	Command	COLOR EFFECTOR DELETE KEY AT TIME	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothColorEffectorUseOnCollide	Command	COLOR EFFECTOR USE ON COLLIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothDeleteCloth	Command	DELETE CLOTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothDeleteCollider	Command	DELETE COLLIDER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothDeleteEffector	Command	DELETE EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothDeleteEmitter	Command	DELETE EMITTER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothDeleteVehicle	Command	DELETE VEHICLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothDrawRagdollDebugLines	Command	DRAW RAGDOLL DEBUG LINES	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothDrawVehicleDebugLines	Command	DRAW VEHICLE DEBUG LINES	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothEnableCollider	Command	ENABLE COLLIDER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothEnableEffector	Command	ENABLE EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFixClothNearestPoint	Command	FIX CLOTH NEAREST POINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFixClothPoint	Command	FIX CLOTH POINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFixClothPointToObject	Command	FIX CLOTH POINT TO OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFixClothPoints	Command	FIX CLOTH POINTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFixObjectToRagdoll	Command	FIX OBJECT TO RAGDOLL	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFixRagdollPointToObject	Command	FIX RAGDOLL POINT TO OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreeAllClothPoints	Command	FREE ALL CLOTH POINTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreeAllClothPointsOnAllObjects	Command	FREE ALL CLOTH POINTS ON ALL OBJECTS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreeAllClothPointsOnObject	Command	FREE ALL CLOTH POINTS ON OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreeAllRagdollPoints	Command	FREE ALL RAGDOLL POINTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreeClothNearestPoint	Command	FREE CLOTH NEAREST POINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreeClothPoint	Command	FREE CLOTH POINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreeClothPoints	Command	FREE CLOTH POINTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreezeCloth	Command	FREEZE CLOTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreezeEmitter	Command	FREEZE EMITTER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothFreezeRagdoll	Command	FREEZE RAGDOLL	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothGenerateClothFromBitmap	Command	GENERATE CLOTH FROM BITMAP	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothGenerateRectangularCloth	Command	GENERATE RECTANGULAR CLOTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothLoadClothState	Command	LOAD CLOTH STATE	Study	core	dbpro-reference	typed-load-errors
-dbpro	Command_ExtClothMakeBasicEmitter	Command	MAKE BASIC EMITTER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeBoxEmitter	Command	MAKE BOX EMITTER	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeChaosEffector	Command	MAKE CHAOS EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeCloth	Command	MAKE CLOTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeCollisionBox	Command	MAKE COLLISION BOX	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeCollisionDisc	Command	MAKE COLLISION DISC	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeCollisionPlane	Command	MAKE COLLISION PLANE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeCollisionSphere	Command	MAKE COLLISION SPHERE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeCollisionSquare	Command	MAKE COLLISION SQUARE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeColorEffector	Command	MAKE COLOR EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeDampingEffector	Command	MAKE DAMPING EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeDragEffector	Command	MAKE DRAG EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeFlockEffector	Command	MAKE FLOCK EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeForceEffector	Command	MAKE FORCE EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeGravityEffector	Command	MAKE GRAVITY EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakePointEffector	Command	MAKE POINT EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeRagdoll	Command	MAKE RAGDOLL	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeSizeEffector	Command	MAKE SIZE EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeSphericalEmitter	Command	MAKE SPHERICAL EMITTER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeVehicle	Command	MAKE VEHICLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeVortexEffector	Command	MAKE VORTEX EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeWindEffector	Command	MAKE WIND EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothMakeWraproundEffector	Command	MAKE WRAPROUND EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothPhysicsGarbageCollect	Command	PHYSICS GARBAGE COLLECT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothRelaxCloth	Command	RELAX CLOTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothRemoveVehicleBodyObject	Command	REMOVE VEHICLE BODY OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothRemoveVehicleWheelObject	Command	REMOVE VEHICLE WHEEL OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothResetClothUvs	Command	RESET CLOTH UVS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSaveClothState	Command	SAVE CLOTH STATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetChaosEffector	Command	SET CHAOS EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetClothElasticity	Command	SET CLOTH ELASTICITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetClothMass	Command	SET CLOTH MASS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetColliderBounce	Command	SET COLLIDER BOUNCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetColliderColor	Command	SET COLLIDER COLOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetColliderFriction	Command	SET COLLIDER FRICTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetColliderInteraction	Command	SET COLLIDER INTERACTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetColliderInvert	Command	SET COLLIDER INVERT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetColliderKiller	Command	SET COLLIDER KILLER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetColliderResolve	Command	SET COLLIDER RESOLVE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetColliderUseColor	Command	SET COLLIDER USE COLOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetCollisionBox	Command	SET COLLISION BOX	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetCollisionDisc	Command	SET COLLISION DISC	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetCollisionSphere	Command	SET COLLISION SPHERE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetCollisionSquare	Command	SET COLLISION SQUARE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetDampingEffector	Command	SET DAMPING EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetDragEffector	Command	SET DRAG EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEffectorFalloff	Command	SET EFFECTOR FALLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEffectorFalloffHeight	Command	SET EFFECTOR FALLOFF HEIGHT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEffectorFalloffPerParticle	Command	SET EFFECTOR FALLOFF PER PARTICLE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEffectorFalloffRadius	Command	SET EFFECTOR FALLOFF RADIUS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEffectorInteraction	Command	SET EFFECTOR INTERACTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEmitterExplode	Command	SET EMITTER EXPLODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEmitterParticleColor	Command	SET EMITTER PARTICLE COLOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEmitterParticleLife	Command	SET EMITTER PARTICLE LIFE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEmitterParticleMass	Command	SET EMITTER PARTICLE MASS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEmitterParticleSize	Command	SET EMITTER PARTICLE SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEmitterParticleVelocity	Command	SET EMITTER PARTICLE VELOCITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetEmitterRate	Command	SET EMITTER RATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetFlockEffector	Command	SET FLOCK EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetFlockEffectorUseCenter	Command	SET FLOCK EFFECTOR USE CENTER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetForceEffector	Command	SET FORCE EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetGravityEffector	Command	SET GRAVITY EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetObjectAsVehicleBody	Command	SET OBJECT AS VEHICLE BODY	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetObjectAsVehicleWheel	Command	SET OBJECT AS VEHICLE WHEEL	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetParticleZSorting	Command	SET PARTICLE Z SORTING	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPhysicsAutoGarbageCollect	Command	SET PHYSICS AUTO GARBAGE COLLECT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPhysicsFrameRate	Command	SET PHYSICS FRAME RATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPhysicsGarbageCollectInterval	Command	SET PHYSICS GARBAGE COLLECT INTERVAL	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPhysicsMaxIterations	Command	SET PHYSICS MAX ITERATIONS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPhysicsTimerBailout	Command	SET PHYSICS TIMER BAILOUT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPointEffector	Command	SET POINT EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPointEffectorFalloffInverse	Command	SET POINT EFFECTOR FALLOFF INVERSE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPointEffectorFalloffInverseSquare	Command	SET POINT EFFECTOR FALLOFF INVERSE SQUARE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPointEffectorFalloffNone	Command	SET POINT EFFECTOR FALLOFF NONE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPointEffectorKillRadius	Command	SET POINT EFFECTOR KILL RADIUS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetPointEffectorUseKillRadius	Command	SET POINT EFFECTOR USE KILL RADIUS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetRadialEmission	Command	SET RADIAL EMISSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetRagdollObjectOffset	Command	SET RAGDOLL OBJECT OFFSET	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetRagdollScales	Command	SET RAGDOLL SCALES	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetSpawnBox	Command	SET SPAWN BOX	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetSpawnHemisphere	Command	SET SPAWN HEMISPHERE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetSpawnRadius	Command	SET SPAWN RADIUS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVehicleCenterOfGravity	Command	SET VEHICLE CENTER OF GRAVITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVehicleMass	Command	SET VEHICLE MASS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVehicleMomentOfInertia	Command	SET VEHICLE MOMENT OF INERTIA	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVehicleSuspensionLimits	Command	SET VEHICLE SUSPENSION LIMITS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVehicleSuspensionPhysics	Command	SET VEHICLE SUSPENSION PHYSICS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVehicleWheelControls	Command	SET VEHICLE WHEEL CONTROLS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVehicleWheelSize	Command	SET VEHICLE WHEEL SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVehicleWheelSteer	Command	SET VEHICLE WHEEL STEER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetVortexEffector	Command	SET VORTEX EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetWindEffector	Command	SET WIND EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSetWraproundEffector	Command	SET WRAPROUND EFFECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSizeEffectorDeleteKey	Command	SIZE EFFECTOR DELETE KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSizeEffectorDeleteKeyAtTime	Command	SIZE EFFECTOR DELETE KEY AT TIME	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothSizeEffectorUseOnCollide	Command	SIZE EFFECTOR USE ON COLLIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothTransformClothUvs	Command	TRANSFORM CLOTH UVS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothUnbindColliderFromObject	Command	UNBIND COLLIDER FROM OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothUnbindEffectorFromObject	Command	UNBIND EFFECTOR FROM OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothUpdatePhysics	Command	UPDATE PHYSICS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothUseEffectorCylinderFalloff	Command	USE EFFECTOR CYLINDER FALLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtClothUseEffectorSphereFalloff	Command	USE EFFECTOR SPHERE FALLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothAddVehicleSuspension	Function	ADD VEHICLE SUSPENSION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothColorEffectorAddKey	Function	COLOR EFFECTOR ADD KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothColorEffectorGetKeyAlphaValue	Function	COLOR EFFECTOR GET KEY ALPHA VALUE	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothColorEffectorGetKeyBlueValue	Function	COLOR EFFECTOR GET KEY BLUE VALUE	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothColorEffectorGetKeyGreenValue	Function	COLOR EFFECTOR GET KEY GREEN VALUE	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothColorEffectorGetKeyRedValue	Function	COLOR EFFECTOR GET KEY RED VALUE	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothColorEffectorGetKeyTime	Function	COLOR EFFECTOR GET KEY TIME	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothColorEffectorGetNumKeys	Function	COLOR EFFECTOR GET NUM KEYS	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothGetNumberOfClothPoints	Function	GET NUMBER OF CLOTH POINTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothIsColliderEnabled	Function	IS COLLIDER ENABLED	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothIsEffectorEnabled	Function	IS EFFECTOR ENABLED	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothSizeEffectorAddKey	Function	SIZE EFFECTOR ADD KEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothSizeEffectorGetKeyTime	Function	SIZE EFFECTOR GET KEY TIME	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothSizeEffectorGetKeyValue	Function	SIZE EFFECTOR GET KEY VALUE	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ExtClothSizeEffectorGetNumKeys	Function	SIZE EFFECTOR GET NUM KEYS	Target	input	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtOdeCreateRagdollFromBoneModel	Command	ODE CREATE RAGDOLL FROM BONE MODEL	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateStaticTerrain	Command	ODE CREATE STATIC TERRAIN	Target	physics	ode-extension	jolt-adapter-and-oracle
 dbpro	Command_ExtOdeCreateStaticUniverse	Command	ODE CREATE STATIC UNIVERSE	Target	physics	ode-extension	jolt-adapter-and-oracle
@@ -470,13 +313,9 @@ dbpro	Command_ExtPhysicsEnableDebug	Command	PHY ENABLE DEBUG	Target	core	dbpro-r
 dbpro	Command_ExtPhysicsEnd	Command	PHY END	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsFreeClothVertex	Command	PHY FREE CLOTH VERTEX	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsLoadRigidBodyDynamicConvex	Command	PHY LOAD RIGID BODY DYNAMIC CONVEX	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsLoadRigidBodyDynamicConvexes	Command	PHY LOAD RIGID BODY DYNAMIC CONVEXES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsLoadRigidBodyDynamicMesh	Command	PHY LOAD RIGID BODY DYNAMIC MESH	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsLoadRigidBodyDynamicMeshes	Command	PHY LOAD RIGID BODY DYNAMIC MESHES	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsLoadRigidBodyStaticConvex	Command	PHY LOAD RIGID BODY STATIC CONVEX	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsLoadRigidBodyStaticConvexes	Command	PHY LOAD RIGID BODY STATIC CONVEXES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsLoadRigidBodyStaticMesh	Command	PHY LOAD RIGID BODY STATIC MESH	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsLoadRigidBodyStaticMeshes	Command	PHY LOAD RIGID BODY STATIC MESHES	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsLoadRigidBodyStaticTerrain	Command	PHY LOAD RIGID BODY STATIC TERRAIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsLoadSoftBody	Command	PHY LOAD SOFT BODY	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMake6dofJoint	Command	PHY MAKE 6DOF JOINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -484,8 +323,6 @@ dbpro	Command_ExtPhysicsMakeBoxCharacterController	Command	PHY MAKE BOX CHARACTE
 dbpro	Command_ExtPhysicsMakeBoxDrain	Command	PHY MAKE BOX DRAIN	Target	2d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeCapsuleCharacterController	Command	PHY MAKE CAPSULE CHARACTER CONTROLLER	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeCloth	Command	PHY MAKE CLOTH	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeClothFromLimb	Command	PHY MAKE CLOTH FROM LIMB	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeClothFromObject	Command	PHY MAKE CLOTH FROM OBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeCylindricalJoint	Command	PHY MAKE CYLINDRICAL JOINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeDistanceJoint	Command	PHY MAKE DISTANCE JOINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeFireEmitter	Command	PHY MAKE FIRE EMITTER	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -501,25 +338,15 @@ dbpro	Command_ExtPhysicsMakePulleyJoint	Command	PHY MAKE PULLEY JOINT	Target	cor
 dbpro	Command_ExtPhysicsMakeRagdoll	Command	PHY MAKE RAGDOLL	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRevoluteJoint	Command	PHY MAKE REVOLUTE JOINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyDynamicBox	Command	PHY MAKE RIGID BODY DYNAMIC BOX	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyDynamicBoxes	Command	PHY MAKE RIGID BODY DYNAMIC BOXES	Target	2d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyDynamicCapsule	Command	PHY MAKE RIGID BODY DYNAMIC CAPSULE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyDynamicCapsules	Command	PHY MAKE RIGID BODY DYNAMIC CAPSULES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyDynamicConvex	Command	PHY MAKE RIGID BODY DYNAMIC CONVEX	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyDynamicConvexes	Command	PHY MAKE RIGID BODY DYNAMIC CONVEXES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyDynamicMesh	Command	PHY MAKE RIGID BODY DYNAMIC MESH	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyDynamicMeshes	Command	PHY MAKE RIGID BODY DYNAMIC MESHES	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyDynamicSphere	Command	PHY MAKE RIGID BODY DYNAMIC SPHERE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyDynamicSpheres	Command	PHY MAKE RIGID BODY DYNAMIC SPHERES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyStaticBox	Command	PHY MAKE RIGID BODY STATIC BOX	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyStaticBoxes	Command	PHY MAKE RIGID BODY STATIC BOXES	Target	2d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyStaticCapsule	Command	PHY MAKE RIGID BODY STATIC CAPSULE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyStaticCapsules	Command	PHY MAKE RIGID BODY STATIC CAPSULES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyStaticConvex	Command	PHY MAKE RIGID BODY STATIC CONVEX	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyStaticConvexes	Command	PHY MAKE RIGID BODY STATIC CONVEXES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyStaticMesh	Command	PHY MAKE RIGID BODY STATIC MESH	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyStaticMeshes	Command	PHY MAKE RIGID BODY STATIC MESHES	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyStaticSphere	Command	PHY MAKE RIGID BODY STATIC SPHERE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsMakeRigidBodyStaticSpheres	Command	PHY MAKE RIGID BODY STATIC SPHERES	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeRigidBodyStaticTerrain	Command	PHY MAKE RIGID BODY STATIC TERRAIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeScene	Command	PHY MAKE SCENE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsMakeSmokeEmitter	Command	PHY MAKE SMOKE EMITTER	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -638,15 +465,6 @@ dbpro	Command_ExtPhysicsSetFluidPacketSize	Command	PHY SET FLUID PACKET SIZE	Tar
 dbpro	Command_ExtPhysicsSetFluidParticleBufferCap	Command	PHY SET FLUID PARTICLE BUFFER CAP	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsSetFluidPosition	Command	PHY SET FLUID POSITION	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsSetFluidRadius	Command	PHY SET FLUID RADIUS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererColorFalloffScale	Command	PHY SET FLUID RENDERER COLOR FALLOFF SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererDensityThreshold	Command	PHY SET FLUID RENDERER DENSITY THRESHOLD	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererFluidColor	Command	PHY SET FLUID RENDERER FLUID COLOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererFluidColorFalloff	Command	PHY SET FLUID RENDERER FLUID COLOR FALLOFF	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererFresnelColor	Command	PHY SET FLUID RENDERER FRESNEL COLOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererParticleRadius	Command	PHY SET FLUID RENDERER PARTICLE RADIUS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererParticleSurfaceScale	Command	PHY SET FLUID RENDERER PARTICLE SURFACE SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererShininess	Command	PHY SET FLUID RENDERER SHININESS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ExtPhysicsSetFluidRendererSpecularColor	Command	PHY SET FLUID RENDERER SPECULAR COLOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsSetFluidRestDensity	Command	PHY SET FLUID REST DENSITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsSetFluidRestPerMetre	Command	PHY SET FLUID REST PER METRE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_ExtPhysicsSetFluidRotation	Command	PHY SET FLUID ROTATION	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -906,45 +724,7 @@ dbpro	Function_ExtPhysicsRayCastAllShapes	Function	PHY RAY CAST ALL SHAPES	Targe
 dbpro	Function_ExtPhysicsRayCastClosestShape	Function	PHY RAY CAST CLOSEST SHAPE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtPhysicsTriggerExist	Function	PHY TRIGGER EXIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_ExtPhysicsTriggerType	Function	PHY TRIGGER TYPE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_3ds2x	Command	3DS2X	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_AddVisbilityListMask	Command	ADD VISBILITY LIST MASK	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdolladdhingejoint	Command	BPHYS_RAGDOLLADDHINGEJOINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdolladdtwistjoint	Command	BPHYS_RAGDOLLADDTWISTJOINT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdollapplyforce	Command	BPHYS_RAGDOLLAPPLYFORCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdollbegin	Command	BPHYS_RAGDOLLBEGIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdollboneaddlimbid	Command	BPHYS_RAGDOLLBONEADDLIMBID	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdollend	Command	BPHYS_RAGDOLLEND	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdollsetdamping	Command	BPHYS_RAGDOLLSETDAMPING	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdollsetdeactivationtime	Command	BPHYS_RAGDOLLSETDEACTIVATIONTIME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysRagdollsetsleepingthresholds	Command	BPHYS_RAGDOLLSETSLEEPINGTHRESHOLDS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_BphysSetnogravity	Command	BPHYS_SETNOGRAVITY	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ClearInternalLightmaps	Command	CLEAR INTERNAL LIGHTMAPS	Target	3d	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_DeleteVector	Command	DELETE VECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_EncryptAllFiles	Command	ENCRYPT ALL FILES	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_EncryptFile	Command	ENCRYPT FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_EncryptWorkshopFile	Command	ENCRYPT WORKSHOP FILE	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_FinishObjectPanel	Command	FINISH OBJECT PANEL	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ForceAdapterOrdinal	Command	FORCE ADAPTER ORDINAL	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_FreeInstanceStamp	Command	FREE INSTANCE STAMP	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_InitInstanceStamp	Command	INIT INSTANCE STAMP	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_InstanceStamp	Command	INSTANCE STAMP	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MakeMeshFromLimb	Command	MAKE MESH FROM LIMB	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MemorySnapshot	Command	MEMORY SNAPSHOT	Target	memory	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerConnectToTcpServer	Command	MULTIPLAYER CONNECT TO TCP SERVER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerCreateTcpServer	Command	MULTIPLAYER CREATE TCP SERVER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerDisconnect	Command	MULTIPLAYER DISCONNECT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerDisplayDebug	Command	MULTIPLAYER DISPLAY DEBUG	Study	display	dbpro-reference	platform-display-mode-matrix
-dbpro	Command_MultiplayerGetMessage	Command	MULTIPLAYER GET MESSAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerGetMessageMemblock	Command	MULTIPLAYER GET MESSAGE MEMBLOCK	Target	memory	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerSendFromPlayer	Command	MULTIPLAYER SEND FROM PLAYER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerSendMessageFloat	Command	MULTIPLAYER SEND MESSAGE FLOAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerSendMessageInteger	Command	MULTIPLAYER SEND MESSAGE INTEGER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerSendMessageMemblock	Command	MULTIPLAYER SEND MESSAGE MEMBLOCK	Target	memory	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerSendMessageString	Command	MULTIPLAYER SEND MESSAGE STRING	Target	text	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerSendMessageTo	Command	MULTIPLAYER SEND MESSAGE TO	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerSetDebugState	Command	MULTIPLAYER SET DEBUG STATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerStart	Command	MULTIPLAYER START	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_MultiplayerStartVoiceServer	Command	MULTIPLAYER START VOICE SERVER	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_QuatAdd	Command	QUAT ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_QuatAxis	Command	QUAT AXIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_QuatConjugate	Command	QUAT CONJUGATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -970,35 +750,8 @@ dbpro	Command_QuatSetZ	Command	QUAT SET Z	Target	core	dbpro-reference	engine-sub
 dbpro	Command_QuatSlerp	Command	QUAT SLERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_QuatSub	Command	QUAT SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_QuatSubtract	Command	QUAT SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_RenderEffectShadowMapping	Command	RENDER EFFECT SHADOW MAPPING	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ResetObjectPivot	Command	RESET OBJECT PIVOT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ResetTracking	Command	RESET TRACKING	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_ReverseObjectFrames	Command	REVERSE OBJECT FRAMES	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_RotateImage	Command	ROTATE IMAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SaveIconFromImage	Command	SAVE ICON FROM IMAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetCameraSwitchBank	Command	SET CAMERA SWITCH BANK	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetCharacterCreatorTones	Command	SET CHARACTER CREATOR TONES	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetChildWindowTruePixel	Command	SET CHILD WINDOW TRUE PIXEL	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetEffectLodTechnique	Command	SET EFFECT LOD TECHNIQUE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetEffectShadowMappingMode	Command	SET EFFECT SHADOW MAPPING MODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetEffectToShadowMapping	Command	SET EFFECT TO SHADOW MAPPING	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetFastBoundsCalculation	Command	SET FAST BOUNDS CALCULATION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetImageAutomipmap	Command	SET IMAGE AUTOMIPMAP	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetLegacyConvertMode	Command	SET LEGACY CONVERT MODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetNvperfhud	Command	SET NVPERFHUD	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectArbitary	Command	SET OBJECT ARBITARY	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectCollisionProperty	Command	SET OBJECT COLLISION PROPERTY	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectLod	Command	SET OBJECT LOD	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectOcclusion	Command	SET OBJECT OCCLUSION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectPanelQuad	Command	SET OBJECT PANEL QUAD	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetObjectRotationZxy	Command	SET OBJECT ROTATION ZXY	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetOcclusionMode	Command	SET OCCLUSION MODE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_SetProjectionMatrix4	Command	SET PROJECTION MATRIX4	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetRegistryHkey	Command	SET REGISTRY HKEY	Target	input	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetSpriteFilterMode	Command	SET SPRITE FILTER MODE	Target	2d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetStaticCulling	Command	SET STATIC CULLING	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_SetStaticEffectTechnique	Command	SET STATIC EFFECT TECHNIQUE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Command_TransferImage	Command	TRANSFER IMAGE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Vector2Add	Command	VECTOR2 ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Vector2Div	Command	VECTOR2 DIV	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Vector2Divide	Command	VECTOR2 DIVIDE	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -1041,70 +794,12 @@ dbpro	Command_Vector4NormalizeFast	Command	VECTOR4 NORMALIZE FAST	Target	core	db
 dbpro	Command_Vector4Scale	Command	VECTOR4 SCALE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Vector4Sub	Command	VECTOR4 SUB	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Command_Vector4Subtract	Command	VECTOR4 SUBTRACT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysDeleteragdoll	Function	BPHYS_DELETERAGDOLL	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdolladdbone	Function	BPHYS_RAGDOLLADDBONE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdolladdbone2	Function	BPHYS_RAGDOLLADDBONE2	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdollexist	Function	BPHYS_RAGDOLLEXIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdollgetboneobjid	Function	BPHYS_RAGDOLLGETBONEOBJID	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdollgetidfromboneobject	Function	BPHYS_RAGDOLLGETIDFROMBONEOBJECT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdollhidebones	Function	BPHYS_RAGDOLLHIDEBONES	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdollisstatic	Function	BPHYS_RAGDOLLISSTATIC	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdollsetstatic	Function	BPHYS_RAGDOLLSETSTATIC	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_BphysRagdollshowbones	Function	BPHYS_RAGDOLLSHOWBONES	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_Clamp	Function	CLAMP	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ClampSnorm	Function	CLAMP SNORM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ClampUnorm	Function	CLAMP UNORM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_CopySign	Function	COPY SIGN	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_DeleteVector	Function	DELETE VECTOR	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_DirectxRefreshRate	Function	DIRECTX REFRESH RATE$	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_DirectxVersion	Function	DIRECTX VERSION$	Target	file	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_FloatToDwordFast	Function	FLOAT TO DWORD FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_FloatToIntFast	Function	FLOAT TO INT FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetChildWindowHeight	Function	GET CHILD WINDOW HEIGHT	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetChildWindowWidth	Function	GET CHILD WINDOW WIDTH	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetChildWindowX	Function	GET CHILD WINDOW X	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetChildWindowY	Function	GET CHILD WINDOW Y	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetEffectParameterIndex	Function	GET EFFECT PARAMETER INDEX	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetLimbPolygonCount	Function	GET LIMB POLYGON COUNT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetMultimaterialCount	Function	GET MULTIMATERIAL COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetObjectOcclusion	Function	GET OBJECT OCCLUSION	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetObjectPolygonCount	Function	GET OBJECT POLYGON COUNT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetObjectVertexCount	Function	GET OBJECT VERTEX COUNT	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetTrackingPitch	Function	GET TRACKING PITCH	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetTrackingRoll	Function	GET TRACKING ROLL	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_GetTrackingYaw	Function	GET TRACKING YAW	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_IntersectAll	Function	INTERSECT ALL	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_InvSqrtFast	Function	INV SQRT FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_Lerp	Function	LERP	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_LimbTexturePtr	Function	LIMB TEXTURE PTR	Target	text	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MakeNewObjectPanel	Function	MAKE NEW OBJECT PANEL	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ManageMemory	Function	MANAGE MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_Matrix4Exist	Function	MATRIX4 EXIST	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_Max	Function	MAX	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_Min	Function	MIN	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetConnection	Function	MULTIPLAYER GET CONNECTION	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetId	Function	MULTIPLAYER GET ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetIpAddress	Function	MULTIPLAYER GET IP ADDRESS	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetMessageFloat	Function	MULTIPLAYER GET MESSAGE FLOAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetMessageInteger	Function	MULTIPLAYER GET MESSAGE INTEGER	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetMessagePlayerFrom	Function	MULTIPLAYER GET MESSAGE PLAYER FROM	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetMessageString	Function	MULTIPLAYER GET MESSAGE STRING	Target	text	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetMessageType	Function	MULTIPLAYER GET MESSAGE TYPE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetPlayerCount	Function	MULTIPLAYER GET PLAYER COUNT	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetPlayerId	Function	MULTIPLAYER GET PLAYER ID	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetPlayerName	Function	MULTIPLAYER GET PLAYER NAME	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerGetQueueSize	Function	MULTIPLAYER GET QUEUE SIZE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_MultiplayerMessageExists	Function	MULTIPLAYER MESSAGE EXISTS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NewQuat	Function	NEW QUAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NewVector2	Function	NEW VECTOR2	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NewVector3	Function	NEW VECTOR3	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_NewVector4	Function	NEW VECTOR4	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_NextPowerOfTwo	Function	NEXT POWER OF TWO	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ObjectScaleX	Function	OBJECT SCALE X	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ObjectScaleY	Function	OBJECT SCALE Y	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ObjectScaleZ	Function	OBJECT SCALE Z	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ObjectStatisticsInteger	Function	OBJECT STATISTICS INTEGER	Target	3d	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_Perffreq	Function	PERFFREQ	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_QuatAdd	Function	QUAT ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_QuatAxis	Function	QUAT AXIS	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_QuatConjugate	Function	QUAT CONJUGATE	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -1140,14 +835,10 @@ dbpro	Function_QuatW	Function	QUAT W	Target	core	dbpro-reference	engine-subsyste
 dbpro	Function_QuatX	Function	QUAT X	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_QuatY	Function	QUAT Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_QuatZ	Function	QUAT Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_ResetLeftEye	Function	RESET LEFT EYE	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_Sign	Function	SIGN	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_SqrtFast	Function	SQRT FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TempQuat	Function	TEMP QUAT	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TempVector2	Function	TEMP VECTOR2	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TempVector3	Function	TEMP VECTOR3	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_TempVector4	Function	TEMP VECTOR4	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_TestMemory	Function	TEST MEMORY	Target	memory	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_Vector2Add	Function	VECTOR2 ADD	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_Vector2Distance	Function	VECTOR2 DISTANCE	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_Vector2DistanceFast	Function	VECTOR2 DISTANCE FAST	Target	core	dbpro-reference	engine-subsystem-and-oracle
@@ -1221,5 +912,3 @@ dbpro	Function_VectorW	Function	VECTOR W	Target	core	dbpro-reference	engine-subs
 dbpro	Function_VectorX	Function	VECTOR X	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_VectorY	Function	VECTOR Y	Target	core	dbpro-reference	engine-subsystem-and-oracle
 dbpro	Function_VectorZ	Function	VECTOR Z	Target	core	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_WindowHeight	Function	WINDOW HEIGHT	Target	display	dbpro-reference	engine-subsystem-and-oracle
-dbpro	Function_WindowWidth	Function	WINDOW WIDTH	Target	display	dbpro-reference	engine-subsystem-and-oracle

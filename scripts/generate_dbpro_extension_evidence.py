@@ -9,6 +9,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
+import generate_dbpro_reference_evidence as reference_evidence
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOGUE = ROOT / "src/language/language_catalogue.inc"
@@ -38,9 +40,12 @@ SDK_ROOTS = (
 SDK_SOURCE_BASE = "Dark Basic Public Shared"
 # The forms of DBPro's editor keyword files, which the hand-written catalogue rows carry.
 CORE_EVIDENCE = ROOT / "scripts/data/dbpro_catalogue_evidence.tsv"
-# The official plugins OpenDBC catalogues, by surface.
+CLASSIC_EVIDENCE = ROOT / "scripts/data/dbc_catalogue_evidence.tsv"
+# A string-table form stays in the catalogue when the DBPro or Classic help documents it or an official
+# example calls it. The quaternion and vector forms stay as well, by decision: OpenDBC means to run them.
+KEPT_SDK_SOURCES = ("DarkSDK/Transforms/Transforms.rc", "DarkSDK/Vectors/Vectors.rc")
+# The official plugins OpenDBC catalogues, by surface. 3D Cloth & Particles is left out whole.
 PLUGIN_ROOTS = {
-    "Cloth": "Dark Basic Public Shared/Official Plugins/3D Cloth & Particles",
     "Enhancement": "Dark Basic Public Shared/Official Plugins/Enhancement Pack",
     "Physics": "Dark Basic Public Shared/Official Plugins/DarkPHYSICS",
 }
@@ -51,7 +56,7 @@ REMOVED_PLUGIN_ROOTS = (
 )
 PLUGIN_FORMS = ROOT / "src/language/removed_plugin_forms.inc"
 
-SURFACE_BITS = {"Cloth": 2, "Enhancement": 2, "Ode": 16, "Physics": 2, "Sdk": 2}
+SURFACE_BITS = {"Enhancement": 2, "Ode": 16, "Physics": 2, "Sdk": 2}
 SURFACE_PREFIXES = {"Ode": "ODE ", "Physics": "PHY "}
 TYPE_CODES = {"D": "I", "L": "I", "R": "I", "F": "R", "S": "S"}
 RETURN_TYPES = {"D": "Integer", "L": "Integer", "R": "Integer", "F": "Real", "S": "String"}
@@ -188,6 +193,11 @@ def BuildEvidence(DbProRoot: Path) -> list[Overload]:
         # Its comments start with "# "; #CONSTANT and #INCLUDE are rows.
         CoreNames = {Row["name"] for Row in
                      csv.DictReader((Line for Line in Input if not Line.startswith("# ")), delimiter="\t")}
+    with CLASSIC_EVIDENCE.open(newline="", encoding="utf-8") as Input:
+        ClassicNames = {Row["name"] for Row in
+                        csv.DictReader((Line for Line in Input if not Line.startswith("# ")), delimiter="\t")}
+    Referenced = (set(reference_evidence.ReadNames(reference_evidence.HELP_EVIDENCE)) |
+                  set(reference_evidence.ReadNames(reference_evidence.EXAMPLE_EVIDENCE)) | ClassicNames)
     SdkExports = defaultdict(lambda: defaultdict(set))
     for Folder in SDK_ROOTS:
         for PathValue in ResourceFiles(DbProRoot, Folder):
@@ -199,8 +209,10 @@ def BuildEvidence(DbProRoot: Path) -> list[Overload]:
                 for Signature in Signatures:
                     SdkExports[Name][Signature].add(Source)
     for Name, Signatures in sorted(SdkExports.items()):
-        AddRows(Result, "Sdk", Name, {TypedSignature(Name, *Signature) for Signature in Signatures}, Name,
-                set().union(*Signatures.values()))
+        Sources = set().union(*Signatures.values())
+        if Name not in Referenced and not any(Source.endswith(Kept) for Source in Sources for Kept in KEPT_SDK_SOURCES):
+            continue
+        AddRows(Result, "Sdk", Name, {TypedSignature(Name, *Signature) for Signature in Signatures}, Name, Sources)
 
     for Surface, Folder in PLUGIN_ROOTS.items():
         PluginExports = defaultdict(lambda: defaultdict(set))
@@ -211,6 +223,9 @@ def BuildEvidence(DbProRoot: Path) -> list[Overload]:
                 for Signature in Signatures:
                     PluginExports[Name][Signature].add(Source)
         for Name, Signatures in sorted(PluginExports.items()):
+            # The Enhancement Pack runs, so it stays whole; DarkPHYSICS keeps what its help documents.
+            if Surface != "Enhancement" and Name not in Referenced:
+                continue
             AddRows(Result, Surface, Name, {TypedSignature(Name, *Signature) for Signature in Signatures}, Name,
                     set().union(*Signatures.values()))
 
@@ -228,7 +243,7 @@ def BuildEvidence(DbProRoot: Path) -> list[Overload]:
     Counts = defaultdict(set)
     for Row in Result:
         Counts[Row.Surface].add(Row.Name)
-    Totals = {"Cloth": 157, "Enhancement": 188, "Ode": 121, "Physics": 491, "Sdk": 267}
+    Totals = {"Enhancement": 188, "Ode": 121, "Physics": 466, "Sdk": 138}
     Require({Surface: len(Names) for Surface, Names in Counts.items()} == Totals,
             "DBPro extension public spelling totals drifted")
     Require(len({(Row.SymbolId, Row.AcceptedCount, Row.ReturnType, Row.Parameters) for Row in Result}) == len(Result),

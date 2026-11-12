@@ -296,7 +296,7 @@ def audit_catalogue() -> tuple[list[tuple], dict[tuple[str, str], tuple]]:
         dbpro_min, dbpro_max = int(match.group(8)), int(match.group(9))
         implemented, evidence = int(match.group(11)), int(match.group(12))
         require(profiles & ~3 == 0, f"Invalid profile mask for {name}")
-        require((kind == "Reserved") == (profiles == 0), f"Reserved/profile mismatch for {name}")
+        require(profiles != 0, f"Symbol is available in no profile: {name}")
         require(implemented & ~profiles == 0, f"Implemented profile is unavailable for {name}")
         require(profiles == 0 or evidence != 0, f"Available symbol has no evidence: {name}")
         require(dbc_min <= dbc_max and dbpro_min <= dbpro_max, f"Invalid arity for {name}")
@@ -473,7 +473,7 @@ def audit_dbpro_extension_evidence(catalogue: dict[tuple[str, str], tuple]) -> N
                     set(range(entry[7], entry[8] + 1)))
         require(count in accepted, f"DBPro extension arity differs from evidence for {row['name']}")
         spellings.add((row["surface"], row["name"]))
-    require(len(spellings) == 1224, "DBPro extension public spelling total drifted")
+    require(len(spellings) == 913, "DBPro extension public spelling total drifted")
 
 
 def audit_free_sources(entries: list[tuple]) -> None:
@@ -486,12 +486,6 @@ def audit_free_sources(entries: list[tuple]) -> None:
     for entry in entries:
         if entry[1] in {"Command", "Function"} and entry[3] & 2 and not entry[11] & 4:
             require(entry[2] in names, f"DBPro form has no free source: {entry[1]} {entry[2]}")
-
-
-# Decisions that override the evidence: the quaternion and vector forms stay although only the SDK
-# string tables name them, and 3D Cloth & Particles goes although its examples call it.
-KEPT_SDK_SOURCES = ("DarkSDK/Transforms/Transforms.rc", "DarkSDK/Vectors/Vectors.rc")
-REMOVED_SURFACES = {"Cloth"}
 
 
 def reference_reasons(entries: list[tuple]) -> dict[str, list[str]]:
@@ -507,21 +501,19 @@ def reference_reasons(entries: list[tuple]) -> dict[str, list[str]]:
     kept = set()
     for row in extensions:
         surfaces.setdefault(row["symbol_id"], set()).add(row["surface"])
-        if any(source in row["sources"] for source in KEPT_SDK_SOURCES):
+        # The quaternion and vector forms stay although only the SDK string tables name them.
+        if any(source in row["sources"] for source in extension_evidence.KEPT_SDK_SOURCES):
             kept.add(row["symbol_id"])
     result = {}
     for symbol_id, kind, name, profiles, *_, implemented, evidence in entries:
         if profiles == 1:
             continue  # Classic is frozen.
         reasons = []
-        if surfaces.get(symbol_id, set()) & REMOVED_SURFACES:
-            result[symbol_id] = reasons
-            continue
         if name in help_names:
             reasons.append("help")
         if evidence & 1:
             reasons.append("classic help")
-        if name in example_names and kind != "Reserved":
+        if name in example_names:
             reasons.append("examples")
         if evidence & 4:
             reasons.append("opendbc")
@@ -531,7 +523,7 @@ def reference_reasons(entries: list[tuple]) -> dict[str, list[str]]:
             reasons.append("kept")
         if kind in {"Statement", "Operator", "Directive"} and name in keyword_names:
             reasons.append("keywords")
-        if kind != "Reserved" and implemented & 2 and not reasons:
+        if implemented & 2 and not reasons:
             reasons.append("implemented")
         result[symbol_id] = reasons
     return result
@@ -548,7 +540,7 @@ def list_unreferenced(entries: list[tuple]) -> None:
         if symbol_id not in reasons:
             continue
         if not reasons[symbol_id]:
-            origin = "Reserved placeholder" if kind == "Reserved" else origins.get(symbol_id, "keyword files only")
+            origin = origins.get(symbol_id, "keyword files only")
             groups.setdefault(origin, []).append(f"{kind} {name}")
         elif reasons[symbol_id] == ["implemented"]:
             only_implemented.append(f"{kind} {name}")
@@ -618,10 +610,14 @@ def main() -> None:
     audit_dbpro_evidence(catalogue)
     audit_dbpro_extension_evidence(catalogue)
     audit_free_sources(entries)
-    reference_reasons(entries)
     if args.list_unreferenced:
         list_unreferenced(entries)
         return
+    reasons = reference_reasons(entries)
+    unreferenced = sorted(entry[2] for entry in entries if reasons.get(entry[0]) == [])
+    require(not unreferenced,
+            "DBPro symbols that no help page, example, implemented plugin or OpenDBC addition names: " +
+            ", ".join(unreferenced))
     callables = sum(entry[1] in {"Command", "Function"} for entry in entries)
     print(f"Language catalogue audit passed: {len(entries)} symbols, {callables} callables")
 

@@ -73,18 +73,12 @@ TEST_CASE("The language catalogue has unique typed spellings and provenance")
     }
 }
 
-TEST_CASE("Retired symbol ids remain reserved and can never be reused")
+TEST_CASE("Every symbol is available in a profile")
 {
     for (const dbc::language::SymbolDescriptor& Descriptor : dbc::language::Symbols())
     {
         CAPTURE(Descriptor.CanonicalName);
-        CHECK((Descriptor.Kind == SymbolKind::Reserved) == (Descriptor.AvailableProfiles == 0));
-        if (Descriptor.Kind == SymbolKind::Reserved)
-        {
-            CHECK(Descriptor.ImplementedProfiles == 0);
-            CHECK(Descriptor.CompatibilityStubProfiles == 0);
-            CHECK(Descriptor.PermanentStubProfiles == 0);
-        }
+        CHECK(Descriptor.AvailableProfiles != 0);
     }
 }
 
@@ -116,24 +110,19 @@ TEST_CASE("DBPro extension surfaces are typed profile-only catalogue data")
     CHECK(ExtensionSymbols == 121);
     CHECK(ImplementedExtensionSymbols == 87);
 
-    CHECK(dbc::language::Symbol(SymbolId::Command_OdeStart).Kind == SymbolKind::Reserved);
     const auto& ActiveOde = dbc::language::Symbol(SymbolId::Command_ExtOdeStart);
     CHECK(ActiveOde.Kind == SymbolKind::Command);
     CHECK(ActiveOde.Surface == CompatibilitySurface::Ode);
     CHECK(dbc::language::HasEvidence(ActiveOde, EvidenceSource::OdeExtension));
 }
 
-TEST_CASE("Every core and supported plugin form of the free DBPro release is catalogued")
+TEST_CASE("Referenced forms of the free DBPro release are catalogued and the others are not")
 {
-    // Later core forms and those of DarkPHYSICS and 3D Cloth & Particles, catalogued before they run.
+    // The quaternion forms, kept by decision, and the documented DarkPHYSICS forms, catalogued before they run.
     for (const auto& [Kind, Name] : std::initializer_list<std::pair<SymbolKind, std::string_view>>{
              {SymbolKind::Function, "QUAT SLERP"},
-             {SymbolKind::Function, "MAX"},
-             {SymbolKind::Command, "BPHYS_RAGDOLLBEGIN"},
-             {SymbolKind::Command, "MULTIPLAYER START"},
              {SymbolKind::Command, "PHY MAKE RIGID BODY DYNAMIC BOX"},
-             {SymbolKind::Function, "PHYSX"},
-             {SymbolKind::Command, "MAKE CLOTH"}})
+             {SymbolKind::Function, "PHYSX"}})
     {
         const dbc::language::SymbolDescriptor* Descriptor =
             dbc::language::FindSymbol(LanguageProfile::DbPro, Kind, Name);
@@ -142,6 +131,14 @@ TEST_CASE("Every core and supported plugin form of the free DBPro release is cat
         CHECK(dbc::language::HasEvidence(*Descriptor, dbc::language::EvidenceSource::DbProReference));
         CHECK(dbc::language::SupportFor(*Descriptor, LanguageProfile::DbPro) == SupportStatus::Unsupported);
     }
+    // Forms that only a string table names, and the whole 3D Cloth & Particles plugin, are gone.
+    for (const auto& [Kind, Name] : std::initializer_list<std::pair<SymbolKind, std::string_view>>{
+             {SymbolKind::Function, "MAX"},
+             {SymbolKind::Command, "BPHYS_RAGDOLLBEGIN"},
+             {SymbolKind::Command, "MULTIPLAYER START"},
+             {SymbolKind::Command, "PHY LOAD RIGID BODY DYNAMIC MESHES"},
+             {SymbolKind::Command, "MAKE CLOTH"}})
+        CHECK_MESSAGE(dbc::language::FindSymbol(LanguageProfile::DbPro, Kind, Name) == nullptr, Name);
     // A Classic form the DBPro release also exports keeps its Classic behaviour.
     const dbc::language::SymbolDescriptor& AlwaysActive =
         dbc::language::Symbol(dbc::language::SymbolId::Command_AlwaysActiveOff);

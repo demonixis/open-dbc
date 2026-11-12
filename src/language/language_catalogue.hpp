@@ -12,7 +12,6 @@ namespace dbc::language
 {
     enum class SymbolKind : std::uint8_t
     {
-        Reserved,
         Statement,
         Directive,
         Command,
@@ -70,7 +69,6 @@ namespace dbc::language
         DbcHelp = 1,
         DbProReference = 2,
         OpenDbcExtension = 4,
-        LegacyUnverified = 8,
         OdeExtension = 16,
     };
 

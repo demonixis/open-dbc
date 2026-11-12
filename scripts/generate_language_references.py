@@ -177,7 +177,7 @@ def build(profile: str, extensions: bool) -> str:
     if extensions:
         lines[4:4] = [
             "The ODE commands are always available in the `DbPro` profile and run on the pinned Jolt backend; remaining forms retain explicit diagnostics.",
-            "DarkPHYSICS, Dark Dynamix and 3D Cloth & Particles forms are not in the catalogue: they fail to compile with `DBC2049`.",
+            "Dark Dynamix, DarkLIGHTS and Advanced Terrain forms are not in the catalogue: they fail to compile with `DBC2049`.",
         ]
     for kind, name, arity, signatures, status, provenance in sorted(entries, key=lambda row: (row[0], row[1])):
         if provenance == "OpenDBC extension" or (profile == "Dbc" and "OpenDBC extension" in provenance):

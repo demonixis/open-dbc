@@ -10,7 +10,7 @@ Publication:
 
 ## Work lots
 
-In order. Each lot is one session; lots 3 and 4 come before any new command set.
+In order. Each lot is one session; lot 4 comes before any new command set.
 The DBPro help (`Install/Help`) is the reference; arrays already match it
 (`DIM a(10)` gives indices 0 to 10).
 
@@ -19,13 +19,6 @@ Conformance:
 - [ ] Arithmetic ranking, left from lot 1: the original compiler reduces `/` before
   `*` and `-` before `+` (`2*6/4` would be 2). Confirm on a real DBPro build before
   following it.
-- [ ] Lot 3, remove the 410 symbols `audit_language_catalogue.py --list-unreferenced`
-  prints, then make the audit reject any new one: the whole 3D Cloth & Particles
-  plugin (157), the reserved placeholders (98), 129 forms known only from SDK string
-  tables (objects 35, MultiplayerPlus 28, core 20, Bullet ragdolls 20, setup 16, ten
-  others; quaternions and vectors stay) and 26 undocumented DarkPHYSICS forms. They
-  never existed for a DBPro user, so they go without a diagnostic. Regenerate
-  evidence, manifests, references and the parity numbers below.
 - [ ] Lot 4, GameFX and help-only commands: a per-form status of the 50 GameFX
   pages; the 12 static forms Classic already runs with the same signature, enabled
   in `dbpro`; `OBJECT BLOCKING` and the 19 `LFX` pages, the only help pages without a
@@ -83,13 +76,12 @@ Canvas, a 2D mode for UI and HUD written and read back as BASIC:
 
 ## DBPro parity
 
-The catalogue counts 1,042 of DBPro's 1,584 core commands and functions as implemented,
-against 701 of 730 in Classic. The other 542 are sorted here by name only; confirm each
+The catalogue counts 1,042 of DBPro's 1,455 core commands and functions as implemented,
+against 701 of 730 in Classic. The other 413 are sorted here by name only; confirm each
 one when it is picked up.
 
-335 of them come from the string tables of the free release rather than its keyword files:
-quaternions and vectors (117 names), objects (47), MultiplayerPlus (28), Bullet ragdolls
-(20) and other later core forms.
+206 of them come from the string tables of the free release rather than its keyword files:
+quaternions and vectors (119 names) and a few forms the help documents.
 
 152 stay `Unsupported`: DirectX 9 capability queries, Windows, disc and registry access
 (89); raw memory and pointers, assembly shaders and DLLs (42); FTP and HTTP without TLS
@@ -107,10 +99,10 @@ Validation and scope:
 
 ## Official plugins
 
-The forms of DarkPHYSICS are catalogued and stop with `DBC2043` until they run; the
-reference lists them. 3D Cloth & Particles leaves the catalogue in lot 3.
+The documented forms of DarkPHYSICS are catalogued and stop with `DBC2043` until they
+run; the reference lists them.
 
-- [ ] DarkPHYSICS (491 forms) on Jolt, the one physics abstraction beside the ODE forms
+- [ ] DarkPHYSICS (466 forms) on Jolt, the one physics abstraction beside the ODE forms
   ([physics.md](physics.md)): rigid bodies, joints, rays, triggers, materials, the
   character controller, then vehicles, ragdolls, heightfield terrains and the
   character's water line. A body belongs to ODE or to DarkPHYSICS, not both. Decide what
