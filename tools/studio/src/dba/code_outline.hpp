@@ -1,5 +1,6 @@
 #pragma once
 
+#include "language/frontend.hpp"
 #include "language/language_profile.hpp"
 
 #include <cstdint>
@@ -34,6 +35,11 @@ namespace dbc::studio
             // locals and parameters are left out.
             std::vector<OutlineEntry> Variables;
         };
+
+        // The parser stores canonical upper-case names: this is `Canonical` as the source spells it
+        // inside `Span`, or `Canonical` itself when the span does not hold it as a whole word.
+        std::string DeclaredSpelling(const dbc::language::SourceDocument& Source,
+                                     const dbc::language::SourceSpan& Span, const std::string& Canonical);
 
         CodeOutline BuildCodeOutline(const std::filesystem::path& LogicalPath, std::string Text,
                                      dbc::language::LanguageProfile Profile);

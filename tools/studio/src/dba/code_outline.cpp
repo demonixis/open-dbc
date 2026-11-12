@@ -21,27 +21,10 @@ namespace dbc::studio
             return Result;
         }
 
-        // The parser stores canonical upper-case names; the outline shows the
-        // spelling found in the declaration itself.
         std::string Spelling(const lang::SourceDocument& Source, const lang::SourceSpan& Span,
                              const std::string& Canonical)
         {
-            const auto IsNameCharacter = [](char Character)
-            {
-                return std::isalnum(static_cast<unsigned char>(Character)) != 0 || Character == '_' ||
-                       Character == '#' || Character == '$';
-            };
-            const std::string_view Text = lang::Lexeme(Source, Span);
-            const std::string UpperText = Upper(Text);
-            // Whole words only: `a` must not match the A of `local a`.
-            for (std::size_t At = UpperText.find(Canonical); At != std::string::npos;
-                 At = UpperText.find(Canonical, At + 1))
-            {
-                const std::size_t End = At + Canonical.size();
-                if ((At == 0 || !IsNameCharacter(Text[At - 1])) && (End == Text.size() || !IsNameCharacter(Text[End])))
-                    return std::string(Text.substr(At, Canonical.size()));
-            }
-            return Canonical;
+            return dbc::studio::dba::DeclaredSpelling(Source, Span, Canonical);
         }
 
         class OutlineBuilder
@@ -181,6 +164,27 @@ namespace dbc::studio
 
     namespace dba
     {
+        std::string DeclaredSpelling(const lang::SourceDocument& Source, const lang::SourceSpan& Span,
+                                     const std::string& Canonical)
+        {
+            const auto IsNameCharacter = [](char Character)
+            {
+                return std::isalnum(static_cast<unsigned char>(Character)) != 0 || Character == '_' ||
+                       Character == '#' || Character == '$';
+            };
+            const std::string_view Text = lang::Lexeme(Source, Span);
+            const std::string UpperText = Upper(Text);
+            // Whole words only: `a` must not match the A of `local a`.
+            for (std::size_t At = UpperText.find(Canonical); At != std::string::npos;
+                 At = UpperText.find(Canonical, At + 1))
+            {
+                const std::size_t End = At + Canonical.size();
+                if ((At == 0 || !IsNameCharacter(Text[At - 1])) && (End == Text.size() || !IsNameCharacter(Text[End])))
+                    return std::string(Text.substr(At, Canonical.size()));
+            }
+            return Canonical;
+        }
+
         CodeOutline BuildCodeOutline(const std::filesystem::path& LogicalPath, std::string Text,
                                      dbc::language::LanguageProfile Profile)
         {

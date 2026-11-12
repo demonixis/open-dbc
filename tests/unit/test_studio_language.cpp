@@ -5,6 +5,7 @@
 #include "dba/completion.hpp"
 #include "dba/program_info.hpp"
 #include "dba/reference.hpp"
+#include "dba/source_symbols.hpp"
 #include "language/language_catalogue.hpp"
 
 #include <algorithm>
@@ -351,4 +352,97 @@ TEST_CASE("Studio code outline survives code that does not compile")
         dba::BuildCodeOutline("broken.dba", "function Open(\nprint (\nStart:\ngoto Start\n", LanguageProfile::Dbc);
     REQUIRE(Outline.Labels.size() == 1);
     CHECK(Outline.Labels[0].Count == 1);
+}
+
+TEST_CASE("Source symbols list what each scope sees, on code that does not compile yet")
+{
+    const std::string Text = "type Point\n"
+                             "  x as float\n"
+                             "  y as float\n"
+                             "endtype\n"
+                             "type Player\n"
+                             "  Position as Point\n"
+                             "  name$\n"
+                             "endtype\n"
+                             "#constant MaxSpeed 8\n"
+                             "global Score as integer\n"
+                             "hero as Player\n"
+                             "dim Enemies(10) as Player\n"
+                             "lives = 3\n"
+                             "for Wave = 1 to 3 : next Wave\n"
+                             "gosub _Setup\n"
+                             "end\n"
+                             "_Setup:\n"
+                             "return\n"
+                             "function Move(dx#, who as Player)\n"
+                             "  local Step as Point\n"
+                             "  Score = Score + 1\n"
+                             "  distance# = dx# * 2\n"
+                             "  print (\n"
+                             "endfunction distance#\n";
+    const dba::SourceSymbols Symbols = dba::BuildSourceSymbols("game.dba", Text, LanguageProfile::DbPro);
+    const auto Names = [](const std::vector<dba::SourceVariable>& Values)
+    {
+        std::vector<std::string> Result;
+        for (const dba::SourceVariable& Value : Values)
+            Result.push_back(Value.Name);
+        return Result;
+    };
+
+    REQUIRE(Symbols.Types.size() == 2);
+    CHECK(Symbols.Types[1].Name == "Player");
+    CHECK(Names(Symbols.Types[1].Fields) == std::vector<std::string>{"Position", "name$"});
+    CHECK(Symbols.Types[1].Fields[0].Type == "Point");
+    CHECK(Symbols.Types[1].Fields[0].UserType == "POINT");
+    CHECK(Symbols.Types[1].Fields[1].Type == "string");
+    CHECK(Symbols.Constants == std::vector<std::string>{"MaxSpeed"});
+    CHECK(Symbols.Labels == std::vector<std::string>{"_Setup"});
+
+    // GLOBAL variables and arrays are seen everywhere; the main program keeps its other variables.
+    CHECK(Names(Symbols.Shared) == std::vector<std::string>{"Score", "Enemies"});
+    CHECK(Symbols.Shared[1].Array);
+    CHECK(Symbols.Shared[1].UserType == "PLAYER");
+    CHECK(Names(Symbols.Main) == std::vector<std::string>{"hero", "lives", "Wave"});
+    CHECK(Symbols.Main[0].Type == "Player");
+
+    REQUIRE(Symbols.Functions.size() == 1);
+    const dba::SourceFunction& Move = Symbols.Functions[0];
+    CHECK(Move.Name == "Move");
+    CHECK(Move.Parameters == std::vector<std::string>{"dx#", "who as Player"});
+    // Score is the global, not a local of Move.
+    CHECK(Names(Move.Locals) == std::vector<std::string>{"dx#", "who", "Step", "distance#"});
+    CHECK(Move.Locals[0].Type == "real");
+    CHECK(Symbols.FunctionAt(19) == &Move);
+    CHECK(Symbols.FunctionAt(22) == &Move);
+    CHECK(Symbols.FunctionAt(24) == &Move);
+    CHECK(Symbols.FunctionAt(18) == nullptr);
+    CHECK(Symbols.FindType("POINT") == &Symbols.Types[0]);
+}
+
+TEST_CASE("Program symbols follow includes from the folder of the file that names them")
+{
+    const dba::SourceReader Read = [](const std::filesystem::path& Path) -> std::optional<std::string>
+    {
+        if (Path == std::filesystem::path("game/lib/maths.dba"))
+            return std::string("#include \"../ui/hud.dba\"\n#include \"maths.dba\"\n"
+                               "function Clamp(v#, low#, high#)\nendfunction v#\n");
+        if (Path == std::filesystem::path("game/ui/hud.dba"))
+            return std::string("type Widget\n  id\nendtype\nglobal HudScale#\nfunction DrawHud()\nendfunction\n");
+        return std::nullopt;
+    };
+    const dba::SourceSymbols Symbols = dba::BuildProgramSymbols(
+        "game/main.dba",
+        "#include \"lib\\maths.dba\"\n#include \"missing.dba\"\nfunction Local()\nendfunction\n",
+        LanguageProfile::DbPro, Read);
+    REQUIRE(Symbols.Functions.size() == 3);
+    CHECK(Symbols.Functions[0].Name == "Local");
+    CHECK(Symbols.Functions[0].FirstLine == 3);
+    CHECK(Symbols.Functions[1].Name == "Clamp");
+    // An included function has no lines in the edited file.
+    CHECK(Symbols.Functions[1].FirstLine == 0);
+    CHECK(Symbols.Functions[2].Name == "DrawHud");
+    REQUIRE(Symbols.Types.size() == 1);
+    CHECK(Symbols.Types[0].Name == "Widget");
+    REQUIRE(Symbols.Shared.size() == 1);
+    CHECK(Symbols.Shared[0].Name == "HudScale#");
 }

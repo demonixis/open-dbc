@@ -31,6 +31,7 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/completion.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/program_info.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/reference.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/source_symbols.cpp
     )
     target_include_directories(test_studio_language PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
     target_link_libraries(test_studio_language PRIVATE doctest_with_main dbc_language)
@@ -39,8 +40,10 @@ if(NOT ANDROID AND NOT IOS)
     add_executable(test_studio_editor
         test_studio_editor.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/code_outline.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/command_database.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/completion.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/source_symbols.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/language.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/reference.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/panels/completion_popup.cpp

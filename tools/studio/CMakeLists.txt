@@ -254,6 +254,8 @@ set(STUDIO_SOURCES
     src/dba/program_info.cpp
     src/dba/program_info.hpp
     src/dba/reference.cpp
+    src/dba/source_symbols.cpp
+    src/dba/source_symbols.hpp
     src/dba/reference.hpp
 
     src/panels/asset_preview.cpp
