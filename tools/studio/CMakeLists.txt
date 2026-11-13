@@ -624,8 +624,29 @@ if(IOS)
     file(WRITE "${STUDIO_IOS_ICONSET}/Contents.json"
         "{\"images\": [{\"filename\": \"AppIcon.png\", \"idiom\": \"universal\", \"platform\": \"ios\", "
         "\"size\": \"1024x1024\"}], \"info\": {\"author\": \"xcode\", \"version\": 1}}\n")
+    # The launch screen named in Info.plist: the logo, a third of its pixels wide in points, on the
+    # Studio's own dark background, so that starting does not flash white.
+    set(STUDIO_IOS_LAUNCH_LOGO "${STUDIO_IOS_ASSETS}/LaunchLogo.imageset")
+    set(STUDIO_IOS_LAUNCH_COLOR "${STUDIO_IOS_ASSETS}/LaunchBackground.colorset")
+    file(MAKE_DIRECTORY "${STUDIO_IOS_LAUNCH_LOGO}" "${STUDIO_IOS_LAUNCH_COLOR}")
+    execute_process(
+        COMMAND /usr/bin/sips -Z 660 "${CMAKE_SOURCE_DIR}/resources/branding/logo_stacked.png"
+                --out "${STUDIO_IOS_LAUNCH_LOGO}/LaunchLogo.png"
+        COMMAND_ERROR_IS_FATAL ANY OUTPUT_QUIET)
+    file(WRITE "${STUDIO_IOS_LAUNCH_LOGO}/Contents.json"
+        "{\"images\": [{\"filename\": \"LaunchLogo.png\", \"idiom\": \"universal\", \"scale\": \"3x\"}], "
+        "\"info\": {\"author\": \"xcode\", \"version\": 1}}\n")
+    file(WRITE "${STUDIO_IOS_LAUNCH_COLOR}/Contents.json"
+        "{\"colors\": [{\"idiom\": \"universal\", \"color\": {\"color-space\": \"srgb\", \"components\": "
+        "{\"red\": \"0x2D\", \"green\": \"0x30\", \"blue\": \"0x34\", \"alpha\": \"1.000\"}}}], "
+        "\"info\": {\"author\": \"xcode\", \"version\": 1}}\n")
     set_source_files_properties("${STUDIO_IOS_ASSETS}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(opendbc PRIVATE "${STUDIO_IOS_ASSETS}")
+
+    # App Store Connect refuses an upload whose required-reason APIs are not declared.
+    set(STUDIO_IOS_PRIVACY "${CMAKE_CURRENT_SOURCE_DIR}/ios/PrivacyInfo.xcprivacy")
+    set_source_files_properties("${STUDIO_IOS_PRIVACY}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(opendbc PRIVATE "${STUDIO_IOS_PRIVACY}")
     set_target_properties(opendbc PROPERTIES XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon")
 elseif(APPLE)
     # --- Full product: signed outside the App Store, drives the toolchains --
