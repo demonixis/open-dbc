@@ -121,7 +121,7 @@ namespace dbc::studio
         // Names the program an in-process run is executing, for the Studio that starts after a crash.
         std::filesystem::path RunMarker() const;
         void SetTextZoom(float Zoom);
-        void SetInterfaceZoom(float Zoom);
+        void SetInterfacePercent(int Percent);
         // Sizes the style and the fonts for the display, the platform and the interface zoom.
         void ApplyInterfaceScale();
         // One finger drives the interface as a mouse would: see core::TouchGesture.
@@ -246,6 +246,9 @@ namespace dbc::studio
         };
 
         TouchScrollState TouchScroll_;
+        // What the interface size slider shows while it is held; 0 otherwise. The size changes on
+        // release: resizing everything under the finger would move the slider itself.
+        int PendingInterfacePercent_ = 0;
         float KeyboardHeight_ = 0.0f;
         // Between the system's notice that the app leaves the screen and its return.
         bool InBackground_ = false;

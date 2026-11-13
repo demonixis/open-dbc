@@ -447,7 +447,7 @@
   "Install Android Studio or the Android command-line tools, or set the SDK folder in External Tools.": "Installez Android Studio ou les outils Android en ligne de commande, ou indiquez le dossier du SDK dans Outils externes.",
   "Install Xcode to build, sign and upload the exported project.": "Installez Xcode pour compiler, signer et envoyer le projet exporté.",
   "Install the Windows SDK signing tools, or set OPENDBC_SIGNTOOL to signtool.exe.": "Installez les outils de signature du SDK Windows, ou faites pointer OPENDBC_SIGNTOOL vers signtool.exe.",
-  "Interface zoom": "Zoom de l’interface",
+  "Interface size": "Taille de l’interface",
   "Invalid project setting type or value: {0}": "Type ou valeur de réglage du projet non valide : {0}",
   "Its creation runs {0} times.": "Sa création s’exécute {0} fois.",
   "Its statement runs {0} times.": "Son instruction s’exécute {0} fois.",

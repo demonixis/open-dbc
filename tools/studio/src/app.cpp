@@ -51,6 +51,7 @@ namespace dbc::studio
         // The persisted setting and the --log-level values, shown verbatim: never translate them.
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
         constexpr float KTextZoomStep = 1.1f;
+        constexpr int KInterfacePercentStep = 10;
         constexpr Uint64 KTextZoomSaveDelayMs = 1000;
 
         enum class ToolIcon
@@ -2064,10 +2065,10 @@ namespace dbc::studio
         TextZoomSaveAt_ = SDL_GetTicks() + KTextZoomSaveDelayMs;
     }
 
-    void App::SetInterfaceZoom(float Zoom)
+    void App::SetInterfacePercent(int Percent)
     {
-        Settings_.Editor.InterfaceZoom =
-            std::clamp(Zoom, core::EditorSettings::KMinInterfaceZoom, core::EditorSettings::KMaxInterfaceZoom);
+        Settings_.Editor.InterfacePercent = std::clamp(Percent, core::EditorSettings::KMinInterfacePercent,
+                                                       core::EditorSettings::KMaxInterfacePercent);
         ApplyInterfaceScale();
         // Shares the text zoom's delayed save: a slider sends a value per frame.
         TextZoomSaveAt_ = SDL_GetTicks() + KTextZoomSaveDelayMs;
@@ -2077,7 +2078,8 @@ namespace dbc::studio
     {
         if (ImGui::GetCurrentContext() == nullptr)
             return;
-        const float Scale = Scale_ * core::platform::UiScaleHint() * Settings_.Editor.InterfaceZoom;
+        const float Scale = Scale_ * core::platform::UiScaleHint() *
+                            (static_cast<float>(Settings_.Editor.InterfacePercent) / 100.0f);
         Theme::ApplyMetrics(Scale, core::platform::IsSandboxed());
         ImGui::GetStyle().FontScaleDpi = Scale;
     }
@@ -2119,12 +2121,16 @@ namespace dbc::studio
             if (ImGui::SliderFloat(TrId("Text zoom"), &TextZoom, core::EditorSettings::KMinTextZoom,
                                    core::EditorSettings::KMaxTextZoom, "%.2f", Flags))
                 SetTextZoom(TextZoom);
-            float InterfaceZoom = Settings_.Editor.InterfaceZoom;
-            // Applied when the slider is released: resizing the window under the finger would move the slider.
-            ImGui::SliderFloat(TrId("Interface zoom"), &InterfaceZoom, core::EditorSettings::KMinInterfaceZoom,
-                               core::EditorSettings::KMaxInterfaceZoom, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-            if (ImGui::IsItemDeactivatedAfterEdit())
-                SetInterfaceZoom(InterfaceZoom);
+            int Percent =
+                PendingInterfacePercent_ != 0 ? PendingInterfacePercent_ : Settings_.Editor.InterfacePercent;
+            if (ImGui::SliderInt(TrId("Interface size"), &Percent, core::EditorSettings::KMinInterfacePercent,
+                                 core::EditorSettings::KMaxInterfacePercent, "%d%%", ImGuiSliderFlags_AlwaysClamp))
+                PendingInterfacePercent_ = Percent;
+            if (ImGui::IsItemDeactivated() && PendingInterfacePercent_ != 0)
+            {
+                SetInterfacePercent(PendingInterfacePercent_);
+                PendingInterfacePercent_ = 0;
+            }
             if constexpr (core::platform::IsSandboxed())
             {
                 // Only here does a program run on a touch screen.
@@ -2588,11 +2594,11 @@ namespace dbc::studio
                 SetTextZoom(1.0f);
             ImGui::Separator();
             if (ImGui::MenuItem(TrId("Increase Interface Size")))
-                SetInterfaceZoom(Settings_.Editor.InterfaceZoom * KTextZoomStep);
+                SetInterfacePercent(Settings_.Editor.InterfacePercent + KInterfacePercentStep);
             if (ImGui::MenuItem(TrId("Decrease Interface Size")))
-                SetInterfaceZoom(Settings_.Editor.InterfaceZoom / KTextZoomStep);
+                SetInterfacePercent(Settings_.Editor.InterfacePercent - KInterfacePercentStep);
             if (ImGui::MenuItem(TrId("Reset Interface Size")))
-                SetInterfaceZoom(1.0f);
+                SetInterfacePercent(100);
             ImGui::Separator();
             if (ImGui::BeginMenu(TrId("Theme")))
             {
