@@ -172,6 +172,49 @@ namespace dbc::studio
             Result.MainSource = Main;
             return Result;
         }
+
+        std::vector<std::filesystem::path> ProjectFolders(const std::filesystem::path& Location)
+        {
+            std::vector<std::filesystem::path> Folders;
+            std::error_code Error;
+            for (std::filesystem::directory_iterator It(Location, Error), End; !Error && It != End; It.increment(Error))
+            {
+                const std::string Name = dbc::PathToUtf8(It->path().filename());
+                if (!Name.empty() && Name.front() != '.' && It->is_directory(Error))
+                    Folders.push_back(It->path());
+            }
+            std::sort(Folders.begin(), Folders.end(),
+                      [](const std::filesystem::path& Left, const std::filesystem::path& Right)
+                      { return Upper(dbc::PathToUtf8(Left.filename())) < Upper(dbc::PathToUtf8(Right.filename())); });
+            return Folders;
+        }
+
+        NewProjectResult CopySampleProject(const std::filesystem::path& Sample, const std::filesystem::path& Location)
+        {
+            NewProjectResult Result;
+            std::error_code Error;
+            if (!std::filesystem::is_directory(Sample, Error) || Sample.filename().empty())
+            {
+                Result.Error = TrFmt("The sample {0} is missing.", {dbc::PathToUtf8(Sample.filename())});
+                return Result;
+            }
+            Result.Root = Location / Sample.filename();
+            if (std::filesystem::exists(Result.Root, Error))
+                return Result;
+            std::filesystem::create_directories(Location, Error);
+            if (!Error)
+                std::filesystem::copy(Sample, Result.Root, std::filesystem::copy_options::recursive, Error);
+            if (Error)
+            {
+                // A partial copy would pass for the user's own project the next time.
+                std::error_code Ignored;
+                std::filesystem::remove_all(Result.Root, Ignored);
+                Result.Error = TrFmt("Cannot copy the sample {0}: {1}",
+                                     {dbc::PathToUtf8(Sample.filename()), Error.message()});
+                Result.Root.clear();
+            }
+            return Result;
+        }
     } // namespace core
 
 } // namespace dbc::studio

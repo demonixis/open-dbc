@@ -7,8 +7,10 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <string>
+#include <vector>
 
 using namespace dbc::studio;
 using dbc::language::LanguageProfile;
@@ -156,4 +158,44 @@ TEST_CASE("project creation never touches an existing folder")
         core::CreateProject({Location.Root / "missing", "Game", LanguageProfile::Dbc, core::ProjectTemplate::Empty});
     CHECK(!Missing);
     CHECK(!std::filesystem::exists(Location.Root / "missing"));
+}
+
+TEST_CASE("a location lists its project folders by name and skips hidden entries")
+{
+    TemporaryLocation Location;
+    std::filesystem::create_directories(Location.Root / "beta");
+    std::filesystem::create_directories(Location.Root / "Alpha");
+    std::filesystem::create_directories(Location.Root / ".hidden");
+    std::ofstream(Location.Root / "notes.txt") << "x";
+
+    const std::vector<std::filesystem::path> Folders = core::ProjectFolders(Location.Root);
+    REQUIRE(Folders.size() == 2);
+    CHECK(Folders[0].filename() == "Alpha");
+    CHECK(Folders[1].filename() == "beta");
+    CHECK(core::ProjectFolders(Location.Root / "missing").empty());
+}
+
+TEST_CASE("a sample is copied once and the user's copy is kept afterwards")
+{
+    TemporaryLocation Location;
+    const std::filesystem::path Sample = Location.Root / "samples" / "demo";
+    std::filesystem::create_directories(Sample / "textures");
+    std::ofstream(Sample / "demo.dba") << "print 1\n";
+    std::ofstream(Sample / "textures" / "wall.png") << "png";
+    const std::filesystem::path Projects = Location.Root / "projects";
+
+    const core::NewProjectResult Copy = core::CopySampleProject(Sample, Projects);
+    REQUIRE_MESSAGE(Copy, Copy.Error);
+    CHECK(Copy.Root == Projects / "demo");
+    CHECK(std::filesystem::is_regular_file(Copy.Root / "textures" / "wall.png"));
+
+    std::ofstream(Copy.Root / "demo.dba") << "print 2\n";
+    const core::NewProjectResult Again = core::CopySampleProject(Sample, Projects);
+    REQUIRE_MESSAGE(Again, Again.Error);
+    std::ifstream Edited(Again.Root / "demo.dba");
+    std::string Text;
+    std::getline(Edited, Text);
+    CHECK(Text == "print 2");
+
+    CHECK(!core::CopySampleProject(Location.Root / "samples" / "absent", Projects));
 }

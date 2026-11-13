@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace dbc::studio
 {
@@ -49,6 +50,13 @@ namespace dbc::studio
         // reads: a historical .dbpro for DBPro, .opendbc-project.json for DBC.
         // Never touches an existing folder.
         NewProjectResult CreateProject(const NewProjectRequest& Request);
+
+        // The folders directly under `Location`, one per project, by name. Hidden ones are skipped.
+        std::vector<std::filesystem::path> ProjectFolders(const std::filesystem::path& Location);
+
+        // Copies the read-only `Sample` folder to `Location` under its own name, so that it can be edited
+        // and run, and returns the copy. A folder of that name is reused as it is: it holds the user's edits.
+        NewProjectResult CopySampleProject(const std::filesystem::path& Sample, const std::filesystem::path& Location);
     } // namespace core
 
 } // namespace dbc::studio

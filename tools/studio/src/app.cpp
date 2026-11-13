@@ -680,6 +680,24 @@ namespace dbc::studio
         return Resolved;
     }
 
+    void App::OpenLocationProject(const core::Workspace::Location& LocationValue, const std::filesystem::path& Folder)
+    {
+        if (LocationValue.Type != core::Workspace::Kind::BundledSamples)
+        {
+            OpenFolder(Folder);
+            return;
+        }
+        // The bundle is read-only and a run writes its log beside the program.
+        const core::NewProjectResult Copy = core::CopySampleProject(Folder, Workspace_.ImportRoot());
+        if (!Copy)
+        {
+            Status_ = Copy.Error;
+            Output_.Append(Status_, panels::OutputPanel::Severity::Error);
+            return;
+        }
+        OpenFolder(Copy.Root);
+    }
+
     void App::OpenFile(const std::filesystem::path& File)
     {
         if (dbc::language::IsDbProProject(File))
@@ -1976,16 +1994,21 @@ namespace dbc::studio
             {
                 if (ImGui::BeginMenu(TrId("Open Location")))
                 {
+                    // One entry per project: a location is a folder of projects, not a project.
                     for (const core::Workspace::Location& LocationValue : Workspace_.Locations())
                     {
-                        if (ImGui::MenuItem(Tr(LocationValue.Name.c_str())))
+                        if (!ImGui::BeginMenu(Tr(LocationValue.Name.c_str())))
+                            continue;
+                        const std::vector<std::filesystem::path> Folders = core::ProjectFolders(LocationValue.Path);
+                        for (const std::filesystem::path& Folder : Folders)
                         {
-                            OpenFolder(LocationValue.Path);
+                            if (ImGui::MenuItem(dbc::PathToUtf8(Folder.filename()).c_str(), nullptr, false,
+                                                !ExecutionBusy_))
+                                OpenLocationProject(LocationValue, Folder);
                         }
-                        if (!LocationValue.Hint.empty() && ImGui::IsItemHovered())
-                        {
-                            ImGui::SetTooltip("%s", Tr(LocationValue.Hint.c_str()));
-                        }
+                        if (Folders.empty())
+                            ImGui::MenuItem(TrId("No project here"), nullptr, false, false);
+                        ImGui::EndMenu();
                     }
                     ImGui::EndMenu();
                 }
