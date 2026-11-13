@@ -5,13 +5,6 @@
 `scripts/generate_example_media.py`). Everything else in this folder is the
 official help example import described below.
 
-`dusk_rally` and `sky_gardens` show a project laid out in files: the main source
-holds the constants, the globals and the game loop, and includes one file per
-responsibility (`cars.dba`, `hud.dba`...). They use functions, never `GOSUB`.
-`levels/<Name>/` holds what the Studio's Scene view edits: `world_settings.dba`
-for the display, the sync rate and the camera lens, and `<Name>.dba` for the
-static scenery. The rest of each world is built by code from `DATA`.
-
 Imported from `Install/Help/examples` in the official
 [Dark-Basic-Pro source snapshot](https://github.com/Dark-Basic-Software-Limited/Dark-Basic-Pro/tree/af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9/Install/Help/examples),
 commit `af6f19d7fc2919c356c683f7f5b8ec0c37a7d7d9`, MIT-licensed,
