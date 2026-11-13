@@ -176,7 +176,7 @@ namespace dbc::studio
             ImGui::PushClipRect(Origin, NameEnd, true);
             ImGui::TextUnformatted(Tree_.Name.empty() ? dbc::PathToUtf8(Root_).c_str() : Tree_.Name.c_str());
             ImGui::PopClipRect();
-            ImGui::SameLine(NameWidth);
+            ImGui::SameLine(ImGui::GetStyle().WindowPadding.x + NameWidth);
             if (Theme::RefreshButton("##refresh", Tr("Refresh")))
             {
                 Refresh();
