@@ -1,0 +1,27 @@
+diff --git a/src/gpu/vulkan/SDL_gpu_vulkan.c b/src/gpu/vulkan/SDL_gpu_vulkan.c
+--- a/src/gpu/vulkan/SDL_gpu_vulkan.c
++++ b/src/gpu/vulkan/SDL_gpu_vulkan.c
+@@ -9298,16 +9298,19 @@
+             blit.srcOffsets[0].y = 0;
+             blit.srcOffsets[0].z = depth;
+ 
+-            blit.srcOffsets[1].x = container->header.info.width >> (level - 1);
+-            blit.srcOffsets[1].y = container->header.info.height >> (level - 1);
++            /* OpenDBC: a level is never thinner than one texel. On a texture that is
++             * not square the shorter side reaches zero first, and blitting such an
++             * empty region corrupted the first level on Adreno. */
++            blit.srcOffsets[1].x = SDL_max(1, container->header.info.width >> (level - 1));
++            blit.srcOffsets[1].y = SDL_max(1, container->header.info.height >> (level - 1));
+             blit.srcOffsets[1].z = depth + 1;
+ 
+             blit.dstOffsets[0].x = 0;
+             blit.dstOffsets[0].y = 0;
+             blit.dstOffsets[0].z = depth;
+ 
+-            blit.dstOffsets[1].x = container->header.info.width >> level;
+-            blit.dstOffsets[1].y = container->header.info.height >> level;
++            blit.dstOffsets[1].x = SDL_max(1, container->header.info.width >> level);
++            blit.dstOffsets[1].y = SDL_max(1, container->header.info.height >> level);
+             blit.dstOffsets[1].z = depth + 1;
+ 
+             blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
