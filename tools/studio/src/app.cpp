@@ -1596,8 +1596,18 @@ namespace dbc::studio
     void App::DrawDockSpace()
     {
         const ImGuiViewport* Viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(Viewport->WorkPos);
-        ImGui::SetNextWindowSize(Viewport->WorkSize);
+        ImVec2 HostPos = Viewport->WorkPos;
+        ImVec2 HostSize = Viewport->WorkSize;
+        // Keeps the Studio out of the status bar, the notch and the home indicator, where the system
+        // takes the touches. The safe area is the whole window on desktops.
+        SDL_Rect Safe{};
+        if (SDL_GetWindowSafeArea(Window_, &Safe) && Safe.w > 0 && Safe.h > 0)
+        {
+            HostPos = ImVec2(Viewport->Pos.x + static_cast<float>(Safe.x), Viewport->Pos.y + static_cast<float>(Safe.y));
+            HostSize = ImVec2(static_cast<float>(Safe.w), static_cast<float>(Safe.h));
+        }
+        ImGui::SetNextWindowPos(HostPos);
+        ImGui::SetNextWindowSize(HostSize);
         ImGui::SetNextWindowViewport(Viewport->ID);
 
         ImGuiWindowFlags HostFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
