@@ -224,7 +224,9 @@ screen, not a trackpad.
 
 In the iOS and Android Studios one finger stands for the mouse: a tap clicks, a
 drag scrolls what scrolls and drags the rest, and a finger held still before it
-moves always drags, which selects text. View > Increase Interface Size enlarges
+moves always drags, which selects text. The editor's caret stays drawn when another
+panel has the focus, and a tap in a text field brings the keyboard back. View >
+Increase Interface Size enlarges
 menus and panels; the Output and Problems panels stay lowered until a run has
 something to report. There the window covers the system's status bar (View > Full
 Screen), the status bar is hidden (View > Status Bar) and the toolbar's first

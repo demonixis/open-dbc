@@ -124,6 +124,8 @@ namespace dbc::studio
         void SetInterfacePercent(int Percent);
         // Sizes the style and the fonts for the display, the platform and the interface zoom.
         void ApplyInterfaceScale();
+        // Asks for the on-screen keyboard again when a tapped text field was left without one.
+        void ReopenScreenKeyboard();
         // One finger drives the interface as a mouse would: see core::TouchGesture.
         bool HandleTouch(const SDL_Event& Event);
         void ApplyTouch(const std::vector<core::TouchAction>& Actions);
@@ -250,6 +252,8 @@ namespace dbc::studio
         // release: resizing everything under the finger would move the slider itself.
         int PendingInterfacePercent_ = 0;
         float KeyboardHeight_ = 0.0f;
+        // Frames left before a tap's field is checked for its keyboard; 0 when no check is due.
+        int KeyboardCheckIn_ = 0;
         // Between the system's notice that the app leaves the screen and its return.
         bool InBackground_ = false;
         bool ImguiPlatformInitialized_ = false;

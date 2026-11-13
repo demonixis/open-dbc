@@ -1,0 +1,18 @@
+diff --git a/TextEditor.cpp b/TextEditor.cpp
+--- a/TextEditor.cpp
++++ b/TextEditor.cpp
+@@ -648,9 +648,12 @@
+ //
+ 
+ void TextEditor::renderCursorCarets() {
+-	if (config.caretsVisible && ImGui::IsWindowFocused()) {
++	// a touch screen has no pointer to show where the text is edited: there an editor without the focus keeps a steady caret
++	auto focused = ImGui::IsWindowFocused();
++
++	if (config.caretsVisible && (focused || ImGui::GetIO().MouseSource == ImGuiMouseSource_TouchScreen)) {
+ 		auto& io = ImGui::GetIO();
+-		cursorAnimationTimer += io.DeltaTime;
++		cursorAnimationTimer = focused ? cursorAnimationTimer + io.DeltaTime : 0.0f;
+ 
+ 		auto drawList = ImGui::GetWindowDrawList();
+ 		size_t cursorIndex = 0;

@@ -52,6 +52,8 @@ namespace dbc::studio
         constexpr std::array<const char*, 6> KLogLevels = {"trace", "debug", "info", "warn", "error", "off"};
         constexpr float KTextZoomStep = 1.1f;
         constexpr int KInterfacePercentStep = 10;
+        // How long after a tap the keyboard is checked: the tap reaches ImGui over the next frames.
+        constexpr int KKeyboardCheckFrames = 4;
         constexpr Uint64 KTextZoomSaveDelayMs = 1000;
 
         enum class ToolIcon
@@ -63,6 +65,17 @@ namespace dbc::studio
             Stop,
             Menu,
         };
+
+        // Opens the on-screen keyboard for code: the system's defaults correct and capitalize prose.
+        void StartCodeTextInput(SDL_Window* Window)
+        {
+            const SDL_PropertiesID Properties = SDL_CreateProperties();
+            SDL_SetBooleanProperty(Properties, SDL_PROP_TEXTINPUT_AUTOCORRECT_BOOLEAN, false);
+            SDL_SetNumberProperty(Properties, SDL_PROP_TEXTINPUT_CAPITALIZATION_NUMBER, SDL_CAPITALIZE_NONE);
+            SDL_SetBooleanProperty(Properties, SDL_PROP_TEXTINPUT_MULTILINE_BOOLEAN, true);
+            SDL_StartTextInputWithProperties(Window, Properties);
+            SDL_DestroyProperties(Properties);
+        }
 
         // Toolbar buttons are drawn as vector shapes on a 16-unit grid, so they stay
         // sharp at any DPI without an icon font or texture.
@@ -506,14 +519,7 @@ namespace dbc::studio
             {
                 SDL_Window* Focus = SDL_GetKeyboardFocus();
                 if (Focus && (Data->WantVisible || Data->WantTextInput) && !SDL_TextInputActive(Focus))
-                {
-                    const SDL_PropertiesID Properties = SDL_CreateProperties();
-                    SDL_SetBooleanProperty(Properties, SDL_PROP_TEXTINPUT_AUTOCORRECT_BOOLEAN, false);
-                    SDL_SetNumberProperty(Properties, SDL_PROP_TEXTINPUT_CAPITALIZATION_NUMBER, SDL_CAPITALIZE_NONE);
-                    SDL_SetBooleanProperty(Properties, SDL_PROP_TEXTINPUT_MULTILINE_BOOLEAN, true);
-                    SDL_StartTextInputWithProperties(Focus, Properties);
-                    SDL_DestroyProperties(Properties);
-                }
+                    StartCodeTextInput(Focus);
                 if (BackendSetImeData)
                     BackendSetImeData(Context, Viewport, Data);
                 // SDL slides the whole view up to show the area the backend gave it. The Studio makes
@@ -854,6 +860,7 @@ namespace dbc::studio
                 case Kind::Press:
                     Io.AddMousePosEvent(Action.At.X, Action.At.Y);
                     Io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+                    KeyboardCheckIn_ = KKeyboardCheckFrames;
                     break;
                 case Kind::Release:
                     Io.AddMousePosEvent(Action.At.X, Action.At.Y);
@@ -1145,12 +1152,15 @@ namespace dbc::studio
                                                   ? TextEditor::DocPos(Plan.Line, 0)
                                                   : TextEditor::DocPos(Last, Glyphs);
                 Editor->ReplaceSectionText(At, At, Plan.Text);
+                // The caret goes where the text went: left behind, it would be out of sight.
+                Editor->SetCursor(At);
                 Editor->ScrollToLine(At.line, TextEditor::Scroll::alignTop);
                 Status_ = TrFmt("Added {0} to the Snippets region at the end of the file", {Tr(Value.Name.c_str())});
                 break;
             }
         }
         Editor->SetFocus();
+        KeyboardCheckIn_ = KKeyboardCheckFrames;
     }
 
     void App::RequestNewProject()
@@ -1668,6 +1678,24 @@ namespace dbc::studio
             AddLibraryTexture(*Picked);
 
         ImGui::Render();
+        ReopenScreenKeyboard();
+    }
+
+    void App::ReopenScreenKeyboard()
+    {
+#ifdef DBC_STUDIO_IOS
+        // ImGui asks for the keyboard only when the caret moves or a field takes the focus. One the
+        // user dismissed, or that iOS dropped while another was closing, would stay away from a tap
+        // in the same place: a few frames after a tap, a field that wants text and has no keyboard
+        // asks again. With a hardware keyboard this restarts text input for nothing.
+        if (KeyboardCheckIn_ <= 0 || --KeyboardCheckIn_ > 0)
+            return;
+        SDL_Window* Focus = SDL_GetKeyboardFocus();
+        if (Focus == nullptr || !ImGui::GetIO().WantTextInput || core::ScreenKeyboardHeight() > 0.0f)
+            return;
+        SDL_StopTextInput(Focus);
+        StartCodeTextInput(Focus);
+#endif
     }
 
     void App::DrawProjectResolution()
