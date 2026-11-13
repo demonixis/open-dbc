@@ -11,6 +11,11 @@ include(FetchContent)
 opendbc_fetch_dependency(imgui
     https://github.com/ocornut/imgui.git
     9b4eb24cee2071e61dc1f9ef3e5228097cdde720
+    PATCH_COMMAND ${CMAKE_COMMAND}
+                  -DOPENDBC_GIT_EXECUTABLE=${GIT_EXECUTABLE}
+                  -DOPENDBC_PATCH_SOURCE_DIR=<SOURCE_DIR>
+                  -DOPENDBC_PATCH_FILE=${CMAKE_SOURCE_DIR}/cmake/patches/imgui-sdlgpu-ios-msl.patch
+                  -P ${CMAKE_SOURCE_DIR}/cmake/apply_idempotent_patch.cmake
 )
 FetchContent_MakeAvailable(imgui)
 

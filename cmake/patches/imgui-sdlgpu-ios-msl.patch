@@ -1,0 +1,26 @@
+diff --git a/backends/imgui_impl_sdlgpu3.cpp b/backends/imgui_impl_sdlgpu3.cpp
+index 3883ca8..15653a5 100644
+--- a/backends/imgui_impl_sdlgpu3.cpp
++++ b/backends/imgui_impl_sdlgpu3.cpp
+@@ -469,9 +469,10 @@ static void ImGui_ImplSDLGPU3_CreateShaders()
+     else
+     {
+         SDL_GPUShaderFormat supported_formats = SDL_GetGPUShaderFormats(v->Device);
+-        if (supported_formats & SDL_GPU_SHADERFORMAT_METALLIB)
++        // OpenDBC: the metallib blobs are built for macOS and iOS rejects them, simulator included.
++        if ((supported_formats & SDL_GPU_SHADERFORMAT_METALLIB) && TARGET_OS_OSX)
+         {
+-            // Using metallib blobs (macOS 14+, iOS)
++            // Using metallib blobs (macOS 14+)
+             vertex_shader_info.entrypoint = "main0";
+             vertex_shader_info.format = SDL_GPU_SHADERFORMAT_METALLIB;
+             vertex_shader_info.code = metallib_vertex;
+@@ -483,7 +484,7 @@ static void ImGui_ImplSDLGPU3_CreateShaders()
+         }
+         else if (supported_formats & SDL_GPU_SHADERFORMAT_MSL)
+         {
+-            // macOS: using MSL source
++            // Using MSL source
+             vertex_shader_info.entrypoint = "main0";
+             vertex_shader_info.format = SDL_GPU_SHADERFORMAT_MSL;
+             vertex_shader_info.code = msl_vertex;
