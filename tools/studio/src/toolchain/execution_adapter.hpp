@@ -91,6 +91,12 @@ namespace dbc::studio
             // The opendbc-runner executable; the one installed beside the Studio by default.
             void SetRunner(std::filesystem::path Runner);
 
+            // Where there is one window per display, the in-process program draws into the Studio's: Lend
+            // frees it for the program's GPU device, Reclaim takes it back once the program has ended.
+            void SetHostWindow(SDL_Window* Window, std::function<bool()> Lend, std::function<bool()> Reclaim);
+            // True while the program has the Studio's window, which the Studio must then not draw into.
+            bool OwnsWindow() const;
+
             bool IsRunning() const;
             bool IsVrEnabled() const;
             bool IsVrPacing() const;
@@ -128,6 +134,10 @@ namespace dbc::studio
             void ServiceSuspension(const dbc::interpreter::ExecutionTick& Tick);
             void ShutdownRuntime();
 
+            SDL_Window* HostWindow_ = nullptr;
+            std::function<bool()> LendWindow_;
+            std::function<bool()> ReclaimWindow_;
+            bool WindowLent_ = false;
             std::unique_ptr<dbc::EngineKernel> Kernel_;
             std::unique_ptr<dbc::interpreter::ExecutionService> Execution_;
 #else

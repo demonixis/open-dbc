@@ -249,6 +249,19 @@ namespace dbc::studio
             return IsRunning() && Kernel_->Vr().Pacing();
         }
 
+        void ExecutionAdapter::SetHostWindow(SDL_Window* Window, std::function<bool()> Lend,
+                                             std::function<bool()> Reclaim)
+        {
+            HostWindow_ = Window;
+            LendWindow_ = std::move(Lend);
+            ReclaimWindow_ = std::move(Reclaim);
+        }
+
+        bool ExecutionAdapter::OwnsWindow() const
+        {
+            return WindowLent_;
+        }
+
         bool ExecutionAdapter::Run(RunDocument Document, const RunOptions& Options)
         {
             if (IsRunning() || Document.LogicalPath.empty())
@@ -273,6 +286,17 @@ namespace dbc::studio
                 Report(Tr("Failed to create the OpenDBC runtime"), true);
                 ShutdownRuntime();
                 return false;
+            }
+            if (HostWindow_ && LendWindow_ && ReclaimWindow_)
+            {
+                if (!LendWindow_())
+                {
+                    Report(Tr("Failed to create the OpenDBC runtime"), true);
+                    ShutdownRuntime();
+                    return false;
+                }
+                WindowLent_ = true;
+                Kernel_->Core().UseHostWindow(HostWindow_);
             }
 
             dbc::interpreter::ExecutionRequest Request;
@@ -415,6 +439,13 @@ namespace dbc::studio
                 Kernel_->Shutdown();
                 Kernel_.reset();
             }
+            // The runtime has released the window by now.
+            if (WindowLent_)
+            {
+                WindowLent_ = false;
+                if (!ReclaimWindow_())
+                    Report(Tr("The Studio could not take its window back"), true);
+            }
             dbc::log::Shutdown();
         }
 #else
@@ -447,6 +478,13 @@ namespace dbc::studio
         }
 
         bool ExecutionAdapter::IsVrPacing() const
+        {
+            return false;
+        }
+
+        void ExecutionAdapter::SetHostWindow(SDL_Window*, std::function<bool()>, std::function<bool()>) {}
+
+        bool ExecutionAdapter::OwnsWindow() const
         {
             return false;
         }

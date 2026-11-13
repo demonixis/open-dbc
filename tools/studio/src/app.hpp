@@ -146,6 +146,9 @@ namespace dbc::studio
 
         bool CreatePresentation();
         void DestroyPresentation();
+        // Hands the window to a program running in-process, then takes it back.
+        bool LendWindow();
+        bool ReclaimWindow();
 
         SDL_Window* Window_ = nullptr;
         SDL_GPUDevice* Gpu_ = nullptr;

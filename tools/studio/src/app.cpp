@@ -323,6 +323,7 @@ namespace dbc::studio
         };
 
         Execution_.SetHandlers(OnLine, OnFinish);
+        Execution_.SetHostWindow(Window_, [this] { return LendWindow(); }, [this] { return ReclaimWindow(); });
         Problems_.SetOnSelect(
             [this](const std::filesystem::path& Path, std::uint32_t Line)
             {
@@ -442,6 +443,31 @@ namespace dbc::studio
         return true;
     }
 
+    bool App::LendWindow()
+    {
+        if (!WindowClaimed_)
+            return false;
+        SDL_WaitForGPUIdle(Gpu_);
+        SDL_ReleaseWindowFromGPUDevice(Gpu_, Window_);
+        WindowClaimed_ = false;
+        return true;
+    }
+
+    bool App::ReclaimWindow()
+    {
+        if (WindowClaimed_)
+            return true;
+        if (!SDL_ClaimWindowForGPUDevice(Gpu_, Window_))
+        {
+            DBC_LOG_ERROR("SDL_ClaimWindowForGPUDevice: {}", SDL_GetError());
+            return false;
+        }
+        WindowClaimed_ = true;
+        if (!SDL_SetGPUSwapchainParameters(Gpu_, Window_, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC))
+            DBC_LOG_ERROR("SDL_SetGPUSwapchainParameters: {}", SDL_GetError());
+        return true;
+    }
+
     void App::DestroyPresentation()
     {
         if (Gpu_ != nullptr)
@@ -505,6 +531,10 @@ namespace dbc::studio
                     SDL_Delay(10);
                 continue;
             }
+
+            // The running program has the window: the Studio comes back when it ends.
+            if (Execution_.OwnsWindow() || !WindowClaimed_)
+                continue;
 
             DrawFrame();
             UpdateFlightMouse();
@@ -574,8 +604,19 @@ namespace dbc::studio
         SDL_Event Event;
         while (SDL_PollEvent(&Event))
         {
-            if (!HandleTextZoom(Event) && (Mode_ != Mode::Scene || !Scene_.HandleEvent(Event)))
+            if (Execution_.OwnsWindow())
+            {
+                // The program covers the Studio and its Stop button: three fingers down end it.
+                int Fingers = 0;
+                if (Event.type == SDL_EVENT_FINGER_DOWN)
+                    SDL_free(SDL_GetTouchFingers(Event.tfinger.touchID, &Fingers));
+                if (Fingers >= 3)
+                    StopRun();
+            }
+            else if (!HandleTextZoom(Event) && (Mode_ != Mode::Scene || !Scene_.HandleEvent(Event)))
+            {
                 ImGui_ImplSDL3_ProcessEvent(&Event);
+            }
             Execution_.HandleEvent(Event);
 
             if (Event.type == SDL_EVENT_QUIT)
@@ -1603,7 +1644,8 @@ namespace dbc::studio
         SDL_Rect Safe{};
         if (SDL_GetWindowSafeArea(Window_, &Safe) && Safe.w > 0 && Safe.h > 0)
         {
-            HostPos = ImVec2(Viewport->Pos.x + static_cast<float>(Safe.x), Viewport->Pos.y + static_cast<float>(Safe.y));
+            HostPos =
+                ImVec2(Viewport->Pos.x + static_cast<float>(Safe.x), Viewport->Pos.y + static_cast<float>(Safe.y));
             HostSize = ImVec2(static_cast<float>(Safe.w), static_cast<float>(Safe.h));
         }
         ImGui::SetNextWindowPos(HostPos);

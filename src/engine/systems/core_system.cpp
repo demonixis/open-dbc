@@ -66,8 +66,10 @@ namespace dbc
         {
             SDL_SetWindowRelativeMouseMode(Window_, false);
             SDL_ShowCursor();
-            SDL_DestroyWindow(Window_);
+            if (!HostWindow_)
+                SDL_DestroyWindow(Window_);
             Window_ = nullptr;
+            HostWindow_ = false;
         }
 
         if (SdlInitFlags_ != 0)
@@ -79,6 +81,14 @@ namespace dbc
         LastRenderTicks_ = 0;
         LastSyncNs_ = 0;
         DeltaTime_ = 0.0f;
+    }
+
+    void CoreSystem::UseHostWindow(SDL_Window* Window)
+    {
+        if (Initialized_ || !Window)
+            return;
+        Window_ = Window;
+        HostWindow_ = true;
     }
 
     bool CoreSystem::IsRunning()
@@ -123,12 +133,16 @@ namespace dbc
         }
         Initialized_ = true;
 
+        if (!HostWindow_)
+        {
 #ifdef DBC_MOBILE
-        // On mobile, pass 0x0 so SDL uses the device's native surface dimensions.
-        Window_ = SDL_CreateWindow("OpenDBC Artifact", 0, 0, 0);
+            // On mobile, pass 0x0 so SDL uses the device's native surface dimensions.
+            Window_ = SDL_CreateWindow("OpenDBC Artifact", 0, 0, 0);
 #else
-        Window_ = SDL_CreateWindow("OpenDBC Runtime", WindowWidth_, WindowHeight_, Headless_ ? SDL_WINDOW_HIDDEN : 0);
+            Window_ =
+                SDL_CreateWindow("OpenDBC Runtime", WindowWidth_, WindowHeight_, Headless_ ? SDL_WINDOW_HIDDEN : 0);
 #endif
+        }
         if (!Window_)
         {
             DBC_LOG_ERROR("SDL window creation failed: {}", SDL_GetError());

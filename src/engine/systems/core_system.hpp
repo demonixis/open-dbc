@@ -25,6 +25,9 @@ namespace dbc
         void Shutdown();
         bool IsRunning();
         bool EnsureInitialized();
+        // Draws into a window the host owns instead of creating one: a platform with a single window per
+        // display has none to spare. Call before the runtime initializes; Shutdown leaves the window alive.
+        void UseHostWindow(SDL_Window* Window);
 
         // --- Display / window ---
         bool SetDisplayMode(int Width, int Height, int Depth, int Vsync = 1, int Multisampling = 0,
@@ -104,6 +107,7 @@ namespace dbc
 
         EngineKernel& Kernel_;
         SDL_Window* Window_ = nullptr;
+        bool HostWindow_ = false;
         int WindowWidth_ = 640;
         int WindowHeight_ = 480;
         // Logical BASIC depth; SDL_GPU render targets remain RGBA32.

@@ -30,7 +30,10 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
 - Desktop Studios compile the program with the unsaved tabs and run its image in a
   child process, `opendbc-runner`; Stop sends `SIGTERM`, which ends the run as
   cancelled. The iOS and Android Studios cannot start processes and run programs
-  in-process, where `SYNC` and waits yield so the Studio stays responsive.
+  in-process, where `SYNC` and waits yield so the Studio stays responsive. A
+  display has one window there, so the Studio lends its own to the program's GPU
+  device (`CoreSystem::UseHostWindow`) and draws nothing until the program ends;
+  three fingers on the screen stop it.
 - A program image (`.obc`, `src/interpreter/program_image.cpp`) stores the
   bytecode and project startup under the runtime fingerprint; loading it checks
   the container, then the verifier runs as for freshly compiled bytecode.

@@ -794,6 +794,7 @@
   "The Scene view edits DBPro projects only. Classic levels keep running as BASIC.": "La vue Scène ne modifie que les projets DBPro. Les niveaux Classic continuent de s’exécuter en BASIC.",
   "The Scene view reads DBPro programs only, and this one ran as {0}.": "La vue Scène ne lit que les programmes DBPro, et celui-ci s’est exécuté en {0}.",
   "The Scene viewport cannot render: {0}": "La vue 3D de la scène ne peut pas s’afficher : {0}",
+  "The Studio could not take its window back": "Le Studio n’a pas pu reprendre sa fenêtre",
   "The active document is not a .dba BASIC source.": "Le document actif n’est pas une source BASIC .dba.",
   "The country is a two-letter code, such as FR": "Le pays est un code à deux lettres, comme FR",
   "The edited source would not parse, so it was left as it is.": "La source modifiée ne serait plus analysable : elle a été laissée telle quelle.",
