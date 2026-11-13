@@ -33,7 +33,6 @@
 #include "panels/build_window.hpp"
 #include "panels/code_panel.hpp"
 #include "panels/editor_panel.hpp"
-#include "panels/launcher_window.hpp"
 #include "panels/media_panel.hpp"
 #include "panels/output_panel.hpp"
 #include "panels/problems_panel.hpp"
@@ -108,7 +107,6 @@ namespace dbc::studio
         // Compiles the current BASIC tab and lists its diagnostics in Problems.
         void CheckCurrentDocument();
         void ShowProblems(const std::vector<toolchain::RunDiagnostic>& Diagnostics);
-        void RunLauncherPath(const std::filesystem::path& Path);
         void StopRun();
         void SetTextZoom(float Zoom);
         // A pinch, or the wheel with Ctrl or Cmd, over a panel of code text. True when it took the event.
@@ -199,7 +197,6 @@ namespace dbc::studio
         panels::AssetPreview Preview_;
         panels::CodePanel Code_;
         panels::MediaPanel Media_;
-        panels::LauncherWindow Launcher_;
         panels::SceneEditor Scene_;
         panels::SnippetWindow Snippets_;
 

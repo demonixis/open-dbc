@@ -299,7 +299,7 @@ TEST_CASE("The French catalogue names every Studio window")
     core::ActivateInterfaceLanguage("fr");
     for (const char* Window :
          {"Project", "Editor", "Output", "Problems", "Preview", "Media", "Hierarchy", "Viewport", "Inspector",
-          "Level Settings", "Assets", "Launcher", "Build", "Project Settings", "About OpenDBC"})
+          "Level Settings", "Assets", "Build", "Project Settings", "About OpenDBC"})
         CHECK(std::string_view(Tr(Window)) != Window);
     CHECK(std::string_view(Tr("Code")) == "Code");
     core::ActivateInterfaceLanguage("en");
@@ -332,10 +332,10 @@ TEST_CASE("The French catalogue covers the menus and the application's messages"
     CHECK(std::string_view(TrC("dialect origin|detected")) == "detected");
 }
 
-TEST_CASE("The French catalogue covers the launcher, the build window and the project settings")
+TEST_CASE("The French catalogue covers the build window and the project settings")
 {
     core::ActivateInterfaceLanguage("fr");
-    for (const char* Label : {"Unrecognised statements", "Development (unsigned)", "macOS app", "Windows executable",
+    for (const char* Label : {"Development (unsigned)", "macOS app", "Windows executable",
                               "Linux folder", "iOS (Xcode project)", "Missing", "My Projects", "Samples", "File System",
                               "Open any folder on this machine", "Screen orientation", "DBPro Advanced"})
         CHECK(std::string_view(Tr(Label)) != Label);

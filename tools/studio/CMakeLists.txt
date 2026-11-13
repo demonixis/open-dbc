@@ -251,8 +251,6 @@ set(STUDIO_SOURCES
     src/dba/completion.hpp
     src/dba/language.cpp
     src/dba/language.hpp
-    src/dba/program_info.cpp
-    src/dba/program_info.hpp
     src/dba/reference.cpp
     src/dba/source_symbols.cpp
     src/dba/source_symbols.hpp
@@ -268,8 +266,6 @@ set(STUDIO_SOURCES
     src/panels/completion_popup.hpp
     src/panels/editor_panel.cpp
     src/panels/editor_panel.hpp
-    src/panels/launcher_window.cpp
-    src/panels/launcher_window.hpp
     src/panels/media_panel.cpp
     src/panels/media_panel.hpp
     src/panels/output_panel.cpp

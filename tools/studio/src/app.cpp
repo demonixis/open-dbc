@@ -265,10 +265,7 @@ namespace dbc::studio
         Commands_.Build(Reference_);
         Editor_.Initialize(&Commands_);
 
-        Launcher_.Initialize(&Commands_, &Workspace_, &Dialog_);
         Snippets_.SetUserFolder(core::paths::PrefDir() / "snippets");
-        Launcher_.SetHandlers([this](const std::filesystem::path& Path) { RunLauncherPath(Path); },
-                              [this](const std::filesystem::path& Path) { OpenFile(Path); });
 
         Project_.SetOnActivate([this](const std::filesystem::path& Path) { OpenFile(Path); });
         if (Execution_.CanCaptureScene())
@@ -875,10 +872,6 @@ namespace dbc::studio
                                  ResolvedProject_->AssetRoot);
         Media_.SetRoot(ResolvedProject_->AssetRoot.empty() ? ResolvedProject_->ProjectRoot
                                                            : ResolvedProject_->AssetRoot);
-        if (ResolvedProject_->DescriptorPath)
-            Launcher_.SetProject(*ResolvedProject_);
-        else
-            Launcher_.SetFolder(ResolvedProject_->ProjectRoot, ResolvedProject_->Profile);
         Status_ = TrFmt("Opened {0} as {1}", {dbc::PathToUtf8(ResolvedProject_->ProjectRoot),
                                               dbc::language::ProfileName(ResolvedProject_->Profile)});
         for (const std::string& Warning : ResolvedProject_->Warnings)
@@ -1766,7 +1759,6 @@ namespace dbc::studio
             DrawCodePanels();
         }
 
-        Launcher_.Draw(Window_);
         DrawBuildWindow();
         DrawEditorSettings();
 
@@ -2113,11 +2105,6 @@ namespace dbc::studio
 
         if (ImGui::BeginMenu(TrId("View")))
         {
-            if (ImGui::MenuItem(TrId("Launcher...")))
-            {
-                Launcher_.Open();
-            }
-            ImGui::Separator();
             const std::string Blocker = SceneBlocker();
             // The mode items share labels with panel toggles below, so they need distinct IDs.
             if (ImGui::MenuItem(TrId("Code##Mode"), "Ctrl+1", Mode_ == Mode::Code))
@@ -2427,21 +2414,6 @@ namespace dbc::studio
             return;
         }
         RenderFailed_ = false;
-    }
-
-    void App::RunLauncherPath(const std::filesystem::path& Path)
-    {
-        if (ExecutionBusy_)
-            return;
-        OpenFile(Path);
-        std::error_code Error;
-        if (Editor_.CurrentPath().empty() || !std::filesystem::equivalent(Editor_.CurrentPath(), Path, Error) || Error)
-        {
-            Output_.Append(Tr("The Launcher could not activate the selected .dba document."),
-                           panels::OutputPanel::Severity::Error);
-            return;
-        }
-        RunActiveDocument();
     }
 
     std::optional<toolchain::ActiveRunPlan> App::PlanCurrentRun(bool Report)

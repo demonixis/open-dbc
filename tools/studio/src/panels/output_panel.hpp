@@ -7,8 +7,7 @@ namespace dbc::studio
 {
     namespace panels
     {
-        // Run/build console. Replaces the launcher OutputPanel and the editor log
-        // pane, which are now the same widget.
+        // Run/build console.
         class OutputPanel
         {
           public:

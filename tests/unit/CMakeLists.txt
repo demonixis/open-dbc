@@ -29,7 +29,6 @@ if(NOT ANDROID AND NOT IOS)
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/code_outline.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/command_database.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/completion.cpp
-        ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/program_info.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/reference.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/dba/source_symbols.cpp
     )
