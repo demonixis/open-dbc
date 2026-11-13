@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12 draws the launch screen itself: the icon on this background. -->
+    <style name="StudioTheme" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/studio_background</item>
+        <item name="android:statusBarColor">@color/studio_background</item>
+        <item name="android:navigationBarColor">@color/studio_background</item>
+        <item name="android:windowSplashScreenBackground">@color/studio_background</item>
+    </style>
+</resources>

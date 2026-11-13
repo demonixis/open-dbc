@@ -10,7 +10,7 @@ namespace dbc::studio
         // cannot draw over it: the window belongs to the program's GPU device. This is a button of the
         // system's own, in the window's top right corner, that asks for the program to stop. Show it once
         // the program has the window: taking it puts the program's view in front of everything there.
-#if defined(DBC_STUDIO_IOS)
+#if defined(DBC_STUDIO_IOS) || defined(DBC_STUDIO_ANDROID)
         void ShowStopButton(SDL_Window* Window);
         void HideStopButton();
         // Whether the button was pressed since the last call.

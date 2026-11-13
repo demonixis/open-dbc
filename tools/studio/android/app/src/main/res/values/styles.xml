@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The Studio's own dark background, so that starting does not flash white. -->
+    <color name="studio_background">#2D3034</color>
+    <style name="StudioTheme" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/studio_background</item>
+        <item name="android:statusBarColor">@color/studio_background</item>
+        <item name="android:navigationBarColor">@color/studio_background</item>
+    </style>
+</resources>

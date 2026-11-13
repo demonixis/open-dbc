@@ -1,0 +1,68 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Written by CMake: the identity and version of this build, and the keystore of a release.
+def studio = new Properties()
+file('../studio.properties').withInputStream { studio.load(it) }
+def keystorePath = studio.getProperty('keystorePath', '')
+def signingEnabled = !keystorePath.isEmpty()
+
+android {
+    namespace 'net.demonixis.opendbc.studio'
+    compileSdk 36
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        applicationId studio.getProperty('applicationId')
+        minSdk 29
+        targetSdk 36
+        versionCode Integer.parseInt(studio.getProperty('versionCode'))
+        versionName studio.getProperty('versionName')
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    if (signingEnabled) {
+        signingConfigs {
+            release {
+                storeFile file(keystorePath)
+                storePassword System.getenv('OPENDBC_ANDROID_KEYSTORE_PASSWORD')
+                keyAlias studio.getProperty('keyAlias')
+                keyPassword System.getenv('OPENDBC_ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Without a keystore the debug key signs the build, so that it installs on a device;
+            // Google Play refuses it.
+            signingConfig signingEnabled ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    packaging {
+        jniLibs {
+            keepDebugSymbols += ['**/libmain.so']
+        }
+    }
+
+    // Textures and sounds are compressed already, and the Studio copies them out once.
+    androidResources {
+        noCompress += ['jpg', 'png', 'ogg', 'wav', 'spv']
+        // The default pattern drops every file whose name starts with a dot, and a Classic sample's
+        // settings are in one.
+        ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:none', '-nowarn']
+}

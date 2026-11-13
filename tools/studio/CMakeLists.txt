@@ -224,6 +224,8 @@ set(STUDIO_SOURCES
 
     src/core/asset_library.cpp
     src/core/asset_library.hpp
+    src/core/bundled_resources.cpp
+    src/core/bundled_resources.hpp
     src/core/builtin_snippets.cpp
     src/core/file_dialog.cpp
     src/core/file_dialog.hpp
@@ -239,6 +241,7 @@ set(STUDIO_SOURCES
     src/core/new_project.hpp
     src/core/paths.cpp
     src/core/paths.hpp
+    src/core/safe_area.hpp
     src/core/screen_keyboard.hpp
     src/core/stop_button.hpp
     src/core/touch_gesture.cpp
@@ -371,8 +374,31 @@ elseif(NOT ANDROID)
         VERBATIM)
 endif()
 
+if(IOS OR ANDROID)
+    # The demos written for OpenDBC ship as the Samples location. They are staged at configure time,
+    # without the logs of local runs, and the app's package takes the folder. A Classic demo has no
+    # project file to name its dialect, so it gets the settings file the Studio would have written.
+    set(STUDIO_SAMPLE_STAGE "${CMAKE_CURRENT_BINARY_DIR}/samples")
+    file(REMOVE_RECURSE "${STUDIO_SAMPLE_STAGE}")
+    foreach(STUDIO_SAMPLE_FAMILY IN ITEMS dbpro dbc)
+        file(GLOB STUDIO_SAMPLES LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/examples/${STUDIO_SAMPLE_FAMILY}/demos/*")
+        foreach(STUDIO_SAMPLE IN LISTS STUDIO_SAMPLES)
+            if(NOT IS_DIRECTORY "${STUDIO_SAMPLE}")
+                continue()
+            endif()
+            get_filename_component(STUDIO_SAMPLE_NAME "${STUDIO_SAMPLE}" NAME)
+            file(COPY "${STUDIO_SAMPLE}" DESTINATION "${STUDIO_SAMPLE_STAGE}" PATTERN "*.log" EXCLUDE)
+            if(STUDIO_SAMPLE_FAMILY STREQUAL "dbc")
+                file(WRITE "${STUDIO_SAMPLE_STAGE}/${STUDIO_SAMPLE_NAME}/.opendbc-project.json"
+                    "{\"language\": {\"dialect\": \"dbc\"}}\n")
+            endif()
+        endforeach()
+    endforeach()
+endif()
+
 if(ANDROID)
     target_compile_definitions(opendbc PRIVATE DBC_STUDIO_SANDBOXED=1 DBC_STUDIO_ANDROID=1)
+    target_sources(opendbc PRIVATE src/core/android_bridge.cpp)
 elseif(IOS)
     # One target covers iOS, iPadOS, visionOS (Designed for iPad) and Mac
     # Catalyst. Catalyst is a Mac but it is still the sandboxed product: no
@@ -612,25 +638,6 @@ if(IOS)
         XCODE_GENERATE_SCHEME ON
     )
 
-    # The demos written for OpenDBC ship as the Samples location. They are staged at configure time,
-    # without the logs of local runs, and Xcode copies the folder into the bundle. A Classic demo has no
-    # project file to name its dialect, so it gets the settings file the Studio would have written.
-    set(STUDIO_SAMPLE_STAGE "${CMAKE_CURRENT_BINARY_DIR}/samples")
-    file(REMOVE_RECURSE "${STUDIO_SAMPLE_STAGE}")
-    foreach(STUDIO_SAMPLE_FAMILY IN ITEMS dbpro dbc)
-        file(GLOB STUDIO_SAMPLES LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/examples/${STUDIO_SAMPLE_FAMILY}/demos/*")
-        foreach(STUDIO_SAMPLE IN LISTS STUDIO_SAMPLES)
-            if(NOT IS_DIRECTORY "${STUDIO_SAMPLE}")
-                continue()
-            endif()
-            get_filename_component(STUDIO_SAMPLE_NAME "${STUDIO_SAMPLE}" NAME)
-            file(COPY "${STUDIO_SAMPLE}" DESTINATION "${STUDIO_SAMPLE_STAGE}" PATTERN "*.log" EXCLUDE)
-            if(STUDIO_SAMPLE_FAMILY STREQUAL "dbc")
-                file(WRITE "${STUDIO_SAMPLE_STAGE}/${STUDIO_SAMPLE_NAME}/.opendbc-project.json"
-                    "{\"language\": {\"dialect\": \"dbc\"}}\n")
-            endif()
-        endforeach()
-    endforeach()
     set_source_files_properties("${STUDIO_SAMPLE_STAGE}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(opendbc PRIVATE "${STUDIO_SAMPLE_STAGE}")
 
@@ -939,4 +946,67 @@ if(NOT IOS AND NOT ANDROID)
                 DESTINATION bin/export-hosts/android/template/app/src/main/assets/licenses COMPONENT Runtime)
         endif()
     endif()
+endif()
+
+# --- Android Studio app: the library above, SDL's Java side and the bundled files as one APK -----
+if(ANDROID)
+    set(OPENDBC_ANDROID_APPLICATION_ID "net.demonixis.opendbc" CACHE STRING "Application id of the Android Studio")
+    set(OPENDBC_ANDROID_KEYSTORE "" CACHE FILEPATH
+        "Keystore signing the Android Studio; empty signs with the debug key. Passwords come from OPENDBC_ANDROID_KEYSTORE_PASSWORD and OPENDBC_ANDROID_KEY_PASSWORD")
+    set(OPENDBC_ANDROID_KEY_ALIAS "" CACHE STRING "Key alias inside OPENDBC_ANDROID_KEYSTORE")
+    if(DEFINED ENV{ANDROID_HOME} AND IS_DIRECTORY "$ENV{ANDROID_HOME}")
+        set(OPENDBC_ANDROID_SDK "$ENV{ANDROID_HOME}")
+    else()
+        # The NDK lies in <sdk>/ndk/<version>.
+        get_filename_component(OPENDBC_ANDROID_SDK "${CMAKE_ANDROID_NDK}/../.." ABSOLUTE)
+    endif()
+    file(TO_CMAKE_PATH "${OPENDBC_ANDROID_SDK}" OPENDBC_ANDROID_SDK)
+
+    set(STUDIO_ANDROID_PROJECT "${CMAKE_BINARY_DIR}/studio-android")
+    set(STUDIO_ANDROID_MAIN "${STUDIO_ANDROID_PROJECT}/app/src/main")
+    set(STUDIO_ANDROID_ASSETS "${STUDIO_ANDROID_MAIN}/assets")
+    set(STUDIO_ANDROID_APK "${CMAKE_BINARY_DIR}/OpenDBC-Studio.apk")
+    file(MAKE_DIRECTORY "${STUDIO_ANDROID_PROJECT}")
+    file(WRITE "${STUDIO_ANDROID_PROJECT}/studio.properties"
+        "applicationId=${OPENDBC_ANDROID_APPLICATION_ID}\n"
+        "versionName=${OPENDBC_VERSION}\n"
+        "versionCode=${OPENDBC_BUILD_NUMBER}\n"
+        "keystorePath=${OPENDBC_ANDROID_KEYSTORE}\n"
+        "keyAlias=${OPENDBC_ANDROID_KEY_ALIAS}\n")
+    file(WRITE "${STUDIO_ANDROID_PROJECT}/local.properties" "sdk.dir=${OPENDBC_ANDROID_SDK}\n")
+    list(TRANSFORM OPENDBC_REFERENCE_FILES REPLACE ".*/" "" OUTPUT_VARIABLE STUDIO_ANDROID_REFERENCE_NAMES)
+
+    add_custom_target(opendbc_android_apk
+        # Stale assets and classes of an earlier build must not ship.
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${STUDIO_ANDROID_MAIN}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/android" "${STUDIO_ANDROID_PROJECT}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/examples/android/gradlew"
+            "${CMAKE_SOURCE_DIR}/examples/android/gradlew.bat" "${STUDIO_ANDROID_PROJECT}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/examples/android/gradle/wrapper"
+            "${STUDIO_ANDROID_PROJECT}/gradle/wrapper"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${sdl3_SOURCE_DIR}/android-project/app/src/main/java"
+            "${STUDIO_ANDROID_MAIN}/java"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${STUDIO_ANDROID_MAIN}/jniLibs/arm64-v8a"
+            "${STUDIO_ANDROID_MAIN}/res/mipmap-xxxhdpi" "${STUDIO_ANDROID_ASSETS}/shaders"
+            "${STUDIO_ANDROID_ASSETS}/licenses"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:opendbc>"
+            "${STUDIO_ANDROID_MAIN}/jniLibs/arm64-v8a/libmain.so"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/resources/editor.png"
+            "${STUDIO_ANDROID_MAIN}/res/mipmap-xxxhdpi/ic_launcher.png"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENDBC_CANONICAL_SHADERS} "${STUDIO_ANDROID_ASSETS}/shaders"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${STUDIO_SAMPLE_STAGE}" "${STUDIO_ANDROID_ASSETS}/samples"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${STUDIO_ASSET_LIBRARY}" "${STUDIO_ANDROID_ASSETS}/asset_library"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENDBC_REFERENCE_FILES} "${CMAKE_SOURCE_DIR}/licenses/NOTICE.md"
+            "${OPENDBC_RUNTIME_MANIFEST}" "${STUDIO_ANDROID_ASSETS}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENDBC_REPOSITORY_LICENSES} ${OPENDBC_GENERATED_LICENSES}
+            "${STUDIO_ANDROID_ASSETS}/licenses"
+        COMMAND ${CMAKE_COMMAND} "-DASSETS=${STUDIO_ANDROID_ASSETS}" "-DFOLDERS=samples;asset_library"
+            "-DFILES=${STUDIO_ANDROID_REFERENCE_NAMES}" -P "${CMAKE_SOURCE_DIR}/cmake/write_resource_list.cmake"
+        COMMAND ${CMAKE_COMMAND} -E chdir "${STUDIO_ANDROID_PROJECT}"
+            ${CMAKE_COMMAND} -E env "ANDROID_HOME=${OPENDBC_ANDROID_SDK}" sh ./gradlew --quiet assembleRelease
+        COMMAND ${CMAKE_COMMAND} -E copy "${STUDIO_ANDROID_PROJECT}/app/build/outputs/apk/release/app-release.apk"
+            "${STUDIO_ANDROID_APK}"
+        DEPENDS opendbc opendbc_shaders
+        COMMENT "Packaging the Android Studio as ${STUDIO_ANDROID_APK}"
+        VERBATIM)
 endif()

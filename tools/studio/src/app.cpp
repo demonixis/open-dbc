@@ -15,9 +15,11 @@
 #include <string_view>
 #include <utility>
 
+#include "core/bundled_resources.hpp"
 #include "core/i18n.hpp"
 #include "core/locales.hpp"
 #include "core/paths.hpp"
+#include "core/safe_area.hpp"
 #include "core/screen_keyboard.hpp"
 #include "core/stop_button.hpp"
 #include "interpreter/atomic_file.hpp"
@@ -273,6 +275,8 @@ namespace dbc::studio
         }
 
         SdlInitialized_ = true;
+        if (std::string ResourceError; !core::PrepareBundledResources(ResourceError))
+            DBC_LOG_ERROR("Bundled resources: {}", ResourceError);
         Scale_ = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
         if (Scale_ <= 0.0f)
         {
@@ -1683,9 +1687,9 @@ namespace dbc::studio
 
     void App::ReopenScreenKeyboard()
     {
-#ifdef DBC_STUDIO_IOS
+#if defined(DBC_STUDIO_IOS) || defined(DBC_STUDIO_ANDROID)
         // ImGui asks for the keyboard only when the caret moves or a field takes the focus. One the
-        // user dismissed, or that iOS dropped while another was closing, would stay away from a tap
+        // user dismissed, or that the system dropped while another was closing, would stay away from a tap
         // in the same place: a few frames after a tap, a field that wants text and has no keyboard
         // asks again. With a hardware keyboard this restarts text input for nothing.
         if (KeyboardCheckIn_ <= 0 || --KeyboardCheckIn_ > 0)
@@ -1980,7 +1984,7 @@ namespace dbc::studio
         // Keeps the Studio out of the status bar, the notch and the home indicator, where the system
         // takes the touches. The safe area is the whole window on desktops.
         SDL_Rect Safe{};
-        if (SDL_GetWindowSafeArea(Window_, &Safe) && Safe.w > 0 && Safe.h > 0)
+        if (core::WindowSafeArea(Window_, Safe) && Safe.w > 0 && Safe.h > 0)
         {
             HostPos =
                 ImVec2(Viewport->Pos.x + static_cast<float>(Safe.x), Viewport->Pos.y + static_cast<float>(Safe.y));

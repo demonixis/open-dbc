@@ -9,8 +9,8 @@ namespace dbc::studio
         // Directory holding the running executable.
         const std::filesystem::path& ExecutableDir();
 
-        // Where bundled data lives: Contents/Resources inside a macOS bundle,
-        // next to the executable everywhere else.
+        // Where bundled data lives: Contents/Resources inside a macOS bundle, the copy
+        // PrepareBundledResources makes on Android, next to the executable everywhere else.
         const std::filesystem::path& ResourceDir();
 
         // Executable on Windows/Linux, application bundle on Apple platforms.

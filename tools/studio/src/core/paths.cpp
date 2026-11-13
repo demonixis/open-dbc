@@ -28,6 +28,10 @@ namespace dbc::studio
             static const fs::path Dir = []
             {
                 std::error_code Ec;
+#if defined(DBC_STUDIO_ANDROID)
+                // The package's assets are not files: PrepareBundledResources copies them here.
+                return PrefDir() / "resources";
+#endif
 #ifdef __APPLE__
                 // .../Contents/MacOS/opendbc -> .../Contents/Resources
                 const fs::path Bundle = ExecutableDir().parent_path() / "Resources";

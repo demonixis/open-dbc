@@ -222,6 +222,18 @@ mouse buttons; Editor Settings in the iOS and Android Studios can make the arrow
 stick, which also reads as a joystick. The back action is escape. On desktops this takes a real touch
 screen, not a trackpad.
 
+The Android Studio is built with the Android SDK and NDK on the command line:
+
+```sh
+ANDROID_NDK_HOME=<sdk>/ndk/<version> cmake --preset android-studio
+cmake --build --preset android-studio
+adb install -r build/android-studio/OpenDBC-Studio.apk
+```
+
+The APK is signed with the debug key unless `OPENDBC_ANDROID_KEYSTORE` and
+`OPENDBC_ANDROID_KEY_ALIAS` name a keystore, whose passwords come from the
+environment variables above.
+
 In the iOS and Android Studios one finger stands for the mouse: a tap clicks, a
 drag scrolls what scrolls and drags the rest, and a finger held still before it
 moves always drags, which selects text. The editor's caret stays drawn when another

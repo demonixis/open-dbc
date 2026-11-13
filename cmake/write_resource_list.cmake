@@ -1,0 +1,31 @@
+# Lists the files of an APK's assets that the Studio copies to its storage, and stamps the set.
+# Usage: cmake -DASSETS=<dir> -DFOLDERS=<a;b> -DFILES=<x;y> -P write_resource_list.cmake
+if(NOT DEFINED ASSETS OR NOT IS_DIRECTORY "${ASSETS}")
+    message(FATAL_ERROR "write_resource_list.cmake needs ASSETS, the assets directory")
+endif()
+
+set(NAMES "")
+foreach(FOLDER IN LISTS FOLDERS)
+    file(GLOB_RECURSE FOUND LIST_DIRECTORIES false RELATIVE "${ASSETS}" "${ASSETS}/${FOLDER}/*")
+    list(APPEND NAMES ${FOUND})
+endforeach()
+foreach(FILE IN LISTS FILES)
+    if(NOT EXISTS "${ASSETS}/${FILE}")
+        message(FATAL_ERROR "${ASSETS}/${FILE} is missing")
+    endif()
+    list(APPEND NAMES "${FILE}")
+endforeach()
+# A file manager's droppings are not resources, and the packager leaves them out.
+list(FILTER NAMES EXCLUDE REGEX "(^|/)(\\.DS_Store|Thumbs\\.db)$")
+list(SORT NAMES)
+
+set(LISTING "")
+set(DIGESTS "")
+foreach(NAME IN LISTS NAMES)
+    file(SHA256 "${ASSETS}/${NAME}" DIGEST)
+    string(APPEND LISTING "${NAME}\n")
+    string(APPEND DIGESTS "${NAME} ${DIGEST}\n")
+endforeach()
+string(SHA256 STAMP "${DIGESTS}")
+file(WRITE "${ASSETS}/resources.list" "${LISTING}")
+file(WRITE "${ASSETS}/resources.stamp" "${STAMP}\n")
