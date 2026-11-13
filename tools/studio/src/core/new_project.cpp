@@ -215,6 +215,21 @@ namespace dbc::studio
             }
             return Result;
         }
+
+        std::filesystem::path RelocateUnder(const std::filesystem::path& Stored, const std::filesystem::path& Root)
+        {
+            std::error_code Error;
+            if (Stored.empty() || Root.filename().empty() || std::filesystem::exists(Stored, Error))
+                return Stored;
+            std::vector<std::filesystem::path> Parts(Stored.begin(), Stored.end());
+            const auto Last = std::find(Parts.rbegin(), Parts.rend(), Root.filename());
+            if (Last == Parts.rend())
+                return Stored;
+            std::filesystem::path Moved = Root;
+            for (auto Part = Last.base(); Part != Parts.end(); ++Part)
+                Moved /= *Part;
+            return Moved;
+        }
     } // namespace core
 
 } // namespace dbc::studio

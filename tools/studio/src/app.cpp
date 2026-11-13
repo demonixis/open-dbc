@@ -307,6 +307,8 @@ namespace dbc::studio
             [this](int ExitCode, const std::vector<toolchain::RunDiagnostic>& Diagnostics)
         {
             ExecutionBusy_ = false;
+            std::error_code Ignored;
+            std::filesystem::remove(RunMarker(), Ignored);
             ShowProblems(Diagnostics);
             // Where the panels start lowered, a run that has something to say raises its panel.
             if (!Diagnostics.empty())
@@ -340,6 +342,16 @@ namespace dbc::studio
 
         // Command line wins over the remembered folder.
         std::error_code Ec;
+        if constexpr (!core::platform::HasFreeformFileSystem())
+        {
+            // The app's container, and with it every saved path, moves when the app is updated.
+            const auto Relocate = [this](std::string& Saved)
+            {
+                Saved = dbc::PathToUtf8(core::RelocateUnder(dbc::PathFromUtf8(Saved), Workspace_.ImportRoot()));
+            };
+            Relocate(Settings_.ProjectFolder);
+            Relocate(Settings_.LastFile);
+        }
         if (!OpenPath.empty())
         {
             const std::filesystem::path Path = dbc::PathFromUtf8(OpenPath);
@@ -361,6 +373,22 @@ namespace dbc::studio
             {
                 OpenFile(dbc::PathFromUtf8(Settings_.LastFile));
             }
+        }
+
+        if constexpr (core::platform::IsSandboxed())
+        {
+            // Left behind by a run that did not end: the program took the Studio down with it.
+            std::error_code Ignored;
+            std::ifstream Marker(RunMarker());
+            std::string Program;
+            if (Marker && std::getline(Marker, Program))
+            {
+                Output_.Append(TrFmt("The Studio closed while {0} was running.", {Program}),
+                               panels::OutputPanel::Severity::Error);
+                ShowOutput_ = true;
+            }
+            Marker.close();
+            std::filesystem::remove(RunMarker(), Ignored);
         }
 
         Recovery_.SetDirectory(core::paths::PrefDir() / "recovery");
@@ -543,6 +571,12 @@ namespace dbc::studio
         while (Running_)
         {
             PollEvents();
+            if (InBackground_)
+            {
+                // A running program waits too: the GPU is out of reach in the background.
+                SDL_Delay(50);
+                continue;
+            }
             Dialog_.Poll();
             Execution_.Poll();
             if (SceneCapture_ && SDL_GetTicks() >= SceneCapture_->Deadline)
@@ -577,6 +611,11 @@ namespace dbc::studio
         }
         // Quitting normally means every change was saved or deliberately discarded.
         Recovery_.Clear();
+    }
+
+    std::filesystem::path App::RunMarker() const
+    {
+        return core::paths::PrefDir() / "run-in-progress";
     }
 
     void App::UpdateRecovery()
@@ -663,6 +702,18 @@ namespace dbc::studio
                      Event.window.windowID == SDL_GetWindowID(Window_))
             {
                 RequestQuit();
+            }
+            else if (Event.type == SDL_EVENT_WILL_ENTER_BACKGROUND || Event.type == SDL_EVENT_TERMINATING)
+            {
+                // The system may end a suspended app without another word: what is unsaved goes to disk
+                // now, and nothing draws until the app is back.
+                UpdateRecovery();
+                Settings_.Save();
+                InBackground_ = Event.type == SDL_EVENT_WILL_ENTER_BACKGROUND;
+            }
+            else if (Event.type == SDL_EVENT_DID_ENTER_FOREGROUND)
+            {
+                InBackground_ = false;
             }
             else if (Event.type == SDL_EVENT_SYSTEM_THEME_CHANGED && Settings_.Theme == "auto")
             {
@@ -2758,6 +2809,8 @@ namespace dbc::studio
         {
             ExecutionBusy_ = true;
             Status_ = TrFmt("Running {0}", {dbc::PathToUtf8(Target.filename())});
+            if constexpr (core::platform::IsSandboxed())
+                std::ofstream(RunMarker()) << dbc::PathToUtf8(Target.filename()) << '\n';
         }
         else if (!ExecutionBusy_)
         {

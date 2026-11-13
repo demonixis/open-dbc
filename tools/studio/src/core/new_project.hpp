@@ -57,6 +57,11 @@ namespace dbc::studio
         // Copies the read-only `Sample` folder to `Location` under its own name, so that it can be edited
         // and run, and returns the copy. A folder of that name is reused as it is: it holds the user's edits.
         NewProjectResult CopySampleProject(const std::filesystem::path& Sample, const std::filesystem::path& Location);
+
+        // Where `Stored`, an absolute path an earlier run saved, is now that `Root`, the folder it was
+        // under, may have moved: a sandboxed app's container changes path when the app is updated.
+        // `Stored` itself when it still exists or was never under a folder of `Root`'s name.
+        std::filesystem::path RelocateUnder(const std::filesystem::path& Stored, const std::filesystem::path& Root);
     } // namespace core
 
 } // namespace dbc::studio

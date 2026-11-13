@@ -199,3 +199,19 @@ TEST_CASE("a sample is copied once and the user's copy is kept afterwards")
 
     CHECK(!core::CopySampleProject(Location.Root / "samples" / "absent", Projects));
 }
+
+TEST_CASE("a saved path follows its folder when the app's container has moved")
+{
+    TemporaryLocation Location;
+    const std::filesystem::path Root = Location.Root / "new-container" / "Documents" / "projects";
+    std::filesystem::create_directories(Root / "demo");
+    const std::filesystem::path Old = Location.Root / "old-container" / "Documents" / "projects";
+
+    CHECK(core::RelocateUnder(Old / "demo", Root) == Root / "demo");
+    CHECK(core::RelocateUnder(Old / "demo" / "main.dba", Root) == Root / "demo" / "main.dba");
+    // A path that still exists, or was never under such a folder, is kept.
+    CHECK(core::RelocateUnder(Root / "demo", Root) == Root / "demo");
+    CHECK(core::RelocateUnder(Location.Root / "elsewhere" / "demo", Root) == Location.Root / "elsewhere" / "demo");
+    CHECK(core::RelocateUnder({}, Root).empty());
+}
+

@@ -219,3 +219,5 @@ menus and panels; the Output and Problems panels stay lowered until a run has
 something to report.
 In the Scene view a tap selects, a finger dragged off the gizmo turns the view, and
 two fingers pan it with their midpoint and zoom it with their spread.
+A program runs inside these Studios, so one that crashes closes them: the next
+start reopens the project, offers the unsaved tabs back and names the program.

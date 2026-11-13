@@ -111,6 +111,8 @@ namespace dbc::studio
         void CheckCurrentDocument();
         void ShowProblems(const std::vector<toolchain::RunDiagnostic>& Diagnostics);
         void StopRun();
+        // Names the program an in-process run is executing, for the Studio that starts after a crash.
+        std::filesystem::path RunMarker() const;
         void SetTextZoom(float Zoom);
         void SetInterfaceZoom(float Zoom);
         // Sizes the style and the fonts for the display, the platform and the interface zoom.
@@ -223,6 +225,8 @@ namespace dbc::studio
         bool WindowClaimed_ = false;
         core::TouchGesture Touch_;
         float KeyboardHeight_ = 0.0f;
+        // Between the system's notice that the app leaves the screen and its return.
+        bool InBackground_ = false;
         bool ImguiPlatformInitialized_ = false;
         bool ImguiGpuInitialized_ = false;
         bool RenderFailed_ = false;
