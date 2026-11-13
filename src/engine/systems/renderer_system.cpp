@@ -1279,7 +1279,28 @@ namespace dbc
         SDL_GPUTexture* SwapchainTexture = nullptr;
         Uint32 DrawableW = 0;
         Uint32 DrawableH = 0;
-        if (ApplyFinalColorTransform || Headless)
+        // Where the window cannot take the display's proportions, the frame is drawn at them offscreen
+        // and shown in the middle of the window, between black bands.
+        SDL_Rect Shown{};
+        bool Letterbox = false;
+        if (K.Core().FitsDisplay() && !Headless)
+        {
+            int PixelWidth = 0;
+            int PixelHeight = 0;
+            if (SDL_GetWindowSizeInPixels(K.Core().Window(), &PixelWidth, &PixelHeight) && PixelWidth > 0 &&
+                PixelHeight > 0)
+            {
+                const SDL_FRect Fit =
+                    FitDisplay(static_cast<float>(PixelWidth), static_cast<float>(PixelHeight),
+                               static_cast<float>(K.Core().WindowWidth()), static_cast<float>(K.Core().WindowHeight()));
+                Shown = SDL_Rect{static_cast<int>(std::lround(Fit.x)), static_cast<int>(std::lround(Fit.y)),
+                                 std::max(1, static_cast<int>(std::lround(Fit.w))),
+                                 std::max(1, static_cast<int>(std::lround(Fit.h)))};
+                // A pixel of rounding is not a band.
+                Letterbox = PixelWidth - Shown.w > 1 || PixelHeight - Shown.h > 1;
+            }
+        }
+        if (ApplyFinalColorTransform || Headless || Letterbox)
         {
             int PixelWidth = 0;
             int PixelHeight = 0;
@@ -1291,8 +1312,8 @@ namespace dbc
                 SDL_Delay(30);
                 return;
             }
-            DrawableW = static_cast<Uint32>(PixelWidth);
-            DrawableH = static_cast<Uint32>(PixelHeight);
+            DrawableW = static_cast<Uint32>(Letterbox ? Shown.w : PixelWidth);
+            DrawableH = static_cast<Uint32>(Letterbox ? Shown.h : PixelHeight);
             if (!K.Gpu().EnsureGpuCaptureTarget(DrawableW, DrawableH))
             {
                 K.Renderer().ReportRenderError("final color target setup failed");
@@ -1332,7 +1353,7 @@ namespace dbc
 
         RenderFrameState Frame = K.Renderer().PrepareFrame(DtSeconds, Retain2d);
         SDL_GPUTexture* CaptureTexture = nullptr;
-        if (ApplyFinalColorTransform || OutCapture != nullptr || Headless)
+        if (ApplyFinalColorTransform || OutCapture != nullptr || Headless || Letterbox)
         {
             if (!K.Gpu().EnsureGpuCaptureTarget(DrawableW, DrawableH))
             {
@@ -1477,6 +1498,15 @@ namespace dbc
                 Blit.destination.h = DrawableH;
                 Blit.load_op = SDL_GPU_LOADOP_DONT_CARE;
                 Blit.filter = SDL_GPU_FILTER_NEAREST;
+                if (Letterbox)
+                {
+                    Blit.destination.x = static_cast<Uint32>(Shown.x);
+                    Blit.destination.y = static_cast<Uint32>(Shown.y);
+                    Blit.destination.w = static_cast<Uint32>(Shown.w);
+                    Blit.destination.h = static_cast<Uint32>(Shown.h);
+                    Blit.load_op = SDL_GPU_LOADOP_CLEAR;
+                    Blit.clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f};
+                }
                 SDL_BlitGPUTexture(Cmd, &Blit);
                 Submitted = Commands.Submit();
             }
@@ -1485,6 +1515,33 @@ namespace dbc
         {
             *OutCapture =
                 dbc::DownloadCapture(K, Commands, CaptureTexture, SwapchainTexture, DrawableW, DrawableH, Submitted);
+        }
+        else if (Letterbox)
+        {
+            Uint32 WindowW = 0;
+            Uint32 WindowH = 0;
+            if (!Commands.AcquireSwapchain(K.Core().Window(), &SwapchainTexture, &WindowW, &WindowH) ||
+                !SwapchainTexture)
+            {
+                DBC_LOG_WARN("Letterbox presentation swapchain acquisition failed: {}", SDL_GetError());
+                K.Renderer().ReportRenderError("letterbox presentation swapchain acquisition failed");
+                Commands.Abandon();
+                return;
+            }
+            SDL_GPUBlitInfo Blit{};
+            Blit.source.texture = CaptureTexture;
+            Blit.source.w = DrawableW;
+            Blit.source.h = DrawableH;
+            Blit.destination.texture = SwapchainTexture;
+            Blit.destination.x = static_cast<Uint32>(Shown.x);
+            Blit.destination.y = static_cast<Uint32>(Shown.y);
+            Blit.destination.w = static_cast<Uint32>(Shown.w);
+            Blit.destination.h = static_cast<Uint32>(Shown.h);
+            Blit.load_op = SDL_GPU_LOADOP_CLEAR;
+            Blit.clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f};
+            Blit.filter = SDL_GPU_FILTER_LINEAR;
+            SDL_BlitGPUTexture(Cmd, &Blit);
+            Submitted = Commands.Submit();
         }
         else
         {

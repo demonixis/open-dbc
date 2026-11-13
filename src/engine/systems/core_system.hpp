@@ -29,6 +29,16 @@ namespace dbc
         // display has none to spare. Call before the runtime initializes; Shutdown leaves the window alive.
         void UseHostWindow(SDL_Window* Window);
 
+        // Whether the display keeps its proportions in a window that has others, between black bands.
+        // True where the window cannot take the display's size: a phone, a tablet, a host's window.
+        bool FitsDisplay() const;
+        // The part of the window, in window coordinates, that shows the display.
+        SDL_FRect DisplayArea() const;
+        // Turns a position in the window into the position the program sees on its display.
+        void WindowToDisplay(float& X, float& Y) const;
+        // Whether the program chose its display's size, which a resized window then leaves alone.
+        bool DisplayModeChosen() const;
+
         // --- Display / window ---
         bool SetDisplayMode(int Width, int Height, int Depth, int Vsync = 1, int Multisampling = 0,
                             int Multimonitor = 0, std::string* Error = nullptr);
@@ -108,6 +118,12 @@ namespace dbc
         EngineKernel& Kernel_;
         SDL_Window* Window_ = nullptr;
         bool HostWindow_ = false;
+#ifdef DBC_MOBILE
+        bool FitDisplay_ = true;
+#else
+        bool FitDisplay_ = false;
+#endif
+        bool DisplayModeChosen_ = false;
         int WindowWidth_ = 640;
         int WindowHeight_ = 480;
         // Logical BASIC depth; SDL_GPU render targets remain RGBA32.

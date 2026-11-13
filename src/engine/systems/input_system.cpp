@@ -120,8 +120,13 @@ namespace dbc
         if (Event.type == SDL_EVENT_WINDOW_RESIZED && IsRuntimeWindow(Event.window.windowID))
         {
             Kernel_.Renderer().InvalidateTriCache();
-            Kernel_.Core().WindowWidth() = Event.window.data1;
-            Kernel_.Core().WindowHeight() = Event.window.data2;
+            // A display that keeps its proportions also keeps the size the program gave it: the window
+            // turning with the device only moves the bands.
+            if (!Kernel_.Core().FitsDisplay() || !Kernel_.Core().DisplayModeChosen())
+            {
+                Kernel_.Core().WindowWidth() = Event.window.data1;
+                Kernel_.Core().WindowHeight() = Event.window.data2;
+            }
             Kernel_.Core().CameraAspect() =
                 static_cast<float>(Kernel_.Core().WindowWidth()) / std::max(1, Kernel_.Core().WindowHeight());
         }
@@ -134,8 +139,11 @@ namespace dbc
         }
         if (Event.type == SDL_EVENT_MOUSE_MOTION && IsRuntimeWindow(Event.motion.windowID))
         {
-            MouseX_ = static_cast<int>(Event.motion.x);
-            MouseY_ = static_cast<int>(Event.motion.y);
+            float X = Event.motion.x;
+            float Y = Event.motion.y;
+            Kernel_.Core().WindowToDisplay(X, Y);
+            MouseX_ = static_cast<int>(X);
+            MouseY_ = static_cast<int>(Y);
             MousePositionKnown_ = true;
             OnMouseMotion(static_cast<int>(Event.motion.xrel), static_cast<int>(Event.motion.yrel));
         }
@@ -1906,12 +1914,25 @@ namespace dbc
         return Slot;
     }
 
+    SDL_FPoint InputSystem::TouchOnDisplay(float X, float Y) const
+    {
+        // A finger is reported as a fraction of the window, which the display may not fill.
+        CoreSystem& Core = Kernel_.Core();
+        if (!Core.FitsDisplay())
+            return SDL_FPoint{X * static_cast<float>(Core.WindowWidth()), Y * static_cast<float>(Core.WindowHeight())};
+        const SDL_FRect Area = Core.DisplayArea();
+        // The area is centred, so the window's size follows from it.
+        SDL_FPoint Point{X * (Area.w + 2.0f * Area.x), Y * (Area.h + 2.0f * Area.y)};
+        Core.WindowToDisplay(Point.x, Point.y);
+        return Point;
+    }
+
     int InputSystem::GetTouchPositionX(int FingerId) const
     {
         auto It = Touches_.find(FingerId);
         if (It == Touches_.end())
             return 0;
-        return static_cast<int>(It->second.X * static_cast<float>(Kernel_.Core().WindowWidth()));
+        return static_cast<int>(TouchOnDisplay(It->second.X, It->second.Y).x);
     }
 
     int InputSystem::GetTouchPositionY(int FingerId) const
@@ -1919,7 +1940,7 @@ namespace dbc
         auto It = Touches_.find(FingerId);
         if (It == Touches_.end())
             return 0;
-        return static_cast<int>(It->second.Y * static_cast<float>(Kernel_.Core().WindowHeight()));
+        return static_cast<int>(TouchOnDisplay(It->second.X, It->second.Y).y);
     }
 
     int InputSystem::IsTouchDown(int FingerId) const

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SDL3/SDL_rect.h>
 #include <array>
 #include <cstdint>
 #include <string>
@@ -156,6 +157,8 @@ namespace dbc
         static bool IsDirectTouchDevice(int DeviceType);
 
         // Mobile touch input
+        // A finger's position, given as a fraction of the window, on the program's display.
+        SDL_FPoint TouchOnDisplay(float X, float Y) const;
         int GetTouchPositionX(int FingerId) const;
         int GetTouchPositionY(int FingerId) const;
         int IsTouchDown(int FingerId) const;

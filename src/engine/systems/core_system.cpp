@@ -89,6 +89,40 @@ namespace dbc
             return;
         Window_ = Window;
         HostWindow_ = true;
+        FitDisplay_ = true;
+    }
+
+    bool CoreSystem::FitsDisplay() const
+    {
+        return FitDisplay_;
+    }
+
+    SDL_FRect CoreSystem::DisplayArea() const
+    {
+        int Width = 0;
+        int Height = 0;
+        if (!Window_ || !SDL_GetWindowSize(Window_, &Width, &Height))
+            return SDL_FRect{0.0f, 0.0f, static_cast<float>(WindowWidth_), static_cast<float>(WindowHeight_)};
+        if (!FitDisplay_)
+            return SDL_FRect{0.0f, 0.0f, static_cast<float>(Width), static_cast<float>(Height)};
+        return FitDisplay(static_cast<float>(Width), static_cast<float>(Height), static_cast<float>(WindowWidth_),
+                          static_cast<float>(WindowHeight_));
+    }
+
+    void CoreSystem::WindowToDisplay(float& X, float& Y) const
+    {
+        if (!FitDisplay_)
+            return;
+        const SDL_FRect Area = DisplayArea();
+        if (Area.w <= 0.0f || Area.h <= 0.0f)
+            return;
+        X = (X - Area.x) * static_cast<float>(WindowWidth_) / Area.w;
+        Y = (Y - Area.y) * static_cast<float>(WindowHeight_) / Area.h;
+    }
+
+    bool CoreSystem::DisplayModeChosen() const
+    {
+        return DisplayModeChosen_;
     }
 
     bool CoreSystem::IsRunning()
@@ -300,6 +334,7 @@ namespace dbc
                 return false;
         WindowWidth_ = Width;
         WindowHeight_ = Height;
+        DisplayModeChosen_ = true;
         ScreenDepth_ = Depth;
         DisplayMultisampling_ = Multisampling;
         DisplayMultimonitor_ = Multimonitor;

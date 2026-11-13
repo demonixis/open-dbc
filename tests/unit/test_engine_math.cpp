@@ -146,3 +146,27 @@ TEST_CASE("ToLowerAscii")
     CHECK(ToLowerAscii("") == "");
     CHECK(ToLowerAscii("already_lower") == "already_lower");
 }
+
+TEST_CASE("A display keeps its proportions inside an area of others, centred")
+{
+    // A 16:9 display on a tablet held upright: bands above and below.
+    const SDL_FRect Upright = FitDisplay(834.0f, 1210.0f, 1280.0f, 720.0f);
+    CHECK(Upright.x == doctest::Approx(0.0f));
+    CHECK(Upright.w == doctest::Approx(834.0f));
+    CHECK(Upright.h == doctest::Approx(834.0f * 720.0f / 1280.0f));
+    CHECK(Upright.y == doctest::Approx((1210.0f - Upright.h) * 0.5f));
+
+    // A 4:3 display on a wide phone: bands left and right.
+    const SDL_FRect Wide = FitDisplay(844.0f, 390.0f, 640.0f, 480.0f);
+    CHECK(Wide.y == doctest::Approx(0.0f));
+    CHECK(Wide.h == doctest::Approx(390.0f));
+    CHECK(Wide.w == doctest::Approx(520.0f));
+    CHECK(Wide.x == doctest::Approx(162.0f));
+
+    // The same proportions fill the area; an empty size leaves it whole.
+    const SDL_FRect Same = FitDisplay(1280.0f, 960.0f, 640.0f, 480.0f);
+    CHECK(Same.w == doctest::Approx(1280.0f));
+    CHECK(Same.h == doctest::Approx(960.0f));
+    CHECK(FitDisplay(800.0f, 600.0f, 0.0f, 480.0f).w == doctest::Approx(800.0f));
+}
+

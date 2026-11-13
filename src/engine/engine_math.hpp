@@ -221,6 +221,18 @@ namespace dbc
         return S;
     }
 
+    // The largest rectangle of the display's proportions that fits the area, centred: where a display is
+    // shown without distortion. The whole area when a size is empty.
+    inline SDL_FRect FitDisplay(float AreaWidth, float AreaHeight, float DisplayWidth, float DisplayHeight)
+    {
+        if (AreaWidth <= 0.0f || AreaHeight <= 0.0f || DisplayWidth <= 0.0f || DisplayHeight <= 0.0f)
+            return SDL_FRect{0.0f, 0.0f, AreaWidth, AreaHeight};
+        const float Scale = std::min(AreaWidth / DisplayWidth, AreaHeight / DisplayHeight);
+        const float Width = DisplayWidth * Scale;
+        const float Height = DisplayHeight * Scale;
+        return SDL_FRect{(AreaWidth - Width) * 0.5f, (AreaHeight - Height) * 0.5f, Width, Height};
+    }
+
     inline bool PathExists(const std::filesystem::path& Path, bool& Exists, std::string* Error = nullptr)
     {
         std::error_code FileError;

@@ -208,6 +208,10 @@ ties to the app: keep a copy of the file and its password.
 
 Mobile targets embed runtimes built apart from the Studio.
 
+A phone or tablet window cannot take the size `SET DISPLAY MODE` asks for: the
+display keeps that size and its proportions, centred between black bands, and
+mouse and touch positions are those of the display.
+
 On touch screens the top, bottom, left, right and centre zones act as the arrow
 keys and space, and the back action is escape. On desktops this takes a real touch
 screen, not a trackpad.
