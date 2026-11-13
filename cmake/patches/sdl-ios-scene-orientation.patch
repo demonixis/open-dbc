@@ -1,0 +1,35 @@
+diff --git a/src/video/uikit/SDL_uikitvideo.m b/src/video/uikit/SDL_uikitvideo.m
+index 8b6f0cd..a11ca53 100644
+--- a/src/video/uikit/SDL_uikitvideo.m
++++ b/src/video/uikit/SDL_uikitvideo.m
+@@ -239,17 +239,23 @@ CGRect UIKit_ComputeViewFrame(SDL_Window *window, UIScreen *screen)
+      * https://bugzilla.libsdl.org/show_bug.cgi?id=3505
+      * https://bugzilla.libsdl.org/show_bug.cgi?id=3465
+      * https://forums.developer.apple.com/thread/65337 */
+-#pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+-    UIInterfaceOrientation orient = [UIApplication sharedApplication].statusBarOrientation;
+-#pragma clang diagnostic pop
+-    BOOL landscape = UIInterfaceOrientationIsLandscape(orient) ||
+-                    !(UIKit_GetSupportedOrientations(window) & (UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown));
++    /* OpenDBC: the status bar orientation is a no-op from iOS 27 and reads as
++     * portrait, which turned a landscape window upright. The window's scene
++     * knows its orientation; without one, the bounds are left as they are. */
++    UIInterfaceOrientation orient = UIInterfaceOrientationUnknown;
++    if (@available(iOS 13.0, *)) {
++        if (data != nil && data.uiwindow.windowScene != nil) {
++            orient = data.uiwindow.windowScene.interfaceOrientation;
++        }
++    }
++    BOOL portraitSupported = (UIKit_GetSupportedOrientations(window) & (UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown)) != 0;
++    BOOL landscape = UIInterfaceOrientationIsLandscape(orient) || !portraitSupported;
+     BOOL fullscreen = CGRectEqualToRect(screen.bounds, frame);
+ 
+     /* The orientation flip doesn't make sense when the window is smaller
+      * than the screen (iPad Split View, for example). */
+-    if (fullscreen && (landscape != (frame.size.width > frame.size.height))) {
++    if (fullscreen && (orient != UIInterfaceOrientationUnknown || !portraitSupported) &&
++        (landscape != (frame.size.width > frame.size.height))) {
+         float height = frame.size.width;
+         frame.size.width = frame.size.height;
+         frame.size.height = height;
