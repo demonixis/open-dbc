@@ -359,6 +359,14 @@ if(TARGET nlohmann_json::nlohmann_json AND NOT ANDROID AND NOT IOS)
     )
     doctest_discover_tests(test_studio_new_project PROPERTIES LABELS "unit-studio")
 
+    add_executable(test_studio_touch_gesture
+        test_studio_touch_gesture.cpp
+        ${CMAKE_SOURCE_DIR}/tools/studio/src/core/touch_gesture.cpp
+    )
+    target_include_directories(test_studio_touch_gesture PRIVATE ${CMAKE_SOURCE_DIR}/tools/studio/src)
+    target_link_libraries(test_studio_touch_gesture PRIVATE doctest_with_main)
+    doctest_discover_tests(test_studio_touch_gesture PROPERTIES LABELS "unit-studio")
+
     add_executable(test_studio_snippets
         test_studio_snippets.cpp
         ${CMAKE_SOURCE_DIR}/tools/studio/src/core/i18n.cpp
@@ -422,6 +430,7 @@ foreach(test_target IN ITEMS test_language_profile test_language_catalogue test_
         test_engine_math test_collision_math test_bsp_world test_terrain_mesh test_triangle_order test_engine_builtins test_network test_dll test_input_haptics test_command_line
         test_program_image test_project_resolver test_debug_system
         test_shader_compiler test_project_settings test_studio_reference test_studio_new_project test_studio_snippets
+        test_studio_touch_gesture
         test_artifact_export)
     if(TARGET ${test_target})
         dbc_enable_warnings(${test_target})

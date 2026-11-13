@@ -10,6 +10,7 @@
 
 #include "core/file_dialog.hpp"
 #include "core/new_project.hpp"
+#include "core/touch_gesture.hpp"
 #include "core/platform.hpp"
 #include "core/project_settings.hpp"
 #include "core/recovery.hpp"
@@ -111,6 +112,12 @@ namespace dbc::studio
         void ShowProblems(const std::vector<toolchain::RunDiagnostic>& Diagnostics);
         void StopRun();
         void SetTextZoom(float Zoom);
+        void SetInterfaceZoom(float Zoom);
+        // Sizes the style and the fonts for the display, the platform and the interface zoom.
+        void ApplyInterfaceScale();
+        // One finger drives the interface as a mouse would: see core::TouchGesture.
+        bool HandleTouch(const SDL_Event& Event);
+        void ApplyTouch(const std::vector<core::TouchAction>& Actions);
         // A pinch, or the wheel with Ctrl or Cmd, over a panel of code text. True when it took the event.
         bool HandleTextZoom(const SDL_Event& Event);
         void DrawEditorSettings();
@@ -174,8 +181,10 @@ namespace dbc::studio
 
         // Panel visibility
         bool ShowProject_ = true;
-        bool ShowOutput_ = true;
-        bool ShowProblems_ = true;
+        // Lowered on a touch screen, where the editor needs the room: they come up when there is something
+        // to read.
+        bool ShowOutput_ = !core::platform::IsSandboxed();
+        bool ShowProblems_ = !core::platform::IsSandboxed();
         bool ShowCode_ = true;
         bool ShowMedia_ = true;
         bool ShowAbout_ = false;
@@ -212,6 +221,8 @@ namespace dbc::studio
         bool SettingsLoaded_ = false;
         bool SdlInitialized_ = false;
         bool WindowClaimed_ = false;
+        core::TouchGesture Touch_;
+        float KeyboardHeight_ = 0.0f;
         bool ImguiPlatformInitialized_ = false;
         bool ImguiGpuInitialized_ = false;
         bool RenderFailed_ = false;

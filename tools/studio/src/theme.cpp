@@ -143,7 +143,14 @@ namespace dbc::studio
             return Light ? Appearance::Light : Appearance::Dark;
         }
 
-        void ApplyMetrics(float Scale)
+        bool ItemActivated()
+        {
+            if (ImGui::GetIO().MouseSource == ImGuiMouseSource_TouchScreen)
+                return ImGui::IsItemClicked(ImGuiMouseButton_Left);
+            return ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+        }
+
+        void ApplyMetrics(float Scale, bool Touch)
         {
             ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -167,6 +174,16 @@ namespace dbc::studio
             Style.IndentSpacing = 16.0f;
             Style.ScrollbarSize = 12.0f;
             Style.GrabMinSize = 10.0f;
+            Style.TouchExtraPadding = ImVec2(0.0f, 0.0f);
+            if (Touch)
+            {
+                // A menu row, a tab or a tree line is a font height plus this spacing: about 40 points.
+                Style.FramePadding = ImVec2(8.0f, 7.0f);
+                Style.ItemSpacing = ImVec2(10.0f, 14.0f);
+                Style.ScrollbarSize = 18.0f;
+                Style.GrabMinSize = 18.0f;
+                Style.TouchExtraPadding = ImVec2(3.0f, 3.0f);
+            }
 
             Style.WindowMenuButtonPosition = ImGuiDir_None;
             Style.SeparatorTextBorderSize = 1.0f;

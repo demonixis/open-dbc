@@ -18,6 +18,7 @@
 #include "core/i18n.hpp"
 #include "core/locales.hpp"
 #include "core/paths.hpp"
+#include "core/screen_keyboard.hpp"
 #include "interpreter/atomic_file.hpp"
 #include "scene/scene_capture.hpp"
 #include "scene/scene_integration.hpp"
@@ -293,6 +294,7 @@ namespace dbc::studio
         RunOptions_.DebugOverlay = Settings_.DebugOverlay;
         Scene_.SetEditorSettings(Settings_.Editor);
         Theme::CodeFontZoom = Settings_.Editor.TextZoom;
+        ApplyInterfaceScale();
 
         IconGenerator_.SetLogHandler([this](const std::string& Message) { Output_.Append(Message); });
 
@@ -306,6 +308,11 @@ namespace dbc::studio
         {
             ExecutionBusy_ = false;
             ShowProblems(Diagnostics);
+            // Where the panels start lowered, a run that has something to say raises its panel.
+            if (!Diagnostics.empty())
+                ShowProblems_ = true;
+            else if (ExitCode != 0 && ExitCode != 130)
+                ShowOutput_ = true;
             ExecutionTarget_.clear();
             if (SceneCapture_)
             {
@@ -414,8 +421,7 @@ namespace dbc::studio
             IniPath_ = dbc::PathToUtf8((core::paths::PrefDir() / "studio-layout.ini"));
             Io.IniFilename = IniPath_.c_str();
 
-            Theme::ApplyMetrics(Scale_ * core::platform::UiScaleHint());
-            ImGui::GetStyle().FontScaleDpi = Scale_ * core::platform::UiScaleHint();
+            ApplyInterfaceScale();
             Theme::AddFonts();
         }
 
@@ -425,6 +431,35 @@ namespace dbc::studio
             return false;
         }
         ImguiPlatformInitialized_ = true;
+        if constexpr (core::platform::IsSandboxed())
+        {
+            // The backend opens the on-screen keyboard with the system's defaults, which correct and
+            // capitalize prose. Opening it first, for code, leaves the backend nothing to start.
+            static void (*BackendSetImeData)(ImGuiContext*, ImGuiViewport*, ImGuiPlatformImeData*) = nullptr;
+            ImGuiPlatformIO& Platform = ImGui::GetPlatformIO();
+            BackendSetImeData = Platform.Platform_SetImeDataFn;
+            Platform.Platform_SetImeDataFn = [](ImGuiContext* Context, ImGuiViewport* Viewport,
+                                                ImGuiPlatformImeData* Data)
+            {
+                SDL_Window* Focus = SDL_GetKeyboardFocus();
+                if (Focus && (Data->WantVisible || Data->WantTextInput) && !SDL_TextInputActive(Focus))
+                {
+                    const SDL_PropertiesID Properties = SDL_CreateProperties();
+                    SDL_SetBooleanProperty(Properties, SDL_PROP_TEXTINPUT_AUTOCORRECT_BOOLEAN, false);
+                    SDL_SetNumberProperty(Properties, SDL_PROP_TEXTINPUT_CAPITALIZATION_NUMBER, SDL_CAPITALIZE_NONE);
+                    SDL_SetBooleanProperty(Properties, SDL_PROP_TEXTINPUT_MULTILINE_BOOLEAN, true);
+                    SDL_StartTextInputWithProperties(Focus, Properties);
+                    SDL_DestroyProperties(Properties);
+                }
+                if (BackendSetImeData)
+                    BackendSetImeData(Context, Viewport, Data);
+                // SDL slides the whole view up to show the area the backend gave it. The Studio makes
+                // room for the keyboard itself, so no area.
+                const SDL_Rect NoArea{0, 0, 0, 0};
+                if (Focus)
+                    SDL_SetTextInputArea(Focus, &NoArea, 0);
+            };
+        }
 
         ImGui_ImplSDLGPU3_InitInfo Init = {};
         Init.Device = Gpu_;
@@ -613,7 +648,8 @@ namespace dbc::studio
                 if (Fingers >= 3)
                     StopRun();
             }
-            else if (!HandleTextZoom(Event) && (Mode_ != Mode::Scene || !Scene_.HandleEvent(Event)))
+            else if (!HandleTextZoom(Event) && (Mode_ != Mode::Scene || !Scene_.HandleEvent(Event)) &&
+                     !HandleTouch(Event))
             {
                 ImGui_ImplSDL3_ProcessEvent(&Event);
             }
@@ -634,10 +670,111 @@ namespace dbc::studio
             }
         }
 
+        if constexpr (core::platform::IsSandboxed())
+        {
+            std::vector<core::TouchAction> Actions;
+            if (Execution_.OwnsWindow())
+                Touch_.Reset(Actions);
+            else
+                Touch_.Update(SDL_GetTicks(), Actions);
+            ApplyTouch(Actions);
+        }
+
         if (TextZoomSaveAt_ != 0 && SDL_GetTicks() >= TextZoomSaveAt_)
         {
             TextZoomSaveAt_ = 0;
             Settings_.Save();
+        }
+    }
+
+    namespace
+    {
+        // The window a finger scrolls: the one under it, or the nearest parent that scrolls that way.
+        ImGuiWindow* TouchScrollWindow(bool Horizontal)
+        {
+            ImGuiContext* Context = ImGui::GetCurrentContext();
+            ImGuiWindow* Window = Context ? Context->HoveredWindow : nullptr;
+            while (Window)
+            {
+                const float Range = Horizontal ? Window->ScrollMax.x : Window->ScrollMax.y;
+                if (Range > 0.0f && (Window->Flags & ImGuiWindowFlags_NoScrollWithMouse) == 0)
+                    return Window;
+                Window = (Window->Flags & ImGuiWindowFlags_ChildWindow) != 0 ? Window->ParentWindow : nullptr;
+            }
+            return nullptr;
+        }
+    } // namespace
+
+    bool App::HandleTouch(const SDL_Event& Event)
+    {
+        if constexpr (!core::platform::IsSandboxed())
+            return false;
+        // SDL also reports a finger as a mouse; the gesture below is what the interface gets instead.
+        if ((Event.type == SDL_EVENT_MOUSE_MOTION && Event.motion.which == SDL_TOUCH_MOUSEID) ||
+            ((Event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || Event.type == SDL_EVENT_MOUSE_BUTTON_UP) &&
+             Event.button.which == SDL_TOUCH_MOUSEID) ||
+            (Event.type == SDL_EVENT_MOUSE_WHEEL && Event.wheel.which == SDL_TOUCH_MOUSEID))
+            return true;
+        if (Event.type != SDL_EVENT_FINGER_DOWN && Event.type != SDL_EVENT_FINGER_MOTION &&
+            Event.type != SDL_EVENT_FINGER_UP && Event.type != SDL_EVENT_FINGER_CANCELED)
+            return false;
+        if (SDL_GetTouchDeviceType(Event.tfinger.touchID) != SDL_TOUCH_DEVICE_DIRECT)
+            return false;
+
+        int Width = 0;
+        int Height = 0;
+        SDL_GetWindowSize(Window_, &Width, &Height);
+        const core::TouchPoint At{Event.tfinger.x * static_cast<float>(Width),
+                                  Event.tfinger.y * static_cast<float>(Height)};
+        std::vector<core::TouchAction> Actions;
+        if (Event.type == SDL_EVENT_FINGER_DOWN)
+            Touch_.Down(Event.tfinger.fingerID, At, SDL_GetTicks(), Actions);
+        else if (Event.type == SDL_EVENT_FINGER_MOTION)
+            Touch_.Motion(
+                Event.tfinger.fingerID, At, [](bool Horizontal) { return TouchScrollWindow(Horizontal) != nullptr; },
+                Actions);
+        else if (Event.type == SDL_EVENT_FINGER_UP)
+            Touch_.Up(Event.tfinger.fingerID, At, Actions);
+        else
+            Touch_.Reset(Actions);
+        ApplyTouch(Actions);
+        return true;
+    }
+
+    void App::ApplyTouch(const std::vector<core::TouchAction>& Actions)
+    {
+        if (Actions.empty() || ImGui::GetCurrentContext() == nullptr)
+            return;
+        ImGuiIO& Io = ImGui::GetIO();
+        Io.AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
+        for (const core::TouchAction& Action : Actions)
+        {
+            using Kind = core::TouchAction::Kind;
+            switch (Action.Type)
+            {
+                case Kind::Hover:
+                case Kind::Move:
+                    Io.AddMousePosEvent(Action.At.X, Action.At.Y);
+                    break;
+                case Kind::Press:
+                    Io.AddMousePosEvent(Action.At.X, Action.At.Y);
+                    Io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+                    break;
+                case Kind::Release:
+                    Io.AddMousePosEvent(Action.At.X, Action.At.Y);
+                    Io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+                    break;
+                case Kind::Leave:
+                    Io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+                    break;
+                case Kind::Scroll:
+                    // The content follows the finger.
+                    if (ImGuiWindow* Window = TouchScrollWindow(false))
+                        ImGui::SetScrollY(Window, Window->Scroll.y - Action.Delta.Y);
+                    if (ImGuiWindow* Window = TouchScrollWindow(true))
+                        ImGui::SetScrollX(Window, Window->Scroll.x - Action.Delta.X);
+                    break;
+            }
         }
     }
 
@@ -1666,6 +1803,20 @@ namespace dbc::studio
                 ImVec2(Viewport->Pos.x + static_cast<float>(Safe.x), Viewport->Pos.y + static_cast<float>(Safe.y));
             HostSize = ImVec2(static_cast<float>(Safe.w), static_cast<float>(Safe.h));
         }
+        // The on-screen keyboard takes the bottom of the window: the layout ends above it, and the line
+        // being typed comes back into view.
+        const float Keyboard = core::ScreenKeyboardHeight();
+        if (Keyboard > 0.0f)
+        {
+            const float Bottom = std::min(HostPos.y + HostSize.y, Viewport->Pos.y + Viewport->Size.y - Keyboard);
+            HostSize.y = std::max(1.0f, Bottom - HostPos.y);
+        }
+        if (Keyboard != KeyboardHeight_)
+        {
+            KeyboardHeight_ = Keyboard;
+            if (TextEditor* Editor = Keyboard > 0.0f ? Editor_.CurrentEditor() : nullptr)
+                Editor->ScrollToLine(Editor->GetMainCursorPosition().line, TextEditor::Scroll::alignMiddle);
+        }
         ImGui::SetNextWindowPos(HostPos);
         ImGui::SetNextWindowSize(HostSize);
         ImGui::SetNextWindowViewport(Viewport->ID);
@@ -1749,6 +1900,24 @@ namespace dbc::studio
         TextZoomSaveAt_ = SDL_GetTicks() + KTextZoomSaveDelayMs;
     }
 
+    void App::SetInterfaceZoom(float Zoom)
+    {
+        Settings_.Editor.InterfaceZoom =
+            std::clamp(Zoom, core::EditorSettings::KMinInterfaceZoom, core::EditorSettings::KMaxInterfaceZoom);
+        ApplyInterfaceScale();
+        // Shares the text zoom's delayed save: a slider sends a value per frame.
+        TextZoomSaveAt_ = SDL_GetTicks() + KTextZoomSaveDelayMs;
+    }
+
+    void App::ApplyInterfaceScale()
+    {
+        if (ImGui::GetCurrentContext() == nullptr)
+            return;
+        const float Scale = Scale_ * core::platform::UiScaleHint() * Settings_.Editor.InterfaceZoom;
+        Theme::ApplyMetrics(Scale, core::platform::IsSandboxed());
+        ImGui::GetStyle().FontScaleDpi = Scale;
+    }
+
     bool App::HandleTextZoom(const SDL_Event& Event)
     {
         if (!CodeTextHovered_)
@@ -1786,6 +1955,12 @@ namespace dbc::studio
             if (ImGui::SliderFloat(TrId("Text zoom"), &TextZoom, core::EditorSettings::KMinTextZoom,
                                    core::EditorSettings::KMaxTextZoom, "%.2f", Flags))
                 SetTextZoom(TextZoom);
+            float InterfaceZoom = Settings_.Editor.InterfaceZoom;
+            // Applied when the slider is released: resizing the window under the finger would move the slider.
+            ImGui::SliderFloat(TrId("Interface zoom"), &InterfaceZoom, core::EditorSettings::KMinInterfaceZoom,
+                               core::EditorSettings::KMaxInterfaceZoom, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            if (ImGui::IsItemDeactivatedAfterEdit())
+                SetInterfaceZoom(InterfaceZoom);
             if constexpr (!core::platform::IsSandboxed())
             {
                 using core::DocumentationReader;
@@ -2209,6 +2384,13 @@ namespace dbc::studio
                 SetTextZoom(Settings_.Editor.TextZoom / KTextZoomStep);
             if (ImGui::MenuItem(TrId("Reset Text Size"), "Ctrl+0"))
                 SetTextZoom(1.0f);
+            ImGui::Separator();
+            if (ImGui::MenuItem(TrId("Increase Interface Size")))
+                SetInterfaceZoom(Settings_.Editor.InterfaceZoom * KTextZoomStep);
+            if (ImGui::MenuItem(TrId("Decrease Interface Size")))
+                SetInterfaceZoom(Settings_.Editor.InterfaceZoom / KTextZoomStep);
+            if (ImGui::MenuItem(TrId("Reset Interface Size")))
+                SetInterfaceZoom(1.0f);
             ImGui::Separator();
             if (ImGui::BeginMenu(TrId("Theme")))
             {

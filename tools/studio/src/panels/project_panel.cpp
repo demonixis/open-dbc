@@ -1,5 +1,6 @@
 #include "project_panel.hpp"
 #include "core/i18n.hpp"
+#include "theme.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -134,7 +135,7 @@ namespace dbc::studio
                     ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
                 ImGui::TreeNodeEx(NodeValue.Name.c_str(), Flags);
 
-                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && OnActivate_)
+                if (Theme::ItemActivated() && OnActivate_)
                 {
                     OnActivate_(NodeValue.Path);
                 }
@@ -187,7 +188,7 @@ namespace dbc::studio
                             Index == 0 ? TrFmt("Main: {0}", {File}) : std::to_string(Index) + ": " + File;
                         ImGui::TreeNodeEx(Name.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen |
                                                             ImGuiTreeNodeFlags_SpanAvailWidth);
-                        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && OnActivate_)
+                        if (Theme::ItemActivated() && OnActivate_)
                             OnActivate_(OrderedSources_[Index]);
                     }
                     ImGui::TreePop();

@@ -220,6 +220,18 @@ TEST_CASE("Studio preferences keep the Editor Settings speeds within their range
     CHECK(Wrong.Editor.ScrollSpeed == doctest::Approx(1.0f));
 }
 
+TEST_CASE("Studio preferences keep the interface zoom within its range")
+{
+    std::string Error;
+    CHECK(core::Settings::Parse("{}", Error).Editor.InterfaceZoom == doctest::Approx(1.0f));
+    CHECK(core::Settings::Parse(R"({"interfaceZoom":1.5})", Error).Editor.InterfaceZoom == doctest::Approx(1.5f));
+    CHECK(core::Settings::Parse(R"({"interfaceZoom":0})", Error).Editor.InterfaceZoom ==
+          doctest::Approx(core::EditorSettings::KMinInterfaceZoom));
+    CHECK(core::Settings::Parse(R"({"interfaceZoom":99})", Error).Editor.InterfaceZoom ==
+          doctest::Approx(core::EditorSettings::KMaxInterfaceZoom));
+    CHECK(Error.empty());
+}
+
 TEST_CASE("Studio preferences keep the text zoom within its range")
 {
     std::string Error;

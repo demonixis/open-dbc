@@ -93,6 +93,8 @@ namespace dbc::studio
                                               EditorSettings::KMinSpeed, EditorSettings::KMaxSpeed);
             S.Editor.TextZoom = std::clamp(Get<float>(J, "textZoom", S.Editor.TextZoom, Error),
                                            EditorSettings::KMinTextZoom, EditorSettings::KMaxTextZoom);
+            S.Editor.InterfaceZoom = std::clamp(Get<float>(J, "interfaceZoom", S.Editor.InterfaceZoom, Error),
+                                                EditorSettings::KMinInterfaceZoom, EditorSettings::KMaxInterfaceZoom);
             const std::string DocReader = Get<std::string>(J, "documentationReader", "studio", Error);
             if (DocReader == "browser")
                 S.Editor.DocReader = DocumentationReader::Browser;
@@ -168,6 +170,7 @@ namespace dbc::studio
             J["scrollSpeed"] = Editor.ScrollSpeed;
             J["cameraSpeed"] = Editor.CameraSpeed;
             J["textZoom"] = Editor.TextZoom;
+            J["interfaceZoom"] = Editor.InterfaceZoom;
             J["documentationReader"] = Editor.DocReader == DocumentationReader::Browser ? "browser" : "studio";
             J["projectPathRemappings"] = ProjectPathRemappings;
             J["javaHome"] = JavaHome;

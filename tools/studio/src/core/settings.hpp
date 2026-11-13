@@ -23,6 +23,8 @@ namespace dbc::studio
             static constexpr float KMaxSpeed = 5.0f;
             static constexpr float KMinTextZoom = 0.5f;
             static constexpr float KMaxTextZoom = 4.0f;
+            static constexpr float KMinInterfaceZoom = 0.75f;
+            static constexpr float KMaxInterfaceZoom = 2.5f;
 
             // The viewport's zoom under the wheel or two fingers.
             float ScrollSpeed = 1.0f;
@@ -30,6 +32,8 @@ namespace dbc::studio
             float CameraSpeed = 1.0f;
             // The size of the code font, in the editor and the panels that use it.
             float TextZoom = 1.0f;
+            // The size of everything else: menus, panels, buttons.
+            float InterfaceZoom = 1.0f;
             DocumentationReader DocReader = DocumentationReader::Studio;
         };
 

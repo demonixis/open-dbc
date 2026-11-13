@@ -51,9 +51,14 @@ namespace dbc::studio
         // The theme setting: "auto" follows the system, "light" is light and anything else dark.
         Appearance ResolveAppearance(std::string_view Setting, bool SystemIsLight);
 
-        // Applies rounding and spacing to the current ImGui style, once.
-        // `Scale` is the display content scale used to bake sizes.
-        void ApplyMetrics(float Scale);
+        // Applies rounding and spacing to the current ImGui style; calling it again replaces them.
+        // `Scale` is the display content scale used to bake sizes. `Touch` spaces rows, tabs and
+        // scrollbars for fingers.
+        void ApplyMetrics(float Scale, bool Touch);
+
+        // Whether the last item was asked to open: a double click, or a tap on a touch screen, where a
+        // drag scrolls and so a single tap cannot be a slip.
+        bool ItemActivated();
 
         // Fills the palette and the current ImGui style's colors. Call between frames.
         void SetAppearance(Appearance Value);

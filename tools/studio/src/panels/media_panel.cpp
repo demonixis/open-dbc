@@ -1,5 +1,6 @@
 #include "media_panel.hpp"
 #include "core/i18n.hpp"
+#include "theme.hpp"
 #include "path_utf8.hpp"
 
 #include <algorithm>
@@ -97,10 +98,10 @@ namespace dbc::studio
                 ImGui::PushID(File.RelativeName.c_str());
                 ImGui::Selectable(File.RelativeName.c_str(), false,
                                   ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick);
+                if (Theme::ItemActivated() && OnActivate_)
+                    OnActivate_(File.Path);
                 if (ImGui::IsItemHovered())
                 {
-                    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && OnActivate_)
-                        OnActivate_(File.Path);
                     ImGui::SetTooltip("%s\n%s", Tr(core::MediaKindLabel(File.Kind)),
                                       dbc::PathToUtf8(File.Path).c_str());
                 }

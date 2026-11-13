@@ -80,12 +80,30 @@ TEST_CASE("Both appearances keep text readable")
 TEST_CASE("Changing the appearance leaves the scaled metrics alone")
 {
     ImGui::CreateContext();
-    Theme::ApplyMetrics(2.0f);
+    Theme::ApplyMetrics(2.0f, false);
     const float Padding = ImGui::GetStyle().FramePadding.x;
     CHECK(Padding == doctest::Approx(12.0f));
 
     Theme::SetAppearance(Theme::Appearance::Light);
     Theme::SetAppearance(Theme::Appearance::Dark);
     CHECK(ImGui::GetStyle().FramePadding.x == doctest::Approx(Padding));
+    ImGui::DestroyContext();
+}
+
+TEST_CASE("Touch metrics give rows more room and applying metrics again does not compound them")
+{
+    ImGui::CreateContext();
+    Theme::ApplyMetrics(1.0f, false);
+    const float MouseSpacing = ImGui::GetStyle().ItemSpacing.y;
+    Theme::ApplyMetrics(1.0f, true);
+    const float TouchSpacing = ImGui::GetStyle().ItemSpacing.y;
+    CHECK(TouchSpacing > MouseSpacing * 2.0f);
+    CHECK(ImGui::GetStyle().TouchExtraPadding.x > 0.0f);
+
+    Theme::ApplyMetrics(1.0f, true);
+    CHECK(ImGui::GetStyle().ItemSpacing.y == doctest::Approx(TouchSpacing));
+    Theme::ApplyMetrics(1.0f, false);
+    CHECK(ImGui::GetStyle().ItemSpacing.y == doctest::Approx(MouseSpacing));
+    CHECK(ImGui::GetStyle().TouchExtraPadding.x == doctest::Approx(0.0f));
     ImGui::DestroyContext();
 }
