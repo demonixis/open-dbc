@@ -1339,3 +1339,66 @@ TEST_CASE("A gizmo move of a program's node rewrites its statement, and a locked
     KeptText << Kept.rdbuf();
     CHECK(KeptText.str() == Moved);
 }
+
+TEST_CASE("On a touch screen a tap picks, the gizmo moves the selection and the view stays put")
+{
+    const glm::vec3 Start(3.0f, 15.0f, 2.0f);
+    SceneViewDriver Driver("touch_gizmo", LevelOfCubes({Start}));
+    ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
+    const glm::vec3 Eye = Driver.Eye();
+    Driver.Click(Start);
+
+    Driver.DragGizmoX(Start, 120.0f);
+    CHECK(Driver.SavedPositions().at(0).x > Start.x + 10.0f);
+    CHECK(glm::length(Driver.Eye() - Eye) < 0.01f);
+}
+
+TEST_CASE("On a touch screen one finger dragged off the gizmo turns the view and moves nothing")
+{
+    const glm::vec3 Start(0.0f, 15.0f, 0.0f);
+    SceneViewDriver Driver("touch_orbit", LevelOfCubes({Start}));
+    ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
+    const glm::vec3 Ahead = Driver.Ahead();
+    const glm::vec2 From = Driver.ScreenOf(glm::vec3(90.0f, 0.0f, 60.0f));
+
+    Driver.MoveMouse(From);
+    Driver.Button(true);
+    for (int Step = 1; Step <= 4; ++Step)
+        Driver.MoveMouse(From + glm::vec2(25.0f * static_cast<float>(Step), 0.0f));
+    Driver.Button(false);
+
+    CHECK(glm::dot(Driver.Ahead(), Ahead) < 0.95f);
+    CHECK(Driver.SavedPositions().at(0).x == doctest::Approx(Start.x));
+}
+
+TEST_CASE("Two fingers on the viewport zoom with their spread and pan with their midpoint")
+{
+    SceneViewDriver Driver("touch_two_fingers", LevelOfCubes({glm::vec3(0.0f)}));
+    const glm::vec2 Centre = Driver.ScreenOf(glm::vec3(0.0f));
+    const glm::vec3 Start = Driver.Eye();
+    const glm::vec3 Ahead = Driver.Ahead();
+
+    Driver.Editor().HandleFinger(SDL_EVENT_FINGER_DOWN, 1, Centre - glm::vec2(30.0f, 0.0f));
+    Driver.Editor().HandleFinger(SDL_EVENT_FINGER_DOWN, 2, Centre + glm::vec2(30.0f, 0.0f));
+    Driver.Editor().HandleFinger(SDL_EVENT_FINGER_MOTION, 1, Centre - glm::vec2(60.0f, 0.0f));
+    Driver.Editor().HandleFinger(SDL_EVENT_FINGER_MOTION, 2, Centre + glm::vec2(60.0f, 0.0f));
+    Driver.Frame();
+    // Twice the spread halves the distance to the pivot, along the line of sight.
+    const glm::vec3 Zoomed = Driver.Eye();
+    CHECK(glm::dot(Zoomed - Start, Ahead) > 10.0f);
+    CHECK(glm::dot(Driver.Ahead(), Ahead) > 0.999f);
+
+    Driver.Editor().HandleFinger(SDL_EVENT_FINGER_MOTION, 1, Centre - glm::vec2(20.0f, 0.0f));
+    Driver.Editor().HandleFinger(SDL_EVENT_FINGER_MOTION, 2, Centre + glm::vec2(100.0f, 0.0f));
+    Driver.Frame();
+    const glm::vec3 Panned = Driver.Eye() - Zoomed;
+    CHECK(glm::length(Panned) > 1.0f);
+    CHECK(std::abs(glm::dot(Panned, Ahead)) < 0.01f * glm::length(Panned) + 0.01f);
+
+    // One finger lifted: the other alone no longer moves the view.
+    Driver.Editor().HandleFinger(SDL_EVENT_FINGER_UP, 2, Centre);
+    Driver.Editor().HandleFinger(SDL_EVENT_FINGER_MOTION, 1, Centre + glm::vec2(200.0f, 80.0f));
+    Driver.Frame();
+    CHECK(glm::length(Driver.Eye() - (Zoomed + Panned)) < 0.01f);
+}
+

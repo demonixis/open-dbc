@@ -154,10 +154,61 @@ namespace dbc::studio
 
         bool SceneEditor::HandleEvent(const SDL_Event& Event)
         {
+            if (Event.type == SDL_EVENT_FINGER_DOWN || Event.type == SDL_EVENT_FINGER_MOTION ||
+                Event.type == SDL_EVENT_FINGER_UP || Event.type == SDL_EVENT_FINGER_CANCELED)
+            {
+                // A trackpad reports fingers too; its gestures already arrive as a wheel.
+                if (SDL_GetTouchDeviceType(Event.tfinger.touchID) == SDL_TOUCH_DEVICE_DIRECT)
+                {
+                    const ImVec2 Size = ImGui::GetIO().DisplaySize;
+                    HandleFinger(static_cast<SDL_EventType>(Event.type), Event.tfinger.fingerID,
+                                 glm::vec2(Event.tfinger.x * Size.x, Event.tfinger.y * Size.y));
+                }
+                // Left to the interface, which reads one finger as the mouse.
+                return false;
+            }
             if (!Flying_ || Event.type != SDL_EVENT_MOUSE_MOTION)
                 return false;
             FlySteer_ += glm::vec2(Event.motion.xrel, Event.motion.yrel);
             return true;
+        }
+
+        void SceneEditor::HandleFinger(SDL_EventType Type, SDL_FingerID Finger, const glm::vec2& At)
+        {
+            const auto Found = std::find_if(Fingers_.begin(), Fingers_.end(),
+                                            [Finger](const TouchFinger& Value) { return Value.Id == Finger; });
+            if (Type == SDL_EVENT_FINGER_DOWN)
+            {
+                if (Found == Fingers_.end())
+                    Fingers_.push_back({Finger, At});
+                const auto OnViewport = [this](const TouchFinger& Value)
+                {
+                    const glm::vec2 Local = Value.At - glm::vec2(ViewportMin_.x, ViewportMin_.y);
+                    return Local.x >= 0.0f && Local.y >= 0.0f && Local.x < ViewportSize_.x && Local.y < ViewportSize_.y;
+                };
+                TouchNavigating_ = Fingers_.size() == 2 && std::all_of(Fingers_.begin(), Fingers_.end(), OnViewport);
+                return;
+            }
+            if (Found == Fingers_.end())
+                return;
+            if (Type != SDL_EVENT_FINGER_MOTION)
+            {
+                Fingers_.erase(Found);
+                TouchNavigating_ = false;
+                return;
+            }
+            if (!TouchNavigating_)
+            {
+                Found->At = At;
+                return;
+            }
+            const glm::vec2 MiddleBefore = (Fingers_[0].At + Fingers_[1].At) * 0.5f;
+            const float SpreadBefore = glm::length(Fingers_[0].At - Fingers_[1].At);
+            Found->At = At;
+            TouchPan_ += (Fingers_[0].At + Fingers_[1].At) * 0.5f - MiddleBefore;
+            // Fingers that start together have no spread to compare with.
+            if (SpreadBefore > 8.0f)
+                TouchZoom_ *= glm::length(Fingers_[0].At - Fingers_[1].At) / SpreadBefore;
         }
 
         void SceneEditor::UpdateCamera(bool Hovered)
@@ -170,6 +221,17 @@ namespace dbc::studio
                 Navigating_ = true;
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && !ImGui::IsMouseDown(ImGuiMouseButton_Middle) && !Orbit)
                 Navigating_ = false;
+
+            // On a touch screen one finger is the left button, and has no Alt to hold: off the gizmo it
+            // turns the view, on it the gizmo moves the selection. The brush keeps its finger.
+            const bool Touch = Io.MouseSource == ImGuiMouseSource_TouchScreen;
+            if (Touch && Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && Tool_ != Tool::Paint &&
+                !ImGuizmo::IsOver())
+                TouchOrbit_ = true;
+            if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) || Fingers_.size() > 1)
+                TouchOrbit_ = false;
+            const glm::vec2 TouchPan = std::exchange(TouchPan_, glm::vec2(0.0f));
+            const float TouchZoom = std::exchange(TouchZoom_, 1.0f);
 
             const bool LevelView = LookThroughCamera_ && Document_.Env.UseCamera;
             const std::array<ImGuiKey, 4> MoveKeys = MovementKeys();
@@ -218,7 +280,7 @@ namespace dbc::studio
                     std::max(Camera_.Distance, 20.0f) * (Io.KeyShift ? 3.0f : 1.0f) * EditorSettings_.CameraSpeed;
                 Camera_.Position += Move * Speed * Io.DeltaTime;
             }
-            else if (Navigating_ && Orbit)
+            else if ((Navigating_ && Orbit) || TouchOrbit_)
             {
                 Camera_.Yaw += Delta.x * 0.3f;
                 Camera_.Pitch = std::clamp(Camera_.Pitch + Delta.y * 0.3f, -89.0f, 89.0f);
@@ -238,6 +300,23 @@ namespace dbc::studio
                 Camera_.Distance = std::clamp(
                     Camera_.Distance * std::pow(0.88f, Io.MouseWheel * EditorSettings_.ScrollSpeed), 1.0f, 15000.0f);
                 Camera_.Position = Pivot - Ahead * Camera_.Distance;
+            }
+            if (TouchPan.x != 0.0f || TouchPan.y != 0.0f)
+            {
+                // What is at the pivot's depth stays under the fingers.
+                const glm::vec3 Look = Forward(Camera_.Yaw, Camera_.Pitch);
+                const glm::vec3 Right = RightOf(Camera_.Yaw);
+                const float UnitsPerPoint = 2.0f * Camera_.Distance * std::tan(glm::radians(KEditorFov) * 0.5f) /
+                                            std::max(ViewportSize_.y, 1.0f);
+                Camera_.Position += (-Right * TouchPan.x + glm::cross(Look, Right) * TouchPan.y) * UnitsPerPoint;
+            }
+            if (TouchZoom != 1.0f && TouchZoom > 0.0f)
+            {
+                // Spreading the fingers brings the pivot closer by the same ratio.
+                const glm::vec3 Look = Forward(Camera_.Yaw, Camera_.Pitch);
+                const glm::vec3 Target = Camera_.Position + Look * Camera_.Distance;
+                Camera_.Distance = std::clamp(Camera_.Distance / TouchZoom, 1.0f, 15000.0f);
+                Camera_.Position = Target - Look * Camera_.Distance;
             }
         }
 
@@ -901,8 +980,13 @@ namespace dbc::studio
             if (!VertexSnap)
                 DrawGizmo();
 
-            if (Pointing && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !Io.KeyAlt && !VertexSnap && !Painting &&
-                !ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
+            // A finger picks when it lifts without having moved: its drag turns the view.
+            const bool PickAsked = Io.MouseSource == ImGuiMouseSource_TouchScreen
+                                       ? ImGui::IsMouseReleased(ImGuiMouseButton_Left) &&
+                                             !ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left)
+                                       : ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+            if (Pointing && PickAsked && !Io.KeyAlt && !VertexSnap && !Painting && !ImGuizmo::IsOver() &&
+                !ImGuizmo::IsUsing())
                 PickAt(ImGui::GetMousePos(), Io.KeyCtrl || Io.KeySuper || Io.KeyShift);
 
             // Tool keys apply while the viewport has focus and nothing is navigating.

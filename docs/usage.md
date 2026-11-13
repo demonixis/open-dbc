@@ -217,3 +217,5 @@ drag scrolls what scrolls and drags the rest, and a finger held still before it
 moves always drags, which selects text. View > Increase Interface Size enlarges
 menus and panels; the Output and Problems panels stay lowered until a run has
 something to report.
+In the Scene view a tap selects, a finger dragged off the gizmo turns the view, and
+two fingers pan it with their midpoint and zoom it with their spread.

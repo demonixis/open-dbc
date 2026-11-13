@@ -144,6 +144,10 @@ namespace dbc::studio
             // it was. Returns whether the event is taken, so that ImGui does not see it.
             bool HandleEvent(const SDL_Event& Event);
 
+            // A finger on a touch screen, at a position in the interface's units. Two fingers over the
+            // viewport pan the view with their midpoint and zoom it with their spread.
+            void HandleFinger(SDL_EventType Type, SDL_FingerID Finger, const glm::vec2& At);
+
             bool Flying() const
             {
                 return Flying_;
@@ -418,6 +422,19 @@ namespace dbc::studio
             bool FlyArmed_ = false;
             // The pointer's motion since the camera last moved.
             glm::vec2 FlySteer_{0.0f};
+            // One finger that did not land on the gizmo turns the view.
+            bool TouchOrbit_ = false;
+            struct TouchFinger
+            {
+                SDL_FingerID Id = 0;
+                glm::vec2 At{0.0f};
+            };
+            std::vector<TouchFinger> Fingers_;
+            // Whether the two fingers down both landed on the viewport.
+            bool TouchNavigating_ = false;
+            // What two fingers did since the camera last moved.
+            glm::vec2 TouchPan_{0.0f};
+            float TouchZoom_ = 1.0f;
             core::EditorSettings EditorSettings_;
             bool GizmoActive_ = false;
             // Position and scale % when the gizmo drag began: snapping and uniform scale start from them.
