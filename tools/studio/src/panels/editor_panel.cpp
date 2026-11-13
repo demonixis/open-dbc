@@ -893,6 +893,14 @@ namespace dbc::studio
             return Right;
         }
 
+        void EditorPanel::CloseAll()
+        {
+            TabsToClose_.clear();
+            for (const std::unique_ptr<Document>& Open : Documents_)
+                TabsToClose_.push_back(Open.get());
+            CloseQueuedTabs();
+        }
+
         void EditorPanel::CloseQueuedTabs()
         {
             while (PendingClose_ < 0 && !TabsToClose_.empty())

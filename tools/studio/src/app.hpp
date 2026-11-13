@@ -80,6 +80,8 @@ namespace dbc::studio
 
         // False when the folder cannot load, or its language still needs an answer.
         bool OpenFolder(const std::filesystem::path& Folder);
+        // Opens the folder as a project and shows the program it starts with.
+        void OpenProjectFolder(const std::filesystem::path& Folder);
         // Opens a project of a workspace location; a bundled sample is copied to My Projects first.
         void OpenLocationProject(const core::Workspace::Location& LocationValue, const std::filesystem::path& Folder);
         void OpenFile(const std::filesystem::path& File);

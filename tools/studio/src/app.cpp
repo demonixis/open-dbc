@@ -895,7 +895,11 @@ namespace dbc::studio
         const std::string PreviousFolder = Settings_.ProjectFolder;
         Settings_.ProjectFolder = dbc::PathToUtf8(Folder);
         if (!PreviousFolder.empty() && dbc::PathFromUtf8(PreviousFolder) != Folder)
+        {
             Settings_.LastFile.clear();
+            // The other project's tabs would otherwise stay in front, and Run would start them.
+            Editor_.CloseAll();
+        }
         Settings_.Save();
         const bool Resolved = ResolveWorkspace(Folder, InitialProfile_);
         if (!Resolved)
@@ -904,11 +908,17 @@ namespace dbc::studio
         return Resolved;
     }
 
+    void App::OpenProjectFolder(const std::filesystem::path& Folder)
+    {
+        if (OpenFolder(Folder) && ResolvedProject_ && !ResolvedProject_->EntrySource.empty())
+            OpenFile(ResolvedProject_->EntrySource);
+    }
+
     void App::OpenLocationProject(const core::Workspace::Location& LocationValue, const std::filesystem::path& Folder)
     {
         if (LocationValue.Type != core::Workspace::Kind::BundledSamples)
         {
-            OpenFolder(Folder);
+            OpenProjectFolder(Folder);
             return;
         }
         // The bundle is read-only and a run writes its log beside the program.
@@ -919,7 +929,7 @@ namespace dbc::studio
             Output_.Append(Status_, panels::OutputPanel::Severity::Error);
             return;
         }
-        OpenFolder(Copy.Root);
+        OpenProjectFolder(Copy.Root);
     }
 
     void App::OpenFile(const std::filesystem::path& File)
@@ -1036,7 +1046,7 @@ namespace dbc::studio
                            [this](const std::string& Path)
                            {
                                if (!Path.empty())
-                                   OpenFolder(dbc::PathFromUtf8(Path));
+                                   OpenProjectFolder(dbc::PathFromUtf8(Path));
                            });
     }
 

@@ -48,6 +48,8 @@ namespace dbc::studio
             // Returns false when the file cannot be read or CanOpen refuses it.
             bool Open(const std::filesystem::path& Path);
             void NewFile();
+            // Closes every tab; one with unsaved changes asks first, as when closed by hand.
+            void CloseAll();
 
             void Draw();
 

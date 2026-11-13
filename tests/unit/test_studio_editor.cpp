@@ -62,6 +62,10 @@ TEST_CASE("Studio editor opens HLSL effects as plain text tabs")
     CHECK(Editor.SaveCurrentAs(Root / "copy.dbpro"));
     CHECK(Editor.SaveCurrentAs(Root / "copy.json"));
 
+    // Another project opening closes the tabs that have nothing unsaved.
+    Editor.CloseAll();
+    CHECK_FALSE(Editor.HasDocument());
+
     std::filesystem::remove_all(Root, Error);
 }
 
