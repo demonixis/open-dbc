@@ -233,6 +233,7 @@ set(STUDIO_SOURCES
     src/core/paths.cpp
     src/core/paths.hpp
     src/core/screen_keyboard.hpp
+    src/core/stop_button.hpp
     src/core/touch_gesture.cpp
     src/core/touch_gesture.hpp
     src/core/project_settings.cpp
@@ -350,8 +351,9 @@ elseif(IOS)
     # Catalyst. Catalyst is a Mac but it is still the sandboxed product: no
     # export or child processes.
     target_compile_definitions(opendbc PRIVATE DBC_STUDIO_SANDBOXED=1 DBC_STUDIO_IOS=1)
-    target_sources(opendbc PRIVATE src/core/screen_keyboard_ios.mm)
-    set_source_files_properties(src/core/screen_keyboard_ios.mm PROPERTIES COMPILE_OPTIONS -fobjc-arc)
+    target_sources(opendbc PRIVATE src/core/screen_keyboard_ios.mm src/core/stop_button_ios.mm)
+    set_source_files_properties(src/core/screen_keyboard_ios.mm src/core/stop_button_ios.mm
+        PROPERTIES COMPILE_OPTIONS -fobjc-arc)
 endif()
 
 target_include_directories(opendbc PRIVATE src)

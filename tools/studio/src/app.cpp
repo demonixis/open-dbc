@@ -19,6 +19,7 @@
 #include "core/locales.hpp"
 #include "core/paths.hpp"
 #include "core/screen_keyboard.hpp"
+#include "core/stop_button.hpp"
 #include "interpreter/atomic_file.hpp"
 #include "scene/scene_capture.hpp"
 #include "scene/scene_integration.hpp"
@@ -518,6 +519,7 @@ namespace dbc::studio
 
     bool App::ReclaimWindow()
     {
+        core::HideStopButton();
         if (WindowClaimed_)
             return true;
         if (!SDL_ClaimWindowForGPUDevice(Gpu_, Window_))
@@ -723,6 +725,8 @@ namespace dbc::studio
 
         if constexpr (core::platform::IsSandboxed())
         {
+            if (core::TakeStopRequest())
+                StopRun();
             std::vector<core::TouchAction> Actions;
             if (Execution_.OwnsWindow())
                 Touch_.Reset(Actions);
@@ -2811,6 +2815,8 @@ namespace dbc::studio
             Status_ = TrFmt("Running {0}", {dbc::PathToUtf8(Target.filename())});
             if constexpr (core::platform::IsSandboxed())
                 std::ofstream(RunMarker()) << dbc::PathToUtf8(Target.filename()) << '\n';
+            if (Execution_.OwnsWindow())
+                core::ShowStopButton(Window_);
         }
         else if (!ExecutionBusy_)
         {

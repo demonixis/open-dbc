@@ -32,8 +32,9 @@ source → lexer → AST → typed binder → bytecode → verifier → VM → b
   cancelled. The iOS and Android Studios cannot start processes and run programs
   in-process, where `SYNC` and waits yield so the Studio stays responsive. A
   display has one window there, so the Studio lends its own to the program's GPU
-  device (`CoreSystem::UseHostWindow`) and draws nothing until the program ends;
-  three fingers on the screen stop it.
+  device (`CoreSystem::UseHostWindow`) and draws nothing until the program ends.
+  On iOS a system button in the top right corner stops it; three fingers on the
+  screen do everywhere.
 - A program image (`.obc`, `src/interpreter/program_image.cpp`) stores the
   bytecode and project startup under the runtime fingerprint; loading it checks
   the container, then the verifier runs as for freshly compiled bytecode.
