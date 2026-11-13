@@ -25,11 +25,11 @@ TEST_CASE("the texture library lists textures by name and the six faces of a cub
     const fs::path Library = FreshFolder("opendbc-library-scan");
     for (const char* Name : {"grass_2.jpg", "grass_1.jpg", "rock_1.PNG", "notes.txt", "day_cube_px.jpg",
                              "day_cube_nx.jpg", "day_cube_py.jpg", "day_cube_ny.jpg", "day_cube_pz.jpg",
-                             "day_cube_nz.jpg", "ice_cube_tray.jpg"})
+                             "day_cube_nz.jpg", "ice_cube_tray.jpg", "grass_1_normal.jpg", "lone_normal.jpg"})
         std::ofstream(Library / Name) << Name;
 
     const std::vector<core::LibraryTexture> Textures = core::ScanTextureLibrary(Library);
-    REQUIRE(Textures.size() == 5);
+    REQUIRE(Textures.size() == 6);
     CHECK(Textures[0].Name == "day_cube");
     CHECK(Textures[0].CubeMap);
     CHECK(Textures[0].Files.size() == 6);
@@ -37,11 +37,18 @@ TEST_CASE("the texture library lists textures by name and the six faces of a cub
     CHECK(Textures[1].Name == "grass_1");
     CHECK(Textures[1].Category == "grass");
     CHECK_FALSE(Textures[1].CubeMap);
+    // A texture comes with its normal map, and shows itself.
+    CHECK(Textures[1].NormalMap);
+    CHECK(Textures[1].Files.size() == 2);
+    CHECK(Textures[1].Preview.filename() == "grass_1.jpg");
     CHECK(Textures[2].Name == "grass_2");
+    CHECK_FALSE(Textures[2].NormalMap);
     // A name that only looks like a face is a texture of its own.
     CHECK(Textures[3].Name == "ice_cube_tray");
     CHECK(Textures[3].Category == "ice_cube_tray");
-    CHECK(Textures[4].Name == "rock_1");
+    // So is a normal map without its texture.
+    CHECK(Textures[4].Name == "lone_normal");
+    CHECK(Textures[5].Name == "rock_1");
 
     CHECK(core::ScanTextureLibrary(Library / "missing").empty());
     std::error_code Error;

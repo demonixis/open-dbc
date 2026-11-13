@@ -18,6 +18,7 @@ namespace dbc::studio
 
             constexpr std::array<std::string_view, 6> KCubeFaces = {"_px", "_nx", "_py", "_ny", "_pz", "_nz"};
             constexpr std::string_view KCubeMark = "_cube";
+            constexpr std::string_view KNormalMark = "_normal";
 
             bool IsTexture(const fs::path& Path)
             {
@@ -56,16 +57,32 @@ namespace dbc::studio
         std::vector<LibraryTexture> ScanTextureLibrary(const fs::path& Folder)
         {
             std::map<std::string, LibraryTexture> ByName;
+            std::vector<fs::path> NormalMaps;
             std::error_code Error;
             for (fs::directory_iterator It(Folder, Error), End; !Error && It != End; It.increment(Error))
             {
                 if (!It->is_regular_file(Error) || !IsTexture(It->path()))
                     continue;
                 const std::string Stem = dbc::PathToUtf8(It->path().stem());
+                if (Stem.size() > KNormalMark.size() && Stem.ends_with(KNormalMark))
+                {
+                    NormalMaps.push_back(It->path());
+                    continue;
+                }
                 const std::string Cube = CubeMapOf(Stem);
                 LibraryTexture& Texture = ByName[Cube.empty() ? Stem : Cube];
                 Texture.CubeMap = !Cube.empty();
                 Texture.Files.push_back(It->path());
+            }
+            for (const fs::path& Normal : NormalMaps)
+            {
+                const std::string Stem = dbc::PathToUtf8(Normal.stem());
+                const std::string Base = Stem.substr(0, Stem.size() - KNormalMark.size());
+                // A normal map without its texture is a texture of its own.
+                const auto Owner = ByName.find(Base);
+                LibraryTexture& Texture = Owner != ByName.end() ? Owner->second : ByName[Stem];
+                Texture.NormalMap = Owner != ByName.end();
+                Texture.Files.push_back(Normal);
             }
             std::vector<LibraryTexture> Textures;
             for (auto& [Name, Texture] : ByName)
@@ -77,6 +94,14 @@ namespace dbc::studio
                 const auto Front = std::find_if(Texture.Files.begin(), Texture.Files.end(), [](const fs::path& File)
                                                 { return dbc::PathToUtf8(File.stem()).ends_with("_pz"); });
                 Texture.Preview = Front != Texture.Files.end() ? *Front : Texture.Files.front();
+                if (Texture.NormalMap)
+                {
+                    // The colour texture, not its normal map, which sorts after it only by chance.
+                    const auto Colour = std::find_if(Texture.Files.begin(), Texture.Files.end(), [&](const fs::path& F)
+                                                     { return dbc::PathToUtf8(F.stem()) == Name; });
+                    if (Colour != Texture.Files.end())
+                        Texture.Preview = *Colour;
+                }
                 Textures.push_back(std::move(Texture));
             }
             return Textures;

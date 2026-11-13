@@ -109,8 +109,9 @@ namespace dbc::studio
                         Draw->AddPolyline(Tick, 3, IM_COL32_WHITE, ImDrawFlags_None, std::max(1.5f, R * 0.25f));
                     }
                     if (Hovered)
-                        ImGui::SetTooltip("%s", Tr(Texture.CubeMap ? "Environment cube map: six faces"
-                                                                   : "Tileable texture"));
+                        ImGui::SetTooltip("%s", Tr(Texture.CubeMap     ? "Environment cube map: six faces"
+                                                   : Texture.NormalMap ? "Tileable texture with its normal map"
+                                                                       : "Tileable texture"));
 
                     ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + Tile);
                     ImGui::TextUnformatted(Texture.Name.c_str());

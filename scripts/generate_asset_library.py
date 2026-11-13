@@ -5,8 +5,9 @@ script needs numpy and a JPEG writer, which Blender's bundled Python provides:
 
     /Applications/Blender.app/Contents/MacOS/Blender -b --python scripts/generate_asset_library.py
 
-It writes resources/asset_library/textures/<category>_<1..3>.jpg (tileable surfaces)
-and <name>_cube_{px,nx,py,ny,pz,nz}.jpg (environment cube faces).
+It writes resources/asset_library/textures/<category>_<1..3>.jpg (tileable surfaces),
+<category>_<1..3>_normal.jpg (their tangent-space normal maps, from the same height
+field) and <name>_cube_{px,nx,py,ny,pz,nz}.jpg (environment cube faces).
 """
 
 from pathlib import Path
@@ -18,6 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "resources" / "asset_library" / "textures"
 N = 512
 QUALITY = 88
+# Slope of the normal maps relative to the slope the colour is shaded with, chosen to sit
+# near the strength of the demos' bump maps.
+NORMAL_STRENGTH = 0.25
 TAU = 2.0 * np.pi
 
 # Tile coordinates in [0, 1); row 0 is the top of the image.
@@ -110,14 +114,28 @@ def worley(seed, nx, ny=None, u=U, v=V, jitter=0.9):
     return f1, f2, cell, dx1, dy1
 
 
+def slopes(h, strength):
+    """Height gradients along u and v (down the image), wrapping so the result tiles."""
+    return ((np.roll(h, -1, 1) - np.roll(h, 1, 1)) * 30.0 * strength,
+            (np.roll(h, -1, 0) - np.roll(h, 1, 0)) * 30.0 * strength)
+
+
 def shade(h, strength=1.0):
     """Light factor for a tileable height field lit from the top left; 1 on flat ground."""
-    dx = (np.roll(h, -1, 1) - np.roll(h, 1, 1)) * 30.0 * strength
-    dy = (np.roll(h, -1, 0) - np.roll(h, 1, 0)) * 30.0 * strength
+    dx, dy = slopes(h, strength)
     light = np.array([-0.5, -0.6, 0.62])
     light /= np.linalg.norm(light)
     lit = (-dx * light[0] - dy * light[1] + light[2]) / np.sqrt(dx * dx + dy * dy + 1.0)
     return rgb(np.clip(1.0 + 0.9 * (lit - light[2]), 0.25, 1.7))
+
+
+def normal_map(h, strength=1.0):
+    """Tangent-space normals of a height field; green follows +V, as the engine reads it."""
+    dx, dy = slopes(h, strength * NORMAL_STRENGTH)
+    length = np.sqrt(dx * dx + dy * dy + 1.0)
+    # Centred on 128 rather than 127.5, so flat ground encodes as exactly (128, 128, 255).
+    return np.stack([(128.0 - 127.0 * dx / length) / 255.0, (128.0 - 127.0 * dy / length) / 255.0,
+                     (128.0 + 127.0 / length) / 255.0], axis=-1)
 
 
 def save(name, pixels):
@@ -507,6 +525,7 @@ def main():
             if lit:
                 light = lerp(light, 1.0, lit[0])
             save(f"{surface.__name__}_{k + 1}", c * light)
+            save(f"{surface.__name__}_{k + 1}_normal", normal_map(h, relief))
     for name, parameters in SKIES.items():
         for face, direction in cube_faces().items():
             save(f"{name}_cube_{face}", sky(direction, parameters))

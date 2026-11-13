@@ -867,6 +867,7 @@
   "This source does not show which dialect it uses: choose DBC or DBPro.": "Cette source n’indique pas quel dialecte elle utilise : choisissez DBC ou DBPro.",
   "This source has evidence for both DBC and DBPro: choose one.": "Cette source présente des indices à la fois de DBC et de DBPro : choisissez-en un.",
   "Tileable texture": "Texture répétable",
+  "Tileable texture with its normal map": "Texture répétable avec sa normal map",
   "Tiles across": "Tuiles en largeur",
   "Tiles down": "Tuiles en profondeur",
   "Timestamp URL": "URL d’horodatage",

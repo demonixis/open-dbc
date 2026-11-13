@@ -19,10 +19,11 @@ namespace dbc::studio
             // The file shown on the tile.
             std::filesystem::path Preview;
             bool CubeMap = false;
+            bool NormalMap = false;
         };
 
         // The textures in `Folder`, sorted by name. The six files `<name>_cube_{px,nx,py,ny,pz,nz}` are one
-        // cube map.
+        // cube map, and `<name>_normal` is the normal map of `<name>`: it comes with it, not as an entry.
         std::vector<LibraryTexture> ScanTextureLibrary(const std::filesystem::path& Folder);
 
         // The folder of a project that library textures are copied to.
