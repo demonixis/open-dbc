@@ -546,6 +546,8 @@ namespace dbc
             }
             else if (Geometry.Hud)
                 AppendHud(Vertices, Batches);
+            if (Geometry.Pad)
+                dbc::AppendVirtualPad(K, Vertices, Batches);
         }
 
         Geometry.ClearColor = ClearColor;
@@ -1406,6 +1408,7 @@ namespace dbc
             {
                 const RenderView Camera = K.Renderer().CameraView(Targets.back().Width, Targets.back().Height);
                 Geometry[Index].Hud = HasHud(Index);
+                Geometry[Index].Pad = Index + 1 == CameraIds.size();
                 Geometry[Index].OverPreviousCamera = Index > ImageCameras || (ScreenQuad && !ToImage);
                 Geometry[Index].SceneHidden = ScreenQuad && !ToImage && K.Camera().TargetImage() != 0;
                 if (Geometry[Index].SceneHidden)

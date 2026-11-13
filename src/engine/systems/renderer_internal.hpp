@@ -101,6 +101,8 @@ namespace dbc
     void EnsureHudGlyphs(EngineKernel& K);
     // Screen primitives, text, pasted images and sprites.
     void AppendHudLayer(EngineKernel& K, std::vector<GpuVertex>& HudVertices, std::vector<GpuBatch>& HudBatches);
+    // The on-screen keys and mouse buttons of a touch screen without a keyboard, when they show.
+    void AppendVirtualPad(EngineKernel& K, std::vector<GpuVertex>& Vertices, std::vector<GpuBatch>& Batches);
 
     // GPU mesh draws: renderer_gpu_meshes.cpp.
     void GroupGpuMeshDraws(std::vector<GpuMeshDraw>& Draws);

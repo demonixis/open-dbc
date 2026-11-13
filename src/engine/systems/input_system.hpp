@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../virtual_pad.hpp"
+
 #include <SDL3/SDL_rect.h>
 #include <array>
 #include <cstdint>
@@ -165,8 +167,27 @@ namespace dbc
         int IsTouchMoved(int FingerId) const;
         int IsTouchUp(int FingerId) const;
 
+        // A finger on a direct touch screen, by its position as a fraction of the window. Outside the
+        // virtual pad the first finger is the mouse: it moves the pointer and holds the left button,
+        // and a second finger makes it the right button instead.
+        void OnFingerDown(uint64_t Finger, float X, float Y);
+        void OnFingerMotion(uint64_t Finger, float X, float Y);
+        void OnFingerUp(uint64_t Finger, float X, float Y);
+
+        // The virtual pad stands for the arrow keys, space and the mouse buttons. Auto shows it on a
+        // touch screen that has no keyboard.
+        enum class VirtualPadMode
+        {
+            Auto,
+            Shown,
+            Hidden,
+        };
+
+        void SetVirtualPadMode(VirtualPadMode Mode);
+        bool VirtualPadVisible() const;
+        bool VirtualPadHeld(PadButton Button) const;
+
         // Mobile settings
-        void SetMobileInputEmulation(int Mode);
         void SetScreenOrientation(int Mode);
 
         // Accelerometer (lazy-init sensor on first call)
@@ -255,13 +276,62 @@ namespace dbc
         std::unordered_map<uint64_t, int> FingerSlotMap_;
         int NextFingerSlot_ = 1;
 
-        // Mobile input emulation (touch zones → virtual keys)
-        bool MobileInputEmulation_ = true;
-        bool TouchInZoneUp() const;
-        bool TouchInZoneDown() const;
-        bool TouchInZoneLeft() const;
-        bool TouchInZoneRight() const;
-        bool TouchInZoneCenter() const;
+        // What a finger on the screen is doing.
+        enum class FingerRole
+        {
+            Pad,
+            Pointer,
+            // The second finger of a right click.
+            Second,
+            Idle,
+        };
+
+        struct FingerUse
+        {
+            FingerRole Role = FingerRole::Idle;
+            int Button = -1;
+        };
+
+        enum class PointerState
+        {
+            None,
+            // Down, and not yet a left click: a second finger may still make it a right click.
+            Pending,
+            Left,
+            Right,
+            // The second finger was lifted: the pointer moves without a button.
+            Hover,
+        };
+
+        // A press lasts at least this long, so that a program polling once a frame sees a tap.
+        static constexpr uint64_t KPadHoldMs = 60;
+        // How long a finger waits for a second one before it presses the left button.
+        static constexpr uint64_t KSecondFingerMs = 80;
+
+        void PadPress(int Button);
+        void PadRelease(int Button);
+        void ApplyPadButton(int Button, bool Down);
+        void ReleaseDuePadButtons();
+
+        VirtualPadMode VirtualPadMode_ = VirtualPadMode::Auto;
+#ifdef DBC_MOBILE
+        bool DirectTouchSeen_ = true;
+#else
+        bool DirectTouchSeen_ = false;
+#endif
+        std::unordered_map<int, FingerUse> FingerUses_;
+        // Per pad button: the fingers holding it, whether the program sees it held, when it was
+        // pressed, and when a lifted finger lets go of it (0: not waiting).
+        std::array<int, KPadButtonCount> PadHolders_{};
+        std::array<bool, KPadButtonCount> PadActive_{};
+        std::array<uint64_t, KPadButtonCount> PadPressedAt_{};
+        std::array<uint64_t, KPadButtonCount> PadReleaseAt_{};
+        PointerState PointerState_ = PointerState::None;
+        int PointerSlot_ = 0;
+        int SecondSlot_ = 0;
+        uint64_t PointerDownAt_ = 0;
+        int PointerStartX_ = 0;
+        int PointerStartY_ = 0;
 
         // Accelerometer
         SDL_Sensor* AccelSensor_ = nullptr;

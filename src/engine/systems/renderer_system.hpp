@@ -77,6 +77,8 @@ namespace dbc
         // Set by the caller when several cameras share the screen: the 2D layer is drawn with one of them only,
         // and each later camera draws over the earlier ones.
         bool Hud = true;
+        // The view the virtual pad is drawn over: the last one on the screen, whatever the 2D layer's order.
+        bool Pad = true;
         bool OverPreviousCamera = false;
         // The screen quad stands for the camera: the view draws its 2D layer only.
         bool SceneHidden = false;

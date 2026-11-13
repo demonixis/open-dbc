@@ -9,10 +9,14 @@
 #include <SDL3/SDL_haptic.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_joystick.h>
+#include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_sensor.h>
+#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_touch.h>
+#include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <limits>
 
 namespace dbc
@@ -48,6 +52,7 @@ namespace dbc
             else
                 ++It;
         }
+        ReleaseDuePadButtons();
     }
 
     void InputSystem::PollEvents()
@@ -137,6 +142,14 @@ namespace dbc
             else
                 EntryBuffer_ += Event.text.text;
         }
+        // The mouse SDL makes of a finger is left out: fingers are read themselves, which tells a
+        // second finger and the virtual pad apart.
+        const bool FromTouch =
+            ((Event.type == SDL_EVENT_MOUSE_MOTION) && Event.motion.which == SDL_TOUCH_MOUSEID) ||
+            ((Event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || Event.type == SDL_EVENT_MOUSE_BUTTON_UP) &&
+             Event.button.which == SDL_TOUCH_MOUSEID);
+        if (FromTouch)
+            return;
         if (Event.type == SDL_EVENT_MOUSE_MOTION && IsRuntimeWindow(Event.motion.windowID))
         {
             float X = Event.motion.x;
@@ -194,21 +207,14 @@ namespace dbc
                                   Event.type == SDL_EVENT_FINGER_UP) &&
                                  Event.tfinger.touchID != SDL_MOUSE_TOUCHID &&
                                  IsDirectTouchDevice(static_cast<int>(SDL_GetTouchDeviceType(Event.tfinger.touchID)));
-        if (DirectTouch && Event.type == SDL_EVENT_FINGER_DOWN && IsRuntimeWindow(Event.tfinger.windowID))
+        if (DirectTouch && IsRuntimeWindow(Event.tfinger.windowID))
         {
-            const int Slot = MapFingerSlot(Event.tfinger.fingerID);
-            Touches_[Slot] = {Event.tfinger.x, Event.tfinger.y, TouchPhase::Down};
-        }
-        if (DirectTouch && Event.type == SDL_EVENT_FINGER_MOTION && IsRuntimeWindow(Event.tfinger.windowID))
-        {
-            const int Slot = MapFingerSlot(Event.tfinger.fingerID);
-            Touches_[Slot] = {Event.tfinger.x, Event.tfinger.y, TouchPhase::Moved};
-        }
-        if (DirectTouch && Event.type == SDL_EVENT_FINGER_UP && IsRuntimeWindow(Event.tfinger.windowID))
-        {
-            const int Slot = MapFingerSlot(Event.tfinger.fingerID);
-            Touches_[Slot] = {Event.tfinger.x, Event.tfinger.y, TouchPhase::Up};
-            FingerSlotMap_.erase(Event.tfinger.fingerID);
+            if (Event.type == SDL_EVENT_FINGER_DOWN)
+                OnFingerDown(Event.tfinger.fingerID, Event.tfinger.x, Event.tfinger.y);
+            else if (Event.type == SDL_EVENT_FINGER_MOTION)
+                OnFingerMotion(Event.tfinger.fingerID, Event.tfinger.x, Event.tfinger.y);
+            else
+                OnFingerUp(Event.tfinger.fingerID, Event.tfinger.x, Event.tfinger.y);
         }
         if (Event.type == SDL_EVENT_SENSOR_UPDATE && AccelSensor_ &&
             Event.sensor.which == SDL_GetSensorID(AccelSensor_))
@@ -722,8 +728,6 @@ namespace dbc
         const bool* Keys = SDL_GetKeyboardState(nullptr);
         if (Keys && Keys[SDL_SCANCODE_UP])
             return 1;
-        if (MobileInputEmulation_ && TouchInZoneUp())
-            return 1;
         return 0;
     }
 
@@ -738,8 +742,6 @@ namespace dbc
             return 1;
         const bool* Keys = SDL_GetKeyboardState(nullptr);
         if (Keys && Keys[SDL_SCANCODE_LEFT])
-            return 1;
-        if (MobileInputEmulation_ && TouchInZoneLeft())
             return 1;
         return 0;
     }
@@ -756,8 +758,6 @@ namespace dbc
         const bool* Keys = SDL_GetKeyboardState(nullptr);
         if (Keys && Keys[SDL_SCANCODE_RIGHT])
             return 1;
-        if (MobileInputEmulation_ && TouchInZoneRight())
-            return 1;
         return 0;
     }
 
@@ -773,8 +773,6 @@ namespace dbc
         const bool* Keys = SDL_GetKeyboardState(nullptr);
         if (Keys && Keys[SDL_SCANCODE_DOWN])
             return 1;
-        if (MobileInputEmulation_ && TouchInZoneDown())
-            return 1;
         return 0;
     }
 
@@ -789,8 +787,6 @@ namespace dbc
             return 1;
         const bool* Keys = SDL_GetKeyboardState(nullptr);
         if (Keys && Keys[SDL_SCANCODE_SPACE])
-            return 1;
-        if (MobileInputEmulation_ && TouchInZoneCenter())
             return 1;
         return 0;
     }
@@ -1961,52 +1957,216 @@ namespace dbc
         return (It != Touches_.end() && It->second.Phase == TouchPhase::Up) ? 1 : 0;
     }
 
-    // === Mobile input emulation (touch zones → virtual keys) ===
+    // === Touch as mouse, and the virtual pad ===
 
-    bool InputSystem::TouchInZoneUp() const
+    void InputSystem::SetVirtualPadMode(VirtualPadMode Mode)
     {
-        for (const auto& [Id, Touch] : Touches_)
-            if (Touch.Phase != TouchPhase::Up && Touch.Y < 0.333f)
-                return true;
-        return false;
+        VirtualPadMode_ = Mode;
     }
 
-    bool InputSystem::TouchInZoneDown() const
+    bool InputSystem::VirtualPadVisible() const
     {
-        for (const auto& [Id, Touch] : Touches_)
-            if (Touch.Phase != TouchPhase::Up && Touch.Y > 0.666f)
-                return true;
-        return false;
+        if (VirtualPadMode_ != VirtualPadMode::Auto)
+            return VirtualPadMode_ == VirtualPadMode::Shown;
+        return DirectTouchSeen_ && !SDL_HasKeyboard();
     }
 
-    bool InputSystem::TouchInZoneLeft() const
+    bool InputSystem::VirtualPadHeld(PadButton Button) const
     {
-        for (const auto& [Id, Touch] : Touches_)
-            if (Touch.Phase != TouchPhase::Up && Touch.X < 0.333f)
-                return true;
-        return false;
+        return PadActive_[static_cast<std::size_t>(Button)];
     }
 
-    bool InputSystem::TouchInZoneRight() const
+    void InputSystem::ApplyPadButton(int Button, bool Down)
     {
-        for (const auto& [Id, Touch] : Touches_)
-            if (Touch.Phase != TouchPhase::Up && Touch.X > 0.666f)
-                return true;
-        return false;
+        const PadButton Which = static_cast<PadButton>(Button);
+        if (Which == PadButton::MouseLeft || Which == PadButton::MouseRight)
+        {
+            const int SdlButton = Which == PadButton::MouseLeft ? SDL_BUTTON_LEFT : SDL_BUTTON_RIGHT;
+            if (Down)
+                OnMouseButtonDown(SdlButton);
+            else
+                OnMouseButtonUp(SdlButton);
+            return;
+        }
+        const int Scancode = static_cast<int>(Which == PadButton::Up      ? SDL_SCANCODE_UP
+                                              : Which == PadButton::Down  ? SDL_SCANCODE_DOWN
+                                              : Which == PadButton::Left  ? SDL_SCANCODE_LEFT
+                                              : Which == PadButton::Right ? SDL_SCANCODE_RIGHT
+                                                                          : SDL_SCANCODE_SPACE);
+        if (Down)
+        {
+            HeldScancodes_[Scancode] = true;
+            LastKeyScancode_ = Scancode;
+            LastKeyText_.clear();
+            AnyKeyPressed_ = true;
+        }
+        else
+        {
+            HeldScancodes_.erase(Scancode);
+            if (LastKeyScancode_ == Scancode)
+                LastKeyScancode_ = 0;
+        }
     }
 
-    bool InputSystem::TouchInZoneCenter() const
+    void InputSystem::PadPress(int Button)
     {
-        for (const auto& [Id, Touch] : Touches_)
-            if (Touch.Phase != TouchPhase::Up && Touch.X >= 0.333f && Touch.X <= 0.666f && Touch.Y >= 0.333f &&
-                Touch.Y <= 0.666f)
-                return true;
-        return false;
+        const auto Index = static_cast<std::size_t>(Button);
+        ++PadHolders_[Index];
+        PadReleaseAt_[Index] = 0;
+        if (PadActive_[Index])
+            return;
+        PadActive_[Index] = true;
+        PadPressedAt_[Index] = SDL_GetTicks();
+        ApplyPadButton(Button, true);
     }
 
-    void InputSystem::SetMobileInputEmulation(int Mode)
+    void InputSystem::PadRelease(int Button)
     {
-        MobileInputEmulation_ = (Mode != 0);
+        const auto Index = static_cast<std::size_t>(Button);
+        if (PadHolders_[Index] > 0)
+            --PadHolders_[Index];
+        // Let go at the start of a later frame: a press and its release in one batch of events would
+        // otherwise never be seen.
+        if (PadHolders_[Index] == 0 && PadActive_[Index])
+            PadReleaseAt_[Index] = std::max<uint64_t>(SDL_GetTicks(), PadPressedAt_[Index] + KPadHoldMs);
+    }
+
+    void InputSystem::ReleaseDuePadButtons()
+    {
+        const uint64_t Now = SDL_GetTicks();
+        if (PointerState_ == PointerState::Pending && Now - PointerDownAt_ >= KSecondFingerMs)
+        {
+            PointerState_ = PointerState::Left;
+            PadPress(static_cast<int>(PadButton::MouseLeft));
+        }
+        for (int Button = 0; Button < KPadButtonCount; ++Button)
+        {
+            const auto Index = static_cast<std::size_t>(Button);
+            if (PadReleaseAt_[Index] == 0 || PadHolders_[Index] > 0 || Now < PadReleaseAt_[Index])
+                continue;
+            PadReleaseAt_[Index] = 0;
+            PadActive_[Index] = false;
+            ApplyPadButton(Button, false);
+        }
+    }
+
+    void InputSystem::OnFingerDown(uint64_t Finger, float X, float Y)
+    {
+        DirectTouchSeen_ = true;
+        const int Slot = MapFingerSlot(Finger);
+        Touches_[Slot] = {X, Y, TouchPhase::Down};
+        const SDL_FPoint At = TouchOnDisplay(X, Y);
+        CoreSystem& Core = Kernel_.Core();
+        const int Button = VirtualPadVisible() ? PadButtonAt(At.x, At.y, static_cast<float>(Core.WindowWidth()),
+                                                             static_cast<float>(Core.WindowHeight()))
+                                               : -1;
+        if (Button >= 0)
+        {
+            FingerUses_[Slot] = {FingerRole::Pad, Button};
+            PadPress(Button);
+            return;
+        }
+        if (PointerSlot_ == 0)
+        {
+            FingerUses_[Slot] = {FingerRole::Pointer, -1};
+            PointerSlot_ = Slot;
+            PointerState_ = PointerState::Pending;
+            PointerDownAt_ = SDL_GetTicks();
+            // The pointer jumps under the finger without reporting a movement: a program steering
+            // with the mouse would otherwise turn at every touch.
+            MouseX_ = PointerStartX_ = static_cast<int>(At.x);
+            MouseY_ = PointerStartY_ = static_cast<int>(At.y);
+            MousePositionKnown_ = true;
+            return;
+        }
+        if (SecondSlot_ == 0 && (PointerState_ == PointerState::Pending || PointerState_ == PointerState::Left))
+        {
+            FingerUses_[Slot] = {FingerRole::Second, -1};
+            SecondSlot_ = Slot;
+            if (PointerState_ == PointerState::Left)
+                PadRelease(static_cast<int>(PadButton::MouseLeft));
+            PointerState_ = PointerState::Right;
+            PadPress(static_cast<int>(PadButton::MouseRight));
+            return;
+        }
+        FingerUses_[Slot] = {FingerRole::Idle, -1};
+    }
+
+    void InputSystem::OnFingerMotion(uint64_t Finger, float X, float Y)
+    {
+        const int Slot = MapFingerSlot(Finger);
+        Touches_[Slot] = {X, Y, TouchPhase::Moved};
+        const auto Use = FingerUses_.find(Slot);
+        if (Use == FingerUses_.end())
+            return;
+        const SDL_FPoint At = TouchOnDisplay(X, Y);
+        CoreSystem& Core = Kernel_.Core();
+        const float Width = static_cast<float>(Core.WindowWidth());
+        const float Height = static_cast<float>(Core.WindowHeight());
+        if (Use->second.Role == FingerRole::Pad)
+        {
+            // A thumb slides from one arrow to the next without lifting.
+            const int Button = PadButtonAt(At.x, At.y, Width, Height);
+            if (Button >= 0 && Button != Use->second.Button)
+            {
+                PadRelease(Use->second.Button);
+                Use->second.Button = Button;
+                PadPress(Button);
+            }
+            return;
+        }
+        if (Use->second.Role != FingerRole::Pointer)
+            return;
+        const int NewX = static_cast<int>(At.x);
+        const int NewY = static_cast<int>(At.y);
+        OnMouseMotion(NewX - MouseX_, NewY - MouseY_);
+        MouseX_ = NewX;
+        MouseY_ = NewY;
+        const float Slop = std::max(2.0f, std::min(Width, Height) * 0.015f);
+        if (PointerState_ == PointerState::Pending &&
+            std::hypot(static_cast<float>(NewX - PointerStartX_), static_cast<float>(NewY - PointerStartY_)) > Slop)
+        {
+            PointerState_ = PointerState::Left;
+            PadPress(static_cast<int>(PadButton::MouseLeft));
+        }
+    }
+
+    void InputSystem::OnFingerUp(uint64_t Finger, float X, float Y)
+    {
+        const int Slot = MapFingerSlot(Finger);
+        Touches_[Slot] = {X, Y, TouchPhase::Up};
+        FingerSlotMap_.erase(Finger);
+        const auto Use = FingerUses_.find(Slot);
+        if (Use == FingerUses_.end())
+            return;
+        const FingerUse Lifted = Use->second;
+        FingerUses_.erase(Use);
+        if (Lifted.Role == FingerRole::Pad)
+        {
+            PadRelease(Lifted.Button);
+        }
+        else if (Lifted.Role == FingerRole::Pointer)
+        {
+            if (PointerState_ == PointerState::Pending)
+                PadPress(static_cast<int>(PadButton::MouseLeft));
+            if (PointerState_ == PointerState::Pending || PointerState_ == PointerState::Left)
+                PadRelease(static_cast<int>(PadButton::MouseLeft));
+            else if (PointerState_ == PointerState::Right)
+                PadRelease(static_cast<int>(PadButton::MouseRight));
+            PointerState_ = PointerState::None;
+            PointerSlot_ = 0;
+            if (SecondSlot_ != 0)
+            {
+                FingerUses_[SecondSlot_] = {FingerRole::Idle, -1};
+                SecondSlot_ = 0;
+            }
+        }
+        else if (Lifted.Role == FingerRole::Second)
+        {
+            PadRelease(static_cast<int>(PadButton::MouseRight));
+            PointerState_ = PointerState::Hover;
+            SecondSlot_ = 0;
+        }
     }
 
     void InputSystem::SetScreenOrientation(int Mode)

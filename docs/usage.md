@@ -212,8 +212,10 @@ A phone or tablet window cannot take the size `SET DISPLAY MODE` asks for: the
 display keeps that size and its proportions, centred between black bands, and
 mouse and touch positions are those of the display.
 
-On touch screens the top, bottom, left, right and centre zones act as the arrow
-keys and space, and the back action is escape. On desktops this takes a real touch
+On a touch screen a finger is the mouse of a running program: a touch is a left
+click, a touch that moves a drag, and a touch with two fingers a right click. While
+no keyboard is connected a pad on the display holds the arrow keys, space and both
+mouse buttons. The back action is escape. On desktops this takes a real touch
 screen, not a trackpad.
 
 In the iOS and Android Studios one finger stands for the mouse: a tap clicks, a

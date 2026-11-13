@@ -256,11 +256,6 @@ namespace dbc
     }
 
     // Mobile settings
-    inline void SetMobileInputEmulation(EngineKernel& K, int Mode)
-    {
-        K.Input().SetMobileInputEmulation(Mode);
-    }
-
     inline void SetScreenOrientation(EngineKernel& K, int Mode)
     {
         K.Input().SetScreenOrientation(Mode);

@@ -5563,7 +5563,146 @@ TEST_CASE("DBPro text keyboard mouse and escape controls preserve their historic
     IndirectTouch.tfinger.x = 0.5f;
     IndirectTouch.tfinger.y = 0.1f;
     Kernel.Input().HandleEvent(IndirectTouch);
-    CHECK(Kernel.Input().Upkey() == 0);
+    CHECK(Kernel.Input().IsTouchDown(1) == 0);
+}
+
+TEST_CASE("a finger is the mouse: a touch clicks, a drag drags and a second finger right-clicks")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 640, 480));
+    dbc::InputSystem& Input = Kernel.Input();
+    Input.SetVirtualPadMode(dbc::InputSystem::VirtualPadMode::Hidden);
+    // Long enough for a held button to be let go, and for a lone finger to stop waiting for a second.
+    const auto NextFrame = [&]
+    {
+        SDL_Delay(100);
+        Input.BeginEventFrame();
+    };
+
+    // A tap, even one over within a batch of events, is a left click that the next frame sees.
+    Input.OnFingerDown(1, 0.25f, 0.5f);
+    CHECK(Input.Mousex() == 160);
+    CHECK(Input.Mousey() == 240);
+    CHECK(Input.Mouseclick() == 0);
+    Input.OnFingerUp(1, 0.25f, 0.5f);
+    CHECK(Input.Mouseclick() == 1);
+    NextFrame();
+    CHECK(Input.Mouseclick() == 0);
+    // Landing somewhere is not a movement.
+    CHECK(Input.Mousemovex() == 0);
+
+    // A drag holds the left button from the moment the finger moves.
+    Input.OnFingerDown(2, 0.25f, 0.5f);
+    Input.OnFingerMotion(2, 0.5f, 0.5f);
+    CHECK(Input.Mouseclick() == 1);
+    CHECK(Input.Mousex() == 320);
+    CHECK(Input.Mousemovex() == 160);
+    NextFrame();
+    CHECK(Input.Mouseclick() == 1);
+    Input.OnFingerUp(2, 0.5f, 0.5f);
+    NextFrame();
+    CHECK(Input.Mouseclick() == 0);
+
+    // A finger held still presses the left button too.
+    Input.OnFingerDown(3, 0.5f, 0.5f);
+    NextFrame();
+    CHECK(Input.Mouseclick() == 1);
+    Input.OnFingerUp(3, 0.5f, 0.5f);
+    NextFrame();
+
+    // Two fingers are a right click, without a left one before it.
+    Input.OnFingerDown(4, 0.5f, 0.5f);
+    Input.OnFingerDown(5, 0.6f, 0.5f);
+    CHECK(Input.Mouseclick() == 2);
+    Input.OnFingerUp(5, 0.6f, 0.5f);
+    Input.OnFingerUp(4, 0.5f, 0.5f);
+    NextFrame();
+    CHECK(Input.Mouseclick() == 0);
+
+    // No zone of the screen stands for a key.
+    Input.OnFingerDown(6, 0.5f, 0.05f);
+    CHECK(Input.Upkey() == 0);
+    Input.OnFingerUp(6, 0.5f, 0.05f);
+
+    // The mouse SDL makes of a finger is left out.
+    SDL_Event Synthetic{};
+    Synthetic.type = SDL_EVENT_MOUSE_MOTION;
+    Synthetic.motion.which = SDL_TOUCH_MOUSEID;
+    Synthetic.motion.x = 5.0f;
+    Synthetic.motion.y = 6.0f;
+    Input.HandleEvent(Synthetic);
+    CHECK(Input.Mousex() == 320);
+}
+
+TEST_CASE("the virtual pad holds the arrow keys, space and the mouse buttons")
+{
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 640, 480));
+    dbc::InputSystem& Input = Kernel.Input();
+    // A desktop is no touch screen without a keyboard.
+    CHECK_FALSE(Input.VirtualPadVisible());
+    Input.SetVirtualPadMode(dbc::InputSystem::VirtualPadMode::Shown);
+    REQUIRE(Input.VirtualPadVisible());
+    const auto NextFrame = [&]
+    {
+        SDL_Delay(100);
+        Input.BeginEventFrame();
+    };
+    const auto Centre = [](dbc::PadButton Button)
+    {
+        const SDL_FRect Rect = dbc::PadButtonRect(Button, 640.0f, 480.0f);
+        return SDL_FPoint{(Rect.x + Rect.w * 0.5f) / 640.0f, (Rect.y + Rect.h * 0.5f) / 480.0f};
+    };
+    for (int Index = 0; Index < dbc::KPadButtonCount; ++Index)
+    {
+        const SDL_FRect Rect = dbc::PadButtonRect(static_cast<dbc::PadButton>(Index), 640.0f, 480.0f);
+        CHECK(Rect.x >= 0.0f);
+        CHECK(Rect.x + Rect.w <= 640.0f);
+        CHECK(Rect.y + Rect.h <= 480.0f);
+        CHECK(dbc::PadButtonAt(Rect.x + Rect.w * 0.5f, Rect.y + Rect.h * 0.5f, 640.0f, 480.0f) == Index);
+    }
+    CHECK(dbc::PadButtonAt(320.0f, 100.0f, 640.0f, 480.0f) == -1);
+
+    Input.PositionMouse(10, 10);
+    const SDL_FPoint Up = Centre(dbc::PadButton::Up);
+    Input.OnFingerDown(1, Up.x, Up.y);
+    CHECK(Input.Upkey() == 1);
+    CHECK(Input.VirtualPadHeld(dbc::PadButton::Up));
+    // A finger on the pad is not the mouse.
+    CHECK(Input.Mouseclick() == 0);
+    CHECK(Input.Mousex() == 10);
+
+    // Another finger aims and fires meanwhile.
+    const SDL_FPoint Fire = Centre(dbc::PadButton::MouseLeft);
+    Input.OnFingerDown(2, Fire.x, Fire.y);
+    CHECK(Input.Mouseclick() == 1);
+    Input.OnFingerUp(2, Fire.x, Fire.y);
+
+    // The thumb slides to the next arrow without lifting.
+    const SDL_FPoint Right = Centre(dbc::PadButton::Right);
+    Input.OnFingerMotion(1, Right.x, Right.y);
+    CHECK(Input.Rightkey() == 1);
+    NextFrame();
+    CHECK(Input.Upkey() == 0);
+    CHECK(Input.Mouseclick() == 0);
+    CHECK(Input.Rightkey() == 1);
+    Input.OnFingerUp(1, Right.x, Right.y);
+    // A tap stays held until the next frame.
+    CHECK(Input.Rightkey() == 1);
+    NextFrame();
+    CHECK(Input.Rightkey() == 0);
+
+    const SDL_FPoint Space = Centre(dbc::PadButton::Space);
+    const SDL_FPoint Menu = Centre(dbc::PadButton::MouseRight);
+    Input.OnFingerDown(3, Space.x, Space.y);
+    Input.OnFingerDown(4, Menu.x, Menu.y);
+    CHECK(Input.Spacekey() == 1);
+    CHECK(Input.Mouseclick() == 2);
+    Input.OnFingerUp(3, Space.x, Space.y);
+    Input.OnFingerUp(4, Menu.x, Menu.y);
+    NextFrame();
+    CHECK(Input.Spacekey() == 0);
+    CHECK(Input.Mouseclick() == 0);
 }
 
 TEST_CASE("SDL virtual joysticks expose the DBPro control device model")

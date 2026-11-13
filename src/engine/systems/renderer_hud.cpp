@@ -1,10 +1,13 @@
+#include "core_system.hpp"
 #include "draw_system.hpp"
 #include "engine_kernel.hpp"
 #include "image_store.hpp"
+#include "input_system.hpp"
 #include "renderer_internal.hpp"
 #include "sprite_system.hpp"
 #include "text_system.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 namespace dbc
@@ -258,6 +261,79 @@ namespace dbc
                     (void)K.Text().EnsureTextGlyph(Line.Request, Cp);
                 }
             });
+    }
+
+    void AppendVirtualPad(EngineKernel& K, std::vector<GpuVertex>& Vertices, std::vector<GpuBatch>& Batches)
+    {
+        if (!K.Input().VirtualPadVisible())
+            return;
+        const float Width = static_cast<float>(K.Core().WindowWidth());
+        const float Height = static_cast<float>(K.Core().WindowHeight());
+        SDL_GPUTexture* White = WhiteGpuTexture(K);
+        for (int Index = 0; Index < KPadButtonCount; ++Index)
+        {
+            const PadButton Button = static_cast<PadButton>(Index);
+            const SDL_FRect Rect = PadButtonRect(Button, Width, Height);
+            const bool Held = K.Input().VirtualPadHeld(Button);
+            // A dark plate under a light sign reads over any picture.
+            dbc::AppendGpuQuad(K, Vertices, Batches, White, Rect.x, Rect.y, Rect.w, Rect.h,
+                               SDL_FColor{0.0f, 0.0f, 0.0f, Held ? 0.55f : 0.3f}, 0.0f, true);
+            const SDL_FColor Ink{1.0f, 1.0f, 1.0f, Held ? 0.95f : 0.6f};
+            const float Unit = Rect.h;
+            const float Thickness = std::max(1.0f, Unit * 0.07f);
+            const float Cx = Rect.x + Rect.w * 0.5f;
+            const float Cy = Rect.y + Rect.h * 0.5f;
+            const auto Line = [&](float X1, float Y1, float X2, float Y2)
+            { dbc::AppendGpuLine(K, Vertices, Batches, X1, Y1, X2, Y2, Ink, Thickness, 0.0f, true); };
+            const float Arm = Unit * 0.2f;
+            switch (Button)
+            {
+                case PadButton::Up:
+                    Line(Cx - Arm, Cy + Arm * 0.5f, Cx, Cy - Arm * 0.5f);
+                    Line(Cx, Cy - Arm * 0.5f, Cx + Arm, Cy + Arm * 0.5f);
+                    break;
+                case PadButton::Down:
+                    Line(Cx - Arm, Cy - Arm * 0.5f, Cx, Cy + Arm * 0.5f);
+                    Line(Cx, Cy + Arm * 0.5f, Cx + Arm, Cy - Arm * 0.5f);
+                    break;
+                case PadButton::Left:
+                    Line(Cx + Arm * 0.5f, Cy - Arm, Cx - Arm * 0.5f, Cy);
+                    Line(Cx - Arm * 0.5f, Cy, Cx + Arm * 0.5f, Cy + Arm);
+                    break;
+                case PadButton::Right:
+                    Line(Cx - Arm * 0.5f, Cy - Arm, Cx + Arm * 0.5f, Cy);
+                    Line(Cx + Arm * 0.5f, Cy, Cx - Arm * 0.5f, Cy + Arm);
+                    break;
+                case PadButton::Space:
+                {
+                    // The sign printed on a space bar.
+                    const float Half = Rect.w * 0.28f;
+                    const float Base = Cy + Arm * 0.5f;
+                    Line(Cx - Half, Base - Arm, Cx - Half, Base);
+                    Line(Cx - Half, Base, Cx + Half, Base);
+                    Line(Cx + Half, Base, Cx + Half, Base - Arm);
+                    break;
+                }
+                case PadButton::MouseLeft:
+                case PadButton::MouseRight:
+                {
+                    // A mouse seen from above, with the button it stands for filled.
+                    const float HalfW = Unit * 0.17f;
+                    const float HalfH = Unit * 0.27f;
+                    const float Split = Cy - HalfH * 0.25f;
+                    Line(Cx - HalfW, Cy - HalfH, Cx + HalfW, Cy - HalfH);
+                    Line(Cx + HalfW, Cy - HalfH, Cx + HalfW, Cy + HalfH);
+                    Line(Cx + HalfW, Cy + HalfH, Cx - HalfW, Cy + HalfH);
+                    Line(Cx - HalfW, Cy + HalfH, Cx - HalfW, Cy - HalfH);
+                    Line(Cx - HalfW, Split, Cx + HalfW, Split);
+                    Line(Cx, Cy - HalfH, Cx, Split);
+                    const float Left = Button == PadButton::MouseLeft ? Cx - HalfW : Cx;
+                    dbc::AppendGpuQuad(K, Vertices, Batches, White, Left, Cy - HalfH, HalfW, Split - Cy + HalfH, Ink,
+                                       0.0f, true);
+                    break;
+                }
+            }
+        }
     }
 
     void AppendHudLayer(EngineKernel& K, std::vector<GpuVertex>& HudVertices, std::vector<GpuBatch>& HudBatches)
