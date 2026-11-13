@@ -577,6 +577,9 @@ if(IOS)
         XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "16.3"
         XCODE_ATTRIBUTE_SUPPORTS_MACCATALYST "YES"
         XCODE_ATTRIBUTE_SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD "YES"
+        # Without these an archive holds no app, and there is nothing to send to the App Store.
+        XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
+        XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
         XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
         XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${OPENDBC_IOS_TEAM_ID}"
         XCODE_GENERATE_SCHEME ON
@@ -603,6 +606,27 @@ if(IOS)
     endforeach()
     set_source_files_properties("${STUDIO_SAMPLE_STAGE}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(opendbc PRIVATE "${STUDIO_SAMPLE_STAGE}")
+
+    # The App Store refuses an app without an icon, and an icon with transparency. The catalogue is
+    # built from the desktop icon; a round trip through JPEG is how sips drops the alpha channel.
+    set(STUDIO_IOS_ASSETS "${CMAKE_CURRENT_BINARY_DIR}/Assets.xcassets")
+    set(STUDIO_IOS_ICONSET "${STUDIO_IOS_ASSETS}/AppIcon.appiconset")
+    file(MAKE_DIRECTORY "${STUDIO_IOS_ICONSET}")
+    execute_process(
+        COMMAND /usr/bin/sips -s format jpeg -s formatOptions 100 "${CMAKE_SOURCE_DIR}/resources/editor.png"
+                --out "${CMAKE_CURRENT_BINARY_DIR}/AppIcon.jpg"
+        COMMAND_ERROR_IS_FATAL ANY OUTPUT_QUIET)
+    execute_process(
+        COMMAND /usr/bin/sips -s format png "${CMAKE_CURRENT_BINARY_DIR}/AppIcon.jpg"
+                --out "${STUDIO_IOS_ICONSET}/AppIcon.png"
+        COMMAND_ERROR_IS_FATAL ANY OUTPUT_QUIET)
+    file(WRITE "${STUDIO_IOS_ASSETS}/Contents.json" "{\"info\": {\"author\": \"xcode\", \"version\": 1}}\n")
+    file(WRITE "${STUDIO_IOS_ICONSET}/Contents.json"
+        "{\"images\": [{\"filename\": \"AppIcon.png\", \"idiom\": \"universal\", \"platform\": \"ios\", "
+        "\"size\": \"1024x1024\"}], \"info\": {\"author\": \"xcode\", \"version\": 1}}\n")
+    set_source_files_properties("${STUDIO_IOS_ASSETS}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(opendbc PRIVATE "${STUDIO_IOS_ASSETS}")
+    set_target_properties(opendbc PROPERTIES XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon")
 elseif(APPLE)
     # --- Full product: signed outside the App Store, drives the toolchains --
     # configure_file fills the @VAR@ values; the ${MACOSX_BUNDLE_*} ones come from the target properties.
