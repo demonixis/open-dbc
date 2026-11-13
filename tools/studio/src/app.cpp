@@ -819,7 +819,13 @@ namespace dbc::studio
         else if (Event.type == SDL_EVENT_FINGER_MOTION)
             Touch_.Motion(
                 Event.tfinger.fingerID, At, [](bool Horizontal) { return TouchScrollWindow(Horizontal) != nullptr; },
-                Actions);
+                Actions,
+                [this](core::TouchPoint Point)
+                {
+                    return TouchScroll_.Active && TouchScroll_.FromDragSource &&
+                           (Point.X < TouchScroll_.AreaMin.x || Point.Y < TouchScroll_.AreaMin.y ||
+                            Point.X > TouchScroll_.AreaMax.x || Point.Y > TouchScroll_.AreaMax.y);
+                });
         else if (Event.type == SDL_EVENT_FINGER_UP)
             Touch_.Up(Event.tfinger.fingerID, At, Actions);
         else
@@ -853,13 +859,41 @@ namespace dbc::studio
                     break;
                 case Kind::Leave:
                     Io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+                    TouchScroll_ = {};
                     break;
                 case Kind::Scroll:
+                {
+                    ImGuiWindow* Vertical = TouchScrollWindow(false);
+                    ImGuiWindow* Horizontal = TouchScrollWindow(true);
+                    if (!TouchScroll_.Active)
+                    {
+                        // Where the scroll began, for a drag that leaves the window to put it back.
+                        const ImGuiWindow* Area = Vertical != nullptr ? Vertical : Horizontal;
+                        TouchScroll_.Active = true;
+                        TouchScroll_.FromDragSource = Theme::OverTouchDragSource();
+                        TouchScroll_.Vertical = Vertical;
+                        TouchScroll_.Horizontal = Horizontal;
+                        TouchScroll_.Start = ImVec2(Horizontal != nullptr ? Horizontal->Scroll.x : 0.0f,
+                                                    Vertical != nullptr ? Vertical->Scroll.y : 0.0f);
+                        if (Area != nullptr)
+                        {
+                            TouchScroll_.AreaMin = Area->OuterRectClipped.Min;
+                            TouchScroll_.AreaMax = Area->OuterRectClipped.Max;
+                        }
+                    }
                     // The content follows the finger.
-                    if (ImGuiWindow* Window = TouchScrollWindow(false))
-                        ImGui::SetScrollY(Window, Window->Scroll.y - Action.Delta.Y);
-                    if (ImGuiWindow* Window = TouchScrollWindow(true))
-                        ImGui::SetScrollX(Window, Window->Scroll.x - Action.Delta.X);
+                    if (Vertical != nullptr)
+                        ImGui::SetScrollY(Vertical, Vertical->Scroll.y - Action.Delta.Y);
+                    if (Horizontal != nullptr)
+                        ImGui::SetScrollX(Horizontal, Horizontal->Scroll.x - Action.Delta.X);
+                    break;
+                }
+                case Kind::ScrollBack:
+                    if (TouchScroll_.Vertical != nullptr)
+                        ImGui::SetScrollY(TouchScroll_.Vertical, TouchScroll_.Start.y);
+                    if (TouchScroll_.Horizontal != nullptr)
+                        ImGui::SetScrollX(TouchScroll_.Horizontal, TouchScroll_.Start.x);
+                    TouchScroll_ = {};
                     break;
             }
         }

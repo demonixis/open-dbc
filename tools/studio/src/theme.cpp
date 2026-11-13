@@ -152,6 +152,21 @@ namespace dbc::studio
             return ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
         }
 
+        namespace
+        {
+            int TouchDragSourceFrame = -2;
+        }
+
+        void MarkTouchDragSource()
+        {
+            TouchDragSourceFrame = ImGui::GetFrameCount();
+        }
+
+        bool OverTouchDragSource()
+        {
+            return ImGui::GetFrameCount() - TouchDragSourceFrame <= 1;
+        }
+
         bool RefreshButton(const char* Id, const char* Tooltip)
         {
             const float Size = ImGui::GetFrameHeight();

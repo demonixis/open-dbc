@@ -213,6 +213,8 @@ namespace dbc::studio
                     ImGui::EndDragDropSource();
                 }
                 if (Hovered)
+                    Theme::MarkTouchDragSource();
+                if (Hovered)
                     ImGui::SetTooltip("%s\n%s", File.RelativeName.c_str(),
                                       Tr(Model ? "Click to inspect; drag onto the viewport or double-click to add."
                                                : "Drag onto the viewport or a file field; double-click to apply."));

@@ -60,6 +60,12 @@ namespace dbc::studio
         // drag scrolls and so a single tap cannot be a slip.
         bool ItemActivated();
 
+        // Says that the item under the pointer can be dragged out of its window: on a touch screen a
+        // scroll that began on it and leaves what scrolls becomes that drag. Call while it is hovered.
+        void MarkTouchDragSource();
+        // Whether the pointer was over such an item in the last frame drawn.
+        bool OverTouchDragSource();
+
         // A frame-high square button showing a refresh arrow: it takes less room than its label.
         bool RefreshButton(const char* Id, const char* Tooltip);
 

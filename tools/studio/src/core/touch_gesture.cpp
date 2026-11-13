@@ -27,7 +27,7 @@ namespace dbc::studio
         }
 
         void TouchGesture::Motion(std::uint64_t Finger, TouchPoint At, const ScrollQuery& CanScroll,
-                                  std::vector<TouchAction>& Out)
+                                  std::vector<TouchAction>& Out, const DragOutQuery& DragsOut)
         {
             if (Finger != Finger_ || State_ == State::Idle || State_ == State::Ignored)
                 return;
@@ -49,6 +49,13 @@ namespace dbc::studio
                     Out.push_back({TouchAction::Kind::Press, Start_, {}});
                     Out.push_back({TouchAction::Kind::Move, At, {}});
                 }
+            }
+            else if (State_ == State::Scrolling && DragsOut && DragsOut(At))
+            {
+                State_ = State::Dragging;
+                Out.push_back({TouchAction::Kind::ScrollBack, Start_, {}});
+                Out.push_back({TouchAction::Kind::Press, Start_, {}});
+                Out.push_back({TouchAction::Kind::Move, At, {}});
             }
             else if (State_ == State::Scrolling)
             {

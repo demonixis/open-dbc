@@ -65,6 +65,31 @@ TEST_CASE("a drag across what does not scroll that way is a mouse drag from wher
     CHECK(Kinds(Out) == std::vector<Kind>{Kind::Hover, Kind::Press, Kind::Move});
 }
 
+TEST_CASE("a scroll that leaves what scrolls drags what it began on")
+{
+    TouchGesture Gesture;
+    std::vector<TouchAction> Out;
+    // The list ends at y = 150; the tile under the finger can be dragged out of it.
+    const TouchGesture::DragOutQuery Leaves = [](TouchPoint At) { return At.Y < 150.0f; };
+    Gesture.Down(1, {100.0f, 200.0f}, 0, Out);
+    Gesture.Motion(1, {100.0f, 170.0f}, Vertical, Out, Leaves);
+    Gesture.Motion(1, {100.0f, 140.0f}, Vertical, Out, Leaves);
+    Gesture.Motion(1, {100.0f, 100.0f}, Vertical, Out, Leaves);
+    Gesture.Up(1, {100.0f, 100.0f}, Out);
+    REQUIRE(Kinds(Out) == std::vector<Kind>{Kind::Hover, Kind::Scroll, Kind::ScrollBack, Kind::Press, Kind::Move,
+                                            Kind::Move, Kind::Move, Kind::Release, Kind::Leave});
+    // The drag starts where the finger landed, on the tile.
+    CHECK(Out[3].At.Y == doctest::Approx(200.0f));
+    CHECK(Out[4].At.Y == doctest::Approx(140.0f));
+
+    // Without something to drag, leaving the list keeps scrolling it.
+    Out.clear();
+    Gesture.Down(2, {100.0f, 200.0f}, 1000, Out);
+    Gesture.Motion(2, {100.0f, 170.0f}, Vertical, Out);
+    Gesture.Motion(2, {100.0f, 100.0f}, Vertical, Out);
+    CHECK(Kinds(Out) == std::vector<Kind>{Kind::Hover, Kind::Scroll, Kind::Scroll});
+}
+
 TEST_CASE("a finger held still starts a mouse drag even where a drag would scroll")
 {
     TouchGesture Gesture;

@@ -8,6 +8,8 @@
 #include <SDL3/SDL.h>
 #include <imgui.h>
 
+struct ImGuiWindow;
+
 #include "core/file_dialog.hpp"
 #include "core/new_project.hpp"
 #include "core/touch_gesture.hpp"
@@ -226,6 +228,20 @@ namespace dbc::studio
         bool SdlInitialized_ = false;
         bool WindowClaimed_ = false;
         core::TouchGesture Touch_;
+        // The scroll a finger is doing: what scrolls, where its scroll was, and the window's rectangle.
+        struct TouchScrollState
+        {
+            bool Active = false;
+            // The finger landed on something that can be dragged out.
+            bool FromDragSource = false;
+            ImGuiWindow* Vertical = nullptr;
+            ImGuiWindow* Horizontal = nullptr;
+            ImVec2 Start;
+            ImVec2 AreaMin;
+            ImVec2 AreaMax;
+        };
+
+        TouchScrollState TouchScroll_;
         float KeyboardHeight_ = 0.0f;
         // Between the system's notice that the app leaves the screen and its return.
         bool InBackground_ = false;

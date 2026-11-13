@@ -26,6 +26,8 @@ namespace dbc::studio
                 Release,
                 // What is under the finger scrolls by Delta, which follows the finger.
                 Scroll,
+                // What scrolled goes back to where it was when the finger landed: a drag follows.
+                ScrollBack,
                 // The pointer leaves the window, so that nothing stays highlighted under a lifted finger.
                 Leave,
             };
@@ -40,12 +42,16 @@ namespace dbc::studio
         // - a drag scrolls what is under the finger when that scrolls along the drag, and is a mouse
         //   drag otherwise (a slider, a splitter, a viewport);
         // - a finger held still, then moved, is always a mouse drag: it selects text in a list that scrolls.
+        // - a scroll that began on something draggable and leaves what scrolls becomes a mouse drag of
+        //   it: that is how a tile is dragged out of a list.
         // A second finger ends the gesture: two fingers belong to pinches.
         class TouchGesture
         {
           public:
             // Whether what is under the finger scrolls horizontally, or vertically.
             using ScrollQuery = std::function<bool(bool Horizontal)>;
+            // Whether the scroll began on something draggable and the finger, now there, has left what scrolls.
+            using DragOutQuery = std::function<bool(TouchPoint At)>;
 
             // How far a finger may slide and still be tapping, in the unit of the points given.
             static constexpr float KSlop = 10.0f;
@@ -53,7 +59,7 @@ namespace dbc::studio
 
             void Down(std::uint64_t Finger, TouchPoint At, std::uint64_t NowMs, std::vector<TouchAction>& Out);
             void Motion(std::uint64_t Finger, TouchPoint At, const ScrollQuery& CanScroll,
-                        std::vector<TouchAction>& Out);
+                        std::vector<TouchAction>& Out, const DragOutQuery& DragsOut = {});
             void Up(std::uint64_t Finger, TouchPoint At, std::vector<TouchAction>& Out);
             // Call once per frame: a long press has no event of its own.
             void Update(std::uint64_t NowMs, std::vector<TouchAction>& Out);

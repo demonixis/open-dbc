@@ -228,5 +228,7 @@ Screen), the status bar is hidden (View > Status Bar) and the toolbar's first
 button shows or hides the menu bar.
 In the Scene view a tap selects, a finger dragged off the gizmo turns the view, and
 two fingers pan it with their midpoint and zoom it with their spread.
+A tile of the Assets panel dragged out of the panel is dropped on the scene; inside
+the panel the drag scrolls it.
 A program runs inside these Studios, so one that crashes closes them: the next
 start reopens the project, offers the unsaved tabs back and names the program.
