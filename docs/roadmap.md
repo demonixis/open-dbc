@@ -20,6 +20,13 @@ Conformance:
   `*` and `-` before `+` (`2*6/4` would be 2). Confirm on a real DBPro build before
   following it.
 
+Examples:
+
+- [ ] Lot 10, DBPro demos: a dedicated `dbpro` `GOSUB` test, then functions instead
+  of `GOSUB` in `dusk_rally` and `sky_gardens`; settings and literal scenery in
+  level files the Scene view can edit; three to five files per demo. The imported
+  TGC tutorials stay byte for byte.
+
 Building generator, baked by the Studio into a model that `LOAD OBJECT` loads:
 
 - [ ] Lot 11, core: output format settled on a hand-made model with a hinge limb

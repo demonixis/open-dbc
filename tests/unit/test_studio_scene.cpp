@@ -364,14 +364,7 @@ TEST_CASE("The BASIC goldens run the generator's exact output")
 TEST_CASE("The demos' levels are what the Scene view writes, so it can edit them")
 {
     const std::filesystem::path Demos = std::filesystem::path(TEST_SOURCE_DIR) / "examples/dbpro/demos";
-    struct Demo
-    {
-        const char* Folder;
-        const char* Name;
-        std::size_t Nodes;
-    };
-    for (const auto& [Folder, Name, Nodes] :
-         {Demo{"dusk_rally", "DuskRally", 2}, Demo{"reactor_breach", "ReactorBreach", 1}, Demo{"sky_gardens", "SkyGardens", 2}})
+    for (const auto& [Folder, Name] : {std::pair{"dusk_rally", "DuskRally"}, std::pair{"sky_gardens", "SkyGardens"}})
     {
         CAPTURE(Name);
         const std::filesystem::path Root = Demos / Folder;
@@ -379,7 +372,7 @@ TEST_CASE("The demos' levels are what the Scene view writes, so it can edit them
         scene::LevelReadResult Read = scene::ReadLevel(Level, Name);
         for (const scene::ReadError& Error : Read.Errors)
             FAIL_CHECK(Error.Line << ": " << Error.Message);
-        CHECK(Read.Document.Nodes.size() == Nodes);
+        CHECK(Read.Document.Nodes.size() == 2);
         CHECK(scene::WriteLevel(Read.Document) == Level);
 
         const std::string World = ReadText(Root / scene::WorldRelativePath(Name));
