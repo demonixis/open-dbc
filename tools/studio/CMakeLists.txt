@@ -574,6 +574,28 @@ if(IOS)
         XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${OPENDBC_IOS_TEAM_ID}"
         XCODE_GENERATE_SCHEME ON
     )
+
+    # The demos written for OpenDBC ship as the Samples location. They are staged at configure time,
+    # without the logs of local runs, and Xcode copies the folder into the bundle. A Classic demo has no
+    # project file to name its dialect, so it gets the settings file the Studio would have written.
+    set(STUDIO_SAMPLE_STAGE "${CMAKE_CURRENT_BINARY_DIR}/samples")
+    file(REMOVE_RECURSE "${STUDIO_SAMPLE_STAGE}")
+    foreach(STUDIO_SAMPLE_FAMILY IN ITEMS dbpro dbc)
+        file(GLOB STUDIO_SAMPLES LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/examples/${STUDIO_SAMPLE_FAMILY}/demos/*")
+        foreach(STUDIO_SAMPLE IN LISTS STUDIO_SAMPLES)
+            if(NOT IS_DIRECTORY "${STUDIO_SAMPLE}")
+                continue()
+            endif()
+            get_filename_component(STUDIO_SAMPLE_NAME "${STUDIO_SAMPLE}" NAME)
+            file(COPY "${STUDIO_SAMPLE}" DESTINATION "${STUDIO_SAMPLE_STAGE}" PATTERN "*.log" EXCLUDE)
+            if(STUDIO_SAMPLE_FAMILY STREQUAL "dbc")
+                file(WRITE "${STUDIO_SAMPLE_STAGE}/${STUDIO_SAMPLE_NAME}/.opendbc-project.json"
+                    "{\"language\": {\"dialect\": \"dbc\"}}\n")
+            endif()
+        endforeach()
+    endforeach()
+    set_source_files_properties("${STUDIO_SAMPLE_STAGE}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(opendbc PRIVATE "${STUDIO_SAMPLE_STAGE}")
 elseif(APPLE)
     # --- Full product: signed outside the App Store, drives the toolchains --
     # configure_file fills the @VAR@ values; the ${MACOSX_BUNDLE_*} ones come from the target properties.
