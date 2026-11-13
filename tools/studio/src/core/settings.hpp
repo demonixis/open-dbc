@@ -25,8 +25,8 @@ namespace dbc::studio
             static constexpr float KMaxSpeed = 5.0f;
             static constexpr float KMinTextZoom = 0.5f;
             static constexpr float KMaxTextZoom = 4.0f;
-            static constexpr int KMinInterfacePercent = 50;
-            static constexpr int KMaxInterfacePercent = 200;
+            static constexpr int KMinInterfacePercent = 25;
+            static constexpr int KMaxInterfacePercent = 150;
 
             // The viewport's zoom under the wheel or two fingers.
             float ScrollSpeed = 1.0f;

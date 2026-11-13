@@ -241,9 +241,9 @@ TEST_CASE("Studio preferences keep the interface zoom within its range")
 {
     std::string Error;
     CHECK(core::Settings::Parse("{}", Error).Editor.InterfacePercent == 100);
-    CHECK(core::Settings::Parse(R"({"interfacePercent":150})", Error).Editor.InterfacePercent == 150);
-    CHECK(core::Settings::Parse(R"({"interfacePercent":0})", Error).Editor.InterfacePercent == 50);
-    CHECK(core::Settings::Parse(R"({"interfacePercent":999})", Error).Editor.InterfacePercent == 200);
+    CHECK(core::Settings::Parse(R"({"interfacePercent":120})", Error).Editor.InterfacePercent == 120);
+    CHECK(core::Settings::Parse(R"({"interfacePercent":0})", Error).Editor.InterfacePercent == 25);
+    CHECK(core::Settings::Parse(R"({"interfacePercent":999})", Error).Editor.InterfacePercent == 150);
     CHECK(Error.empty());
 }
 
