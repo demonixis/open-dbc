@@ -3,6 +3,8 @@
 
 #include <misc/freetype/imgui_freetype.h>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <span>
 #include <string_view>
@@ -148,6 +150,36 @@ namespace dbc::studio
             if (ImGui::GetIO().MouseSource == ImGuiMouseSource_TouchScreen)
                 return ImGui::IsItemClicked(ImGuiMouseButton_Left);
             return ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+        }
+
+        bool RefreshButton(const char* Id, const char* Tooltip)
+        {
+            const float Size = ImGui::GetFrameHeight();
+            const bool Pressed = ImGui::InvisibleButton(Id, ImVec2(Size, Size));
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s", Tooltip);
+            const ImVec2 Min = ImGui::GetItemRectMin();
+            ImDrawList* Draw = ImGui::GetWindowDrawList();
+            if (ImGui::IsItemHovered())
+                Draw->AddRectFilled(Min, ImGui::GetItemRectMax(), ImGui::IsItemActive() ? Selection : Hover,
+                                    ImGui::GetStyle().FrameRounding);
+
+            // An open ring, clockwise, ending in an arrow head.
+            constexpr float KStart = 0.6f;
+            constexpr float KEnd = 5.4f;
+            const ImVec2 Centre(Min.x + Size * 0.5f, Min.y + Size * 0.5f);
+            const float Radius = Size * 0.28f;
+            const float Thickness = std::max(1.0f, Size * 0.075f);
+            Draw->PathArcTo(Centre, Radius, KStart, KEnd, 24);
+            Draw->PathStroke(Text, ImDrawFlags_None, Thickness);
+            const ImVec2 Tip(Centre.x + std::cos(KEnd) * Radius, Centre.y + std::sin(KEnd) * Radius);
+            const ImVec2 Along(-std::sin(KEnd), std::cos(KEnd));
+            const ImVec2 Across(std::cos(KEnd), std::sin(KEnd));
+            const float Head = Size * 0.17f;
+            Draw->AddTriangleFilled(ImVec2(Tip.x + Along.x * Head, Tip.y + Along.y * Head),
+                                    ImVec2(Tip.x - Across.x * Head, Tip.y - Across.y * Head),
+                                    ImVec2(Tip.x + Across.x * Head, Tip.y + Across.y * Head), Text);
+            return Pressed;
         }
 
         void ApplyMetrics(float Scale, bool Touch)

@@ -167,10 +167,17 @@ namespace dbc::studio
                 return;
             }
 
+            // The name is cut short of the button instead of running under it.
+            const float Button = ImGui::GetFrameHeight();
+            const float NameWidth = ImGui::GetContentRegionAvail().x - Button;
+            const ImVec2 Origin = ImGui::GetCursorScreenPos();
+            ImGui::AlignTextToFramePadding();
+            const ImVec2 NameEnd(Origin.x + NameWidth - ImGui::GetStyle().ItemSpacing.x, Origin.y + Button);
+            ImGui::PushClipRect(Origin, NameEnd, true);
             ImGui::TextUnformatted(Tree_.Name.empty() ? dbc::PathToUtf8(Root_).c_str() : Tree_.Name.c_str());
-            ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(Tr("Refresh")).x -
-                            ImGui::GetStyle().FramePadding.x * 2.0f);
-            if (ImGui::SmallButton(TrId("Refresh")))
+            ImGui::PopClipRect();
+            ImGui::SameLine(NameWidth);
+            if (Theme::RefreshButton("##refresh", Tr("Refresh")))
             {
                 Refresh();
             }

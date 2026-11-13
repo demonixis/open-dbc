@@ -60,6 +60,9 @@ namespace dbc::studio
         // drag scrolls and so a single tap cannot be a slip.
         bool ItemActivated();
 
+        // A frame-high square button showing a refresh arrow: it takes less room than its label.
+        bool RefreshButton(const char* Id, const char* Tooltip);
+
         // Fills the palette and the current ImGui style's colors. Call between frames.
         void SetAppearance(Appearance Value);
 

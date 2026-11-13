@@ -62,7 +62,7 @@ namespace dbc::studio
                        std::to_string(Counts[static_cast<std::size_t>(*Kind)]) + ")";
             };
 
-            const float RefreshWidth = ImGui::CalcTextSize(Tr("Refresh")).x + ImGui::GetStyle().FramePadding.x * 2.0f;
+            const float RefreshWidth = ImGui::GetFrameHeight();
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - RefreshWidth - ImGui::GetStyle().ItemSpacing.x);
             if (ImGui::BeginCombo("##media-kind", Label(Filter_).c_str()))
             {
@@ -76,7 +76,7 @@ namespace dbc::studio
                 ImGui::EndCombo();
             }
             ImGui::SameLine();
-            if (ImGui::Button(TrId("Refresh")))
+            if (Theme::RefreshButton("##refresh", Tr("Refresh")))
                 Refresh();
             ImGui::SetNextItemWidth(-1.0f);
             ImGui::InputTextWithHint("##media-search", Tr("Filter by name"), Search_, sizeof(Search_));
