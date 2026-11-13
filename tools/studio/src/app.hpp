@@ -32,6 +32,7 @@ struct ImGuiWindow;
 #include "dba/command_database.hpp"
 #include "dba/reference.hpp"
 #include "interpreter/project_resolver.hpp"
+#include "panels/asset_library_window.hpp"
 #include "panels/asset_preview.hpp"
 #include "panels/build_window.hpp"
 #include "panels/code_panel.hpp"
@@ -84,6 +85,8 @@ namespace dbc::studio
         bool OpenFolder(const std::filesystem::path& Folder);
         // Opens the folder as a project and shows the program it starts with.
         void OpenProjectFolder(const std::filesystem::path& Folder);
+        // Copies a texture of the library into the project and shows it in the panels.
+        void AddLibraryTexture(const core::LibraryTexture& Texture);
         // Opens a project of a workspace location; a bundled sample is copied to My Projects first.
         void OpenLocationProject(const core::Workspace::Location& LocationValue, const std::filesystem::path& Folder);
         void OpenFile(const std::filesystem::path& File);
@@ -219,6 +222,7 @@ namespace dbc::studio
         panels::MediaPanel Media_;
         panels::SceneEditor Scene_;
         panels::SnippetWindow Snippets_;
+        panels::AssetLibraryWindow Library_;
 
         core::ReferenceArchive Documentation_;
         panels::ReferencePanel DocumentationPanel_;

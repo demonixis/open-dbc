@@ -217,6 +217,8 @@ set(STUDIO_SOURCES
     src/toolchain/icon_generator.cpp
     src/toolchain/icon_generator.hpp
 
+    src/core/asset_library.cpp
+    src/core/asset_library.hpp
     src/core/builtin_snippets.cpp
     src/core/file_dialog.cpp
     src/core/file_dialog.hpp
@@ -265,6 +267,8 @@ set(STUDIO_SOURCES
     src/dba/source_symbols.hpp
     src/dba/reference.hpp
 
+    src/panels/asset_library_window.cpp
+    src/panels/asset_library_window.hpp
     src/panels/asset_preview.cpp
     src/panels/build_window.cpp
     src/panels/build_window.hpp
@@ -342,6 +346,24 @@ endif()
 
 if(COMMAND opendbc_deploy_resources)
     opendbc_deploy_resources(opendbc)
+endif()
+
+# The textures of Assets > Texture Library, beside the Studio's other resources. Xcode copies the
+# folder itself on iOS, where a post-build step cannot name the bundle.
+set(STUDIO_ASSET_LIBRARY "${CMAKE_SOURCE_DIR}/resources/asset_library")
+if(IOS)
+    set_source_files_properties("${STUDIO_ASSET_LIBRARY}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(opendbc PRIVATE "${STUDIO_ASSET_LIBRARY}")
+elseif(NOT ANDROID)
+    if(APPLE)
+        set(STUDIO_RESOURCE_DIR "$<TARGET_BUNDLE_DIR:opendbc>/Contents/Resources")
+    else()
+        set(STUDIO_RESOURCE_DIR "$<TARGET_FILE_DIR:opendbc>")
+    endif()
+    add_custom_command(TARGET opendbc POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${STUDIO_ASSET_LIBRARY}" "${STUDIO_RESOURCE_DIR}/asset_library"
+        COMMENT "Deploy the texture library for opendbc"
+        VERBATIM)
 endif()
 
 if(ANDROID)
@@ -880,6 +902,7 @@ if(NOT IOS AND NOT ANDROID)
         install(FILES ${OPENDBC_CANONICAL_SHADERS} DESTINATION bin/shaders COMPONENT Runtime)
         install(FILES "${CMAKE_SOURCE_DIR}/licenses/NOTICE.md" DESTINATION bin COMPONENT Runtime)
         install(FILES "${CMAKE_SOURCE_DIR}/resources/editor.png" DESTINATION bin COMPONENT Runtime)
+        install(DIRECTORY "${STUDIO_ASSET_LIBRARY}" DESTINATION bin COMPONENT Runtime)
         install(FILES "${OPENDBC_RUNTIME_MANIFEST}" DESTINATION bin COMPONENT Runtime)
         install(FILES ${OPENDBC_REPOSITORY_LICENSES} ${OPENDBC_GENERATED_LICENSES}
             DESTINATION bin/licenses COMPONENT Runtime)

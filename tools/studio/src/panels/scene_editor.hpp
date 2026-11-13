@@ -109,6 +109,16 @@ namespace dbc::studio
             }
 
             bool Dirty() const;
+            // Where the Assets panel last drew its first file, after the shapes: the tile's top left corner.
+            glm::vec2 FirstFileTile() const
+            {
+                return FirstFileTile_;
+            }
+            // Files were added to the project outside the Scene view: lists them again.
+            void ProjectFilesChanged()
+            {
+                RefreshAssets();
+            }
             // Opens the limb list of the model the Inspector shows, as its Limbs button does.
             void ShowLimbs()
             {

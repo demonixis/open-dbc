@@ -123,6 +123,9 @@ with their GOTO/GOSUB jumps, types and main-program variables; selecting one
 goes to its line. Counts cover that file only, not its includes. The **Media**
 panel lists the asset root's images, audio, models, effects, videos and fonts,
 filtered by kind and name; double-clicking an image or sound previews it.
+**Assets > Texture Library** shows the CC0 textures shipped with the Studio, ground,
+wall and roof surfaces and sky cube maps; a click copies one into the project's
+`textures` folder. `scripts/generate_asset_library.py` regenerates them.
 `.fx` and `.hlsl` effects open in the editor as HLSL text, without completion,
 outline or Run.
 

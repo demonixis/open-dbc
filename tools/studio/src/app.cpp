@@ -271,6 +271,7 @@ namespace dbc::studio
         }
 
         Preview_.Initialize(Gpu_);
+        Library_.Initialize(Gpu_, core::paths::ResourceDir() / "asset_library" / "textures");
         panels::SceneHost SceneHost;
         SceneHost.ReadSource = [this](const std::filesystem::path& Path) { return ReadSource(Path); };
         SceneHost.WriteSource = [this](const std::filesystem::path& Path, const std::string& Text, bool Generated)
@@ -946,6 +947,26 @@ namespace dbc::studio
     {
         if (OpenFolder(Folder) && ResolvedProject_ && !ResolvedProject_->EntrySource.empty())
             OpenFile(ResolvedProject_->EntrySource);
+    }
+
+    void App::AddLibraryTexture(const core::LibraryTexture& Texture)
+    {
+        const std::filesystem::path Root = Project_.Root();
+        if (Root.empty())
+            return;
+        std::string Error;
+        if (!core::AddLibraryTexture(Texture, Root, Error))
+        {
+            Status_ = TrFmt("Cannot add {0}: {1}", {Texture.Name, Error});
+            Output_.Append(Status_, panels::OutputPanel::Severity::Error);
+            return;
+        }
+        const std::string Folder = dbc::PathToUtf8(core::LibraryTextureFolder(Root).filename());
+        Status_ = TrFmt("Added {0} to {1}", {Texture.Name, Folder});
+        Output_.Append(Status_);
+        Project_.Refresh();
+        Media_.Refresh();
+        Scene_.ProjectFilesChanged();
     }
 
     void App::OpenLocationProject(const core::Workspace::Location& LocationValue, const std::filesystem::path& Folder)
@@ -1642,6 +1663,8 @@ namespace dbc::studio
         DrawNewProject();
         if (std::optional<core::Snippet> Picked = Snippets_.Draw())
             InsertSnippet(*Picked);
+        if (std::optional<core::LibraryTexture> Picked = Library_.Draw(Project_.Root()))
+            AddLibraryTexture(*Picked);
 
         ImGui::Render();
     }
@@ -2419,6 +2442,13 @@ namespace dbc::studio
         if (Mode_ == Mode::Scene)
             Scene_.DrawMenus();
 
+        if (ImGui::BeginMenu(TrId("Assets")))
+        {
+            if (ImGui::MenuItem(TrId("Texture Library...")))
+                Library_.Open();
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu(TrId("Build")))
         {
             if (ImGui::MenuItem(TrId("Run"), "F5", false, !ExecutionBusy_))
@@ -3155,6 +3185,7 @@ namespace dbc::studio
             SettingsLoaded_ = false;
         }
         Preview_.Shutdown();
+        Library_.Shutdown();
         if (Gpu_ != nullptr)
             SDL_WaitForGPUIdle(Gpu_);
         Scene_.Shutdown();
