@@ -17,10 +17,6 @@ namespace dbc::studio
     {
         namespace
         {
-            constexpr std::array<scene::NodeKind, 7> KPrimitives = {
-                scene::NodeKind::Cube, scene::NodeKind::Box,   scene::NodeKind::Sphere,  scene::NodeKind::Cylinder,
-                scene::NodeKind::Cone, scene::NodeKind::Plain, scene::NodeKind::Triangle};
-
             // Menus list at most this many asset files; the Assets panel shows the rest.
             constexpr std::size_t KMenuAssetLimit = 40;
 
@@ -595,7 +591,7 @@ namespace dbc::studio
             PruneSelection();
         }
 
-        void SceneEditor::Create(scene::NodeKind Kind, scene::LightKind Light)
+        void SceneEditor::Create(scene::NodeKind Kind, scene::LightKind Light, std::optional<glm::vec3> At)
         {
             if (!Editable())
                 return;
@@ -613,6 +609,8 @@ namespace dbc::studio
                 else if (Light == scene::LightKind::Directional)
                     Node.Rotation = glm::vec3(45.0f, 0.0f, 0.0f);
             }
+            if (At)
+                Node.Position = SnapActive() ? scene::SnapToGrid(*At, MoveSnap_) : *At;
             Select(&Node);
             Commit();
         }

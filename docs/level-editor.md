@@ -223,6 +223,8 @@ Dropping an image on a node textures it. Dropping a
 model or a sound places it on the ground under the cursor. In Assets, a
 double-click applies the image to the selection, gives the sound to a selected
 3D sound, or adds the model or sound in front of the camera.
+Assets lists the cube, box, sphere, cylinder, cone, plain and triangle before the
+project's files: dropped or double-clicked, one is added like a model.
 
 The viewport is a preview drawn by the Studio, not by the engine. Its
 primitives, matrices, terrains and models use the engine's geometry and

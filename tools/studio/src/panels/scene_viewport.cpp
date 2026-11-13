@@ -834,11 +834,24 @@ namespace dbc::studio
         {
             if (!Editable() || !ImGui::BeginDragDropTarget())
                 return;
-            if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload(KAssetPayload))
+            const ImVec2 Mouse = ImGui::GetMousePos();
+            // Dropped on the ground plane, or in front of the camera when looking up.
+            const auto Ground = [&]
+            {
+                const scene::Ray Ray = RayAt(Mouse);
+                if (Ray.Direction.y < -0.001f)
+                    return Ray.Origin + Ray.Direction * (-Ray.Origin.y / Ray.Direction.y);
+                return Ray.Origin + Ray.Direction * Camera_.Distance;
+            };
+            if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload(KPrimitivePayload))
+            {
+                Create(static_cast<scene::NodeKind>(*static_cast<const std::uint8_t*>(Payload->Data)),
+                       scene::LightKind::Point, Ground());
+            }
+            else if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload(KAssetPayload))
             {
                 const std::string Relative(static_cast<const char*>(Payload->Data));
                 const std::optional<core::MediaKind> Kind = core::ClassifyMedia(Relative);
-                const ImVec2 Mouse = ImGui::GetMousePos();
                 if (Kind == core::MediaKind::Image)
                 {
                     PickAt(Mouse);
@@ -850,13 +863,8 @@ namespace dbc::studio
                 }
                 else if (Kind == core::MediaKind::Model || Kind == core::MediaKind::Audio)
                 {
-                    // Dropped on the ground plane, or in front of the camera when looking up.
-                    const scene::Ray Ray = RayAt(Mouse);
-                    glm::vec3 At = Ray.Origin + Ray.Direction * Camera_.Distance;
-                    if (Ray.Direction.y < -0.001f)
-                        At = Ray.Origin + Ray.Direction * (-Ray.Origin.y / Ray.Direction.y);
                     CreateFromAsset(Kind == core::MediaKind::Model ? scene::NodeKind::Model : scene::NodeKind::Sound,
-                                    Relative, At);
+                                    Relative, Ground());
                 }
             }
             ImGui::EndDragDropTarget();

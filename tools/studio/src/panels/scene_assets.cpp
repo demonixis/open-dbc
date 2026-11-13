@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <cstdint>
 
 #include "core/i18n.hpp"
 #include "theme.hpp"
@@ -22,6 +24,75 @@ namespace dbc::studio
             constexpr int KThumbnailsPerFrame = 4;
             constexpr int KModelThumbnailsPerFrame = 1;
             constexpr int KThumbnailSize = 96;
+
+            // A primitive's outline, drawn in a square of half-side R around Centre.
+            void DrawPrimitiveIcon(ImDrawList* Draw, scene::NodeKind Kind, ImVec2 Centre, float R)
+            {
+                const ImU32 Ink = Theme::Keyword;
+                constexpr float KLine = 1.5f;
+                const auto Ellipse = [&](float Y, float Rx, float Ry)
+                {
+                    constexpr int KSegments = 24;
+                    ImVec2 Points[KSegments];
+                    for (int Index = 0; Index < KSegments; ++Index)
+                    {
+                        const float Angle = static_cast<float>(Index) * (6.2831853f / KSegments);
+                        Points[Index] = ImVec2(Centre.x + std::cos(Angle) * Rx, Y + std::sin(Angle) * Ry);
+                    }
+                    Draw->AddPolyline(Points, KSegments, Ink, ImDrawFlags_Closed, KLine);
+                };
+                // A box seen from above its front: two faces and the edges between them.
+                const auto Cuboid = [&](float HalfW, float HalfH, float Shift)
+                {
+                    const ImVec2 Front(Centre.x - Shift * 0.5f, Centre.y + Shift * 0.5f);
+                    const ImVec2 Back(Centre.x + Shift * 0.5f, Centre.y - Shift * 0.5f);
+                    Draw->AddRect(ImVec2(Front.x - HalfW, Front.y - HalfH), ImVec2(Front.x + HalfW, Front.y + HalfH),
+                                  Ink, 0.0f, 0, KLine);
+                    Draw->AddRect(ImVec2(Back.x - HalfW, Back.y - HalfH), ImVec2(Back.x + HalfW, Back.y + HalfH), Ink,
+                                  0.0f, 0, KLine);
+                    for (const float Sx : {-1.0f, 1.0f})
+                        for (const float Sy : {-1.0f, 1.0f})
+                            Draw->AddLine(ImVec2(Front.x + Sx * HalfW, Front.y + Sy * HalfH),
+                                          ImVec2(Back.x + Sx * HalfW, Back.y + Sy * HalfH), Ink, KLine);
+                };
+                switch (Kind)
+                {
+                    case scene::NodeKind::Cube:
+                        Cuboid(R * 0.7f, R * 0.7f, R * 0.6f);
+                        break;
+                    case scene::NodeKind::Box:
+                        Cuboid(R * 0.85f, R * 0.4f, R * 0.5f);
+                        break;
+                    case scene::NodeKind::Sphere:
+                        Draw->AddCircle(Centre, R, Ink, 32, KLine);
+                        Ellipse(Centre.y, R, R * 0.35f);
+                        break;
+                    case scene::NodeKind::Cylinder:
+                        Ellipse(Centre.y - R * 0.7f, R * 0.7f, R * 0.25f);
+                        Ellipse(Centre.y + R * 0.7f, R * 0.7f, R * 0.25f);
+                        for (const float Side : {-1.0f, 1.0f})
+                            Draw->AddLine(ImVec2(Centre.x + Side * R * 0.7f, Centre.y - R * 0.7f),
+                                          ImVec2(Centre.x + Side * R * 0.7f, Centre.y + R * 0.7f), Ink, KLine);
+                        break;
+                    case scene::NodeKind::Cone:
+                        Ellipse(Centre.y + R * 0.7f, R * 0.75f, R * 0.25f);
+                        for (const float Side : {-1.0f, 1.0f})
+                            Draw->AddLine(ImVec2(Centre.x, Centre.y - R),
+                                          ImVec2(Centre.x + Side * R * 0.75f, Centre.y + R * 0.7f), Ink, KLine);
+                        break;
+                    case scene::NodeKind::Plain:
+                        Draw->AddQuad(ImVec2(Centre.x - R * 0.5f, Centre.y - R * 0.45f),
+                                      ImVec2(Centre.x + R, Centre.y - R * 0.45f),
+                                      ImVec2(Centre.x + R * 0.5f, Centre.y + R * 0.45f),
+                                      ImVec2(Centre.x - R, Centre.y + R * 0.45f), Ink, KLine);
+                        break;
+                    default:
+                        Draw->AddTriangle(ImVec2(Centre.x, Centre.y - R * 0.85f),
+                                          ImVec2(Centre.x + R, Centre.y + R * 0.75f),
+                                          ImVec2(Centre.x - R, Centre.y + R * 0.75f), Ink, KLine);
+                        break;
+                }
+            }
 
             std::string Lower(std::string Text)
             {
@@ -110,6 +181,49 @@ namespace dbc::studio
             int Column = 0;
 
             ImGui::BeginChild("##asset-grid");
+            // The shapes come first: they need no file. They count as models for the filter.
+            const bool Touch = ImGui::GetIO().MouseSource == ImGuiMouseSource_TouchScreen;
+            for (const scene::NodeKind Kind : KPrimitives)
+            {
+                if (AssetFilterKind_ != 0 && AssetFilterKind_ != 2)
+                    break;
+                const char* Label = Tr(scene::NodeKindLabel(Kind));
+                if (!Filter.empty() && Lower(Label).find(Filter) == std::string::npos)
+                    continue;
+                ImGui::PushID(static_cast<int>(Kind));
+                if (Column > 0)
+                    ImGui::SameLine();
+                ImGui::BeginGroup();
+                const ImVec2 Min = ImGui::GetCursorScreenPos();
+                const bool Clicked = ImGui::InvisibleButton("##primitive", ImVec2(Tile, Tile));
+                const bool Hovered = ImGui::IsItemHovered();
+                ImDrawList* Draw = ImGui::GetWindowDrawList();
+                Draw->AddRectFilled(Min, ImVec2(Min.x + Tile, Min.y + Tile), Hovered ? Theme::Hover : Theme::Panel,
+                                    4.0f);
+                DrawPrimitiveIcon(Draw, Kind, ImVec2(Min.x + Tile * 0.5f, Min.y + Tile * 0.5f), Tile * 0.28f);
+                if (ImGui::BeginDragDropSource())
+                {
+                    const std::uint8_t Value = static_cast<std::uint8_t>(Kind);
+                    ImGui::SetDragDropPayload(KPrimitivePayload, &Value, sizeof(Value));
+                    ImGui::TextUnformatted(Label);
+                    ImGui::EndDragDropSource();
+                }
+                if (Hovered)
+                {
+                    Theme::MarkTouchDragSource();
+                    ImGui::SetTooltip("%s\n%s", Label, Tr("Drag onto the viewport or double-click to add."));
+                }
+                // A finger taps where a mouse double-clicks.
+                if (Editable() && (Touch ? Clicked : Hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)))
+                    Create(Kind);
+                ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + Tile);
+                ImGui::TextDisabled("%s", Label);
+                ImGui::PopTextWrapPos();
+                ImGui::EndGroup();
+                ImGui::PopID();
+                Column = (Column + 1) % Columns;
+            }
+            bool FirstFile = false;
             for (const core::MediaFile& File : AssetScan_.Files)
             {
                 const bool Image = File.Kind == core::MediaKind::Image;
@@ -126,6 +240,11 @@ namespace dbc::studio
                     ImGui::SameLine();
                 ImGui::BeginGroup();
                 const ImVec2 Min = ImGui::GetCursorScreenPos();
+                if (!FirstFile)
+                {
+                    FirstFile = true;
+                    FirstFileTile_ = glm::vec2(Min.x, Min.y);
+                }
                 const ImVec2 Max(Min.x + Tile, Min.y + Tile);
                 const bool Clicked = ImGui::InvisibleButton("##tile", ImVec2(Tile, Tile));
                 const bool Hovered = ImGui::IsItemHovered();

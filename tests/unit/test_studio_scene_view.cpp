@@ -316,11 +316,8 @@ namespace
 
         glm::vec2 FirstAssetPosition() const
         {
-            const ImGuiWindow* Window = ImGui::FindWindowByName(TrId(panels::SceneEditor::KPanelAssets));
-            REQUIRE(Window != nullptr);
-            REQUIRE(Window->DC.ChildWindows.Size == 1);
-            const ImGuiWindow* Grid = Window->DC.ChildWindows[0];
-            return glm::vec2(Grid->DC.CursorStartPos.x + 30.0f, Grid->DC.CursorStartPos.y + 30.0f);
+            // The project's files come after the shapes.
+            return Editor_.FirstFileTile() + glm::vec2(30.0f, 30.0f);
         }
 
         void ClickFirstAsset()

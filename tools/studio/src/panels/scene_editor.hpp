@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <functional>
@@ -77,6 +78,12 @@ namespace dbc::studio
             static constexpr const char* KPanelAssets = "Assets";
             // Drag and drop payload: an asset path relative to the asset root, NUL-terminated.
             static constexpr const char* KAssetPayload = "OPENDBC_ASSET";
+            // Drag and drop payload: the scene::NodeKind of a primitive, as one byte.
+            static constexpr const char* KPrimitivePayload = "OPENDBC_PRIMITIVE";
+            // The shapes the Add menu and the Assets panel offer.
+            static constexpr std::array<scene::NodeKind, 7> KPrimitives = {
+                scene::NodeKind::Cube, scene::NodeKind::Box,   scene::NodeKind::Sphere,  scene::NodeKind::Cylinder,
+                scene::NodeKind::Cone, scene::NodeKind::Plain, scene::NodeKind::Triangle};
 
             void Initialize(SDL_GPUDevice* Gpu, SceneHost Host);
             void Shutdown();
@@ -257,7 +264,9 @@ namespace dbc::studio
             void Commit();
             void Undo();
             void Redo();
-            void Create(scene::NodeKind Kind, scene::LightKind Light = scene::LightKind::Point);
+            // `At` puts the node there instead of where its kind starts.
+            void Create(scene::NodeKind Kind, scene::LightKind Light = scene::LightKind::Point,
+                        std::optional<glm::vec3> At = std::nullopt);
             // A model or 3D sound for an asset file, at `At` or ahead of the editor camera.
             void CreateFromAsset(scene::NodeKind Kind, const std::string& Relative, std::optional<glm::vec3> At);
             // The Create menu's items, shared by the menu bar and the Hierarchy's context menu.
@@ -356,6 +365,7 @@ namespace dbc::studio
 
             // Assets (scene_assets.cpp)
             void DrawAssets();
+            glm::vec2 FirstFileTile_{0.0f};
             void RefreshAssets();
             // Rescans when the project's asset root changed since the last scan.
             const core::MediaScan& Assets();
