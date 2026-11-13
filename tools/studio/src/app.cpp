@@ -60,6 +60,7 @@ namespace dbc::studio
             Save,
             Run,
             Stop,
+            Menu,
         };
 
         // Toolbar buttons are drawn as vector shapes on a 16-unit grid, so they stay
@@ -114,14 +115,42 @@ namespace dbc::studio
                 case ToolIcon::Stop:
                     Draw->AddRectFilled(At(4, 4), At(12, 12), Tint(Theme::Error), Unit);
                     break;
+                case ToolIcon::Menu:
+                    for (const float Y : {4.5f, 8.0f, 11.5f})
+                        Draw->AddLine(At(3, Y), At(13, Y), Ink, Thickness);
+                    break;
             }
             return Pressed;
         }
 
-        // Height of the toolbar and status bar: one frame-height row plus vertical padding.
+        // The margin above and below a bar's row. Frames are already finger-sized on a touch screen, so a
+        // bar adds little to them there.
+        float BarMargin()
+        {
+            return ImGui::GetStyle().FramePadding.y * (core::platform::IsSandboxed() ? 0.25f : 1.0f);
+        }
+
+        // Height of the toolbar and status bar: one frame-height row plus its margins.
         float BarHeight()
         {
-            return ImGui::GetFrameHeight() + ImGui::GetStyle().FramePadding.y * 2.0f;
+            return ImGui::GetFrameHeight() + BarMargin() * 2.0f;
+        }
+
+        // The gap between the toolbar, the dock space and the status bar. The spacing that keeps rows
+        // apart for fingers would leave empty bands there.
+        float BarGap()
+        {
+            const ImGuiStyle& Style = ImGui::GetStyle();
+            return core::platform::IsSandboxed() ? Style.ItemSpacing.y * 0.2f : Style.ItemSpacing.y;
+        }
+
+        // A status bar is read more than touched: its frames keep the height they have with a mouse.
+        void PushStatusBarFrames()
+        {
+            const ImGuiStyle& Style = ImGui::GetStyle();
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,
+                                ImVec2(Style.FramePadding.x,
+                                       Style.FramePadding.y * (core::platform::IsSandboxed() ? 0.45f : 1.0f)));
         }
 
         void ToolbarSeparator()
@@ -296,6 +325,8 @@ namespace dbc::studio
         Scene_.SetEditorSettings(Settings_.Editor);
         Theme::CodeFontZoom = Settings_.Editor.TextZoom;
         ApplyInterfaceScale();
+        if constexpr (core::platform::IsSandboxed())
+            SDL_SetWindowFullscreen(Window_, Settings_.FullScreen);
 
         IconGenerator_.SetLogHandler([this](const std::string& Message) { Output_.Append(Message); });
 
@@ -1876,10 +1907,11 @@ namespace dbc::studio
         ImGui::SetNextWindowSize(HostSize);
         ImGui::SetNextWindowViewport(Viewport->ID);
 
-        ImGuiWindowFlags HostFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
-                                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-                                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags HostFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
+                                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                                      ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        if (Settings_.ShowMenuBar)
+            HostFlags |= ImGuiWindowFlags_MenuBar;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -1919,13 +1951,22 @@ namespace dbc::studio
         if (ImGui::DockBuilderGetNode(HiddenDockspaceId) != nullptr)
             ImGui::DockSpace(HiddenDockspaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_KeepAliveOnly);
 
-        // Reserve a row at the bottom of the host window for the status bar, plus
-        // the item spacing ImGui inserts between the dock space and it.
-        const float StatusHeight = BarHeight() + ImGui::GetStyle().ItemSpacing.y;
+        // Reserve a row at the bottom of the host window for the status bar, plus the gap ImGui inserts
+        // between the dock space and it.
+        float StatusHeight = 0.0f;
+        if (Settings_.ShowStatusBar)
+        {
+            PushStatusBarFrames();
+            StatusHeight = BarHeight() + BarGap();
+            ImGui::PopStyleVar();
+        }
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, BarGap()));
         ImGui::DockSpace(SceneMode ? SceneDockspaceId : DockspaceId, ImVec2(0.0f, -StatusHeight),
                          ImGuiDockNodeFlags_None);
+        ImGui::PopStyleVar();
 
-        DrawStatusBar();
+        if (Settings_.ShowStatusBar)
+            DrawStatusBar();
 
         ImGui::End();
     }
@@ -2424,6 +2465,16 @@ namespace dbc::studio
             ImGui::MenuItem(TrId(KPanelMedia), nullptr, &ShowMedia_);
             ImGui::MenuItem(TrId(KPanelOutput), nullptr, &ShowOutput_);
             ImGui::MenuItem(TrId(KPanelProblems), nullptr, &ShowProblems_);
+            if (ImGui::MenuItem(TrId("Status Bar"), nullptr, &Settings_.ShowStatusBar))
+                Settings_.Save();
+            if constexpr (core::platform::IsSandboxed())
+            {
+                if (ImGui::MenuItem(TrId("Full Screen"), nullptr, &Settings_.FullScreen))
+                {
+                    SDL_SetWindowFullscreen(Window_, Settings_.FullScreen);
+                    Settings_.Save();
+                }
+            }
             ImGui::Separator();
             if (ImGui::MenuItem(TrId("Reset Layout")))
             {
@@ -2581,10 +2632,22 @@ namespace dbc::studio
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(Theme::Panel));
+        // Pushed in the host window, where the gap under the toolbar is laid out; the toolbar has one row.
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, BarGap()));
         ImGui::BeginChild("##Toolbar", ImVec2(0.0f, BarHeight()), ImGuiChildFlags_None,
                           ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-        ImGui::SetCursorPos(ImVec2(Style.ItemSpacing.x, Style.FramePadding.y));
+        ImGui::SetCursorPos(ImVec2(Style.ItemSpacing.x, BarMargin()));
 
+        if constexpr (core::platform::IsSandboxed())
+        {
+            // The menu bar costs a row that a small screen cannot spare all the time.
+            if (ToolbarButton("##menu", ToolIcon::Menu, true, "Menus"))
+            {
+                Settings_.ShowMenuBar = !Settings_.ShowMenuBar;
+                Settings_.Save();
+            }
+            ToolbarSeparator();
+        }
         if (ToolbarButton("##new", ToolIcon::New, true, "New (Ctrl+N)"))
             Editor_.NewFile();
         if constexpr (core::platform::HasNativeFileDialog())
@@ -2616,16 +2679,18 @@ namespace dbc::studio
             ShowScene();
 
         ImGui::EndChild();
+        ImGui::PopStyleVar();
         ImGui::PopStyleColor();
     }
 
     void App::DrawStatusBar()
     {
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(Theme::Panel));
+        PushStatusBarFrames();
         ImGui::BeginChild("##StatusBar", ImVec2(0.0f, BarHeight()), ImGuiChildFlags_None,
                           ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-        ImGui::SetCursorPos(ImVec2(ImGui::GetStyle().ItemSpacing.x, ImGui::GetStyle().FramePadding.y));
+        ImGui::SetCursorPos(ImVec2(ImGui::GetStyle().ItemSpacing.x, BarMargin()));
         // Centres the text on the dialect combo that shares its row.
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(Status_.c_str());
@@ -2664,6 +2729,7 @@ namespace dbc::studio
         }
 
         ImGui::EndChild();
+        ImGui::PopStyleVar();
         ImGui::PopStyleColor();
     }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "platform.hpp"
+
 #include <filesystem>
 #include <map>
 #include <optional>
@@ -48,6 +50,11 @@ namespace dbc::studio
             // "auto" follows the system, otherwise "dark" or "light".
             std::string Theme = "dark";
             bool DebugOverlay = false;
+            // A touch screen is short of room: there the status bar and the menu bar start hidden, the
+            // toolbar has a button for the menus, and the window covers the system's own status bar.
+            bool ShowStatusBar = !platform::IsSandboxed();
+            bool ShowMenuBar = !platform::IsSandboxed();
+            bool FullScreen = platform::IsSandboxed();
             EditorSettings Editor;
             std::map<std::string, std::string> ProjectPathRemappings;
 

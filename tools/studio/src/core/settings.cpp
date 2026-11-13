@@ -87,6 +87,9 @@ namespace dbc::studio
             S.Language = Get<std::string>(J, "language", S.Language, Error);
             S.Theme = Get<std::string>(J, "theme", S.Theme, Error);
             S.DebugOverlay = Get<bool>(J, "debugOverlay", S.DebugOverlay, Error);
+            S.ShowStatusBar = Get<bool>(J, "showStatusBar", S.ShowStatusBar, Error);
+            S.ShowMenuBar = Get<bool>(J, "showMenuBar", S.ShowMenuBar, Error);
+            S.FullScreen = Get<bool>(J, "fullScreen", S.FullScreen, Error);
             S.Editor.ScrollSpeed = std::clamp(Get<float>(J, "scrollSpeed", S.Editor.ScrollSpeed, Error),
                                               EditorSettings::KMinSpeed, EditorSettings::KMaxSpeed);
             S.Editor.CameraSpeed = std::clamp(Get<float>(J, "cameraSpeed", S.Editor.CameraSpeed, Error),
@@ -167,6 +170,9 @@ namespace dbc::studio
             J["language"] = Language;
             J["theme"] = Theme;
             J["debugOverlay"] = DebugOverlay;
+            J["showStatusBar"] = ShowStatusBar;
+            J["showMenuBar"] = ShowMenuBar;
+            J["fullScreen"] = FullScreen;
             J["scrollSpeed"] = Editor.ScrollSpeed;
             J["cameraSpeed"] = Editor.CameraSpeed;
             J["textZoom"] = Editor.TextZoom;

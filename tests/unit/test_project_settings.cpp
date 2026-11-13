@@ -220,6 +220,23 @@ TEST_CASE("Studio preferences keep the Editor Settings speeds within their range
     CHECK(Wrong.Editor.ScrollSpeed == doctest::Approx(1.0f));
 }
 
+TEST_CASE("Studio preferences remember which bars are shown")
+{
+    std::string Error;
+    // A desktop Studio shows its bars and keeps the system's own.
+    const core::Settings Defaults = core::Settings::Parse("{}", Error);
+    CHECK(Defaults.ShowStatusBar);
+    CHECK(Defaults.ShowMenuBar);
+    CHECK_FALSE(Defaults.FullScreen);
+
+    const core::Settings Chosen =
+        core::Settings::Parse(R"({"showStatusBar":false,"showMenuBar":false,"fullScreen":true})", Error);
+    CHECK_FALSE(Chosen.ShowStatusBar);
+    CHECK_FALSE(Chosen.ShowMenuBar);
+    CHECK(Chosen.FullScreen);
+    CHECK(Error.empty());
+}
+
 TEST_CASE("Studio preferences keep the interface zoom within its range")
 {
     std::string Error;
