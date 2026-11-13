@@ -29,6 +29,7 @@ namespace dbc::studio
             }
             const bool Valid = std::is_same_v<T, bool>    ? It->is_boolean()
                                : std::is_same_v<T, float> ? It->is_number()
+                               : std::is_same_v<T, int>   ? It->is_number_integer()
                                                           : It->is_string();
             if (!Valid)
             {
