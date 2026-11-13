@@ -68,8 +68,8 @@ the scene; what later frames set belongs to the game loop. **Refresh** runs it
 again. An included file is seen through the program including it, with only the
 nodes it creates.
 
-The banner lists what is left out: limbs, meshes, particles, vertex data, BSP
-worlds and `APPEND OBJECT`. Custom geometry shows as a box. Hidden and
+Limbs, meshes, particles, vertex data, BSP worlds and `APPEND OBJECT` are left
+out. Custom geometry shows as a box. Hidden and
 screen-locked objects are dimmed in the Hierarchy and not drawn; a row's tooltip
 gives its source line, and **Show in Code** in the Inspector opens it.
 

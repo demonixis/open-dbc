@@ -332,13 +332,6 @@ namespace dbc::studio
                 }
                 return Found->second;
             }
-
-            bool IsNotShown(std::string_view Command)
-            {
-                constexpr std::string_view Words[] = {"LIMB", "MESH", "PARTICLES", "VERTEXDATA", "BSP", "APPEND"};
-                return std::any_of(std::begin(Words), std::end(Words),
-                                   [&](std::string_view Word) { return Command.find(Word) != std::string_view::npos; });
-            }
         } // namespace
 
         bool SameTransformValue(TransformPart Part, float Left, float Right)
@@ -698,12 +691,6 @@ namespace dbc::studio
             if (Generated > 0)
                 Result.Notes.push_back(TrFmt("{0} textures could not be read from the program: they are not shown.",
                                              {std::to_string(Generated)}));
-            std::string NotShown;
-            for (const std::string& Command : Replay.Skipped)
-                if (IsNotShown(Command))
-                    NotShown += (NotShown.empty() ? "" : ", ") + Command;
-            if (!NotShown.empty())
-                Result.Notes.push_back(TrFmt("Not shown: {0}.", {NotShown}));
             return Result;
         }
     } // namespace scene

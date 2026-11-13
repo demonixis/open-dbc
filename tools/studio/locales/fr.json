@@ -561,7 +561,6 @@
   "Node": "Nœud",
   "None": "Aucune",
   "Not a comment, label, assignment, flow control or known command.": "Ni un commentaire, ni une étiquette, ni une affectation, ni un contrôle de flux, ni une commande connue.",
-  "Not shown: {0}.": "Non affiché : {0}.",
   "Not supported by OpenDBC: using it is a compile error.": "Non pris en charge par OpenDBC : l’utiliser est une erreur de compilation.",
   "Not written: the index is used above or the object is missing.": "Non écrit : l'indice est déjà utilisé plus haut ou l'objet est absent.",
   "Notarization profile": "Profil de notarisation",
