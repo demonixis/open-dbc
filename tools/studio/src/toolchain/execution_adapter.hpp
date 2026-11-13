@@ -37,6 +37,8 @@ namespace dbc::studio
             std::string AssetRoot;
             std::string LogLevel = "debug";
             bool DebugOverlay = false;
+            // On a touch screen without a keyboard, a stick stands for the arrow keys instead of four buttons.
+            bool VirtualPadStick = false;
             // Set to run headless and write the scene there, stopping one frame after `CaptureFrames`:
             // that frame shows which statements belong to the game loop.
             std::filesystem::path CaptureScene;

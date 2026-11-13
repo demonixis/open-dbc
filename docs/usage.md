@@ -215,7 +215,8 @@ mouse and touch positions are those of the display.
 On a touch screen a finger is the mouse of a running program: a touch is a left
 click, a touch that moves a drag, and a touch with two fingers a right click. While
 no keyboard is connected a pad on the display holds the arrow keys, space and both
-mouse buttons. The back action is escape. On desktops this takes a real touch
+mouse buttons; Editor Settings in the iOS and Android Studios can make the arrows a
+stick, which also reads as a joystick. The back action is escape. On desktops this takes a real touch
 screen, not a trackpad.
 
 In the iOS and Android Studios one finger stands for the mouse: a tap clicks, a

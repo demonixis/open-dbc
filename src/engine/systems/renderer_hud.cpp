@@ -270,7 +270,38 @@ namespace dbc
         const float Width = static_cast<float>(K.Core().WindowWidth());
         const float Height = static_cast<float>(K.Core().WindowHeight());
         SDL_GPUTexture* White = WhiteGpuTexture(K);
-        for (int Index = 0; Index < KPadButtonCount; ++Index)
+        const PadStyle Style = K.Input().VirtualPadStyle();
+        if (Style == PadStyle::Stick)
+        {
+            const SDL_FRect Base = PadStickBase(Width, Height);
+            const SDL_FPoint Lean = K.Input().VirtualPadStick();
+            const bool Held = Lean.x != 0.0f || Lean.y != 0.0f;
+            const auto Ring = [&](float Cx, float Cy, float Radius, SDL_FColor Color, float Thickness)
+            {
+                constexpr int KSegments = 40;
+                float Px = Cx + Radius;
+                float Py = Cy;
+                for (int Segment = 1; Segment <= KSegments; ++Segment)
+                {
+                    const float Angle = static_cast<float>(Segment) * static_cast<float>(2.0 * M_PI / KSegments);
+                    const float Nx = Cx + std::cos(Angle) * Radius;
+                    const float Ny = Cy + std::sin(Angle) * Radius;
+                    dbc::AppendGpuLine(K, Vertices, Batches, Px, Py, Nx, Ny, Color, Thickness, 0.0f, true);
+                    Px = Nx;
+                    Py = Ny;
+                }
+            };
+            const float Line = std::max(1.0f, Base.w * 0.05f);
+            // A dark ring under each light one reads over any picture.
+            Ring(Base.x, Base.y, Base.w, SDL_FColor{0.0f, 0.0f, 0.0f, 0.35f}, Line * 3.0f);
+            Ring(Base.x, Base.y, Base.w, SDL_FColor{1.0f, 1.0f, 1.0f, 0.5f}, Line);
+            const float KnobX = Base.x + Lean.x * Base.w * 0.6f;
+            const float KnobY = Base.y + Lean.y * Base.w * 0.6f;
+            const float Knob = Base.w * 0.22f;
+            Ring(KnobX, KnobY, Knob, SDL_FColor{0.0f, 0.0f, 0.0f, Held ? 0.55f : 0.35f}, Knob * 2.0f);
+            Ring(KnobX, KnobY, Knob * 1.9f, SDL_FColor{1.0f, 1.0f, 1.0f, Held ? 0.95f : 0.6f}, Line);
+        }
+        for (int Index = Style == PadStyle::Stick ? 4 : 0; Index < KPadButtonCount; ++Index)
         {
             const PadButton Button = static_cast<PadButton>(Index);
             const SDL_FRect Rect = PadButtonRect(Button, Width, Height);

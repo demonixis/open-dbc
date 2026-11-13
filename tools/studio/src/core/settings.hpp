@@ -37,6 +37,8 @@ namespace dbc::studio
             // The size of everything else: menus, panels, buttons.
             float InterfaceZoom = 1.0f;
             DocumentationReader DocReader = DocumentationReader::Studio;
+            // What a running program shows for the arrow keys on a touch screen: a stick, or four buttons.
+            bool VirtualPadStick = false;
         };
 
         // Preferences use JSON in the per-user directory; ImGui persists window geometry and docking.

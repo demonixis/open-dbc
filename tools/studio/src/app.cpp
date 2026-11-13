@@ -322,6 +322,7 @@ namespace dbc::studio
 
         RunOptions_.LogLevel = Settings_.LogLevel;
         RunOptions_.DebugOverlay = Settings_.DebugOverlay;
+        RunOptions_.VirtualPadStick = Settings_.Editor.VirtualPadStick;
         Scene_.SetEditorSettings(Settings_.Editor);
         Theme::CodeFontZoom = Settings_.Editor.TextZoom;
         ApplyInterfaceScale();
@@ -2057,6 +2058,27 @@ namespace dbc::studio
                                core::EditorSettings::KMaxInterfaceZoom, "%.2f", ImGuiSliderFlags_AlwaysClamp);
             if (ImGui::IsItemDeactivatedAfterEdit())
                 SetInterfaceZoom(InterfaceZoom);
+            if constexpr (core::platform::IsSandboxed())
+            {
+                // Only here does a program run on a touch screen.
+                const char* Arrows = TrId("Arrow keys");
+                const char* Stick = TrId("Analog stick");
+                const bool IsStick = Settings_.Editor.VirtualPadStick;
+                if (ImGui::BeginCombo(TrId("Virtual pad"), IsStick ? Stick : Arrows))
+                {
+                    const auto Choose = [this](bool Value)
+                    {
+                        Settings_.Editor.VirtualPadStick = Value;
+                        RunOptions_.VirtualPadStick = Value;
+                        Settings_.Save();
+                    };
+                    if (ImGui::Selectable(Arrows, !IsStick))
+                        Choose(false);
+                    if (ImGui::Selectable(Stick, IsStick))
+                        Choose(true);
+                    ImGui::EndCombo();
+                }
+            }
             if constexpr (!core::platform::IsSandboxed())
             {
                 using core::DocumentationReader;

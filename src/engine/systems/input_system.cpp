@@ -1461,6 +1461,9 @@ namespace dbc
     {
         if (!Joystick_ && !JoystickOpenAttempted_)
             TryOpenJoystick();
+        // Without a joystick the virtual stick is one, on its first two axes.
+        if (!Joystick_ && (Axis == 0 || Axis == 1) && PadStyle_ == PadStyle::Stick && VirtualPadVisible())
+            return static_cast<int>(std::lround((Axis == 0 ? PadStick_.x : PadStick_.y) * 1000.0f));
         if (!Joystick_ || Axis < 0 || Axis >= SDL_GetNumJoystickAxes(Joystick_))
             return 0;
         SDL_UpdateJoysticks();
@@ -1971,6 +1974,43 @@ namespace dbc
         return DirectTouchSeen_ && !SDL_HasKeyboard();
     }
 
+    void InputSystem::SetVirtualPadStyle(PadStyle Style)
+    {
+        if (Style == PadStyle_)
+            return;
+        LeanPadStick({});
+        PadStyle_ = Style;
+    }
+
+    PadStyle InputSystem::VirtualPadStyle() const
+    {
+        return PadStyle_;
+    }
+
+    SDL_FPoint InputSystem::VirtualPadStick() const
+    {
+        return PadStick_;
+    }
+
+    void InputSystem::LeanPadStick(SDL_FPoint Lean)
+    {
+        PadStick_ = Lean;
+        const std::array<bool, 4> Keys{Lean.y < -KPadStickKeyLean, Lean.y > KPadStickKeyLean,
+                                       Lean.x < -KPadStickKeyLean, Lean.x > KPadStickKeyLean};
+        // In the order of PadButton: up, down, left, right.
+        for (int Button = 0; Button < 4; ++Button)
+        {
+            const auto Index = static_cast<std::size_t>(Button);
+            if (Keys[Index] == PadStickKeys_[Index])
+                continue;
+            PadStickKeys_[Index] = Keys[Index];
+            if (Keys[Index])
+                PadPress(Button);
+            else
+                PadRelease(Button);
+        }
+    }
+
     bool InputSystem::VirtualPadHeld(PadButton Button) const
     {
         return PadActive_[static_cast<std::size_t>(Button)];
@@ -2057,9 +2097,16 @@ namespace dbc
         Touches_[Slot] = {X, Y, TouchPhase::Down};
         const SDL_FPoint At = TouchOnDisplay(X, Y);
         CoreSystem& Core = Kernel_.Core();
-        const int Button = VirtualPadVisible() ? PadButtonAt(At.x, At.y, static_cast<float>(Core.WindowWidth()),
-                                                             static_cast<float>(Core.WindowHeight()))
-                                               : -1;
+        const float Width = static_cast<float>(Core.WindowWidth());
+        const float Height = static_cast<float>(Core.WindowHeight());
+        const bool PadShown = VirtualPadVisible();
+        if (PadShown && PadStyle_ == PadStyle::Stick && PadStickAt(At.x, At.y, Width, Height))
+        {
+            FingerUses_[Slot] = {FingerRole::Stick, -1};
+            LeanPadStick(PadStickLean(At.x, At.y, Width, Height));
+            return;
+        }
+        const int Button = PadShown ? PadButtonAt(At.x, At.y, Width, Height, PadStyle_) : -1;
         if (Button >= 0)
         {
             FingerUses_[Slot] = {FingerRole::Pad, Button};
@@ -2103,10 +2150,15 @@ namespace dbc
         CoreSystem& Core = Kernel_.Core();
         const float Width = static_cast<float>(Core.WindowWidth());
         const float Height = static_cast<float>(Core.WindowHeight());
+        if (Use->second.Role == FingerRole::Stick)
+        {
+            LeanPadStick(PadStickLean(At.x, At.y, Width, Height));
+            return;
+        }
         if (Use->second.Role == FingerRole::Pad)
         {
             // A thumb slides from one arrow to the next without lifting.
-            const int Button = PadButtonAt(At.x, At.y, Width, Height);
+            const int Button = PadButtonAt(At.x, At.y, Width, Height, PadStyle_);
             if (Button >= 0 && Button != Use->second.Button)
             {
                 PadRelease(Use->second.Button);
@@ -2144,6 +2196,10 @@ namespace dbc
         if (Lifted.Role == FingerRole::Pad)
         {
             PadRelease(Lifted.Button);
+        }
+        else if (Lifted.Role == FingerRole::Stick)
+        {
+            LeanPadStick({});
         }
         else if (Lifted.Role == FingerRole::Pointer)
         {

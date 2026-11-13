@@ -326,6 +326,8 @@ namespace dbc::studio
                 return false;
             }
             Kernel_->Core().HideMouse();
+            if (Options.VirtualPadStick)
+                Kernel_->Input().SetVirtualPadStyle(dbc::PadStyle::Stick);
             if (Options.DebugOverlay)
                 Kernel_->Debug().SetOverlayEnabled(true);
             return true;

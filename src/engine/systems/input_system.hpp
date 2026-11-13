@@ -184,6 +184,10 @@ namespace dbc
         };
 
         void SetVirtualPadMode(VirtualPadMode Mode);
+        void SetVirtualPadStyle(PadStyle Style);
+        PadStyle VirtualPadStyle() const;
+        // How far the virtual stick leans, each axis in -1..1.
+        SDL_FPoint VirtualPadStick() const;
         bool VirtualPadVisible() const;
         bool VirtualPadHeld(PadButton Button) const;
 
@@ -280,6 +284,7 @@ namespace dbc
         enum class FingerRole
         {
             Pad,
+            Stick,
             Pointer,
             // The second finger of a right click.
             Second,
@@ -312,6 +317,8 @@ namespace dbc
         void PadRelease(int Button);
         void ApplyPadButton(int Button, bool Down);
         void ReleaseDuePadButtons();
+        // Leans the stick, holding the arrow keys it points at.
+        void LeanPadStick(SDL_FPoint Lean);
 
         VirtualPadMode VirtualPadMode_ = VirtualPadMode::Auto;
 #ifdef DBC_MOBILE
@@ -319,6 +326,9 @@ namespace dbc
 #else
         bool DirectTouchSeen_ = false;
 #endif
+        PadStyle PadStyle_ = PadStyle::Arrows;
+        SDL_FPoint PadStick_{};
+        std::array<bool, 4> PadStickKeys_{};
         std::unordered_map<int, FingerUse> FingerUses_;
         // Per pad button: the fingers holding it, whether the program sees it held, when it was
         // pressed, and when a lifted finger lets go of it (0: not waiting).
