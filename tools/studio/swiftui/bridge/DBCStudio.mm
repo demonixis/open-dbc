@@ -636,6 +636,9 @@ namespace dbc::studio::swiftui
     // The interface is UIKit's: SDL neither owns the application nor runs its event loop.
     SDL_SetMainReady();
     SDL_SetiOSEventPump(false);
+    // SDL would turn SIGTERM into a quit event for an event loop this app does not run, and the
+    // app would outlive the signal.
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_SetAppMetadata("OpenDBC", OPENDBC_VERSION_STRING, "net.demonixis.opendbc");
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
     {
