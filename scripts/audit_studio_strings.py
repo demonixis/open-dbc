@@ -11,6 +11,10 @@ Reports, for the C++ sources of tools/studio/src:
 - a Tr* key or built-in snippet name or description absent from
   tools/studio/locales/fr.json, and a catalogue key that nothing mentions any more.
 
+The SwiftUI Studio (tools/studio/swiftui) shares the catalogue: the keys its Swift and
+Objective-C++ sources pass to tr, Tr, TrC and TrFmt must be in it too, and count as
+mentions. Its other literals are not read.
+
 Without --check this is a report; with it, any finding fails.
 """
 
@@ -25,6 +29,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "tools/studio/src"
 SNIPPETS = ROOT / "tools/studio/snippets"
+SWIFTUI = ROOT / "tools/studio/swiftui"
 CATALOGUE = ROOT / "tools/studio/locales/fr.json"
 VERBATIM = ROOT / "scripts/data/studio_verbatim_strings.txt"
 
@@ -379,6 +384,32 @@ def ReadSnippetTexts(Folder: Path) -> dict[str, str]:
     }
 
 
+SWIFTUI_LITERAL = r'"((?:[^"\\]|\\.)*)"'
+# tr("a" "b"), and the choices of tr(Condition ? "a" : Other ? "b" : "c").
+SWIFTUI_CALL = re.compile(r"\b(?:tr|Tr|TrC|TrFmt)\(\s*((?:" + SWIFTUI_LITERAL + r"\s*)+)")
+SWIFTUI_CHOICE = re.compile(
+    r"\b(?:tr|Tr)\([^\"()]*\?\s*" + SWIFTUI_LITERAL + r"\s*:\s*(?:[^\"()]*\?\s*" + SWIFTUI_LITERAL
+    + r"\s*:\s*)?" + SWIFTUI_LITERAL
+)
+
+
+def ReadSwiftUiKeys(Folder: Path) -> dict[str, str]:
+    Keys: dict[str, str] = {}
+    for Path_ in sorted(Folder.rglob("*")):
+        if Path_.suffix not in (".swift", ".mm", ".hpp", ".h"):
+            continue
+        Text = Path_.read_text(encoding="utf-8")
+        Name = Path_.relative_to(ROOT).as_posix()
+        for Match in SWIFTUI_CALL.finditer(Text):
+            Parts = re.findall(SWIFTUI_LITERAL, Match.group(1))
+            Keys.setdefault(SourceKey("Tr", Unescape("".join(Parts))), Name)
+        for Match in SWIFTUI_CHOICE.finditer(Text):
+            for Part in Match.groups():
+                if Part:
+                    Keys.setdefault(SourceKey("Tr", Unescape(Part)), Name)
+    return Keys
+
+
 def ReadCatalogue(Path_: Path) -> set[str]:
     Entries = json.loads(Path_.read_text(encoding="utf-8"))
     return {Key for Key in Entries if not Key.startswith("@")}
@@ -394,7 +425,8 @@ def main() -> None:
         for Path_ in SOURCES.rglob("*")
         if Path_.suffix in (".cpp", ".hpp")
     }
-    Result = Audit(Files, ReadCatalogue(CATALOGUE), ReadVerbatim(VERBATIM), ReadSnippetTexts(SNIPPETS))
+    Required = ReadSnippetTexts(SNIPPETS) | ReadSwiftUiKeys(SWIFTUI)
+    Result = Audit(Files, ReadCatalogue(CATALOGUE), ReadVerbatim(VERBATIM), Required)
 
     Sections = (
         ("Interface text outside Tr*", Result.Unwrapped),
