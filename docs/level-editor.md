@@ -143,7 +143,9 @@ The Inspector edits the selected node:
   bump or blend mapping on the second stage, a cube map (alone or over a bump map),
   `SET BLEND MAPPING ON` for stages 2 to 7, `SET ALPHA MAPPING ON`, cartoon or
   rainbow shading, which replace every stage, and `SET REFLECTION SHADING ON`,
-  which ends shadow casting. Each image is loaded once, whatever uses it. A level
+  which ends shadow casting. Choosing a bump (normal) map or a cube map gives an
+  object without a specular colour a white one: the engine lights the one and
+  weighs the other's reflection with it. Each image is loaded once, whatever uses it. A level
   that orders these commands in a way the Inspector cannot express stays read-only.
 - an effect (`LOAD EFFECT`, `SET OBJECT EFFECT`), numbered from the level's first
   effect and loaded once per file. It replaces cartoon and rainbow shading, and

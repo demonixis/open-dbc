@@ -885,7 +885,7 @@ namespace dbc::studio
                 const char* const Maps[] = {Tr("None"),       Tr("Light map"), Tr("Detail map"),
                                             Tr("Sphere map"), Tr("Bump map"),  Tr("Blend")};
                 if (ImGui::Combo(TrId("Second texture"), &Second, Maps, 6))
-                    Mat.Second = static_cast<scene::SecondMap>(Second);
+                    scene::SetSecondMap(Mat, static_cast<scene::SecondMap>(Second));
                 if (Mat.Second != scene::SecondMap::None)
                 {
                     AssetField("Second image", Mat.SecondTexture, core::MediaKind::Image);
@@ -900,7 +900,7 @@ namespace dbc::studio
                 ImGui::BeginDisabled(!CubeAllowed);
                 bool Cube = Mat.Cube.has_value();
                 if (ImGui::Checkbox(TrId("Cube map"), &Cube))
-                    Mat.Cube = Cube ? std::optional<std::array<std::string, 6>>(std::in_place) : std::nullopt;
+                    scene::SetCubeMap(Mat, Cube);
                 ImGui::EndDisabled();
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                     ImGui::SetTooltip("%s", Tr("SET CUBE MAPPING ON; it combines with a bump map only"));

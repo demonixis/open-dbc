@@ -344,6 +344,11 @@ namespace dbc::studio
         std::vector<std::string> NodeTextures(const SceneNode& Node);
         // Drops what a choice rules out: a shading leaves no stage of its own, a cube map only bump mapping.
         void ResolveMaterial(Material& Mat);
+        // What the Inspector's choices set. The engine lights a normal map, and weighs a cube map's
+        // reflection, with the object's specular colour, black until a statement sets it: choosing
+        // either gives an object that has none a white one, so that the choice shows.
+        void SetSecondMap(Material& Mat, SecondMap Value);
+        void SetCubeMap(Material& Mat, bool On);
         // The object a node is glued to, or null when the glue names itself, a missing object or a
         // chain of glued objects that comes back to the node: the engine refuses those.
         const SceneNode* GlueTarget(const SceneDocument& Document, const SceneNode& Node);

@@ -207,6 +207,20 @@ namespace dbc::studio
             return Result;
         }
 
+        void SetSecondMap(Material& Mat, SecondMap Value)
+        {
+            Mat.Second = Value;
+            if (Value == SecondMap::Bump && !Mat.Specular)
+                Mat.Specular = 0xFFFFFF;
+        }
+
+        void SetCubeMap(Material& Mat, bool On)
+        {
+            Mat.Cube = On ? std::optional<std::array<std::string, 6>>(std::in_place) : std::nullopt;
+            if (On && !Mat.Specular)
+                Mat.Specular = 0xFFFFFF;
+        }
+
         void ResolveMaterial(Material& Mat)
         {
             if (!Mat.Effect.empty())

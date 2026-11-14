@@ -345,7 +345,7 @@ namespace dbc::studio::panels
                          {Tr("None"), Tr("Light map"), Tr("Detail map"), Tr("Sphere map"), Tr("Normal map"),
                           Tr("Blend")},
                          static_cast<int>(Mat.Second),
-                         [Target](int Second) { Target->Second = static_cast<scene::SecondMap>(Second); });
+                         [Target](int Second) { scene::SetSecondMap(*Target, static_cast<scene::SecondMap>(Second)); });
                 if (Mat.Second != scene::SecondMap::None)
                 {
                     F.Asset(Tr(Mat.Second == scene::SecondMap::Bump ? "Normal map image" : "Second image"),
@@ -362,11 +362,7 @@ namespace dbc::studio::panels
                 // A cube map takes the second stage, which only a normal map shares with it.
                 const bool CubeAllowed = Mat.Second == scene::SecondMap::None || Mat.Second == scene::SecondMap::Bump;
                 Field& Cube = F.Toggle(Tr("Reflection map (cube)"), Mat.Cube.has_value(),
-                                       [Target](bool On)
-                                       {
-                                           Target->Cube = On ? std::optional<std::array<std::string, 6>>(std::in_place)
-                                                             : std::nullopt;
-                                       });
+                                       [Target](bool On) { scene::SetCubeMap(*Target, On); });
                 Cube.Enabled = F.Enabled && CubeAllowed;
                 Cube.Tooltip = Tr("SET CUBE MAPPING ON; it combines with a bump map only");
                 if (Mat.Cube)
@@ -381,6 +377,10 @@ namespace dbc::studio::panels
                     if (!Complete)
                         F.Warning(Tr("Not written to the level until its six images are chosen."));
                 }
+
+                const bool Shines = Mat.Flags.Lighting && Mat.Specular && (*Mat.Specular & 0xFFFFFFu) != 0;
+                if ((Mat.Second == scene::SecondMap::Bump || Mat.Cube) && !Shines)
+                    F.Warning(Tr("A normal map and a reflection show only on a lit object with a specular colour."));
 
                 for (std::size_t Index = 0; Index < Mat.Blends.size(); ++Index)
                 {
