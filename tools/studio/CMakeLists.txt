@@ -1010,3 +1010,8 @@ if(ANDROID)
         COMMENT "Packaging the Android Studio as ${STUDIO_ANDROID_APK}"
         VERBATIM)
 endif()
+
+# The experimental SwiftUI Studio, a second app beside the Dear ImGui one.
+if(IOS)
+    include(swiftui/studio_swiftui.cmake)
+endif()

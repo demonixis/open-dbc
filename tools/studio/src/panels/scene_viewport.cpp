@@ -953,7 +953,8 @@ namespace dbc::studio
                 }
             }
 
-            DrawViewportBar();
+            if (ShowViewportBar_)
+                DrawViewportBar();
             const ImVec2 Start = ImGui::GetCursorScreenPos();
             const ImVec2 Available = ImGui::GetContentRegionAvail();
             ViewportMin_ = Start;

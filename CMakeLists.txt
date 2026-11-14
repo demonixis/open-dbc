@@ -86,6 +86,10 @@ set(OPENDBC_IOS_TEAM_ID "" CACHE STRING "Apple Developer team ID used to sign")
 if(APPLE)
     enable_language(OBJCXX)
 endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    # The SwiftUI Studio (tools/studio/swiftui).
+    enable_language(Swift)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -140,6 +144,17 @@ endif()
 # --- Mobile cross-compilation overrides ---
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(IOS TRUE)
+endif()
+
+if(IOS)
+    # FindZLIB names libz by its full path in the iPhoneOS SDK, which a Mac Catalyst link refuses.
+    # By name, the linker finds it in the SDK the build targets.
+    # CMake's module reads the first pair, Assimp's own the second.
+    foreach(OPENDBC_ZLIB_VARIABLE IN ITEMS ZLIB_LIBRARY_RELEASE ZLIB_LIBRARY_DEBUG ZLIB_LIBRARY_REL ZLIB_LIBRARY_DBG)
+        set(${OPENDBC_ZLIB_VARIABLE} "z" CACHE STRING "" FORCE)
+    endforeach()
+    add_library(ZLIB::ZLIB INTERFACE IMPORTED GLOBAL)
+    target_link_libraries(ZLIB::ZLIB INTERFACE z)
 endif()
 
 if(ANDROID OR IOS)

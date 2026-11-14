@@ -109,21 +109,25 @@ namespace dbc::studio
             }
 
             bool Dirty() const;
+
             // Where the Assets panel last drew its first file, after the shapes: the tile's top left corner.
             glm::vec2 FirstFileTile() const
             {
                 return FirstFileTile_;
             }
+
             // Files were added to the project outside the Scene view: lists them again.
             void ProjectFilesChanged()
             {
                 RefreshAssets();
             }
+
             // Opens the limb list of the model the Inspector shows, as its Limbs button does.
             void ShowLimbs()
             {
                 ShowLimbs_ = true;
             }
+
             // Ctrl+S: a program's scene is read again after its edits, to show what they did.
             bool SaveAndRefresh();
             void RefreshProgram();
@@ -182,6 +186,9 @@ namespace dbc::studio
             }
 
           private:
+            // The SwiftUI Studio draws the panels itself, from the document and these members.
+            friend struct SceneEditorAccess;
+
             struct Selection
             {
                 scene::IdSpace Space = scene::IdSpace::Object;
@@ -444,11 +451,13 @@ namespace dbc::studio
             glm::vec2 FlySteer_{0.0f};
             // One finger that did not land on the gizmo turns the view.
             bool TouchOrbit_ = false;
+
             struct TouchFinger
             {
                 SDL_FingerID Id = 0;
                 glm::vec2 At{0.0f};
             };
+
             std::vector<TouchFinger> Fingers_;
             // Whether the two fingers down both landed on the viewport.
             bool TouchNavigating_ = false;
@@ -484,6 +493,8 @@ namespace dbc::studio
             std::optional<glm::vec3> PaintLast_;
 
             scene::ViewParameters View_;
+            // False where the host draws the tools itself, above the viewport.
+            bool ShowViewportBar_ = true;
             ImVec2 ViewportMin_{0.0f, 0.0f};
             ImVec2 ViewportSize_{0.0f, 0.0f};
 
