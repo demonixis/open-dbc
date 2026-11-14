@@ -67,6 +67,9 @@ It reports interface literals outside a `Tr*` call, translated text used as a
 format, keys and built-in snippet texts absent from `fr.json`, and catalogue keys
 nothing mentions any more.
 
+Of the [SwiftUI Studio](swiftui-studio.md) it reads only the keys given to `tr` and
+`Tr*`, which share the catalogue.
+
 A literal that must stay as it is goes in `scripts/data/studio_verbatim_strings.txt`;
 a source without interface text goes in `NO_INTERFACE_TEXT` in the script. The audit
 reads literals, not meaning: a fragment that does not read as a sentence, such as

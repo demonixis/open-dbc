@@ -46,8 +46,14 @@ enum DebugHooks {
                 .compactMap { $0 as? UIWindowScene }
                 .flatMap(\.windows)
             guard let window = windows.first(where: \.isKeyWindow) ?? windows.first else { return }
+            // A sheet is another controller's view, drawn over the window's.
+            var top = window.rootViewController
+            while let presented = top?.presentedViewController { top = presented }
             let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
                 window.drawHierarchy(in: window.bounds, afterScreenUpdates: false)
+                if let sheet = top?.view, top !== window.rootViewController {
+                    sheet.drawHierarchy(in: sheet.convert(sheet.bounds, to: window), afterScreenUpdates: false)
+                }
             }
             try? image.pngData()?.write(to: URL(fileURLWithPath: path))
         }
