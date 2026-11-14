@@ -109,25 +109,21 @@ namespace dbc::studio
             }
 
             bool Dirty() const;
-
             // Where the Assets panel last drew its first file, after the shapes: the tile's top left corner.
             glm::vec2 FirstFileTile() const
             {
                 return FirstFileTile_;
             }
-
             // Files were added to the project outside the Scene view: lists them again.
             void ProjectFilesChanged()
             {
                 RefreshAssets();
             }
-
             // Opens the limb list of the model the Inspector shows, as its Limbs button does.
             void ShowLimbs()
             {
                 ShowLimbs_ = true;
             }
-
             // Ctrl+S: a program's scene is read again after its edits, to show what they did.
             bool SaveAndRefresh();
             void RefreshProgram();
@@ -451,13 +447,11 @@ namespace dbc::studio
             glm::vec2 FlySteer_{0.0f};
             // One finger that did not land on the gizmo turns the view.
             bool TouchOrbit_ = false;
-
             struct TouchFinger
             {
                 SDL_FingerID Id = 0;
                 glm::vec2 At{0.0f};
             };
-
             std::vector<TouchFinger> Fingers_;
             // Whether the two fingers down both landed on the viewport.
             bool TouchNavigating_ = false;
