@@ -31,7 +31,8 @@ enum DebugHooks {
         }
         if let path = environment["OPENDBC_STUDIO_OUTPUT"] {
             Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                let text = model.output.map(\.text).joined(separator: "\n") + "\nstatus: " + model.status + "\n"
+                var text = model.output.map(\.text).joined(separator: "\n") + "\nstatus: " + model.status + "\n"
+                if model.mode == .scene { text += "camera: " + model.studio.sceneCameraDescription + "\n" }
                 try? text.write(toFile: path, atomically: true, encoding: .utf8)
             }
         }

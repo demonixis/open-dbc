@@ -41,6 +41,9 @@ show a mode or a dialog and write what it draws
 
 - Panels have fixed places; the toolbar shows or hides them.
 - Find and replace are the system's.
+- With a mouse or a trackpad the viewport takes the primary button only: a drag off
+  the gizmo or with Alt turns the view, with Shift it pans, and scrolling zooms. The
+  movement keys still fly while the pointer is over it.
 - In the Hierarchy, the list button makes a tap add to the selection, and a row's
   menu selects up to that row.
 - Not there yet: thumbnails of models in Assets, the `.dbpro` tabs of Project

@@ -438,6 +438,8 @@ typedef NS_ENUM(NSInteger, DBCSceneTool) {
 // Writes what the viewport's renderer last drew, without its gizmos, as a PNG: a check for
 // builds nobody is looking at. False when there is nothing to write.
 - (BOOL)writeViewportImage:(NSString*)path;
+// Where the editor's camera is, as text: the same kind of check.
+@property(nonatomic, readonly) NSString* sceneCameraDescription;
 // The model an Assets tile shows in the Inspector instead of the selection; empty for none.
 @property(nonatomic, copy) NSString* sceneInspectedModel;
 

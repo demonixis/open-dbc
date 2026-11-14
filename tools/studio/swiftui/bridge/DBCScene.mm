@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <cfloat>
+#include <cstdio>
 
 #include <imgui.h>
 #include <imgui_impl_sdlgpu3.h>
@@ -1329,6 +1330,14 @@ namespace dbc::studio::panels
             E.InspectedModel_ = Model;
         }
         static void AddFlySteer(SceneEditor& E, float X, float Y) { E.FlySteer_ += glm::vec2(X, Y); }
+        static std::string CameraText(SceneEditor& E)
+        {
+            char Text[160];
+            std::snprintf(Text, sizeof(Text), "%.2f %.2f %.2f yaw %.2f pitch %.2f distance %.2f", E.Camera_.Position.x,
+                          E.Camera_.Position.y, E.Camera_.Position.z, E.Camera_.Yaw, E.Camera_.Pitch,
+                          E.Camera_.Distance);
+            return Text;
+        }
         // The renderer's colour target at the viewport's size, or nullptr before it has drawn.
         static SDL_GPUTexture* Target(SceneEditor& E, int Width, int Height)
         {
@@ -1839,6 +1848,11 @@ namespace dbc::studio::swiftui
     return Access::MoveStep(TheSession().Scene);
 }
 
+- (NSString*)sceneCameraDescription
+{
+    return ToNs(Access::CameraText(TheSession().Scene));
+}
+
 - (BOOL)writeViewportImage:(NSString*)path
 {
     Session& S = TheSession();
@@ -1972,6 +1986,10 @@ namespace
     BOOL _pressSent;
     CGPoint _pointerStart;
     CGPoint _lastMouse;
+    // A mouse's buttons: which ImGui button the primary one is for this press, and as what source.
+    BOOL _pointerDown;
+    int _pointerButton;
+    int _pointerSource;
     BOOL _renderFailed;
 }
 
@@ -2175,11 +2193,21 @@ namespace
         const CGPoint At = [Touch locationInView:self];
         if (Touch.type == UITouchTypeIndirectPointer)
         {
-            // A mouse or a trackpad's pointer: its buttons are the mouse's.
-            Io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
+            // A mouse or a trackpad's pointer. UIKit gives a view its primary button only, and
+            // macOS keeps Control-click for itself, so Shift stands for the middle button, which
+            // pans. With Alt the button orbits as on a desktop; without a modifier it stands for
+            // a finger, which turns the view off the gizmo and picks when it did not move.
+            const UIKeyModifierFlags Flags = event.modifierFlags;
+            // The paint tool keeps Shift, which erases.
+            const bool Pans =
+                (Flags & UIKeyModifierShift) != 0 && Access::Tool(E) != static_cast<int>(DBCSceneToolPaint);
+            const bool Orbits = (Flags & UIKeyModifierAlternate) != 0;
+            _pointerButton = Pans ? ImGuiMouseButton_Middle : ImGuiMouseButton_Left;
+            _pointerSource = Pans || Orbits ? ImGuiMouseSource_Mouse : ImGuiMouseSource_TouchScreen;
+            _pointerDown = YES;
+            Io.AddMouseSourceEvent(static_cast<ImGuiMouseSource>(_pointerSource));
             Io.AddMousePosEvent(static_cast<float>(At.x), static_cast<float>(At.y));
-            const bool Secondary = (event.buttonMask & UIEventButtonMaskSecondary) != 0;
-            Io.AddMouseButtonEvent(Secondary ? ImGuiMouseButton_Right : ImGuiMouseButton_Left, true);
+            Io.AddMouseButtonEvent(_pointerButton, true);
             _lastMouse = At;
             continue;
         }
@@ -2213,11 +2241,8 @@ namespace
         const CGPoint At = [Touch locationInView:self];
         if (Touch.type == UITouchTypeIndirectPointer)
         {
-            // A flight steers with the pointer's motion.
-            if (E.Flying())
-                Access::AddFlySteer(E, static_cast<float>(At.x - _lastMouse.x), static_cast<float>(At.y - _lastMouse.y));
             _lastMouse = At;
-            Io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
+            Io.AddMouseSourceEvent(static_cast<ImGuiMouseSource>(_pointerSource));
             Io.AddMousePosEvent(static_cast<float>(At.x), static_cast<float>(At.y));
             continue;
         }
@@ -2243,10 +2268,10 @@ namespace
         const CGPoint At = [Touch locationInView:self];
         if (Touch.type == UITouchTypeIndirectPointer)
         {
-            Io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
+            Io.AddMouseSourceEvent(static_cast<ImGuiMouseSource>(_pointerSource));
             Io.AddMousePosEvent(static_cast<float>(At.x), static_cast<float>(At.y));
-            Io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
-            Io.AddMouseButtonEvent(ImGuiMouseButton_Right, false);
+            Io.AddMouseButtonEvent(_pointerButton, false);
+            _pointerDown = NO;
             continue;
         }
         [_fingers removeObject:Touch];
@@ -2282,9 +2307,13 @@ namespace
     Io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
     if (recognizer.state == UIGestureRecognizerStateEnded || recognizer.state == UIGestureRecognizerStateCancelled)
     {
-        Io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+        // Pressing a button ends the hover too: the pointer is still there, and the press needs it.
+        if (!_pointerDown)
+            Io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
         return;
     }
+    if (_pointerDown)
+        return;
     const CGPoint At = [recognizer locationInView:self];
     panels::SceneEditor& E = TheSession().Scene;
     if (E.Flying())
