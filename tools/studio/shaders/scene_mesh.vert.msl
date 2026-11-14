@@ -19,6 +19,7 @@ struct type_FragmentUniforms
     float4 Camera;
     float4 Fog;
     float4 Flags;
+    float4 Stages;
     float4 LightPosition[8];
     float4 LightDirection[8];
     float4 LightColor[8];
@@ -43,9 +44,9 @@ struct VSMain_in
 vertex VSMain_out VSMain(VSMain_in in [[stage_in]], constant type_VertexUniforms& VertexUniforms [[buffer(0)]])
 {
     VSMain_out out = {};
-    float4 _53 = VertexUniforms.World * float4(in.in_var_POSITION, 1.0);
-    out.gl_Position = VertexUniforms.ViewProj * _53;
-    out.out_var_TEXCOORD0 = _53.xyz;
+    float4 _59 = VertexUniforms.World * float4(in.in_var_POSITION, 1.0);
+    out.gl_Position = VertexUniforms.ViewProj * _59;
+    out.out_var_TEXCOORD0 = _59.xyz;
     out.out_var_TEXCOORD1 = in.in_var_NORMAL * float3x3(float4(VertexUniforms.NormalWorld[0][0], VertexUniforms.NormalWorld[1][0], VertexUniforms.NormalWorld[2][0], VertexUniforms.NormalWorld[3][0]).xyz, float4(VertexUniforms.NormalWorld[0][1], VertexUniforms.NormalWorld[1][1], VertexUniforms.NormalWorld[2][1], VertexUniforms.NormalWorld[3][1]).xyz, float4(VertexUniforms.NormalWorld[0][2], VertexUniforms.NormalWorld[1][2], VertexUniforms.NormalWorld[2][2], VertexUniforms.NormalWorld[3][2]).xyz);
     out.out_var_TEXCOORD2 = in.in_var_TEXCOORD0;
     return out;

@@ -63,7 +63,7 @@ namespace dbc::studio
                              sizeof(K_scene_mesh_vert_msl), SDL_GPU_SHADERSTAGE_VERTEX, 0);
             SDL_GPUShader* MeshFragment =
                 CreateShader(K_scene_mesh_frag_spv, sizeof(K_scene_mesh_frag_spv), K_scene_mesh_frag_msl,
-                             sizeof(K_scene_mesh_frag_msl), SDL_GPU_SHADERSTAGE_FRAGMENT, 1);
+                             sizeof(K_scene_mesh_frag_msl), SDL_GPU_SHADERSTAGE_FRAGMENT, 3);
             SDL_GPUShader* LineVertexShader =
                 CreateShader(K_scene_line_vert_spv, sizeof(K_scene_line_vert_spv), K_scene_line_vert_msl,
                              sizeof(K_scene_line_vert_msl), SDL_GPU_SHADERSTAGE_VERTEX, 0);
@@ -221,9 +221,10 @@ namespace dbc::studio
             {
                 SDL_FillSurfaceRect(White, nullptr, 0xFFFFFFFF);
                 core::UploadGpuImage(Gpu_, White, White_, Error);
+                core::UploadGpuCubeImage(Gpu_, {White, White, White, White, White, White}, WhiteCube_, Error);
                 SDL_DestroySurface(White);
             }
-            if (Sampler_ == nullptr || White_.Texture == nullptr)
+            if (Sampler_ == nullptr || White_.Texture == nullptr || WhiteCube_.Texture == nullptr)
             {
                 Error = TrFmt("Scene sampler: {0}", {SDL_GetError()});
                 return false;
@@ -242,6 +243,7 @@ namespace dbc::studio
                 core::ReleaseGpuImage(Gpu_, Image);
             Textures_.clear();
             core::ReleaseGpuImage(Gpu_, White_);
+            core::ReleaseGpuImage(Gpu_, WhiteCube_);
             for (SDL_GPUBuffer* Buffer : {LineBuffer_, ShadowBuffer_})
                 if (Buffer != nullptr)
                     SDL_ReleaseGPUBuffer(Gpu_, Buffer);
@@ -409,6 +411,31 @@ namespace dbc::studio
             {
                 Failed_.emplace(Key, true);
                 Errors_.push_back(TrFmt("Scene preview: {0}: {1}", {dbc::PathToUtf8(Path), Error}));
+                return nullptr;
+            }
+            return Textures_.emplace(Key, Image).first->second.Texture;
+        }
+
+        SDL_GPUTexture* SceneRenderer::FindCube(const std::array<std::string, 6>& Faces,
+                                                const std::filesystem::path& AssetRoot)
+        {
+            std::array<std::filesystem::path, 6> Paths;
+            std::string Key = "cube";
+            for (std::size_t Index = 0; Index < Faces.size(); ++Index)
+            {
+                Paths[Index] = (AssetRoot / dbc::PathFromUtf8(Faces[Index])).lexically_normal();
+                Key += "|" + dbc::PathToUtf8(Paths[Index]);
+            }
+            if (const auto Found = Textures_.find(Key); Found != Textures_.end())
+                return Found->second.Texture;
+            if (Failed_.count(Key) != 0)
+                return nullptr;
+            core::GpuImage Image;
+            std::string Error;
+            if (!core::LoadGpuCubeImage(Gpu_, Paths, Image, Error))
+            {
+                Failed_.emplace(Key, true);
+                Errors_.push_back(TrFmt("Scene preview: {0}: {1}", {Faces[0], Error}));
                 return nullptr;
             }
             return Textures_.emplace(Key, Image).first->second.Texture;
@@ -647,6 +674,21 @@ namespace dbc::studio
                 Item.Fragment.Flags.y = Mat.Flags.Lighting ? 1.0f : 0.0f;
                 Item.Texture = Mat.Texture.empty() ? nullptr : FindTexture(AssetRoot / dbc::PathFromUtf8(Mat.Texture));
                 Item.Fragment.Flags.x = Item.Texture != nullptr ? 1.0f : 0.0f;
+                // The second stage's normal map and the cube map, as the engine's Blinn-Phong draws them.
+                const bool Bumped = Mat.Second == SecondMap::Bump && !Mat.SecondTexture.empty();
+                if (Bumped)
+                    Item.Normal = FindTexture(AssetRoot / dbc::PathFromUtf8(Mat.SecondTexture));
+                Item.Fragment.Stages.x = Item.Normal != nullptr ? 1.0f : 0.0f;
+                if (Mat.Cube && std::none_of(Mat.Cube->begin(), Mat.Cube->end(),
+                                             [](const std::string& Face) { return Face.empty(); }))
+                    Item.Cube = FindCube(*Mat.Cube, AssetRoot);
+                if (Item.Cube != nullptr)
+                {
+                    // It reflects on a lit object that has a specular colour, or under a normal map;
+                    // otherwise it is a stage that multiplies.
+                    const bool Shines = Mat.Flags.Lighting && Mat.Specular && (*Mat.Specular & 0xFFFFFFu) != 0;
+                    Item.Fragment.Stages.y = Shines || Item.Normal != nullptr ? 1.0f : 2.0f;
+                }
                 Item.Blend = Mat.Ghost;
                 Item.Wireframe = Mat.Flags.Wireframe;
                 Item.Count = static_cast<Uint32>(Entry.Mesh.Vertices.size());
@@ -835,8 +877,11 @@ namespace dbc::studio
                 }
                 SDL_PushGPUVertexUniformData(Commands, 0, &Item.Vertex, sizeof(Item.Vertex));
                 SDL_PushGPUFragmentUniformData(Commands, 0, &Item.Fragment, sizeof(Item.Fragment));
-                const SDL_GPUTextureSamplerBinding Binding = {Item.Texture ? Item.Texture : White_.Texture, Sampler_};
-                SDL_BindGPUFragmentSamplers(Pass, 0, &Binding, 1);
+                const SDL_GPUTextureSamplerBinding Bindings[3] = {
+                    {Item.Texture ? Item.Texture : White_.Texture, Sampler_},
+                    {Item.Normal ? Item.Normal : White_.Texture, Sampler_},
+                    {Item.Cube ? Item.Cube : WhiteCube_.Texture, Sampler_}};
+                SDL_BindGPUFragmentSamplers(Pass, 0, Bindings, 3);
                 const SDL_GPUBufferBinding Buffer = {Item.Mesh->Buffer, 0};
                 SDL_BindGPUVertexBuffers(Pass, 0, &Buffer, 1);
                 SDL_DrawGPUPrimitives(Pass, Item.Count, 1, Item.First, 0);

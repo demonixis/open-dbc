@@ -1011,7 +1011,7 @@ TEST_CASE("Includes are followed through the files that hold them")
     CHECK_FALSE(Includes("/game/lib/missing.dba"));
 }
 
-TEST_CASE("A normal map or a cube map gives an object without a specular colour a white one")
+TEST_CASE("A normal map or a cube map gives an object without a specular colour one to show with")
 {
     // The engine lights the one and weighs the other with that colour, black by default.
     scene::Material Bumped;
@@ -1019,7 +1019,7 @@ TEST_CASE("A normal map or a cube map gives an object without a specular colour 
     CHECK_FALSE(Bumped.Specular.has_value());
     scene::SetSecondMap(Bumped, scene::SecondMap::Bump);
     CHECK(Bumped.Second == scene::SecondMap::Bump);
-    CHECK(Bumped.Specular == std::optional<scene::Rgb>(0xFFFFFF));
+    CHECK(Bumped.Specular == std::optional<scene::Rgb>(scene::KShownSpecular));
 
     scene::Material Mirrored;
     Mirrored.Specular = 0x404040;

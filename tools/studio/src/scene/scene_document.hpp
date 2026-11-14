@@ -346,7 +346,9 @@ namespace dbc::studio
         void ResolveMaterial(Material& Mat);
         // What the Inspector's choices set. The engine lights a normal map, and weighs a cube map's
         // reflection, with the object's specular colour, black until a statement sets it: choosing
-        // either gives an object that has none a white one, so that the choice shows.
+        // either gives an object that has none this grey, which shows the choice and keeps the
+        // texture under a reflection.
+        inline constexpr Rgb KShownSpecular = 0x808080;
         void SetSecondMap(Material& Mat, SecondMap Value);
         void SetCubeMap(Material& Mat, bool On);
         // The object a node is glued to, or null when the glue names itself, a missing object or a

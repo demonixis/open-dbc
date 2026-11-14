@@ -139,12 +139,12 @@ The Inspector edits the selected node:
   `DISABLE OBJECT ZDEPTH`, `ZREAD` and `ZWRITE`, which the viewport does not show.
   A level may also set one flag at a time (`SET OBJECT WIREFRAME`, `FOG`...); it is
   written back as `SET OBJECT`.
-- texture stages, which the viewport does not show: one of light, detail, sphere,
+- texture stages, of which the viewport shows the bump map and the cube map: one of light, detail, sphere,
   bump or blend mapping on the second stage, a cube map (alone or over a bump map),
   `SET BLEND MAPPING ON` for stages 2 to 7, `SET ALPHA MAPPING ON`, cartoon or
   rainbow shading, which replace every stage, and `SET REFLECTION SHADING ON`,
   which ends shadow casting. Choosing a bump (normal) map or a cube map gives an
-  object without a specular colour a white one: the engine lights the one and
+  object without a specular colour a grey one: the engine lights the one and
   weighs the other's reflection with it. Each image is loaded once, whatever uses it. A level
   that orders these commands in a way the Inspector cannot express stays read-only.
 - an effect (`LOAD EFFECT`, `SET OBJECT EFFECT`), numbered from the level's first

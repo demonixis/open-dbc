@@ -671,6 +671,101 @@ TEST_CASE("The Scene renderer draws a lit, textured level offscreen")
     SDL_Quit();
 }
 
+TEST_CASE("The Scene renderer shows a normal map and a cube map's reflection")
+{
+    REQUIRE(SDL_Init(SDL_INIT_VIDEO));
+    SDL_GPUDevice* Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL, false, nullptr);
+    if (Gpu == nullptr)
+    {
+        const std::string Reason = std::string("No GPU device: ") + SDL_GetError();
+        MESSAGE(Reason);
+        SDL_Quit();
+        return;
+    }
+    scene::SceneRenderer Renderer;
+    std::string Error;
+    REQUIRE_MESSAGE(Renderer.Initialize(Gpu, Error), Error);
+    constexpr int KSize = 256;
+    SDL_GPUTexture* Target = Renderer.Target(KSize, KSize);
+    REQUIRE(Target != nullptr);
+
+    scene::ViewParameters View;
+    View.Eye = glm::vec3(0.0f, 10.0f, -32.0f);
+    View.View = glm::lookAt(View.Eye, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    View.Projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.5f, 2000.0f);
+    const std::filesystem::path Library = std::filesystem::path(TEST_SOURCE_DIR) / "resources/asset_library/textures";
+    const auto Draw = [&](const scene::Material& Mat, const char* Name)
+    {
+        scene::SceneDocument Document;
+        Document.Env.Backdrop = 0x000040;
+        scene::SceneNode& Ball = Document.Add(scene::NodeKind::Sphere);
+        Ball.Size = 30.0f;
+        Ball.Mat = Mat;
+        Renderer.Prepare(Document, View, Library, {});
+        CHECK(Renderer.TakeErrors().empty());
+        std::vector<Uint8> Pixels = ReadPixels(Gpu, Target, KSize, &Renderer);
+        REQUIRE(Pixels.size() == KSize * KSize * 4);
+        // Kept for a look by hand, in build/tests.
+        if (SDL_Surface* Image =
+                SDL_CreateSurfaceFrom(KSize, KSize, SDL_PIXELFORMAT_ABGR8888, Pixels.data(), KSize * 4))
+        {
+            IMG_SavePNG(Image, (std::filesystem::path(TEST_OUTPUT_DIR) / Name).string().c_str());
+            SDL_DestroySurface(Image);
+        }
+        return Pixels;
+    };
+    // How many pixels of two frames differ by more than rounding.
+    const auto Differing = [&](const std::vector<Uint8>& First, const std::vector<Uint8>& Second)
+    {
+        int Count = 0;
+        for (int Index = 0; Index < KSize * KSize; ++Index)
+        {
+            const Uint8* Left = &First[static_cast<std::size_t>(Index) * 4];
+            const Uint8* Right = &Second[static_cast<std::size_t>(Index) * 4];
+            if (std::abs(Left[0] - Right[0]) + std::abs(Left[1] - Right[1]) + std::abs(Left[2] - Right[2]) > 12)
+                ++Count;
+        }
+        return Count;
+    };
+
+    scene::Material Plain;
+    Plain.Texture = "brick_1.jpg";
+    const std::vector<Uint8> PlainPixels = Draw(Plain, "scene_render_plain.png");
+
+    scene::Material Bumped = Plain;
+    scene::SetSecondMap(Bumped, scene::SecondMap::Bump);
+    Bumped.SecondTexture = "brick_1_normal.jpg";
+    const std::vector<Uint8> BumpedPixels = Draw(Bumped, "scene_render_bump.png");
+    CHECK(Differing(PlainPixels, BumpedPixels) > KSize * KSize / 50);
+
+    scene::Material Mirror = Plain;
+    scene::SetCubeMap(Mirror, true);
+    *Mirror.Cube = {"day_cube_px.jpg", "day_cube_nx.jpg", "day_cube_py.jpg",
+                    "day_cube_ny.jpg", "day_cube_pz.jpg", "day_cube_nz.jpg"};
+    Mirror.Specular = 0xFFFFFF;
+    const std::vector<Uint8> MirrorPixels = Draw(Mirror, "scene_render_cube.png");
+    CHECK(Differing(PlainPixels, MirrorPixels) > KSize * KSize / 20);
+    // The top of the ball reflects the sky, bluer and brighter than the backdrop or the brick.
+    int Sky = 0;
+    for (int Index = 0; Index < KSize * KSize; ++Index)
+    {
+        const Uint8* Pixel = &MirrorPixels[static_cast<std::size_t>(Index) * 4];
+        if (Pixel[2] > 150 && Pixel[2] > Pixel[0] + 30)
+            ++Sky;
+    }
+    CHECK(Sky > KSize * KSize / 100);
+
+    // Without a specular colour the cube map is a stage that multiplies, which reflects nothing.
+    scene::Material Stage = Mirror;
+    Stage.Specular.reset();
+    const std::vector<Uint8> StagePixels = Draw(Stage, "scene_render_cube_stage.png");
+    CHECK(Differing(MirrorPixels, StagePixels) > KSize * KSize / 20);
+
+    Renderer.Shutdown();
+    SDL_DestroyGPUDevice(Gpu);
+    SDL_Quit();
+}
+
 TEST_CASE("Scene models keep their materials' textures and colours")
 {
     const std::filesystem::path Folder = std::filesystem::temp_directory_path() / "opendbc-scene-model-test";

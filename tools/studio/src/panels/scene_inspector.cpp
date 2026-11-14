@@ -843,7 +843,7 @@ namespace dbc::studio
         void SceneEditor::DrawTextureStages(scene::Material& Mat)
         {
             Heading("Texture stages");
-            Hint(Tr("Written to the level; the Scene view shows the first texture only."));
+            Hint(Tr("Written to the level; of these the Scene view shows the normal map and the cube map."));
 
             AssetField("Effect", Mat.Effect, core::MediaKind::Effect);
             if (!Mat.Effect.empty())

@@ -211,14 +211,14 @@ namespace dbc::studio
         {
             Mat.Second = Value;
             if (Value == SecondMap::Bump && !Mat.Specular)
-                Mat.Specular = 0xFFFFFF;
+                Mat.Specular = KShownSpecular;
         }
 
         void SetCubeMap(Material& Mat, bool On)
         {
             Mat.Cube = On ? std::optional<std::array<std::string, 6>>(std::in_place) : std::nullopt;
             if (On && !Mat.Specular)
-                Mat.Specular = 0xFFFFFF;
+                Mat.Specular = KShownSpecular;
         }
 
         void ResolveMaterial(Material& Mat)

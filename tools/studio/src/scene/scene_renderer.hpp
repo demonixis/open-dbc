@@ -93,6 +93,7 @@ namespace dbc::studio
                 glm::vec4 Camera{0.0f};
                 glm::vec4 Fog{0.0f};
                 glm::vec4 Flags{0.0f};
+                glm::vec4 Stages{0.0f};
                 std::array<glm::vec4, KMaxLights> LightPosition{};
                 std::array<glm::vec4, KMaxLights> LightDirection{};
                 std::array<glm::vec4, KMaxLights> LightColor{};
@@ -105,6 +106,8 @@ namespace dbc::studio
                 VertexUniforms Vertex;
                 FragmentUniforms Fragment;
                 SDL_GPUTexture* Texture = nullptr;
+                SDL_GPUTexture* Normal = nullptr;
+                SDL_GPUTexture* Cube = nullptr;
                 Uint32 First = 0;
                 Uint32 Count = 0;
                 bool Blend = false;
@@ -117,6 +120,7 @@ namespace dbc::studio
             std::string GeometryKey(const SceneNode& Node, const std::filesystem::path& AssetRoot) const;
             Geometry& FindGeometry(const SceneNode& Node, const std::filesystem::path& AssetRoot);
             SDL_GPUTexture* FindTexture(const std::filesystem::path& Path);
+            SDL_GPUTexture* FindCube(const std::array<std::string, 6>& Faces, const std::filesystem::path& AssetRoot);
             SDL_GPUTexture* PartTexture(Geometry& Entry, const MeshPart& Part, const std::filesystem::path& AssetRoot);
             void Release(Geometry& Entry);
             void ReleaseTargets();
@@ -135,6 +139,8 @@ namespace dbc::studio
             bool Stencil_ = false;
             SDL_GPUSampler* Sampler_ = nullptr;
             core::GpuImage White_;
+            // Bound where an object has no cube map: a sampler needs a texture of its kind.
+            core::GpuImage WhiteCube_;
             SDL_GPUTextureFormat DepthFormat_ = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
 
             SDL_GPUTexture* Color_ = nullptr;

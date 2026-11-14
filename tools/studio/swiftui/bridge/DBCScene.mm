@@ -310,7 +310,7 @@ namespace dbc::studio::panels
         {
             const int Image = static_cast<int>(core::MediaKind::Image);
             F.Heading("Texture stages");
-            F.Hint(Tr("Written to the level; the Scene view shows the first texture only."));
+            F.Hint(Tr("Written to the level; of these the Scene view shows the normal map and the cube map."));
             scene::Material* Target = &Mat;
 
             F.Asset(Tr("Effect"), Mat.Effect, static_cast<int>(core::MediaKind::Effect));
@@ -380,8 +380,9 @@ namespace dbc::studio::panels
                 }
 
                 const bool Shines = Mat.Flags.Lighting && Mat.Specular && (*Mat.Specular & 0xFFFFFFu) != 0;
-                if ((Mat.Second == scene::SecondMap::Bump || Mat.Cube) && !Shines)
-                    F.Warning(Tr("A normal map and a reflection show only on a lit object with a specular colour."));
+                if (Mat.Cube && Mat.Second != scene::SecondMap::Bump && !Shines)
+                    F.Warning(Tr("Without lighting and a specular colour the cube map darkens the texture instead "
+                                 "of reflecting."));
 
                 for (std::size_t Index = 0; Index < Mat.Blends.size(); ++Index)
                 {
