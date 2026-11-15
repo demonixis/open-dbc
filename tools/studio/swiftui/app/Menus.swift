@@ -92,12 +92,7 @@ struct EditMenu: View {
 
     var body: some View {
         let textView = model.mode == .code ? model.current?.textView : nil
-        if model.mode == .code {
-            Button(tr("Undo")) { textView?.undoManager?.undo() }
-                .disabled(!(textView?.undoManager?.canUndo ?? false))
-            Button(tr("Redo")) { textView?.undoManager?.redo() }
-                .disabled(!(textView?.undoManager?.canRedo ?? false))
-        }
+        UndoRedoItems(model: model)
         Button(tr("Find")) { textView?.findInteraction?.presentFindNavigator(showingReplace: false) }
             .studioShortcut("r")
             .disabled(textView == nil)
@@ -117,12 +112,34 @@ struct EditMenu: View {
     }
 }
 
-struct SceneMenu: View {
+/// Undo and Redo of what the mode edits: the tab's text or the level. The menu bar has one pair of
+/// them, with one pair of shortcuts.
+struct UndoRedoItems: View {
     @ObservedObject var model: StudioModel
 
     var body: some View {
         let studio = model.studio
-        Button(tr("New Level...")) { model.sheet = .newLevel }
+        let manager = model.current?.textView?.undoManager
+        let scene = model.mode == .scene
+        Button(tr("Undo")) { scene ? studio.sceneUndo() : manager?.undo() }
+            .studioShortcut("z")
+            .disabled(scene ? !studio.sceneCanUndo : !(manager?.canUndo ?? false))
+        Button(tr("Redo")) { scene ? studio.sceneRedo() : manager?.redo() }
+            .studioShortcut("z", modifiers: [.command, .shift])
+            .disabled(scene ? !studio.sceneCanRedo : !(manager?.canRedo ?? false))
+    }
+}
+
+struct SceneMenu: View {
+    @ObservedObject var model: StudioModel
+    @Environment(\.menuShortcuts) private var inMenuBar
+
+    var body: some View {
+        let studio = model.studio
+        // The menu bar drops a menu that repeats an item of another one, and File has this one.
+        if !inMenuBar {
+            Button(tr("New Level...")) { model.sheet = .newLevel }
+        }
         Menu(tr("Open Level")) {
             ForEach(studio.levelNames, id: \.self) { name in
                 Button {
@@ -138,20 +155,12 @@ struct SceneMenu: View {
         }
         Button(tr("Save Level")) { _ = studio.saveScene() }
         Divider()
-        Button(tr("Undo")) { studio.sceneUndo() }
-            .studioShortcut("z")
-            .disabled(!studio.sceneCanUndo)
-        Button(tr("Redo")) { studio.sceneRedo() }
-            .studioShortcut("z", modifiers: [.command, .shift])
-            .disabled(!studio.sceneCanRedo)
-        Divider()
         Button(tr("Duplicate")) { studio.sceneDuplicate() }
             .studioShortcut("d")
             .disabled(!studio.sceneHasSelection || !studio.sceneEditable)
         Button(tr("Delete"), role: .destructive) { studio.sceneDelete() }
             .disabled(!studio.sceneHasSelection || !studio.sceneEditable)
         Button(tr("Select All")) { studio.sceneSelectAll() }
-            .studioShortcut("a")
         Button(tr("Frame Selection")) { studio.frameSceneSelection() }
             .disabled(!studio.sceneHasSelection)
         Button(tr("Align to Grid")) { studio.sceneAlignToGrid() }
@@ -313,14 +322,14 @@ struct StudioCommands: Commands {
         CommandGroup(replacing: .newItem) { FileMenu(model: model).environment(\.menuShortcuts, true) }
         CommandMenu(tr("Scene")) {
             SceneMenu(model: model).disabled(model.mode != .scene).environment(\.menuShortcuts, true)
-            Divider()
-            Menu(tr("Create")) { CreateMenu(model: model) }.disabled(model.mode != .scene)
         }
+        CommandMenu(tr("Create")) { CreateMenu(model: model).disabled(model.mode != .scene) }
         CommandMenu(tr("Assets")) {
             Button(tr("Texture Library...")) { model.sheet = .textureLibrary }
         }
         CommandMenu(tr("Build")) { BuildMenu(model: model).environment(\.menuShortcuts, true) }
         CommandGroup(after: .toolbar) { ViewMenu(model: model).environment(\.menuShortcuts, true) }
+        CommandGroup(replacing: .undoRedo) { UndoRedoItems(model: model).environment(\.menuShortcuts, true) }
         CommandGroup(after: .textEditing) {
             Button(tr("Trim Trailing Whitespace")) { model.trimTrailingWhitespace() }
             Button(tr("Insert Snippet...")) { model.sheet = .snippets }

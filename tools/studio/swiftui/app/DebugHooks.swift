@@ -5,7 +5,9 @@ import UIKit
 /// Lets a Debug build be checked without a hand on it. Environment variables:
 /// OPENDBC_STUDIO_OPEN (a project folder to open), OPENDBC_STUDIO_MODE ("scene"),
 /// OPENDBC_STUDIO_SHEET (a StudioSheet name), OPENDBC_STUDIO_CREATE (a node kind to add),
-/// OPENDBC_STUDIO_RUN (runs the program), OPENDBC_STUDIO_OUTPUT (a file the Output panel is
+/// OPENDBC_STUDIO_RUN (runs the program), OPENDBC_STUDIO_STEPS (steps a second apart, separated by
+/// ";": "level:<name>", "create:<kind>", "save", "closeall", "language:<code>", "select:<row>", "number:<label>=<value>",
+/// "menus", "menu:<menu>><item>"), OPENDBC_STUDIO_OUTPUT (a file the Output panel is
 /// written to), OPENDBC_STUDIO_VIEWPORT (a PNG of what the viewport's renderer drew) and
 /// OPENDBC_STUDIO_SNAPSHOT (a PNG the window is drawn to every two seconds; the
 /// Metal viewport is not part of that drawing).
@@ -27,6 +29,11 @@ enum DebugHooks {
             }
             if environment["OPENDBC_STUDIO_RUN"] != nil {
                 model.run()
+            }
+        }
+        if let steps = environment["OPENDBC_STUDIO_STEPS"] {
+            for (index, step) in steps.split(separator: ";").enumerated() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0 + Double(index)) { run(String(step), model) }
             }
         }
         if let path = environment["OPENDBC_STUDIO_OUTPUT"] {
@@ -58,6 +65,75 @@ enum DebugHooks {
             }
             try? image.pngData()?.write(to: URL(fileURLWithPath: path))
         }
+    }
+
+    private static func run(_ step: String, _ model: StudioModel) {
+        let studio = model.studio
+        let parts = step.split(separator: ":", maxSplits: 1).map(String.init)
+        let argument = parts.count > 1 ? parts[1] : ""
+        switch parts[0] {
+        case "level": studio.newLevel(argument)
+        case "create": studio.sceneCreate(Int(argument) ?? 0, light: 0)
+        case "save": model.saveCurrent()
+        case "closeall": model.closeAll()
+        case "language":
+            studio.language = argument
+            model.themeRevision += 1
+        case "select":
+            if let row = studio.sceneRows().first(where: { $0.name == argument }) {
+                studio.selectSceneRow(row.key, toggle: false, range: false)
+            }
+        case "number":
+            let pair = argument.split(separator: "=").map(String.init)
+            if pair.count == 2, let value = Double(pair[1]),
+               let field = studio.sceneForm(.inspector).first(where: { $0.label == pair[0] }) {
+                if field.optional && !field.isSet {
+                    studio.sceneForm(.inspector, setOptional: true, field: field.identifier)
+                }
+                studio.sceneForm(.inspector, setNumber: value, field: field.identifier, commit: true)
+            } else {
+                model.append("no field " + argument, severity: .error)
+            }
+        case "menus":
+            model.append("menus: " + menuItems(mainMenu()).map(title).joined(separator: " | "), severity: .notice)
+        case "menu":
+            // Picks the item as a click would, validation included.
+            var menu = mainMenu()
+            let path = argument.split(separator: ">").map(String.init)
+            for (depth, name) in path.enumerated() {
+                let items = menuItems(menu)
+                guard let index = items.firstIndex(where: { title($0) == name }) else {
+                    model.append("no item \(name) in: " + items.map(title).joined(separator: " | "), severity: .error)
+                    break
+                }
+                if depth + 1 < path.count {
+                    menu = items[index].value(forKey: "submenu") as? NSObject
+                    _ = menu?.perform(NSSelectorFromString("update"))
+                } else if let menu {
+                    let selector = NSSelectorFromString("performActionForItemAtIndex:")
+                    typealias Perform = @convention(c) (NSObject, Selector, Int) -> Void
+                    unsafeBitCast(menu.method(for: selector), to: Perform.self)(menu, selector, index)
+                }
+            }
+        default: break
+        }
+        model.append("step \(step): level \(studio.levelName) dirty \(studio.sceneDirty) editable \(studio.sceneEditable)",
+                     severity: .notice)
+    }
+
+    /// The Mac's menu bar, read from AppKit since UIKit does not list it.
+    private static func mainMenu() -> NSObject? {
+        let application = (NSClassFromString("NSApplication") as? NSObject.Type)?
+            .value(forKey: "sharedApplication") as? NSObject
+        return application?.value(forKey: "mainMenu") as? NSObject
+    }
+
+    private static func menuItems(_ menu: NSObject?) -> [NSObject] {
+        menu?.value(forKey: "itemArray") as? [NSObject] ?? []
+    }
+
+    private static func title(_ item: NSObject) -> String {
+        item.value(forKey: "title") as? String ?? ""
     }
 }
 #endif
