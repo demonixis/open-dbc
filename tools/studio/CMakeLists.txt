@@ -633,6 +633,7 @@ if(IOS)
         # Without these an archive holds no app, and there is nothing to send to the App Store.
         XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
         XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
+        XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "${OPENDBC_IOS_SIGNING_ALLOWED}"
         XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
         XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${OPENDBC_IOS_TEAM_ID}"
         XCODE_GENERATE_SCHEME ON

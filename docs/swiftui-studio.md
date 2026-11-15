@@ -2,7 +2,8 @@
 
 An experiment: a second Studio for iOS, iPadOS and Mac Catalyst whose interface is
 SwiftUI instead of Dear ImGui. It installs beside the other one, as
-`net.demonixis.opendbc.swiftui`, and opens the same projects.
+`OPENDBC_SWIFTUI_BUNDLE_ID` (`<OPENDBC_BUNDLE_ID>.swiftui` unless set), and opens the
+same projects.
 
 ## Layout
 
@@ -30,7 +31,8 @@ xcodebuild -project build/ios/OpenDBC.xcodeproj -scheme opendbc_swiftui \
 ```
 
 The app is `build/ios/tools/studio/Debug-maccatalyst/OpenDBCSwiftUI.app`. For a
-device, open the project in Xcode and choose the scheme and a team. An unsigned
+device, configure with `-DOPENDBC_IOS_TEAM_ID=<team>`, which signs the apps, then
+run the scheme from Xcode. An unsigned
 Catalyst build is not sandboxed: it shares the desktop Studio's preferences folder.
 
 A Debug build reads `OPENDBC_STUDIO_*` environment variables to open a project,

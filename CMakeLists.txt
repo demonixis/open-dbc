@@ -80,8 +80,15 @@ set(OPENDBC_BUNDLE_ID "net.demonixis.opendbc" CACHE STRING "Bundle identifier of
 # The full desktop build is a different product with different capabilities, so
 # it gets its own id and can sit next to the Catalyst one on the same Mac.
 set(OPENDBC_DESKTOP_BUNDLE_ID "net.demonixis.opendbc.desktop" CACHE STRING "Bundle identifier of the full desktop app")
+set(OPENDBC_SWIFTUI_BUNDLE_ID "${OPENDBC_BUNDLE_ID}.swiftui" CACHE STRING "Bundle identifier of the SwiftUI Studio")
 # Left empty on purpose: set it per machine, e.g. in CMakeUserPresets.json.
 set(OPENDBC_IOS_TEAM_ID "" CACHE STRING "Apple Developer team ID used to sign")
+# The iOS presets build unsigned, which a device refuses: with a team, the apps are signed.
+if(OPENDBC_IOS_TEAM_ID)
+    set(OPENDBC_IOS_SIGNING_ALLOWED "YES")
+else()
+    set(OPENDBC_IOS_SIGNING_ALLOWED "NO")
+endif()
 
 if(APPLE)
     enable_language(OBJCXX)
