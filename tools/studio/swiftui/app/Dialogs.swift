@@ -116,6 +116,12 @@ struct OpenLocationSheet: View {
 
     var body: some View {
         List {
+            Section {
+                Button(tr("Open Folder...")) { model.pickFolder() }
+                    .disabled(model.running)
+            } footer: {
+                Text(tr("Any folder of this device or of a drive. The Studio keeps access to the folders picked here."))
+            }
             ForEach(model.studio.locations, id: \.path) { location in
                 Section {
                     if location.projects.isEmpty {

@@ -6,7 +6,7 @@ import UIKit
 /// OPENDBC_STUDIO_OPEN (a project folder to open), OPENDBC_STUDIO_MODE ("scene"),
 /// OPENDBC_STUDIO_SHEET (a StudioSheet name), OPENDBC_STUDIO_CREATE (a node kind to add),
 /// OPENDBC_STUDIO_RUN (runs the program), OPENDBC_STUDIO_STEPS (steps a second apart, separated by
-/// ";": "level:<name>", "create:<kind>", "save", "closeall", "language:<code>", "select:<row>", "number:<label>=<value>",
+/// ";": "level:<name>", "create:<kind>", "save", "closeall", "folder:<path>", "scene", "language:<code>", "select:<row>", "number:<label>=<value>",
 /// "menus", "menu:<menu>><item>"), OPENDBC_STUDIO_OUTPUT (a file the Output panel is
 /// written to), OPENDBC_STUDIO_VIEWPORT (a PNG of what the viewport's renderer drew) and
 /// OPENDBC_STUDIO_SNAPSHOT (a PNG the window is drawn to every two seconds; the
@@ -76,6 +76,8 @@ enum DebugHooks {
         case "create": studio.sceneCreate(Int(argument) ?? 0, light: 0)
         case "save": model.saveCurrent()
         case "closeall": model.closeAll()
+        case "folder": studio.openPickedFolder(URL(fileURLWithPath: argument))
+        case "scene": model.showScene()
         case "language":
             studio.language = argument
             model.themeRevision += 1
@@ -117,7 +119,7 @@ enum DebugHooks {
             }
         default: break
         }
-        model.append("step \(step): level \(studio.levelName) dirty \(studio.sceneDirty) editable \(studio.sceneEditable)",
+        model.append("step \(step): project \(studio.projectRoot.fileName) blocker '\(studio.sceneBlocker)' level \(studio.levelName) dirty \(studio.sceneDirty) editable \(studio.sceneEditable)",
                      severity: .notice)
     }
 

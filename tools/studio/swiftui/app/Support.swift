@@ -111,3 +111,13 @@ struct ResizeHandle: View {
         .accessibilityLabel(tr("Resize"))
     }
 }
+
+extension UIApplication {
+    /// The controller on top of the key window, which is the one that may present another.
+    var topController: UIViewController? {
+        let windows = connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+        var top = (windows.first(where: \.isKeyWindow) ?? windows.first)?.rootViewController
+        while let presented = top?.presentedViewController { top = presented }
+        return top
+    }
+}

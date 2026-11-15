@@ -307,6 +307,9 @@ typedef NS_ENUM(NSInteger, DBCSceneTool) {
 @property(nonatomic, readonly) NSString* assetRoot;
 - (void)openLocationProject:(NSString*)folder samples:(BOOL)samples;
 - (void)openProjectFolder:(NSString*)folder;
+// Opens a folder picked in the system's file browser, anywhere on the device, and keeps the access
+// the pick granted for the next launches.
+- (void)openPickedFolder:(NSURL*)url;
 - (void)openFile:(NSString*)path;
 - (NSString*)validateProjectName:(NSString*)name;
 // Empty on success, else why the project was not created.

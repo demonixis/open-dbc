@@ -67,6 +67,7 @@
   "Android signing requires the keystore and key passwords": "La signature Android nécessite les mots de passe du keystore et de la clé",
   "Animation": "Animation",
   "Another command changes it while the program runs.": "Une autre commande le modifie pendant l’exécution du programme.",
+  "Any folder of this device or of a drive. The Studio keeps access to the folders picked here.": "N’importe quel dossier de cet appareil ou d’un disque. Le Studio garde l’accès aux dossiers choisis ici.",
   "App name": "Nom de l’app",
   "Apple development team": "Équipe de développement Apple",
   "Apple notarization did not accept the app ({0})": "La notarisation Apple n’a pas accepté l’application ({0})",
@@ -362,6 +363,7 @@
   "Enter them in the Build window, or set OPENDBC_ANDROID_KEYSTORE_PASSWORD and OPENDBC_ANDROID_KEY_PASSWORD.": "Saisissez-les dans la fenêtre de génération, ou définissez OPENDBC_ANDROID_KEYSTORE_PASSWORD et OPENDBC_ANDROID_KEY_PASSWORD.",
   "Environment cube map: six faces": "Cube map d’environnement : six faces",
   "Error: no icon source configured": "Erreur : aucune source d’icône configurée",
+  "Export Project...": "Exporter le projet…",
   "Export cancelled": "Export annulé",
   "Export destination already exists: {0}": "La destination de l’export existe déjà : {0}",
   "Export destination is not a directory: {0}": "La destination de l’export n’est pas un dossier : {0}",
@@ -1008,6 +1010,7 @@
   "{0} objects have their own geometry and appear as boxes.": "{0} objets ont leur propre géométrie et apparaissent comme des boîtes.",
   "{0} stopped with an error: the scene shows what it had built.": "{0} s’est arrêté sur une erreur : la scène montre ce qu’il avait construit.",
   "{0} textures could not be read from the program: they are not shown.": "{0} textures n’ont pas pu être lues depuis le programme : elles ne sont pas affichées.",
+  "{0} will have to be picked again at the next launch.": "{0} devra être choisi à nouveau au prochain lancement.",
   "{0}: the program does not keep the new {1} {2} {3}": "{0} : le programme ne conserve pas la nouvelle {2} {1} {3}",
   "{0}: {1}": "{0} : {1}",
   "{0}:{1} became a number": "{0}:{1} est devenu un nombre"

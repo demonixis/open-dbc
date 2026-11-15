@@ -3,6 +3,7 @@
 
 #import "DBCStudio.h"
 
+#include <unistd.h>
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -590,6 +591,64 @@ namespace dbc::studio::swiftui
         OpenInEditor(File);
     }
 
+    namespace
+    {
+        NSString* const KPickedFolders = @"OpenDBCPickedFolders";
+        constexpr NSUInteger KMaxPickedFolders = 16;
+
+        // Folders picked in the system's file browser, which granted access to them.
+        std::vector<std::filesystem::path>& PickedFolders()
+        {
+            static std::vector<std::filesystem::path> Folders;
+            return Folders;
+        }
+
+        void GrantFolder(const std::filesystem::path& Folder)
+        {
+            std::error_code Error;
+            const std::filesystem::path Canonical = std::filesystem::weakly_canonical(Folder, Error);
+            std::vector<std::filesystem::path>& Folders = PickedFolders();
+            if (!Canonical.empty() && std::find(Folders.begin(), Folders.end(), Canonical) == Folders.end())
+                Folders.push_back(Canonical);
+        }
+
+        // Takes back, at launch, the access each picked folder granted.
+        void RestorePickedFolders()
+        {
+            NSArray* Saved = [NSUserDefaults.standardUserDefaults arrayForKey:KPickedFolders];
+            for (id Entry in Saved)
+            {
+                if (![Entry isKindOfClass:NSData.class])
+                    continue;
+                BOOL Stale = NO;
+                NSURL* Url = [NSURL URLByResolvingBookmarkData:Entry
+                                                       options:0
+                                                 relativeToURL:nil
+                                           bookmarkDataIsStale:&Stale
+                                                         error:nil];
+                if (Url == nil)
+                    continue;
+                [Url startAccessingSecurityScopedResource];
+                GrantFolder(PathFromNs(Url.path));
+            }
+        }
+
+        bool ProjectWritable(const std::filesystem::path& Root)
+        {
+            if (TheSession().Workspace.IsWritable(Root))
+                return true;
+            std::error_code Error;
+            const std::filesystem::path Canonical = std::filesystem::weakly_canonical(Root, Error);
+            for (const std::filesystem::path& Folder : PickedFolders())
+            {
+                const std::filesystem::path Relative = Canonical.lexically_relative(Folder);
+                if (!Relative.empty() && *Relative.begin() != ".." && access(Canonical.c_str(), W_OK) == 0)
+                    return true;
+            }
+            return false;
+        }
+    } // namespace
+
     std::string SceneBlocker()
     {
         const Session& S = TheSession();
@@ -601,7 +660,7 @@ namespace dbc::studio::swiftui
             return "The Scene view edits DBPro projects only. Classic levels keep running as BASIC.";
         if (S.Resolved->EntrySource.empty() || !dbc::language::IsLanguageSource(S.Resolved->EntrySource))
             return "The project needs a main .dba source that includes the level.";
-        if (!S.Workspace.IsWritable(S.Resolved->ProjectRoot))
+        if (!ProjectWritable(S.Resolved->ProjectRoot))
             return "The project folder is read-only.";
         return {};
     }
@@ -695,6 +754,8 @@ namespace dbc::studio::swiftui
             AppendOutput(Status, ExitCode == 0 || ExitCode == 130 ? DBCSeverityNotice : DBCSeverityError);
             [TheStudio().delegate studioRunStateChanged:NO];
         });
+
+    RestorePickedFolders();
 
     // The app's container, and with it every saved path, moves when the app is updated.
     const auto Relocate = [&S](std::string& Saved)
@@ -1092,6 +1153,45 @@ namespace dbc::studio::swiftui
 - (void)openProjectFolder:(NSString*)folder
 {
     OpenProjectFolder(PathFromNs(folder));
+}
+
+- (void)openPickedFolder:(NSURL*)url
+{
+    if (_session->Busy)
+        return;
+    // Held for as long as the Studio runs: it reads and writes the project at any time.
+    [url startAccessingSecurityScopedResource];
+    const std::filesystem::path Folder = PathFromNs(url.path);
+    GrantFolder(Folder);
+
+    NSData* Bookmark = [url bookmarkDataWithOptions:0 includingResourceValuesForKeys:nil relativeToURL:nil error:nil];
+    if (Bookmark != nil)
+    {
+        NSUserDefaults* Defaults = NSUserDefaults.standardUserDefaults;
+        NSMutableArray* Saved = [NSMutableArray array];
+        for (id Entry in [Defaults arrayForKey:KPickedFolders])
+        {
+            // The same folder picked again replaces its older entry.
+            NSURL* Other = [Entry isKindOfClass:NSData.class] ? [NSURL URLByResolvingBookmarkData:Entry
+                                                                                           options:0
+                                                                                     relativeToURL:nil
+                                                                               bookmarkDataIsStale:nil
+                                                                                             error:nil]
+                                                              : nil;
+            if (Other != nil && ![Other.path isEqualToString:url.path])
+                [Saved addObject:Entry];
+        }
+        [Saved addObject:Bookmark];
+        while (Saved.count > KMaxPickedFolders)
+            [Saved removeObjectAtIndex:0];
+        [Defaults setObject:Saved forKey:KPickedFolders];
+    }
+    else
+    {
+        AppendOutput(TrFmt("{0} will have to be picked again at the next launch.", {dbc::PathToUtf8(Folder)}),
+                     DBCSeverityNotice);
+    }
+    OpenProjectFolder(Folder);
 }
 
 - (void)openFile:(NSString*)path

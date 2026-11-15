@@ -72,6 +72,11 @@ struct FileMenu: View {
         Button(tr("Open Location")) { model.sheet = .openLocation }
             .studioShortcut("o")
             .disabled(model.running)
+        Button(tr("Open Folder...")) { model.pickFolder() }
+            .studioShortcut("o", modifiers: [.command, .shift])
+            .disabled(model.running)
+        Button(tr("Export Project...")) { model.exportProject() }
+            .disabled(model.studio.projectRoot.isEmpty)
         Divider()
         Button(tr("Save")) { model.saveCurrent() }
             .studioShortcut("s")

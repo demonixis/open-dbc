@@ -93,6 +93,8 @@ final class StudioModel: NSObject, ObservableObject, DBCStudioDelegate {
     @Published var closing: EditorDocument?
     @Published var textZoom: Double = 1.0
     @Published var message: String?
+    /// The system's file browser is up, to pick a project folder.
+    @Published var pickingFolder = false
 
     private var nextOutputID = 0
     private var untitledCount = 0
@@ -229,6 +231,22 @@ final class StudioModel: NSObject, ObservableObject, DBCStudioDelegate {
         for other in documents[(index + 1)...].reversed() where !other.dirty {
             close(other)
         }
+    }
+
+    /// Asks for a folder anywhere on the device, once the sheet that asked is gone.
+    func pickFolder() {
+        sheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { self.pickingFolder = true }
+    }
+
+    /// Copies the project's folder where the system's file browser says.
+    func exportProject() {
+        let root = studio.projectRoot
+        guard !root.isEmpty else { return }
+        saveAll()
+        if mode == .scene, studio.sceneDirty { _ = studio.saveScene() }
+        let picker = UIDocumentPickerViewController(forExporting: [URL(fileURLWithPath: root)], asCopy: true)
+        UIApplication.shared.topController?.present(picker, animated: true)
     }
 
     func goToLine(_ line: Int) {

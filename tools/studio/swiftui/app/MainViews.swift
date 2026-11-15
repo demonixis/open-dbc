@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import UIKit
 
 /// The Studio's window: a toolbar, the Code or the Scene mode, and the status bar.
@@ -35,6 +36,11 @@ struct RootView: View {
         }
         .sheet(item: $model.sheet) { sheet in
             StudioSheetView(model: model, sheet: sheet)
+        }
+        .fileImporter(isPresented: $model.pickingFolder, allowedContentTypes: [.folder]) { result in
+            if case .success(let folder) = result {
+                model.studio.openPickedFolder(folder)
+            }
         }
         .sheet(item: Binding(get: { model.previewPath.map(PreviewItem.init) },
                              set: { model.previewPath = $0?.path })) { item in
