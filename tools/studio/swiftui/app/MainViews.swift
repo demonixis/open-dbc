@@ -248,6 +248,8 @@ struct EditorArea: View {
                 Spacer()
             }
         }
+        // Without a tab the text alone would set the width, and the row would sit in the middle.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

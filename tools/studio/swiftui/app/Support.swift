@@ -90,14 +90,13 @@ struct ResizeHandle: View {
     @State private var start: Double?
 
     var body: some View {
-        ZStack {
-            Palette.color("PanelAlt")
-            Capsule()
-                .fill(Palette.color("TextDim"))
-                .frame(width: vertical ? 36 : 3, height: vertical ? 3 : 36)
-                .opacity(start == nil ? 0.5 : 1)
-        }
-        .frame(width: vertical ? nil : 9, height: vertical ? 9 : nil)
+        Capsule()
+            .fill(Palette.color("TextDim"))
+            .frame(width: vertical ? 36 : 3, height: vertical ? 3 : 36)
+            .opacity(start == nil ? 0.5 : 1)
+            .frame(maxWidth: vertical ? .infinity : 9, maxHeight: vertical ? 9 : .infinity)
+            // A background reaches under the safe area, as the panels' own do.
+            .background(Palette.color("PanelAlt"))
         .contentShape(Rectangle())
         // The handle moves with the panel: its own coordinates would feed the drag back.
         .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
