@@ -170,6 +170,8 @@ struct CodeModeView: View {
     @ObservedObject var model: StudioModel
     let compact: Bool
     @State private var compactPanel = 1
+    @AppStorage("code.sidebarWidth") private var sidebarWidth = 290.0
+    @AppStorage("code.bottomHeight") private var bottomHeight = 230.0
 
     var body: some View {
         if compact {
@@ -191,15 +193,15 @@ struct CodeModeView: View {
             HStack(spacing: 0) {
                 if model.showSidebar {
                     SidebarView(model: model) {}
-                        .frame(width: 290)
-                    Divider()
+                        .frame(width: sidebarWidth)
+                    ResizeHandle(size: $sidebarWidth, range: 180...560, vertical: false, grows: 1)
                 }
                 VStack(spacing: 0) {
                     EditorArea(model: model)
                     if model.showBottomPanel {
-                        Divider()
+                        ResizeHandle(size: $bottomHeight, range: 100...700, vertical: true, grows: -1)
                         BottomPanel(model: model, closable: true)
-                            .frame(height: 230)
+                            .frame(height: bottomHeight)
                     }
                 }
             }

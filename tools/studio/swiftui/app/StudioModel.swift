@@ -85,6 +85,8 @@ final class StudioModel: NSObject, ObservableObject, DBCStudioDelegate {
     @Published var themeRevision = 0
     @Published var previewPath: String?
     @Published var bottomPanel = 0
+    /// The Scene mode's bottom panel: 0 the assets, 1 the output.
+    @Published var sceneBottomTab = 0
     @Published var showBottomPanel = false
     @Published var showSidebar = true
     @Published var showInspector = true
@@ -301,6 +303,7 @@ final class StudioModel: NSObject, ObservableObject, DBCStudioDelegate {
         append(line, severity: severity)
         if severity == .error {
             bottomPanel = 0
+            sceneBottomTab = 1
             showBottomPanel = true
         }
     }

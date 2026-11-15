@@ -7,7 +7,9 @@ struct SceneModeView: View {
     @ObservedObject var model: StudioModel
     let compact: Bool
     @State private var compactPanel = 1
-    @State private var bottomTab = 0
+    @AppStorage("scene.sidebarWidth") private var sidebarWidth = 240.0
+    @AppStorage("scene.inspectorWidth") private var inspectorWidth = 330.0
+    @AppStorage("scene.bottomHeight") private var bottomHeight = 240.0
 
     var body: some View {
         if compact {
@@ -30,16 +32,16 @@ struct SceneModeView: View {
         } else {
             HStack(spacing: 0) {
                 if model.showSidebar {
-                    HierarchyView(model: model).frame(width: 240)
-                    Divider()
+                    HierarchyView(model: model).frame(width: sidebarWidth)
+                    ResizeHandle(size: $sidebarWidth, range: 160...520, vertical: false, grows: 1)
                 }
                 VStack(spacing: 0) {
                     ViewportPanel(model: model)
                     if model.showBottomPanel {
-                        Divider()
+                        ResizeHandle(size: $bottomHeight, range: 120...700, vertical: true, grows: -1)
                         VStack(spacing: 0) {
                             PanelHeader(title: "") {
-                                Picker("", selection: $bottomTab) {
+                                Picker("", selection: $model.sceneBottomTab) {
                                     Text(tr("Assets")).tag(0)
                                     Text(tr("Output")).tag(1)
                                 }
@@ -48,18 +50,18 @@ struct SceneModeView: View {
                                 Spacer()
                                 Button { model.showBottomPanel = false } label: { Image(systemName: "xmark") }
                             }
-                            if bottomTab == 0 {
+                            if model.sceneBottomTab == 0 {
                                 AssetsView(model: model)
                             } else {
                                 OutputView(model: model)
                             }
                         }
-                        .frame(height: 240)
+                        .frame(height: bottomHeight)
                     }
                 }
                 if model.showInspector {
-                    Divider()
-                    InspectorPanel(model: model).frame(width: 330)
+                    ResizeHandle(size: $inspectorWidth, range: 260...620, vertical: false, grows: -1)
+                    InspectorPanel(model: model).frame(width: inspectorWidth)
                 }
             }
             .onAppear { model.showBottomPanel = true }

@@ -78,3 +78,36 @@ extension PanelHeader where Trailing == EmptyView {
         self.init(title: title) { EmptyView() }
     }
 }
+
+/// The edge between two panels: dragged, it resizes the one whose size it holds.
+struct ResizeHandle: View {
+    @Binding var size: Double
+    let range: ClosedRange<Double>
+    /// True for an edge dragged up and down.
+    let vertical: Bool
+    /// 1 when dragging right or down grows the panel, -1 when it shrinks it.
+    let grows: Double
+    @State private var start: Double?
+
+    var body: some View {
+        ZStack {
+            Palette.color("PanelAlt")
+            Capsule()
+                .fill(Palette.color("TextDim"))
+                .frame(width: vertical ? 36 : 3, height: vertical ? 3 : 36)
+                .opacity(start == nil ? 0.5 : 1)
+        }
+        .frame(width: vertical ? nil : 9, height: vertical ? 9 : nil)
+        .contentShape(Rectangle())
+        // The handle moves with the panel: its own coordinates would feed the drag back.
+        .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+            .onChanged { drag in
+                let from = start ?? size
+                start = from
+                let moved = vertical ? drag.translation.height : drag.translation.width
+                size = min(max(from + grows * Double(moved), range.lowerBound), range.upperBound)
+            }
+            .onEnded { _ in start = nil })
+        .accessibilityLabel(tr("Resize"))
+    }
+}
