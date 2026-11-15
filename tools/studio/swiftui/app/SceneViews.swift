@@ -81,7 +81,34 @@ struct HierarchyView: View {
         let studio = model.studio
         let _ = model.sceneRevision
         VStack(spacing: 0) {
-            PanelHeader(title: studio.levelName + (studio.sceneDirty ? " *" : "")) {
+            HStack(spacing: 8) {
+                // The level's name opens the list of the project's levels.
+                Menu {
+                    ForEach(studio.levelNames, id: \.self) { name in
+                        Button {
+                            studio.openLevel(name)
+                        } label: {
+                            if name == studio.levelName {
+                                Label(name, systemImage: "checkmark")
+                            } else {
+                                Text(name)
+                            }
+                        }
+                    }
+                    Divider()
+                    Button(tr("New Level...")) { model.sheet = .newLevel }
+                    Button(tr("Save Level")) { _ = studio.saveScene() }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(studio.levelName + (studio.sceneDirty ? " *" : ""))
+                            .font(.subheadline.weight(.semibold))
+                            .lineLimit(1)
+                        Image(systemName: "chevron.down").font(.caption2)
+                    }
+                    .foregroundColor(Palette.color("Text"))
+                }
+                .help(tr("Open Level"))
+                Spacer(minLength: 4)
                 Toggle(isOn: $multiSelect) { Image(systemName: "checklist") }
                     .toggleStyle(.button)
                     .help(tr("Select several nodes"))
@@ -91,7 +118,11 @@ struct HierarchyView: View {
                     Image(systemName: "plus")
                 }
                 .disabled(!studio.sceneEditable)
+                .help(tr("Create"))
             }
+            .padding(.horizontal, 10)
+            .frame(minHeight: 34)
+            .background(Palette.color("PanelAlt"))
             let errors = studio.sceneReadErrors
             if !errors.isEmpty {
                 VStack(alignment: .leading, spacing: 2) {

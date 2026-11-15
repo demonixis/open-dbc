@@ -1283,6 +1283,7 @@ namespace dbc::studio::panels
         static std::vector<std::string> LevelNames(SceneEditor& E) { return E.LevelNames(); }
         static void OpenLevel(SceneEditor& E, const std::string& Name) { E.OpenLevel(Name); }
         static bool NewLevel(SceneEditor& E, const std::string& Name) { return E.NewLevel(Name); }
+        static bool HasLevel(SceneEditor& E) { return E.HasLevel_; }
         static bool Editable(SceneEditor& E) { return E.Editable(); }
         static bool HasSelection(SceneEditor& E) { return !E.Selection_.empty() || E.CameraSelected_; }
         static bool CanUndo(SceneEditor& E) { return E.TransformEditable() && E.History_.CanUndo(); }
@@ -1388,6 +1389,36 @@ namespace
         Host.CaptureRunning = [] { return false; };
         Host.FilesMoved = [] { [TheStudio().delegate studioProjectChanged]; };
         return Host;
+    }
+
+    NSString* const KLastLevels = @"OpenDBCLastLevels";
+
+    // The level each project was last editing, so that the Scene mode opens on it again.
+    void RememberLevel()
+    {
+        panels::SceneEditor& E = TheSession().Scene;
+        if (!E.Project() || E.LevelName().empty())
+            return;
+        NSUserDefaults* Defaults = NSUserDefaults.standardUserDefaults;
+        NSMutableDictionary* Levels = [NSMutableDictionary dictionary];
+        if (NSDictionary* Saved = [Defaults dictionaryForKey:KLastLevels])
+            [Levels addEntriesFromDictionary:Saved];
+        Levels[ToNs(E.Project()->Root)] = ToNs(E.LevelName());
+        [Defaults setObject:Levels forKey:KLastLevels];
+    }
+
+    void OpenRememberedLevel()
+    {
+        panels::SceneEditor& E = TheSession().Scene;
+        if (!E.Project() || Access::HasLevel(E))
+            return;
+        NSString* Last = [NSUserDefaults.standardUserDefaults dictionaryForKey:KLastLevels][ToNs(E.Project()->Root)];
+        if (![Last isKindOfClass:NSString.class])
+            return;
+        const std::string Name = FromNs(Last);
+        const std::vector<std::string> Names = Access::LevelNames(E);
+        if (std::find(Names.begin(), Names.end(), Name) != Names.end())
+            Access::OpenLevel(E, Name);
     }
 
     void EnsureSceneHost()
@@ -1517,7 +1548,9 @@ namespace dbc::studio::swiftui
     }
     EnsureSceneHost();
     S.SceneMode = true;
+    OpenRememberedLevel();
     S.Scene.Activate();
+    RememberLevel();
     return YES;
 }
 
@@ -1579,6 +1612,7 @@ namespace dbc::studio::swiftui
     if (E.Dirty())
         E.Save();
     Access::OpenLevel(E, FromNs(name));
+    RememberLevel();
     NotifySceneChanged();
 }
 
@@ -1592,6 +1626,7 @@ namespace dbc::studio::swiftui
     // Asked for by name, it should exist from here on, unlike the level Activate() starts.
     if (Access::NewLevel(E, FromNs(name)))
         E.Save();
+    RememberLevel();
     NotifySceneChanged();
 }
 
