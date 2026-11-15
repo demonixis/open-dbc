@@ -130,6 +130,8 @@ namespace dbc::studio
             Info.depth_stencil_state.enable_depth_write = false;
             BlendPipeline_ = SDL_CreateGPUGraphicsPipeline(Gpu_, &Info);
             Color.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+            // What is behind shows through, as SET ALPHA MAPPING ON fades an object.
+            FadePipeline_ = SDL_CreateGPUGraphicsPipeline(Gpu_, &Info);
 
             SDL_GPUVertexBufferDescription LineBuffer = {};
             LineBuffer.slot = 0;
@@ -178,7 +180,7 @@ namespace dbc::studio
             }
 
             Release();
-            if (!MeshPipeline_ || !WirePipeline_ || !BlendPipeline_ || !LinePipeline_ ||
+            if (!MeshPipeline_ || !WirePipeline_ || !BlendPipeline_ || !FadePipeline_ || !LinePipeline_ ||
                 (Stencil_ && (!VolumePipeline_ || !ShadePipeline_)))
             {
                 Error = TrFmt("Scene pipelines: {0}", {SDL_GetError()});
@@ -250,10 +252,12 @@ namespace dbc::studio
             LineBuffer_ = ShadowBuffer_ = nullptr;
             LineCapacity_ = ShadowCapacity_ = 0;
             for (SDL_GPUGraphicsPipeline* Pipeline :
-                 {MeshPipeline_, BlendPipeline_, WirePipeline_, LinePipeline_, VolumePipeline_, ShadePipeline_})
+                 {MeshPipeline_, BlendPipeline_, FadePipeline_, WirePipeline_, LinePipeline_, VolumePipeline_,
+                  ShadePipeline_})
                 if (Pipeline != nullptr)
                     SDL_ReleaseGPUGraphicsPipeline(Gpu_, Pipeline);
-            MeshPipeline_ = BlendPipeline_ = WirePipeline_ = LinePipeline_ = VolumePipeline_ = ShadePipeline_ = nullptr;
+            MeshPipeline_ = BlendPipeline_ = FadePipeline_ = WirePipeline_ = nullptr;
+            LinePipeline_ = VolumePipeline_ = ShadePipeline_ = nullptr;
             if (Sampler_ != nullptr)
                 SDL_ReleaseGPUSampler(Gpu_, Sampler_);
             Sampler_ = nullptr;
@@ -662,7 +666,8 @@ namespace dbc::studio
                 glm::vec3 Base = ColorOf(Mat.Color.value_or(0xFFFFFF));
                 if (Mat.Diffuse)
                     Base = ColorOf(*Mat.Diffuse);
-                Item.Fragment.BaseColor = glm::vec4(Base, Mat.Ghost ? 0.5f : 1.0f);
+                const float Alpha = std::clamp(Mat.Alpha.value_or(100.0f), 0.0f, 100.0f) / 100.0f;
+                Item.Fragment.BaseColor = glm::vec4(Base, (Mat.Ghost ? 0.5f : 1.0f) * Alpha);
                 if (Mat.Emissive)
                     Item.Fragment.Emissive = glm::vec4(ColorOf(*Mat.Emissive), 0.0f);
                 if (Mat.Specular)
@@ -689,7 +694,13 @@ namespace dbc::studio
                     const bool Shines = Mat.Flags.Lighting && Mat.Specular && (*Mat.Specular & 0xFFFFFFu) != 0;
                     Item.Fragment.Stages.y = Shines || Item.Normal != nullptr ? 1.0f : 2.0f;
                 }
+                // SET OBJECT's transparency, as the engine reads it for a DBPro level: every mode but 0
+                // and 7 leaves the texture's black undrawn, and 4 and 6 also test its alpha.
+                const int Mode = Mat.Flags.Transparency;
+                Item.Fragment.Stages.z = Mode != 0 && Mode != 7 ? 1.0f : 0.0f;
+                Item.Fragment.Stages.w = Mode == 4 || Mode == 6 ? 207.0f / 255.0f : 0.0f;
                 Item.Blend = Mat.Ghost;
+                Item.Fade = !Mat.Ghost && Alpha < 0.999f;
                 Item.Wireframe = Mat.Flags.Wireframe;
                 Item.Count = static_cast<Uint32>(Entry.Mesh.Vertices.size());
                 if (Entry.Mesh.Parts.empty())
@@ -742,7 +753,8 @@ namespace dbc::studio
                 }
             }
             // Ghosts last, so what is behind them is already drawn.
-            std::stable_partition(Items_.begin(), Items_.end(), [](const DrawItem& Item) { return !Item.Blend; });
+            std::stable_partition(Items_.begin(), Items_.end(),
+                                  [](const DrawItem& Item) { return !Item.Blend && !Item.Fade; });
 
             // SET SHADOW SHADING ON.
             Shadows_.clear();
@@ -869,6 +881,7 @@ namespace dbc::studio
                     continue;
                 SDL_GPUGraphicsPipeline* Pipeline = Item.Wireframe ? WirePipeline_
                                                     : Item.Blend   ? BlendPipeline_
+                                                    : Item.Fade    ? FadePipeline_
                                                                    : MeshPipeline_;
                 if (Pipeline != Bound)
                 {

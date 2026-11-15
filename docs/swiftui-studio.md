@@ -39,7 +39,12 @@ show a mode or a dialog and write what it draws
 
 ## Differences from the Dear ImGui Studio
 
-- Panels have fixed places; the toolbar shows or hides them.
+- Panels have fixed places; the toolbar shows or hides them, and a handle on their
+  edge resizes them.
+- File > Open Folder asks the system's file browser for a project folder anywhere
+  (Files on iPadOS, the Finder on a Mac) and keeps access to it; File > Export
+  Project copies the project's folder to a place picked the same way.
+- The Hierarchy's title lists the levels, and the Scene mode reopens the last one.
 - Find and replace are the system's.
 - With a mouse or a trackpad the viewport takes the primary button only: a drag off
   the gizmo or with Alt turns the view, with Shift it pans, and scrolling zooms. The

@@ -415,7 +415,7 @@ namespace dbc::studio::panels
                              });
             }
 
-            F.OptionalFloat("Alpha", Mat.Alpha, 100.0f, 0.5, 0.0, 100.0);
+            F.OptionalFloat("Alpha", Mat.Alpha, 100.0f, 0.5, 0.0, 100.0, true);
             F.Toggle(Tr("Mirror (reflection shading)"), Mat.Reflection).Tooltip =
                 Tr("SET REFLECTION SHADING ON; it ends shadow casting");
         }
@@ -442,6 +442,9 @@ namespace dbc::studio::panels
             F.Toggle(Tr("Wireframe"), Flags.Wireframe);
             F.Int(Tr("Transparency"), Flags.Transparency, 0, 7, true).Tooltip =
                 Tr("SET OBJECT transparency mode; 0 draws black as black");
+            if (Flags.Transparency != 0)
+                F.Hint(Tr("A transparency mode acts on the texture: 1 to 6 leave its black undrawn. Alpha fades the "
+                          "whole object."));
             F.Toggle(Tr("Cull back faces"), Flags.Cull);
             F.Toggle(Tr("Filter"), Flags.Filter);
             F.Toggle(Tr("Lighting"), Flags.Lighting);

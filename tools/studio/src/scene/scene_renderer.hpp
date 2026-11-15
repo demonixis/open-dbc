@@ -110,7 +110,10 @@ namespace dbc::studio
                 SDL_GPUTexture* Cube = nullptr;
                 Uint32 First = 0;
                 Uint32 Count = 0;
+                // Additive, for a ghost.
                 bool Blend = false;
+                // Blended over what is behind, for an alpha under 100.
+                bool Fade = false;
                 bool Wireframe = false;
             };
 
@@ -130,6 +133,7 @@ namespace dbc::studio
             SDL_GPUDevice* Gpu_ = nullptr;
             SDL_GPUGraphicsPipeline* MeshPipeline_ = nullptr;
             SDL_GPUGraphicsPipeline* BlendPipeline_ = nullptr;
+            SDL_GPUGraphicsPipeline* FadePipeline_ = nullptr;
             SDL_GPUGraphicsPipeline* WirePipeline_ = nullptr;
             SDL_GPUGraphicsPipeline* LinePipeline_ = nullptr;
             // SET SHADOW SHADING: volumes count into the stencil, then a dark overlay

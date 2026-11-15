@@ -32,6 +32,7 @@
   "A third-person camera behind an object. Call TpsCamera(object number) once per frame before sync.": "Une caméra à la troisième personne derrière un objet. Appelez TpsCamera(object number) une fois par image avant sync.",
   "A tileable texture": "Une texture répétable",
   "A tileable texture, with its normal map": "Une texture répétable, avec sa normal map",
+  "A transparency mode acts on the texture: 1 to 6 leave its black undrawn. Alpha fades the whole object.": "Un mode de transparence agit sur la texture : de 1 à 6, son noir n’est pas dessiné. Alpha estompe l’objet entier.",
   "About": "À propos",
   "About OpenDBC": "À propos d’OpenDBC",
   "Add BSP collision": "Ajouter une collision BSP",

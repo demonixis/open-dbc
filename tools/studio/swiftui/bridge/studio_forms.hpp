@@ -231,9 +231,10 @@ namespace dbc::studio::swiftui
         }
 
         void OptionalFloat(const char* Label, std::optional<float>& Value, float Default, double Step, double Min,
-                           double Max)
+                           double Max, bool Slider = false)
         {
-            Optional(Value, Default, ShownFloat_, [&](float& Number) { Float(Tr(Label), Number, Step, Min, Max); });
+            Optional(Value, Default, ShownFloat_,
+                     [&](float& Number) { Float(Tr(Label), Number, Step, Min, Max).Slider = Slider; });
         }
 
         void OptionalInt(const char* Label, std::optional<int>& Value, int Default, int Min, int Max,

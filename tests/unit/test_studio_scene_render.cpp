@@ -766,6 +766,97 @@ TEST_CASE("The Scene renderer shows a normal map and a cube map's reflection")
     SDL_Quit();
 }
 
+TEST_CASE("The Scene renderer fades an object by its alpha and keys its texture's black out")
+{
+    REQUIRE(SDL_Init(SDL_INIT_VIDEO));
+    SDL_GPUDevice* Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL, false, nullptr);
+    if (Gpu == nullptr)
+    {
+        const std::string Reason = std::string("No GPU device: ") + SDL_GetError();
+        MESSAGE(Reason);
+        SDL_Quit();
+        return;
+    }
+    scene::SceneRenderer Renderer;
+    std::string Error;
+    REQUIRE_MESSAGE(Renderer.Initialize(Gpu, Error), Error);
+    constexpr int KSize = 128;
+    SDL_GPUTexture* Target = Renderer.Target(KSize, KSize);
+    REQUIRE(Target != nullptr);
+
+    // White with a black left half.
+    const std::filesystem::path Folder = std::filesystem::path(TEST_OUTPUT_DIR) / "scene_render_key";
+    std::filesystem::create_directories(Folder);
+    SDL_Surface* Half = SDL_CreateSurface(256, 256, SDL_PIXELFORMAT_RGBA32);
+    REQUIRE(Half != nullptr);
+    SDL_FillSurfaceRect(Half, nullptr, SDL_MapSurfaceRGBA(Half, 255, 255, 255, 255));
+    const SDL_Rect Left = {0, 0, 128, 256};
+    SDL_FillSurfaceRect(Half, &Left, SDL_MapSurfaceRGBA(Half, 0, 0, 0, 255));
+    REQUIRE(IMG_SavePNG(Half, (Folder / "half.png").string().c_str()));
+    SDL_DestroySurface(Half);
+
+    // A wall that fills the view, in front of a blue backdrop.
+    scene::ViewParameters View;
+    View.Eye = glm::vec3(0.0f, 0.0f, -20.0f);
+    View.View = glm::lookAt(View.Eye, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    View.Projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.5f, 2000.0f);
+    // Red, green, blue summed over the frame.
+    const auto Draw = [&](const scene::Material& Mat)
+    {
+        scene::SceneDocument Document;
+        Document.Env.Backdrop = 0x0000FF;
+        // One face: a solid would show its far side through the near one.
+        scene::SceneNode& Wall = Document.Add(scene::NodeKind::Plain);
+        Wall.Extent = glm::vec3(200.0f, 200.0f, 0.0f);
+        Wall.Mat = Mat;
+        Wall.Mat.Flags.Lighting = false;
+        Renderer.Prepare(Document, View, Folder, {});
+        CHECK(Renderer.TakeErrors().empty());
+        const std::vector<Uint8> Pixels = ReadPixels(Gpu, Target, KSize, &Renderer);
+        REQUIRE(Pixels.size() == KSize * KSize * 4);
+        glm::dvec3 Sum(0.0);
+        for (int Index = 0; Index < KSize * KSize; ++Index)
+            Sum += glm::dvec3(Pixels[static_cast<std::size_t>(Index) * 4], Pixels[static_cast<std::size_t>(Index) * 4 + 1],
+                              Pixels[static_cast<std::size_t>(Index) * 4 + 2]);
+        return Sum / static_cast<double>(KSize * KSize);
+    };
+
+    scene::Material Solid;
+    Solid.Color = 0xFF0000;
+    const glm::dvec3 SolidMean = Draw(Solid);
+    CHECK(SolidMean.r > 250.0);
+    CHECK(SolidMean.b < 5.0);
+
+    // Half the wall's red, half the backdrop's blue.
+    scene::Material Faded = Solid;
+    Faded.Alpha = 50.0f;
+    const glm::dvec3 FadedMean = Draw(Faded);
+    CHECK(FadedMean.r == doctest::Approx(127.5).epsilon(0.05));
+    CHECK(FadedMean.b == doctest::Approx(127.5).epsilon(0.05));
+
+    scene::Material Textured;
+    Textured.Texture = "half.png";
+    const glm::dvec3 OpaqueMean = Draw(Textured);
+    // Black and white halves, no backdrop.
+    CHECK(OpaqueMean.r == doctest::Approx(127.5).epsilon(0.1));
+    CHECK(OpaqueMean.b == doctest::Approx(OpaqueMean.r).epsilon(0.02));
+
+    // The black half lets the backdrop through.
+    scene::Material Keyed = Textured;
+    Keyed.Flags.Transparency = 1;
+    const glm::dvec3 KeyedMean = Draw(Keyed);
+    CHECK(KeyedMean.r == doctest::Approx(OpaqueMean.r).epsilon(0.1));
+    CHECK(KeyedMean.b > 240.0);
+
+    // Mode 7 only changes the drawing order.
+    Keyed.Flags.Transparency = 7;
+    CHECK(Draw(Keyed).b == doctest::Approx(OpaqueMean.b).epsilon(0.02));
+
+    Renderer.Shutdown();
+    SDL_DestroyGPUDevice(Gpu);
+    SDL_Quit();
+}
+
 TEST_CASE("Scene models keep their materials' textures and colours")
 {
     const std::filesystem::path Folder = std::filesystem::temp_directory_path() / "opendbc-scene-model-test";

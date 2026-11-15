@@ -137,11 +137,13 @@ The Inspector edits the selected node:
 - texture, `COLOR OBJECT`, `GHOST OBJECT ON`, the `SET OBJECT` flags, diffuse,
   ambience, emissive, specular colour and power, `SET SHADOW SHADING ON`, and
   `DISABLE OBJECT ZDEPTH`, `ZREAD` and `ZWRITE`, which the viewport does not show.
+  Of `SET OBJECT`'s transparency the viewport shows the colour key: modes 1 to 6
+  leave the texture's black undrawn.
   A level may also set one flag at a time (`SET OBJECT WIREFRAME`, `FOG`...); it is
   written back as `SET OBJECT`.
 - texture stages, of which the viewport shows the bump map and the cube map: one of light, detail, sphere,
   bump or blend mapping on the second stage, a cube map (alone or over a bump map),
-  `SET BLEND MAPPING ON` for stages 2 to 7, `SET ALPHA MAPPING ON`, cartoon or
+  `SET BLEND MAPPING ON` for stages 2 to 7, `SET ALPHA MAPPING ON` (shown as a fade), cartoon or
   rainbow shading, which replace every stage, and `SET REFLECTION SHADING ON`,
   which ends shadow casting. Choosing a bump (normal) map or a cube map gives an
   object without a specular colour a grey one: the engine lights the one and
