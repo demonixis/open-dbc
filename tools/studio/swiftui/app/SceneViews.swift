@@ -97,7 +97,7 @@ struct HierarchyView: View {
                     }
                     Divider()
                     Button(tr("New Level...")) { model.sheet = .newLevel }
-                    Button(tr("Save Level")) { _ = studio.saveScene() }
+                    Button(tr("Save Level")) { model.saveScene() }
                 } label: {
                     HStack(spacing: 4) {
                         Text(studio.levelName + (studio.sceneDirty ? " *" : ""))

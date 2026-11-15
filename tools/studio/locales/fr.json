@@ -866,6 +866,7 @@
   "The installed product does not contain the qualified iOS runtime": "Le produit installé ne contient pas le moteur iOS qualifié",
   "The keystore folder does not exist": "Le dossier du keystore n’existe pas",
   "The keystore password needs at least 6 characters": "Le mot de passe du keystore doit contenir au moins 6 caractères",
+  "The level could not be saved.": "Le niveau n’a pas pu être enregistré.",
   "The level is read-only: fix the lines reported when it was opened": "Le niveau est en lecture seule : corrigez les lignes signalées à son ouverture",
   "The level stays read-only until these lines are fixed in the code editor": "Le niveau reste en lecture seule tant que ces lignes ne sont pas corrigées dans l’éditeur de code",
   "The location is not a folder: {0}": "L’emplacement n’est pas un dossier : {0}",

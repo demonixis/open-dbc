@@ -158,7 +158,7 @@ struct SceneMenu: View {
                 }
             }
         }
-        Button(tr("Save Level")) { _ = studio.saveScene() }
+        Button(tr("Save Level")) { model.saveScene() }
         Divider()
         Button(tr("Duplicate")) { studio.sceneDuplicate() }
             .studioShortcut("d")

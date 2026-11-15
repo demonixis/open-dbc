@@ -244,7 +244,7 @@ final class StudioModel: NSObject, ObservableObject, DBCStudioDelegate {
         let root = studio.projectRoot
         guard !root.isEmpty else { return }
         saveAll()
-        if mode == .scene, studio.sceneDirty { _ = studio.saveScene() }
+        if mode == .scene, studio.sceneDirty { saveScene() }
         let picker = UIDocumentPickerViewController(forExporting: [URL(fileURLWithPath: root)], asCopy: true)
         UIApplication.shared.topController?.present(picker, animated: true)
     }
@@ -294,9 +294,18 @@ final class StudioModel: NSObject, ObservableObject, DBCStudioDelegate {
 
     func saveCurrent() {
         if mode == .scene {
-            _ = studio.saveScene()
+            saveScene()
         } else {
             save(current)
+        }
+    }
+
+    /// Saves the level, and says why when it cannot be.
+    func saveScene() {
+        let errors = output.last?.id ?? 0
+        if !studio.saveScene() {
+            let reason = output.last { $0.id > errors && $0.severity == .error }?.text
+            message = reason ?? tr("The level could not be saved.")
         }
     }
 
@@ -389,14 +398,23 @@ final class StudioModel: NSObject, ObservableObject, DBCStudioDelegate {
 
     func studioReplaceText(_ text: String, atPath path: String, saved: Bool) -> Bool {
         guard let document = document(at: path) else { return false }
+        let wasDirty = document.dirty
         if let textView = document.textView {
             textView.replaceAll(with: text)
+            // A view that is not on screen may refuse the edit, and would then give its old text back.
+            if textView.text != text { textView.text = text }
         }
         document.text = text
+        document.revision += 1
         if saved {
             document.savedText = text
         }
         document.dirty = document.text != document.savedText
+        // A tab without edits of its own goes to its file at once: the change is the Studio's, as
+        // when a saved level links itself into the main source.
+        if document.dirty && !wasDirty {
+            write(document, to: document.path)
+        }
         return true
     }
 

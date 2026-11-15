@@ -37,6 +37,10 @@ struct RootView: View {
         .sheet(item: $model.sheet) { sheet in
             StudioSheetView(model: model, sheet: sheet)
         }
+        .alert(model.message ?? "", isPresented: Binding(get: { model.message != nil },
+                                                         set: { if !$0 { model.message = nil } })) {
+            Button(tr("OK")) { model.message = nil }
+        }
         .fileImporter(isPresented: $model.pickingFolder, allowedContentTypes: [.folder]) { result in
             if case .success(let folder) = result {
                 model.studio.openPickedFolder(folder)
