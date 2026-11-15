@@ -1301,6 +1301,21 @@ namespace dbc::studio::panels
         static void Create(SceneEditor& E, scene::NodeKind Kind, scene::LightKind Light, std::optional<glm::vec3> At)
         {
             E.Create(Kind, Light, At);
+            if (Kind != scene::NodeKind::Terrain || !E.Project_)
+                return;
+            // A terrain is its heightmap: it starts flat, in the level's own file, so that the level
+            // can be saved before the Inspector generates another.
+            for (scene::SceneNode& Node : E.Document_.Nodes)
+            {
+                if (Node.Kind != scene::NodeKind::Terrain || !Node.Asset.empty())
+                    continue;
+                const std::filesystem::path Relative = scene::TerrainHeightmapPath(E.Document_.Name, Node.Id);
+                if (scene::WriteHeightmap(E.Project_->AssetRoot / Relative, E.HeightmapSize_,
+                                          scene::FlatHeightmap(E.HeightmapSize_, E.TerrainFillHeight_),
+                                          E.TerrainError_))
+                    Node.Asset = dbc::GenericPathToUtf8(Relative);
+            }
+            E.RefreshAssets();
         }
         static void CreateFromAsset(SceneEditor& E, scene::NodeKind Kind, const std::string& Relative)
         {
