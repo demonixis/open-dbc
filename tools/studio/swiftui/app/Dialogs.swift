@@ -246,6 +246,20 @@ struct EditorSettingsSheet: View {
         let studio = model.studio
         Form {
             Section {
+                Picker(tr("Language"), selection: Binding(get: { studio.language },
+                                                          set: { studio.language = $0; model.themeRevision += 1 })) {
+                    Text(tr("Automatic")).tag("auto")
+                    ForEach(studio.interfaceLanguages, id: \.self) { language in
+                        Text(language[1]).tag(language[0])
+                    }
+                }
+                Picker(tr("Theme"), selection: Binding(get: { studio.theme }, set: { model.applyTheme($0) })) {
+                    Text(tr("Automatic")).tag("auto")
+                    Text(tr("theme|Dark")).tag("dark")
+                    Text(tr("theme|Light")).tag("light")
+                }
+            }
+            Section {
                 slider(tr("Scroll speed"), $scrollSpeed, 0.1...5) { studio.scrollSpeed = scrollSpeed }
                 slider(tr("Camera speed"), $cameraSpeed, 0.1...5) { studio.cameraSpeed = cameraSpeed }
                 slider(tr("Text zoom"), Binding(get: { model.textZoom }, set: { model.setTextZoom($0) }), 0.5...4) {}
