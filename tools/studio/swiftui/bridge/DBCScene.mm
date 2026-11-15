@@ -1491,6 +1491,9 @@ namespace
     }
 } // namespace
 
+// SDL's Metal view of the viewport's window, once it was found.
+static __weak UIView* CachedMetalView = nil;
+
 namespace dbc::studio::swiftui
 {
     void UpdateSceneProject()
@@ -1515,13 +1518,31 @@ namespace dbc::studio::swiftui
         S.Scene.SetProject(std::move(Project));
     }
 
+    void ReleaseViewWindow()
+    {
+        Session& S = TheSession();
+        if (S.ViewWindow == nullptr)
+            return;
+        [CachedMetalView removeFromSuperview];
+        CachedMetalView = nil;
+        if (S.Gpu != nullptr)
+        {
+            SDL_WaitForGPUIdle(S.Gpu);
+            SDL_ReleaseWindowFromGPUDevice(S.Gpu, S.ViewWindow);
+        }
+        SDL_DestroyWindow(S.ViewWindow);
+        S.ViewWindow = nullptr;
+    }
+
     bool EnsurePresentation()
     {
         Session& S = TheSession();
-        if (S.ImGuiReady)
-            return true;
-        if (S.ViewWindow == nullptr)
+        const bool NewWindow = S.ViewWindow == nullptr;
+        if (NewWindow)
         {
+            // SDL allows one window per display here, and a running program has it.
+            if (S.Busy)
+                return false;
             // Never shown: only its Metal view is used, inside the interface.
             S.ViewWindow =
                 SDL_CreateWindow("OpenDBC Scene", 1024, 768, SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY);
@@ -1532,17 +1553,18 @@ namespace dbc::studio::swiftui
             }
         }
         if (S.Gpu == nullptr)
-        {
             S.Gpu = SDL_CreateGPUDevice(
                 SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_METALLIB, false, nullptr);
-            if (S.Gpu == nullptr || !SDL_ClaimWindowForGPUDevice(S.Gpu, S.ViewWindow) ||
-                !SDL_SetGPUSwapchainParameters(S.Gpu, S.ViewWindow, SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-                                               SDL_GPU_PRESENTMODE_VSYNC))
-            {
-                AppendOutput(std::string("The Scene viewport cannot start: ") + SDL_GetError(), DBCSeverityError);
-                return false;
-            }
+        if (S.Gpu == nullptr ||
+            (NewWindow && (!SDL_ClaimWindowForGPUDevice(S.Gpu, S.ViewWindow) ||
+                           !SDL_SetGPUSwapchainParameters(S.Gpu, S.ViewWindow, SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+                                                          SDL_GPU_PRESENTMODE_VSYNC))))
+        {
+            AppendOutput(std::string("The Scene viewport cannot start: ") + SDL_GetError(), DBCSeverityError);
+            return false;
         }
+        if (S.ImGuiReady)
+            return true;
         Theme::AddFonts();
         ImGui_ImplSDLGPU3_InitInfo Init = {};
         Init.Device = S.Gpu;
@@ -2046,6 +2068,8 @@ namespace
     UIView* _metalView;
     CADisplayLink* _displayLink;
     CFTimeInterval _lastFrame;
+    // The viewport could not get its window: no retry at every frame.
+    BOOL _attachFailed;
     // Fingers on the view, in the order they landed.
     NSMutableArray<UITouch*>* _fingers;
     // The finger that stands for the mouse, and whether its press has been sent: a press waits
@@ -2091,15 +2115,17 @@ namespace
 - (void)attachMetalView
 {
     if (!EnsurePresentation())
+    {
+        _attachFailed = !TheSession().Busy;
         return;
+    }
     Session& S = TheSession();
     const SDL_PropertiesID Properties = SDL_GetWindowProperties(S.ViewWindow);
     UIWindow* Window =
         (__bridge UIWindow*)SDL_GetPointerProperty(Properties, SDL_PROP_WINDOW_UIKIT_WINDOW_POINTER, nullptr);
     const NSInteger Tag =
         static_cast<NSInteger>(SDL_GetNumberProperty(Properties, SDL_PROP_WINDOW_UIKIT_METAL_VIEW_TAG_NUMBER, 0));
-    static __weak UIView* Metal = nil;
-    UIView* Found = Metal;
+    UIView* Found = CachedMetalView;
     // SDL makes its Metal view the view of the window's controller; a window that was never
     // shown has not loaded it into its own hierarchy.
     if (Found == nil && Window.rootViewController.view.tag == Tag)
@@ -2108,7 +2134,7 @@ namespace
         Found = [Window viewWithTag:Tag];
     if (Found == nil)
         return;
-    Metal = Found;
+    CachedMetalView = Found;
     // SDL made the view for its own window, which is never shown: it is drawn here instead.
     [Found removeFromSuperview];
     Found.frame = self.bounds;
@@ -2125,6 +2151,7 @@ namespace
     _displayLink = nil;
     if (self.window == nil)
         return;
+    _attachFailed = NO;
     [self attachMetalView];
     _lastFrame = CACurrentMediaTime();
     _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(drawFrame)];
@@ -2134,6 +2161,9 @@ namespace
 - (void)drawFrame
 {
     Session& S = TheSession();
+    // A run took the one window SDL allows: the viewport gets a new one once the run is over.
+    if (S.ViewWindow == nullptr && !S.Busy && !S.InBackground && !_attachFailed)
+        [self attachMetalView];
     if (_metalView == nil || _metalView.superview != self || !S.ImGuiReady || S.InBackground || S.Busy)
         return;
     const CGSize Size = self.bounds.size;

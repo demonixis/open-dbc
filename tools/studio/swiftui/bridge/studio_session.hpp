@@ -134,4 +134,6 @@ namespace dbc::studio::swiftui
     void UpdateSceneProject();
     // Creates the GPU device and the ImGui context the viewport draws with, on first use.
     bool EnsurePresentation();
+    // Destroys the viewport's window: SDL allows one window per display on iOS, and a run needs it.
+    void ReleaseViewWindow();
 } // namespace dbc::studio::swiftui

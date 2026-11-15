@@ -420,6 +420,7 @@ namespace
         UpdateRecovery();
 
         RunFingers.clear();
+        ReleaseViewWindow();
         // The program draws in a window of its own, in front of the interface.
         InterfaceWindow = FindInterfaceWindow();
         S.RunWindow = SDL_CreateWindow("OpenDBC", 1280, 720, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_HIGH_PIXEL_DENSITY);
