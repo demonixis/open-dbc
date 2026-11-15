@@ -6,7 +6,7 @@ import UIKit
 /// OPENDBC_STUDIO_OPEN (a project folder to open), OPENDBC_STUDIO_MODE ("scene"),
 /// OPENDBC_STUDIO_SHEET (a StudioSheet name), OPENDBC_STUDIO_CREATE (a node kind to add),
 /// OPENDBC_STUDIO_RUN (runs the program), OPENDBC_STUDIO_STEPS (steps a second apart, separated by
-/// ";": "level:<name>", "create:<kind>", "save", "closeall", "project:<name>", "sceneproject:<name>", "folder:<path>", "scene", "language:<code>", "select:<row>", "number:<label>=<value>",
+/// ";": "level:<name>", "create:<kind>", "save", "closeall", "project:<name>", "sceneproject:<name>", "folder:<path>", "scene", "language:<code>", "select:<row>", "number:<label>=<value>", "flag:<label>=<0|1>", "text:<label>=<value>", "assets",
 /// "menus", "menu:<menu>><item>"), OPENDBC_STUDIO_OUTPUT (a file the Output panel is
 /// written to), OPENDBC_STUDIO_VIEWPORT (a PNG of what the viewport's renderer drew) and
 /// OPENDBC_STUDIO_SNAPSHOT (a PNG the window is drawn to every two seconds; the
@@ -102,6 +102,21 @@ enum DebugHooks {
             } else {
                 model.append("no field " + argument, severity: .error)
             }
+        case "flag", "text":
+            let pair = argument.split(separator: "=", maxSplits: 1).map(String.init)
+            guard pair.count == 2,
+                  let field = studio.sceneForm(.inspector).first(where: { $0.label == pair[0] }) else {
+                model.append("no field " + argument, severity: .error)
+                break
+            }
+            if parts[0] == "flag" {
+                studio.sceneForm(.inspector, setFlag: pair[1] == "1", field: field.identifier)
+            } else {
+                studio.sceneForm(.inspector, setText: pair[1], field: field.identifier, commit: true)
+            }
+        case "assets":
+            let rows = studio.sceneForm(.inspector).filter { $0.kind == .asset }.map { "\($0.label)=\($0.text)" }
+            model.append("assets: " + rows.joined(separator: " | "), severity: .notice)
         case "menus":
             model.append("menus: " + menuItems(mainMenu()).map(title).joined(separator: " | "), severity: .notice)
         case "menu":

@@ -908,7 +908,18 @@ namespace dbc::studio
                 {
                     const char* const Faces[] = {"+X", "-X", "+Y", "-Y", "+Z", "-Z"};
                     for (std::size_t Face = 0; Face < Mat.Cube->size(); ++Face)
-                        AssetField(Faces[Face], (*Mat.Cube)[Face], core::MediaKind::Image);
+                    {
+                        // One face named as usual (_px, _right...) brings the five others with it.
+                        std::string Chosen = (*Mat.Cube)[Face];
+                        if (AssetField(Faces[Face], Chosen, core::MediaKind::Image) && Project_)
+                            scene::SetCubeFace(*Mat.Cube, Face, Chosen,
+                                               [this](const std::string& Name)
+                                               {
+                                                   std::error_code Ignored;
+                                                   return std::filesystem::is_regular_file(
+                                                       Project_->AssetRoot / dbc::PathFromUtf8(Name), Ignored);
+                                               });
+                    }
                 }
 
                 std::optional<std::size_t> Removed;

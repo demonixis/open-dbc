@@ -372,7 +372,21 @@ namespace dbc::studio::panels
                     bool Complete = true;
                     for (std::size_t Face = 0; Face < Mat.Cube->size(); ++Face)
                     {
-                        F.Asset(KFaces[Face], (*Mat.Cube)[Face], Image);
+                        // One face named as usual (_px, _right...) brings the five others with it.
+                        F.Asset(KFaces[Face], (*Mat.Cube)[Face], Image).SetText =
+                            [Target, Face, Root = E.Project_ ? E.Project_->AssetRoot : std::filesystem::path()](
+                                const std::string& Text)
+                        {
+                            if (!Target->Cube)
+                                return;
+                            scene::SetCubeFace(*Target->Cube, Face, Text,
+                                               [&Root](const std::string& Name)
+                                               {
+                                                   std::error_code Ignored;
+                                                   return std::filesystem::is_regular_file(
+                                                       Root / dbc::PathFromUtf8(Name), Ignored);
+                                               });
+                        };
                         Complete = Complete && !(*Mat.Cube)[Face].empty();
                     }
                     if (!Complete)

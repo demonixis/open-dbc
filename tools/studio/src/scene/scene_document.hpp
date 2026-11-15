@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -351,6 +352,16 @@ namespace dbc::studio
         inline constexpr Rgb KShownSpecular = 0x808080;
         void SetSecondMap(Material& Mat, SecondMap Value);
         void SetCubeMap(Material& Mat, bool On);
+        // The six images of the cube map `Chosen` is face `Face` of, in SET CUBE MAPPING's order,
+        // when its name ends with that face's usual suffix (px, posx, right, rt...) and `Exists`
+        // finds the five others beside it.
+        using FileExists = std::function<bool(const std::string&)>;
+        std::optional<std::array<std::string, 6>> CubeFaceSet(const std::string& Chosen, std::size_t Face,
+                                                               const FileExists& Exists);
+        // Puts `Chosen` on a face, and its five siblings on the others while those are empty or
+        // still the siblings of the image it replaces: faces picked one by one are kept.
+        void SetCubeFace(std::array<std::string, 6>& Cube, std::size_t Face, const std::string& Chosen,
+                         const FileExists& Exists);
         // The object a node is glued to, or null when the glue names itself, a missing object or a
         // chain of glued objects that comes back to the node: the engine refuses those.
         const SceneNode* GlueTarget(const SceneDocument& Document, const SceneNode& Node);

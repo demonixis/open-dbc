@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <string_view>
 
 namespace dbc::studio
 {
@@ -219,6 +220,78 @@ namespace dbc::studio
             Mat.Cube = On ? std::optional<std::array<std::string, 6>>(std::in_place) : std::nullopt;
             if (On && !Mat.Specular)
                 Mat.Specular = KShownSpecular;
+        }
+
+        std::optional<std::array<std::string, 6>> CubeFaceSet(const std::string& Chosen, std::size_t Face,
+                                                               const FileExists& Exists)
+        {
+            // +X, -X, +Y, -Y, +Z, -Z, as the tools that write cube maps name them.
+            static constexpr std::array<const char*, 6> KSchemes[] = {
+                {"px", "nx", "py", "ny", "pz", "nz"},
+                {"posx", "negx", "posy", "negy", "posz", "negz"},
+                {"xpos", "xneg", "ypos", "yneg", "zpos", "zneg"},
+                {"right", "left", "top", "bottom", "front", "back"},
+                {"right", "left", "up", "down", "front", "back"},
+                {"rt", "lf", "up", "dn", "ft", "bk"},
+            };
+            if (Face >= 6)
+                return std::nullopt;
+            const std::size_t Dot = Chosen.find_last_of("./");
+            const std::size_t StemEnd = Dot != std::string::npos && Chosen[Dot] == '.' ? Dot : Chosen.size();
+            const auto Lower = [](char Value)
+            { return static_cast<char>(std::tolower(static_cast<unsigned char>(Value))); };
+            for (const std::array<const char*, 6>& Scheme : KSchemes)
+            {
+                const std::string_view Suffix = Scheme[Face];
+                if (StemEnd < Suffix.size())
+                    continue;
+                const std::size_t Start = StemEnd - Suffix.size();
+                if (!std::equal(Suffix.begin(), Suffix.end(), Chosen.begin() + static_cast<std::ptrdiff_t>(Start),
+                                [&](char Left, char Right) { return Left == Lower(Right); }))
+                    continue;
+                // A whole word: "group.png" does not end with "up".
+                if (Start > 0 && std::isalnum(static_cast<unsigned char>(Chosen[Start - 1])))
+                    continue;
+                // The siblings are written the way the chosen name is: px, PX or Px.
+                const bool Upper = std::isupper(static_cast<unsigned char>(Chosen[Start])) != 0;
+                const bool AllUpper =
+                    Upper && Suffix.size() > 1 && std::isupper(static_cast<unsigned char>(Chosen[Start + 1])) != 0;
+                std::array<std::string, 6> Set;
+                bool Found = true;
+                for (std::size_t Other = 0; Other < 6 && Found; ++Other)
+                {
+                    std::string Name = Scheme[Other];
+                    for (std::size_t Index = 0; Index < Name.size(); ++Index)
+                        if (AllUpper || (Upper && Index == 0))
+                            Name[Index] = static_cast<char>(std::toupper(static_cast<unsigned char>(Name[Index])));
+                    Set[Other] = Chosen.substr(0, Start) + Name + Chosen.substr(StemEnd);
+                    Found = Other == Face || (Exists && Exists(Set[Other]));
+                }
+                if (Found)
+                    return Set;
+            }
+            return std::nullopt;
+        }
+
+        void SetCubeFace(std::array<std::string, 6>& Cube, std::size_t Face, const std::string& Chosen,
+                         const FileExists& Exists)
+        {
+            if (Face >= Cube.size())
+                return;
+            bool Free = true;
+            for (std::size_t Other = 0; Other < Cube.size(); ++Other)
+                Free = Free && (Other == Face || Cube[Other].empty());
+            if (!Free)
+            {
+                const std::optional<std::array<std::string, 6>> Before =
+                    CubeFaceSet(Cube[Face], Face, [](const std::string&) { return true; });
+                Free = Before && *Before == Cube;
+            }
+            Cube[Face] = Chosen;
+            if (!Free || Chosen.empty())
+                return;
+            if (const std::optional<std::array<std::string, 6>> Set = CubeFaceSet(Chosen, Face, Exists))
+                Cube = *Set;
         }
 
         void ResolveMaterial(Material& Mat)

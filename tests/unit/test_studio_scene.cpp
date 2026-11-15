@@ -1031,3 +1031,48 @@ TEST_CASE("A normal map or a cube map gives an object without a specular colour 
     CHECK_FALSE(Mirrored.Cube.has_value());
     CHECK(Mirrored.Specular == std::optional<scene::Rgb>(0x404040));
 }
+
+TEST_CASE("One face of a cube map named as usual brings the five others")
+{
+    using Faces = std::array<std::string, 6>;
+    const std::vector<std::string> Files = {
+        "sky/day_cube_px.jpg", "sky/day_cube_nx.jpg", "sky/day_cube_py.jpg", "sky/day_cube_ny.jpg",
+        "sky/day_cube_pz.jpg", "sky/day_cube_nz.jpg", "Night_Right.png",     "Night_Left.png",
+        "Night_Up.png",        "Night_Down.png",      "Night_Front.png",     "Night_Back.png",
+        "lone_px.jpg",         "group.png",
+    };
+    const scene::FileExists Exists = [&](const std::string& Name)
+    { return std::find(Files.begin(), Files.end(), Name) != Files.end(); };
+
+    const Faces Day = {"sky/day_cube_px.jpg", "sky/day_cube_nx.jpg", "sky/day_cube_py.jpg",
+                       "sky/day_cube_ny.jpg", "sky/day_cube_pz.jpg", "sky/day_cube_nz.jpg"};
+    CHECK(scene::CubeFaceSet("sky/day_cube_px.jpg", 0, Exists) == std::optional<Faces>(Day));
+    CHECK(scene::CubeFaceSet("sky/day_cube_nz.jpg", 5, Exists) == std::optional<Faces>(Day));
+    // The name says another face, a sibling is missing, or the suffix is part of a word.
+    CHECK_FALSE(scene::CubeFaceSet("sky/day_cube_px.jpg", 1, Exists).has_value());
+    CHECK_FALSE(scene::CubeFaceSet("lone_px.jpg", 0, Exists).has_value());
+    CHECK_FALSE(scene::CubeFaceSet("group.png", 2, Exists).has_value());
+    // Words, written the way the chosen file writes them; "up" and "down" where "top" is missing.
+    const Faces Night = {"Night_Right.png", "Night_Left.png",  "Night_Up.png",
+                         "Night_Down.png",  "Night_Front.png", "Night_Back.png"};
+    CHECK(scene::CubeFaceSet("Night_Left.png", 1, Exists) == std::optional<Faces>(Night));
+
+    // The first face fills the empty ones, and another set replaces the whole set.
+    Faces Cube;
+    scene::SetCubeFace(Cube, 0, "sky/day_cube_px.jpg", Exists);
+    CHECK(Cube == Day);
+    scene::SetCubeFace(Cube, 1, "Night_Left.png", Exists);
+    CHECK(Cube == Night);
+    // Faces picked one by one are kept.
+    scene::SetCubeFace(Cube, 2, "group.png", Exists);
+    CHECK(Cube[2] == "group.png");
+    CHECK(Cube[0] == "Night_Right.png");
+    scene::SetCubeFace(Cube, 0, "sky/day_cube_px.jpg", Exists);
+    CHECK(Cube[0] == "sky/day_cube_px.jpg");
+    CHECK(Cube[1] == "Night_Left.png");
+    // Clearing a face clears that face.
+    Cube = Day;
+    scene::SetCubeFace(Cube, 3, "", Exists);
+    CHECK(Cube[3].empty());
+    CHECK(Cube[0] == Day[0]);
+}
