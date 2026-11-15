@@ -390,6 +390,9 @@ namespace
         return nil;
     }
 
+    // The fingers down on the running program's window.
+    std::vector<SDL_FingerID> RunFingers;
+
     void CloseRunWindow()
     {
         Session& S = TheSession();
@@ -416,6 +419,7 @@ namespace
         // A program that brings the Studio down must not take the unsaved tabs with it.
         UpdateRecovery();
 
+        RunFingers.clear();
         // The program draws in a window of its own, in front of the interface.
         InterfaceWindow = FindInterfaceWindow();
         S.RunWindow = SDL_CreateWindow("OpenDBC", 1280, 720, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_HIGH_PIXEL_DENSITY);
@@ -814,13 +818,26 @@ namespace dbc::studio::swiftui
     {
         S.Execution.HandleEvent(Event);
         // Three fingers stop the program: its window covers the interface and its Stop button.
-        if (S.Busy && Event.type == SDL_EVENT_FINGER_DOWN)
+        // They are counted here: SDL still holds the fingers that were down when an earlier run's
+        // window was destroyed, and with them any touch would count three.
+        if (!S.Busy)
         {
-            int Count = 0;
-            if (SDL_Finger** Fingers = SDL_GetTouchFingers(Event.tfinger.touchID, &Count))
-                SDL_free(Fingers);
-            if (Count >= 3)
+            RunFingers.clear();
+        }
+        else if (Event.type == SDL_EVENT_FINGER_DOWN)
+        {
+            if (std::find(RunFingers.begin(), RunFingers.end(), Event.tfinger.fingerID) == RunFingers.end())
+                RunFingers.push_back(Event.tfinger.fingerID);
+            if (RunFingers.size() >= 3)
+            {
+                RunFingers.clear();
                 [self stopRun];
+            }
+        }
+        else if (Event.type == SDL_EVENT_FINGER_UP || Event.type == SDL_EVENT_FINGER_CANCELED)
+        {
+            RunFingers.erase(std::remove(RunFingers.begin(), RunFingers.end(), Event.tfinger.fingerID),
+                             RunFingers.end());
         }
     }
     if (core::TakeStopRequest())
