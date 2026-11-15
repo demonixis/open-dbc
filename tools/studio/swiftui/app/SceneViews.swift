@@ -283,17 +283,22 @@ struct FieldRow: View {
                         .labelsHidden()
                         .toggleStyle(CheckboxStyle())
                         .help(tr("Unchecked: the engine default, and no statement"))
+                        .disabled(!field.enabled)
+                        .opacity(field.enabled ? 1 : 0.5)
                 }
-                Text(field.label)
-                    .font(.subheadline)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                control
+                // The check mark stays live beside a value it switched off.
+                Group {
+                    Text(field.label)
+                        .font(.subheadline)
+                        .lineLimit(2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    control
+                }
+                .disabled(!field.enabled || !field.isSet)
+                .opacity(field.enabled && field.isSet ? 1 : 0.5)
             }
             .padding(.horizontal, 10)
             .frame(minHeight: 40)
-            .disabled(!field.enabled || !field.isSet)
-            .opacity(field.enabled && field.isSet ? 1 : 0.5)
             .help(field.tooltip)
         }
     }
