@@ -300,6 +300,29 @@ namespace
         return Resolved;
     }
 
+    // Leaves the open project: no folder, no tab, no level.
+    void CloseFolder()
+    {
+        Session& S = TheSession();
+        [TheStudio().delegate studioCloseAllDocuments];
+        S.Root.clear();
+        S.Resolved.reset();
+        S.Pending = {};
+        S.DialectLocked = false;
+        S.Settings.ProjectFolder.clear();
+        S.Settings.LastFile.clear();
+        S.Settings.Save();
+        UpdateSceneProject();
+        [TheStudio().delegate studioProjectChanged];
+    }
+
+    bool IsOpenProject(const std::filesystem::path& Folder)
+    {
+        std::error_code Error;
+        const Session& S = TheSession();
+        return !S.Root.empty() && std::filesystem::equivalent(S.Root, Folder, Error);
+    }
+
     void OpenInEditor(const std::filesystem::path& File)
     {
         Session& S = TheSession();
@@ -1171,6 +1194,43 @@ namespace dbc::studio::swiftui
 - (void)openProjectFolder:(NSString*)folder
 {
     OpenProjectFolder(PathFromNs(folder));
+}
+
+- (NSString*)deleteProject:(NSString*)folder
+{
+    Session& S = *_session;
+    if (S.Busy)
+        return ToNs(Tr("Stop the program first."));
+    const std::filesystem::path Folder = PathFromNs(folder);
+    if (IsOpenProject(Folder))
+        CloseFolder();
+    const std::string Failure = core::DeleteProject(Folder, S.Workspace.ImportRoot());
+    [self.delegate studioProjectChanged];
+    return ToNs(Failure);
+}
+
+- (NSString*)duplicateProject:(NSString*)folder
+{
+    const core::NewProjectResult Copy = core::DuplicateProject(PathFromNs(folder));
+    [self.delegate studioProjectChanged];
+    return ToNs(Copy.Error);
+}
+
+- (NSString*)renameProject:(NSString*)folder to:(NSString*)name
+{
+    Session& S = *_session;
+    if (S.Busy)
+        return ToNs(Tr("Stop the program first."));
+    const std::filesystem::path Folder = PathFromNs(folder);
+    const bool Open = IsOpenProject(Folder);
+    // The tabs and the level name files of the folder under its old name.
+    if (Open)
+        CloseFolder();
+    const core::NewProjectResult Renamed = core::RenameProject(Folder, FromNs(name));
+    if (Open)
+        OpenProjectFolder(Renamed ? Renamed.Root : Folder);
+    [self.delegate studioProjectChanged];
+    return ToNs(Renamed.Error);
 }
 
 - (void)openPickedFolder:(NSURL*)url

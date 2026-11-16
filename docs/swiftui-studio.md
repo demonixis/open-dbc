@@ -46,7 +46,11 @@ show a mode or a dialog and write what it draws
 - File > Open Folder asks the system's file browser for a project folder anywhere
   (Files on iPadOS, the Finder on a Mac) and keeps access to it; File > Export
   Project copies the project's folder to a place picked the same way.
+- File > Projects lists the user's projects, to open, duplicate, rename and delete,
+  and the examples. An example opens as a copy in My Projects; once that copy was
+  edited it stays the user's, and the example opens again as it was, as `name-2`.
 - The Hierarchy's title lists the levels, and the Scene mode reopens the last one.
+- A double tap or a double click on an object of the viewport frames it.
 - Find and replace are the system's.
 - With a mouse or a trackpad the viewport takes the primary button only: a drag off
   the gizmo or with Alt turns the view, with Shift it pans, and scrolling zooms. The

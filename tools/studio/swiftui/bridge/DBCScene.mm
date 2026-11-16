@@ -2070,6 +2070,8 @@ namespace
     CFTimeInterval _lastFrame;
     // The viewport could not get its window: no retry at every frame.
     BOOL _attachFailed;
+    // Frames left before a double tap frames what its taps selected.
+    int _frameIn;
     // Fingers on the view, in the order they landed.
     NSMutableArray<UITouch*>* _fingers;
     // The finger that stands for the mouse, and whether its press has been sent: a press waits
@@ -2194,6 +2196,8 @@ namespace
         Access::DrawViewport(S.Scene);
     ImGui::End();
     Access::EndFrame(S.Scene, S.FormEditing);
+    if (_frameIn > 0 && --_frameIn == 0 && Access::HasSelection(S.Scene))
+        Access::Frame(S.Scene);
     ImGui::Render();
     [self present];
 
@@ -2364,6 +2368,10 @@ namespace
     for (UITouch* Touch in touches)
     {
         const CGPoint At = [Touch locationInView:self];
+        // A double tap, or a double click, frames the object under it. The editor picks when it
+        // next draws, so the view moves a few frames later.
+        if (Touch.tapCount == 2 && Access::Tool(E) != static_cast<int>(DBCSceneToolPaint))
+            _frameIn = 3;
         if (Touch.type == UITouchTypeIndirectPointer)
         {
             Io.AddMouseSourceEvent(static_cast<ImGuiMouseSource>(_pointerSource));

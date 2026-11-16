@@ -6,7 +6,8 @@ import UIKit
 /// OPENDBC_STUDIO_OPEN (a project folder to open), OPENDBC_STUDIO_MODE ("scene"),
 /// OPENDBC_STUDIO_SHEET (a StudioSheet name), OPENDBC_STUDIO_CREATE (a node kind to add),
 /// OPENDBC_STUDIO_RUN (runs the program), OPENDBC_STUDIO_STEPS (steps a second apart, separated by
-/// ";": "level:<name>", "create:<kind>", "save", "closeall", "run", "stop", "project:<name>", "sceneproject:<name>", "folder:<path>", "scene", "language:<code>", "select:<row>", "number:<label>=<value>", "flag:<label>=<0|1>", "text:<label>=<value>", "assets",
+/// ";": "level:<name>", "create:<kind>", "save", "closeall", "run", "stop", "sample:<name>", "delete:<project>", "duplicate:<project>",
+/// "rename:<project>=<name>", "project:<name>", "sceneproject:<name>", "folder:<path>", "scene", "language:<code>", "select:<row>", "number:<label>=<value>", "flag:<label>=<0|1>", "text:<label>=<value>", "assets",
 /// "menus", "menu:<menu>><item>"), OPENDBC_STUDIO_OUTPUT (a file the Output panel is
 /// written to), OPENDBC_STUDIO_VIEWPORT (a PNG of what the viewport's renderer drew) and
 /// OPENDBC_STUDIO_SNAPSHOT (a PNG the window is drawn to every two seconds; the
@@ -39,7 +40,10 @@ enum DebugHooks {
         if let path = environment["OPENDBC_STUDIO_OUTPUT"] {
             Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
                 var text = model.output.map(\.text).joined(separator: "\n") + "\nstatus: " + model.status + "\n"
-                if model.mode == .scene { text += "camera: " + model.studio.sceneCameraDescription + "\n" }
+                if model.mode == .scene {
+                    text += "camera: " + model.studio.sceneCameraDescription
+                        + (model.studio.sceneHasSelection ? " selected" : "") + "\n"
+                }
                 try? text.write(toFile: path, atomically: true, encoding: .utf8)
             }
         }
@@ -77,6 +81,19 @@ enum DebugHooks {
         case "save": model.saveCurrent()
         case "closeall": model.closeAll()
         case "run": model.run()
+        case "sample":
+            if let folder = studio.locations.first(where: \.samples)?.projects.first(where: { $0.fileName == argument }) {
+                studio.openLocationProject(folder, samples: true)
+            }
+        case "delete", "duplicate", "rename":
+            let pair = argument.split(separator: "=", maxSplits: 1).map(String.init)
+            let folder = (studio.importRoot as NSString).appendingPathComponent(pair[0])
+            let failure = parts[0] == "delete" ? studio.deleteProject(folder)
+                : parts[0] == "duplicate" ? studio.duplicateProject(folder)
+                : studio.renameProject(folder, to: pair.count > 1 ? pair[1] : "")
+            if !failure.isEmpty { model.append(failure, severity: .error) }
+            let names = studio.locations.first { !$0.samples }?.projects.map(\.fileName) ?? []
+            model.append("projects: " + names.joined(separator: " | "), severity: .notice)
         case "stop": studio.stopRun()
         case "project":
             let failure = studio.createProjectNamed(argument, profile: .dbPro, basicScene: false)

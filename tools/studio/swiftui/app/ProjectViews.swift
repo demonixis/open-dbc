@@ -35,7 +35,7 @@ struct ProjectTreeView: View {
         if root.isEmpty {
             VStack(spacing: 12) {
                 Text(tr("No folder opened.")).foregroundColor(Palette.color("TextDim"))
-                Button(tr("Open Location")) { model.sheet = .openLocation }
+                Button(tr("Projects...")) { model.sheet = .openLocation }
                 Button(tr("New Project...")) { model.sheet = .newProject }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -69,11 +69,14 @@ struct ProjectTreeView: View {
                 opened()
             }
         }
-        TreeHeading(title: tr("Media"))
-        Text(model.studio.assetRoot)
-            .font(.caption)
-            .foregroundColor(Palette.color("TextDim"))
-            .padding(.leading, 30)
+        // Worth a line only when the media are somewhere else than the project.
+        if (model.studio.assetRoot as NSString).standardizingPath != (model.studio.projectRoot as NSString).standardizingPath {
+            TreeHeading(title: tr("Media"))
+            Text(model.studio.assetRoot)
+                .font(.caption)
+                .foregroundColor(Palette.color("TextDim"))
+                .padding(.leading, 30)
+        }
         TreeHeading(title: tr("Other files"))
     }
 }

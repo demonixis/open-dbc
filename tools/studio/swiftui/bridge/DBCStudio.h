@@ -307,6 +307,11 @@ typedef NS_ENUM(NSInteger, DBCSceneTool) {
 @property(nonatomic, readonly) NSString* assetRoot;
 - (void)openLocationProject:(NSString*)folder samples:(BOOL)samples;
 - (void)openProjectFolder:(NSString*)folder;
+// A project of `importRoot`: empty on success, else why not. Deleting or renaming the open
+// project closes it first.
+- (NSString*)deleteProject:(NSString*)folder;
+- (NSString*)duplicateProject:(NSString*)folder;
+- (NSString*)renameProject:(NSString*)folder to:(NSString*)name;
 // Opens a folder picked in the system's file browser, anywhere on the device, and keeps the access
 // the pick granted for the next launches.
 - (void)openPickedFolder:(NSURL*)url;

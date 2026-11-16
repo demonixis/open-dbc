@@ -111,37 +111,121 @@ struct NewProjectSheet: View {
     }
 }
 
+/// The user's projects, to open, duplicate, rename and delete, and the examples, which open as copies.
 struct OpenLocationSheet: View {
     @ObservedObject var model: StudioModel
+    @State private var deleting: String?
+    @State private var renaming: String?
+    @State private var newName = ""
+    @State private var failure = ""
 
     var body: some View {
+        let studio = model.studio
+        let _ = model.projectRevision
         List {
             Section {
+                Button(tr("New Project...")) { model.sheet = .newProject }
+                    .disabled(model.running)
                 Button(tr("Open Folder...")) { model.pickFolder() }
                     .disabled(model.running)
             } footer: {
                 Text(tr("Any folder of this device or of a drive. The Studio keeps access to the folders picked here."))
             }
-            ForEach(model.studio.locations, id: \.path) { location in
+            if !failure.isEmpty {
+                Text(failure).foregroundColor(Palette.color("Error"))
+            }
+            ForEach(studio.locations, id: \.path) { location in
                 Section {
                     if location.projects.isEmpty {
                         Text(tr("No project here")).foregroundColor(Palette.color("TextDim"))
                     }
                     ForEach(location.projects, id: \.self) { folder in
-                        Button(folder.fileName) {
-                            model.sheet = nil
-                            model.studio.openLocationProject(folder, samples: location.samples)
+                        if location.samples {
+                            Button(folder.fileName) { open(folder, samples: true) }
+                                .disabled(model.running)
+                        } else {
+                            projectRow(folder)
                         }
-                        .disabled(model.running)
                     }
                 } header: {
                     Text(location.name)
                 } footer: {
-                    Text(location.hint)
+                    Text(location.samples
+                        ? tr("Examples are read-only: one opens as a copy in My Projects, which keeps your changes.")
+                        : location.hint)
                 }
             }
         }
-        .navigationTitle(tr("Open Location"))
+        .navigationTitle(tr("Projects"))
+        .confirmationDialog(tr("Delete {0}?", deleting?.fileName ?? ""),
+                            isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
+                            titleVisibility: .visible) {
+            Button(tr("Delete"), role: .destructive) {
+                if let folder = deleting { failure = studio.deleteProject(folder) }
+                deleting = nil
+            }
+            Button(tr("Cancel"), role: .cancel) { deleting = nil }
+        } message: {
+            Text(tr("The project’s folder and everything in it are deleted. This cannot be undone."))
+        }
+        .alert(tr("Rename"), isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField(tr("Name"), text: $newName)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+            Button(tr("Rename")) {
+                if let folder = renaming, newName != folder.fileName {
+                    failure = studio.renameProject(folder, to: newName)
+                }
+                renaming = nil
+            }
+            Button(tr("Cancel"), role: .cancel) { renaming = nil }
+        }
+    }
+
+    private func open(_ folder: String, samples: Bool) {
+        model.sheet = nil
+        model.studio.openLocationProject(folder, samples: samples)
+    }
+
+    @ViewBuilder private func projectRow(_ folder: String) -> some View {
+        let studio = model.studio
+        let isOpen = (studio.projectRoot as NSString).standardizingPath == (folder as NSString).standardizingPath
+        HStack {
+            Button {
+                open(folder, samples: false)
+            } label: {
+                HStack {
+                    Text(folder.fileName)
+                    if isOpen {
+                        Image(systemName: "checkmark").font(.footnote).foregroundColor(Palette.color("TextDim"))
+                    }
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(model.running)
+            Menu {
+                actions(folder)
+            } label: {
+                Image(systemName: "ellipsis.circle").frame(width: 34, height: 30)
+            }
+            .accessibilityLabel(tr("Manage"))
+            .disabled(model.running)
+        }
+        .contextMenu { actions(folder) }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(tr("Delete"), role: .destructive) { deleting = folder }
+        }
+    }
+
+    @ViewBuilder private func actions(_ folder: String) -> some View {
+        Button(tr("Duplicate")) { failure = model.studio.duplicateProject(folder) }
+        Button(tr("Rename...")) {
+            newName = folder.fileName
+            renaming = folder
+        }
+        Button(tr("Delete"), role: .destructive) { deleting = folder }
     }
 }
 

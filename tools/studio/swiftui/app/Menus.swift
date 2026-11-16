@@ -69,7 +69,7 @@ struct FileMenu: View {
             if model.mode == .scene { model.sheet = .newLevel }
         }
         .disabled(!model.studio.sceneBlocker.isEmpty)
-        Button(tr("Open Location")) { model.sheet = .openLocation }
+        Button(tr("Projects...")) { model.sheet = .openLocation }
             .studioShortcut("o")
             .disabled(model.running)
         Button(tr("Open Folder...")) { model.pickFolder() }
