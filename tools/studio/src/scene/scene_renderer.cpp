@@ -64,7 +64,7 @@ namespace dbc::studio
                              sizeof(K_scene_mesh_vert_msl), SDL_GPU_SHADERSTAGE_VERTEX, 0);
             SDL_GPUShader* MeshFragment =
                 CreateShader(K_scene_mesh_frag_spv, sizeof(K_scene_mesh_frag_spv), K_scene_mesh_frag_msl,
-                             sizeof(K_scene_mesh_frag_msl), SDL_GPU_SHADERSTAGE_FRAGMENT, 3);
+                             sizeof(K_scene_mesh_frag_msl), SDL_GPU_SHADERSTAGE_FRAGMENT, 6);
             SDL_GPUShader* LineVertexShader =
                 CreateShader(K_scene_line_vert_spv, sizeof(K_scene_line_vert_spv), K_scene_line_vert_msl,
                              sizeof(K_scene_line_vert_msl), SDL_GPU_SHADERSTAGE_VERTEX, 0);
@@ -684,7 +684,20 @@ namespace dbc::studio
                     Item.Fragment.Ambient = glm::vec4(0.0f);
                 Item.Fragment.Flags.y = Mat.Flags.Lighting ? 1.0f : 0.0f;
                 Item.Texture = Mat.Texture.empty() ? nullptr : FindTexture(AssetRoot / dbc::PathFromUtf8(Mat.Texture));
-                Item.Fragment.Flags.x = Item.Texture != nullptr ? 1.0f : 0.0f;
+                if (HasTerrainLayers(Node))
+                {
+                    // As the engine blends them: 5 units of height and 8 degrees of slope on either side.
+                    const glm::vec3 Range = Node.LayerRange.value_or(KDefaultLayerRange);
+                    const auto Steepness = [](float Degrees)
+                    { return 1.0f - std::cos(glm::radians(std::clamp(Degrees, 0.0f, 90.0f))); };
+                    Item.Texture = FindTexture(AssetRoot / dbc::PathFromUtf8(Node.Layers[0]));
+                    for (std::size_t Layer = 1; Layer < Node.Layers.size(); ++Layer)
+                        Item.Layers[Layer - 1] = FindTexture(AssetRoot / dbc::PathFromUtf8(Node.Layers[Layer]));
+                    Item.Fragment.LayerHeights = glm::vec4(Node.Position.y, Range.x, Range.y, 5.0f);
+                    Item.Fragment.LayerSlope =
+                        glm::vec4(Steepness(Range.z - 8.0f), Steepness(Range.z + 8.0f), Node.LayerTiles, 1.0f);
+                }
+                Item.Fragment.Flags.x = Item.Texture != nullptr || Item.Fragment.LayerSlope.w > 0.5f ? 1.0f : 0.0f;
                 // The second stage's normal map and the cube map, as the engine's Blinn-Phong draws them.
                 const bool Bumped = Mat.Second == SecondMap::Bump && !Mat.SecondTexture.empty();
                 if (Bumped)
@@ -896,11 +909,14 @@ namespace dbc::studio
                 }
                 SDL_PushGPUVertexUniformData(Commands, 0, &Item.Vertex, sizeof(Item.Vertex));
                 SDL_PushGPUFragmentUniformData(Commands, 0, &Item.Fragment, sizeof(Item.Fragment));
-                const SDL_GPUTextureSamplerBinding Bindings[3] = {
+                const SDL_GPUTextureSamplerBinding Bindings[6] = {
                     {Item.Texture ? Item.Texture : White_.Texture, Sampler_},
                     {Item.Normal ? Item.Normal : White_.Texture, Sampler_},
-                    {Item.Cube ? Item.Cube : WhiteCube_.Texture, Sampler_}};
-                SDL_BindGPUFragmentSamplers(Pass, 0, Bindings, 3);
+                    {Item.Cube ? Item.Cube : WhiteCube_.Texture, Sampler_},
+                    {Item.Layers[0] ? Item.Layers[0] : White_.Texture, Sampler_},
+                    {Item.Layers[1] ? Item.Layers[1] : White_.Texture, Sampler_},
+                    {Item.Layers[2] ? Item.Layers[2] : White_.Texture, Sampler_}};
+                SDL_BindGPUFragmentSamplers(Pass, 0, Bindings, 6);
                 const SDL_GPUBufferBinding Buffer = {Item.Mesh->Buffer, 0};
                 SDL_BindGPUVertexBuffers(Pass, 0, &Buffer, 1);
                 SDL_DrawGPUPrimitives(Pass, Item.Count, 1, Item.First, 0);

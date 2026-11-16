@@ -104,6 +104,8 @@ namespace dbc::studio
                 glm::vec4 Fog{0.0f};
                 glm::vec4 Flags{0.0f};
                 glm::vec4 Stages{0.0f};
+                glm::vec4 LayerHeights{0.0f};
+                glm::vec4 LayerSlope{0.0f};
                 std::array<glm::vec4, KMaxLights> LightPosition{};
                 std::array<glm::vec4, KMaxLights> LightDirection{};
                 std::array<glm::vec4, KMaxLights> LightColor{};
@@ -118,6 +120,8 @@ namespace dbc::studio
                 SDL_GPUTexture* Texture = nullptr;
                 SDL_GPUTexture* Normal = nullptr;
                 SDL_GPUTexture* Cube = nullptr;
+                // A terrain's mid ground, steep ground and heights; Texture is its low ground.
+                std::array<SDL_GPUTexture*, 3> Layers{};
                 Uint32 First = 0;
                 Uint32 Count = 0;
                 // Additive, for a ghost.

@@ -97,7 +97,7 @@ the Hierarchy, groups what a level can hold by type:
 | 3D Object | Cube, box, sphere, cylinder, cone, plain, triangle | `MAKE OBJECT …` |
 | 3D Object → Model | A model file from the asset folder | `LOAD OBJECT` |
 | Landscape | Matrix | `MAKE MATRIX`, `PREPARE MATRIX TEXTURE`, `FILL MATRIX`, `SET MATRIX HEIGHT`, `UPDATE MATRIX`, `POSITION MATRIX` |
-| Landscape | Terrain | `MAKE TERRAIN`, `TEXTURE TERRAIN`, `POSITION TERRAIN` |
+| Landscape | Terrain | `MAKE TERRAIN`, `TEXTURE TERRAIN`, `SET TERRAIN LAYERS`, `SET TERRAIN LAYER RANGE`, `POSITION TERRAIN` |
 | Light | Point, spot or directional light | `MAKE LIGHT`, `SET … LIGHT`, `POSITION`/`ROTATE LIGHT`, `SET LIGHT RANGE`, `COLOR LIGHT` |
 | Audio → 3D Sound | A sound file from the asset folder | `LOAD 3DSOUND`, `POSITION SOUND`, `SET SOUND VOLUME`, `PLAY SOUND` or `LOOP SOUND` |
 | Camera | The level camera, on or off | see Level Settings |
@@ -128,6 +128,12 @@ The Inspector edits the selected node:
   `heightmaps/<level>_terrain<number>.png` under the asset root and point the
   terrain at it. A pixel's R + G + B, 0 to 765, is a height from 0 to 100; a heightmap
   picked by hand is never overwritten. [Sculpt](#sculpt) edits the same image;
+- a terrain's texture layers, in the SwiftUI Studio: four images for the low ground, the
+  mid ground, the steep ground and the heights, which the engine
+  [blends by altitude and slope](rendering.md#terrain-layers) once all four are set.
+  **Sand, grass, rock, snow** copies four textures of the library into the project.
+  **Tiling**, the two heights and the slope are written when they differ from the
+  engine's;
 - a model's animation: none, or a range of the frames of the file's first
   animation (the only one `LOAD OBJECT` keeps, at 25 frames a second), played
   once (`PLAY OBJECT`) or looped (`LOOP OBJECT`), at an optional

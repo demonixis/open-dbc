@@ -268,6 +268,35 @@ TEST_CASE("A level of painted objects reads every instance back")
     CHECK(Read.Document == Document);
 }
 
+TEST_CASE("A terrain's layers are written once all four are set, and read back")
+{
+    scene::SceneDocument Document;
+    scene::SceneNode& Terrain = Document.Add(scene::NodeKind::Terrain);
+    Terrain.Asset = "heightmaps/hills.png";
+    Terrain.Layers = {"sand.jpg", "grass.jpg", "rock.jpg", ""};
+    CHECK_FALSE(scene::HasTerrainLayers(Terrain));
+    CHECK(scene::WriteLevel(Document).find("SET TERRAIN LAYERS") == std::string::npos);
+
+    // The engine's tiling and range are left unsaid; grass is loaded once though two layers use it.
+    Terrain.Layers[3] = "grass.jpg";
+    std::string Text = scene::WriteLevel(Document);
+    CHECK(Text.find("SET TERRAIN LAYERS 1, 1000, 1001, 1002, 1001\n") != std::string::npos);
+    CHECK(Text.find("SET TERRAIN LAYER RANGE") == std::string::npos);
+    scene::LevelReadResult Read = scene::ReadLevel(Text, Document.Name);
+    CHECK(Read.Ok());
+    CHECK(Read.Document == Document);
+
+    Terrain.Layers[3] = "snow.jpg";
+    Terrain.LayerTiles = 24.0f;
+    Terrain.LayerRange = glm::vec3(20.0f, 55.5f, 40.0f);
+    Text = scene::WriteLevel(Document);
+    CHECK(Text.find("SET TERRAIN LAYERS 1, 1000, 1001, 1002, 1003, 24\n") != std::string::npos);
+    CHECK(Text.find("SET TERRAIN LAYER RANGE 1, 20, 55.5, 40\n") != std::string::npos);
+    Read = scene::ReadLevel(Text, Document.Name);
+    CHECK(Read.Ok());
+    CHECK(Read.Document == Document);
+}
+
 TEST_CASE("Default node names do not depend on the interface")
 {
     CHECK(scene::DefaultNodeName(scene::NodeKind::Cube, 12) == "Cube 12");

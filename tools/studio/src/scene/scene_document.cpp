@@ -180,6 +180,13 @@ namespace dbc::studio
             return std::clamp(Node.Tile, 1, Tiles);
         }
 
+        bool HasTerrainLayers(const SceneNode& Node)
+        {
+            return Node.Kind == NodeKind::Terrain &&
+                   std::none_of(Node.Layers.begin(), Node.Layers.end(),
+                                [](const std::string& Layer) { return Layer.empty(); });
+        }
+
         std::vector<std::string> NodeTextures(const SceneNode& Node)
         {
             std::vector<std::string> Result;
@@ -192,6 +199,9 @@ namespace dbc::studio
                 return Result;
             const Material& Mat = Node.Mat;
             Add(Mat.Texture);
+            if (HasTerrainLayers(Node))
+                for (const std::string& Layer : Node.Layers)
+                    Add(Layer);
             if (IdSpaceOf(Node.Kind) != IdSpace::Object)
                 return Result;
             if (Mat.Second != SecondMap::None)

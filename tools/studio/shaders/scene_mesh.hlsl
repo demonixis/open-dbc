@@ -33,6 +33,13 @@ Texture2D NormalMap : register(t1, space2);
 SamplerState NormalSampler : register(s1, space2);
 TextureCube Environment : register(t2, space2);
 SamplerState EnvironmentSampler : register(s2, space2);
+// SET TERRAIN LAYERS: the mid ground, the steep ground and the heights; Albedo is the low ground.
+Texture2D LayerMid : register(t3, space2);
+SamplerState LayerMidSampler : register(s3, space2);
+Texture2D LayerSteep : register(t4, space2);
+SamplerState LayerSteepSampler : register(s4, space2);
+Texture2D LayerHigh : register(t5, space2);
+SamplerState LayerHighSampler : register(s5, space2);
 
 cbuffer FragmentUniforms : register(b0, space3)
 {
@@ -45,6 +52,9 @@ cbuffer FragmentUniforms : register(b0, space3)
     float4 Flags;      // x = textured, y = lit, w = light count
     float4 Stages;     // x = normal map; y = cube map: 1 reflects, 2 multiplies; z = the texture's
                        // black is not drawn; w = the texture alpha below which nothing is drawn
+    float4 LayerHeights; // terrain layers, as the engine's: x = base height, y and z = where the mid ground
+                         // and the heights begin above it, w = half the width of those blends
+    float4 LayerSlope;   // xy = the range of 1 - cos(slope) of the steep ground, z = tiling, w = 1 with layers
     float4 LightPosition[MAX_LIGHTS];  // xyz, w = 0 directional, 1 point, 2 spot
     float4 LightDirection[MAX_LIGHTS]; // xyz, w = range
     float4 LightColor[MAX_LIGHTS];     // rgb
@@ -82,12 +92,31 @@ float3 PerturbNormal(float3 normal, float3 position, float2 uv, float3 tangentNo
                      tangentNormal.z * normal);
 }
 
+// The engine's terrain_layers: altitude picks among the low ground, the mid ground and the heights, and
+// the steep ground covers them on slopes.
+float4 TerrainLayers(Varyings input)
+{
+    const float2 uv = input.uv * LayerSlope.z;
+    const float height = input.world.y - LayerHeights.x;
+    const float up = abs(normalize(input.normal).y);
+    const float width = max(LayerHeights.w, 0.0001);
+    float4 color = lerp(Albedo.Sample(AlbedoSampler, uv), LayerMid.Sample(LayerMidSampler, uv),
+                        smoothstep(LayerHeights.y - width, LayerHeights.y + width, height));
+    color = lerp(color, LayerHigh.Sample(LayerHighSampler, uv),
+                 smoothstep(LayerHeights.z - width, LayerHeights.z + width, height));
+    return lerp(color, LayerSteep.Sample(LayerSteepSampler, uv), smoothstep(LayerSlope.x, LayerSlope.y, 1.0 - up));
+}
+
 float4 PSMain(Varyings input) : SV_Target
 {
     float4 albedo = BaseColor;
     if (Flags.x > 0.5)
     {
-        const float4 texel = Albedo.Sample(AlbedoSampler, input.uv);
+        float4 texel;
+        if (LayerSlope.w > 0.5)
+            texel = TerrainLayers(input);
+        else
+            texel = Albedo.Sample(AlbedoSampler, input.uv);
         // SET OBJECT's transparency: the engine keys the texture's black out.
         if (Stages.z > 0.5 && max(texel.r, max(texel.g, texel.b)) < 0.004)
             discard;

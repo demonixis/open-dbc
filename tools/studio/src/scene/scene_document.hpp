@@ -169,6 +169,10 @@ namespace dbc::studio
             bool operator==(const Glue&) const = default;
         };
 
+        // What the engine gives a terrain's layers until a command says otherwise.
+        inline constexpr float KDefaultLayerTiles = 16.0f;
+        inline constexpr glm::vec3 KDefaultLayerRange{12.0f, 70.0f, 35.0f};
+
         // One field set covers every kind; each kind reads the fields it uses.
         struct SceneNode
         {
@@ -191,6 +195,13 @@ namespace dbc::studio
             // Terrain: counts the edits of its heightmap's pixels, so that undo sees them. Not written
             // to the level: the heights are the image's.
             int HeightRevision = 0;
+            // Terrain: SET TERRAIN LAYERS' images of the low ground, the mid ground, the steep ground and
+            // the heights, written once all four are set, and how many times each repeats across.
+            std::array<std::string, 4> Layers;
+            float LayerTiles = KDefaultLayerTiles;
+            // Terrain: SET TERRAIN LAYER RANGE's mid height, high height and slope in degrees; the
+            // engine's own when unset.
+            std::optional<glm::vec3> LayerRange;
 
             // Matrix: size and tiles, plus the PREPARE MATRIX TEXTURE grid.
             float Width = 100.0f;
@@ -345,6 +356,8 @@ namespace dbc::studio
         // number, name, transform and animation. INSTANCE OBJECT copies everything else.
         bool SameLook(const SceneNode& First, const SceneNode& Second);
         // Every image a node's commands name, each once, in the order they are written.
+        // Whether a terrain draws its four layers rather than its one texture.
+        bool HasTerrainLayers(const SceneNode& Node);
         std::vector<std::string> NodeTextures(const SceneNode& Node);
         // Drops what a choice rules out: a shading leaves no stage of its own, a cube map only bump mapping.
         void ResolveMaterial(Material& Mat);

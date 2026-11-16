@@ -381,6 +381,22 @@ namespace dbc::studio
                         Out.Command(SymbolId::Command_MakeTerrain, {Id, Quoted(Node.Asset)});
                         if (!Node.Mat.Texture.empty())
                             Out.Command(SymbolId::Command_TextureTerrain, {Id, Integer(Images.at(Node.Mat.Texture))});
+                        if (HasTerrainLayers(Node))
+                        {
+                            const auto Layer = [&](std::size_t Index)
+                            { return Integer(Images.at(Node.Layers[Index])); };
+                            if (Node.LayerTiles != KDefaultLayerTiles)
+                                Out.Command(
+                                    SymbolId::Command_SetTerrainLayers,
+                                    {Id, Layer(0), Layer(1), Layer(2), Layer(3), NumberLiteral(Node.LayerTiles)});
+                            else
+                                Out.Command(SymbolId::Command_SetTerrainLayers,
+                                            {Id, Layer(0), Layer(1), Layer(2), Layer(3)});
+                            if (Node.LayerRange)
+                                Out.Command(SymbolId::Command_SetTerrainLayerRange,
+                                            {Id, NumberLiteral(Node.LayerRange->x), NumberLiteral(Node.LayerRange->y),
+                                             NumberLiteral(Node.LayerRange->z)});
+                        }
                         // MAKE TERRAIN starts at Z = its depth, so the position is always written.
                         Out.Vector(SymbolId::Command_PositionTerrain, Node.Id, Node.Position);
                         break;
@@ -1469,6 +1485,19 @@ namespace dbc::studio
                         case SymbolId::Command_PositionTerrain:
                             if (SceneNode* Node = Existing(IdSpace::Terrain, I(A, 0)))
                                 Node->Position = V(A, 1);
+                            break;
+                        case SymbolId::Command_SetTerrainLayers:
+                            if (SceneNode* Node = Existing(IdSpace::Terrain, I(A, 0)))
+                            {
+                                for (std::size_t Layer = 0; Layer < Node->Layers.size(); ++Layer)
+                                    Texture(I(A, Layer + 1), Node->Layers[Layer]);
+                                if (A.size() == 6)
+                                    Node->LayerTiles = F(A, 5);
+                            }
+                            break;
+                        case SymbolId::Command_SetTerrainLayerRange:
+                            if (SceneNode* Node = Existing(IdSpace::Terrain, I(A, 0)))
+                                Node->LayerRange = glm::vec3(F(A, 1), F(A, 2), F(A, 3));
                             break;
 
                         case SymbolId::Command_MakeLight:

@@ -12,8 +12,10 @@
 #include <imgui.h>
 #include <imgui_impl_sdlgpu3.h>
 
+#include "core/asset_library.hpp"
 #include "core/i18n.hpp"
 #include "core/media_catalogue.hpp"
+#include "core/paths.hpp"
 #include "path_utf8.hpp"
 #include "scene/heightmap.hpp"
 #include "scene/scene_geometry.hpp"
@@ -234,6 +236,87 @@ namespace dbc::studio::panels
             F.Hint(TrFmt("Writes {0}", {dbc::GenericPathToUtf8(Relative)}));
         }
 
+        // SET TERRAIN LAYERS: four images the engine blends by altitude and slope.
+        static void TerrainLayers(SceneEditor& E, Form& F, scene::SceneNode& Node)
+        {
+            // Only this Studio has the section yet, so the audit must see the key here.
+            F.Add(FieldKind::Heading, Tr("Texture layers"));
+            const int Image = static_cast<int>(core::MediaKind::Image);
+            F.Asset(Tr("Low ground"), Node.Layers[0], Image);
+            F.Asset(Tr("Mid ground"), Node.Layers[1], Image);
+            F.Asset(Tr("Steep ground"), Node.Layers[2], Image);
+            F.Asset(Tr("Heights"), Node.Layers[3], Image);
+            const int Id = Node.Id;
+            F.Button(Tr("Sand, grass, rock, snow"),
+                     [&E, Id]
+                     {
+                         if (!E.Project_)
+                             return;
+                         // The library's first texture of each kind, copied into the project like any other.
+                         static constexpr const char* KNames[] = {"sand_1", "grass_1", "rock_1", "snow_1"};
+                         const std::vector<core::LibraryTexture> Library =
+                             core::ScanTextureLibrary(core::paths::ResourceDir() / "asset_library" / "textures");
+                         std::array<std::string, 4> Layers;
+                         for (std::size_t Layer = 0; Layer < Layers.size(); ++Layer)
+                         {
+                             const auto Found = std::find_if(Library.begin(), Library.end(),
+                                                             [&](const core::LibraryTexture& Texture)
+                                                             { return Texture.Name == KNames[Layer]; });
+                             std::string Error = Tr("The texture library does not have it");
+                             if (Found == Library.end() || Found->Files.empty() ||
+                                 !core::AddLibraryTexture(*Found, E.Project_->Root, Error))
+                             {
+                                 E.Host_.Log(TrFmt("Cannot add {0}: {1}", {KNames[Layer], Error}), true);
+                                 return;
+                             }
+                             const std::filesystem::path Relative =
+                                 (core::LibraryTextureFolder(E.Project_->Root) / Found->Preview.filename())
+                                     .lexically_relative(E.Project_->AssetRoot);
+                             Layers[Layer] = dbc::GenericPathToUtf8(Relative);
+                         }
+                         E.RefreshAssets();
+                         for (scene::SceneNode& Target : E.Document_.Nodes)
+                             if (Target.Kind == scene::NodeKind::Terrain && Target.Id == Id)
+                                 Target.Layers = Layers;
+                     })
+                .Tooltip = Tr("Copies four textures of the library into the project and uses them");
+            const bool Some = std::any_of(Node.Layers.begin(), Node.Layers.end(),
+                                          [](const std::string& Layer) { return !Layer.empty(); });
+            if (!scene::HasTerrainLayers(Node))
+            {
+                if (Some)
+                    F.Warning(Tr("The layers show once all four have an image."));
+                return;
+            }
+            F.Float(Tr("Tiling"), Node.LayerTiles, 1.0, 1.0, 256.0).Tooltip =
+                Tr("How many times each layer repeats across the terrain");
+            // The engine's own range until a value differs from it.
+            scene::SceneNode* Target = &Node;
+            const auto Range = [&](const std::string& Label, int Axis, double Max, const std::string& Tooltip)
+            {
+                Field& Row = F.Add(FieldKind::Number, Label);
+                Row.Number = Node.LayerRange.value_or(scene::KDefaultLayerRange)[Axis];
+                Row.Min = 0.0;
+                Row.Max = Max;
+                Row.Slider = true;
+                Row.Tooltip = Tooltip;
+                Row.SetNumber = [Target, Axis, Max](double Number)
+                {
+                    glm::vec3 Value = Target->LayerRange.value_or(scene::KDefaultLayerRange);
+                    Value[Axis] = static_cast<float>(std::clamp(Number, 0.0, Max));
+                    // The mid ground begins below the heights.
+                    if (Axis == 0)
+                        Value.y = std::max(Value.y, Value.x);
+                    if (Axis == 1)
+                        Value.x = std::min(Value.x, Value.y);
+                    Target->LayerRange = Value == scene::KDefaultLayerRange ? std::nullopt : std::optional(Value);
+                };
+            };
+            Range(Tr("Mid ground from"), 0, scene::KTerrainHeightScale, Tr("Units above the terrain's position"));
+            Range(Tr("Heights from"), 1, scene::KTerrainHeightScale, Tr("Units above the terrain's position"));
+            Range(Tr("Steep from"), 2, 90.0, Tr("The slope, in degrees, where the steep ground shows"));
+        }
+
         static void Shape(SceneEditor& E, Form& F, scene::SceneNode& Node)
         {
             F.Heading(Node.Kind == scene::NodeKind::Sound ? "Sound" : "Shape");
@@ -286,6 +369,7 @@ namespace dbc::studio::panels
                     if (Node.Asset.empty())
                         F.Warning(Tr("A terrain needs a square heightmap image."));
                     TerrainHeightmap(E, F, Node);
+                    TerrainLayers(E, F, Node);
                     break;
                 case scene::NodeKind::Matrix:
                     F.Float(Tr("Width"), Node.Width, 1.0, 0.01, 100000.0);
