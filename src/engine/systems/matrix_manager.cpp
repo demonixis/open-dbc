@@ -889,6 +889,57 @@ namespace dbc
         return true;
     }
 
+    bool MatrixManager::SetTerrainLayers(int TerrainId, const std::array<int, 4>& Images, float Tiles,
+                                         std::string* Error)
+    {
+        Matrix* Terrain = RequireTerrain(TerrainId, "SET TERRAIN LAYERS", Error);
+        if (!Terrain)
+            return false;
+        const bool Remove = Images == std::array<int, 4>{};
+        for (const int ImageId : Images)
+            if (!Remove && Kernel_.ImageStoreRef().ImageExist(ImageId) == 0)
+            {
+                if (Error)
+                    *Error = "SET TERRAIN LAYERS requires existing image " + std::to_string(ImageId);
+                return false;
+            }
+        if (!std::isfinite(Tiles) || Tiles <= 0.0f)
+        {
+            if (Error)
+                *Error = "SET TERRAIN LAYERS tiling must be above 0";
+            return false;
+        }
+        Terrain->LayerImages = Images;
+        Terrain->LayerTiles = Tiles;
+        InvalidateRenderer();
+        return true;
+    }
+
+    bool MatrixManager::SetTerrainLayerRange(int TerrainId, float MidHeight, float HighHeight, float SlopeDegrees,
+                                             std::string* Error)
+    {
+        Matrix* Terrain = RequireTerrain(TerrainId, "SET TERRAIN LAYER RANGE", Error);
+        if (!Terrain)
+            return false;
+        if (!std::isfinite(MidHeight) || !std::isfinite(HighHeight) || MidHeight > HighHeight)
+        {
+            if (Error)
+                *Error = "SET TERRAIN LAYER RANGE heights must be finite, the mid ground below the heights";
+            return false;
+        }
+        if (!std::isfinite(SlopeDegrees) || SlopeDegrees < 0.0f || SlopeDegrees > 90.0f)
+        {
+            if (Error)
+                *Error = "SET TERRAIN LAYER RANGE slope must be between 0 and 90 degrees";
+            return false;
+        }
+        Terrain->LayerMidHeight = MidHeight;
+        Terrain->LayerHighHeight = HighHeight;
+        Terrain->LayerSlope = SlopeDegrees;
+        InvalidateRenderer();
+        return true;
+    }
+
     bool MatrixManager::PositionTerrain(int TerrainId, float X, float Y, float Z, std::string* Error)
     {
         Matrix* TerrainPointer = RequireTerrain(TerrainId, "POSITION TERRAIN", Error);

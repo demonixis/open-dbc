@@ -1115,6 +1115,8 @@ Type legend: `number` accepts historical numeric coercion; `output` is assigned 
 | `SET STATIC PORTALS ON` | Command | 0 | none -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET STATIC SCORCH` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
 | `SET STATIC UNIVERSE` | Command | 3 | number, number, number -> void | Unsupported (DBC2043) | DBPro snapshot | Historical DarkBASIC Professional command recognized for a stable unsupported diagnostic. |
+| `SET TERRAIN LAYER RANGE` | Command | 4 | integer, real, real, real -> void | Implemented | OpenDBC extension | OpenDBC terrain layers addition; see docs/rendering.md for its observable contract. |
+| `SET TERRAIN LAYERS` | Command | 5-6 | integer, integer, integer, integer, integer, real -> void | Implemented | OpenDBC extension | OpenDBC terrain layers addition; see docs/rendering.md for its observable contract. |
 | `SET TEXT FONT` | Command | 1-2 | string, number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET TEXT OPAQUE` | Command | 0 | none -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |
 | `SET TEXT SIZE` | Command | 1 | number -> void | Implemented | Classic help, DBPro snapshot | DarkBASIC Professional command implemented with an observable contract. |

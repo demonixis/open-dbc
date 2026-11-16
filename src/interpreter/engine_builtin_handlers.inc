@@ -1208,6 +1208,10 @@ DBC_VALUE("OBJECT COLLISION CENTER Z", 1, 1, int IntegerArgument0 = 0; if (Args.
 
 // Recorded from the pinned Classic help index and the official DBPro examples; no implementation yet.
 
+// OpenDBC terrain layers, in the DBPro profile only.
+DBC_VOID("SET TERRAIN LAYERS", 5, 6, int Terrain = 0; std::array<int, 4> Images{}; float Tiles = 16.0f; if (!Args[0].AsInt(Terrain, &Error) || !Args[1].AsInt(Images[0], &Error) || !Args[2].AsInt(Images[1], &Error) || !Args[3].AsInt(Images[2], &Error) || !Args[4].AsInt(Images[3], &Error) || (Args.size() > 5 && !Args[5].AsFloat(Tiles, &Error)) || !Ctx.Kernel->Matrices().SetTerrainLayers(Terrain, Images, Tiles, &Error)) return false;)
+DBC_VOID("SET TERRAIN LAYER RANGE", 4, 4, int Terrain = 0; float Mid = 0; float High = 0; float Slope = 0; if (!Args[0].AsInt(Terrain, &Error) || !Args[1].AsFloat(Mid, &Error) || !Args[2].AsFloat(High, &Error) || !Args[3].AsFloat(Slope, &Error) || !Ctx.Kernel->Matrices().SetTerrainLayerRange(Terrain, Mid, High, Slope, &Error)) return false;)
+
 // OpenDBC VR extensions are shared by both existing language profiles.
 DBC_VOID("SET VR ENABLED", 1, 1, int Mode = 0; if (!Args[0].AsInt(Mode, &Error) || !Ctx.Kernel->Vr().SetEnabled(Mode, &Error)) return false;)
 DBC_VOID("SET TRACKING SPACE", 1, 1, int Mode = 0; if (!Args[0].AsInt(Mode, &Error) || !Ctx.Kernel->Vr().SetTrackingSpace(Mode, &Error)) return false;)

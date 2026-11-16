@@ -112,7 +112,7 @@ form of those three is named by `DBC2049`. Physics has one abstraction,
 Jolt, under the ODE and DarkPHYSICS forms.
 
 Classic takes no additions. `DbPro` also takes OpenDBC's own forms, with multi-word names,
-among them VR ([vr.md](vr.md)).
+among them VR ([vr.md](vr.md)) and terrain layers ([rendering.md](rendering.md#terrain-layers)).
 
 ## Engine
 

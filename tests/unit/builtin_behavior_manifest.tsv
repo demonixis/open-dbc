@@ -1984,3 +1984,5 @@ dbpro	2352	3080	Function	IS VR ENABLED	xr-state-and-vector	test_vr.cpp::VR built
 dbpro	2353	3081	Command	SET VR PREVIEW MODE	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
 dbpro	2354	3082	Command	SET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
 dbpro	2355	3083	Function	GET VR CAMERA HEIGHT	xr-state-and-vector	test_vr.cpp::VR builtins expose poses and validate destination vectors	-
+dbpro	2356	3084	Command	SET TERRAIN LAYERS	terrain-layers	test_engine_builtins.cpp::Terrain layers take four images, validate their ranges and draw	-
+dbpro	2357	3085	Command	SET TERRAIN LAYER RANGE	terrain-layers	test_engine_builtins.cpp::Terrain layers take four images, validate their ranges and draw	-

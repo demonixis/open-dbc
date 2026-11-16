@@ -127,6 +127,30 @@ namespace dbc
                 Batch.Style.Filter = Terrain.Filter;
                 Batch.Style.TextureAddressModes[0] = Terrain.TextureMode;
                 Batch.Style.TextureMipModes[0] = Terrain.MipMode;
+                if (Terrain.LayerImages != std::array<int, 4>{})
+                {
+                    // Stages 0 to 3 repeat the four layers; a deleted image leaves its layer white.
+                    const auto Layer = [&](std::size_t Index) -> SDL_GPUTexture*
+                    {
+                        Image* LayerImage = K.ImageStoreRef().GetImage(Terrain.LayerImages[Index]);
+                        SDL_GPUTexture* Texture = LayerImage ? dbc::ImageGpuTexture(K, *LayerImage, false) : nullptr;
+                        return Texture ? Texture : WhiteGpuTexture(K);
+                    };
+                    Batch.Texture = Layer(0);
+                    for (std::size_t Index = 1; Index < 4; ++Index)
+                        Batch.AuxiliaryTextures[Index - 1] = Layer(Index);
+                    Batch.Style.TextureAddressModes[0] = 0;
+                    Batch.Style.BuiltInEffect = 5;
+                    // Each blend spreads over 5 units of height, or 8 degrees of slope, on either side.
+                    constexpr float KHeightBlend = 5.0f;
+                    constexpr float KSlopeBlend = 8.0f;
+                    const auto Steepness = [](float Degrees)
+                    { return 1.0f - std::cos(glm::radians(std::clamp(Degrees, 0.0f, 90.0f))); };
+                    Batch.Style.LayerHeights = {Terrain.PosY, Terrain.LayerMidHeight, Terrain.LayerHighHeight,
+                                                KHeightBlend};
+                    Batch.Style.LayerSlope = {Steepness(Terrain.LayerSlope - KSlopeBlend),
+                                              Steepness(Terrain.LayerSlope + KSlopeBlend), Terrain.LayerTiles, 0.0f};
+                }
                 Batch.StaticVertices = Entry.Vertices;
                 Batch.FirstIndex = FirstIndex;
                 Batch.IndexCount = IndexCount;

@@ -876,11 +876,27 @@ namespace dbc
                         // Read by Blinn-Phong only, but the shader's slot must hold something.
                         const bool BlinnPhong = Batch.Style.BuiltInEffect == 4;
                         const bool Stage1Scaled = Batch.Style.Stage1UvScale[0] != 0.0f;
-                        if (BlinnPhong || Stage1Scaled || !MaterialUniformsBound)
+                        const bool Layers = Batch.Style.BuiltInEffect == 5;
+                        if (BlinnPhong || Stage1Scaled || Layers || !MaterialUniformsBound)
                         {
                             GpuMaterialUniforms Material{};
                             Material.Params[2] = Batch.Style.Stage1UvScale[0];
                             Material.Params[3] = Batch.Style.Stage1UvScale[1];
+                            if (Layers)
+                            {
+                                for (int Index = 0; Index < 4; ++Index)
+                                {
+                                    Material.LayerHeights[Index] = Batch.Style.LayerHeights[Index];
+                                    Material.LayerSlope[Index] = Batch.Style.LayerSlope[Index];
+                                }
+                                // The world's height: row 1 of the rotation's transpose, which is the matrix's
+                                // second column, times the view position less the translation.
+                                const glm::vec3 Up(View.WorldToView[1]);
+                                Material.ViewToWorld[1][0] = Up.x;
+                                Material.ViewToWorld[1][1] = Up.y;
+                                Material.ViewToWorld[1][2] = Up.z;
+                                Material.ViewToWorld[1][3] = -glm::dot(Up, glm::vec3(View.WorldToView[3]));
+                            }
                             if (BlinnPhong)
                             {
                                 // The rotation's inverse is its transpose, mirrored reflection views included.

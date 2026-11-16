@@ -194,6 +194,15 @@ namespace dbc
         float HeightScale = 1.0f;
         // Changes whenever terrain geometry (heights, size, tiling, position) changes; unique across terrains.
         uint64_t Revision = 0;
+        // SET TERRAIN LAYERS: the images of the low ground, the mid ground, the steep ground and the heights,
+        // blended by altitude and slope instead of the one image. All zero without layers.
+        std::array<int, 4> LayerImages{};
+        float LayerTiles = 16.0f;
+        // SET TERRAIN LAYER RANGE: where the mid ground and the heights begin, in units above the terrain's
+        // position, and the slope in degrees where the steep ground shows.
+        float LayerMidHeight = 12.0f;
+        float LayerHighHeight = 70.0f;
+        float LayerSlope = 35.0f;
     };
 
     // -----------------------------------------------------------------------
@@ -630,6 +639,10 @@ namespace dbc
         float CubeLevels = 0.0f;
         // GPU meshes: what stage 1 multiplies the base coordinates by (0: stage 1 has its own).
         std::array<float, 2> Stage1UvScale{};
+        // Terrain layers (BuiltInEffect 5): the base height, the two heights and their blend width in
+        // LayerHeights; the slope's range as 1 - cos, then the tiling, in LayerSlope.
+        std::array<float, 4> LayerHeights{};
+        std::array<float, 4> LayerSlope{};
 
         bool operator==(const SurfaceStyle& Other) const
         {
@@ -640,7 +653,8 @@ namespace dbc
                    EffectId == Other.EffectId && ReflectionSurface == Other.ReflectionSurface &&
                    ReflectionPass == Other.ReflectionPass && ReflectionOverlay == Other.ReflectionOverlay &&
                    Backdrop == Other.Backdrop && ShadowOverlay == Other.ShadowOverlay &&
-                   CubeLevels == Other.CubeLevels && Stage1UvScale == Other.Stage1UvScale;
+                   CubeLevels == Other.CubeLevels && Stage1UvScale == Other.Stage1UvScale &&
+                   LayerHeights == Other.LayerHeights && LayerSlope == Other.LayerSlope;
         }
     };
 
@@ -801,14 +815,18 @@ namespace dbc
 
     static_assert(sizeof(GpuTextureStageUniforms) == 128, "texture-stage UBO size mismatch");
 
-    // Pushed for the Blinn-Phong path only; MaterialUniforms in the shader.
+    // Read by the Blinn-Phong path and by terrain layers; MaterialUniforms in the shader.
     struct GpuMaterialUniforms
     {
+        // The view-to-world rotation; with terrain layers, row 1 also holds the world height's offset in w.
         float ViewToWorld[3][4]{};
-        // Whether stage 1 holds a normal map, cube mip levels (0: no reflection), then padding.
+        // Whether stage 1 holds a normal map, cube mip levels (0: no reflection), then stage 1's UV scale.
         float Params[4]{};
+        // SurfaceStyle's LayerHeights and LayerSlope.
+        float LayerHeights[4]{};
+        float LayerSlope[4]{};
     };
 
-    static_assert(sizeof(GpuMaterialUniforms) == 64, "material UBO size mismatch");
+    static_assert(sizeof(GpuMaterialUniforms) == 96, "material UBO size mismatch");
 
 } // namespace dbc

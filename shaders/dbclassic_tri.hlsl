@@ -111,13 +111,20 @@ cbuffer TextureStageUniforms : register(b1, space3)
     int4 stages[8];
 };
 
-// Blinn-Phong only (stages[0].z == 4). Stage 1 holds the normal map.
+// Blinn-Phong (stages[0].z == 4), where stage 1 holds the normal map, and terrain layers (stages[0].z == 5).
 cbuffer MaterialUniforms : register(b2, space3)
 {
+    // The view-to-world rotation. With terrain layers, view_to_world[1].w is what its row adds to give the
+    // world height.
     float4 view_to_world[3];
     // x whether there is a normal map, y cube mip levels (0: no reflection), zw what stage 1 multiplies its
     // coordinates by (0: nothing).
     float4 material_params;
+    // Terrain layers: x the terrain's base height, y and z where the mid ground and the heights begin above
+    // it, w half the width of those two blends.
+    float4 layer_heights;
+    // Terrain layers: xy the range of 1 - cos(slope) over which the steep ground appears, z the tiling.
+    float4 layer_slope;
 };
 
 Varyings VSMain(VertexInput input)
@@ -409,6 +416,22 @@ float4 shade_blinn_phong(Varyings input, float4 tex_color, float3 N, float3 V, f
     return float4(linear_to_srgb(apply_fog(result, input.view_pos)), tex_color.a);
 }
 
+// Terrain layers: stages 0 to 3 hold the low ground, the mid ground, the steep ground and the heights. Altitude
+// picks among the first, second and fourth; the third covers them where the ground is steep.
+float4 terrain_layers(Varyings input)
+{
+    const float2 uv = input.uv * layer_slope.z;
+    const float height = dot(view_to_world[1].xyz, input.view_pos) + view_to_world[1].w - layer_heights.x;
+    const float normal_length = length(input.normal);
+    const float up = normal_length > 0.01 ? dot(view_to_world[1].xyz, input.normal) / normal_length : 1.0;
+    const float width = max(layer_heights.w, 0.0001);
+    float4 color = lerp(tex0.Sample(sampler0, uv), tex1.Sample(sampler1, uv),
+                        smoothstep(layer_heights.y - width, layer_heights.y + width, height));
+    color = lerp(color, tex3.Sample(sampler3, uv),
+                 smoothstep(layer_heights.z - width, layer_heights.z + width, height));
+    return lerp(color, tex2.Sample(sampler2, uv), smoothstep(layer_slope.x, layer_slope.y, 1.0 - up));
+}
+
 float4 PSMain(Varyings input) : SV_Target0
 {
     if (input.box_tr.a > 0.5)
@@ -434,6 +457,10 @@ float4 PSMain(Varyings input) : SV_Target0
         float4 rainbow1 = sample_2d_stage(1, aux_uv[0]);
         tex_color = float4(clamp(rainbow0.rgb * rainbow0.a * 2.0 + rainbow1.a - 0.5, 0.0, 1.0),
                            rainbow0.a * rainbow1.a * diffuse.a);
+    }
+    else if (built_in_effect == 5)
+    {
+        tex_color = terrain_layers(input) * diffuse;
     }
     else
     {

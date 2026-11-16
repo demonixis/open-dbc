@@ -181,7 +181,9 @@ def build(profile: str, extensions: bool) -> str:
         ]
     for kind, name, arity, signatures, status, provenance in sorted(entries, key=lambda row: (row[0], row[1])):
         if provenance == "OpenDBC extension" or (profile == "Dbc" and "OpenDBC extension" in provenance):
-            description = "Shared OpenDBC VR addition; see docs/vr.md for its observable contract."
+            description = ("OpenDBC terrain layers addition; see docs/rendering.md for its observable contract."
+                           if name.startswith("SET TERRAIN LAYER")
+                           else "Shared OpenDBC VR addition; see docs/vr.md for its observable contract.")
         elif status == "Implemented":
             description = f"{product} {kind.lower()} implemented with an observable contract."
         elif status.startswith("Compatibility stub"):

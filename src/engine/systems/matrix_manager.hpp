@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <unordered_map>
 
@@ -64,6 +65,12 @@ namespace dbc
         bool MakeTerrain(int TerrainId, const std::string& Path, std::string* Error = nullptr);
         bool DeleteTerrain(int TerrainId, std::string* Error = nullptr);
         bool SetTerrainTexture(int TerrainId, int ImageId, std::string* Error = nullptr);
+        // Four images blended by altitude and slope, each repeated `Tiles` times across; four zeros
+        // give the terrain back its one image.
+        bool SetTerrainLayers(int TerrainId, const std::array<int, 4>& Images, float Tiles,
+                              std::string* Error = nullptr);
+        bool SetTerrainLayerRange(int TerrainId, float MidHeight, float HighHeight, float SlopeDegrees,
+                                  std::string* Error = nullptr);
         bool PositionTerrain(int TerrainId, float X, float Y, float Z, std::string* Error = nullptr);
         bool GetTerrainHeight(float& Output, int TerrainId, float X, float Z, std::string* Error = nullptr) const;
         bool GetTotalTerrainHeight(float& Output, int TerrainId, std::string* Error = nullptr) const;

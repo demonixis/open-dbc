@@ -66,6 +66,19 @@
         "notes": "See docs/vr.md for meter units, tracking, validation, defaults and unavailable-device behavior."
       },
       "expected_rows": 14
+    },
+    {
+      "match": {
+        "symbols": [
+          "SET TERRAIN LAYERS",
+          "SET TERRAIN LAYER RANGE"
+        ]
+      },
+      "set": {
+        "description": "OpenDBC terrain layers addition in DBPro; not a historical DarkBASIC command.",
+        "notes": "See docs/rendering.md for the four layers, their blend by altitude and slope, defaults and validation."
+      },
+      "expected_rows": 2
     }
   ],
   "additional_rows": [

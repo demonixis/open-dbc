@@ -4636,6 +4636,88 @@ TEST_CASE("DBPro LOD terrain preserves heightmap identity query and render contr
     std::filesystem::remove(Heightmap, Ignored);
 }
 
+TEST_CASE("Terrain layers take four images, validate their ranges and draw")
+{
+    const auto Suffix = dbc::testing::UniqueSuffix();
+    const std::filesystem::path Heightmap =
+        std::filesystem::temp_directory_path() / ("opendbc-terrain-layers-" + std::to_string(Suffix) + ".bmp");
+    SDL_Surface* Surface = SDL_CreateSurface(2, 2, SDL_PIXELFORMAT_RGBA32);
+    REQUIRE(Surface != nullptr);
+    REQUIRE(SDL_ClearSurface(Surface, 0.5f, 0.5f, 0.5f, 1.0f));
+    REQUIRE(SDL_SaveBMP(Surface, Heightmap.string().c_str()));
+    SDL_DestroySurface(Surface);
+
+    dbc::EngineKernel Kernel;
+    REQUIRE(Kernel.Initialize("test", 64, 64));
+    Kernel.Camera().SetAutoCamOff();
+    BuiltinContext Context;
+    Context.Kernel = &Kernel;
+    Context.Profile = dbc::language::LanguageProfile::DbPro;
+    std::string Error;
+    const auto Command = [&](dbc::language::SymbolId Symbol, std::initializer_list<double> Arguments)
+    {
+        Error.clear();
+        std::vector<BuiltinValue> Values;
+        for (const double Argument : Arguments)
+            Values.push_back(BuiltinValue::FromNumber(Argument));
+        return InvokeCommand(Context, Symbol, Values, Error);
+    };
+    using dbc::language::SymbolId;
+
+    REQUIRE(InvokeCommand(Context, SymbolId::Command_MakeTerrain,
+                          {BuiltinValue::FromNumber(1), BuiltinValue::FromString(Heightmap.string())}, Error));
+    for (int ImageId = 1; ImageId <= 4; ++ImageId)
+    {
+        Kernel.ImageStoreRef().CreateBitmap(ImageId, 2, 2);
+        Kernel.ImageStoreRef().GetImage(ImageId, 0, 0, 2, 2);
+    }
+
+    // Nothing changes until the command is called, and a refused call changes nothing either.
+    const dbc::Matrix* Terrain = Kernel.Matrices().GetTerrain(1);
+    REQUIRE(Terrain != nullptr);
+    CHECK(Terrain->LayerImages == std::array<int, 4>{});
+    CHECK_FALSE(Command(SymbolId::Command_SetTerrainLayers, {2, 1, 2, 3, 4}));
+    CHECK(Error.find("requires existing terrain 2") != std::string::npos);
+    CHECK_FALSE(Command(SymbolId::Command_SetTerrainLayers, {1, 1, 2, 3, 9}));
+    CHECK(Error.find("requires existing image 9") != std::string::npos);
+    CHECK_FALSE(Command(SymbolId::Command_SetTerrainLayers, {1, 1, 2, 3, 4, 0}));
+    CHECK(Error.find("tiling must be above 0") != std::string::npos);
+    CHECK(Terrain->LayerImages == std::array<int, 4>{});
+
+    REQUIRE(Command(SymbolId::Command_SetTerrainLayers, {1, 1, 2, 3, 4}));
+    CHECK(Terrain->LayerImages == std::array<int, 4>{1, 2, 3, 4});
+    CHECK(Terrain->LayerTiles == doctest::Approx(16.0f));
+    REQUIRE(Command(SymbolId::Command_SetTerrainLayers, {1, 4, 3, 2, 1, 8}));
+    CHECK(Terrain->LayerImages == std::array<int, 4>{4, 3, 2, 1});
+    CHECK(Terrain->LayerTiles == doctest::Approx(8.0f));
+
+    CHECK_FALSE(Command(SymbolId::Command_SetTerrainLayerRange, {1, 50, 20, 35}));
+    CHECK(Error.find("the mid ground below the heights") != std::string::npos);
+    CHECK_FALSE(Command(SymbolId::Command_SetTerrainLayerRange, {1, 20, 50, 91}));
+    CHECK(Error.find("between 0 and 90 degrees") != std::string::npos);
+    REQUIRE(Command(SymbolId::Command_SetTerrainLayerRange, {1, 20, 50, 40}));
+    CHECK(Terrain->LayerMidHeight == doctest::Approx(20.0f));
+    CHECK(Terrain->LayerHighHeight == doctest::Approx(50.0f));
+    CHECK(Terrain->LayerSlope == doctest::Approx(40.0f));
+
+    // The layered terrain still draws from its static buffers, and a deleted image does not stop it.
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PositionCamera(1.0f, 150.0f, 0.0f, &Error); });
+    RequireEngineStatus([&](std::string& Error) { return Kernel.Camera().PointCamera(1.0f, 50.0f, 1.0f, &Error); });
+    REQUIRE(Kernel.Core().EnsureInitialized());
+    Kernel.ImageStoreRef().DeleteImage(3);
+    SDL_Surface* Capture = Kernel.Renderer().CaptureScreen();
+    REQUIRE(Capture != nullptr);
+    SDL_DestroySurface(Capture);
+    CHECK(Kernel.Renderer().LastStaticTerrainTriangles() >= 2);
+
+    // Four zeros give the terrain back its one image.
+    REQUIRE(Command(SymbolId::Command_SetTerrainLayers, {1, 0, 0, 0, 0}));
+    CHECK(Terrain->LayerImages == std::array<int, 4>{});
+
+    std::error_code Ignored;
+    std::filesystem::remove(Heightmap, Ignored);
+}
+
 TEST_CASE("Matrices skip blocks outside the view and terrains coarsen far from the camera")
 {
     dbc::EngineKernel Kernel;

@@ -1572,6 +1572,16 @@ UNIT_WITNESSES += tuple(
 
 
 UNIT_WITNESSES += tuple(
+    ("dbpro", "Command", name, code, "terrain-layers",
+     "test_engine_builtins.cpp::Terrain layers take four images, validate their ranges and draw")
+    for name, code in (
+        ("SET TERRAIN LAYERS", "set terrain layers 1, 1, 2, 3, 4\n"),
+        ("SET TERRAIN LAYER RANGE", "set terrain layer range 1, 12.0, 70.0, 35.0\n"),
+    )
+)
+
+
+UNIT_WITNESSES += tuple(
     (profile, kind, name, code, "xr-state-and-vector",
      "test_vr.cpp::VR builtins expose poses and validate destination vectors")
     for profile in ("dbpro",)

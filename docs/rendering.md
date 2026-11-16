@@ -67,6 +67,21 @@ view picks the visible 16-cell blocks and their LOD step and draws them indexed,
 and the vertex shader applies the view through the `ModelView` uniform. Ghosted,
 transparent and unculled terrains stay on the CPU path.
 
+### Terrain layers
+
+An OpenDBC addition to the `DbPro` profile, where `TEXTURE TERRAIN` stretches one image
+over the whole terrain:
+
+| Command | Effect |
+| --- | --- |
+| `SET TERRAIN LAYERS Terrain, Low, Mid, Steep, High [, Tiles]` | Four existing images, each repeated `Tiles` times across (16 by default), replace the terrain's image. Four zeros give it back |
+| `SET TERRAIN LAYER RANGE Terrain, MidHeight, HighHeight, Slope` | Where the mid ground and the heights begin, in units above the terrain's position (12 and 70 by default), and the slope in degrees, 0 to 90, where the steep ground shows (35) |
+
+The fragment shader blends per pixel: altitude picks among the low ground, the mid ground
+and the heights, over 5 units on either side of each height, and the steep ground covers
+them over 8 degrees on either side of the slope. A deleted image leaves its layer white.
+A terrain on the CPU path keeps its `TEXTURE TERRAIN` image.
+
 Object meshes take the same route where the result cannot change. A mesh draws from
 GPU buffers when its object is opaque (not ghosted, faded by alpha, alpha-mapped,
 black-keyed or given a transparency mode), depth tested and written, and neither

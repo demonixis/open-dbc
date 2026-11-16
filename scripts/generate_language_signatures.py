@@ -123,6 +123,8 @@ PROFILE_PARAMETER_SPECS = {
     ("DbPro", "IS VR CONTROLLER TRACKED"): "I",
     ("DbPro", "SET VR PREVIEW MODE"): "I",
     ("DbPro", "SET VR CAMERA HEIGHT"): "R",
+    ("DbPro", "SET TERRAIN LAYERS"): "I,I,I,I,I,R",
+    ("DbPro", "SET TERRAIN LAYER RANGE"): "I,R,R,R",
 
     ("Dbc", "CALL DLL"): "N,S,A,A,A,A,A,A,A,A,A",
     ("Dbc", "CREATE NET GAME"): "S,S,N,N",
