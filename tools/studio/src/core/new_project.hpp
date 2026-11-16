@@ -54,9 +54,19 @@ namespace dbc::studio
         // The folders directly under `Location`, one per project, by name. Hidden ones are skipped.
         std::vector<std::filesystem::path> ProjectFolders(const std::filesystem::path& Location);
 
-        // Copies the read-only `Sample` folder to `Location` under its own name, so that it can be edited
-        // and run, and returns the copy. A folder of that name is reused as it is: it holds the user's edits.
+        // Copies the read-only `Sample` folder to `Location`, so that it can be edited and run, and
+        // returns the copy. An earlier copy is reused while it still holds the sample's files as they
+        // are; one the user edited is theirs, and the sample is copied again beside it as `name-2`...
         NewProjectResult CopySampleProject(const std::filesystem::path& Sample, const std::filesystem::path& Location);
+
+        // A copy of the project `Folder` beside it, as `name-2`...
+        NewProjectResult DuplicateProject(const std::filesystem::path& Folder);
+
+        // Renames the project `Folder`; `Root` is the folder under its new name.
+        NewProjectResult RenameProject(const std::filesystem::path& Folder, std::string_view Name);
+
+        // Deletes the project `Folder`, which has to be one of `Location`'s. Empty on success.
+        std::string DeleteProject(const std::filesystem::path& Folder, const std::filesystem::path& Location);
 
         // Where `Stored`, an absolute path an earlier run saved, is now that `Root`, the folder it was
         // under, may have moved: a sandboxed app's container changes path when the app is updated.

@@ -175,7 +175,7 @@ TEST_CASE("a location lists its project folders by name and skips hidden entries
     CHECK(core::ProjectFolders(Location.Root / "missing").empty());
 }
 
-TEST_CASE("a sample is copied once and the user's copy is kept afterwards")
+TEST_CASE("a sample opens as it was, beside the copy the user edited")
 {
     TemporaryLocation Location;
     const std::filesystem::path Sample = Location.Root / "samples" / "demo";
@@ -189,15 +189,58 @@ TEST_CASE("a sample is copied once and the user's copy is kept afterwards")
     CHECK(Copy.Root == Projects / "demo");
     CHECK(std::filesystem::is_regular_file(Copy.Root / "textures" / "wall.png"));
 
+    // A copy that only ran is opened again; its log is not an edit.
+    std::ofstream(Copy.Root / "open-dbc.log") << "ran";
+    const core::NewProjectResult Same = core::CopySampleProject(Sample, Projects);
+    REQUIRE_MESSAGE(Same, Same.Error);
+    CHECK(Same.Root == Copy.Root);
+
+    // An edited copy is the user's: the sample opens as it was, beside it.
     std::ofstream(Copy.Root / "demo.dba") << "print 2\n";
     const core::NewProjectResult Again = core::CopySampleProject(Sample, Projects);
     REQUIRE_MESSAGE(Again, Again.Error);
-    std::ifstream Edited(Again.Root / "demo.dba");
+    CHECK(Again.Root == Projects / "demo-2");
+    std::ifstream Edited(Copy.Root / "demo.dba");
     std::string Text;
     std::getline(Edited, Text);
     CHECK(Text == "print 2");
+    CHECK(std::filesystem::file_size(Again.Root / "demo.dba") == std::filesystem::file_size(Sample / "demo.dba"));
+    CHECK(core::CopySampleProject(Sample, Projects).Root == Projects / "demo-2");
 
     CHECK(!core::CopySampleProject(Location.Root / "samples" / "absent", Projects));
+}
+
+TEST_CASE("a project is duplicated, renamed and deleted inside its location")
+{
+    TemporaryLocation Location;
+    const std::filesystem::path Projects = Location.Root / "projects";
+    std::filesystem::create_directories(Projects / "game" / "media");
+    std::ofstream(Projects / "game" / "main.dba") << "print 1\n";
+    std::ofstream(Projects / "game" / "media" / "a.png") << "png";
+
+    const core::NewProjectResult Copy = core::DuplicateProject(Projects / "game");
+    REQUIRE_MESSAGE(Copy, Copy.Error);
+    CHECK(Copy.Root == Projects / "game-2");
+    CHECK(std::filesystem::is_regular_file(Copy.Root / "media" / "a.png"));
+    CHECK(core::DuplicateProject(Projects / "game").Root == Projects / "game-3");
+    CHECK(!core::DuplicateProject(Projects / "absent"));
+
+    const core::NewProjectResult Renamed = core::RenameProject(Projects / "game-2", "level test");
+    REQUIRE_MESSAGE(Renamed, Renamed.Error);
+    CHECK(Renamed.Root == Projects / "level test");
+    CHECK(!std::filesystem::exists(Projects / "game-2"));
+    // A taken or an invalid name leaves the project where it is.
+    CHECK(!core::RenameProject(Projects / "game-3", "game"));
+    CHECK(!core::RenameProject(Projects / "game-3", "a/b"));
+    CHECK(std::filesystem::is_directory(Projects / "game-3"));
+
+    CHECK(core::DeleteProject(Projects / "game-3", Projects).empty());
+    CHECK(!std::filesystem::exists(Projects / "game-3"));
+    // Only a folder of the location itself is deleted.
+    CHECK(!core::DeleteProject(Projects / "game" / "media", Projects).empty());
+    CHECK(!core::DeleteProject(Location.Root / "projects", Projects).empty());
+    CHECK(!core::DeleteProject(Projects / "absent", Projects).empty());
+    CHECK(std::filesystem::is_regular_file(Projects / "game" / "media" / "a.png"));
 }
 
 TEST_CASE("a saved path follows its folder when the app's container has moved")

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <fstream>
 
 namespace dbc::studio
 {
@@ -189,6 +190,72 @@ namespace dbc::studio
             return Folders;
         }
 
+        namespace
+        {
+            bool SameBytes(const std::filesystem::path& Left, const std::filesystem::path& Right)
+            {
+                std::error_code Error;
+                if (!std::filesystem::is_regular_file(Right, Error) ||
+                    std::filesystem::file_size(Left, Error) != std::filesystem::file_size(Right, Error) || Error)
+                    return false;
+                std::ifstream First(Left, std::ios::binary);
+                std::ifstream Second(Right, std::ios::binary);
+                std::array<char, 16384> Block;
+                std::array<char, 16384> Other;
+                while (First && Second)
+                {
+                    First.read(Block.data(), static_cast<std::streamsize>(Block.size()));
+                    Second.read(Other.data(), static_cast<std::streamsize>(Other.size()));
+                    if (First.gcount() != Second.gcount() ||
+                        !std::equal(Block.begin(), Block.begin() + First.gcount(), Other.begin()))
+                        return false;
+                }
+                return First.eof() && Second.eof();
+            }
+
+            // Whether `Copy` still has every file of `Sample` as it is. What a run adds, such as its
+            // log, does not make the copy the user's.
+            bool HoldsSample(const std::filesystem::path& Sample, const std::filesystem::path& Copy)
+            {
+                std::error_code Error;
+                for (std::filesystem::recursive_directory_iterator It(Sample, Error), End; !Error && It != End;
+                     It.increment(Error))
+                {
+                    if (It->is_regular_file(Error) && !SameBytes(It->path(), Copy / It->path().lexically_relative(Sample)))
+                        return false;
+                }
+                return !Error;
+            }
+
+            // `Folder`, or the first of `Folder-2`, `Folder-3`... that `Taken` leaves free.
+            template <typename TakenFn> std::filesystem::path FreeFolder(const std::filesystem::path& Folder, TakenFn Taken)
+            {
+                std::filesystem::path Candidate = Folder;
+                for (int Number = 2; Taken(Candidate); ++Number)
+                    Candidate = Folder.parent_path() / (dbc::PathToUtf8(Folder.filename()) + "-" + std::to_string(Number));
+                return Candidate;
+            }
+
+            NewProjectResult CopyFolder(const std::filesystem::path& From, const std::filesystem::path& To)
+            {
+                NewProjectResult Result;
+                Result.Root = To;
+                std::error_code Error;
+                std::filesystem::create_directories(To.parent_path(), Error);
+                if (!Error)
+                    std::filesystem::copy(From, To, std::filesystem::copy_options::recursive, Error);
+                if (Error)
+                {
+                    // A partial copy would pass for a project the next time.
+                    std::error_code Ignored;
+                    std::filesystem::remove_all(To, Ignored);
+                    Result.Error = TrFmt("Cannot copy {0}: {1}", {dbc::PathToUtf8(From.filename()), Error.message()});
+                    Result.Root.clear();
+                }
+                return Result;
+            }
+        } // namespace
+
         NewProjectResult CopySampleProject(const std::filesystem::path& Sample, const std::filesystem::path& Location)
         {
             NewProjectResult Result;
@@ -198,22 +265,68 @@ namespace dbc::studio
                 Result.Error = TrFmt("The sample {0} is missing.", {dbc::PathToUtf8(Sample.filename())});
                 return Result;
             }
-            Result.Root = Location / Sample.filename();
-            if (std::filesystem::exists(Result.Root, Error))
-                return Result;
-            std::filesystem::create_directories(Location, Error);
-            if (!Error)
-                std::filesystem::copy(Sample, Result.Root, std::filesystem::copy_options::recursive, Error);
-            if (Error)
+            const std::filesystem::path Target =
+                FreeFolder(Location / Sample.filename(),
+                           [&](const std::filesystem::path& Candidate)
+                           {
+                               std::error_code Ignored;
+                               return std::filesystem::exists(Candidate, Ignored) && !HoldsSample(Sample, Candidate);
+                           });
+            if (std::filesystem::exists(Target, Error))
             {
-                // A partial copy would pass for the user's own project the next time.
-                std::error_code Ignored;
-                std::filesystem::remove_all(Result.Root, Ignored);
-                Result.Error = TrFmt("Cannot copy the sample {0}: {1}",
-                                     {dbc::PathToUtf8(Sample.filename()), Error.message()});
-                Result.Root.clear();
+                Result.Root = Target;
+                return Result;
             }
+            return CopyFolder(Sample, Target);
+        }
+
+        NewProjectResult DuplicateProject(const std::filesystem::path& Folder)
+        {
+            std::error_code Error;
+            if (!std::filesystem::is_directory(Folder, Error) || Folder.filename().empty())
+            {
+                NewProjectResult Result;
+                Result.Error = TrFmt("The project {0} is missing.", {dbc::PathToUtf8(Folder.filename())});
+                return Result;
+            }
+            return CopyFolder(Folder, FreeFolder(Folder, [](const std::filesystem::path& Candidate)
+                                                 {
+                                                     std::error_code Ignored;
+                                                     return std::filesystem::exists(Candidate, Ignored);
+                                                 }));
+        }
+
+        NewProjectResult RenameProject(const std::filesystem::path& Folder, std::string_view Name)
+        {
+            NewProjectResult Result;
+            Result.Error = ValidateProjectName(Name);
+            if (!Result.Error.empty())
+                return Result;
+            const std::filesystem::path Target = Folder.parent_path() / dbc::PathFromUtf8(std::string(Name));
+            std::error_code Error;
+            if (std::filesystem::exists(Target, Error))
+            {
+                Result.Error = TrFmt("{0} already exists.", {std::string(Name)});
+                return Result;
+            }
+            std::filesystem::rename(Folder, Target, Error);
+            if (Error)
+                Result.Error = TrFmt("Cannot rename {0}: {1}", {dbc::PathToUtf8(Folder.filename()), Error.message()});
+            else
+                Result.Root = Target;
             return Result;
+        }
+
+        std::string DeleteProject(const std::filesystem::path& Folder, const std::filesystem::path& Location)
+        {
+            std::error_code Error;
+            // One of the location's own folders, and nothing a path could reach from there.
+            if (Folder.filename().empty() || !std::filesystem::is_directory(Folder, Error) ||
+                !std::filesystem::equivalent(Folder.parent_path(), Location, Error))
+                return TrFmt("{0} is not a project of this location.", {dbc::PathToUtf8(Folder.filename())});
+            std::filesystem::remove_all(Folder, Error);
+            return Error ? TrFmt("Cannot delete {0}: {1}", {dbc::PathToUtf8(Folder.filename()), Error.message()})
+                         : std::string();
         }
 
         std::filesystem::path RelocateUnder(const std::filesystem::path& Stored, const std::filesystem::path& Root)
