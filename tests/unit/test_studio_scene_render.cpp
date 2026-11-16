@@ -1040,22 +1040,44 @@ TEST_CASE("Scene shadows follow SET SHADOW SHADING ON and the shadow source")
 TEST_CASE("Generated terrain heightmaps load back as the heights they were made for")
 {
     const scene::Heightmap Flat = scene::FlatHeightmap(4, 50.0f);
-    REQUIRE(Flat.size() == 16);
-    CHECK(std::all_of(Flat.begin(), Flat.end(), [](std::uint8_t Level) { return Level == 128; }));
+    REQUIRE(Flat.Heights.size() == 16);
+    CHECK(std::all_of(Flat.Heights.begin(), Flat.Heights.end(), [](float Height) { return Height == 50.0f; }));
 
-    std::mt19937 First(7), Second(7);
-    const scene::Heightmap Hills = scene::RandomHeightmap(64, 40.0f, 4, First);
-    CHECK(Hills == scene::RandomHeightmap(64, 40.0f, 4, Second));
-    const auto [Low, High] = std::minmax_element(Hills.begin(), Hills.end());
-    CHECK(*Low == 0);
-    CHECK(*High == 102); // 40 of 100 units
+    // A preset and a seed always give the same terrain, stretched over the range.
+    for (int Preset = 0; Preset < scene::KTerrainPresetCount; ++Preset)
+    {
+        const scene::TerrainPreset Kind = static_cast<scene::TerrainPreset>(Preset);
+        const scene::Heightmap Map = scene::GenerateHeightmap(64, Kind, 7, 40.0f);
+        CAPTURE(Preset);
+        CHECK(Map == scene::GenerateHeightmap(64, Kind, 7, 40.0f));
+        CHECK(Map != scene::GenerateHeightmap(64, Kind, 8, 40.0f));
+        const auto [Low, High] = std::minmax_element(Map.Heights.begin(), Map.Heights.end());
+        CHECK(*Low == doctest::Approx(0.0f));
+        CHECK(*High == doctest::Approx(40.0f));
+    }
+    // An island's borders lie at sea level.
+    const scene::Heightmap Island = scene::GenerateHeightmap(64, scene::TerrainPreset::Islands, 3, 60.0f);
+    for (int Index = 0; Index < 64; ++Index)
+    {
+        CHECK(Island.Heights[Index] == 0.0f);
+        CHECK(Island.Heights[static_cast<std::size_t>(Index) * 64] == 0.0f);
+    }
     CHECK(scene::TerrainHeightmapPath("Level 1", 2).generic_string() == "heightmaps/Level_1_terrain2.png");
 
+    const scene::Heightmap Hills = scene::GenerateHeightmap(64, scene::TerrainPreset::RollingHills, 7, 40.0f);
     const std::filesystem::path Path =
         std::filesystem::temp_directory_path() / "opendbc-heightmap-test" / "heightmaps" / "hills.png";
     std::string Error;
-    REQUIRE_MESSAGE(scene::WriteHeightmap(Path, 64, Hills, Error), Error);
-    CHECK_FALSE(scene::WriteHeightmap(Path, 63, Hills, Error));
+    REQUIRE_MESSAGE(scene::WriteHeightmap(Path, Hills, Error), Error);
+    scene::Heightmap Odd = Hills;
+    Odd.Size = 63;
+    CHECK_FALSE(scene::WriteHeightmap(Path, Odd, Error));
+    // The image holds 766 levels: a height comes back within half a level.
+    scene::Heightmap Read;
+    REQUIRE_MESSAGE(scene::ReadHeightmap(Path, Read, Error), Error);
+    REQUIRE(Read.Size == 64);
+    for (std::size_t Index = 0; Index < Hills.Heights.size(); ++Index)
+        REQUIRE(std::abs(Read.Heights[Index] - Hills.Heights[Index]) <= 50.0f / 765.0f + 1.0e-4f);
     scene::CpuMesh Mesh;
     REQUIRE_MESSAGE(scene::LoadTerrainMesh(Path, Mesh, Error), Error);
     scene::ComputeBounds(Mesh);
@@ -1063,4 +1085,42 @@ TEST_CASE("Generated terrain heightmaps load back as the heights they were made 
     CHECK(Mesh.Max.y == doctest::Approx(40.0f).epsilon(0.01));
     std::error_code Ignored;
     std::filesystem::remove_all(Path.parent_path().parent_path(), Ignored);
+}
+
+TEST_CASE("The sculpt brush raises, smooths and flattens within its radius")
+{
+    const scene::TerrainBrush Brush{8.0f, 0.5f};
+    CHECK(scene::BrushWeight(Brush, 0.0f) == 1.0f);
+    CHECK(scene::BrushWeight(Brush, 4.0f) == 1.0f);
+    CHECK(scene::BrushWeight(Brush, 6.0f) == doctest::Approx(0.5f));
+    CHECK(scene::BrushWeight(Brush, 8.0f) == 0.0f);
+    CHECK(scene::BrushWeight(scene::TerrainBrush{8.0f, 0.0f}, 7.9f) == 1.0f);
+
+    const auto At = [](const scene::Heightmap& Map, int X, int Z)
+    { return Map.Heights[static_cast<std::size_t>(Z) * Map.Size + X]; };
+    scene::Heightmap Map = scene::FlatHeightmap(64, 20.0f);
+    REQUIRE(scene::SculptHeightmap(Map, scene::SculptMode::Raise, Brush, glm::vec2(32.0f, 32.0f), 10.0f));
+    CHECK(At(Map, 32, 32) == doctest::Approx(30.0f));
+    CHECK(At(Map, 36, 32) == doctest::Approx(30.0f));
+    CHECK(At(Map, 38, 32) == doctest::Approx(25.0f));
+    CHECK(At(Map, 40, 32) == 20.0f);
+    CHECK(At(Map, 0, 0) == 20.0f);
+    CHECK(scene::SampleHeightmap(Map, 37.0f, 32.0f) ==
+          doctest::Approx((At(Map, 36, 32) + At(Map, 38, 32)) * 0.5f).epsilon(0.05));
+
+    // Heights stay within what the image can hold, and a brush off the map changes nothing.
+    REQUIRE(scene::SculptHeightmap(Map, scene::SculptMode::Raise, Brush, glm::vec2(32.0f, 32.0f), -500.0f));
+    CHECK(At(Map, 32, 32) == 0.0f);
+    CHECK_FALSE(scene::SculptHeightmap(Map, scene::SculptMode::Raise, Brush, glm::vec2(-50.0f, 32.0f), 10.0f));
+
+    // Smoothing lowers a spike; flattening brings the disc to the target and leaves the rest.
+    Map = scene::FlatHeightmap(64, 20.0f);
+    Map.Heights[static_cast<std::size_t>(32) * 64 + 32] = 80.0f;
+    REQUIRE(scene::SculptHeightmap(Map, scene::SculptMode::Smooth, Brush, glm::vec2(32.0f, 32.0f), 1.0f));
+    CHECK(At(Map, 32, 32) == doctest::Approx(20.0f + 60.0f / 9.0f));
+    CHECK(At(Map, 31, 32) > 20.0f);
+    REQUIRE(scene::SculptHeightmap(Map, scene::SculptMode::Flatten, Brush, glm::vec2(32.0f, 32.0f), 1.0f, 50.0f));
+    CHECK(At(Map, 32, 32) == doctest::Approx(50.0f));
+    CHECK(At(Map, 35, 30) == doctest::Approx(50.0f));
+    CHECK(At(Map, 45, 32) == 20.0f);
 }

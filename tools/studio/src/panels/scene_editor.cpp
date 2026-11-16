@@ -161,6 +161,7 @@ namespace dbc::studio
             Document_ = std::move(Read.Document);
             Saved_ = Document_;
             History_.Reset(Document_);
+            ResetTerrainEdits();
             HasLevel_ = true;
             Select(nullptr);
         }
@@ -180,6 +181,7 @@ namespace dbc::studio
             Saved_ = Document_;
             ReadErrors_.clear();
             History_.Reset(Document_);
+            ResetTerrainEdits();
             HasLevel_ = true;
             Select(nullptr);
             return true;
@@ -203,6 +205,7 @@ namespace dbc::studio
             Saved_ = Document_;
             ReadErrors_.clear();
             History_.Reset(Document_);
+            ResetTerrainEdits();
             HasLevel_ = true;
             Program_ = ProgramView{Source, SetupFrames, OnlyFile, std::move(Read.Origins), std::move(Read.Notes)};
             PruneSelection();
@@ -580,6 +583,7 @@ namespace dbc::studio
             if (!TransformEditable() || !History_.CanUndo())
                 return;
             Document_ = History_.Undo();
+            RestoreTerrainHeights();
             PruneSelection();
         }
 
@@ -588,6 +592,7 @@ namespace dbc::studio
             if (!TransformEditable() || !History_.CanRedo())
                 return;
             Document_ = History_.Redo();
+            RestoreTerrainHeights();
             PruneSelection();
         }
 

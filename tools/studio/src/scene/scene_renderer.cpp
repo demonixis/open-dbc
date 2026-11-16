@@ -1,6 +1,7 @@
 #include "scene/scene_renderer.hpp"
 #include "core/i18n.hpp"
 #include "path_utf8.hpp"
+#include "scene/heightmap.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -251,9 +252,8 @@ namespace dbc::studio
                     SDL_ReleaseGPUBuffer(Gpu_, Buffer);
             LineBuffer_ = ShadowBuffer_ = nullptr;
             LineCapacity_ = ShadowCapacity_ = 0;
-            for (SDL_GPUGraphicsPipeline* Pipeline :
-                 {MeshPipeline_, BlendPipeline_, FadePipeline_, WirePipeline_, LinePipeline_, VolumePipeline_,
-                  ShadePipeline_})
+            for (SDL_GPUGraphicsPipeline* Pipeline : {MeshPipeline_, BlendPipeline_, FadePipeline_, WirePipeline_,
+                                                      LinePipeline_, VolumePipeline_, ShadePipeline_})
                 if (Pipeline != nullptr)
                     SDL_ReleaseGPUGraphicsPipeline(Gpu_, Pipeline);
             MeshPipeline_ = BlendPipeline_ = FadePipeline_ = WirePipeline_ = nullptr;
@@ -314,6 +314,8 @@ namespace dbc::studio
                     return "model:" + dbc::PathToUtf8((AssetRoot / dbc::PathFromUtf8(Node.Asset)).lexically_normal());
                 case NodeKind::Terrain:
                 {
+                    if (LiveHeights_ != nullptr && Node.Id == LiveTerrain_)
+                        return "terrain-live:" + std::to_string(Node.Id) + "#" + std::to_string(LiveRevision_);
                     // The Scene view rewrites generated heightmaps in place: the write
                     // time makes a new image a new mesh.
                     const std::filesystem::path Path = (AssetRoot / dbc::PathFromUtf8(Node.Asset)).lexically_normal();
@@ -373,7 +375,11 @@ namespace dbc::studio
                 return Found->second;
             }
             Geometry Entry;
-            if (Node.Kind == NodeKind::Model || Node.Kind == NodeKind::Terrain)
+            if (Node.Kind == NodeKind::Terrain && LiveHeights_ != nullptr && Node.Id == LiveTerrain_)
+            {
+                BuildTerrainMesh(*LiveHeights_, Entry.Mesh);
+            }
+            else if (Node.Kind == NodeKind::Model || Node.Kind == NodeKind::Terrain)
             {
                 const std::filesystem::path Path = AssetRoot / dbc::PathFromUtf8(Node.Asset);
                 Entry.Folder = Path.parent_path();

@@ -188,6 +188,9 @@ namespace dbc::studio
                                              glm::vec3(-10.0f, -10.0f, 0.0f)};
 
             std::string Asset; // model file, terrain heightmap or sound file, asset-relative
+            // Terrain: counts the edits of its heightmap's pixels, so that undo sees them. Not written
+            // to the level: the heights are the image's.
+            int HeightRevision = 0;
 
             // Matrix: size and tiles, plus the PREPARE MATRIX TEXTURE grid.
             float Width = 100.0f;
@@ -292,8 +295,8 @@ namespace dbc::studio
         // LOAD BSP: the level's world, which a level holds at most one of.
         struct BspWorld
         {
-            std::string Archive; // LOAD BSP's pk3 argument, empty for a map file of the project
-            std::string Map;     // asset-relative
+            std::string Archive;       // LOAD BSP's pk3 argument, empty for a map file of the project
+            std::string Map;           // asset-relative
             std::optional<int> Camera; // SET BSP CAMERA; the engine uses camera 0 without it
             std::vector<BspCollision> Collisions;
 
@@ -357,7 +360,7 @@ namespace dbc::studio
         // finds the five others beside it.
         using FileExists = std::function<bool(const std::string&)>;
         std::optional<std::array<std::string, 6>> CubeFaceSet(const std::string& Chosen, std::size_t Face,
-                                                               const FileExists& Exists);
+                                                              const FileExists& Exists);
         // Puts `Chosen` on a face, and its five siblings on the others while those are empty or
         // still the siblings of the image it replaces: faces picked one by one are kept.
         void SetCubeFace(std::array<std::string, 6>& Cube, std::size_t Face, const std::string& Chosen,

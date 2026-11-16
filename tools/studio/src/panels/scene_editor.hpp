@@ -22,6 +22,7 @@
 #include "core/gpu_texture.hpp"
 #include "core/media_catalogue.hpp"
 #include "core/settings.hpp"
+#include "scene/heightmap.hpp"
 #include "scene/scene_capture.hpp"
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_document.hpp"
@@ -109,21 +110,25 @@ namespace dbc::studio
             }
 
             bool Dirty() const;
+
             // Where the Assets panel last drew its first file, after the shapes: the tile's top left corner.
             glm::vec2 FirstFileTile() const
             {
                 return FirstFileTile_;
             }
+
             // Files were added to the project outside the Scene view: lists them again.
             void ProjectFilesChanged()
             {
                 RefreshAssets();
             }
+
             // Opens the limb list of the model the Inspector shows, as its Limbs button does.
             void ShowLimbs()
             {
                 ShowLimbs_ = true;
             }
+
             // Ctrl+S: a program's scene is read again after its edits, to show what they did.
             bool SaveAndRefresh();
             void RefreshProgram();
@@ -302,6 +307,7 @@ namespace dbc::studio
                 Rotate,
                 Scale,
                 Paint,
+                Sculpt,
             };
 
             enum class PaintMode
@@ -349,6 +355,18 @@ namespace dbc::studio
             std::optional<float> PaintSurfaceDistance(const scene::Ray& Ray) const;
             void PaintStamp(const glm::vec3& Center, bool OnMesh);
             void PaintErase(const glm::vec3& Center);
+            // Sculpt tool (scene_sculpt.cpp)
+            // Returns whether the tool is on, replacing the gizmo and picking.
+            bool UpdateSculpt(bool Hovered, ImDrawList* Draw);
+            // The node's heights, read from its image once and kept while it stays the same; nullptr
+            // when the image cannot be read.
+            scene::Heightmap* TerrainHeights(const scene::SceneNode& Node);
+            // Writes the heights to the level's own image, points the terrain at it and counts the
+            // edit for undo. The caller commits.
+            bool SetTerrainHeights(scene::SceneNode& Node, const scene::Heightmap& Map);
+            // After undo or redo: puts back the pixels each terrain had in the state now shown.
+            void RestoreTerrainHeights();
+            void ResetTerrainEdits();
             bool ProjectToScreen(const glm::vec3& Point, ImVec2& Screen) const;
             scene::Ray RayAt(const ImVec2& Mouse) const;
 
@@ -447,11 +465,13 @@ namespace dbc::studio
             glm::vec2 FlySteer_{0.0f};
             // One finger that did not land on the gizmo turns the view.
             bool TouchOrbit_ = false;
+
             struct TouchFinger
             {
                 SDL_FingerID Id = 0;
                 glm::vec2 At{0.0f};
             };
+
             std::vector<TouchFinger> Fingers_;
             // Whether the two fingers down both landed on the viewport.
             bool TouchNavigating_ = false;
@@ -486,6 +506,40 @@ namespace dbc::studio
             bool Painting_ = false;
             std::optional<glm::vec3> PaintLast_;
 
+            // The sculpt brush: world units, which are a terrain's pixels, and units a second.
+            enum class SculptTool
+            {
+                Raise,
+                Lower,
+                Smooth,
+                Flatten, // toward the height under the pointer where the stroke began
+            };
+
+            SculptTool SculptTool_ = SculptTool::Raise;
+            scene::TerrainBrush SculptBrush_;
+            float SculptStrength_ = 30.0f;
+            bool Sculpting_ = false;
+            bool SculptChanged_ = false;
+            int SculptTerrain_ = 0;
+            float SculptTarget_ = 0.0f;
+            unsigned SculptRevision_ = 0;
+
+            // The heights of the terrain last edited or pointed at, as its image holds them.
+            struct TerrainCache
+            {
+                int Id = 0;
+                std::string Asset;
+                int Revision = -1;
+                scene::Heightmap Map;
+            };
+
+            TerrainCache TerrainCache_;
+            // Heights by terrain number and revision, for undo and redo to write back; the oldest
+            // go first. `TerrainOnDisk_` is the revision each level-owned image holds.
+            std::map<std::pair<int, int>, scene::Heightmap> TerrainStates_;
+            std::map<int, int> TerrainOnDisk_;
+            int TerrainRevisions_ = 0;
+
             scene::ViewParameters View_;
             // False where the host draws the tools itself, above the viewport.
             bool ShowViewportBar_ = true;
@@ -514,7 +568,8 @@ namespace dbc::studio
             int HeightmapSize_ = 128;
             float TerrainFillHeight_ = 0.0f;
             float TerrainRange_ = 40.0f;
-            int TerrainHills_ = 4;
+            scene::TerrainPreset TerrainPreset_ = scene::TerrainPreset::RollingHills;
+            int TerrainSeed_ = 1;
             std::string TerrainError_;
             std::mt19937 Random_{std::random_device{}()};
         };

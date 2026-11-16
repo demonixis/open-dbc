@@ -226,7 +226,7 @@ namespace dbc::studio
             // turns the view, on it the gizmo moves the selection. The brush keeps its finger.
             const bool Touch = Io.MouseSource == ImGuiMouseSource_TouchScreen;
             if (Touch && Hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && Tool_ != Tool::Paint &&
-                !ImGuizmo::IsOver())
+                Tool_ != Tool::Sculpt && !ImGuizmo::IsOver())
                 TouchOrbit_ = true;
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) || Fingers_.size() > 1)
                 TouchOrbit_ = false;
@@ -584,7 +584,7 @@ namespace dbc::studio
             const ImGuiIO& Io = ImGui::GetIO();
             const bool Held = ImGui::IsKeyDown(ImGuiKey_V) && !Io.WantTextInput && ImGui::IsWindowFocused() &&
                               !Navigating_ && !GizmoActive_ && TransformEditable() && !CameraSelected_ &&
-                              Tool_ != Tool::View && Tool_ != Tool::Paint;
+                              Tool_ != Tool::View && Tool_ != Tool::Paint && Tool_ != Tool::Sculpt;
             if (VertexDragging_ && (!Held || !ImGui::IsMouseDown(ImGuiMouseButton_Left)))
             {
                 VertexDragging_ = false;
@@ -651,7 +651,8 @@ namespace dbc::studio
 
         void SceneEditor::DrawGizmo()
         {
-            if (!TransformEditable() || Tool_ == Tool::View || Tool_ == Tool::Paint || (CameraSelected_ && !Editable()))
+            if (!TransformEditable() || Tool_ == Tool::View || Tool_ == Tool::Paint || Tool_ == Tool::Sculpt ||
+                (CameraSelected_ && !Editable()))
                 return;
             if (!CameraSelected_ && Selection_.size() > 1)
             {
@@ -983,7 +984,7 @@ namespace dbc::studio
             const bool Pointing = Hovered && !Flying_;
             ImDrawList* Draw = ImGui::GetWindowDrawList();
             DrawIcons(Draw);
-            const bool Painting = UpdatePaint(Pointing, Draw);
+            const bool Painting = UpdatePaint(Pointing, Draw) || UpdateSculpt(Pointing, Draw);
             const bool VertexSnap = UpdateVertexSnap(Pointing, Draw);
             ImGuizmo::Enable(!Flying_);
             if (!VertexSnap)
@@ -1023,6 +1024,16 @@ namespace dbc::studio
                     Tool_ = Tool::Paint;
                     EnterPaintTool();
                 }
+                else if (ImGui::IsKeyPressed(ImGuiKey_T, false))
+                    Tool_ = Tool::Sculpt;
+                else if (Tool_ == Tool::Sculpt && ImGui::IsKeyPressed(ImGuiKey_1, false))
+                    SculptTool_ = SculptTool::Raise;
+                else if (Tool_ == Tool::Sculpt && ImGui::IsKeyPressed(ImGuiKey_2, false))
+                    SculptTool_ = SculptTool::Lower;
+                else if (Tool_ == Tool::Sculpt && ImGui::IsKeyPressed(ImGuiKey_3, false))
+                    SculptTool_ = SculptTool::Smooth;
+                else if (Tool_ == Tool::Sculpt && ImGui::IsKeyPressed(ImGuiKey_4, false))
+                    SculptTool_ = SculptTool::Flatten;
                 else if (Tool_ == Tool::Paint && ImGui::IsKeyPressed(ImGuiKey_1, false))
                     PaintMode_ = PaintMode::One;
                 else if (Tool_ == Tool::Paint && ImGui::IsKeyPressed(ImGuiKey_2, false))

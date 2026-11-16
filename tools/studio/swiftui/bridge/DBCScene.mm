@@ -189,28 +189,46 @@ namespace dbc::studio::panels
             }
             F.Choice(Tr("Size"), Sizes, Current, [&E](int Choice) { E.HeightmapSize_ = KSizes[std::clamp(Choice, 0, 3)]; });
 
-            scene::SceneNode* Target = &Node;
+            // The node is found again by its number: a form's rows outlive the edit before them.
+            const int Id = Node.Id;
             const std::filesystem::path Relative = scene::TerrainHeightmapPath(E.Document_.Name, Node.Id);
-            const auto Write = [&E, Target, Relative](const scene::Heightmap& Generated)
+            const auto Write = [&E, Id](const scene::Heightmap& Generated)
             {
-                // Always the level's own file: a heightmap the user picked is never overwritten.
-                if (!E.Project_ || !scene::WriteHeightmap(E.Project_->AssetRoot / Relative, E.HeightmapSize_, Generated,
-                                                          E.TerrainError_))
-                    return;
-                E.TerrainError_.clear();
-                Target->Asset = dbc::GenericPathToUtf8(Relative);
-                E.RefreshAssets();
+                for (scene::SceneNode& Target : E.Document_.Nodes)
+                    if (Target.Kind == scene::NodeKind::Terrain && Target.Id == Id)
+                    {
+                        E.SetTerrainHeights(Target, Generated);
+                        return;
+                    }
             };
-            // Terrain heights are an image's grey levels, 0 to KTerrainHeightScale.
+            // Terrain heights are an image's levels, 0 to KTerrainHeightScale.
             F.Float(Tr("Fill height"), E.TerrainFillHeight_, 0.25, 0.0, scene::KTerrainHeightScale);
-            F.Button(Tr("Fill"), [&E, Write] { Write(scene::FlatHeightmap(E.HeightmapSize_, E.TerrainFillHeight_)); });
-            F.Float(Tr("Height range"), E.TerrainRange_, 0.25, 0.0, scene::KTerrainHeightScale);
-            F.Int(Tr("Hills across"), E.TerrainHills_, 1, 32);
-            F.Button(Tr("Randomize"),
-                     [&E, Write]
+            F.Button(Tr("Flatten"), [&E, Write] { Write(scene::FlatHeightmap(E.HeightmapSize_, E.TerrainFillHeight_)); })
+                .Tooltip = Tr("Sets every height to the fill height");
+            // In the order of scene::TerrainPreset.
+            F.Choice(Tr("Preset"), {Tr("Rolling hills"), Tr("Mountains"), Tr("Plains"), Tr("Islands"), Tr("Desert")},
+                     static_cast<int>(E.TerrainPreset_),
+                     [&E](int Choice)
                      {
-                         Write(scene::RandomHeightmap(E.HeightmapSize_, E.TerrainRange_, E.TerrainHills_, E.Random_));
+                         E.TerrainPreset_ = static_cast<scene::TerrainPreset>(
+                             std::clamp(Choice, 0, scene::KTerrainPresetCount - 1));
                      });
+            F.Float(Tr("Height range"), E.TerrainRange_, 0.25, 0.0, scene::KTerrainHeightScale);
+            F.Int(Tr("Seed"), E.TerrainSeed_, 0, 999999).Tooltip =
+                Tr("The same preset, seed and size always give the same terrain");
+            const auto Generate = [&E, Write]
+            {
+                Write(scene::GenerateHeightmap(E.HeightmapSize_, E.TerrainPreset_,
+                                               static_cast<std::uint32_t>(E.TerrainSeed_), E.TerrainRange_));
+            };
+            F.Button(Tr("Generate"), Generate);
+            F.Button(Tr("Random seed"),
+                     [&E, Generate]
+                     {
+                         E.TerrainSeed_ = static_cast<int>(E.Random_() % 1000000u);
+                         Generate();
+                     })
+                .Tooltip = Tr("Draws another seed and generates the terrain");
             if (!E.TerrainError_.empty())
                 F.Warning(E.TerrainError_);
             F.Hint(TrFmt("Writes {0}", {dbc::GenericPathToUtf8(Relative)}));
@@ -993,6 +1011,22 @@ namespace dbc::studio::panels
             }
         }
 
+        static void Sculpt(SceneEditor& E, Form& F)
+        {
+            F.Choice(Tr("Brush"), {Tr("Raise"), Tr("Lower"), Tr("Smooth"), Tr("Flatten")},
+                     static_cast<int>(E.SculptTool_),
+                     [&E](int Choice) { E.SculptTool_ = static_cast<SceneEditor::SculptTool>(std::clamp(Choice, 0, 3)); });
+            F.Float(Tr("Radius"), E.SculptBrush_.Radius, 0.5, 1.0, 128.0).Slider = true;
+            Field& Falloff = F.Float(Tr("Falloff"), E.SculptBrush_.Falloff, 0.05, 0.0, 1.0);
+            Falloff.Slider = true;
+            Falloff.Tooltip =
+                Tr("The share of the radius over which the brush fades: 0 is a hard edge, 1 is soft from the centre");
+            Field& Strength = F.Float(Tr("Strength"), E.SculptStrength_, 1.0, 1.0, 100.0);
+            Strength.Slider = true;
+            Strength.Tooltip = Tr("Units per second while the brush is held");
+            F.Hint(Tr("Drag over a terrain. Flatten levels to the height where the drag began."));
+        }
+
         static void SnapSteps(SceneEditor& E, Form& F)
         {
             F.Float(Tr("Move"), E.MoveSnap_, 0.1, scene::KMinGridStep, scene::KMaxGridStep);
@@ -1012,6 +1046,9 @@ namespace dbc::studio::panels
                     break;
                 case DBCFormPaint:
                     Paint(E, F);
+                    break;
+                case DBCFormSculpt:
+                    Sculpt(E, F);
                     break;
                 case DBCFormSnapSteps:
                     SnapSteps(E, F);
@@ -1272,7 +1309,7 @@ namespace dbc::studio::panels
         {
             static Shown Last;
             // A drag changes the document every frame: the panels follow once it ends.
-            if (E.GizmoActive_ || E.Painting_ || E.VertexDragging_)
+            if (E.GizmoActive_ || E.Painting_ || E.Sculpting_ || E.VertexDragging_)
                 return false;
             std::vector<std::uint64_t> Selection;
             Selection.reserve(E.Selection_.size());
@@ -1324,7 +1361,7 @@ namespace dbc::studio::panels
                 if (Node.Kind != scene::NodeKind::Terrain || !Node.Asset.empty())
                     continue;
                 const std::filesystem::path Relative = scene::TerrainHeightmapPath(E.Document_.Name, Node.Id);
-                if (scene::WriteHeightmap(E.Project_->AssetRoot / Relative, E.HeightmapSize_,
+                if (scene::WriteHeightmap(E.Project_->AssetRoot / Relative,
                                           scene::FlatHeightmap(E.HeightmapSize_, E.TerrainFillHeight_),
                                           E.TerrainError_))
                     Node.Asset = dbc::GenericPathToUtf8(Relative);

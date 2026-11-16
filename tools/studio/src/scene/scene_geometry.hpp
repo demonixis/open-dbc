@@ -69,6 +69,7 @@ namespace dbc::studio
         bool LoadModelMesh(const std::filesystem::path& Path, CpuMesh& Out, std::string& Error);
         // MAKE TERRAIN: one vertex per pixel, growing toward -Z from the position.
         bool LoadTerrainMesh(const std::filesystem::path& Heightmap, CpuMesh& Out, std::string& Error);
+        void BuildTerrainMesh(const struct Heightmap& Map, CpuMesh& Out);
         void ComputeBounds(CpuMesh& Mesh);
 
         // The animation LOAD OBJECT keeps: a model file's first, at 25 frames a second.

@@ -203,6 +203,7 @@ typedef NS_ENUM(NSInteger, DBCForm) {
     DBCFormLevelSettings,
     DBCFormPaint,
     DBCFormSnapSteps,
+    DBCFormSculpt,
 };
 
 @interface DBCSceneRow : NSObject
@@ -223,6 +224,7 @@ typedef NS_ENUM(NSInteger, DBCSceneTool) {
     DBCSceneToolRotate,
     DBCSceneToolScale,
     DBCSceneToolPaint,
+    DBCSceneToolSculpt,
 };
 
 @protocol DBCStudioDelegate <NSObject>

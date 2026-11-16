@@ -547,6 +547,7 @@ struct ViewportPanel: View {
     @ObservedObject var model: StudioModel
     @State private var showSteps = false
     @State private var showPaint = false
+    @State private var showSculpt = false
 
     var body: some View {
         let studio = model.studio
@@ -561,10 +562,18 @@ struct ViewportPanel: View {
                         Label(tr("Rotate"), systemImage: "arrow.triangle.2.circlepath").tag(2)
                         Label(tr("Scale"), systemImage: "arrow.up.left.and.arrow.down.right").tag(3)
                         Label(tr("Paint"), systemImage: "paintbrush").tag(4)
+                        Label(tr("Terrain"), systemImage: "mountain.2").tag(5)
                     }
                     .pickerStyle(.segmented)
                     .labelStyle(.iconOnly)
-                    .frame(width: 230)
+                    .frame(width: 276)
+                    if studio.sceneTool == .sculpt {
+                        Button { showSculpt = true } label: { Label(tr("Terrain"), systemImage: "slider.horizontal.3") }
+                            .popover(isPresented: $showSculpt) {
+                                FormView(model: model, form: .sculpt)
+                                    .frame(minWidth: 340, minHeight: 300)
+                            }
+                    }
                     if studio.sceneTool == .paint {
                         Button { showPaint = true } label: { Label(tr("Paint"), systemImage: "slider.horizontal.3") }
                             .popover(isPresented: $showPaint) {

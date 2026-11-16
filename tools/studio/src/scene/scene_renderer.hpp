@@ -56,6 +56,16 @@ namespace dbc::studio
             // The node's geometry after Prepare, for picking and bounds; nullptr when
             // the node has none yet.
             const CpuMesh* Mesh(const SceneNode& Node) const;
+
+            // Shows a terrain from heights in memory rather than from its image, while a brush changes
+            // them: a new revision is a new mesh. `Map` must outlive the calls to Prepare; nullptr ends it.
+            void SetLiveTerrain(int TerrainId, const struct Heightmap* Map, unsigned Revision)
+            {
+                LiveTerrain_ = TerrainId;
+                LiveHeights_ = Map;
+                LiveRevision_ = Revision;
+            }
+
             // Messages for files that could not be loaded, once per file.
             std::vector<std::string> TakeErrors();
 
@@ -153,6 +163,9 @@ namespace dbc::studio
             int Height_ = 0;
 
             std::unordered_map<std::string, Geometry> Geometry_;
+            int LiveTerrain_ = 0;
+            const struct Heightmap* LiveHeights_ = nullptr;
+            unsigned LiveRevision_ = 0;
             std::unordered_map<std::uint64_t, const Geometry*> NodeGeometry_;
             std::unordered_map<std::string, core::GpuImage> Textures_;
             std::unordered_map<std::string, bool> Failed_;

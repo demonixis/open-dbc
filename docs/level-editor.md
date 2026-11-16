@@ -122,11 +122,12 @@ The Inspector edits the selected node:
   one `SET MATRIX HEIGHT` per other vertex and `UPDATE MATRIX`, so every run
   shows the authored matrix. Changing the tile count leaves the old heights
   aside until **Flatten**;
-- a terrain's heightmap: **Fill** and **Randomize** (rolling hills below a
-  range) write a square grey PNG, 64 to 512 pixels, to
+- a terrain's heightmap: **Fill** sets every height; in the SwiftUI Studio, **Generate**
+  draws a preset (rolling hills, mountains, plains, islands, desert) from a **Seed**, and
+  **Random seed** draws another. Both write a square PNG, 64 to 512 pixels, to
   `heightmaps/<level>_terrain<number>.png` under the asset root and point the
-  terrain at it. Grey levels 0–255 are heights 0–100; a heightmap picked by
-  hand is never overwritten;
+  terrain at it. A pixel's R + G + B, 0 to 765, is a height from 0 to 100; a heightmap
+  picked by hand is never overwritten. [Sculpt](#sculpt) edits the same image;
 - a model's animation: none, or a range of the frames of the file's first
   animation (the only one `LOAD OBJECT` keeps, at 25 frames a second), played
   once (`PLAY OBJECT`) or looped (`LOOP OBJECT`), at an optional
@@ -201,6 +202,7 @@ sets only X. Names and numbers stay per node.
 | Hold V and drag | Move the selection by its vertex nearest the mouse onto another node's vertex |
 | B, then 1 2 3 | The paint tool, then its One, Several and Brush modes |
 | Shift + left click or drag, with the paint tool | Erase the painted copies within the radius |
+| T, then 1 2 3 4 | The sculpt tool, then its Raise, Lower, Smooth and Flatten brushes |
 | Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y, Ctrl+D, Delete | Undo, redo, duplicate, delete |
 
 Matrices, terrains and sounds only move, lights and the camera move and turn,
@@ -276,3 +278,21 @@ how the next save writes them. They draw as instances of one geometry, as
 [rendering](rendering.md) explains. A level file grows by about 100 bytes per
 object, and the Studio's preview, which draws them one by one, is meant for
 thousands of them.
+
+## Sculpt
+
+**Terrain** (**T**) edits a terrain's heightmap with a round brush, dragged over the
+terrain. The SwiftUI Studio shows its settings beside the tools; the Dear ImGui Studio
+has the keys only.
+
+| Brush | What it does |
+| --- | --- |
+| Raise, Lower | Adds or removes **Strength** units a second; Shift swaps the two |
+| Smooth | Moves each height toward its neighbours' mean |
+| Flatten | Levels to the height under the pointer where the drag began |
+
+**Radius** is in world units, which are the terrain's pixels. **Falloff** is the share
+of the radius over which the brush fades: 0 is a hard edge, 1 is soft from the centre.
+
+A drag is one undo step, and writes the level's own heightmap when it ends: a terrain
+on an image picked by hand moves to a copy. Undo keeps the pixels of the last 48 edits.

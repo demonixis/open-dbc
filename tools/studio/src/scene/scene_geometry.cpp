@@ -1,6 +1,7 @@
 #include "scene/scene_geometry.hpp"
 #include "core/i18n.hpp"
 #include "path_utf8.hpp"
+#include "scene/heightmap.hpp"
 
 #include <algorithm>
 #include <array>
@@ -419,39 +420,14 @@ namespace dbc::studio
             return true;
         }
 
-        bool LoadTerrainMesh(const std::filesystem::path& Heightmap, CpuMesh& Out, std::string& Error)
+        void BuildTerrainMesh(const Heightmap& Map, CpuMesh& Out)
         {
-            SDL_Surface* Loaded = IMG_Load(dbc::PathToUtf8(Heightmap).c_str());
-            if (Loaded == nullptr)
-            {
-                Error = SDL_GetError();
-                return false;
-            }
-            SDL_Surface* Pixels = SDL_ConvertSurface(Loaded, SDL_PIXELFORMAT_RGBA32);
-            SDL_DestroySurface(Loaded);
-            if (Pixels == nullptr)
-            {
-                Error = SDL_GetError();
-                return false;
-            }
-            const int Size = Pixels->w;
-            if (Size < 2 || Pixels->h != Size)
-            {
-                SDL_DestroySurface(Pixels);
-                Error = Tr("A terrain heightmap must be square and at least 2x2");
-                return false;
-            }
-            const auto Height = [&](int X, int Z)
-            {
-                const auto* Row =
-                    static_cast<const Uint8*>(Pixels->pixels) + static_cast<std::size_t>(Z) * Pixels->pitch;
-                const Uint8* Pixel = Row + static_cast<std::size_t>(X) * 4;
-                return (Pixel[0] + Pixel[1] + Pixel[2]) / (3.0f * 255.0f) * KTerrainHeightScale;
-            };
+            const int Size = Map.Size;
             // Width is the pixel count over Size - 1 segments; row 0 lies at the position's Z.
             const int Segments = Size - 1;
             const float Step = static_cast<float>(Size) / static_cast<float>(Segments);
-            const auto Point = [&](int X, int Z) { return glm::vec3(X * Step, Height(X, Z), -Z * Step); };
+            const auto Point = [&](int X, int Z)
+            { return glm::vec3(X * Step, Map.Heights[static_cast<std::size_t>(Z) * Size + X], -Z * Step); };
             const auto Uv = [&](int X, int Z)
             { return glm::vec2(static_cast<float>(X) / Segments, static_cast<float>(Z) / Segments); };
             Out = {};
@@ -463,9 +439,16 @@ namespace dbc::studio
                     AddTriangle(Out, Point(X, Z), Point(X, Z + 1), Point(X + 1, Z + 1), Uv(X, Z), Uv(X, Z + 1),
                                 Uv(X + 1, Z + 1));
                 }
-            SDL_DestroySurface(Pixels);
             FaceUp(Out);
             ComputeBounds(Out);
+        }
+
+        bool LoadTerrainMesh(const std::filesystem::path& Path, CpuMesh& Out, std::string& Error)
+        {
+            Heightmap Map;
+            if (!ReadHeightmap(Path, Map, Error))
+                return false;
+            BuildTerrainMesh(Map, Out);
             return true;
         }
 

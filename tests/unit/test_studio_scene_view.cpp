@@ -6,6 +6,7 @@
 #include "core/locales.hpp"
 #include "panels/scene_editor.hpp"
 #include "path_utf8.hpp"
+#include "scene/heightmap.hpp"
 #include "scene/scene_codegen.hpp"
 #include "scene/scene_geometry.hpp"
 
@@ -1052,6 +1053,44 @@ TEST_CASE("The paint tool lands on what lies under the mouse, and stops at its e
         CHECK(Nodes[Index].Position.y == doctest::Approx(65.0f));
 }
 
+TEST_CASE("The sculpt tool raises a terrain's heightmap under the brush, and undo puts it back")
+{
+    // A 64 x 64 terrain centred on the origin, flat at 10: it runs from its position toward -Z.
+    scene::SceneDocument Level;
+    Level.Name = "Level";
+    scene::SceneNode& Terrain = Level.Add(scene::NodeKind::Terrain);
+    Terrain.Position = glm::vec3(-32.0f, 0.0f, 32.0f);
+    Terrain.Asset = scene::TerrainHeightmapPath("Level", Terrain.Id).generic_string();
+    const std::string Asset = Terrain.Asset;
+    SceneViewDriver Driver("sculpt", Level,
+                           [&](const std::filesystem::path& Root)
+                           {
+                               std::string Error;
+                               REQUIRE_MESSAGE(
+                                   scene::WriteHeightmap(Root / Asset, scene::FlatHeightmap(64, 10.0f), Error), Error);
+                           });
+    const auto Heights = [&]
+    {
+        scene::Heightmap Map;
+        std::string Error;
+        REQUIRE_MESSAGE(scene::ReadHeightmap(Driver.Root() / Asset, Map, Error), Error);
+        return Map;
+    };
+
+    // The first click gives the viewport the focus its keys need, and selects the terrain.
+    Driver.Click(glm::vec3(0.0f, 10.0f, 0.0f));
+    Driver.Tap(ImGuiKey_T);
+    Driver.Click(glm::vec3(0.0f, 10.0f, 0.0f));
+    scene::Heightmap Map = Heights();
+    CHECK(scene::SampleHeightmap(Map, 31.5f, 31.5f) > 10.2f);
+    CHECK(Map.Heights.front() == doctest::Approx(10.0f).epsilon(0.01));
+    CHECK(Driver.SavedNodes().size() == 1);
+
+    Driver.Undo();
+    Map = Heights();
+    CHECK(scene::SampleHeightmap(Map, 31.5f, 31.5f) == doctest::Approx(10.0f).epsilon(0.01));
+}
+
 TEST_CASE("Painted objects fold into one Hierarchy row, whose click selects them all")
 {
     const glm::vec3 Source(-150.0f, 15.0f, 0.0f);
@@ -1398,4 +1437,3 @@ TEST_CASE("Two fingers on the viewport zoom with their spread and pan with their
     Driver.Frame();
     CHECK(glm::length(Driver.Eye() - (Zoomed + Panned)) < 0.01f);
 }
-

@@ -474,7 +474,8 @@ namespace dbc::studio
             if (Info.Limbs.empty())
                 return;
             // The list opens on demand: a rigged model has dozens of limbs, too many for the Inspector.
-            if (ImGui::Button((TrFmt("Limbs ({0})...", {std::to_string(Info.Limbs.size())}) + "##model-limbs").c_str()) ||
+            if (ImGui::Button(
+                    (TrFmt("Limbs ({0})...", {std::to_string(Info.Limbs.size())}) + "##model-limbs").c_str()) ||
                 ShowLimbs_)
                 ImGui::OpenPopup("##model-limbs-popup");
             ShowLimbs_ = false;
@@ -620,21 +621,13 @@ namespace dbc::studio
             if (ImGui::Button(TrId("Fill##terrain")))
                 Generated = scene::FlatHeightmap(HeightmapSize_, TerrainFillHeight_);
             ImGui::DragFloat(TrId("Height range"), &TerrainRange_, 0.25f, 0.0f, scene::KTerrainHeightScale);
-            ImGui::DragInt(TrId("Hills across"), &TerrainHills_, 0.1f, 1, 32);
             if (ImGui::Button(TrId("Randomize##terrain")))
-                Generated = scene::RandomHeightmap(HeightmapSize_, TerrainRange_, TerrainHills_, Random_);
+                Generated = scene::GenerateHeightmap(HeightmapSize_, scene::TerrainPreset::RollingHills,
+                                                     static_cast<std::uint32_t>(Random_()), TerrainRange_);
 
             const std::filesystem::path Relative = scene::TerrainHeightmapPath(Document_.Name, Node.Id);
             if (Generated && Project_)
-            {
-                // Always the level's own file: a heightmap the user picked is never overwritten.
-                if (scene::WriteHeightmap(Project_->AssetRoot / Relative, HeightmapSize_, *Generated, TerrainError_))
-                {
-                    TerrainError_.clear();
-                    Node.Asset = dbc::GenericPathToUtf8(Relative);
-                    RefreshAssets();
-                }
-            }
+                SetTerrainHeights(Node, *Generated);
             if (!TerrainError_.empty())
                 ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Theme::Error), "%s", TerrainError_.c_str());
             ImGui::TextDisabled("%s", TrFmt("Writes {0}", {dbc::GenericPathToUtf8(Relative)}).c_str());
@@ -677,7 +670,8 @@ namespace dbc::studio
             ImGui::Checkbox(TrId("Ambient"), &Flags.Ambient);
             ImGui::Checkbox(TrId("Depth buffer"), &Mat.ZDepth);
             if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("%s", Tr("Unchecked writes DISABLE OBJECT ZDEPTH; the Scene view does not preview it"));
+                ImGui::SetTooltip("%s",
+                                  Tr("Unchecked writes DISABLE OBJECT ZDEPTH; the Scene view does not preview it"));
             ImGui::SameLine();
             ImGui::Checkbox(TrId("Depth read"), &Mat.ZRead);
             ImGui::SameLine();
@@ -784,8 +778,9 @@ namespace dbc::studio
             { return Other.Name + " (" + std::to_string(Other.Id) + ")"; };
             const scene::SceneNode* Target = scene::GlueTarget(Document_, Node);
             const std::string Current = !Node.Glued ? std::string(Tr("None"))
-                                        : Target    ? Label(*Target)
-                                                    : TrFmt("Object {0} cannot hold it", {std::to_string(Node.Glued->Object)});
+                                        : Target
+                                            ? Label(*Target)
+                                            : TrFmt("Object {0} cannot hold it", {std::to_string(Node.Glued->Object)});
             if (ImGui::BeginCombo(TrId("Glued to"), Current.c_str()))
             {
                 if (ImGui::Selectable(Tr("None"), !Node.Glued))
@@ -812,13 +807,15 @@ namespace dbc::studio
                 return;
 
             // A model lists its limbs; any other object has its root alone, limb 0.
-            const ModelInspection* Read = Target != nullptr && Target->Kind == scene::NodeKind::Model
-                                              ? ModelInfoOf(Target->Asset)
-                                              : nullptr;
+            const ModelInspection* Read =
+                Target != nullptr && Target->Kind == scene::NodeKind::Model ? ModelInfoOf(Target->Asset) : nullptr;
             if (Read != nullptr && Read->Info && !Read->Info->Limbs.empty())
             {
                 const auto LimbLabel = [](const scene::ModelLimb& Limb)
-                { return std::to_string(Limb.Id) + "  " + (Limb.Name.empty() ? std::string(Tr("(unnamed)")) : Limb.Name); };
+                {
+                    return std::to_string(Limb.Id) + "  " +
+                           (Limb.Name.empty() ? std::string(Tr("(unnamed)")) : Limb.Name);
+                };
                 const auto& Limbs = Read->Info->Limbs;
                 const auto Chosen = std::find_if(Limbs.begin(), Limbs.end(), [&](const scene::ModelLimb& Limb)
                                                  { return Limb.Id == Node.Glued->Limb; });
@@ -991,8 +988,8 @@ namespace dbc::studio
                 ImGui::TextDisabled("%s", TrFmt("Function {0}()", {scene::LevelFunctionName(Document_)}).c_str());
 
                 Heading("Numbers");
-                static const char* const Labels[] = {"First object",  "First image", "First matrix", "First terrain",
-                                                     "First light",   "First sound", "First effect"};
+                static const char* const Labels[] = {"First object", "First image", "First matrix", "First terrain",
+                                                     "First light",  "First sound", "First effect"};
                 for (std::size_t Space = 0; Space < scene::KIdSpaceCount; ++Space)
                 {
                     int Base = Document_.IdBase[Space];
